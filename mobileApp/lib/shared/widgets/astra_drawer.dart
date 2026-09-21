@@ -137,7 +137,10 @@ class AstraDrawer extends StatelessWidget {
                             icon: Icons.nfc,
                             label: 'Link Student Card',
                             subtitle: 'Tap a new or replacement card',
-                            onTap: () => _toRoute(context, Routes.linkStudentCard)),
+                            active: context.isTablet && activeTab == kLinkCardTab,
+                            onTap: () => context.isTablet
+                                ? _toTab(context, kLinkCardTab)
+                                : _toRoute(context, Routes.linkStudentCard)),
                       ],
                       _section(p, 'ACCOUNT'),
                       _item(context, p,

@@ -894,8 +894,13 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                       children: [
                         Icon(Icons.account_balance_wallet_outlined, size: 16, color: p.primary),
                         const SizedBox(width: 7),
-                        Text('Collected this session', style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-                        const Spacer(),
+                        Expanded(
+                          child: Text('Collected this session',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                        ),
+                        const SizedBox(width: 8),
                         Text(Money.of(total), style: serif(size: 16, color: p.primaryDark)),
                       ],
                     ),

@@ -189,6 +189,12 @@ class LocalStorageService {
   Future<void> setSaleView(String v) =>
       _prefs.setString(LocalStorageKeys.saleView, v);
 
+  // Link Student Card rendering preference — 'grid' or 'list'.
+  String? get studentCardView =>
+      _prefs.getString(LocalStorageKeys.studentCardView);
+  Future<void> setStudentCardView(String v) =>
+      _prefs.setString(LocalStorageKeys.studentCardView, v);
+
   // New Sale — last used Product/Service filter ('', 'product', 'service').
   String? get saleType => _prefs.getString(LocalStorageKeys.saleType);
   Future<void> setSaleType(String v) =>

@@ -64,7 +64,11 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
           unawaited(drain(ignoreBackoff: true));
           // A snapshot that went stale during the outage is worth re-taking now
           // rather than at the next six-hour check. No-ops when it is still fresh.
-          unawaited(refreshCatalog());
+          // Forced instead when the last attempt left lookups incomplete: a fresh
+          // product snapshot would otherwise short-circuit the refresh before it
+          // ever retries payment methods, staff, customers or sale settings,
+          // leaving the till stuck showing "Reconnect to finish" after reconnecting.
+          unawaited(refreshCatalog(force: state.provisionIncomplete.isNotEmpty));
         }
         wasOnline = isOnline;
       });

@@ -64,6 +64,9 @@ class Dates {
   /// and a phone ahead of the server reads as the future.
   static String instant(DateTime d) => d.toUtc().toIso8601String();
 
+  /// `21 Jun 2026` — one date, spelled out.
+  static String day(DateTime d) => DateFormat('d MMM yyyy').format(d);
+
   /// `Sat, 21 Jun 2026` — the weekday-prefixed date used on the day-session screen.
   static String weekday(DateTime d) => DateFormat('EEE, d MMM yyyy').format(d);
 

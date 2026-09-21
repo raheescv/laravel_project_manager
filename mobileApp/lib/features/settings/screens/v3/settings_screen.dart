@@ -117,7 +117,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final print = context.watch<PrintSettingsCubit>();
     final pos = context.watch<PosSettingsCubit>();
     final auth = context.watch<AuthCubit>();
-    final user = auth.user;
     // Count only what the permissions screen lists — the app's own gates —
     // not every backend permission the account happens to hold.
     final permCount = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
@@ -134,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           '${pos.askClientOnNewSale ? 'Asks for client' : 'No client prompt'} · ${_tipShown(context) ? 'tip on' : 'tip off'} · ${pos.lockAfterSale ? 'locks after sale' : 'stays unlocked'}'),
       (startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
           'Opens on ${_effectiveStartScreen(context).label}'),
-      (Icons.verified_user_outlined, 'My permissions', (user?.isAdmin ?? false) ? 'Administrator' : '$permCount granted'),
+      (Icons.verified_user_outlined, 'My permissions', '$permCount granted'),
       // Haptics, currency, branch, offline data and the server are all "how
       // this device is set up" — plumbing you visit once and leave alone, not
       // five separate places. Grouped, the rail is a short list of subjects
@@ -1278,11 +1277,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _permissionsCard(BuildContext context) {
     final p = context.astra;
     final auth = context.watch<AuthCubit>();
-    final user = auth.user;
     final count = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
-    final subtitle = (user?.isAdmin ?? false)
-        ? 'Administrator · full access'
-        : '$count of ${mobilePermissions.length} ${count == 1 ? 'permission' : 'permissions'} granted';
+    final subtitle = '$count of ${mobilePermissions.length} ${count == 1 ? 'permission' : 'permissions'} granted';
     return AstraCard(
       radius: 14,
       onTap: _openPermissions,

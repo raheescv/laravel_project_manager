@@ -58,8 +58,11 @@ class ApiUser extends Equatable {
   /// Whether the user has an uploaded avatar (vs. the letter monogram fallback).
   bool get hasPhoto => photoUrl.isNotEmpty;
 
-  /// Admins implicitly hold every permission; staff need the slug explicitly.
-  bool hasPermission(String permission) => isAdmin || permissions.contains(permission);
+  /// Strictly what the account was granted — `is_admin` carries no implicit
+  /// permissions. The server checks the same way (`$user->can($permission)`,
+  /// never the `is_admin` column), so a link or page gated on a permission
+  /// the account doesn't hold must not be shown, admin flag or not.
+  bool hasPermission(String permission) => permissions.contains(permission);
 
   /// True when this is a staff (employee-type) account rather than a back-office
   /// 'user' account.
@@ -76,7 +79,7 @@ class ApiUser extends Equatable {
   /// not an employee, so it gets the full branch view even with `is_admin` off
   /// — which is why anything asking "may I see other people's numbers?" must
   /// ask this and not [isAdmin]. [isAdmin] stays what it says: the admin flag,
-  /// for the badge and for implicit permissions.
+  /// for the badge only — it grants nothing by itself, see [hasPermission].
   bool get seesAllRecords => !isNonAdminEmployee;
 
   factory ApiUser.fromJson(Map<String, dynamic> j) => ApiUser(

@@ -16,8 +16,11 @@ import 'package:invo/features/sales_returns/screens/v3/sales_returns_list_screen
 import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
 import 'package:invo/features/profile/screens/v3/profile_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
+import 'package:invo/features/student_card/screens/link_card_screen.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:provider/provider.dart';
 
 /// Adaptive admin shell: a glossy floating bottom nav on phones (Instagram-style:
@@ -43,11 +46,11 @@ class _HomeShellState extends State<HomeShell> {
   /// The four phone tabs are always built, exactly as before.
   late final Set<int> _visited = {widget.initialTab};
 
-  /// The shell's destinations. Returns / Stock Check / Day Session are real
-  /// tablet destinations (indices [kReturnsTab], [kStockCheckTab],
-  /// [kDaySessionTab]) so the rail switches to them with the same instant swap
-  /// as the four tabs — routing to them instead makes those links slide in as
-  /// pages while the others don't.
+  /// The shell's destinations. Returns / Stock Check / Day Session / Link Card
+  /// are real tablet destinations (indices [kReturnsTab], [kStockCheckTab],
+  /// [kDaySessionTab], [kLinkCardTab]) so the rail switches to them with the
+  /// same instant swap as the four tabs — routing to them instead makes those
+  /// links slide in as pages while the others don't.
   ///
   /// Indices must stay stable, so an unpermitted destination becomes a
   /// placeholder rather than shrinking the list. The rail never offers it.
@@ -77,6 +80,12 @@ class _HomeShellState extends State<HomeShell> {
           : const SizedBox.shrink(),
       context.isTablet && _visited.contains(kPermissionsTab)
           ? const PermissionsScreen()
+          : const SizedBox.shrink(),
+      context.isTablet &&
+              serviceLocator<LocalStorageService>().schoolEnabled &&
+              auth.hasPermission(PermissionSlug.studentCardAssign) &&
+              _visited.contains(kLinkCardTab)
+          ? const LinkCardScreen()
           : const SizedBox.shrink(),
     ];
   }

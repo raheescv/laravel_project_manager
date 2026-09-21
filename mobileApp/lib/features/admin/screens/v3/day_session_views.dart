@@ -367,8 +367,8 @@ extension _DaySessionViews on _DaySessionScreenState {
 
   // ------------------------------------------------------ SESSION REPORT
   /// The Sale Bill Report of [s] — the open session, or the one just closed:
-  /// the thermal roll in one tap, and the Export sheet for the A4 PDF and
-  /// sending it on.
+  /// the thermal roll in one tap, and its preview for the A4 PDF, the roll on
+  /// screen, and sending it on.
   Widget _reportCard(DaySessionSummary s) {
     final p = context.astra;
     final printer = context.watch<PrintSettingsCubit>();
@@ -413,9 +413,8 @@ extension _DaySessionViews on _DaySessionScreenState {
               const SizedBox(width: 10),
               Expanded(
                 flex: 2,
-                child: _reportButton(Icons.ios_share, 'PDF & share',
-                    onTap: () => unawaited(showReportExport(context,
-                        initial: ExportReport.daySession, reports: const [ExportReport.daySession]))),
+                child: _reportButton(Icons.visibility_outlined, 'Preview',
+                    onTap: () => unawaited(openReportPreview(context, ExportReport.daySession, sessionId: s.id))),
               ),
             ],
           ),

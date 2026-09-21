@@ -23,10 +23,12 @@ class AdminState extends Equatable {
     this.reportLoadingMore = false,
     this.reportError,
     this.reportType = 'itemwise',
-    this.itemMetric = 'amount',
+    this.sortKey = 'amount',
+    this.sortAscending = false,
     this.itemProductType,
     this.reportRows = const [],
     this.reportTotal = 0,
+    this.reportQuantityTotal = 0,
     this.reportRowCount = 0,
     this.reportPage = 1,
     this.reportLastPage = 1,
@@ -57,10 +59,21 @@ class AdminState extends Equatable {
   final bool reportLoadingMore;
   final String? reportError;
   final String reportType;
-  final String itemMetric;
+
+  /// What the breakdown is ranked by — `amount`, `quantity`, `bills` or
+  /// `name`, the four the API sorts on (App\Actions\V1\Report\GetAction).
+  final String sortKey;
+
+  /// Low → high when true; the list opens high → low, which is what a ranking
+  /// means everywhere else in the app.
+  final bool sortAscending;
   final String? itemProductType;
   final List<ReportRow> reportRows;
   final double reportTotal;
+
+  /// Units across the whole range — the Qty column's total. Zero on the staff
+  /// breakdown, whose summary carries revenue alone.
+  final double reportQuantityTotal;
   final int reportRowCount;
   final int reportPage;
   final int reportLastPage;
@@ -88,10 +101,12 @@ class AdminState extends Equatable {
     bool? reportLoadingMore,
     String? reportError,
     String? reportType,
-    String? itemMetric,
+    String? sortKey,
+    bool? sortAscending,
     String? itemProductType,
     List<ReportRow>? reportRows,
     double? reportTotal,
+    double? reportQuantityTotal,
     int? reportRowCount,
     int? reportPage,
     int? reportLastPage,
@@ -120,11 +135,13 @@ class AdminState extends Equatable {
         reportLoadingMore: reportLoadingMore ?? this.reportLoadingMore,
         reportError: clearReportError ? null : (reportError ?? this.reportError),
         reportType: reportType ?? this.reportType,
-        itemMetric: itemMetric ?? this.itemMetric,
+        sortKey: sortKey ?? this.sortKey,
+        sortAscending: sortAscending ?? this.sortAscending,
         itemProductType:
             clearItemProductType ? null : (itemProductType ?? this.itemProductType),
         reportRows: reportRows ?? this.reportRows,
         reportTotal: reportTotal ?? this.reportTotal,
+        reportQuantityTotal: reportQuantityTotal ?? this.reportQuantityTotal,
         reportRowCount: reportRowCount ?? this.reportRowCount,
         reportPage: reportPage ?? this.reportPage,
         reportLastPage: reportLastPage ?? this.reportLastPage,
@@ -141,8 +158,8 @@ class AdminState extends Equatable {
         startDate, endDate, rangePreset,
         loading, errorMessage, dashboard, topStylists, topStylistsDate,
         trendPoints, trendLabels,
-        reportLoading, reportLoadingMore, reportError, reportType, itemMetric,
-        itemProductType, reportRows, reportTotal, reportRowCount, reportPage,
+        reportLoading, reportLoadingMore, reportError, reportType, sortKey,
+        sortAscending, itemProductType, reportRows, reportTotal, reportRowCount, reportPage,
         reportLastPage, reportTrendPoints, reportTrendLabels,
         overviewLoading, overviewError, overview,
       ];

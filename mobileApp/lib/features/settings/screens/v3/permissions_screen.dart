@@ -62,10 +62,6 @@ class PermissionsScreen extends StatelessWidget {
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                         children: [
-                          if (auth.user?.isAdmin ?? false) ...[
-                            _adminNote(context),
-                            const SizedBox(height: 14),
-                          ],
                           for (final entry in groups.entries) ...[
                             _groupLabel(context, entry.key),
                             _groupCard(context, auth, entry.value),
@@ -103,10 +99,6 @@ class PermissionsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        if (auth.user?.isAdmin ?? false) ...[
-          _adminNote(context),
-          const SizedBox(height: 16),
-        ],
         _groupColumn(context, auth, groups.entries),
       ],
     );
@@ -119,7 +111,6 @@ class PermissionsScreen extends StatelessWidget {
   /// read as one narrow ribbon down the middle of a 1200pt window.
   Widget _tablet(BuildContext context, AuthCubit auth, Map<String, List<MobilePermission>> groups,
       int allowed, int restricted) {
-    final isAdmin = auth.user?.isAdmin ?? false;
     return Column(
       children: [
         TabletPageHead(
@@ -150,10 +141,6 @@ class PermissionsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isAdmin) ...[
-                      _adminNote(context),
-                      const SizedBox(height: 18),
-                    ],
                     if (!twoUp)
                       for (final e in entries) ...[_groupPanel(context, auth, e), const SizedBox(height: 16)]
                     else
@@ -250,26 +237,6 @@ class PermissionsScreen extends StatelessWidget {
             Text(label, style: ui(size: 10, weight: FontWeight.w600, color: labelColor)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _adminNote(BuildContext context) {
-    final p = context.astra;
-    return AstraCard(
-      radius: 14,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.verified_user_outlined, size: 18, color: AstraPalette.success),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'You are an administrator, so every feature below is available to you.',
-              style: ui(size: 11.5, weight: FontWeight.w600, color: p.ink),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -207,42 +207,56 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     }
   }
 
-  /// Close / cancel the ticket: confirm if there are items, then leave the
-  /// screen — pop back to whatever pushed New Sale (dashboard, sales list, …)
-  /// when there's a back stack, otherwise land on a sensible home so the
-  /// buttons are never a dead-end.
+  /// Confirms discarding the ticket when it isn't empty, clearing it on
+  /// confirmation. Returns whether it's safe to leave the screen.
+  Future<bool> _confirmDiscard() async {
+    final cart = context.read<CartCubit>();
+    if (cart.isEmpty) return true;
+    final discard = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard this sale?'),
+        content: const Text('The current ticket will be cleared.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Discard')),
+        ],
+      ),
+    );
+    if (discard != true) return false;
+    cart.clear();
+    return true;
+  }
+
+  /// The dashboard (or `/sale` for a cashier, whose home IS New Sale — see
+  /// the app_router redirect that bounces a non-admin off `/home`).
+  String get _dashboardRoute {
+    final canViewAdmin = context.read<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
+    return canViewAdmin ? Routes.home : Routes.sale;
+  }
+
+  /// Back chevron: confirm if there are items, then retrace the stack — pop
+  /// back to whatever pushed New Sale (dashboard, sales list, …) when there's
+  /// one, otherwise land on the dashboard so the button is never a dead-end.
   Future<void> _close() async {
     unawaited(HapticFeedback.selectionClick());
-    final cart = context.read<CartCubit>();
-    if (!cart.isEmpty) {
-      final discard = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Discard this sale?'),
-          content: const Text('The current ticket will be cleared.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Discard')),
-          ],
-        ),
-      );
-      if (discard != true) return;
-      cart.clear();
-    }
+    if (!await _confirmDiscard()) return;
     if (!mounted) return;
-    // If New Sale was pushed (from the dashboard, sales list, home FAB, …) pop
-    // straight back to it. With no back stack — the signed-in landing screen,
-    // or after a completed sale reset the stack via `go('/sale')` — fall back
-    // to a home that won't bounce us. `/home` redirects non-admins back to
-    // `/sale` (app_router redirect), so only send admins there; a cashier's
-    // home IS the sale screen, so reset it in place.
     if (context.canPop()) {
       context.pop();
     } else {
-      final canViewAdmin =
-          context.read<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
-      context.go(canViewAdmin ? Routes.home : Routes.sale);
+      context.go(_dashboardRoute);
     }
+  }
+
+  /// The X: confirm if there are items, then always leave to the dashboard —
+  /// unlike the back chevron, it never just pops to wherever New Sale was
+  /// pushed from.
+  Future<void> _closeToDashboard() async {
+    unawaited(HapticFeedback.selectionClick());
+    if (!await _confirmDiscard()) return;
+    if (!mounted) return;
+    context.go(_dashboardRoute);
   }
 
   @override
@@ -375,7 +389,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                 const SizedBox(width: 6),
                 const PendingSalesBadge(),
                 const SizedBox(width: 2),
-                _ghostBtn(Icons.close, _close, size: 38),
+                _closeBtn(38),
               ],
             ),
             const SizedBox(height: 11),
@@ -401,6 +415,30 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
         width: size,
         height: size,
         child: Icon(icon, size: size * 0.55, color: p.textSecondary),
+      ),
+    );
+  }
+
+  /// The X: a soft tinted circle rather than a bare ghost icon, so it reads
+  /// as the one control that leaves the ticket entirely, not just another
+  /// header glyph.
+  Widget _closeBtn(double size) {
+    final p = context.astra;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _closeToDashboard();
+      },
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: p.primary.withValues(alpha: 0.1),
+          border: Border.all(color: p.primary.withValues(alpha: 0.25)),
+        ),
+        child: Icon(Icons.close, size: size * 0.5, color: p.primary),
       ),
     );
   }
@@ -676,7 +714,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               const SizedBox(width: 6),
               const PendingSalesBadge(),
               const SizedBox(width: 2),
-              _ghostBtn(Icons.close, _close, size: 34),
+              _closeBtn(34),
             ],
           ),
           const SizedBox(height: 12),
@@ -1000,7 +1038,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                     ],
                   ),
                 )
-              else if (cart.schoolEnabled)
+              else if (cart.schoolEnabled &&
+                  context.read<AuthCubit>().hasPermission(PermissionSlug.studentCardAssign))
                 AstraButton(
                   label: 'Tap student card',
                   icon: Icons.nfc,

@@ -20,7 +20,9 @@ class ReportRow extends Equatable {
       required this.title,
       required this.subtitle,
       required this.value,
-      this.amount = 0});
+      this.amount = 0,
+      this.quantity = 0,
+      this.bills = 0});
 
   /// The staff member's user id on a staff row, so a screen can pick out the
   /// signed-in person; '' on item and category rows.
@@ -30,8 +32,15 @@ class ReportRow extends Equatable {
   final String value;
   final double amount;
 
+  /// Units sold on an item or category row, lines sold on a staff row — the
+  /// ledger table's Qty column.
+  final double quantity;
+
+  /// Distinct bills the row appears on — the ledger table's Bills column.
+  final int bills;
+
   @override
-  List<Object?> get props => [id, title, subtitle, value, amount];
+  List<Object?> get props => [id, title, subtitle, value, amount, quantity, bills];
 }
 
 /// The loaded breakdown for one report type, held so the By Item / By Category /
@@ -147,10 +156,17 @@ class AdminCubit extends Cubit<AdminState> {
   bool get reportLoadingMore => state.reportLoadingMore;
   String? get reportError => state.reportError;
   String get reportType => state.reportType;
-  String get itemMetric => state.itemMetric;
+  String get sortKey => state.sortKey;
+  bool get sortAscending => state.sortAscending;
+
+  /// The measure the amount column and the grand total are in. Sorting by
+  /// quantity switches the report to units; the other three sorts leave it in
+  /// money. Kept for the export screen, which labels the PDF with it.
+  String get itemMetric => state.sortKey == 'quantity' ? 'qty' : 'amount';
   String? get itemProductType => state.itemProductType;
   List<ReportRow> get reportRows => state.reportRows;
   double get reportTotal => state.reportTotal;
+  double get reportQuantityTotal => state.reportQuantityTotal;
   int get reportRowCount => state.reportRowCount;
   bool get reportHasMore => state.reportHasMore;
   DateTime get startDate => state.startDate;
@@ -170,6 +186,9 @@ class AdminCubit extends Cubit<AdminState> {
       case 'today':
         from = today;
         to = today;
+      case 'yesterday':
+        from = today.subtract(const Duration(days: 1));
+        to = from;
       case '7d':
         from = today.subtract(const Duration(days: 6));
         to = today;
@@ -390,7 +409,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// [force] throws away everything cached — for a branch switch, where the
   /// range is unchanged but every figure behind it belongs to someone else.
   /// Every other caller invalidates only what its own input can have moved.
-  Future<void> loadReports({String? type, String? metric, bool force = false}) async {
+  Future<void> loadReports({String? type, bool force = false}) async {
     if (force) {
       _reportCache.clear();
       _trendKey = null;
@@ -399,7 +418,6 @@ class AdminCubit extends Cubit<AdminState> {
     final req = ++_reportReq;
     emit(state.copyWith(
       reportType: type,
-      itemMetric: metric,
       reportLoading: true,
       reportLoadingMore: false,
       clearReportError: true,
@@ -456,7 +474,10 @@ class AdminCubit extends Cubit<AdminState> {
   /// for scrolling; a printed report has to carry every line, so this walks the
   /// pages instead of reusing [reportRows]. Throws what the repository throws —
   /// the caller reports it.
-  Future<ReportExport> exportReport(ReportExportKind kind) async {
+  ///
+  /// [withCategories] also pulls the overview's sales by category — the
+  /// thermal summary prints it in place of the top items.
+  Future<ReportExport> exportReport(ReportExportKind kind, {bool withCategories = false}) async {
     final from = state.startDate;
     final to = state.endDate;
     final start = Dates.iso(from);
@@ -465,13 +486,20 @@ class AdminCubit extends Cubit<AdminState> {
 
     switch (kind) {
       case ReportExportKind.overview:
+        // A one-day range's "by day" table is a single row repeating the
+        // totals, so it is left out — and its bills are never walked.
+        final byDay = start != end;
         final results = await Future.wait<Object>([
           _repo.report(type: 'overview', startDate: start, endDate: end),
-          _allReportRows('billwise', start, end),
+          if (byDay) _allReportRows('billwise', start, end),
+          // Every item type, ranked by amount: the summary covers the whole
+          // range, not whatever the By Category screen is filtered to.
+          if (withCategories) _allReportRows('categorywise', start, end, sort: 'amount'),
         ]);
-        final bills = results[1] as _ExportRows;
+        final bills = byDay ? results[1] as _ExportRows : null;
+        final categories = withCategories ? results.last as _ExportRows : null;
         final byDate = <String, ReportExportDay>{};
-        for (final bill in bills.rows) {
+        for (final bill in bills?.rows ?? const <Map<String, dynamic>>[]) {
           final date = asStr(bill['date']).split(' ').first;
           byDate[date] = (byDate[date] ?? ReportExportDay(date: date)).add(bill);
         }
@@ -481,16 +509,20 @@ class AdminCubit extends Cubit<AdminState> {
           endDate: to,
           generatedAt: now,
           overview: SalesOverview.fromJson(results[0] as Map<String, dynamic>),
-          days: bills.truncated
+          days: bills == null || bills.truncated
               ? const []
               : (byDate.values.toList()..sort((a, b) => a.date.compareTo(b.date))),
-          daysComplete: !bills.truncated,
+          daysComplete: !(bills?.truncated ?? false),
+          categories: categories?.rows.map(ReportExportLine.category).toList() ?? const [],
+          categoryCount: categories?.total ?? 0,
         );
       case ReportExportKind.items:
-        final byQty = state.itemMetric == 'qty';
+        final byQty = state.sortKey == 'quantity';
         final productType = state.itemProductType;
         final data = await _allReportRows('itemwise', start, end,
-            sort: byQty ? 'quantity' : 'amount', productType: productType);
+            sort: state.sortKey,
+            direction: state.sortAscending ? 'asc' : 'desc',
+            productType: productType);
         return ReportExport(
           kind: kind,
           startDate: from,
@@ -504,10 +536,12 @@ class AdminCubit extends Cubit<AdminState> {
           productType: productType,
         );
       case ReportExportKind.categories:
-        final byQty = state.itemMetric == 'qty';
+        final byQty = state.sortKey == 'quantity';
         final productType = state.itemProductType;
         final data = await _allReportRows('categorywise', start, end,
-            sort: byQty ? 'quantity' : 'amount', productType: productType);
+            sort: state.sortKey,
+            direction: state.sortAscending ? 'asc' : 'desc',
+            productType: productType);
         return ReportExport(
           kind: kind,
           startDate: from,
@@ -538,7 +572,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// four requests at a time — all at once would queue up to fifty on the
   /// server behind a single tap.
   Future<_ExportRows> _allReportRows(String type, String start, String end,
-      {String? sort, String? productType}) async {
+      {String? sort, String? direction, String? productType}) async {
     Future<Map<String, dynamic>> page(int n) => _repo.report(
           type: type,
           startDate: start,
@@ -546,6 +580,7 @@ class AdminCubit extends Cubit<AdminState> {
           page: n,
           perPage: _exportPerPage,
           sort: sort,
+          direction: direction,
           productType: productType,
         );
 
@@ -612,9 +647,8 @@ class AdminCubit extends Cubit<AdminState> {
         endDate: Dates.iso(state.endDate),
         page: page,
         perPage: _reportPageSize,
-        sort: ranksProducts(state.reportType)
-            ? (state.itemMetric == 'qty' ? 'quantity' : 'amount')
-            : null,
+        sort: state.sortKey,
+        direction: state.sortAscending ? 'asc' : 'desc',
         productType: ranksProducts(state.reportType) ? state.itemProductType : null,
       );
 
@@ -622,11 +656,10 @@ class AdminCubit extends Cubit<AdminState> {
     final rows = (data['rows'] as List?) ?? const [];
     final pag = (data['pagination'] as Map?) ?? const {};
     final summary = (data['summary'] as Map?) ?? const {};
+    // Always the money total: the ledger has a column each for quantity and
+    // amount, so ranking by quantity changes the order, never the measure.
     final total = ranksProducts(state.reportType)
-        ? asNum(state.itemMetric == 'qty'
-                ? summary['total_quantity']
-                : summary['total_amount'])
-            .toDouble()
+        ? asNum(summary['total_amount']).toDouble()
         : asNum(summary['total_revenue']).toDouble();
 
     final mapped = switch (state.reportType) {
@@ -640,6 +673,7 @@ class AdminCubit extends Cubit<AdminState> {
       reportLastPage: asNum(pag['last_page'] ?? 1).toInt(),
       reportRowCount: asNum(pag['total'] ?? rows.length).toInt(),
       reportTotal: total,
+      reportQuantityTotal: asNum(summary['total_quantity']).toDouble(),
       reportRows: append ? [...state.reportRows, ...mapped] : mapped,
     ));
 
@@ -658,15 +692,13 @@ class AdminCubit extends Cubit<AdminState> {
     final total = asNum(m['total']).toDouble();
     final qty = asNum(m['quantity']).toDouble();
     final bills = asNum(m['bills_count']).toInt();
-    final byQty = state.itemMetric == 'qty';
-    final billLabel = '$bills bill${bills == 1 ? '' : 's'}';
     return ReportRow(
       title: asStr(m['item_name']),
-      subtitle: byQty
-          ? '${Money.of(total)} · $billLabel'
-          : '${_qty(qty)} sold · $billLabel',
-      value: byQty ? '${_qty(qty)} sold' : Money.of(total),
-      amount: byQty ? qty : total,
+      subtitle: '${_qty(qty)} sold · $bills bill${bills == 1 ? '' : 's'}',
+      value: Money.of(total),
+      amount: total,
+      quantity: qty,
+      bills: bills,
     );
   }
 
@@ -675,39 +707,70 @@ class AdminCubit extends Cubit<AdminState> {
     final total = asNum(m['total']).toDouble();
     final qty = asNum(m['quantity']).toDouble();
     final products = asNum(m['products_count']).toInt();
-    final byQty = state.itemMetric == 'qty';
-    final productLabel = '$products item${products == 1 ? '' : 's'}';
+    final bills = asNum(m['bills_count']).toInt();
     return ReportRow(
       title: asStr(m['category_name']),
-      subtitle: byQty
-          ? '${Money.of(total)} · $productLabel'
-          : '${_qty(qty)} sold · $productLabel',
-      value: byQty ? '${_qty(qty)} sold' : Money.of(total),
-      amount: byQty ? qty : total,
+      subtitle: '${_qty(qty)} sold · $products item${products == 1 ? '' : 's'}',
+      value: Money.of(total),
+      amount: total,
+      quantity: qty,
+      bills: bills,
     );
   }
 
   ReportRow _employeeRow(dynamic e) {
     final m = Map<String, dynamic>.from(e);
     final rev = asNum(m['revenue']).toDouble();
+    final bills = asNum(m['bills_count']).toInt();
+    final items = asNum(m['items_count']).toInt();
     return ReportRow(
       id: asStr(m['employee_id']),
       title: asStr(m['employee_name']),
-      subtitle:
-          '${asNum(m['bills_count']).toInt()} bills · ${asNum(m['items_count']).toInt()} items',
+      subtitle: '$bills bills · $items items',
       value: Money.of(rev),
       amount: rev,
+      quantity: items.toDouble(),
+      bills: bills,
     );
   }
 
-  /// Rank By and Type ride on the item and category requests alone —
-  /// [_fetchReportPage] sends `sort` and `product_type` only for those — so
-  /// they invalidate those two sides and leave By Staff's cached rows
-  /// standing. Only the date range (and a branch switch) can move those.
-  void setItemMetric(String metric) {
-    if (state.itemMetric == metric) return;
-    _dropProductCaches();
-    unawaited(loadReports(metric: metric));
+  /// The sort rides on every breakdown request, so changing it empties the
+  /// cache for all three sides rather than the two product ones. Re-picking
+  /// the live sort flips its direction, which is what tapping a column header
+  /// (or the live row in the filter sheet) means.
+  void setSort(String key, {bool? ascending}) {
+    final flip = ascending ?? (state.sortKey == key ? !state.sortAscending : false);
+    if (state.sortKey == key && state.sortAscending == flip) return;
+    _reportCache.clear();
+    emit(state.copyWith(sortKey: key, sortAscending: flip));
+    unawaited(loadReports());
+  }
+
+  /// Type rides on the item and category requests alone, so it leaves By
+  /// Staff's cached rows standing.
+  /// Back to the report the screen opens on: today, ranked by amount, every
+  /// item type. The breakdown side (By Item / By Category / By Staff) is the
+  /// user's place in the report, not a filter, so it stays where it is.
+  void resetReportFilters() {
+    final cleared = state.sortKey != 'amount' ||
+        state.sortAscending ||
+        state.itemProductType != null ||
+        state.rangePreset != 'today';
+    if (!cleared) return;
+    _reportCache.clear();
+    _trendKey = null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    emit(state.copyWith(
+      startDate: today,
+      endDate: today,
+      rangePreset: 'today',
+      sortKey: 'amount',
+      sortAscending: false,
+      clearItemProductType: true,
+    ));
+    unawaited(loadReports());
+    unawaited(loadOverview());
   }
 
   void setItemProductType(String? productType) {
@@ -722,13 +785,16 @@ class AdminCubit extends Cubit<AdminState> {
     ..remove('itemwise')
     ..remove('categorywise');
 
-  String get reportTotalText =>
-      (ranksProducts(state.reportType) && state.itemMetric == 'qty')
-          ? '${_qty(state.reportTotal)} sold'
-          : Money.of(state.reportTotal);
+  /// The list's grand total — money, whichever column it is ranked by.
+  String get reportTotalText => Money.of(state.reportTotal);
 
-  String _qty(double q) =>
-      q == q.roundToDouble() ? q.toInt().toString() : q.toStringAsFixed(2);
+  /// The Qty column's total, empty when the report has no quantity to sum.
+  String get reportQuantityText =>
+      state.reportQuantityTotal == 0 ? '' : qtyLabel(state.reportQuantityTotal);
+
+  /// The same quantity formatting the ledger's Qty column uses, so a row's
+  /// caption and its column can never disagree.
+  String _qty(double q) => qtyLabel(q);
 
   void _applyRangeSummary(Map<String, dynamic> bill) {
     final rows = (bill['rows'] as List?) ?? const [];

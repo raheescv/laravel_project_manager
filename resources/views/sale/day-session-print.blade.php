@@ -75,7 +75,18 @@
 
         @php
             $dueRows = collect($dueTransactions ?? [])->values();
-            $pendingPaymentRows = collect($pendingPayments ?? [])->values();
+            $pendingPaymentGroups = collect($pendingPayments ?? [])
+                ->groupBy(fn ($row) => ($row['source'] ?? 'N/A') . '|' . ($row['reference_no'] ?? 'N/A'))
+                ->map(fn ($rows) => [
+                    'source' => $rows->first()['source'] ?? 'N/A',
+                    'reference_no' => $rows->first()['reference_no'] ?? 'N/A',
+                    'amount' => $rows->sum('amount'),
+                    'payment_rows' => $rows->map(fn ($row) => [
+                        'method' => $row['payment_method'],
+                        'amount' => $row['amount'],
+                    ])->values()->all(),
+                ])
+                ->values();
         @endphp
 
         <center><strong>SALE TRANSACTIONS</strong></center>
@@ -108,25 +119,23 @@
             @endforelse
         </table>
 
-        <center><strong>DUE AMOUNT DETAILS</strong></center>
-        <table width="100%" cellpadding="2" cellspacing="0" border="1">
-            <tr>
-                <th align="left">Type</th>
-                <th align="left">Reference</th>
-                <th align="right">Due Amount</th>
-            </tr>
-            @forelse ($dueRows as $dueRow)
+        @if ($dueRows->isNotEmpty())
+            <center><strong>DUE AMOUNT DETAILS</strong></center>
+            <table width="100%" cellpadding="2" cellspacing="0" border="1">
                 <tr>
-                    <td><strong>{{ $dueRow['source'] }}</strong></td>
-                    <td><strong>{{ $dueRow['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td align="right"><strong>{{ currency($dueRow['due_amount']) }}</strong></td>
+                    <th align="left">Type</th>
+                    <th align="left">Reference</th>
+                    <th align="right">Due Amount</th>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="3" align="center">No due amounts.</td>
-                </tr>
-            @endforelse
-        </table>
+                @foreach ($dueRows as $dueRow)
+                    <tr>
+                        <td><strong>{{ $dueRow['source'] }}</strong></td>
+                        <td><strong>{{ $dueRow['reference_no'] ?? 'N/A' }}</strong></td>
+                        <td align="right"><strong>{{ currency($dueRow['due_amount']) }}</strong></td>
+                    </tr>
+                @endforeach
+            </table>
+        @endif
 
         <center><strong>DUE PAYMENT RECEIVED</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
@@ -136,13 +145,21 @@
                 <th align="left">Payment Method</th>
                 <th align="right">Amount</th>
             </tr>
-            @forelse ($pendingPaymentRows as $pendingPayment)
+            @forelse ($pendingPaymentGroups as $group)
                 <tr>
-                    <td><strong>{{ $pendingPayment['source'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td><strong>{{ $pendingPayment['payment_method'] }}</strong></td>
-                    <td align="right"><strong>{{ currency($pendingPayment['amount']) }}</strong></td>
+                    <td><strong>{{ $group['source'] }}</strong></td>
+                    <td><strong>{{ $group['reference_no'] }}</strong></td>
+                    <td><strong>_</strong></td>
+                    <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
                 </tr>
+                @foreach ($group['payment_rows'] as $paymentRow)
+                    <tr>
+                        <td><strong>{{ $paymentRow['method'] }}</strong></td>
+                        <td><strong>{{ $group['reference_no'] }}</strong></td>
+                        <td><strong>_</strong></td>
+                        <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                    </tr>
+                @endforeach
             @empty
                 <tr>
                     <td colspan="4" align="center">No due payment receipts.</td>

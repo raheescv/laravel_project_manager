@@ -2,15 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/printing/pdf_export.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 
-// What the app does with a PDF it has exported — the Reports screen's A4 report
-// and the day session Sale Bill Report share these, so every document offers
-// the same routes out: preview, print, WhatsApp, share, download.
+// Shared by the report preview (ReportPreviewScreen): saving a document it has
+// laid out, and the card shown while one is fetched and laid out.
 
 /// Saves [bytes] to Downloads, then offers WhatsApp straight from the
 /// confirmation. Where the app can't write a Downloads copy itself (iOS,
@@ -37,73 +35,24 @@ Future<void> downloadPdf(
   );
 }
 
-/// Full-screen preview. PdfPreview brings Print and Share; WhatsApp and
-/// Download sit beside them so every route out is one tap from here.
-/// [maxPageWidth] keeps an A4 page from blowing up across a landscape tablet —
-/// pass a narrow one for a thermal roll.
-void openPdfPreview(
-  BuildContext context, {
-  required String title,
-  required Uint8List bytes,
-  required String fileName,
-  required String caption,
-  double maxPageWidth = 820,
-}) {
-  final p = context.astra;
-  final paper = p.isDark ? const Color(0xFF26282D) : const Color(0xFFE8EBF0);
-  Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
-    fullscreenDialog: true,
-    builder: (_) => Scaffold(
-      backgroundColor: paper,
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: p.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: PdfPreview(
-        build: (_) => bytes,
-        useActions: true,
-        canChangePageFormat: false,
-        canChangeOrientation: false,
-        canDebug: false,
-        pdfFileName: fileName,
-        maxPageWidth: maxPageWidth,
-        scrollViewDecoration: BoxDecoration(color: paper),
-        actions: [
-          // Only where it differs from the preview's own Share button.
-          if (PdfExport.opensWhatsAppDirectly)
-            PdfPreviewAction(
-              icon: const Icon(Icons.chat_rounded),
-              onPressed: (_, build, format) async =>
-                  PdfExport.whatsApp(await build(format), fileName, caption: caption),
-            ),
-          PdfPreviewAction(
-            icon: const Icon(Icons.download_rounded),
-            onPressed: (ctx, build, format) async {
-              final snack = AstraSnack.capture(ctx);
-              await downloadPdf(await build(format), fileName, caption: caption, snack: snack);
-            },
-          ),
-        ],
-        actionBarTheme: PdfActionBarTheme(backgroundColor: p.primary, iconColor: Colors.white),
-      ),
-    ),
-  ));
-}
-
 /// Holds the screen while a document is fetched and laid out. Show it with
-/// `showDialog(barrierDismissible: false)` and pop it when the bytes are in.
+/// `showDialog(barrierDismissible: false)` and pop it when the bytes are in —
+/// or inline in a page with [blocking] off.
 class PdfProgressCard extends StatelessWidget {
-  const PdfProgressCard({super.key, this.title = 'Preparing PDF…', this.message = ''});
+  const PdfProgressCard({super.key, this.title = 'Preparing PDF…', this.message = '', this.blocking = true});
 
   final String title;
   final String message;
+
+  /// Holds back navigation — right in a dialog, wrong inside a page, where the
+  /// user may leave while the document is still being made.
+  final bool blocking;
 
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
     return PopScope(
-      canPop: false,
+      canPop: !blocking,
       child: Center(
         child: Material(
           color: Colors.transparent,

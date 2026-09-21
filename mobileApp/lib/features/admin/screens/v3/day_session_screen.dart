@@ -13,7 +13,7 @@ import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
-import 'package:invo/features/admin/widgets/report_export_sheet.dart';
+import 'package:invo/features/admin/screens/v3/report_preview_screen.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';

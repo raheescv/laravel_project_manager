@@ -21,6 +21,7 @@ Future<Uint8List> buildDaySessionThermalPdf(
   PrintSettings settings, {
   DateTime? printedAt,
   String highlightUserId = '',
+  TransactionsLayout layout = TransactionsLayout.combined,
 }) async {
   final (regular, bold) = await loadBundledArabicFonts();
   final theme = regular == null
@@ -78,20 +79,9 @@ Future<Uint8List> buildDaySessionThermalPdf(
           _rule(),
           // ---- transactions ----
           _heading('SALE TRANSACTIONS', s),
-          _grid(
-            s,
-            head: const ['Type', 'Reference', 'Amount', 'Payment'],
-            flex: const [1.2, 1.5, 1.2, 1.2],
-            right: const {2, 3},
-            rows: [
-              for (final tx in report.transactions) ...[
-                _GridRow(['Invoice', _orNa(tx.referenceNo), _amt(tx.amount), '_']),
-                for (final pay in tx.payments)
-                  _GridRow([pay.method, _orNa(tx.referenceNo), '_', _amt(pay.amount)], firstRight: true),
-              ],
-            ],
-            empty: 'No transactions.',
-          ),
+          layout == TransactionsLayout.combined
+              ? _transactionsGrid(s, report.transactions)
+              : _transactionsGridDetailed(s, report.transactions),
           pw.SizedBox(height: s(6)),
           _heading('DUE AMOUNT DETAILS', s),
           _grid(
@@ -150,6 +140,12 @@ Future<Uint8List> buildDaySessionThermalPdf(
   );
   return doc.save();
 }
+
+/// How SALE TRANSACTIONS lays out a bill's payment method(s) against its
+/// invoice row, on the thermal roll — [combined] folds them into the same
+/// row, [detailed] gives each one a row of its own under the invoice, as the
+/// web print does.
+enum TransactionsLayout { combined, detailed }
 
 final _arabic = RegExp(r'[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]');
 
@@ -259,6 +255,81 @@ pw.Widget _grid(
     ],
   );
 }
+
+/// SALE TRANSACTIONS, one row per invoice — its payment method(s) sit in the
+/// same row's Payment cell rather than a row of their own, so a split payment
+/// costs a couple of extra lines in one cell instead of a whole extra row.
+pw.Widget _transactionsGrid(double Function(double) s, List<DaySessionTransaction> transactions) {
+  pw.Widget paymentCell(DaySessionTransaction tx) {
+    if (tx.payments.isEmpty) return _cell('_', s(7.5), right: true);
+    if (tx.payments.length == 1) {
+      final p = tx.payments.first;
+      return _cell('${p.method}  ${_amt(p.amount)}', s(7.5), right: true);
+    }
+    return pw.Container(
+      alignment: pw.Alignment.centerRight,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        children: [
+          for (final p in tx.payments) _text('${p.method}  ${_amt(p.amount)}', s(7), align: pw.TextAlign.right),
+        ],
+      ),
+    );
+  }
+
+  final table = pw.Table(
+    border: pw.TableBorder.all(width: 0.5, color: PdfColors.black),
+    columnWidths: const {0: pw.FlexColumnWidth(1.5), 1: pw.FlexColumnWidth(1.2), 2: pw.FlexColumnWidth(1.7)},
+    defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+    children: [
+      pw.TableRow(children: [
+        _cell('Reference', s(7.5)),
+        _cell('Amount', s(7.5), right: true),
+        _cell('Payment', s(7.5), right: true),
+      ]),
+      for (final tx in transactions)
+        pw.TableRow(children: [_cell(_orNa(tx.referenceNo), s(7.5)), _cell(_amt(tx.amount), s(7.5), right: true), paymentCell(tx)]),
+    ],
+  );
+  if (transactions.isNotEmpty) return table;
+  // pdf tables have no colspan: the "No …" row becomes a box hung under the
+  // header, sharing its bottom border — same trick as _grid's empty state.
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    children: [
+      table,
+      pw.Container(
+        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(
+            left: pw.BorderSide(width: 0.5),
+            right: pw.BorderSide(width: 0.5),
+            bottom: pw.BorderSide(width: 0.5),
+          ),
+        ),
+        child: _centred('No transactions.', s(7.5)),
+      ),
+    ],
+  );
+}
+
+/// SALE TRANSACTIONS, the web print's layout: an invoice row, then one row
+/// per payment method underneath it, repeating the reference.
+pw.Widget _transactionsGridDetailed(double Function(double) s, List<DaySessionTransaction> transactions) => _grid(
+      s,
+      head: const ['Type', 'Reference', 'Amount', 'Payment'],
+      flex: const [1.2, 1.5, 1.2, 1.2],
+      right: const {2, 3},
+      rows: [
+        for (final tx in transactions) ...[
+          _GridRow(['Invoice', _orNa(tx.referenceNo), _amt(tx.amount), '_']),
+          for (final pay in tx.payments)
+            _GridRow([pay.method, _orNa(tx.referenceNo), '_', _amt(pay.amount)], firstRight: true),
+        ],
+      ],
+      empty: 'No transactions.',
+    );
 
 String _day(String wallClock, DateTime fallback) =>
     DateFormat('dd-MM-yyyy').format(DateTime.tryParse(wallClock) ?? fallback);

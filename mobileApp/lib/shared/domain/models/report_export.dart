@@ -114,6 +114,8 @@ class ReportExport {
     this.overview,
     this.days = const [],
     this.daysComplete = true,
+    this.categories = const [],
+    this.categoryCount = 0,
     this.lines = const [],
     this.lineCount = 0,
     this.totalAmount = 0,
@@ -129,12 +131,21 @@ class ReportExport {
 
   // ---- overview ----
   final SalesOverview? overview;
+
+  /// Empty for a one-day range, where the table would only repeat the totals.
   final List<ReportExportDay> days;
 
   /// False when the range had more bills than an export walks. [days] is then
   /// empty — a capped walk holds only the newest bills, so its oldest day would
   /// print short rather than missing.
   final bool daysComplete;
+
+  /// Sales by category for the range, ranked by amount — only when the export
+  /// asked for it (the thermal summary).
+  final List<ReportExportLine> categories;
+
+  /// How many categories there are in full — more than [categories] when capped.
+  final int categoryCount;
 
   // ---- breakdowns ----
   /// Every line up to the export cap, in the server's rank order.

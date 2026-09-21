@@ -153,7 +153,13 @@ GoRouter createRouter(AuthCubit auth) {
           builder: (_, state) => TabletRailScaffold(
               activeTab: kStockCheckTab,
               child: StockCheckCountScreen(detail: state.extra as StockCheckDetail))),
-      GoRoute(path: Routes.linkStudentCard, builder: (_, __) => const LinkCardScreen()),
+      // On tablet Link Card is a shell destination (`/home?tab=9`); this route
+      // still serves phones and any deep link, and keeps the rail so the two
+      // look the same.
+      GoRoute(
+          path: Routes.linkStudentCard,
+          builder: (_, __) => const TabletRailScaffold(
+              activeTab: kLinkCardTab, child: LinkCardScreen())),
       GoRoute(
           path: Routes.saleReturn, builder: (_, __) => const NewSaleReturnScreen()),
       GoRoute(

@@ -24,6 +24,8 @@ class LocalStorageKeys {
   static const String tipEnabled = 'astra.tipEnabled';
   /// Whether the business runs the School module (student cards). From the web.
   static const String schoolEnabled = 'astra.schoolEnabled';
+  /// Link Student Card catalog rendering preference — 'grid' or 'list'.
+  static const String studentCardView = 'astra.studentCardView';
   static const String defaultProductType = 'astra.defaultProductType';
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';

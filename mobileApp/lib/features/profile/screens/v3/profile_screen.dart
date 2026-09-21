@@ -189,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TabletPanel(
               title: 'Access',
               child: _infoRow(context, Icons.verified_user_outlined, 'Permissions',
-                  user.isAdmin ? 'Administrator' : '${user.permissions.length} granted',
+                  '${user.permissions.length} granted',
                   muted: true, divider: false, onTap: _openPermissions),
             ),
           ],

@@ -226,57 +226,93 @@ List<pw.Widget> _overview(ReportExport d, _Tone tone, ReportPdfBrand b) {
   final pay = ov.payments;
   final methods = pay.methods;
   final avg = s.noOfSales > 0 ? s.netSales / s.noOfSales : 0.0;
+  // Figures that are zero print nothing, and a column that is zero all the way
+  // down is left off. With no returns a method's Sales is its Net, so the
+  // Sales/Returns split goes too.
+  final split = methods.any((m) => m.returns != 0);
+  final discCol = d.days.any((x) => x.discount != 0);
+  // Nor does a tile that only repeats another: with no discount gross is net
+  // (net stays — there is no headline box on A4), item total is covered by
+  // gross when they agree, a products (or services) tile by item total when
+  // every sale was one kind, and with no returns the method table's Total is
+  // the net payment.
+  final performance = [
+    if (!_same(s.grossSales, s.netSales)) _Kpi('Gross sales', Money.of(s.grossSales)),
+    if (s.discount != 0) _Kpi('Discounts', Money.of(s.discount)),
+    _Kpi('Net sales', Money.of(s.netSales), color: tone.accent),
+  ];
+  final items = [
+    if (!_same(s.totalItem, s.grossSales)) _Kpi('Item total', Money.of(s.totalItem)),
+    if (s.productSale != 0 && !_same(s.productSale, s.totalItem)) _Kpi('Products', Money.of(s.productSale)),
+    if (s.serviceSale != 0 && !_same(s.serviceSale, s.totalItem)) _Kpi('Services', Money.of(s.serviceSale)),
+  ];
+  final payLines = methods.isEmpty || !_same(pay.salesTotal, pay.netPayment);
 
   return [
     _section('Sales performance', tone),
-    _kpiGrid([
-      _Kpi('Gross sales', Money.of(s.grossSales)),
-      _Kpi('Discounts', Money.of(s.discount)),
-      _Kpi('Net sales', Money.of(s.netSales), color: tone.accent),
+    // A row per theme, its tiles sharing the full width, so a tile left off
+    // widens its neighbours instead of leaving a hole or pulling the next
+    // row's tiles up into it.
+    _kpiRow(performance, tone),
+    pw.SizedBox(height: 7),
+    _kpiRow([
       _Kpi('Invoices', '${s.noOfSales}'),
       _Kpi('Average ticket', s.noOfSales > 0 ? Money.of(avg) : '-'),
       _Kpi('Returns', '${s.noOfSalesReturns}'),
-      _Kpi('Item total', Money.of(s.totalItem)),
-      _Kpi('Products', Money.of(s.productSale)),
-      _Kpi('Services', Money.of(s.serviceSale)),
     ], tone),
-    pw.SizedBox(height: 12),
-    pw.Row(
-      children: [
-        pw.Expanded(child: _rate('Sales success rate', s.successRate, tone.accent)),
-        pw.SizedBox(width: 18),
-        pw.Expanded(child: _rate('Collection rate', s.collectionRate, _good)),
-      ],
-    ),
+    if (items.isNotEmpty) ...[
+      pw.SizedBox(height: 7),
+      _kpiRow(items, tone),
+    ],
+    // Printed only when they differ — two equal bars (both 100% on a day with
+    // no returns and nothing owed) add nothing. The server rounds both to one
+    // decimal, the precision they print at, so equal here means equal on paper.
+    if (s.successRate != s.collectionRate) ...[
+      pw.SizedBox(height: 12),
+      pw.Row(
+        children: [
+          pw.Expanded(child: _rate('Sales success rate', s.successRate, tone.accent)),
+          pw.SizedBox(width: 18),
+          pw.Expanded(child: _rate('Collection rate', s.collectionRate, _good)),
+        ],
+      ),
+    ],
     _section('Payments', tone),
-    _kpiGrid([
-      _Kpi('Sales payments', Money.of(pay.salesTotal),
-          caption: _count(pay.salesTransactions, 'transaction'), color: _good),
-      _Kpi('Returns payments', Money.of(pay.returnsTotal),
-          caption: _count(pay.returnsTransactions, 'return'), color: _warn),
-      _Kpi('Net payments', Money.of(pay.netPayment),
-          caption: _count(pay.totalTransactions, 'transaction'),
-          color: pay.netPayment < 0 ? _bad : tone.accent),
-    ], tone),
+    if (payLines)
+      _kpiRow([
+        _Kpi('Sales payments', Money.of(pay.salesTotal),
+            caption: _count(pay.salesTransactions, 'transaction'), color: _good),
+        if (pay.returnsTotal != 0)
+          _Kpi('Returns payments', Money.of(pay.returnsTotal),
+              caption: _count(pay.returnsTransactions, 'return'), color: _warn),
+        _Kpi('Net payments', Money.of(pay.netPayment),
+            caption: _count(pay.totalTransactions, 'transaction'),
+            color: pay.netPayment < 0 ? _bad : tone.accent),
+      ], tone),
     if (methods.isNotEmpty) ...[
-      pw.SizedBox(height: 9),
+      if (payLines) pw.SizedBox(height: 9),
       _table(
         tone,
         [
           const _Col('Method', 3),
           const _Col('Txns', 1.1, right: true),
-          _Col(_withCurrency('Sales'), 2, right: true),
-          _Col(_withCurrency('Returns'), 2, right: true),
+          if (split) ...[
+            _Col(_withCurrency('Sales'), 2, right: true),
+            _Col(_withCurrency('Returns'), 2, right: true),
+          ],
           _Col(_withCurrency('Net'), 2, right: true),
         ],
         [
-          for (final m in methods) [m.method, '${m.transactions}', _amt(m.sales), _amt(m.returns), _amt(m.net)],
+          for (final m in methods)
+            [m.method, '${m.transactions}', if (split) ...[_amt(m.sales), _amt(m.returns)], _amt(m.net)],
         ],
         total: [
           'Total',
           '${methods.fold<int>(0, (a, m) => a + m.transactions)}',
-          _amt(methods.fold<double>(0, (a, m) => a + m.sales)),
-          _amt(methods.fold<double>(0, (a, m) => a + m.returns)),
+          if (split) ...[
+            _amt(methods.fold<double>(0, (a, m) => a + m.sales)),
+            _amt(methods.fold<double>(0, (a, m) => a + m.returns)),
+          ],
           _amt(methods.fold<double>(0, (a, m) => a + m.net)),
         ],
       ),
@@ -289,18 +325,18 @@ List<pw.Widget> _overview(ReportExport d, _Tone tone, ReportPdfBrand b) {
           const _Col('Date', 3),
           const _Col('Invoices', 1.3, right: true),
           _Col(_withCurrency('Gross'), 2, right: true),
-          _Col(_withCurrency('Discount'), 2, right: true),
+          if (discCol) _Col(_withCurrency('Discount'), 2, right: true),
           _Col(_withCurrency('Paid'), 2, right: true),
         ],
         [
           for (final day in d.days)
-            [_day(day.date), '${day.invoices}', _amt(day.gross), _amt(day.discount), _amt(day.paid)],
+            [_day(day.date), '${day.invoices}', _amt(day.gross), if (discCol) _amt(day.discount), _amt(day.paid)],
         ],
         total: [
           'Total',
           '${d.days.fold<int>(0, (a, x) => a + x.invoices)}',
           _amt(d.days.fold<double>(0, (a, x) => a + x.gross)),
-          _amt(d.days.fold<double>(0, (a, x) => a + x.discount)),
+          if (discCol) _amt(d.days.fold<double>(0, (a, x) => a + x.discount)),
           _amt(d.days.fold<double>(0, (a, x) => a + x.paid)),
         ],
       ),
@@ -638,6 +674,9 @@ pw.Widget _kpiGrid(List<_Kpi> tiles, _Tone tone, {int columns = 3}) => pw.Column
       ],
     );
 
+/// One row of tiles sharing the full width.
+pw.Widget _kpiRow(List<_Kpi> tiles, _Tone tone) => _kpiGrid(tiles, tone, columns: tiles.length);
+
 pw.Widget _kpi(_Kpi k, _Tone tone) => pw.Container(
       padding: const pw.EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: pw.BoxDecoration(color: tone.tint, borderRadius: pw.BorderRadius.circular(5)),
@@ -765,6 +804,9 @@ String _withCurrency(String label) {
 }
 
 String _amt(double v) => Money.plain(v);
+
+/// Equal to the cent — the server rounds every amount to two places.
+bool _same(double a, double b) => (a - b).abs() < 0.005;
 
 String _share(double part, double whole) {
   if (whole == 0) return '-';

@@ -113,6 +113,10 @@ class FakeAdminRepository implements AdminRepository {
   int dashboardCalls = 0;
   int dayStatusCalls = 0;
 
+  /// The sort the last breakdown request carried, for the Reports tests.
+  String? lastSort;
+  String? lastDirection;
+
   /// What the server says the day is; a test moves the day underneath the
   /// app by swapping this.
   DayStatus dayStatusAnswer = DayStatus(
@@ -149,8 +153,13 @@ class FakeAdminRepository implements AdminRepository {
     int? page,
     int? perPage,
     String? sort,
+    String? direction,
     String? productType,
   }) async {
+    if (type != 'overview' && type != 'billwise') {
+      lastSort = sort;
+      lastDirection = direction;
+    }
     if (type == 'employeewise') {
       return {
         'rows': [

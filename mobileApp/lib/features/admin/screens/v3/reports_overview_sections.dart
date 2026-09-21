@@ -32,7 +32,7 @@ extension _OverviewSections on _ReportsScreenState {
             children: [
               _netSalesTile(s),
               const SizedBox(height: 8),
-              _figureTiles(s),
+              _figureTiles(s, ov.payments),
               const SizedBox(height: 12),
               _countStrip(s),
               _methodsSection(ov.payments.methods),
@@ -43,15 +43,30 @@ extension _OverviewSections on _ReportsScreenState {
     );
   }
 
-  /// The wide brand tile: Net sales, with Gross and Discount beside it.
+  /// The wide brand tile: Net sales as the one headline, with the three
+  /// figures that explain it — Gross, Discount and Avg ticket — on a line
+  /// underneath, so none of them needs a tile of its own.
   Widget _netSalesTile(OverviewSummary s) {
     final p = context.astra;
-    Widget aside(String label, double value) => Text.rich(
-          TextSpan(children: [
-            TextSpan(text: '$label  '),
-            TextSpan(text: Money.plain(value), style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
-          ]),
-          style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.78)),
+    final avg = s.noOfSales > 0 ? s.netSales / s.noOfSales : 0.0;
+    Widget aside(String label, String value) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(
+                      size: 10,
+                      weight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.78))),
+              const SizedBox(height: 2),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(size: 12.5, weight: FontWeight.w800, color: Colors.white)),
+            ],
+          ),
         );
 
     return Container(
@@ -62,26 +77,18 @@ extension _OverviewSections on _ReportsScreenState {
         borderRadius: BorderRadius.circular(15),
         boxShadow: context.astraTheme.floatShadow(p.primary),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _tileLabel('Net sales', Icons.account_balance_wallet_rounded, Colors.white, onBrand: true),
-                const SizedBox(height: 8),
-                _amount(s.netSales, size: 26, color: Colors.white),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          _tileLabel('Net sales', Icons.account_balance_wallet_rounded, Colors.white, onBrand: true),
+          const SizedBox(height: 8),
+          _amount(s.netSales, size: 26, color: Colors.white),
+          const SizedBox(height: 11),
+          Row(
             children: [
-              aside('Gross', s.grossSales),
-              const SizedBox(height: 3),
-              aside('Discount', s.discount),
+              aside('Gross', Money.plain(s.grossSales)),
+              aside('Discount', '− ${Money.plain(s.discount)}'),
+              aside('Avg ticket', Money.plain(avg)),
             ],
           ),
         ],
@@ -93,16 +100,15 @@ extension _OverviewSections on _ReportsScreenState {
   /// once the card is wide enough to keep each one readable. Plain rows rather
   /// than a GridView: a grid picks up the screen's safe-area padding and opened
   /// big gaps above and below the tiles.
-  Widget _figureTiles(OverviewSummary s) {
+  Widget _figureTiles(OverviewSummary s, OverviewPayments pay) {
     final p = context.astra;
-    final avg = s.noOfSales > 0 ? s.netSales / s.noOfSales : 0.0;
     final tiles = [
-      _figureTile('Gross sales', s.grossSales, Icons.payments_rounded, p.primary),
-      _figureTile('Discounts', s.discount, Icons.sell_rounded, _ReportsScreenState._warn),
-      _figureTile('Item total', s.totalItem, Icons.inventory_2_rounded, const Color(0xFF64748B)),
       _figureTile('Products', s.productSale, Icons.shopping_cart_rounded, const Color(0xFF0891B2)),
       _figureTile('Services', s.serviceSale, Icons.star_rounded, const Color(0xFF7C3AED)),
-      _figureTile('Avg ticket', avg, Icons.confirmation_number_rounded, _ReportsScreenState._good),
+      _figureTile('Item total', s.totalItem, Icons.inventory_2_rounded, const Color(0xFF64748B)),
+      _figureTile('Collected', pay.netPayment, Icons.payments_rounded, p.primary),
+      _figureTile('Credit', pay.credit, Icons.account_balance_wallet_rounded, _ReportsScreenState._warn),
+      _figureTile('Returns', pay.returnsTotal, Icons.assignment_return_rounded, _ReportsScreenState._bad),
     ];
 
     return LayoutBuilder(

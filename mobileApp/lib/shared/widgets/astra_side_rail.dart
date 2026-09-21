@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
@@ -30,13 +32,18 @@ const int kProfileTab = 7;
 /// from Settings, so it swaps in place rather than sliding over the shell.
 const int kPermissionsTab = 8;
 
+/// Link Student Card — a real shell destination too, for the same reason as
+/// Returns / Stock Check / Day Session: a rail item that pushed a route instead
+/// slid in as a full page while every other item swapped instantly in place,
+/// which read as leaving the app rather than switching a section of it.
+const int kLinkCardTab = 9;
+
 /// The rail's destinations, in display order.
 ///
-/// On a tablet, Returns / Stock Check / Day Session are real shell destinations
-/// rather than routes. That matters: every rail item has to switch the same way
-/// — an instant [IndexedStack] swap — or the routed ones slide in as pages while
-/// the tab ones don't, and the rail feels inconsistent. Each is gated on the
-/// same permission as its route.
+/// Every item is a real shell destination ([tab]) rather than a route, an
+/// instant [IndexedStack] swap. A routed item would slide in as a page while
+/// the others don't, and the rail would feel inconsistent. Each is gated on
+/// the same permission as its route.
 List<({IconData icon, String label, int tab})> railDestinations(BuildContext context) {
   final auth = context.read<AuthCubit>();
   ({IconData icon, String label, int tab}) tab(int i) =>
@@ -51,6 +58,9 @@ List<({IconData icon, String label, int tab})> railDestinations(BuildContext con
     tab(2),
     if (auth.hasPermission(PermissionSlug.daySession))
       (icon: Icons.schedule, label: 'Day Session', tab: kDaySessionTab),
+    if (serviceLocator<LocalStorageService>().schoolEnabled &&
+        auth.hasPermission(PermissionSlug.studentCardAssign))
+      (icon: Icons.nfc, label: 'Link Card', tab: kLinkCardTab),
     tab(3),
   ];
 }

@@ -12,6 +12,7 @@ abstract class AdminRepository {
     int? page,
     int? perPage,
     String? sort,
+    String? direction,
     String? productType,
   });
 

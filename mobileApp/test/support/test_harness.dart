@@ -21,6 +21,7 @@ import 'package:invo/features/stock_check/domain/repository/stock_check_reposito
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -103,6 +104,11 @@ class TestHarness {
       branchId: '3',
       daySessionStatus: 'open',
       daySessionDate: '2026-06-14',
+      // `is_admin` grants nothing by itself (see ApiUser.hasPermission) — the
+      // server checks the same way, so a harness "admin" needs every slug the
+      // app gates on, same as a real Admin role, or every permission-guarded
+      // screen and nav item would render as if signed in with none.
+      permissions: admin ? mobilePermissions.map((m) => m.slug).toList() : const [],
     ));
     // DaySessionCubit resolves AuthCubit from the locator.
     serviceLocator.registerSingleton<AuthCubit>(authCubit);

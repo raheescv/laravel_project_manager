@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
@@ -10,11 +11,12 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
-import 'package:invo/features/admin/widgets/report_export_sheet.dart';
+import 'package:invo/features/admin/screens/v3/report_preview_screen.dart';
+import 'package:invo/features/admin/widgets/report_sort_sheet.dart';
+import 'package:invo/features/admin/widgets/report_picker_sheet.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
-import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/shared/widgets/you_badge.dart';
 
 part 'reports_overview_sections.dart';
@@ -101,7 +103,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: canView
                 ? Column(
                     children: [
-                      _reportsPageHead(admin),
+                      _commandBar(admin),
                       Expanded(child: MaxWidthBox(maxWidth: 1120, child: _tabletReports(admin))),
                     ],
                   )
@@ -119,7 +121,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               title: 'Reports',
               subtitle: 'Every angle on your sales',
               trailing: canView
-                  ? HeaderIconButton(icon: Icons.download, gold: true, onTap: () => unawaited(_openExport()))
+                  ? HeaderIconButton(icon: Icons.print_outlined, gold: true, onTap: () => unawaited(_openExport()))
                   : null,
             ),
             Expanded(
@@ -167,58 +169,84 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  /// Sections of the currently selected report (the date range is rendered
-  /// separately, above the switcher's output, since both reports share it).
-  List<Widget?> _tabSections(AdminCubit admin) => _tab == 0
-      ? [_salesPerformance(admin), _paymentOverview(admin), _byDay(admin)]
-      : [_breakdownCard(admin)];
+  /// Sections of the Overview report (the date range is rendered separately,
+  /// above them, since both reports share it). The Breakdown report is one
+  /// card that fills the page, so it is laid out by [build] instead.
+  List<Widget?> _tabSections(AdminCubit admin) =>
+      [_salesPerformance(admin), _paymentOverview(admin), _byDay(admin)];
+
+  /// A recessed fill for controls sunk into the command bar — neutral so it
+  /// reads the same on every preset, light or dark. Same value as Link Card's.
+  Color get _softFill {
+    final p = context.astra;
+    return p.isDark ? Colors.white.withValues(alpha: 0.07) : Colors.black.withValues(alpha: 0.045);
+  }
 
   /// Report switcher — picks which of the two reports the page shows.
-  Widget _reportTabs() {
+  ///
+  /// [quiet] draws it the way the command bar draws its presets: a segmented
+  /// cluster sunk into a recessed track, sized to its labels, rather than a
+  /// full-width gradient bar. Used on tablet, where it sits directly under the
+  /// command bar and shouldn't compete with it.
+  Widget _reportTabs({bool quiet = false}) {
     final p = context.astra;
     Widget tab(String label, int index, IconData icon) {
       final active = _tab == index;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => _setTab(index),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: active ? p.primaryGradient : null,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 15, color: active ? Colors.white : p.textSecondary),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12.5, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
+      final seg = GestureDetector(
+        onTap: () {
+          if (_tab == index) return;
+          HapticFeedback.selectionClick();
+          _setTab(index);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(vertical: quiet ? 7 : 10, horizontal: quiet ? 14 : 0),
+          alignment: Alignment.center,
+          decoration: quiet
+              ? _thumb(active)
+              : BoxDecoration(
+                  gradient: active ? p.primaryGradient : null,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
                 ),
-              ],
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: quiet ? 14 : 15,
+                  color: quiet ? (active ? p.primary : p.textMuted) : (active ? Colors.white : p.textSecondary)),
+              SizedBox(width: quiet ? 6 : 7),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(
+                        size: quiet ? 11.5 : 12.5,
+                        weight: active ? FontWeight.w800 : (quiet ? FontWeight.w600 : FontWeight.w800),
+                        color: quiet
+                            ? (active ? p.primary : p.textSecondary)
+                            : (active ? Colors.white : p.textSecondary))),
+              ),
+            ],
           ),
         ),
       );
+      return quiet ? seg : Expanded(child: seg);
     }
 
+    final tabs = [tab('Overview', 0, Icons.insights_rounded), tab('Breakdown', 1, Icons.leaderboard_rounded)];
+    if (quiet) return _sunkGroup(children: tabs);
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(15)),
-      child: Row(children: [
-        tab('Overview', 0, Icons.insights_rounded),
-        tab('Breakdown', 1, Icons.leaderboard_rounded),
-      ]),
+      child: Row(children: tabs),
     );
   }
 
-  /// The one Export sheet, opened on the report that is on screen.
-  Future<void> _openExport() => showReportExport(context, initial: _reportOnScreen);
+  /// The report list, the one on screen ticked; a report opens its preview.
+  Future<void> _openExport() => showReportPicker(context, current: _reportOnScreen);
 
   ExportReport get _reportOnScreen {
     if (_tab == 0) return ExportReport.overview;
@@ -227,21 +255,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'categorywise' => ExportReport.categories,
       _ => ExportReport.staff,
     };
-  }
-
-  /// Toolbar button on tablets; phones use the header's download button.
-  Widget _exportButton({double size = 40, double radius = 12, double iconSize = 18}) {
-    final p = context.astra;
-    return GestureDetector(
-      onTap: () => unawaited(_openExport()),
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(radius)),
-        child: Icon(Icons.download_rounded, size: iconSize, color: p.primary),
-      ),
-    );
   }
 
   Widget _restricted() => const Center(
@@ -256,35 +269,190 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
       );
 
-  /// Tablet page head — the title plus the whole range control in one toolbar
-  /// row, replacing both the header band and the phone's stacked filter card.
-  Widget _reportsPageHead(AdminCubit admin) {
+  /// Tablet command bar — the title, the range it is showing, and the whole
+  /// range control on one flat bar closed by a hairline (the same chrome as
+  /// Link Card): every control is sunk into a recessed group instead of
+  /// floating as its own tinted pill, so the reports below start the page.
+  ///
+  /// The title side is [Expanded], not [Flexible], on purpose: the range line
+  /// changes length as presets are picked ("Today" vs "1 – 23 Sep 2026"), and a
+  /// loose fit would let that reflow the whole bar under the pointer. A tight
+  /// flex fixes both halves, so tapping a preset never moves the controls.
+  Widget _commandBar(AdminCubit admin) {
     final p = context.astra;
-    final custom = admin.rangePreset == 'custom';
-    const presets = [('Today', 'today'), ('7 Days', '7d'), ('30 Days', '30d'), ('Month', 'month')];
-    return TabletPageHead(
-      title: 'Reports',
-      subtitle: Dates.range(admin.startDate, admin.endDate),
-      actions: [
-        for (final (label, id) in presets)
-          TabletFilterChip(label: label, active: admin.rangePreset == id, onTap: () => admin.setPreset(id)),
-        GestureDetector(
-          onTap: () => _pickCustom(admin),
-          child: Container(
-            width: 34,
-            height: 34,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: custom ? p.accentGradient : null,
-              color: custom ? null : p.tint,
-              borderRadius: BorderRadius.circular(11),
+    return Container(
+      decoration: BoxDecoration(
+        color: p.cardSolid,
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 13),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Reports', maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 20, color: p.ink)),
+                const SizedBox(height: 5),
+                _rangeChip(admin),
+              ],
             ),
-            child: Icon(Icons.edit_calendar, size: 17, color: custom ? p.primaryDark : p.primary),
           ),
-        ),
-        _refreshButton(admin, size: 34, radius: 11, iconSize: 17),
-        _exportButton(size: 34, radius: 11, iconSize: 17),
+          const SizedBox(width: 20),
+          // Wrap, not Row: on a narrow tablet the two groups drop to a second
+          // line instead of overflowing the bar.
+          Expanded(
+            flex: 7,
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 10,
+              runSpacing: 8,
+              children: [_presetSegmented(admin), _barActions(admin)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The range being reported on, as a tinted chip under the title — the one
+  /// piece of live data in the bar, so it reads as data rather than a caption.
+  Widget _rangeChip(AdminCubit admin) {
+    final p = context.astra;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 4, 10, 4),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.event_rounded, size: 12.5, color: p.primary),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(Dates.range(admin.startDate, admin.endDate),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: 11, weight: FontWeight.w700, color: p.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The recessed shell both control groups share — a sunk track with a
+  /// hairline edge, so each group reads as one machined control rather than a
+  /// row of loose buttons.
+  Widget _sunkGroup({required List<Widget> children, bool expand = false}) {
+    final p = context.astra;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _softFill,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: p.hairline),
+      ),
+      child: Row(
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+        children: expand ? [for (final c in children) Expanded(child: c)] : children,
+      ),
+    );
+  }
+
+  /// The raised thumb that marks the live segment in a sunk group.
+  BoxDecoration _thumb(bool active, {double radius = 10}) {
+    final p = context.astra;
+    return BoxDecoration(
+      color: active ? p.cardSolid : Colors.transparent,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: active ? p.hairline : Colors.transparent),
+      boxShadow: active ? context.astraTheme.softShadow : null,
+    );
+  }
+
+  /// Today / 7 Days / 30 Days / Month as one segmented cluster — the quiet
+  /// sibling of the phone's gradient preset chips.
+  Widget _presetSegmented(AdminCubit admin) {
+    const presets = [('Today', 'today'), ('7 Days', '7d'), ('30 Days', '30d'), ('Month', 'month')];
+    return _sunkGroup(
+      children: [for (final (label, id) in presets) _presetSegment(admin, label, id)],
+    );
+  }
+
+  Widget _presetSegment(AdminCubit admin, String label, String id) {
+    final p = context.astra;
+    final active = admin.rangePreset == id;
+    return GestureDetector(
+      onTap: () {
+        if (active) return;
+        HapticFeedback.selectionClick();
+        admin.setPreset(id);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 13),
+        alignment: Alignment.center,
+        decoration: _thumb(active),
+        child: Text(label,
+            maxLines: 1,
+            style: ui(
+              size: 11.5,
+              weight: active ? FontWeight.w800 : FontWeight.w600,
+              color: active ? p.primary : p.textSecondary,
+            )),
+      ),
+    );
+  }
+
+  /// Custom range, refresh and print — a second sunk group beside the presets,
+  /// so the bar carries two machined controls rather than five loose squares.
+  Widget _barActions(AdminCubit admin) {
+    final busy = admin.reportLoading || admin.overviewLoading;
+    return _sunkGroup(
+      children: [
+        _barAction(Icons.date_range_rounded, 'Custom range',
+            () => _pickCustom(admin), active: admin.rangePreset == 'custom'),
+        _barAction(Icons.refresh_rounded, 'Refresh',
+            busy ? null : () => unawaited(admin.refreshReports()), busy: busy),
+        _barAction(Icons.print_rounded, 'Print or export', () => unawaited(_openExport())),
       ],
+    );
+  }
+
+  Widget _barAction(IconData icon, String tooltip, VoidCallback? onTap, {bool active = false, bool busy = false}) {
+    final p = context.astra;
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 500),
+      child: GestureDetector(
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          width: 36,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: active
+              ? BoxDecoration(
+                  gradient: p.primaryGradient,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: context.astraTheme.floatShadow(p.primary),
+                )
+              : _thumb(false),
+          child: busy
+              ? SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2.2, color: p.primary))
+              : Icon(icon, size: 16.5, color: active ? Colors.white : p.textSecondary),
+        ),
+      ),
     );
   }
 
@@ -310,8 +478,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _reportTabs(),
+            _reportTabs(quiet: true),
             const SizedBox(height: 14),
             Expanded(child: _breakdownCard(admin)),
           ],
@@ -323,7 +492,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
       controller: _scrollCtl,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       children: [
-        Padding(padding: const EdgeInsets.only(bottom: 14), child: _reportTabs()),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Align(alignment: Alignment.centerLeft, child: _reportTabs(quiet: true)),
+        ),
         LayoutBuilder(
           builder: (ctx, c) {
             if (c.maxWidth < 820) return col([...left, ...right]);
@@ -429,7 +601,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
   /// range on screen from the API, bypassing the cubit's cached breakdowns.
   /// Spins while either request is in flight and ignores taps until it settles,
   /// so a double tap can't stack requests.
-  Widget _refreshButton(AdminCubit admin, {double size = 40, double radius = 12, double iconSize = 18}) {
+  Widget _refreshButton(AdminCubit admin) {
+    const size = 40.0, radius = 12.0, iconSize = 18.0;
     final p = context.astra;
     final busy = admin.reportLoading || admin.overviewLoading;
     return GestureDetector(
@@ -584,194 +757,313 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return d == null ? '' : Dates.weekday(d);
   }
 
-  // ---- By Item / By Category / By Staff breakdown (toggle + metric + table) --
+  // ---- By Item / By Category / By Staff breakdown (toolbar + ledger) --------
 
-  /// One card: the By Item / By Category / By Staff segmented control, the
-  /// Amount/Qty and Type rows (items and categories), then the ranked,
-  /// paginated table — was three stacked blocks, now a single cohesive card.
+  /// Column widths the ledger head and its rows share, so the numbers line up
+  /// down the page. Phone drops Qty and Bills (see [_ledgerRow]).
+  static const double _colRank = 28;
+  static const double _colGap = 16;
+
+  /// Between the rank and the name — tighter than a column gutter, because the
+  /// numeral belongs to the row it labels.
+  static const double _rankGap = 12;
+  static const double _colQty = 62;
+  static const double _colBills = 58;
+  static const double _colShare = 122;
+  static const double _colAmount = 128;
+
+  /// The Breakdown report: one quiet toolbar (which breakdown, item type, and
+  /// the sort — which opens the filter sheet), the filters in force as chips,
+  /// then the ranked ledger table closed by a grand-total bar.
   Widget _breakdownCard(AdminCubit admin) {
-    return AstraCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _breakdownToolbar(admin),
+        _appliedChips(admin),
+        const SizedBox(height: 10),
+        // The rows are the only unbounded part of the card, so they get the
+        // remaining height and scroll inside it — built lazily as they come
+        // into view. Keeping the card a plain box (rather than slivers) means
+        // it still renders identically under all five skins, including Glass,
+        // whose BackdropFilter has no sliver equivalent.
+        Expanded(
+          child: AstraCard(
+            padding: EdgeInsets.zero,
+            // The head and total bars are full-bleed fills, so they are
+            // clipped to the card's radius — otherwise their square corners
+            // sit proud of it.
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(context.astraTheme.rCard),
+              child: _breakdownBody(admin),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Which breakdown · which item type · the sort. One line on tablet; two on
+  /// phone, where the breakdown segments take the full width.
+  Widget _breakdownToolbar(AdminCubit admin) {
+    final wide = context.isTablet;
+    final segments = _sunkGroup(expand: !wide, children: [
+      _breakdownSegment(admin, 'By Item', 'itemwise', Icons.inventory_2_rounded, compact: !wide),
+      _breakdownSegment(admin, 'By Category', 'categorywise', Icons.category_rounded, compact: !wide),
+      _breakdownSegment(admin, 'By Staff', 'employeewise', Icons.people_alt_rounded, compact: !wide),
+    ]);
+    final type = AdminCubit.ranksProducts(admin.reportType) ? _typeGroup(admin, expand: !wide) : null;
+
+    if (wide) {
+      // A big screen needs no filter button: the column heads sort, the type
+      // sits here, and the command bar holds the range.
+      return Row(
         children: [
-          _segmentToggle(admin),
-          if (AdminCubit.ranksProducts(admin.reportType)) ...[
-            const SizedBox(height: 10),
-            _itemMetricRow(admin),
-            const SizedBox(height: 10),
-            _itemTypeRow(admin),
+          // The segments keep their natural width and scroll sideways on a
+          // narrow tablet rather than squeezing their labels to nothing.
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: segments,
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (type != null) type,
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        segments,
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            if (type != null) ...[Expanded(child: type), const SizedBox(width: 8)],
+            _sortButton(admin),
           ],
-          const SizedBox(height: 14),
-          // The rows are the only unbounded part of this card, so they get the
-          // remaining height and scroll inside it — built lazily, unlike the
-          // old `for (final r in rows)` which laid out every loaded page on
-          // every rebuild. Keeping the card a plain box (rather than slivers)
-          // means it still renders identically under all five skins, including
-          // Glass, whose BackdropFilter has no sliver equivalent.
-          Expanded(child: _breakdownBody(admin)),
+        ),
+      ],
+    );
+  }
+
+  Widget _breakdownSegment(AdminCubit admin, String label, String type, IconData icon,
+      {bool compact = false}) {
+    final p = context.astra;
+    final active = admin.reportType == type;
+    return GestureDetector(
+      onTap: () {
+        if (admin.reportType == type) return;
+        HapticFeedback.selectionClick();
+        admin.setReportType(type);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.symmetric(vertical: 7, horizontal: compact ? 6 : 14),
+        alignment: Alignment.center,
+        decoration: _thumb(active),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(
+                      size: 11.5,
+                      weight: active ? FontWeight.w800 : FontWeight.w600,
+                      color: active ? p.primary : p.textSecondary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// All / Product / Service — the item and category reports' type filter,
+  /// mirroring the web report's `product_type`.
+  Widget _typeGroup(AdminCubit admin, {bool expand = false}) {
+    final p = context.astra;
+    Widget seg(String label, String? id) {
+      final active = admin.itemProductType == id;
+      return GestureDetector(
+        onTap: () {
+          if (active) return;
+          HapticFeedback.selectionClick();
+          admin.setItemProductType(id);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 12),
+          alignment: Alignment.center,
+          decoration: _thumb(active),
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(
+                  size: 11.5,
+                  weight: active ? FontWeight.w800 : FontWeight.w600,
+                  color: active ? p.primary : p.textSecondary)),
+        ),
+      );
+    }
+
+    return _sunkGroup(
+      expand: expand,
+      children: [seg('All', null), seg('Product', 'product'), seg('Service', 'service')],
+    );
+  }
+
+  /// The phone's way into the sort sheet, carrying the sort it is on.
+  Widget _sortButton(AdminCubit admin) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        unawaited(showReportSort(context));
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        decoration: BoxDecoration(
+          color: p.cardSolid,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: p.hairline),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.swap_vert_rounded, size: 14, color: p.textSecondary),
+            const SizedBox(width: 7),
+            Text('Sort · ', style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary)),
+            Text(sortChipLabel(admin.sortKey, admin.reportType),
+                style: ui(size: 11.5, weight: FontWeight.w800, color: p.ink)),
+            const SizedBox(width: 3),
+            Icon(admin.sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                size: 13, color: p.primary),
+            if (_filtersOn(admin)) ...[
+              const SizedBox(width: 8),
+              Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(color: p.primary, shape: BoxShape.circle)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Whether anything is set away from the report's defaults — today, ranked
+  /// by amount, every item type.
+  bool _filtersOn(AdminCubit admin) =>
+      admin.rangePreset != 'today' ||
+      admin.sortKey != 'amount' ||
+      admin.sortAscending ||
+      admin.itemProductType != null;
+
+  /// What the list is filtered to, as chips you can take off one at a time —
+  /// so the figures below are never a mystery.
+  Widget _appliedChips(AdminCubit admin) {
+    if (!_filtersOn(admin)) return const SizedBox.shrink();
+    final sorted = admin.sortKey != 'amount' || admin.sortAscending;
+    return Padding(
+      padding: const EdgeInsets.only(top: 9),
+      child: Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: [
+          if (admin.rangePreset != 'today')
+            _filterChip(Dates.range(admin.startDate, admin.endDate), () => admin.setPreset('today')),
+          if (sorted)
+            _filterChip(
+                '${sortChipLabel(admin.sortKey, admin.reportType)} · '
+                '${sortDirectionLabel(admin.sortKey, admin.sortAscending)}',
+                () => admin.setSort('amount', ascending: false)),
+          if (admin.itemProductType != null)
+            _filterChip(admin.itemProductType == 'product' ? 'Products only' : 'Services only',
+                () => admin.setItemProductType(null)),
+          _resetChip(admin),
         ],
       ),
     );
   }
 
-  Widget _segmentToggle(AdminCubit admin) {
+  Widget _filterChip(String label, VoidCallback onClear) {
     final p = context.astra;
-    Widget seg(String label, String type, IconData icon) {
-      final active = admin.reportType == type;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => admin.setReportType(type),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: active ? p.primaryGradient : null,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 14, color: active ? Colors.white : p.textSecondary),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Text(label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
-                ),
-              ],
-            ),
-          ),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onClear();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 5, 7, 5),
+        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(11)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: ui(size: 10.5, weight: FontWeight.w800, color: p.primary)),
+            const SizedBox(width: 5),
+            Icon(Icons.close_rounded, size: 12, color: p.primary.withValues(alpha: 0.7)),
+          ],
         ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(13)),
-      child: Row(children: [
-        seg('By Item', 'itemwise', Icons.inventory_2_rounded),
-        seg('By Category', 'categorywise', Icons.category_rounded),
-        seg('By Staff', 'employeewise', Icons.people_alt_rounded),
-      ]),
+      ),
     );
   }
 
-  Widget _itemMetricRow(AdminCubit admin) {
+  Widget _resetChip(AdminCubit admin) {
     final p = context.astra;
-    Widget chip(String label, String id, IconData icon) {
-      final active = admin.itemMetric == id;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => admin.setItemMetric(id),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: active ? p.accentGradient : null,
-              color: active ? null : p.tint,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 13, color: active ? p.primaryDark : p.textSecondary),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: ui(size: 11, weight: FontWeight.w800, color: active ? p.primaryDark : p.textSecondary)),
-              ],
-            ),
-          ),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        admin.resetReportFilters();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: _softFill,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: p.hairline),
         ),
-      );
-    }
-
-    return Row(
-      children: [
-        Text('RANK BY',
-            style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-        const SizedBox(width: 10),
-        chip('Amount', 'amount', Icons.payments_rounded),
-        const SizedBox(width: 7),
-        chip('Qty', 'qty', Icons.numbers_rounded),
-      ],
+        child: Text('Reset', style: ui(size: 10.5, weight: FontWeight.w700, color: p.textSecondary)),
+      ),
     );
   }
 
-  /// Item and category type filter: All / Product / Service. Passing null to
-  /// the controller clears the filter (the server returns every type). Mirrors
-  /// the web report's `product_type` filter.
-  Widget _itemTypeRow(AdminCubit admin) {
-    final p = context.astra;
-    Widget chip(String label, String? id, IconData icon) {
-      final active = admin.itemProductType == id;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => admin.setItemProductType(id),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: active ? p.primaryGradient : null,
-              color: active ? null : p.tint,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 13, color: active ? Colors.white : p.textSecondary),
-                const SizedBox(width: 6),
-                Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 11, weight: FontWeight.w800, color: active ? Colors.white : p.textSecondary)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        Text('TYPE',
-            style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-        const SizedBox(width: 10),
-        chip('All', null, Icons.apps_rounded),
-        const SizedBox(width: 7),
-        chip('Product', 'product', Icons.inventory_2_rounded),
-        const SizedBox(width: 7),
-        chip('Service', 'service', Icons.design_services_rounded),
-      ],
-    );
-  }
-
-  /// Ranked breakdown body (share-of-total bars + top highlight). Lives inside
-  /// the breakdown card so the toggle stays visible across loading/empty states.
+  /// The ranked ledger: a column head, the rows, and the grand-total bar.
+  /// Lives inside the breakdown card so the toolbar stays put across the
+  /// loading, error and empty states.
   Widget _breakdownBody(AdminCubit admin) {
-    final p = context.astra;
     if (admin.reportLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (admin.reportError != null) {
       return Center(
-        child: EmptyState(
-            icon: Icons.wifi_off, title: 'Report unavailable', message: admin.reportError),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: EmptyState(
+              icon: Icons.wifi_off, title: 'Report unavailable', message: admin.reportError),
+        ),
       );
     }
     if (admin.reportRows.isEmpty) {
       return const Center(
-        child: EmptyState(icon: Icons.bar_chart, title: 'No data for this period'),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: EmptyState(icon: Icons.bar_chart, title: 'No data for this period'),
+        ),
       );
     }
 
-    final (heading, noun, rowIcon) = switch (admin.reportType) {
-      'itemwise' => ('Item breakdown', 'items', Icons.inventory_2_rounded),
-      'categorywise' => ('Category breakdown', admin.reportRowCount == 1 ? 'category' : 'categories', Icons.category_rounded),
-      _ => ('Staff breakdown', 'staff', Icons.person_rounded),
-    };
     final isStaff = !AdminCubit.ranksProducts(admin.reportType);
     final maxAmount = admin.reportRows.fold<double>(0, (a, r) => r.amount > a ? r.amount : a);
     // One trailing slot for the load-more footer while further pages remain.
@@ -783,51 +1075,335 @@ class _ReportsScreenState extends State<ReportsScreen> {
     bool isMe(ReportRow r) => isStaff && meId.isNotEmpty && r.id == meId;
     final myIndex = isStaff ? admin.reportRows.indexWhere(isMe) : -1;
 
-    return Column(
+    return LayoutBuilder(
+      builder: (context, box) {
+        // Below this the Qty and Bills columns would squeeze the name to a few
+        // characters, so the phone layout carries them in the row's caption.
+        final wide = box.maxWidth >= 560;
+        return Column(
+          children: [
+            _ledgerHead(admin, wide: wide, isStaff: isStaff),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollCtl,
+                padding: EdgeInsets.zero,
+                itemCount: admin.reportRows.length + extra,
+                itemBuilder: (_, i) {
+                  // Infinite-scroll footer: a spinner while the next page
+                  // streams in, plus a tap-to-load fallback in case the scroll
+                  // trigger is missed. New pages arrive via [_onScroll].
+                  if (i == admin.reportRows.length) return _loadMoreFooter(admin);
+                  final r = admin.reportRows[i];
+                  return _ledgerRow(admin, r, i, maxAmount,
+                      wide: wide, isMe: isMe(r));
+                },
+              ),
+            ),
+            _ledgerFoot(admin, wide: wide, isStaff: isStaff, myIndex: myIndex),
+          ],
+        );
+      },
+    );
+  }
+
+  /// The column head. On a big screen every label is also its sort: tap one to
+  /// rank the list by that column, tap the live one to flip the direction. The
+  /// live column is tinted and carries the arrow. A phone head is labels only —
+  /// its columns are too narrow to aim at, so the filter sheet does the sorting.
+  Widget _ledgerHead(AdminCubit admin, {required bool wide, required bool isStaff}) {
+    final p = context.astra;
+    final noun = switch (admin.reportType) {
+      'itemwise' => 'Item',
+      'categorywise' => 'Category',
+      _ => 'Staff',
+    };
+
+    Widget cell(String label, String sortKey, {double? width, bool right = false}) {
+      final active = admin.sortKey == sortKey;
+      final text = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (active) ...[
+            Icon(admin.sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                size: 11, color: p.primary),
+            const SizedBox(width: 3),
+          ],
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(
+                    size: 9.5,
+                    weight: FontWeight.w800,
+                    color: active ? p.primary : p.textMuted,
+                    letterSpacing: 0.9)),
+          ),
+        ],
+      );
+      final cellChild = Align(
+        alignment: right ? Alignment.centerRight : Alignment.centerLeft,
+        child: text,
+      );
+      final sized = width == null ? cellChild : SizedBox(width: width, child: cellChild);
+      if (!wide) return sized;
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          admin.setSort(sortKey);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: sized,
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, 11, wide ? 18 : 13, 11),
+      decoration: BoxDecoration(
+        color: _softFill,
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: wide ? _colRank : 26,
+            child: Text('#',
+                style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.9)),
+          ),
+          const SizedBox(width: _rankGap),
+          Expanded(child: cell(noun.toUpperCase(), 'name')),
+          if (wide) ...[
+            const SizedBox(width: _colGap),
+            cell(isStaff ? 'ITEMS' : 'QTY', 'quantity', width: _colQty, right: true),
+            const SizedBox(width: _colGap),
+            cell('BILLS', 'bills', width: _colBills, right: true),
+            const SizedBox(width: _colGap),
+            SizedBox(
+              width: _colShare,
+              child: Text('SHARE',
+                  style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.9)),
+            ),
+          ],
+          const SizedBox(width: _colGap),
+          cell(isStaff ? 'REVENUE' : 'AMOUNT', 'amount',
+              width: wide ? _colAmount : 96, right: true),
+        ],
+      ),
+    );
+  }
+
+  /// One ledger line. [isMe] marks the signed-in person's own staff row with a
+  /// primary tint and a YOU badge; rank 1 carries a small gold numeral rather
+  /// than a card of its own.
+  Widget _ledgerRow(AdminCubit admin, ReportRow r, int index, double maxAmount,
+      {required bool wide, bool isMe = false}) {
+    final p = context.astra;
+    final frac = admin.reportTotal > 0 ? r.amount / admin.reportTotal : 0.0;
+    final pct = frac * 100;
+    final isTop = maxAmount > 0 && r.amount >= maxAmount;
+
+    final rank = Container(
+      width: 26,
+      height: 26,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: isTop ? p.accentGradient : null,
+        color: isTop ? null : _softFill,
+        borderRadius: BorderRadius.circular(9),
+        boxShadow: isTop ? context.astraTheme.floatShadow(p.accent) : null,
+      ),
+      child: Text('${index + 1}',
+          style: ui(
+              size: 11,
+              weight: FontWeight.w800,
+              color: isTop ? p.primaryDark : p.textSecondary)),
+    );
+
+    final spent = r.amount == 0;
+    final name = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        SectionLabel(
-          heading,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (myIndex >= 0) ...[
-                _pill('You · #${myIndex + 1}', p.primary.withValues(alpha: 0.12), p.primary),
-                const SizedBox(width: 6),
-              ],
-              _pill('${admin.reportRowCount} $noun', p.tint, p.textSecondary),
-            ],
-          ),
+        Row(
+          children: [
+            Flexible(
+              child: Text(r.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(
+                      size: 12.5,
+                      weight: FontWeight.w800,
+                      color: spent ? p.textSecondary : p.ink)),
+            ),
+            if (isMe) ...[const SizedBox(width: 6), const YouBadge()],
+          ],
         ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollCtl,
-            padding: EdgeInsets.zero,
-            itemCount: admin.reportRows.length + extra,
-            itemBuilder: (_, i) {
-              // Infinite-scroll footer: a spinner while the next page streams
-              // in, plus a tap-to-load fallback in case the scroll trigger is
-              // missed. New pages arrive via [_onScroll].
-              if (i == admin.reportRows.length) return _loadMoreFooter(admin);
-              final r = admin.reportRows[i];
-              return _reportRow(admin, r, rowIcon, maxAmount, isMe: isMe(r));
-            },
-          ),
-        ),
-        Container(height: 1.5, color: p.hairline, margin: const EdgeInsets.fromLTRB(2, 8, 2, 10)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(!isStaff && admin.itemMetric == 'qty' ? 'Total qty' : 'Grand total',
-                  style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-              Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
-            ],
-          ),
+        // On a wide screen Qty and Bills have columns of their own, so the
+        // caption would only say them twice.
+        if (!wide) ...[
+          const SizedBox(height: 2),
+          Text(r.subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+        ],
+      ],
+    );
+
+    final share = Row(
+      children: [
+        Expanded(child: ProgressBar(fraction: frac)),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 32,
+          child: Text('${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',
+              textAlign: TextAlign.right,
+              style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
         ),
       ],
+    );
+
+    final amount = Text(r.value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: ui(
+            size: 13,
+            weight: spent ? FontWeight.w600 : FontWeight.w800,
+            color: spent ? p.textMuted : p.ink));
+
+    Widget figure(String text) => Text(text,
+        textAlign: TextAlign.right,
+        style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary));
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, wide ? 11 : 9, wide ? 18 : 13, wide ? 11 : 9),
+      decoration: BoxDecoration(
+        color: isMe
+            ? p.primary.withValues(alpha: p.isDark ? 0.16 : 0.07)
+            : (isTop ? p.tint.withValues(alpha: p.isDark ? 0.5 : 0.55) : null),
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      child: wide
+          ? Row(
+              children: [
+                SizedBox(width: _colRank, child: Align(alignment: Alignment.centerLeft, child: rank)),
+                const SizedBox(width: _rankGap),
+                Expanded(child: name),
+                const SizedBox(width: _colGap),
+                SizedBox(width: _colQty, child: figure(qtyLabel(r.quantity))),
+                const SizedBox(width: _colGap),
+                SizedBox(width: _colBills, child: figure('${r.bills}')),
+                const SizedBox(width: _colGap),
+                SizedBox(width: _colShare, child: share),
+                const SizedBox(width: _colGap),
+                SizedBox(width: _colAmount, child: amount),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(width: 26, child: Align(alignment: Alignment.centerLeft, child: rank)),
+                    const SizedBox(width: _rankGap),
+                    Expanded(child: name),
+                    const SizedBox(width: _colGap),
+                    SizedBox(width: 96, child: amount),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                // Indented to the name, so the bar reads as part of that row.
+                Padding(padding: const EdgeInsets.only(left: 26 + _rankGap), child: share),
+              ],
+            ),
+    );
+  }
+
+  /// The bar that closes the table: what the list adds up to, how much of it is
+  /// loaded, and — on the staff list — where the signed-in person ranks. On a
+  /// big screen it stands on the table's own grid, so each total sits under the
+  /// column it totals.
+  Widget _ledgerFoot(AdminCubit admin,
+      {required bool wide, required bool isStaff, required int myIndex}) {
+    final p = context.astra;
+    final noun = switch (admin.reportType) {
+      'itemwise' => 'items',
+      'categorywise' => admin.reportRowCount == 1 ? 'category' : 'categories',
+      _ => 'staff',
+    };
+    final loaded = admin.reportRows.length < admin.reportRowCount
+        ? '${admin.reportRows.length} of ${admin.reportRowCount} $noun'
+        : '${admin.reportRowCount} $noun';
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, 12, wide ? 18 : 13, 13),
+      decoration: BoxDecoration(
+        color: _softFill,
+        border: Border(top: BorderSide(color: p.hairline)),
+      ),
+      child: wide
+          ? Row(
+              children: [
+                const SizedBox(width: _colRank + _rankGap),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text('Grand total', style: ui(size: 12, weight: FontWeight.w800, color: p.ink)),
+                      const SizedBox(width: 10),
+                      if (myIndex >= 0) ...[
+                        _pill('You · #${myIndex + 1}', p.primary.withValues(alpha: 0.12), p.primary),
+                        const SizedBox(width: 6),
+                      ],
+                      Flexible(
+                        child: FittedBox(
+                          alignment: Alignment.centerLeft,
+                          fit: BoxFit.scaleDown,
+                          child: _pill(loaded, p.tint, p.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: _colGap),
+                SizedBox(
+                  width: _colQty,
+                  child: Text(admin.reportQuantityText,
+                      textAlign: TextAlign.right,
+                      style: ui(size: 12, weight: FontWeight.w800, color: p.textSecondary)),
+                ),
+                // Bills are counted per row, not summed across the range, and
+                // the share of the whole is always 100% — both left blank so
+                // the eye lands on the two totals that mean something.
+                const SizedBox(width: _colGap + _colBills + _colGap + _colShare + _colGap),
+                SizedBox(
+                  width: _colAmount,
+                  child: FittedBox(
+                    alignment: Alignment.centerRight,
+                    fit: BoxFit.scaleDown,
+                    child: Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Text('Grand total', style: ui(size: 12, weight: FontWeight.w800, color: p.ink)),
+                const SizedBox(width: 10),
+                if (myIndex >= 0) ...[
+                  _pill('You · #${myIndex + 1}', p.primary.withValues(alpha: 0.12), p.primary),
+                  const SizedBox(width: 6),
+                ],
+                _pill(loaded, p.tint, p.textSecondary),
+                const Spacer(),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: FittedBox(
+                    alignment: Alignment.centerRight,
+                    fit: BoxFit.scaleDown,
+                    child: Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -857,101 +1433,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 child: Text('Showing ${admin.reportRows.length} of ${admin.reportRowCount} · tap to load more',
                     style: ui(size: 11, weight: FontWeight.w700, color: p.primary)),
               ),
-      ),
-    );
-  }
-
-  /// [isMe] marks the signed-in person's own staff row: a primary-tinted card
-  /// with an outline, a filled avatar and a YOU badge — it stays readable next
-  /// to (or on top of) the TOP highlight.
-  Widget _reportRow(AdminCubit admin, ReportRow r, IconData icon, double maxAmount, {bool isMe = false}) {
-    final p = context.astra;
-    final frac = admin.reportTotal > 0 ? r.amount / admin.reportTotal : 0.0;
-    final pct = frac * 100;
-    final isTop = maxAmount > 0 && r.amount >= maxAmount;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.all(9),
-      decoration: BoxDecoration(
-        color: isMe
-            ? p.primary.withValues(alpha: p.isDark ? 0.18 : 0.08)
-            : (isTop ? p.tint : Colors.transparent),
-        borderRadius: BorderRadius.circular(12),
-        border: isMe ? Border.all(color: p.primary.withValues(alpha: 0.55), width: 1.4) : null,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: isMe ? p.primaryGradient : null,
-              color: isMe ? null : (isTop ? p.accent.withValues(alpha: 0.18) : p.tint),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: Icon(icon, size: 17, color: isMe ? Colors.white : (isTop ? p.goldText : p.primary)),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(r.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                    ),
-                    if (isTop) ...[
-                      const SizedBox(width: 7),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: p.accent.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star_rounded, size: 10, color: p.goldText),
-                            const SizedBox(width: 3),
-                            Text('TOP',
-                                style: ui(size: 8.5, weight: FontWeight.w900, color: p.goldText, letterSpacing: 0.6)),
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (isMe) ...[
-                      const SizedBox(width: 6),
-                      const YouBadge(),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(r.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                const SizedBox(height: 8),
-                ProgressBar(fraction: frac),
-              ],
-            ),
-          ),
-          const SizedBox(width: 11),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(r.value, style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
-              const SizedBox(height: 3),
-              Text('${pct.toStringAsFixed(pct >= 10 ? 0 : 1)}%',
-                  style: ui(size: 10, weight: FontWeight.w700, color: p.textMuted)),
-            ],
-          ),
-        ],
       ),
     );
   }
