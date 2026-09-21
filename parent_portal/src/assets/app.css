@@ -417,6 +417,9 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-amount-field__cur{font-size:22px; font-weight:600; color:var(--ink-2)}
 .pp-amount-field input{flex:1; min-width:0; padding:0; border:0; outline:none; background:none; color:var(--ink); font-size:34px; font-weight:750; letter-spacing:-.02em; text-align:right; font-variant-numeric:tabular-nums}
 .pp-actionbar{position:sticky; bottom:0; z-index:20; margin-top:auto; padding:12px 16px calc(var(--safe-bottom) + 10px); background:var(--bar); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); box-shadow:0 -1px 0 var(--line)}
+/* Something to know before paying — softer than an alert, it is not an error. */
+.pp-notice{display:flex; align-items:flex-start; gap:10px; margin-top:10px; padding:11px 14px; border-radius:12px; background:var(--warn-soft); color:var(--ink); font-size:13.5px; line-height:1.45}
+.pp-notice > .fa{flex:none; margin-top:2px; color:var(--warn); font-size:15px}
 .pp-trust{display:flex; align-items:center; justify-content:center; gap:7px; margin-top:10px; font-size:12.5px; color:var(--ink-2); text-align:center}
 
 /*

@@ -286,6 +286,8 @@ onUnmounted(stopTicker)
                 </span>
               </div>
             </div>
+            <!-- Before they go: leaving QPay's page half-way holds the next top-up (the API words it). -->
+            <p v-if="chosen?.notice" class="pp-notice"><i class="fa fa-clock-o"></i><span>{{ chosen.notice }}</span></p>
           </section>
 
           <section v-if="!desktop" class="pp-group">

@@ -624,3 +624,11 @@ it('will not let another parent cancel the payment', function (): void {
     Http::assertNothingSent();
     expect($transaction->refresh()->status)->toBe('pending');
 });
+
+it('warns the parent before a debit card payment that leaving QPay half-way holds the next top-up', function (): void {
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->getJson($this->world->url("/api/v1/parent/students/{$this->student->id}"))
+        ->assertOk()
+        ->assertJsonPath('data.topup.methods.0.key', 'debit')
+        ->assertJsonPath('data.topup.methods.0.notice', fn ($notice) => str_contains($notice, StartPaymentAction::BROKEN_AFTER_MINUTES.' minutes'));
+});

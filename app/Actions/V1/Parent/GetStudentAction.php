@@ -4,6 +4,7 @@ namespace App\Actions\V1\Parent;
 
 use App\Actions\Parent\FindStudentAction;
 use App\Actions\Parent\ListStudentsAction;
+use App\Actions\QPay\StartPaymentAction;
 use App\Actions\Student\GetBalanceAction;
 use App\Models\Guardian;
 use App\Support\Payment\MpgsSettings;
@@ -47,13 +48,24 @@ class GetStudentAction
      * Debit (QPay) and credit (Mastercard Gateway) — each only when the school has
      * switched it on and filled it in (Settings → Student Cards).
      *
-     * @return array<int, array{key: string, label: string, detail: string}>
+     * `notice` is what the parent should know before choosing it. A QPay payment left
+     * unfinished blocks the next top-up until QPay can be asked about it (QPay
+     * certification, see StartPaymentAction), so the parent is told up front rather
+     * than finding out from the block. A credit card payment never blocks: no notice.
+     *
+     * @return array<int, array{key: string, label: string, detail: string, notice: ?string}>
      */
     public static function methods(): array
     {
         return array_values(array_filter([
-            QPaySettings::current()->isReady() ? ['key' => 'debit', 'label' => 'Debit card', 'detail' => 'Qatar debit card · QPay'] : null,
-            MpgsSettings::current()->isReady() ? ['key' => 'credit', 'label' => 'Credit card', 'detail' => 'Visa · Mastercard'] : null,
+            QPaySettings::current()->isReady() ? [
+                'key' => 'debit',
+                'label' => 'Debit card',
+                'detail' => 'Qatar debit card · QPay',
+                'notice' => "Please finish paying on QPay's page. If you close it or go back before it's done, you'll have to wait "
+                    .StartPaymentAction::BROKEN_AFTER_MINUTES.' minutes before you can top up again, while we check with QPay that no money was taken.',
+            ] : null,
+            MpgsSettings::current()->isReady() ? ['key' => 'credit', 'label' => 'Credit card', 'detail' => 'Visa · Mastercard', 'notice' => null] : null,
         ]));
     }
 }
