@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import SchoolMark from '@/components/SchoolMark.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { school } from '@/school'
-import { amount, firstName, money } from '@/utils/format'
+import { amount, classLabel, firstName, money } from '@/utils/format'
 
 /**
  * A child as a physical student card. On the home stack it is a link showing who
@@ -42,7 +42,7 @@ const statusLabel = computed(() => ({ none: 'No card yet', blocked: 'Card blocke
       </span>
       <span class="pp-card__bottom">
         <span v-if="state !== 'none'" class="pp-card__chip"></span>
-        <span class="pp-card__holder"><b>{{ student.name }}</b><small v-if="student.class">{{ student.class }}</small></span>
+        <span class="pp-card__holder"><b>{{ student.name }}</b><small v-if="student.class">{{ classLabel(student.class) }}</small></span>
         <i v-if="state !== 'none'" class="fa fa-wifi pp-card__nfc"></i>
       </span>
     </template>
@@ -52,7 +52,7 @@ const statusLabel = computed(() => ({ none: 'No card yet', blocked: 'Card blocke
         <StudentAvatar :name="student.name" :image="student.image_url" />
         <span class="pp-card__id">
           <span class="pp-card__name">{{ student.name }}</span>
-          <span v-if="student.class || student.admission_no" class="pp-card__class">{{ student.class || student.admission_no }}</span>
+          <span v-if="student.class || student.admission_no" class="pp-card__class">{{ classLabel(student.class) || student.admission_no }}</span>
         </span>
         <span class="pp-card__bal" :class="{ 'pp-card__bal--neg': negative && state !== 'none' }">
           <small>{{ negative ? 'Overdraft' : 'Balance' }}</small><b>{{ money(student.balance) }}</b>

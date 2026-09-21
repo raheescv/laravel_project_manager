@@ -134,3 +134,13 @@ export function initials(name) {
 
 /** "Sara Ahmed" → "Sara" */
 export const firstName = (name) => String(name || '').trim().split(/\s+/)[0] || ''
+
+/**
+ * The class as the office typed it (grade - section). A bare number reads as a
+ * stray digit under a name, so it gets its word: "1" → "Grade 1", "4 - B" →
+ * "Grade 4 - B"; "KG 2" or "Grade 4" stay as they are.
+ */
+export const classLabel = (value) => {
+  const text = String(value || '').trim()
+  return /^\d/.test(text) ? `Grade ${text}` : text
+}

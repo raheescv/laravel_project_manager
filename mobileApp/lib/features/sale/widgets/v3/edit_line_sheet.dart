@@ -46,13 +46,11 @@ class _EditLineSheetState extends State<_EditLineSheet> {
 
   /// Look up the assigned stylist's avatar from the (already-loaded) stylist
   /// list — the cart line only carries the id/name, not the photo.
-  String _resolvePhoto(int? id) {
-    if (id == null) return '';
-    for (final e in context.read<StylistCubit>().all) {
-      if (e.id == id) return e.photoUrl;
-    }
-    return '';
-  }
+  String _resolvePhoto(int? id) => context.read<StylistCubit>().byId(id)?.photoUrl ?? '';
+
+  /// Reassigning a line takes the change-employee permission; without it the
+  /// stylist card only shows who the line is on.
+  bool get _canChooseStylist => context.read<StylistCubit>().canChoose;
 
   late final TextEditingController _unitCtl = TextEditingController(text: _fmt(_unitPrice));
   late final TextEditingController _taxCtl = TextEditingController(text: _fmt(_tax));
@@ -69,6 +67,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
   static String _fmt(double v) => v == 0 ? '' : (v % 1 == 0 ? v.toStringAsFixed(0) : v.toString());
 
   Future<void> _pickLineStylist() async {
+    if (!_canChooseStylist) return;
     final chosen = await pickStylist(context, selectedId: _employeeId);
     if (chosen == null || !mounted) return;
     setState(() {
@@ -127,7 +126,7 @@ class _EditLineSheetState extends State<_EditLineSheet> {
             AstraCard(
               radius: 15,
               padding: const EdgeInsets.all(11),
-              onTap: _pickLineStylist,
+              onTap: _canChooseStylist ? _pickLineStylist : null,
               child: Row(
                 children: [
                   ProfileAvatar(
@@ -147,7 +146,8 @@ class _EditLineSheetState extends State<_EditLineSheet> {
                       ],
                     ),
                   ),
-                  Icon(Icons.swap_horiz, size: 18, color: p.textMuted),
+                  Icon(_canChooseStylist ? Icons.swap_horiz : Icons.lock_outline,
+                      size: _canChooseStylist ? 18 : 15, color: p.textMuted),
                 ],
               ),
             ),

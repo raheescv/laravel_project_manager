@@ -977,7 +977,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
           _setStaff(null, '');
         },
       ),
-      for (final e in staff.all)
+      // The whole staff list, not the assignable one ([StylistCubit.all]) —
+      // filtering by who rang a sale is a view, open only to see-all users.
+      for (final e in staff.state.items)
         _optTile(
           label: e.name,
           icon: Icons.person_outline,

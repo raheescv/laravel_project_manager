@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
 import 'package:invo/shared/logic/base/list_fetch_state.dart';
@@ -38,16 +39,31 @@ class StylistCubit extends Cubit<ListFetchState<Employee>> {
   bool get loading => state.loading;
   String? get error => state.errorMessage;
 
-  /// The stylists the signed-in user may assign. An admin gets the whole staff
-  /// list, as does a back-office ('user'-type) account; a non-admin employee
-  /// sees only itself — it can't ring a ticket under a colleague's name.
-  /// Applied on read rather than on fetch, so the cached list stays whole for
-  /// the next user of a shared till.
+  /// Whether the signed-in user may put someone else on a ticket or line —
+  /// the `sale.mobile change employee` permission (admins hold it implicitly).
+  /// Without it the POS staff selector is locked: it shows who the ticket is
+  /// assigned to (themselves, on a new sale) and cannot be changed.
+  bool get canChoose => _auth.hasPermission(PermissionSlug.saleChangeEmployee);
+
+  /// The stylists the signed-in user may assign: the whole staff list with
+  /// [canChoose], otherwise only themselves — they can't ring a ticket under a
+  /// colleague's name. Applied on read rather than on fetch, so the cached list
+  /// stays whole for the next user of a shared till.
   List<Employee> get all {
     final user = _auth.user;
-    if (user == null || !user.isNonAdminEmployee) return state.items;
+    if (user == null || canChoose) return state.items;
     final selfId = int.tryParse(user.id);
     return state.items.where((e) => e.id == selfId).toList();
+  }
+
+  /// Any cached employee by id, assignable or not — for showing who a ticket
+  /// already carries (e.g. a colleague's photo on a sale being edited).
+  Employee? byId(int? id) {
+    if (id == null) return null;
+    for (final e in state.items) {
+      if (e.id == id) return e;
+    }
+    return null;
   }
 
   Future<void> loadIfNeeded() async {

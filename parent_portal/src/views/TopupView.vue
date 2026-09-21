@@ -8,7 +8,7 @@ import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { school } from '@/school'
-import { amount as plainAmount, firstName, money } from '@/utils/format'
+import { amount as plainAmount, classLabel, firstName, money } from '@/utils/format'
 import { goToQPay } from '@/utils/qpay'
 import { desktop } from '@/utils/viewport'
 
@@ -229,7 +229,7 @@ onUnmounted(stopTicker)
         <aside v-if="desktop" class="pp-panel pp-summary">
           <div class="pp-summary__who">
             <StudentAvatar :name="student.name" :image="student.image_url" />
-            <span class="pp-row__main"><b>{{ student.name }}</b><small v-if="student.class">{{ student.class }}</small></span>
+            <span class="pp-row__main"><b>{{ student.name }}</b><small v-if="student.class">{{ classLabel(student.class) }}</small></span>
             <span v-if="cardState === 'active'" class="pp-status pp-status--soft pp-status--active">Card active</span>
             <span v-else-if="cardState === 'blocked'" class="pp-tag pp-tag--neg">Card blocked</span>
           </div>

@@ -5,8 +5,10 @@ import { useRoute } from 'vue-router'
 import { fetchTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
-import { loadChildren } from '@/children'
-import { dateTime, firstName, money } from '@/utils/format'
+import StudentAvatar from '@/components/StudentAvatar.vue'
+import { children, loadChildren } from '@/children'
+import { school } from '@/school'
+import { amount, dateTime, firstName, money } from '@/utils/format'
 
 /**
  * Where QPay brings the parent back. Shows what QPay certification asks for —
@@ -24,6 +26,13 @@ let polls = 0
 
 const first = computed(() => firstName(topup.value?.student?.name))
 const studentRoute = computed(() => ({ name: 'student', params: { id: topup.value?.student?.account_id } }))
+// The top-up answer carries no photo; the wallet list has it.
+const child = computed(() => children.list.find((student) => student.account_id === topup.value?.student?.account_id) || null)
+const newBalance = computed(() => {
+  const status = topup.value?.status
+  if (status === 'success') return money(topup.value.balance)
+  return ['pending', 'review', 'unresolved'].includes(status) ? 'Not added yet' : 'No change'
+})
 
 const view = computed(() => {
   const t = topup.value
@@ -94,45 +103,55 @@ onBeforeUnmount(() => clearTimeout(timer))
     <RouterLink class="pp-link" :to="{ name: 'home' }">Go to my children</RouterLink>
   </LoadError>
 
-  <main v-else-if="status === 'loading'" aria-busy="true">
-    <section class="pp-result pp-result--confirming">
-      <div class="pp-result__icon"><span class="pp-spinner" aria-label="Loading"></span></div>
-      <h1 class="pp-result__title">Checking your payment…</h1>
-    </section>
+  <main v-else-if="status === 'loading'" class="pp-receipt-page" aria-busy="true">
+    <article class="pp-receipt pp-receipt--confirming">
+      <header class="pp-receipt__head">
+        <div class="pp-result__icon"><span class="pp-spinner" aria-label="Loading"></span></div>
+        <h1 class="pp-receipt__title">Checking your payment…</h1>
+        <span class="pp-skel pp-receipt__skel" aria-hidden="true"></span>
+      </header>
+    </article>
   </main>
 
-  <main v-else class="pp-narrow">
-    <section class="pp-result" :class="`pp-result--${view.tone}`" aria-live="polite">
-      <div class="pp-result__icon">
-        <span v-if="view.spinner" class="pp-spinner" aria-hidden="true"></span><i v-else class="fa" :class="view.icon"></i>
-      </div>
-      <h1 class="pp-result__title">{{ view.title }}</h1>
-      <p v-if="topup.status === 'success'" class="pp-result__msg">
-        <b>{{ money(topup.amount) }}</b> has been added to {{ first ? `${first}'s` : 'the' }} card.
-      </p>
-      <p v-else-if="view.msg" class="pp-result__msg">{{ view.msg }}</p>
-    </section>
+  <!-- One ticket: the outcome and the amount on top, the proof below the tear. -->
+  <main v-else class="pp-receipt-page">
+    <article class="pp-receipt" :class="`pp-receipt--${view.tone}`" aria-live="polite">
+      <header class="pp-receipt__head">
+        <div class="pp-result__icon">
+          <span v-if="view.spinner" class="pp-spinner" aria-hidden="true"></span><i v-else class="fa" :class="view.icon"></i>
+        </div>
+        <h1 class="pp-receipt__title">{{ view.title }}</h1>
+        <p class="pp-receipt__amount pp-num"><small>{{ school.currency.code }}</small>{{ amount(topup.amount) }}</p>
+        <p v-if="topup.status === 'success'" class="pp-receipt__msg">Added to {{ first ? `${first}'s` : 'the' }} card.</p>
+        <p v-else-if="view.msg" class="pp-receipt__msg">{{ view.msg }}</p>
+      </header>
 
-    <section class="pp-group">
-      <h2 class="pp-group__head">Receipt</h2>
-      <dl class="pp-group__body">
-        <div class="pp-row"><dt>Payment reference</dt><dd class="pp-mono">{{ topup.pun }}</dd></div>
-        <div class="pp-row"><dt>Amount</dt><dd>{{ money(topup.amount) }}</dd></div>
-        <div class="pp-row">
+      <div class="pp-tear" aria-hidden="true"></div>
+
+      <dl class="pp-receipt__fields">
+        <div><dt>Date &amp; time</dt><dd>{{ dateTime(topup.completed_at || topup.created_at) }}</dd></div>
+        <div class="is-end">
           <dt>Status</dt>
           <dd><span class="pp-tag" :class="`pp-tag--${view.tag[0]}`">{{ view.tag[1] }}</span></dd>
         </div>
-        <div class="pp-row"><dt>Date &amp; time</dt><dd>{{ dateTime(topup.completed_at || topup.created_at) }}</dd></div>
-        <div class="pp-row"><dt>QPay confirmation</dt><dd :class="{ 'pp-mono': topup.confirmation_id }">{{ topup.confirmation_id || '—' }}</dd></div>
-        <div v-if="topup.student?.name" class="pp-row"><dt>Card</dt><dd>{{ topup.student.name }}</dd></div>
-        <div class="pp-row">
-          <dt>New card balance</dt>
-          <dd>{{ topup.status === 'success' ? money(topup.balance) : ['pending', 'review', 'unresolved'].includes(topup.status) ? 'Not added yet' : 'No change' }}</dd>
+        <div class="is-wide"><dt>Payment reference</dt><dd class="pp-receipt__code">{{ topup.pun }}</dd></div>
+        <div class="is-wide">
+          <dt>QPay confirmation</dt>
+          <dd :class="topup.confirmation_id ? 'pp-receipt__code' : 'pp-text-muted'">{{ topup.confirmation_id || 'Not received yet' }}</dd>
         </div>
       </dl>
-    </section>
 
-    <div class="pp-result-actions">
+      <footer class="pp-receipt__foot">
+        <StudentAvatar :name="topup.student?.name" :image="child?.image_url" />
+        <span class="pp-row__main">
+          <b class="pp-receipt__who">{{ topup.student?.name || 'Card' }}</b>
+          <span class="pp-row__sub">New card balance</span>
+        </span>
+        <b class="pp-receipt__balance" :class="{ 'is-muted': topup.status !== 'success' }">{{ newBalance }}</b>
+      </footer>
+    </article>
+
+    <div class="pp-receipt__actions">
       <template v-if="topup.status === 'failed'">
         <RouterLink class="pp-btn pp-btn--primary" :to="{ name: 'topup', params: { id: topup.student.account_id } }">Try again</RouterLink>
         <RouterLink class="pp-btn pp-btn--tinted" :to="studentRoute">Back to {{ first || 'my child' }}</RouterLink>

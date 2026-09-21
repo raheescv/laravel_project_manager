@@ -9,7 +9,7 @@ import { children, loadChildren } from '@/children'
 import { school } from '@/school'
 import { session } from '@/session'
 import { signOut } from '@/utils/account'
-import { initials } from '@/utils/format'
+import { classLabel, initials } from '@/utils/format'
 
 /**
  * The signed-in parent: the details the school has for them, their children,
@@ -98,7 +98,7 @@ onMounted(() => {
           <StudentAvatar :name="student.name" :image="student.image_url" />
           <span class="pp-row__main">
             <span class="pp-row__title">{{ student.name }}</span>
-            <span class="pp-row__sub">{{ [student.class, student.admission_no].filter(Boolean).join(' · ') }}</span>
+            <span class="pp-row__sub">{{ [classLabel(student.class), student.admission_no].filter(Boolean).join(' · ') }}</span>
           </span>
           <i class="fa fa-angle-right pp-chev"></i>
         </RouterLink>

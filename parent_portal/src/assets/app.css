@@ -336,7 +336,8 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-child-card--blocked{--card-face:repeating-linear-gradient(-45deg,rgba(255,255,255,.035) 0 6px,transparent 6px 12px),linear-gradient(152deg,#6B6F79 0%,#3B3E46 52%,#1E2025 100%); --card-ink:#FFFFFF; --card-gloss:rgba(255,255,255,.2)}
 /* no card yet: blank outline card */
 .pp-child-card--none{background:var(--surface); color:var(--ink); box-shadow:0 -8px 20px -12px rgba(0,0,0,.22),inset 0 0 0 1px var(--line)}
-.pp-child-card--none::before{box-shadow:-46px -30px 0 0 var(--fill)}
+/* No gloss crescent on a blank card: on white it read as a stray grey arc through the note. */
+.pp-child-card--none::before{display:none}
 .pp-child-card--none::after{inset:8px; border:1.5px dashed var(--ink-3); border-radius:14px; background:none; opacity:.55}
 .pp-child-card--none .pp-card__who .pp-avatar{background-color:var(--fill); color:var(--ink-2); box-shadow:none}
 .pp-child-card--none .pp-status{background:var(--fill); color:var(--ink-2)}
@@ -415,25 +416,70 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-actionbar{position:sticky; bottom:0; z-index:20; margin-top:auto; padding:12px 16px calc(var(--safe-bottom) + 10px); background:var(--bar); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); box-shadow:0 -1px 0 var(--line)}
 .pp-trust{display:flex; align-items:center; justify-content:center; gap:7px; margin-top:10px; font-size:12.5px; color:var(--ink-2); text-align:center}
 
-/* Top-up result */
-.pp-result{display:flex; flex-direction:column; align-items:center; padding:28px 28px 30px; text-align:center}
-.pp-result--success{--tone:var(--pos)}
-.pp-result--confirming{--tone:var(--accent)}
-.pp-result--review{--tone:var(--warn)}
-.pp-result--failed{--tone:var(--neg)}
-.pp-result__icon{position:relative; display:grid; place-items:center; width:92px; height:92px; border-radius:50%; background:var(--tone); color:#FFFFFF; font-size:40px; box-shadow:0 16px 30px -16px var(--tone); animation:pp-pop .55s var(--ease) both}
-.pp-result__icon::before{content:""; position:absolute; inset:-12px; border:2px solid var(--tone); border-radius:50%; animation:pp-ring 2.4s ease-out infinite}
-.pp-result__title{margin-top:24px; font-size:28px; font-weight:800; line-height:1.08; letter-spacing:-.032em}
-.pp-result__msg{max-width:300px; margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
-.pp-result__msg b{color:var(--ink); font-weight:650}
+/*
+ * Top-up receipt — one ticket, on every screen. The outcome and the amount sit on
+ * top in a wash of the status colour; the proof (date, status, the two references
+ * QPay certification asks for) sits below the tear; the child and the new balance
+ * close it. The ticket keeps one measure (--receipt) and sits in the middle of
+ * whatever room it is given: the phone column, a tablet, the computer's right pane.
+ */
+.pp-receipt-page{--receipt:460px; display:flex; flex:1 0 auto; flex-direction:column; justify-content:center; padding:4px 16px calc(var(--safe-bottom) + 24px)}
+.pp-receipt-page > *{width:100%; max-width:var(--receipt); margin-inline:auto}
+.pp-receipt{
+  --tone:var(--accent); position:relative; border-radius:24px; background:var(--surface);
+  box-shadow:0 1px 2px rgba(38,49,34,.05),0 26px 50px -30px rgba(38,49,34,.42);
+}
+.pp-receipt--success{--tone:var(--pos)}
+.pp-receipt--confirming{--tone:var(--accent)}
+.pp-receipt--review{--tone:var(--warn)}
+.pp-receipt--failed{--tone:var(--neg)}
+.pp-receipt__head{
+  display:flex; flex-direction:column; align-items:center; padding:34px 24px 20px; border-radius:24px 24px 0 0; text-align:center;
+  background:radial-gradient(120% 100% at 50% 0%,color-mix(in oklab,var(--tone) 13%,transparent) 0%,transparent 68%);
+}
+.pp-result__icon{position:relative; display:grid; place-items:center; flex:none; width:68px; height:68px; border-radius:50%; background:var(--tone); color:#FFFFFF; font-size:29px; box-shadow:0 14px 26px -14px var(--tone); animation:pp-pop .55s var(--ease) both}
+.pp-result__icon::before{content:""; position:absolute; inset:-9px; border:2px solid var(--tone); border-radius:50%; animation:pp-ring 2.4s ease-out infinite}
+.pp-receipt__title{margin-top:20px; font-size:21px; font-weight:750; line-height:1.2; letter-spacing:-.02em}
+.pp-receipt__amount{margin-top:10px; font-size:42px; font-weight:800; line-height:1; letter-spacing:-.04em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.pp-receipt__amount small{margin-right:7px; font-size:17px; font-weight:650; letter-spacing:0; color:var(--ink-2); vertical-align:.85em}
+.pp-receipt__msg{max-width:330px; margin-top:12px; font-size:15px; line-height:1.45; color:var(--ink-2)}
+.pp-receipt__skel{width:150px; height:40px; margin-top:12px}
+.pp-receipt .pp-tear{margin-top:2px}
+/* Date takes the room, the status tag sits at the far edge: a phone keeps the date on one line. */
+.pp-receipt__fields{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px 20px; padding:8px 24px 22px}
+.pp-receipt__fields .is-wide{grid-column:1/-1}
+.pp-receipt__fields .is-end{text-align:right}
+.pp-receipt__fields dt{margin-bottom:7px; font:500 10px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-receipt__fields dd{font-size:15px; font-weight:600; line-height:1.35; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.pp-receipt__fields dd.pp-text-muted{font-weight:500}
+/* A reference is something to read out to the office: set apart, never broken mid-way on a phone. */
+.pp-receipt__code{
+  display:block; padding:10px 12px; border-radius:var(--radius-control); background:var(--bg); box-shadow:inset 0 0 0 1px var(--line);
+  font:400 13px/1.35 var(--mono); letter-spacing:.06em; color:var(--ink); word-break:break-all; user-select:all;
+}
+.pp-receipt__foot{display:flex; align-items:center; gap:12px; margin:0 12px 12px; padding:12px 14px; border-radius:16px; background:color-mix(in oklab,var(--tone) 7%,var(--bg))}
+.pp-receipt__who{display:block; overflow:hidden; font-size:15px; font-weight:650; white-space:nowrap; text-overflow:ellipsis}
+.pp-receipt__balance{flex:none; font-size:18px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.pp-receipt__balance.is-muted{font-size:14px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
+.pp-receipt__actions{display:grid; gap:8px; margin-top:20px}
 .pp-spinner{width:42px; height:42px; border:4px solid rgba(255,255,255,.35); border-top-color:#FFFFFF; border-radius:50%; animation:pp-spin .9s linear infinite}
+.pp-result__icon .pp-spinner{width:32px; height:32px; border-width:3.5px}
 .pp-mono{font-family:var(--mono); font-size:13px; font-weight:500; letter-spacing:.02em; word-break:break-all}
 .pp-tag{display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:13px; font-weight:650}
 .pp-tag--pos{background:var(--pos-soft); color:var(--pos)}
 .pp-tag--warn{background:var(--warn-soft); color:var(--warn)}
 .pp-tag--neg{background:var(--neg-soft); color:var(--neg)}
 .pp-tag--accent{background:var(--accent-soft); color:var(--accent-ink)}
-.pp-result-actions{display:grid; gap:8px; padding:0 16px 28px}
+@media (max-width:370px){
+  .pp-receipt-page{padding-left:12px; padding-right:12px}
+  .pp-receipt__head{padding:28px 18px 18px}
+  .pp-receipt__fields{padding:6px 18px 20px; column-gap:14px}
+  .pp-receipt__amount{font-size:36px}
+  /* No room for a photo beside a name and a balance: the name gets it, and wraps. */
+  .pp-receipt__foot .pp-avatar{display:none}
+  .pp-receipt__foot :is(.pp-receipt__who,.pp-row__sub){white-space:normal}
+  .pp-receipt__balance{font-size:16px}
+}
 
 /* Sheets */
 .pp-sheet__panel{padding-bottom:calc(var(--safe-bottom) + 16px); border-radius:14px 14px 0 0; background:var(--bg); box-shadow:0 -10px 40px rgba(0,0,0,.2)}
@@ -768,9 +814,20 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-wallet__error{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:14px 16px; border-radius:14px; background:var(--neg-soft); font-size:14px}
   .pp-wallet__error .pp-link{min-height:0; padding:0; font-size:14px}
 
-  .pp-detail{display:flex; flex-direction:column; min-width:0; min-height:100dvh; padding:30px 40px 48px}
-  .pp-detail > *{flex-shrink:0; max-width:1040px}
-  .pp-detail .pp-narrow{width:100%; max-width:640px}
+  /* The page is ONE centred column in the pane — 1040px for the wide pages, 640px
+     for a form or the profile (.pp-narrow), the receipt its own measure — so a big
+     screen gets even margins instead of everything hugging the wallet. The back
+     link lines up with the column's left edge, not the pane's. Sheets are fixed
+     overlays and stay out of it. */
+  .pp-detail{--detail:1040px; display:flex; flex-direction:column; min-width:0; min-height:100dvh; padding:30px 40px 48px}
+  .pp-detail:has(> .pp-narrow){--detail:640px}
+  /* Pages whose content is a fixed pair of columns take the pair's width, so the
+     back link and the title sit over the content, not over empty space. */
+  .pp-detail:has(> main > .pp-checkout){--detail:900px}
+  .pp-detail:has(> .pp-bill-layout){--detail:864px}
+  .pp-detail > :not(.pp-sheet){flex-shrink:0; width:100%; max-width:var(--detail); margin-inline:auto}
+  .pp-detail > .pp-back{width:auto; margin-right:0; margin-left:max(0px,calc((100% - var(--detail)) / 2))}
+  .pp-detail > .pp-receipt-page{max-width:none; padding:0}
 
   /* The phone pages inside the right pane: no phone gutters */
   .pp-detail .pp-largetitle{padding:0 0 22px}
@@ -781,7 +838,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-detail .pp-group__foot{padding:8px 4px 0}
   .pp-detail .pp-group__body{box-shadow:0 0 0 1px var(--line)}
   .pp-detail .pp-alert{margin:0 0 16px}
-  .pp-detail :is(.pp-inline-actions,.pp-result-actions){padding-left:0; padding-right:0}
+  .pp-detail .pp-inline-actions{padding-left:0; padding-right:0}
   .pp-detail .pp-inline-actions{justify-items:start}
   .pp-detail .pp-auth__actions{padding:0}
   .pp-detail .pp-pass{margin:0}
@@ -897,6 +954,8 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
 @media (min-width:1024px) and (max-width:1199.98px){
   .pp-web{grid-template-columns:360px minmax(0,1fr)}
   .pp-wallet{padding-left:20px; padding-right:20px}
+  /* A narrower wallet means a shorter card: less overlap, or the next card covers the balance. */
+  .pp-wallet .pp-wallet-stack .pp-child-card + .pp-child-card{margin-top:-72px}
   .pp-detail{padding-left:32px; padding-right:32px}
   .pp-student-grid{grid-template-columns:minmax(0,1fr); grid-template-areas:"aside" "activity"}
   .pp-student-grid__aside{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); column-gap:18px}

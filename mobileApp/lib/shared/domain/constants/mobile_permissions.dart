@@ -36,6 +36,9 @@ abstract final class PermissionSlug {
   static const saleView = 'sale.view';
   static const saleEdit = 'sale.edit';
   static const saleDelete = 'sale.delete';
+  // Pick any staff member on a ticket or line; without it the POS staff
+  // selector is locked to the signed-in user (see StylistCubit.canChoose).
+  static const saleChangeEmployee = 'sale.mobile change employee';
   static const saleReturnView = 'sales return.view';
   static const saleReturnCreate = 'sales return.create';
   static const saleReturnEdit = 'sales return.edit';
@@ -80,6 +83,13 @@ const mobilePermissions = <MobilePermission>[
     description: 'Remove a sale',
     group: 'Sales',
     icon: Icons.delete_outline,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.saleChangeEmployee,
+    label: 'Change Employee',
+    description: 'Assign any staff member on a sale',
+    group: 'Sales',
+    icon: Icons.badge_outlined,
   ),
   MobilePermission(
     slug: PermissionSlug.salesOverview,

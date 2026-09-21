@@ -12,7 +12,7 @@ import { children, loadChildren } from '@/children'
 import { school } from '@/school'
 import { session } from '@/session'
 import { signOut } from '@/utils/account'
-import { firstName, initials, money } from '@/utils/format'
+import { classLabel, firstName, initials, money } from '@/utils/format'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
@@ -133,7 +133,7 @@ onMounted(() => {
           <StudentAvatar :name="student.name" :image="student.image_url" />
           <span class="pp-row__main">
             <span class="pp-row__title">{{ student.name }}</span>
-            <span class="pp-row__sub">{{ [student.class || student.admission_no, cardNote(student)].filter(Boolean).join(' · ') }}</span>
+            <span class="pp-row__sub">{{ [classLabel(student.class) || student.admission_no, cardNote(student)].filter(Boolean).join(' · ') }}</span>
           </span>
           <span class="pp-amt" :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</span>
           <span class="pp-kid-row__actions">

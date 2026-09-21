@@ -10,7 +10,7 @@ import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
-import { amount, currentMonth, date, dateTile, dayMonth, firstName, isMonth, money, monthLabel, shiftMonth, weekdaysLabel } from '@/utils/format'
+import { amount, classLabel, currentMonth, date, dateTile, dayMonth, firstName, isMonth, money, monthLabel, shiftMonth, weekdaysLabel } from '@/utils/format'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
@@ -48,7 +48,7 @@ const mealsSummary = computed(() => {
 const cardState = computed(() => (!student.value?.has_card ? 'none' : student.value.card_blocked ? 'blocked' : 'active'))
 
 /* Desktop: the card is in the wallet, so the page leads with the numbers. */
-const details = computed(() => [student.value?.class, student.value?.admission_no].filter(Boolean).join(' · '))
+const details = computed(() => [classLabel(student.value?.class), student.value?.admission_no].filter(Boolean).join(' · '))
 const balanceNote = computed(() => {
   if (cardState.value === 'none') return 'No card yet'
   if (cardState.value === 'blocked') return 'Card blocked'

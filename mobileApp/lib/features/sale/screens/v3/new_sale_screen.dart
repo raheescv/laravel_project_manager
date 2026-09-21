@@ -94,14 +94,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       // Preselect the staff: the last employee used on a ticket (remembered
       // across sales) wins; otherwise default to the logged-in user. Skipped
       // while editing, where the ticket already carries its own stylist.
-      // An employee who may only assign themselves (see StylistCubit.all) is
-      // always themselves — a colleague remembered on this device (a shared
-      // till) must not carry over.
-      if (cart.stylistName.isEmpty) {
+      // Without the change-employee permission (StylistCubit.canChoose) the
+      // staff is always the signed-in user — a colleague remembered on this
+      // device, or left on the ticket by whoever used a shared till last, must
+      // not carry over.
+      final selfOnly = !context.read<StylistCubit>().canChoose;
+      final notSelf = user != null && cart.stylistId != int.tryParse(user.id);
+      final editing = cart.isEditing || cart.state.isEditingPending;
+      if (cart.stylistName.isEmpty || (selfOnly && !editing && notSelf)) {
         final storage = serviceLocator<LocalStorageService>();
         final savedId = storage.saleStylistId;
         final savedName = storage.saleStylistName;
-        final selfOnly = user?.isNonAdminEmployee ?? false;
         if (!selfOnly && savedId != null && savedName != null && savedName.isNotEmpty) {
           cart.setStylist(savedId, savedName);
         } else if (user != null) {
@@ -425,6 +428,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               _pickStylist,
               avatarUrl: _staffAvatarUrl(cart),
               avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
+              locked: !context.read<StylistCubit>().canChoose,
             ),
           ),
         ],
@@ -504,8 +508,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
 
   /// One half of the joined selector — circular avatar (staff photo when set),
   /// gold micro-label, value and a chevron.
+  /// [locked] shows the value read-only — no tap, a lock in place of the
+  /// chevron — for a selector the signed-in user isn't allowed to change.
   Widget _whoSeg(IconData icon, String label, String value, VoidCallback onTap,
-      {String? avatarUrl, Map<String, String>? avatarHeaders}) {
+      {String? avatarUrl, Map<String, String>? avatarHeaders, bool locked = false}) {
     final p = context.astra;
     final fallback = Container(
       width: 38,
@@ -531,10 +537,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
         : fallback;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
+      onTap: locked
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
         child: Row(
@@ -554,7 +562,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                 ],
               ),
             ),
-            Icon(Icons.keyboard_arrow_down, color: p.textMuted, size: 16),
+            Icon(locked ? Icons.lock_outline : Icons.keyboard_arrow_down, color: p.textMuted, size: locked ? 14 : 16),
           ],
         ),
       ),
@@ -618,6 +626,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             _pickStylist,
             avatarUrl: _staffAvatarUrl(cart),
             avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
+            locked: !context.read<StylistCubit>().canChoose,
           ),
         ],
       ),
@@ -909,6 +918,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   }
 
   Future<void> _pickStylist() async {
+    if (!context.read<StylistCubit>().canChoose) return;
     final cart = context.read<CartCubit>();
     final chosen = await pickStylist(context, selectedId: cart.stylistId);
     if (chosen == null || !mounted) return;
@@ -930,12 +940,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     if (id == null || (user != null && int.tryParse(user.id) == id)) {
       raw = user?.photoUrl ?? '';
     } else {
-      for (final e in context.read<StylistCubit>().all) {
-        if (e.id == id) {
-          raw = e.photoUrl;
-          break;
-        }
-      }
+      raw = context.read<StylistCubit>().byId(id)?.photoUrl ?? '';
     }
     return raw.isEmpty ? null : auth.config.assetUrl(raw);
   }
