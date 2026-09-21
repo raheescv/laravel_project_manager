@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import { fetchStudent, startTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
@@ -148,11 +149,26 @@ async function load() {
   }
 }
 
-async function pay() {
+// Debit card only: what leaving QPay's page half-way costs, said when the parent presses Pay.
+const noticeOpen = ref(false)
+
+function pay() {
   touched.value = true
   dismiss()
   if (!valid.value || blocked.value) return
+  if (chosen.value?.notice) {
+    noticeOpen.value = true
+    return
+  }
+  startPayment()
+}
 
+function continueToPayment() {
+  noticeOpen.value = false
+  startPayment()
+}
+
+async function startPayment() {
   paying.value = true
   try {
     const { payment } = await startTopup(id, value.value, chosen.value?.key)
@@ -286,8 +302,6 @@ onUnmounted(stopTicker)
                 </span>
               </div>
             </div>
-            <!-- Before they go: leaving QPay's page half-way holds the next top-up (the API words it). -->
-            <p v-if="chosen?.notice" class="pp-notice"><i class="fa fa-clock-o"></i><span>{{ chosen.notice }}</span></p>
           </section>
 
           <section v-if="!desktop" class="pp-group">
@@ -330,4 +344,18 @@ onUnmounted(stopTicker)
       <p class="pp-trust"><i class="fa fa-shield"></i>{{ trust }}</p>
     </footer>
   </template>
+
+  <!-- Pressing Pay with a debit card: the hold that leaving QPay half-way causes (the API words it). -->
+  <BottomSheet :open="noticeOpen" label="Before you go to QPay" @close="noticeOpen = false">
+    <div class="pp-sheet__grabber"></div>
+    <div class="pp-lede pp-lede--sheet pp-lede--info">
+      <div class="pp-hero-icon pp-hero-icon--warn"><i class="fa fa-clock-o"></i></div>
+      <h2>Before you go to QPay</h2>
+      <p>{{ chosen?.notice }}</p>
+    </div>
+    <div class="pp-sheet__actions pp-sheet__actions--stack">
+      <button class="pp-btn pp-btn--pay" type="button" @click="continueToPayment"><i class="fa fa-lock"></i>Continue to QPay</button>
+      <button class="pp-link" type="button" @click="noticeOpen = false">Cancel</button>
+    </div>
+  </BottomSheet>
 </template>
