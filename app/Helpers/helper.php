@@ -913,7 +913,7 @@ if (! function_exists('getNextSaleInvoiceNo')) {
     function getNextSaleInvoiceNo($branchId = null)
     {
         $branchCode = currentBranchCode($branchId);
-        $prefix = 'INV-';
+        $prefix = '';
 
         if ($branchCode) {
             $prefix .= $branchCode.'-';
