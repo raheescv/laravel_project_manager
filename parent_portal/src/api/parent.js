@@ -54,6 +54,14 @@ export const startTopup = (id, amount, method) => client.post(`/students/${id}/t
 
 export const fetchTopup = (pun) => client.get(`/topups/${encodeURIComponent(pun)}`)
 
+/**
+ * For a parent who left QPay's page without paying: QPay is asked, and the top-up
+ * comes back `failed` (cancelled — QPay never got it) or `success` (it was paid, so
+ * it is on the card). Refused with `errors.retry_at` while it is too early or QPay
+ * gave no answer.
+ */
+export const cancelTopup = (pun) => client.post(`/topups/${encodeURIComponent(pun)}/cancel`)
+
 /* ---- Canteen pre-orders ---- */
 
 /** [{ id, name, items: [{ id, name, mrp, thumbnail, … }] }] grouped by category */

@@ -10,6 +10,7 @@ use App\Services\Payment\QPayClient;
 use App\Support\Payment\MpgsSettings;
 use App\Support\Payment\QPaySettings;
 use App\Support\Student\StudentSettings;
+use Carbon\CarbonInterface;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -117,7 +118,7 @@ class StartPaymentAction
             ->get();
 
         foreach ($pending as $transaction) {
-            $retryAt = $transaction->created_at->copy()->addMinutes(self::BROKEN_AFTER_MINUTES)->addMinute();
+            $retryAt = self::inquirableAt($transaction);
 
             if (now()->lt($retryAt)) {
                 throw new TopupInProgressException('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt, $transaction->pun);
@@ -141,6 +142,16 @@ class StartPaymentAction
                 );
             }
         }
+    }
+
+    /**
+     * When a QPay payment that has no result is old enough to be asked about — and so
+     * to free the card (a new top-up, or the parent cancelling it). A minute past the
+     * cutoff, so the time shown to the parent is never a moment too early.
+     */
+    public static function inquirableAt(QpayTransaction $transaction): CarbonInterface
+    {
+        return $transaction->created_at->copy()->addMinutes(self::BROKEN_AFTER_MINUTES)->addMinute();
     }
 
     /** 20 alphanumeric characters, unique across every school. */

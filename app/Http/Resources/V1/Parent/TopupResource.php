@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\V1\Parent;
 
+use App\Actions\QPay\StartPaymentAction;
 use App\Actions\Student\GetBalanceAction;
 use App\Models\QpayTransaction;
 use App\Services\Payment\QPayClient;
@@ -38,12 +39,30 @@ class TopupResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel(),
             // The gateway's own words for a failed payment. Review reasons are internal and stay with the school.
-            'message' => $this->status === QpayTransaction::STATUS_FAILED ? $this->gateway_status_message : null,
+            'message' => $this->status === QpayTransaction::STATUS_FAILED ? $this->failureMessage() : null,
+            // A QPay payment with no result blocks new top-ups; from this moment the parent may
+            // cancel it (QPay is asked first — see CancelTopupAction). Null when there is nothing to cancel.
+            'cancellable_at' => $this->isPending() && ! $this->isCreditCard()
+                ? StartPaymentAction::inquirableAt($this->resource)->toIso8601String()
+                : null,
             // QPay's confirmation ID, or the card receipt (RRN) for a credit card.
             'confirmation_id' => $this->confirmation_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'balance' => $success ? (new GetBalanceAction())->execute($this->account_id) : null,
         ];
+    }
+
+    /**
+     * QPay's "not found" (8106) is its way of saying the parent never paid on its page —
+     * worded for a parent, not as the gateway's "unfounded transaction" jargon.
+     */
+    private function failureMessage(): ?string
+    {
+        if (! $this->isCreditCard() && $this->gateway_status === QPayClient::NOT_FOUND) {
+            return 'The payment was never completed on QPay.';
+        }
+
+        return $this->gateway_status_message;
     }
 }

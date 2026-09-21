@@ -59,6 +59,8 @@ Route::prefix('v1/parent')
             });
 
             Route::get('topups/{pun}', 'topup')->where('pun', '[A-Za-z0-9]{1,40}')->name('topups.show');
+            // Each try asks QPay, so it is throttled like starting a top-up.
+            Route::post('topups/{pun}/cancel', 'cancelTopup')->where('pun', '[A-Za-z0-9]{1,40}')->middleware('throttle:10,1')->name('topups.cancel');
         });
     });
 

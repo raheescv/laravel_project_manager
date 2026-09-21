@@ -456,3 +456,17 @@ it('tells debit and credit card recharges apart in the report', function (): voi
         ->and(Livewire::test(QPayRechargeReport::class)->set('gateway', 'mpgs')->viewData('rows')->pluck('pun')->all())->toBe([$credit->pun])
         ->and(Livewire::test(QPayRechargeReport::class)->set('gateway', 'qpay')->viewData('rows')->pluck('pun')->all())->toBe(['PUNDEBIT000000000001']);
 });
+
+it('starts "Record top-ups as" from the QPay user and names the field that is missing', function (): void {
+    mpgsGrantSettings($this);
+    Configuration::where('key', MpgsSettings::KEY)->delete();
+
+    Livewire::test(MpgsPayments::class)
+        ->assertSet('user_id', (string) $this->world->user->id)
+        ->set('user_id', '')
+        ->set('enabled', true)
+        ->set('merchant_id', 'TESTABC')
+        ->set('payment_account_id', (string) $this->creditBankId)
+        ->call('save')
+        ->assertDispatched('error', fn ($name, $params) => $params[0]['message'] === 'Choose a user under "Record top-ups as" to switch on credit card top-ups.');
+});

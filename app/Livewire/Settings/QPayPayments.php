@@ -60,9 +60,15 @@ class QPayPayments extends Component
                 throw new Exception('Choose a valid user.');
             }
             if ($this->enabled) {
-                foreach (['bank_id' => 'Bank ID', 'merchant_id' => 'Merchant ID', 'payment_account_id' => 'the account top-ups are paid into', 'user_id' => 'the user top-ups are recorded under'] as $field => $label) {
+                // Worded after the labels on screen, so the missing field can be found.
+                foreach ([
+                    'bank_id' => 'Enter the Bank ID',
+                    'merchant_id' => 'Enter the Merchant ID',
+                    'payment_account_id' => 'Choose an account under "Debit card top-ups are paid into"',
+                    'user_id' => 'Choose a user under "Record top-ups as"',
+                ] as $field => $ask) {
                     if (trim($this->{$field}) === '') {
-                        throw new Exception("Enter {$label} to switch on QPay top-ups.");
+                        throw new Exception("{$ask} to switch on QPay top-ups.");
                     }
                 }
                 if ($secret === '' && ! $saved) {

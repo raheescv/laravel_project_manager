@@ -12,6 +12,7 @@ use App\Actions\QPay\HandleReturnAction;
 use App\Actions\Student\Guardian\SendInviteAction;
 use App\Actions\Student\Guardian\SetPasswordAction as GuardianSetPasswordAction;
 use App\Actions\V1\Parent\BlockCardAction;
+use App\Actions\V1\Parent\CancelTopupAction;
 use App\Actions\V1\Parent\ChangePasswordAction;
 use App\Actions\V1\Parent\ForgotPasswordAction;
 use App\Actions\V1\Parent\GetStudentAction;
@@ -368,6 +369,35 @@ class ParentPortalController extends Controller
             return $this->sendNotFoundError('Top-up not found');
         } catch (\Throwable $e) {
             return $this->failure($e, 'We could not load this payment. Please try again.');
+        }
+    }
+
+    /**
+     * Cancel a top-up.
+     *
+     * For a parent who opened QPay's page and left without paying. Allowed once the
+     * payment is 20 minutes old: QPay is asked, and only its answer that it never
+     * received the payment cancels it (`status` becomes `failed`). If QPay says it
+     * was paid, the card is credited and `status` is `success`. 422 with
+     * `data.retry_at` (ISO 8601) while it is too early or QPay gave no answer.
+     */
+    public function cancelTopup(Request $request, string $pun, CancelTopupAction $action): JsonResponse
+    {
+        try {
+            $transaction = $action->execute($this->guardian($request), $pun);
+            $message = match ($transaction->status) {
+                QpayTransaction::STATUS_FAILED => 'Payment cancelled. QPay confirmed no money was taken.',
+                QpayTransaction::STATUS_SUCCESS => 'QPay says this payment went through, so it was added to the card.',
+                default => 'QPay has answered: the payment is '.strtolower($transaction->statusLabel()).'.',
+            };
+
+            return $this->sendSuccess(new TopupResource($transaction), $message);
+        } catch (ModelNotFoundException) {
+            return $this->sendNotFoundError('Top-up not found');
+        } catch (ParentPortalException $e) {
+            return $this->sendError($e->getMessage(), $e->data, 422);
+        } catch (\Throwable $e) {
+            return $this->failure($e, 'We could not cancel this payment. Please try again.');
         }
     }
 

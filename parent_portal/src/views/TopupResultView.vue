@@ -1,14 +1,15 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
-import { fetchTopup } from '@/api/parent'
+import { cancelTopup, fetchTopup } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { children, loadChildren } from '@/children'
 import { school } from '@/school'
-import { amount, dateTime, firstName, money } from '@/utils/format'
+import { toast } from '@/toast'
+import { amount, dateTime, firstName, money, time } from '@/utils/format'
 
 /**
  * Where the payment page brings the parent back — QPay for a debit card, the
@@ -17,6 +18,7 @@ import { amount, dateTime, firstName, money } from '@/utils/format'
  * the payment is still being confirmed.
  */
 const route = useRoute()
+const router = useRouter()
 const pun = String(route.params.pun || '')
 
 const topup = ref(null)
@@ -24,6 +26,24 @@ const status = ref('loading')
 const error = ref('')
 let timer = null
 let polls = 0
+
+// Cancelling a QPay payment the parent walked away from. The API says from when
+// (`cancellable_at`, once QPay can be asked); a refusal says when to try again.
+const now = ref(Date.now())
+const cancelling = ref(false)
+const cancelError = ref('')
+const retryAt = ref(0)
+let ticker = 0
+
+const cancelFrom = computed(() => (topup.value?.status === 'pending' && topup.value.cancellable_at ? new Date(topup.value.cancellable_at).getTime() || 0 : 0))
+const cancelAt = computed(() => Math.max(cancelFrom.value, retryAt.value))
+const cancelOpen = computed(() => cancelFrom.value > 0 && now.value >= cancelAt.value)
+// Past the point QPay should have answered: "a few seconds" is no longer true.
+const overdue = computed(() => cancelFrom.value > 0 && now.value >= cancelFrom.value)
+const countdown = computed(() => {
+  const seconds = Math.max(0, Math.ceil((cancelAt.value - now.value) / 1000))
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+})
 
 const first = computed(() => firstName(topup.value?.student?.name))
 const studentRoute = computed(() => ({ name: 'student', params: { id: topup.value?.student?.account_id } }))
@@ -45,7 +65,15 @@ const view = computed(() => {
   return (
     {
       success: { tone: 'success', icon: 'fa-check', title: 'Payment successful', tag: ['pos', 'Paid'] },
-      pending: { tone: 'confirming', spinner: true, title: 'Confirming your payment…', tag: ['accent', 'Confirming'], msg: "Please don't pay again. This usually takes a few seconds." },
+      pending: {
+        tone: 'confirming',
+        spinner: true,
+        title: 'Confirming your payment…',
+        tag: ['accent', 'Confirming'],
+        msg: overdue.value
+          ? "QPay hasn't confirmed this payment yet. If you left QPay's page without paying, you can cancel it below."
+          : "Please don't pay again. This usually takes a few seconds.",
+      },
       review: {
         tone: 'review',
         icon: 'fa-clock-o',
@@ -97,8 +125,47 @@ function schedule() {
   timer = setTimeout(load, polls < 15 ? 4000 : 15000)
 }
 
-onMounted(load)
-onBeforeUnmount(() => clearTimeout(timer))
+/**
+ * Nothing is cancelled on our word: the API asks QPay first. Never received → the
+ * payment closes and the parent goes straight back to top up; paid → it is on the
+ * card and this page shows so; no answer → the API says when to try again.
+ */
+async function cancel() {
+  cancelling.value = true
+  cancelError.value = ''
+  try {
+    const result = await cancelTopup(pun)
+    topup.value = result
+    if (result.status === 'failed') {
+      toast('Payment cancelled. No money was taken.')
+      router.replace({ name: 'topup', params: { id: result.student.account_id } })
+      return
+    }
+    if (result.status === 'success') {
+      loadChildren()
+      toast('QPay says this payment went through. It is on the card.')
+    }
+  } catch (e) {
+    cancelError.value = e.message
+    const at = e.errors?.retry_at ? new Date(e.errors.retry_at).getTime() : 0
+    retryAt.value = Number.isFinite(at) ? at : 0
+    now.value = Date.now()
+  } finally {
+    cancelling.value = false
+  }
+}
+
+onMounted(() => {
+  load()
+  // The cancel's countdown; idle once the payment has an outcome.
+  ticker = setInterval(() => {
+    if (topup.value?.status === 'pending') now.value = Date.now()
+  }, 1000)
+})
+onBeforeUnmount(() => {
+  clearTimeout(timer)
+  clearInterval(ticker)
+})
 </script>
 
 <template>
@@ -163,6 +230,21 @@ onBeforeUnmount(() => clearTimeout(timer))
         <RouterLink class="pp-btn pp-btn--tinted" :to="studentRoute">Back to {{ first || 'my child' }}</RouterLink>
       </template>
       <RouterLink v-else class="pp-btn pp-btn--primary" :to="studentRoute">Back to {{ first || 'my child' }}</RouterLink>
+
+      <!-- Left QPay's page without paying: cancel it, once QPay can be asked. -->
+      <template v-if="cancelFrom">
+        <div v-if="cancelError" class="pp-alert pp-alert--warn" role="alert">
+          <i class="fa fa-clock-o"></i><span class="pp-alert__main">{{ cancelError }}</span>
+        </div>
+        <button class="pp-btn pp-btn--neg-soft" :class="{ 'is-busy': cancelling }" type="button" :disabled="!cancelOpen || cancelling" @click="cancel">
+          <span v-if="cancelling" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa fa-times-circle"></i>
+          {{ cancelling ? 'Checking with QPay…' : cancelOpen ? 'Cancel this payment' : `Cancel available in ${countdown}` }}
+        </button>
+        <p class="pp-receipt__note">
+          <template v-if="cancelOpen">Only if you left QPay's page without paying. We check with QPay first: if the money was taken, it goes on the card instead.</template>
+          <template v-else>Left QPay's page without paying? You can cancel this payment after {{ time(cancelAt) }}, once QPay can tell us nothing was taken.</template>
+        </p>
+      </template>
     </div>
   </main>
 </template>

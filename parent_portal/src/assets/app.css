@@ -465,6 +465,11 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-receipt__balance{flex:none; font-size:18px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
 .pp-receipt__balance.is-muted{font-size:14px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
 .pp-receipt__actions{display:grid; gap:8px; margin-top:20px}
+.pp-receipt__actions .pp-alert{margin:6px 0 0}
+.pp-receipt__note{padding:2px 12px 0; font-size:13px; line-height:1.45; color:var(--ink-2); text-align:center}
+/* A way out, not the page's main action: soft, in the colour of a stop. */
+.pp-btn--neg-soft{margin-top:6px; background:var(--neg-soft); color:var(--neg)}
+.pp-btn--neg-soft:disabled{opacity:1; background:var(--fill); color:var(--ink-3)}
 .pp-spinner{width:42px; height:42px; border:4px solid rgba(255,255,255,.35); border-top-color:#FFFFFF; border-radius:50%; animation:pp-spin .9s linear infinite}
 .pp-result__icon .pp-spinner{width:32px; height:32px; border-width:3.5px}
 .pp-mono{font-family:var(--mono); font-size:13px; font-weight:500; letter-spacing:.02em; word-break:break-all}

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Payment\MpgsClient;
 use App\Services\Payment\MpgsException;
 use App\Support\Payment\MpgsSettings;
+use App\Support\Payment\QPaySettings;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -48,7 +49,8 @@ class MpgsPayments extends Component
         $this->merchant_id = (string) $settings->merchantId;
         $this->merchant_name = (string) ($settings->merchantName ?: mb_substr(tenant_cache('company_name', '') ?: config('app.name'), 0, 40));
         $this->payment_account_id = (string) ($settings->paymentAccountId ?? '');
-        $this->user_id = (string) ($settings->userId ?? '');
+        // Most schools record both card types as the same person: start from QPay's, else whoever is setting it up.
+        $this->user_id = (string) ($settings->userId ?? QPaySettings::current()->userId ?? auth()->id() ?? '');
         $this->saved_password_hint = MpgsSettings::hint($settings->apiPassword);
     }
 
@@ -74,9 +76,15 @@ class MpgsPayments extends Component
                 throw new Exception('Choose a valid user.');
             }
             if ($this->enabled) {
-                foreach (['merchant_id' => 'the Merchant ID', 'merchant_name' => 'the name shown on the payment page', 'payment_account_id' => 'the account credit card top-ups are paid into', 'user_id' => 'the user top-ups are recorded under'] as $field => $label) {
+                // Worded after the labels on screen, so the missing field can be found.
+                foreach ([
+                    'merchant_id' => 'Enter the Merchant ID',
+                    'merchant_name' => 'Enter the "Name on the payment page"',
+                    'payment_account_id' => 'Choose an account under "Credit card top-ups are paid into"',
+                    'user_id' => 'Choose a user under "Record top-ups as"',
+                ] as $field => $ask) {
                     if (trim($this->{$field}) === '') {
-                        throw new Exception("Enter {$label} to switch on credit card top-ups.");
+                        throw new Exception("{$ask} to switch on credit card top-ups.");
                     }
                 }
                 if ($password === '' && ! $saved) {

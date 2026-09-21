@@ -544,3 +544,83 @@ it('logs a refund QPay refused, under the staff member who asked', function (): 
         ->and($log->user_id)->toBe($this->world->user->id)
         ->and(json_decode($log->request, true))->toMatchArray(['Action' => '6', 'OriginalTransactionPaymentUniqueNumber_1' => $transaction->pun]);
 });
+
+/* ---- The parent cancels a payment they left QPay's page without paying ---- */
+
+function qpayCancel($test, QpayTransaction $transaction, $guardian = null)
+{
+    return $test->withToken(StudentWorld::parentToken($guardian ?? $test->guardian))
+        ->postJson($test->world->url("/api/v1/parent/topups/{$transaction->pun}/cancel"));
+}
+
+it('offers the cancel from the moment QPay can be asked, and not before', function (): void {
+    $transaction = qpayStart($this, 100);
+    Http::fake();
+
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->getJson($this->world->url("/api/v1/parent/topups/{$transaction->pun}"))
+        ->assertJsonPath('data.cancellable_at', StartPaymentAction::inquirableAt($transaction)->toIso8601String());
+
+    // The parent may still be on QPay's page: refused, with the moment it opens, and QPay is not asked.
+    qpayCancel($this, $transaction)
+        ->assertStatus(422)
+        ->assertJsonPath('data.retry_at', StartPaymentAction::inquirableAt($transaction)->toIso8601String());
+
+    Http::assertNothingSent();
+    expect($transaction->refresh()->status)->toBe('pending');
+});
+
+it('cancels a payment QPay confirms it never received, and frees the card for a new one', function (): void {
+    $transaction = qpayStart($this, 100);
+    Http::fake(fn () => Http::response(qpaySigned(['Status' => QPayClient::NOT_FOUND, 'StatusMessage' => 'Try to Inquiry about unfounded transaction'])));
+    $this->travel(StartPaymentAction::BROKEN_AFTER_MINUTES + 1)->minutes();
+
+    qpayCancel($this, $transaction)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'failed')
+        ->assertJsonPath('data.cancellable_at', null)
+        // Worded for the parent, not QPay's jargon.
+        ->assertJsonPath('data.message', 'The payment was never completed on QPay.');
+
+    expect($transaction->refresh()->failure_reason)->toStartWith('Cancelled by the parent in the portal')
+        ->and(qpayBalance($this))->toBe(0.0)
+        ->and((new StartPaymentAction())->execute($this->guardian, $this->student, 50)['success'])->toBeTrue();
+});
+
+it('credits the card instead when QPay says the payment went through', function (): void {
+    $transaction = qpayStart($this, 100);
+    Http::fake(fn () => Http::response(qpayInquiryResponse($transaction)));
+    $this->travel(StartPaymentAction::BROKEN_AFTER_MINUTES + 1)->minutes();
+
+    qpayCancel($this, $transaction)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'success')
+        ->assertJsonPath('message', 'QPay says this payment went through, so it was added to the card.');
+
+    expect(qpayBalance($this))->toBe(100.0);
+});
+
+it('keeps the payment when QPay gives no answer, and says when to try again', function (): void {
+    $transaction = qpayStart($this, 100);
+    $this->travel(StartPaymentAction::BROKEN_AFTER_MINUTES + 1)->minutes();
+    qpayAnswersNothing();
+
+    qpayCancel($this, $transaction)
+        ->assertStatus(422)
+        ->assertJsonPath('message', fn ($message) => str_contains($message, 'school office can release it'))
+        ->assertJsonPath('data.retry_at', now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String());
+
+    expect($transaction->refresh()->status)->toBe('pending');
+});
+
+it('will not let another parent cancel the payment', function (): void {
+    $transaction = qpayStart($this, 100);
+    $this->travel(StartPaymentAction::BROKEN_AFTER_MINUTES + 1)->minutes();
+    Http::fake();
+    $stranger = StudentWorld::enrol($this->world, ['name' => 'Omar Ali', 'card_uid' => '04:ff:00:11', 'guardians' => [['name' => 'Ali Omar', 'mobile' => '55999888', 'relation' => 'father']]])->guardians->first();
+
+    qpayCancel($this, $transaction, $stranger)->assertNotFound();
+
+    Http::assertNothingSent();
+    expect($transaction->refresh()->status)->toBe('pending');
+});
