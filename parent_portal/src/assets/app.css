@@ -226,6 +226,9 @@ dl.pp-group__body dd.pp-mono{font-weight:500}
 .pp-alert__title{display:block; font-weight:650}
 .pp-alert__btn{position:relative; display:inline-flex; align-items:center; align-self:center; flex:none; min-height:36px; padding:0 14px; border:0; border-radius:999px; background:var(--surface); color:var(--ink); font-size:14px; font-weight:650; box-shadow:0 0 0 1px var(--line)}
 .pp-alert__btn::after{content:""; position:absolute; inset:-4px}
+/* Under the alert's text instead of beside it (a follow-up, not the alert's one action). */
+.pp-alert__btn--below{gap:6px; margin-top:10px}
+.pp-alert__btn .fa-angle-right{font-size:17px; line-height:0; color:var(--ink-2)}
 
 /* A wait the parent can watch run down, inside an alert */
 .pp-countdown{display:flex; align-items:center; gap:8px; margin-top:9px; font-size:13.5px; color:var(--ink-2)}

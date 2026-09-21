@@ -30,6 +30,8 @@ const payError = ref('')
 // says when that is, so the wait is a ticking clock here rather than a time to watch for.
 const retryAt = ref(0)
 const freed = ref(false)
+// The reference of the top-up that is holding this one up: its page says where it stands.
+const pendingPun = ref('')
 const now = ref(Date.now())
 let ticker = 0
 
@@ -158,6 +160,7 @@ async function pay() {
     await goToPayment(payment)
   } catch (e) {
     payError.value = e.message
+    pendingPun.value = e.errors?.pun || ''
     holdUntil(e.errors?.retry_at)
     paying.value = false
   }
@@ -214,6 +217,9 @@ onUnmounted(stopTicker)
                 <b class="pp-countdown__time">{{ countdown }}</b>
                 <span>until you can try again</span>
               </span>
+              <RouterLink v-if="pendingPun" class="pp-alert__btn pp-alert__btn--below" :to="{ name: 'topup-result', params: { pun: pendingPun } }">
+                See that top-up<i class="fa fa-angle-right"></i>
+              </RouterLink>
             </span>
           </div>
 

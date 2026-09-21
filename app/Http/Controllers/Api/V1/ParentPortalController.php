@@ -337,7 +337,8 @@ class ParentPortalController extends Controller
      * 422 when the amount is outside the school's range, an earlier top-up is still
      * being confirmed, or online top-up is not set up. While an earlier top-up is
      * still being confirmed the error carries `data.retry_at` (ISO 8601), the moment
-     * paying becomes possible again — the portal counts down to it.
+     * paying becomes possible again — the portal counts down to it — and `data.pun`,
+     * that earlier top-up's reference, which the portal links to `#/topups/{pun}`.
      */
     public function startTopup(StartTopupRequest $request, int $account, StartTopupAction $action): JsonResponse
     {

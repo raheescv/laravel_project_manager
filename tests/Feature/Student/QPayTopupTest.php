@@ -248,12 +248,15 @@ it('blocks a second top-up while the first has no result, then inquires it after
     $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
     expect($blocked['success'])->toBeFalse()
         ->and($blocked['message'])->toContain('still being confirmed')
-        ->and($blocked['retry_at'])->toBe($retryAt->toIso8601String());
+        ->and($blocked['retry_at'])->toBe($retryAt->toIso8601String())
+        ->and($blocked['pun'])->toBe($first->pun);
 
+    // The portal links the parent back to the payment that is holding them up.
     $this->withToken(StudentWorld::parentToken($this->guardian))
         ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 50])
         ->assertStatus(422)
-        ->assertJsonPath('data.retry_at', $retryAt->toIso8601String());
+        ->assertJsonPath('data.retry_at', $retryAt->toIso8601String())
+        ->assertJsonPath('data.pun', $first->pun);
 
     Http::fake(fn () => Http::response(qpaySigned(['Status' => QPayClient::NOT_FOUND, 'StatusMessage' => 'Try to Inquiry about unfounded transaction'])));
     $this->travel(22)->minutes();
@@ -286,7 +289,7 @@ function qpayAnswersNothing(): void
 }
 
 it('counts the parent down instead of leaving them tapping an unanswerable block', function (): void {
-    qpayStart($this, 100);
+    $first = qpayStart($this, 100);
     $this->travel(22)->minutes();
     qpayAnswersNothing();
 
@@ -296,12 +299,14 @@ it('counts the parent down instead of leaving them tapping an unanswerable block
     // the Pay button live and the parent looped on the same sentence for ever.
     expect($blocked['success'])->toBeFalse()
         ->and($blocked['message'])->toContain('the school office can release it')
-        ->and($blocked['retry_at'])->toBe(now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String());
+        ->and($blocked['retry_at'])->toBe(now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String())
+        ->and($blocked['pun'])->toBe($first->pun);
 
     $this->withToken(StudentWorld::parentToken($this->guardian))
         ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 50])
         ->assertStatus(422)
-        ->assertJsonPath('data.retry_at', now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String());
+        ->assertJsonPath('data.retry_at', now()->addMinutes(StartPaymentAction::RETRY_AFTER_INQUIRY_MINUTES)->toIso8601String())
+        ->assertJsonPath('data.pun', $first->pun);
 });
 
 it('stops a payment QPay never answers for from blocking the card for ever', function (): void {

@@ -97,6 +97,7 @@ class StartPaymentAction
             // The caller can count the parent down to it rather than repeat the clock time.
             if ($th instanceof TopupInProgressException) {
                 $return['retry_at'] = $th->retryAt->toIso8601String();
+                $return['pun'] = $th->pun;
             }
         }
 
@@ -119,7 +120,7 @@ class StartPaymentAction
             $retryAt = $transaction->created_at->copy()->addMinutes(self::BROKEN_AFTER_MINUTES)->addMinute();
 
             if (now()->lt($retryAt)) {
-                throw new TopupInProgressException('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt);
+                throw new TopupInProgressException('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt, $transaction->pun);
             }
 
             (new InquireAction())->execute($transaction);
@@ -136,6 +137,7 @@ class StartPaymentAction
                 throw new TopupInProgressException(
                     'We are still confirming an earlier top-up with QPay. Please try again in a few minutes — if it still will not go through, the school office can release it for you.',
                     $retryAt,
+                    $transaction->pun,
                 );
             }
         }

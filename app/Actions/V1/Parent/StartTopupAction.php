@@ -44,8 +44,12 @@ class StartTopupAction
         $gateway = QpayTransaction::METHODS[$request->validated('method') ?: (GetStudentAction::methods()[0]['key'] ?? 'debit')];
         $response = (new StartPaymentAction())->execute($guardian, $student, (float) $request->validated('amount'), $lang, $gateway);
         if (! $response['success']) {
-            // A block on an unfinished top-up carries the moment it lifts, so the portal can count down to it.
-            throw new ParentPortalException($response['message'], array_filter(['retry_at' => $response['retry_at'] ?? null]));
+            // A block on an unfinished top-up carries the moment it lifts, so the portal can count
+            // down to it, and that top-up's reference, so the portal can link back to its result page.
+            throw new ParentPortalException($response['message'], array_filter([
+                'retry_at' => $response['retry_at'] ?? null,
+                'pun' => $response['pun'] ?? null,
+            ]));
         }
 
         $transaction = $response['data'];
