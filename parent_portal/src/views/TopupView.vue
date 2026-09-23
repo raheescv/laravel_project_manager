@@ -295,7 +295,9 @@ onUnmounted(stopTicker)
                 />
               </label>
             </div>
-            <p class="pp-group__foot" :class="{ 'is-error': hint.error }" aria-live="polite">{{ hint.text }}</p>
+            <p class="pp-group__foot" :class="{ 'is-error': hint.error }" aria-live="polite">
+              <i class="fa" :class="hint.error ? 'fa-exclamation-circle' : 'fa-info-circle'" aria-hidden="true"></i>{{ hint.text }}
+            </p>
           </section>
 
           <!-- Debit (QPay) or credit (Mastercard Gateway): shown as a choice only when the school offers both. -->
