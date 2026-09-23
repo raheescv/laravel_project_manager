@@ -59,6 +59,8 @@ const value = computed(() => {
 })
 const valid = computed(() => value.value !== null && value.value >= limits.value.min && value.value <= limits.value.max)
 const newBalance = computed(() => Number(student.value?.balance || 0) + (value.value || 0))
+/** The number written on the card face: what has been typed, or a resting zero. */
+const faceAmount = computed(() => plainAmount(value.value ?? 0))
 const cardState = computed(() => (!student.value?.has_card ? 'none' : student.value.card_blocked ? 'blocked' : 'active'))
 const payLabel = computed(() => {
   if (blocked.value) return `Try again in ${countdown.value}`
@@ -198,16 +200,40 @@ onUnmounted(stopTicker)
         <span v-else class="pp-skel pp-skel--title"></span>
       </div>
 
-      <div v-if="!desktop" class="pp-topup-card">
-        <StudentAvatar v-if="student" :name="student.name" :image="student.image_url" />
-        <span v-else class="pp-skel pp-avatar" aria-hidden="true"></span>
-        <span class="pp-row__main">
-          <span class="pp-row__sub">Current balance</span>
-          <b v-if="student" :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</b>
-          <span v-else class="pp-skel pp-skel--line" style="width: 100px; height: 20px"></span>
-        </span>
-        <span v-if="student && cardState === 'active'" class="pp-status pp-status--soft pp-status--active">Card active</span>
-        <span v-else-if="student && cardState === 'blocked'" class="pp-tag pp-tag--neg">Card blocked</span>
+      <div v-if="!desktop && !student" class="pp-face pp-face--skel" aria-hidden="true">
+        <div class="pp-face__top">
+          <span class="pp-skel pp-avatar"></span>
+          <span class="pp-face__who"><span class="pp-skel pp-skel--line" style="width: 120px"></span></span>
+        </div>
+        <span class="pp-face__label">Adding to balance</span>
+        <div class="pp-face__amt"><small>{{ school.currency.code }}</small><b>0.00</b></div>
+      </div>
+
+      <!-- The card the parent is filling: the amount is written onto its face. -->
+      <div v-else-if="!desktop" class="pp-face">
+        <div class="pp-face__top">
+          <StudentAvatar :name="student.name" :image="student.image_url" />
+          <span class="pp-face__who">
+            <b>{{ student.name }}</b>
+            <small v-if="student.class">{{ classLabel(student.class) }}</small>
+          </span>
+          <span v-if="cardState === 'active'" class="pp-face__chip"><i class="fa fa-check-circle"></i>Active</span>
+          <span v-else-if="cardState === 'blocked'" class="pp-face__chip"><i class="fa fa-ban"></i>Blocked</span>
+        </div>
+        <span class="pp-face__label">Adding to balance</span>
+        <div class="pp-face__amt" :class="{ 'is-empty': !valid }">
+          <small>{{ school.currency.code }}</small><b>{{ faceAmount }}</b>
+        </div>
+        <div class="pp-face__strip">
+          <span class="pp-face__stat">
+            <small><i class="fa fa-credit-card"></i>Balance now</small>
+            <b>{{ money(student.balance) }}</b>
+          </span>
+          <span class="pp-face__stat">
+            <small><i class="fa fa-arrow-circle-o-up"></i>After top-up</small>
+            <b>{{ valid ? money(newBalance) : '—' }}</b>
+          </span>
+        </div>
       </div>
 
       <div v-if="student && !limits.enabled" class="pp-alert pp-alert--warn" role="alert">
@@ -240,7 +266,7 @@ onUnmounted(stopTicker)
           </div>
 
           <section class="pp-group">
-            <h2 class="pp-group__head">Amount</h2>
+            <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-money"></i>Amount</span></h2>
             <div v-if="limits.suggestions.length" class="pp-chips" role="group" aria-label="Quick amounts">
               <button
                 v-for="suggestion in limits.suggestions"
@@ -274,27 +300,27 @@ onUnmounted(stopTicker)
 
           <!-- Debit (QPay) or credit (Mastercard Gateway): shown as a choice only when the school offers both. -->
           <section v-if="methods.length" class="pp-group">
-            <h2 class="pp-group__head">Pay with</h2>
-            <div class="pp-group__body" :role="methods.length > 1 ? 'radiogroup' : null" aria-label="Card type">
-              <template v-if="methods.length > 1">
-                <button
-                  v-for="option in methods"
-                  :key="option.key"
-                  class="pp-row pp-row--icon pp-method-row"
-                  type="button"
-                  role="radio"
-                  :aria-checked="chosen?.key === option.key"
-                  @click="chooseMethod(option.key)"
-                >
-                  <span class="pp-row__icon"><i class="fa" :class="methodIcon[option.key] || 'fa-credit-card'"></i></span>
-                  <span class="pp-row__main">
-                    <span class="pp-row__title">{{ option.label }}</span>
-                    <span class="pp-row__sub">{{ option.detail }}</span>
-                  </span>
-                  <span class="pp-check" aria-hidden="true"><i class="fa fa-check"></i></span>
-                </button>
-              </template>
-              <div v-else class="pp-row pp-row--icon">
+            <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-credit-card"></i>Pay with</span></h2>
+            <div v-if="methods.length > 1" class="pp-tiles" role="radiogroup" aria-label="Card type">
+              <button
+                v-for="option in methods"
+                :key="option.key"
+                class="pp-tile"
+                type="button"
+                role="radio"
+                :aria-checked="chosen?.key === option.key"
+                @click="chooseMethod(option.key)"
+              >
+                <span class="pp-tile__icon"><i class="fa" :class="methodIcon[option.key] || 'fa-credit-card'"></i></span>
+                <span>
+                  <span class="pp-tile__title">{{ option.label }}</span>
+                  <span class="pp-tile__sub">{{ option.detail }}</span>
+                </span>
+                <span class="pp-tile__check" aria-hidden="true"><i class="fa fa-check"></i></span>
+              </button>
+            </div>
+            <div v-else class="pp-group__body">
+              <div class="pp-row pp-row--icon">
                 <span class="pp-row__icon"><i class="fa" :class="methodIcon[chosen.key] || 'fa-credit-card'"></i></span>
                 <span class="pp-row__main">
                   <span class="pp-row__title">{{ chosen.label }}</span>
@@ -304,14 +330,6 @@ onUnmounted(stopTicker)
             </div>
           </section>
 
-          <section v-if="!desktop" class="pp-group">
-            <div class="pp-group__body">
-              <div class="pp-row">
-                <span class="pp-row__main"><span class="pp-row__title">New balance after top-up</span></span>
-                <b class="pp-row__value">{{ valid ? money(newBalance) : '—' }}</b>
-              </div>
-            </div>
-          </section>
         </form>
 
         <!-- Desktop: the phone's pay bar becomes a summary beside the form -->
