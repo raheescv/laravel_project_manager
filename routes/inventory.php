@@ -15,6 +15,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('', [InventoryController::class, 'index'])->name('index')->can('inventory.view');
         Route::get('search', [InventoryController::class, 'search'])->name('search')->can('inventory.product search')->middleware(EnsureBranchSelected::class);
         Route::get('stock-adjustment', [InventoryStockAdjustmentController::class, 'index'])->name('stock-adjustment')->can('inventory.stock adjustment');
+        Route::get('employee-transfer', [InventoryController::class, 'employeeTransfer'])->name('employee-transfer')->can('inventory.transfer')->middleware(EnsureBranchSelected::class);
         Route::post('stock-adjustment/save', [InventoryStockAdjustmentController::class, 'save'])->name('stock-adjustment.save')->can('inventory.stock adjustment');
         Route::name('product::')->prefix('product')->group(function (): void {
             Route::get('view/{id}', [InventoryController::class, 'view'])->name('view')->can('inventory.view');

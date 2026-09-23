@@ -20,6 +20,11 @@ class InventoryController extends Controller
         return Inertia::render('Inventory/ProductSearch');
     }
 
+    public function employeeTransfer()
+    {
+        return view('inventory.employee-transfer');
+    }
+
     public function view($product_id)
     {
         $product = Product::find($product_id);

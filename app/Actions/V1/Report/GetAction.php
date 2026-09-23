@@ -47,6 +47,7 @@ class GetAction
         $productId = $request->validated('product_id');
         $branchId = $request->validated('branch_id');
         $sort = $request->validated('sort');
+        $direction = $request->validated('direction') === 'asc' ? 'asc' : 'desc';
         $page = max(1, (int) ($request->validated('page') ?? 1));
         $perPage = min(100, max(1, (int) ($request->validated('per_page') ?? 20)));
 
@@ -57,9 +58,9 @@ class GetAction
         // They query line items joined to their headers, which the header
         // models' AssignedBranchScope never reaches, so the filter is explicit.
         [$rows, $summary, $total] = match ($type) {
-            'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage),
-            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $productType),
-            'categorywise' => $this->categoryWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $productType),
+            'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction),
+            'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction, $productType),
+            'categorywise' => $this->categoryWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction, $productType),
             'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
             // Bills are sale-level, so self-scope means "bills I rang up" —
             // created_by, the same set the Sales list and the dashboard cards
@@ -78,6 +79,8 @@ class GetAction
                 'employee_id' => $employeeId ? (string) $employeeId : null,
                 'product_id' => $productId ? (string) $productId : null,
                 'product_type' => $productType ?? null,
+                'sort' => $sort ?? 'amount',
+                'direction' => $direction,
             ],
             'summary' => $summary,
             'rows' => $rows,
@@ -88,6 +91,22 @@ class GetAction
                 'total' => $total,
             ],
         ];
+    }
+
+    /**
+     * The column a ranked breakdown is ordered by, for the `sort` the client
+     * asked for. Every breakdown carries the same four sorts; only the name of
+     * the amount column ([$amount]) and of the label column ([$label]) differ,
+     * so each one passes its own pair.
+     */
+    private function orderColumn(?string $sort, string $amount, string $label): string
+    {
+        return match ($sort) {
+            'quantity' => 'quantity',
+            'bills' => 'bills_count',
+            'name' => $label,
+            default => $amount,
+        };
     }
 
     /**
@@ -134,7 +153,7 @@ class GetAction
     /**
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function employeeWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage): array
+    private function employeeWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, string $direction): array
     {
         // Net of returns (sale items − return items) using base-unit quantities —
         // mirrors the web Employee Performance table & the overview, so the figures
@@ -190,7 +209,8 @@ class GetAction
         $totalRevenue = (float) (clone $wrapped)->sum('revenue');
 
         $rows = (clone $wrapped)
-            ->orderByDesc('revenue')
+            ->orderBy($this->orderColumn($sort, 'revenue', 'employee'), $direction)
+            ->orderBy('employee')
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($row) => [
@@ -218,7 +238,7 @@ class GetAction
      *
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, ?string $productType): array
+    private function itemWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, string $direction, ?string $productType): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -270,10 +290,9 @@ class GetAction
             ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(quantity), 0) as total_quantity')
             ->first();
 
-        $orderColumn = $sort === 'quantity' ? 'quantity' : 'total';
-
         $rows = (clone $wrapped)
-            ->orderByDesc($orderColumn)
+            ->orderBy($this->orderColumn($sort, 'total', 'item_name'), $direction)
+            ->orderBy('item_name')
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($row) => [
@@ -304,7 +323,7 @@ class GetAction
      *
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
-    private function categoryWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, ?string $productType): array
+    private function categoryWise(?string $startDate, ?string $endDate, ?int $employeeId, ?int $branchId, int $page, int $perPage, ?string $sort, string $direction, ?string $productType): array
     {
         $saleItems = SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -361,10 +380,8 @@ class GetAction
             ->selectRaw('COALESCE(SUM(total), 0) as total_amount, COALESCE(SUM(quantity), 0) as total_quantity')
             ->first();
 
-        $orderColumn = $sort === 'quantity' ? 'quantity' : 'total';
-
         $rows = (clone $wrapped)
-            ->orderByDesc($orderColumn)
+            ->orderBy($this->orderColumn($sort, 'total', 'category_name'), $direction)
             ->orderBy('category_name')
             ->forPage($page, $perPage)
             ->get()

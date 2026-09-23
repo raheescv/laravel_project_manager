@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QLOUD POS · Reports — Premium Preview (all pages, tablet + phone)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PREVIEW SHELL — mockup of the Flutter Reports screens.
+   Every report page (Overview · Breakdown · Filters & sorting)
+   shown on tablet and phone at once. Not shipped.
+   Emerald preset, light mode only — the real screens keep all
+   five skins; these tokens are lifted from palette.dart.
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:radial-gradient(60% 50% at 20% 0%,#1b2030,#0c0e16 70%);
+  min-height:100vh;color:#e8ebf5;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px 16px 60px;
+}
+.head{text-align:center;max-width:720px}
+.head h1{font-size:22px;font-weight:700;letter-spacing:-.2px;margin-bottom:6px}
+.head p{font-size:13px;color:#9aa3bd;line-height:1.55}
+.bar{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;position:sticky;top:0;z-index:20;
+  background:rgba(12,14,22,.86);backdrop-filter:blur(10px);padding:10px 14px;border-radius:16px;border:1px solid #242a3b}
+.grp{display:flex;flex-direction:column;gap:7px;align-items:center}
+.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:#7c86a4}
+.seg{display:flex;background:#171a26;border:1px solid #262b3d;border-radius:12px;padding:3px;gap:2px}
+.seg button{font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:#9aa3bd;padding:8px 13px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{background:#e8ebf5;color:#10131c}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+
+.stage{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%}
+.frame{display:flex;flex-direction:column;gap:9px;align-items:center}
+.frame .cap{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7c86a4}
+.notes{width:min(760px,100%);background:#141824;border:1px solid #242a3b;border-radius:18px;padding:18px}
+.notes h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.notes .tag{font-size:11px;color:#8b95b3;margin-bottom:12px}
+.notes ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px 20px}
+@media (max-width:760px){.notes ul{grid-template-columns:1fr}}
+.notes li{font-size:12.5px;line-height:1.5;color:#c5cbe0;padding-left:16px;position:relative}
+.notes li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:#7c86a4}
+.notes .note[hidden]{display:none}
+.notes b{color:#fff}
+
+/* ============================================================
+   DEVICE
+   ============================================================ */
+.device{flex:none;background:#05060a;border-radius:34px;padding:11px;
+  box-shadow:0 0 0 2px #20242f,0 30px 80px -30px rgba(0,0,0,.9),0 0 70px -24px var(--pri)}
+.device[data-w="tablet"]{width:1000px;max-width:96vw;height:700px}
+.device[data-w="phone"]{width:392px;max-width:96vw;height:780px;border-radius:46px;padding:13px}
+.screen{position:relative;width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.device[data-w="phone"] .screen{border-radius:36px}
+
+/* ---- tokens (emerald · light — palette.dart) ---- */
+.device{
+  --pri:#15806C;--pri-d:#0E5648;--acc:#C9A24B;--canvas:#F6F1E8;
+  --ink:#13211d;--ink2:#4b5a55;--muted:#8d9793;--hair:rgba(19,33,29,.09);--card:#fff;--inset:rgba(19,33,29,.04);
+  --shadow:0 1px 2px rgba(16,24,20,.04),0 10px 30px -14px rgba(16,24,20,.16);
+  --tint:color-mix(in srgb,var(--pri) 9%,transparent);--tint2:color-mix(in srgb,var(--pri) 16%,transparent);
+  --track:rgba(19,33,29,.07);--good:#1F9D63;--warn:#D9890C;--bad:#D4546A;--cyan:#0891B2;--violet:#7C3AED;
+}
+.serif{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   SHARED CHROME — command bar (tablet) / header (phone)
+   ============================================================ */
+.cmd{background:var(--card);border-bottom:1px solid var(--hair);padding:11px 22px 12px;display:flex;align-items:center;gap:18px;flex:none}
+.cmd .ttl{font-size:19px}
+.cmd .rng{display:inline-flex;align-items:center;gap:6px;margin-top:4px;background:var(--tint);color:var(--pri);border-radius:8px;padding:4px 9px 4px 7px;font-size:11px;font-weight:700}
+.cmd .right{margin-left:auto;display:flex;gap:9px;align-items:center}
+.sunk{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:13px;background:var(--inset);border:1px solid var(--hair)}
+.sunk > span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;cursor:default}
+.sunk > .on{background:var(--card);color:var(--pri);font-weight:800;border:1px solid var(--hair);box-shadow:var(--shadow)}
+.sunk .ico{width:30px;justify-content:center;padding:6px 0;color:var(--ink2)}
+.sunk .ico.live{background:linear-gradient(135deg,var(--pri),var(--pri-d));color:#fff;box-shadow:0 8px 16px -10px var(--pri)}
+.hdr{background:linear-gradient(135deg,var(--pri-d),var(--pri));color:#fff;padding:40px 18px 16px;border-radius:0 0 26px 26px;position:relative;overflow:hidden;flex:none}
+.hdr::after{content:"";position:absolute;right:-50px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 35%,transparent),transparent 70%)}
+.hdr .row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.hdr h3{font-size:21px}
+.hdr p{font-size:11.5px;opacity:.82;margin-top:2px}
+.hdr .acts{display:flex;gap:8px}
+.hbtn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;color:var(--acc)}
+.device[data-w="tablet"] .hdr{display:none}
+.device[data-w="phone"] .cmd{display:none}
+
+.page{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 20px 18px;gap:11px;position:relative}
+.device[data-w="phone"] .page{padding:12px 15px 16px;gap:10px}
+.tabsq{display:flex;align-self:flex-start;flex:none}
+.device[data-w="phone"] .tabsq{align-self:stretch}
+.device[data-w="phone"] .tabsq .sunk{flex:1}
+.device[data-w="phone"] .tabsq .sunk > span{flex:1;justify-content:center}
+
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);border:1px solid var(--hair)}
+.dir{flex:1;min-height:0;display:none;flex-direction:column;gap:11px}
+.device[data-dir="a"] .dirA,.device[data-dir="b"] .dirB,.device[data-dir="c"] .dirC{display:flex}
+.kicker{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:800;letter-spacing:.03em}
+.pill.gold{background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc)}
+.pill.quiet{background:var(--tint);color:var(--ink2)}
+.pill.good{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+
+/* ---- the filter/sort toolbar, shared by every breakdown direction ---- */
+.toolbar{display:flex;align-items:center;gap:10px;flex:none;flex-wrap:wrap}
+.toolbar .fgrp{display:flex;align-items:center;gap:7px}
+.toolbar .spacer{flex:1}
+.toolbar .fbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;background:var(--card);
+  border:1px solid var(--hair);box-shadow:var(--shadow);font-size:11.5px;font-weight:700;color:var(--ink2);cursor:pointer}
+.toolbar .fbtn b{color:var(--ink);font-weight:800}
+.toolbar .fbtn .dot{width:6px;height:6px;border-radius:50%;background:var(--pri)}
+.device[data-w="phone"] .toolbar{gap:8px}
+.device[data-w="phone"] .toolbar .spacer{display:none}
+.device[data-w="phone"] .toolbar > .sunk{width:100%}
+.device[data-w="phone"] .toolbar .sunk > span{flex:1;justify-content:center;padding:6px 4px;font-size:11px}
+.device[data-w="phone"] .toolbar .fgrp{flex:1}
+.device[data-w="phone"] .toolbar .fbtn{flex:1;justify-content:center}
+.device[data-w="phone"] .toolbar .fgrp .sunk{flex:1}
+
+/* ============================================================
+   A · LEDGER
+   ============================================================ */
+.ledger{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.lhead{display:grid;grid-template-columns:34px minmax(0,1fr) 62px 58px 122px 128px;align-items:center;gap:10px;
+  padding:11px 18px;border-bottom:1px solid var(--hair);background:var(--inset)}
+.lhead span{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}
+.lhead .r{justify-content:flex-end;text-align:right}
+.lhead .sorted{color:var(--pri)}
+.lrows{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.lrows::-webkit-scrollbar{display:none}
+.lrow{display:grid;grid-template-columns:34px minmax(0,1fr) 62px 58px 122px 128px;align-items:center;gap:10px;
+  padding:9px 18px;border-bottom:1px solid var(--hair)}
+.lrow:last-child{border-bottom:0}
+.lrow .rk{width:26px;height:26px;border-radius:9px;background:var(--inset);color:var(--ink2);display:grid;place-items:center;font-size:11px;font-weight:800}
+.lrow.top .rk{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 62%,#7a5c12));color:#fff;box-shadow:0 6px 14px -8px var(--acc)}
+.lrow .nm{min-width:0}
+.lrow .nm b{display:block;font-size:12.5px;font-weight:700;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .nm small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+.lrow .col{font-size:12px;font-weight:600;color:var(--ink2);text-align:right}
+.lrow .amt{font-size:13px;font-weight:800;text-align:right;letter-spacing:-.2px}
+.lrow .sh{display:flex;align-items:center;gap:8px}
+.lrow .sh .tr{flex:1;height:5px;border-radius:99px;background:var(--track);overflow:hidden}
+.lrow .sh .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--acc)))}
+.lrow .sh em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);width:32px;text-align:right}
+.lrow.zero .amt,.lrow.zero .col{color:var(--muted);font-weight:600}
+.lrow:hover{background:var(--inset)}
+.lfoot{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1.5px solid var(--hair);background:var(--inset);flex:none}
+.lfoot b.lab{font-size:12px;font-weight:800}
+.lfoot .tot{margin-left:auto;font-size:19px;color:var(--pri-d)}
+.device[data-w="phone"] .lhead,.device[data-w="phone"] .lrow{grid-template-columns:30px minmax(0,1fr) 96px;padding-left:13px;padding-right:13px}
+.device[data-w="phone"] .lhead .h-qty,.device[data-w="phone"] .lhead .h-bill,.device[data-w="phone"] .lhead .h-share,
+.device[data-w="phone"] .lrow .col{display:none}
+.device[data-w="phone"] .lrow .rk{grid-column:1;grid-row:1}
+.device[data-w="phone"] .lrow .nm{grid-column:2;grid-row:1}
+.device[data-w="phone"] .lrow .amt{grid-column:3;grid-row:1}
+.device[data-w="phone"] .lrow .sh{grid-column:2 / -1;grid-row:2;margin-top:6px}
+.device[data-w="phone"] .lfoot{padding:11px 13px}
+.device[data-w="phone"] .lfoot .pill{display:none}
+
+/* ============================================================
+   B · PODIUM
+   ============================================================ */
+.podium{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:11px;flex:none}
+.device[data-w="phone"] .podium{grid-template-columns:1fr 1fr;gap:9px}
+.pcard{padding:13px 14px;border-radius:18px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.device[data-w="phone"] .pcard.first{grid-column:1 / -1}
+.pcard .medal{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;font-size:11px;font-weight:900;background:var(--inset);color:var(--ink2)}
+.pcard.first{background:linear-gradient(135deg,var(--pri-d),var(--pri));border-color:transparent;color:#fff;box-shadow:0 18px 34px -20px var(--pri)}
+.pcard.first::after{content:"";position:absolute;right:-42px;top:-54px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 34%,transparent),transparent 70%)}
+.pcard.first .medal{background:color-mix(in srgb,var(--acc) 88%,#fff);color:#3b2b06}
+.pcard .rowtop{display:flex;align-items:center;gap:9px;position:relative;z-index:1}
+.pcard .rowtop .pill{margin-left:auto}
+.pcard.first .pill{background:rgba(255,255,255,.18);color:#fff}
+.pcard b.nm{display:block;margin-top:11px;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;z-index:1}
+.pcard .val{display:block;margin-top:5px;font-size:19px;position:relative;z-index:1}
+.pcard.first .val{font-size:24px;color:#fff}
+.pcard small.meta{display:block;margin-top:4px;font-size:10.5px;color:var(--muted);position:relative;z-index:1}
+.pcard.first small.meta{color:rgba(255,255,255,.78)}
+.pcard .tr{margin-top:10px;height:5px;border-radius:99px;background:var(--track);overflow:hidden;position:relative;z-index:1}
+.pcard.first .tr{background:rgba(255,255,255,.22)}
+.pcard .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--acc)))}
+.pcard.first .tr i{background:linear-gradient(90deg,var(--acc),#fff)}
+
+.tail{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.tail .th{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--hair)}
+.tail .th .pill{margin-left:auto}
+.tail .rows{flex:1;min-height:0;overflow:auto;scrollbar-width:none;padding:4px 8px 8px;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;align-content:start}
+.device[data-w="phone"] .tail .rows{grid-template-columns:1fr}
+.tail .rows::-webkit-scrollbar{display:none}
+.trow{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:12px}
+.trow:hover{background:var(--inset)}
+.trow .rk{width:22px;font-size:11px;font-weight:800;color:var(--muted);text-align:center}
+.trow .nm{min-width:0;flex:1}
+.trow .nm b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .nm .tr{display:block;margin-top:5px;height:4px;border-radius:99px;background:var(--track);overflow:hidden}
+.trow .nm .tr i{display:block;height:100%;background:color-mix(in srgb,var(--pri) 70%,transparent);border-radius:99px}
+.trow .rt{text-align:right}
+.trow .rt b{display:block;font-size:12.5px;font-weight:800}
+.trow .rt small{font-size:10px;color:var(--muted)}
+.trow.zero .rt b{color:var(--muted);font-weight:600}
+.bfoot{display:flex;align-items:center;padding:11px 16px;border-top:1.5px solid var(--hair);background:var(--inset);flex:none}
+.bfoot .tot{margin-left:auto;font-size:19px;color:var(--pri-d)}
+
+/* ============================================================
+   C · ANALYST SPLIT
+   ============================================================ */
+.split{flex:1;min-height:0;display:grid;grid-template-columns:262px minmax(0,1fr);gap:12px}
+.device[data-w="phone"] .split{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+.rail{display:flex;flex-direction:column;gap:11px;min-height:0}
+.rail .card{padding:13px}
+.fstack{display:flex;flex-direction:column;gap:11px}
+.fstack .blk .kicker{margin-bottom:7px;display:block}
+.vsunk{display:flex;flex-direction:column;gap:3px;padding:4px;border-radius:14px;background:var(--inset);border:1px solid var(--hair)}
+.vsunk span{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.vsunk .on{background:var(--card);color:var(--pri);font-weight:800;box-shadow:var(--shadow)}
+.vsunk .on .dot{background:var(--pri)}
+.vsunk .dot{width:6px;height:6px;border-radius:50%;background:var(--track)}
+.vsunk .cnt{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:700;font-style:normal}
+.rowsunk{display:flex;gap:3px;padding:4px;border-radius:13px;background:var(--inset);border:1px solid var(--hair)}
+.rowsunk span{flex:1;text-align:center;padding:7px 4px;border-radius:10px;font-size:11px;font-weight:600;color:var(--ink2)}
+.rowsunk .on{background:var(--card);color:var(--pri);font-weight:800;box-shadow:var(--shadow)}
+.summary{display:flex;align-items:center;gap:14px}
+.donut{width:86px;height:86px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:conic-gradient(var(--pri) 0 31%,color-mix(in srgb,var(--pri) 62%,var(--acc)) 31% 52%,color-mix(in srgb,var(--pri) 38%,transparent) 52% 69%,var(--track) 69% 100%)}
+.donut .hole{width:60px;height:60px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:14px;font-weight:800;line-height:1}
+.donut .hole small{font-size:8.5px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+.summary .stats{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.summary .stats div{display:flex;align-items:baseline;gap:6px}
+.summary .stats small{font-size:10.5px;color:var(--muted);font-weight:600}
+.summary .stats b{font-size:13px;font-weight:800;margin-left:auto}
+.gt{margin-top:12px;padding-top:11px;border-top:1px solid var(--hair);display:flex;align-items:baseline}
+.gt small{font-size:10px;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase}
+.gt b{margin-left:auto;font-size:19px;color:var(--pri-d)}
+.listcard{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.listcard .lh{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--hair)}
+.listcard .lh .pill{margin-left:auto}
+.listcard .rows{flex:1;min-height:0;overflow:auto;scrollbar-width:none;padding:5px 10px 10px}
+.listcard .rows::-webkit-scrollbar{display:none}
+.crow{display:flex;align-items:center;gap:11px;padding:10px;border-radius:13px}
+.crow:hover{background:var(--inset)}
+.crow.top{background:var(--tint)}
+.crow .ic{width:32px;height:32px;border-radius:11px;background:var(--inset);color:var(--pri);display:grid;place-items:center;flex:none}
+.crow.top .ic{background:color-mix(in srgb,var(--acc) 20%,transparent);color:var(--acc)}
+.crow .nm{flex:1;min-width:0}
+.crow .nm b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .nm .mt{display:flex;align-items:center;gap:8px;margin-top:5px}
+.crow .nm .tr{flex:1;height:4px;border-radius:99px;background:var(--track);overflow:hidden}
+.crow .nm .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--acc)))}
+.crow .nm small{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap}
+.crow .rt{text-align:right}
+.crow .rt b{display:block;font-size:13px;font-weight:800}
+.crow .rt small{font-size:10px;color:var(--muted);font-weight:700}
+.crow.zero .rt b{color:var(--muted);font-weight:600}
+.device[data-w="phone"] .rail .card.filters{display:none}
+.device[data-w="phone"] .rail .summary .stats{gap:6px}
+
+/* ============================================================
+   OVERVIEW PAGE
+   ============================================================ */
+.ovgrid{flex:1;min-height:0;overflow:auto;scrollbar-width:none;display:grid;grid-template-columns:1.05fr 1fr;gap:12px;align-items:start;align-content:start}
+.ovgrid::-webkit-scrollbar{display:none}
+.device[data-w="phone"] .ovgrid{grid-template-columns:1fr}
+.ovcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec{padding:14px}
+.sec .sh{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.sec .sh .ic{width:32px;height:32px;border-radius:11px;background:var(--tint);color:var(--pri);display:grid;place-items:center;flex:none}
+.sec .sh b{font-size:12.5px;font-weight:800}
+.sec .sh .pill{margin-left:auto}
+.hero{border-radius:16px;padding:14px 15px;background:linear-gradient(135deg,var(--pri-d),var(--pri));color:#fff;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 32%,transparent),transparent 70%)}
+.hero .k{font-size:9.5px;font-weight:800;letter-spacing:.11em;opacity:.85;text-transform:uppercase;position:relative;z-index:1}
+.hero .v{display:block;margin-top:5px;font-size:28px;position:relative;z-index:1}
+.hero .sub{display:flex;gap:16px;margin-top:11px;position:relative;z-index:1}
+.hero .sub div{font-size:10.5px;opacity:.85}
+.hero .sub b{display:block;font-size:13.5px;font-weight:800;margin-top:2px;opacity:1;white-space:nowrap}
+.device[data-w="phone"] .hero .sub{gap:12px}
+.device[data-w="phone"] .hero .sub div{font-size:10px}
+.device[data-w="phone"] .hero .sub b{font-size:12px}
+.tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:11px}
+.device[data-w="phone"] .tiles{grid-template-columns:1fr 1fr}
+.tile{border-radius:13px;padding:10px 11px;background:var(--inset);border-left:3px solid var(--c,var(--pri))}
+.tile small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.07em;color:var(--muted);text-transform:uppercase}
+.tile b{display:block;margin-top:4px;font-size:14px;font-weight:800;letter-spacing:-.2px}
+.strip{display:flex;gap:9px;margin-top:11px}
+.strip div{flex:1;border-radius:13px;padding:9px 11px;background:var(--inset);display:flex;align-items:center;gap:8px}
+.strip small{font-size:10.5px;color:var(--muted);font-weight:700}
+.strip b{margin-left:auto;font-size:14px;font-weight:800}
+.stack{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--track);margin-bottom:11px}
+.stack i{display:block;height:100%}
+.mtable{width:100%;border-collapse:collapse}
+.mtable th{font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;text-align:right;padding:0 0 7px}
+.mtable th:first-child{text-align:left}
+.mtable td{padding:7px 0;border-top:1px solid var(--hair);font-size:12px;font-weight:700;text-align:right}
+.mtable td:first-child{text-align:left;font-weight:700;display:flex;align-items:center;gap:7px}
+.mtable td .sw{width:8px;height:8px;border-radius:3px;flex:none}
+.mtable tr.zero td{color:var(--muted);font-weight:600}
+.chart{display:flex;align-items:stretch;gap:7px;height:126px;padding-top:6px}
+.chart .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+.chart .b i{width:100%;max-width:26px;min-height:5px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--pri),color-mix(in srgb,var(--pri) 45%,transparent))}
+.chart .b.max i{background:linear-gradient(180deg,var(--acc),color-mix(in srgb,var(--acc) 40%,transparent))}
+.chart .b span{font-size:9.5px;color:var(--muted);font-weight:700}
+.datecard{display:flex;align-items:center;gap:11px;padding:11px 12px;flex:none}
+.datecard .ic{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--acc);display:grid;place-items:center;flex:none}
+.datecard small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--muted)}
+.datecard b{display:block;font-size:15px;margin-top:1px}
+.datecard .go{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:11px;background:var(--inset);border:1px solid var(--hair);font-size:11px;font-weight:800;color:var(--ink2)}
+
+/* ============================================================
+   FILTERS & SORTING — tablet popover · phone sheet
+   ============================================================ */
+.scrim{position:absolute;inset:0;background:rgba(9,18,15,.42);z-index:5}
+.device[data-w="tablet"] .fsheet{position:absolute;top:70px;right:20px;width:400px;z-index:6;border-radius:20px;background:var(--card);
+  border:1px solid var(--hair);box-shadow:0 30px 60px -28px rgba(9,18,15,.55);overflow:hidden;
+  display:flex;flex-direction:column;max-height:calc(100% - 96px)}
+.device[data-w="phone"] .fsheet{position:absolute;left:0;right:0;bottom:0;z-index:6;border-radius:24px 24px 0 0;background:var(--card);
+  border-top:1px solid var(--hair);box-shadow:0 -22px 50px -26px rgba(9,18,15,.5);overflow:hidden;
+  display:flex;flex-direction:column;max-height:82%}
+.fsheet .fh{display:flex;align-items:center;gap:9px;padding:13px 16px;border-bottom:1px solid var(--hair)}
+.fsheet .fh b{font-size:13px;font-weight:800}
+.fsheet .fh .clear{margin-left:auto;font-size:11px;font-weight:800;color:var(--pri)}
+.fsheet .grab{width:38px;height:4px;border-radius:99px;background:var(--track);margin:8px auto 0}
+.device[data-w="tablet"] .fsheet .grab{display:none}
+.fbody{padding:13px 16px 16px;display:flex;flex-direction:column;gap:13px;flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.fbody::-webkit-scrollbar{display:none}
+.fblk .kicker{display:block;margin-bottom:7px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips span{padding:7px 12px;border-radius:11px;background:var(--inset);border:1px solid var(--hair);font-size:11.5px;font-weight:700;color:var(--ink2)}
+.chips .on{background:linear-gradient(135deg,var(--pri),var(--pri-d));color:#fff;border-color:transparent;box-shadow:0 10px 18px -12px var(--pri)}
+.dates{display:flex;gap:9px}
+.dates div{flex:1;border-radius:12px;border:1px solid var(--hair);background:var(--inset);padding:8px 11px}
+.dates small{display:block;font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.07em}
+.dates b{display:block;font-size:12.5px;margin-top:2px}
+.sortlist{display:flex;flex-direction:column;gap:3px;padding:4px;border-radius:14px;background:var(--inset);border:1px solid var(--hair)}
+.sortlist span{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:11px;font-size:12px;font-weight:600;color:var(--ink2)}
+.sortlist .on{background:var(--card);color:var(--ink);font-weight:800;box-shadow:var(--shadow)}
+.sortlist .on .tick{opacity:1}
+.sortlist .tick{margin-left:auto;color:var(--pri);opacity:0}
+.sortlist .dir{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:var(--pri);
+  background:var(--tint);border-radius:9px;padding:4px 8px}
+.pickrow{display:flex;align-items:center;gap:10px;border-radius:13px;border:1px solid var(--hair);background:var(--inset);padding:9px 11px}
+.pickrow .ic{width:28px;height:28px;border-radius:9px;background:var(--card);border:1px solid var(--hair);display:grid;place-items:center;color:var(--pri);flex:none}
+.pickrow small{display:block;font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.07em}
+.pickrow b{display:block;font-size:12.5px;margin-top:1px}
+.pickrow .chev{margin-left:auto;color:var(--muted)}
+.applied{display:flex;flex-wrap:wrap;gap:7px;flex:none}
+.applied .tagp{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:11px;background:var(--tint);color:var(--pri);font-size:11px;font-weight:800}
+.applied .tagp .x{opacity:.6}
+.applied .reset{padding:6px 10px;border-radius:11px;background:var(--inset);border:1px solid var(--hair);color:var(--ink2);font-size:11px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Reports — every page, tablet &amp; phone</h1>
+  <p>Overview, Breakdown and the new Filters &amp; sorting surface, side by side at both widths. <b>A · Ledger was chosen (2026-09-23) and is live in <code>reports_screen.dart</code></b> — B and C are kept here as the alternatives that were on the table.</p>
+</div>
+
+<div class="bar">
+  <div class="grp"><span class="lbl">Page</span>
+    <div class="seg">
+      <button data-page="overview" aria-pressed="false">Overview</button>
+      <button data-page="breakdown" aria-pressed="true">Breakdown</button>
+      <button data-page="filters" aria-pressed="false">Filters &amp; sort</button>
+    </div>
+  </div>
+  <div class="grp"><span class="lbl">Breakdown direction</span>
+    <div class="seg">
+      <button data-dir="a" aria-pressed="true">A · Ledger</button>
+      <button data-dir="b" aria-pressed="false">B · Podium</button>
+      <button data-dir="c" aria-pressed="false">C · Analyst</button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="frame">
+    <span class="cap">Tablet · 1000 × 700</span>
+    <div class="device" data-w="tablet" data-dir="a"><div class="screen"></div></div>
+  </div>
+  <div class="frame">
+    <span class="cap">Phone · 392 × 780</span>
+    <div class="device" data-w="phone" data-dir="a"><div class="screen"></div></div>
+  </div>
+</div>
+
+<aside class="notes">
+  <div class="note" data-for="overview">
+    <h2>Overview — same data, calmer frame</h2><div class="tag">Shared by all three directions</div>
+    <ul>
+      <li>Net sales stays the one hero; Gross and Discount ride inside it instead of taking their own tiles.</li>
+      <li>Six figure tiles, 3-up on tablet and 2-up on phone, each with a colour edge — no more half-empty rows.</li>
+      <li>Payment methods: one stacked share bar over a Method · Txns · Sales · Net table, zero rows muted.</li>
+      <li>By day keeps the bar chart; the best day is gold.</li>
+      <li>Tablet uses two columns so the page ends with the fold instead of a long scroll.</li>
+      <li>The date range lives in the command bar (tablet) / the filter card (phone) — one place, both screens.</li>
+    </ul>
+  </div>
+  <div class="note" data-for="filters" hidden>
+    <h2>Filters &amp; sorting — one surface, both screens</h2><div class="tag">Popover on tablet, bottom sheet on phone</div>
+    <ul>
+      <li>Everything that filters a report in one place: range presets, custom from/to, branch, staff, and product type.</li>
+      <li><b>Sort by</b> becomes explicit: Amount, Quantity, Bills or Name, each with a High→Low / Low→High toggle. Today the list is always "amount, highest first" with no way to say otherwise.</li>
+      <li>Click-and-go: tapping a value applies it and the list rebuilds — no Save button.</li>
+      <li>Applied filters show as removable chips above the list, so you always know what you're looking at.</li>
+      <li>On tablet the same sorts are also one tap away in the table's column headers (direction A).</li>
+      <li><b>Backend note:</b> the API takes <code>sort=amount|quantity</code> today. Bills/Name and the direction toggle need a small addition to <code>GetRequest</code> + <code>GetAction</code> — I'll do it with the port.</li>
+    </ul>
+  </div>
+  <div class="note" data-for="a" hidden>
+    <h2>A · Ledger</h2><div class="tag">Quiet chrome, the numbers do the work</div>
+    <ul>
+      <li>The three filter rows collapse into one toolbar line in the command bar's sunk-segment language — no more three fat gradient bars.</li>
+      <li>Rows become a real table: rank · name · qty · bills · share · amount, tabular figures lined up down the page.</li>
+      <li>Column headers name each number and double as sort buttons (the live one is tinted with an arrow).</li>
+      <li>Rank 1 gets a small gold numeral instead of a tinted card plus a TOP badge.</li>
+      <li>Grand total on a footer bar with the page counter beside it.</li>
+      <li>Phone drops Qty/Bills columns and moves the share bar under the name.</li>
+    </ul>
+  </div>
+  <div class="note" data-for="b" hidden>
+    <h2>B · Podium</h2><div class="tag">Best sellers first, the tail underneath</div>
+    <ul>
+      <li>Same one-line toolbar, then the top three on a podium: #1 as a brand card with amount, avg ticket and share.</li>
+      <li>Everything after rank 3 is a quiet two-column list on tablet, one column on phone — the width finally gets used.</li>
+      <li>Reads like a leaderboard; strongest for By Staff, still fine for items.</li>
+      <li>Grand total on the list footer.</li>
+    </ul>
+  </div>
+  <div class="note" data-for="c" hidden>
+    <h2>C · Analyst</h2><div class="tag">Filters + summary rail, list on the right</div>
+    <ul>
+      <li>Tablet splits: a left rail holds the breakdown/rank/type filters stacked with row counts, plus a share donut and the totals.</li>
+      <li>The list on the right is only the list — full height, no chrome above it, so roughly twice as many rows fit.</li>
+      <li>The donut answers "how concentrated are my sales?" (top 3 = 69%) at a glance.</li>
+      <li>Phone falls back to chips + list, so only tablet gains the rail.</li>
+    </ul>
+  </div>
+</aside>
+
+<!-- ============================================================
+     TEMPLATES — cloned into both devices, CSS adapts per width
+     ============================================================ -->
+<template id="chrome">
+  <div class="cmd">
+    <div>
+      <div class="serif ttl">Reports</div>
+      <div class="rng"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>1 – 23 Sep 2026 · All branches</div>
+    </div>
+    <div class="right">
+      <div class="sunk"><span>Today</span><span>7 Days</span><span>30 Days</span><span class="on">Month</span></div>
+      <div class="sunk">
+        <span class="ico filterbtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span>
+        <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg></span>
+        <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 9V3h10v6M7 19H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 15h10v6H7z"/></svg></span>
+      </div>
+    </div>
+  </div>
+  <div class="hdr">
+    <div class="row">
+      <div><h3 class="serif">Reports</h3><p>Every angle on your sales</p></div>
+      <div class="acts">
+        <div class="hbtn filterbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+        <div class="hbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 9V3h10v6M7 19H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 15h10v6H7z"/></svg></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tabs-overview">
+  <div class="tabsq"><div class="sunk">
+    <span class="on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 16l5-6 4 4 4-7 5 9"/></svg>Overview</span>
+    <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Breakdown</span>
+  </div></div>
+</template>
+<template id="tabs-breakdown">
+  <div class="tabsq"><div class="sunk">
+    <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 16l5-6 4 4 4-7 5 9"/></svg>Overview</span>
+    <span class="on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Breakdown</span>
+  </div></div>
+</template>
+
+<!-- ---------------- OVERVIEW ---------------- -->
+<template id="page-overview">
+  <div class="datecard card phoneonly">
+    <span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>
+    <span><small>DATE RANGE</small><b class="serif">1 – 23 Sep 2026</b></span>
+    <span class="go filterbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters</span>
+  </div>
+  <div class="ovgrid">
+    <div class="ovcol">
+      <div class="card sec">
+        <div class="sh"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 16l5-6 4 4 4-7 5 9"/></svg></span><b>Sales performance</b><span class="pill good">93% success</span></div>
+        <div class="hero">
+          <span class="k">Net sales</span>
+          <span class="v serif num">QAR 15,215.00</span>
+          <div class="sub">
+            <div>Gross<b class="num">QAR 16,140.00</b></div>
+            <div>Discount<b class="num">− QAR 925.00</b></div>
+            <div>Avg ticket<b class="num">QAR 371.10</b></div>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="tile" style="--c:var(--pri)"><small>Products</small><b class="num">12,880.00</b></div>
+          <div class="tile" style="--c:var(--violet)"><small>Services</small><b class="num">2,335.00</b></div>
+          <div class="tile" style="--c:var(--acc)"><small>Item total</small><b class="num">57</b></div>
+          <div class="tile" style="--c:var(--cyan)"><small>Collected</small><b class="num">14,110.00</b></div>
+          <div class="tile" style="--c:var(--warn)"><small>Credit</small><b class="num">1,105.00</b></div>
+          <div class="tile" style="--c:var(--bad)"><small>Returns</small><b class="num">925.00</b></div>
+        </div>
+        <div class="strip">
+          <div><small>Invoices</small><b class="num">41</b></div>
+          <div><small>Returns</small><b class="num">3</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="ovcol">
+      <div class="card sec">
+        <div class="sh"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10h18"/></svg></span><b>Payment methods</b><span class="pill quiet">44 txns</span></div>
+        <div class="stack">
+          <i style="width:53%;background:var(--pri)"></i>
+          <i style="width:33%;background:color-mix(in srgb,var(--pri) 55%,var(--acc))"></i>
+          <i style="width:10%;background:var(--cyan)"></i>
+          <i style="width:4%;background:var(--warn)"></i>
+        </div>
+        <table class="mtable">
+          <tr><th>Method</th><th>Txns</th><th>Sales</th><th>Net</th></tr>
+          <tr><td><i class="sw" style="background:var(--pri)"></i>Cash</td><td class="num">22</td><td class="num">7,420.00</td><td class="num">7,420.00</td></tr>
+          <tr><td><i class="sw" style="background:color-mix(in srgb,var(--pri) 55%,var(--acc))"></i>Card</td><td class="num">14</td><td class="num">4,960.00</td><td class="num">4,700.00</td></tr>
+          <tr><td><i class="sw" style="background:var(--cyan)"></i>Bank transfer</td><td class="num">5</td><td class="num">1,420.00</td><td class="num">1,420.00</td></tr>
+          <tr><td><i class="sw" style="background:var(--warn)"></i>Credit</td><td class="num">3</td><td class="num">570.00</td><td class="num">570.00</td></tr>
+          <tr class="zero"><td><i class="sw" style="background:var(--track)"></i>Wallet</td><td class="num">0</td><td class="num">0.00</td><td class="num">0.00</td></tr>
+        </table>
+      </div>
+      <div class="card sec">
+        <div class="sh"><span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><b>Sales by day</b><span class="pill gold">Best · Fri</span></div>
+        <div class="chart">
+          <div class="b"><i style="height:38%"></i><span>Mon</span></div>
+          <div class="b"><i style="height:52%"></i><span>Tue</span></div>
+          <div class="b"><i style="height:44%"></i><span>Wed</span></div>
+          <div class="b"><i style="height:66%"></i><span>Thu</span></div>
+          <div class="b max"><i style="height:100%"></i><span>Fri</span></div>
+          <div class="b"><i style="height:73%"></i><span>Sat</span></div>
+          <div class="b"><i style="height:30%"></i><span>Sun</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ---------------- BREAKDOWN ---------------- -->
+<template id="page-breakdown">
+  <div class="dir dirA">
+    <div class="toolbar tbar"></div>
+    <div class="applied">
+      <span class="tagp">Month · 1 – 23 Sep<i class="x">✕</i></span>
+      <span class="tagp">Sort · Amount ↓<i class="x">✕</i></span>
+      <span class="reset">Reset</span>
+    </div>
+    <div class="card ledger">
+      <div class="lhead">
+        <span>#</span><span>Item</span>
+        <span class="r h-qty">Qty</span><span class="r h-bill">Bills</span><span class="h-share">Share</span>
+        <span class="r sorted">Amount ↓</span>
+      </div>
+      <div class="lrows">
+        <div class="lrow top"><span class="rk">1</span><span class="nm"><b>ANKLETS RHODIUM</b><small>Silver · 12 sold · 9 bills</small></span><span class="col num">12</span><span class="col num">9</span><span class="sh"><i class="tr"><i style="width:100%"></i></i><em class="num">31%</em></span><span class="amt num">4,820.00</span></div>
+        <div class="lrow"><span class="rk">2</span><span class="nm"><b>CURB &amp; FIGARO BRACELETS</b><small>Silver · 8 sold · 7 bills</small></span><span class="col num">8</span><span class="col num">7</span><span class="sh"><i class="tr"><i style="width:67%"></i></i><em class="num">21%</em></span><span class="amt num">3,240.00</span></div>
+        <div class="lrow"><span class="rk">3</span><span class="nm"><b>BANGLES SILVER</b><small>Silver · 15 sold · 11 bills</small></span><span class="col num">15</span><span class="col num">11</span><span class="sh"><i class="tr"><i style="width:54%"></i></i><em class="num">17%</em></span><span class="amt num">2,615.00</span></div>
+        <div class="lrow"><span class="rk">4</span><span class="nm"><b>BABY BANGLES KM</b><small>Kids · 6 sold · 5 bills</small></span><span class="col num">6</span><span class="col num">5</span><span class="sh"><i class="tr"><i style="width:40%"></i></i><em class="num">12%</em></span><span class="amt num">1,910.00</span></div>
+        <div class="lrow"><span class="rk">5</span><span class="nm"><b>PENDANT SET GOLD PLATED</b><small>Gold plated · 3 sold · 3 bills</small></span><span class="col num">3</span><span class="col num">3</span><span class="sh"><i class="tr"><i style="width:27%"></i></i><em class="num">8%</em></span><span class="amt num">1,290.00</span></div>
+        <div class="lrow"><span class="rk">6</span><span class="nm"><b>CHAIN 22" RHODIUM</b><small>Silver · 9 sold · 6 bills</small></span><span class="col num">9</span><span class="col num">6</span><span class="sh"><i class="tr"><i style="width:18%"></i></i><em class="num">6%</em></span><span class="amt num">880.00</span></div>
+        <div class="lrow"><span class="rk">7</span><span class="nm"><b>EARRINGS STUD KM</b><small>Kids · 4 sold · 4 bills</small></span><span class="col num">4</span><span class="col num">4</span><span class="sh"><i class="tr"><i style="width:10%"></i></i><em class="num">3%</em></span><span class="amt num">460.00</span></div>
+        <div class="lrow"><span class="rk">8</span><span class="nm"><b>NOSE PIN KM</b><small>Kids · 2 sold · 2 bills</small></span><span class="col num">2</span><span class="col num">2</span><span class="sh"><i class="tr"><i style="width:6%"></i></i><em class="num">2%</em></span><span class="amt num">310.00</span></div>
+        <div class="lrow zero"><span class="rk">9</span><span class="nm"><b>TOE RING SILVER</b><small>Returned in full · 1 bill</small></span><span class="col num">0</span><span class="col num">1</span><span class="sh"><i class="tr"><i style="width:0"></i></i><em class="num">0%</em></span><span class="amt num">0.00</span></div>
+      </div>
+      <div class="lfoot"><b class="lab">Grand total</b><span class="pill quiet">9 of 24 loaded</span><span class="tot serif num">QAR 15,525.00</span></div>
+    </div>
+  </div>
+
+  <div class="dir dirB">
+    <div class="toolbar tbar"></div>
+    <div class="podium">
+      <div class="pcard first"><div class="rowtop"><span class="medal">1</span><span class="pill gold">TOP · 31%</span></div><b class="nm">ANKLETS RHODIUM</b><span class="val serif num">QAR 4,820.00</span><small class="meta">12 sold · 9 bills · QAR 402 avg</small><div class="tr"><i style="width:100%"></i></div></div>
+      <div class="pcard"><div class="rowtop"><span class="medal">2</span><span class="pill quiet">21%</span></div><b class="nm">CURB &amp; FIGARO</b><span class="val serif num">3,240.00</span><small class="meta">8 sold · 7 bills</small><div class="tr"><i style="width:67%"></i></div></div>
+      <div class="pcard"><div class="rowtop"><span class="medal">3</span><span class="pill quiet">17%</span></div><b class="nm">BANGLES SILVER</b><span class="val serif num">2,615.00</span><small class="meta">15 sold · 11 bills</small><div class="tr"><i style="width:54%"></i></div></div>
+    </div>
+    <div class="card tail">
+      <div class="th"><span class="kicker">The rest of the list</span><span class="pill quiet">9 of 24 loaded</span></div>
+      <div class="rows">
+        <div class="trow"><span class="rk num">4</span><span class="nm"><b>BABY BANGLES KM</b><i class="tr"><i style="width:40%"></i></i></span><span class="rt"><b class="num">1,910.00</b><small class="num">12%</small></span></div>
+        <div class="trow"><span class="rk num">5</span><span class="nm"><b>PENDANT SET GOLD</b><i class="tr"><i style="width:27%"></i></i></span><span class="rt"><b class="num">1,290.00</b><small class="num">8%</small></span></div>
+        <div class="trow"><span class="rk num">6</span><span class="nm"><b>CHAIN 22" RHODIUM</b><i class="tr"><i style="width:18%"></i></i></span><span class="rt"><b class="num">880.00</b><small class="num">6%</small></span></div>
+        <div class="trow"><span class="rk num">7</span><span class="nm"><b>EARRINGS STUD KM</b><i class="tr"><i style="width:10%"></i></i></span><span class="rt"><b class="num">460.00</b><small class="num">3%</small></span></div>
+        <div class="trow"><span class="rk num">8</span><span class="nm"><b>NOSE PIN KM</b><i class="tr"><i style="width:6%"></i></i></span><span class="rt"><b class="num">310.00</b><small class="num">2%</small></span></div>
+        <div class="trow zero"><span class="rk num">9</span><span class="nm"><b>TOE RING SILVER</b><i class="tr"><i style="width:0"></i></i></span><span class="rt"><b class="num">0.00</b><small class="num">0%</small></span></div>
+      </div>
+      <div class="bfoot"><b style="font-size:12px">Grand total</b><span class="tot serif num">QAR 15,525.00</span></div>
+    </div>
+  </div>
+
+  <div class="dir dirC">
+    <div class="split">
+      <div class="rail">
+        <div class="toolbar phoneonly"></div>
+        <div class="card filters">
+          <div class="fstack">
+            <div class="blk"><span class="kicker">Breakdown</span>
+              <div class="vsunk">
+                <span class="on"><i class="dot"></i>By Item<em class="cnt num">24</em></span>
+                <span><i class="dot"></i>By Category<em class="cnt num">7</em></span>
+                <span><i class="dot"></i>By Staff<em class="cnt num">5</em></span>
+              </div>
+            </div>
+            <div class="blk"><span class="kicker">Sort by</span>
+              <div class="vsunk">
+                <span class="on"><i class="dot"></i>Amount<em class="cnt">High → Low</em></span>
+                <span><i class="dot"></i>Quantity</span>
+                <span><i class="dot"></i>Name A–Z</span>
+              </div>
+            </div>
+            <div class="blk"><span class="kicker">Type</span>
+              <div class="rowsunk"><span class="on">All</span><span>Product</span><span>Service</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="summary">
+            <div class="donut"><div class="hole"><b class="num">69%</b><small>TOP 3</small></div></div>
+            <div class="stats">
+              <div><small>Items sold</small><b class="num">59</b></div>
+              <div><small>Bills</small><b class="num">44</b></div>
+              <div><small>Avg per item</small><b class="num">646.00</b></div>
+            </div>
+          </div>
+          <div class="gt"><small>Grand total</small><b class="serif num">QAR 15,525.00</b></div>
+        </div>
+      </div>
+      <div class="card listcard">
+        <div class="lh"><span class="kicker">Item breakdown</span><span class="pill quiet">9 of 24 loaded</span></div>
+        <div class="rows">
+          <div class="crow top"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>ANKLETS RHODIUM</b><span class="mt"><i class="tr"><i style="width:100%"></i></i><small class="num">12 sold · 9 bills</small></span></span><span class="rt"><b class="num">4,820.00</b><small class="num">31%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>CURB &amp; FIGARO BRACELETS</b><span class="mt"><i class="tr"><i style="width:67%"></i></i><small class="num">8 sold · 7 bills</small></span></span><span class="rt"><b class="num">3,240.00</b><small class="num">21%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>BANGLES SILVER</b><span class="mt"><i class="tr"><i style="width:54%"></i></i><small class="num">15 sold · 11 bills</small></span></span><span class="rt"><b class="num">2,615.00</b><small class="num">17%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>BABY BANGLES KM</b><span class="mt"><i class="tr"><i style="width:40%"></i></i><small class="num">6 sold · 5 bills</small></span></span><span class="rt"><b class="num">1,910.00</b><small class="num">12%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>PENDANT SET GOLD PLATED</b><span class="mt"><i class="tr"><i style="width:27%"></i></i><small class="num">3 sold · 3 bills</small></span></span><span class="rt"><b class="num">1,290.00</b><small class="num">8%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>CHAIN 22" RHODIUM</b><span class="mt"><i class="tr"><i style="width:18%"></i></i><small class="num">9 sold · 6 bills</small></span></span><span class="rt"><b class="num">880.00</b><small class="num">6%</small></span></div>
+          <div class="crow"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>EARRINGS STUD KM</b><span class="mt"><i class="tr"><i style="width:10%"></i></i><small class="num">4 sold · 4 bills</small></span></span><span class="rt"><b class="num">460.00</b><small class="num">3%</small></span></div>
+          <div class="crow zero"><span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg></span><span class="nm"><b>TOE RING SILVER</b><span class="mt"><i class="tr"><i style="width:0"></i></i><small class="num">Returned in full · 1 bill</small></span></span><span class="rt"><b class="num">0.00</b><small class="num">0%</small></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- the shared breakdown toolbar, injected into every direction -->
+<template id="toolbar">
+  <div class="sunk">
+    <span class="on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M3 11h18M8 7V4h8v3"/></svg>By Item</span>
+    <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 3l4 6H8l4-6zM6 13h6v6H6zM15 13h5v6h-5z"/></svg>By Category</span>
+    <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.9-4.6 5.5-4.6S14 16 14.6 19M17 11.5a2.6 2.6 0 1 0 0-5.2M18 19c-.2-2-.9-3.4-2-4.2"/></svg>By Staff</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="fgrp"><span class="kicker">Type</span><div class="sunk"><span class="on">All</span><span>Product</span><span>Service</span></div></div>
+  <div class="fgrp"><span class="fbtn filterbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Sort · <b>Amount ↓</b><i class="dot"></i></span></div>
+</template>
+
+<!-- ---------------- FILTERS & SORTING ---------------- -->
+<template id="fsheet">
+  <div class="scrim"></div>
+  <div class="fsheet">
+    <div class="grab"></div>
+    <div class="fh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M4 6h16M7 12h10M10 18h4"/></svg><b>Filters &amp; sorting</b><span class="clear">Reset all</span></div>
+    <div class="fbody">
+      <div class="fblk"><span class="kicker">Date range</span>
+        <div class="chips"><span>Today</span><span>Yesterday</span><span>7 Days</span><span>30 Days</span><span class="on">This month</span><span>Custom</span></div>
+        <div class="dates" style="margin-top:9px">
+          <div><small>FROM</small><b class="num">01 Sep 2026</b></div>
+          <div><small>TO</small><b class="num">23 Sep 2026</b></div>
+        </div>
+      </div>
+      <div class="fblk"><span class="kicker">Sort by</span>
+        <div class="sortlist">
+          <span class="on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v20M6 8l6-6 6 6"/></svg>Amount<em class="dir">High → Low ↓</em></span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7h16M4 12h10M4 17h6"/></svg>Quantity<i class="tick">✓</i></span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>Bills<i class="tick">✓</i></span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 7h14M5 12h14M5 17h9"/></svg>Name A–Z<i class="tick">✓</i></span>
+        </div>
+      </div>
+      <div class="fblk"><span class="kicker">Type</span>
+        <div class="chips"><span class="on">All</span><span>Product</span><span>Service</span></div>
+      </div>
+      <div class="fblk"><span class="kicker">Scope</span>
+        <div class="pickrow" style="margin-bottom:8px">
+          <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M4 21V8l8-5 8 5v13M9 21v-6h6v6"/></svg></span>
+          <span><small>BRANCH</small><b>All branches</b></span>
+          <i class="chev">›</i>
+        </div>
+        <div class="pickrow">
+          <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c.7-3.6 3.6-5.6 7-5.6s6.3 2 7 5.6"/></svg></span>
+          <span><small>STAFF</small><b>Everyone</b></span>
+          <i class="chev">›</i>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+const devices = [...document.querySelectorAll('.device')];
+const tpl = id => document.getElementById(id).content.cloneNode(true);
+let page = 'breakdown', dir = 'a';
+
+function render(){
+  devices.forEach(dev => {
+    dev.dataset.dir = dir;
+    const screen = dev.querySelector('.screen');
+    screen.replaceChildren();
+    screen.append(tpl('chrome'));
+
+    const pageEl = document.createElement('div');
+    pageEl.className = 'page';
+    pageEl.append(tpl(page === 'overview' ? 'tabs-overview' : 'tabs-breakdown'));
+    pageEl.append(tpl(page === 'overview' ? 'page-overview' : 'page-breakdown'));
+    screen.append(pageEl);
+    if (page === 'filters') screen.append(tpl('fsheet'));
+
+    // the breakdown toolbar is one component shared by all three directions
+    pageEl.querySelectorAll('.toolbar').forEach(t => t.append(tpl('toolbar')));
+    // C's rail carries the filters itself on tablet; the toolbar is phone-only there
+    pageEl.querySelectorAll('.dirC .toolbar').forEach(t => { t.style.display = dev.dataset.w === 'phone' ? 'flex' : 'none'; });
+    // the phone-only date card
+    pageEl.querySelectorAll('.phoneonly').forEach(el => { if (dev.dataset.w !== 'phone') el.remove(); });
+  });
+  document.querySelectorAll('.note').forEach(n => {
+    n.hidden = page === 'breakdown' ? n.dataset.for !== dir : n.dataset.for !== page;
+  });
+  document.querySelectorAll('[data-dir]').forEach(b => b.tagName === 'BUTTON' && b.setAttribute('aria-pressed', b.dataset.dir === dir));
+  document.querySelectorAll('[data-page]').forEach(b => b.setAttribute('aria-pressed', b.dataset.page === page));
+}
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.page) page = b.dataset.page;
+  if (b.dataset.dir){ dir = b.dataset.dir; if (page === 'overview') page = 'breakdown'; }
+  render();
+}));
+// clicking any filter button in the mock opens the filter surface
+document.addEventListener('click', e => {
+  if (e.target.closest('.filterbtn')){ page = 'filters'; render(); }
+  else if (e.target.closest('.scrim')){ page = 'breakdown'; render(); }
+});
+render();
+</script>
+</body>
+</html>

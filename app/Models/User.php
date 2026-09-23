@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -102,6 +103,14 @@ class User extends Authenticatable implements AuditableContracts
     public function branches()
     {
         return $this->hasMany(UserHasBranch::class, 'user_id');
+    }
+
+    /**
+     * Stock handed over to this employee and not yet returned or sold.
+     */
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(Inventory::class, 'employee_id');
     }
 
     public function tenant(): BelongsTo

@@ -2,12 +2,14 @@
         auth()->user()->can('inventory.product search') ||
         auth()->user()->can('inventory.barcode cart') ||
         auth()->user()->can('inventory transfer.create') ||
+        auth()->user()->can('inventory.transfer') ||
         auth()->user()->can('report.product'))
     <li class="nav-item has-sub">
         @php
             $list = [
                 'inventory',
                 'inventory/stock-adjustment',
+                'inventory/employee-transfer',
                 'inventory/product/*',
                 'inventory/search',
                 'inventory/transfer',
@@ -36,6 +38,12 @@
                 <li class="nav-item">
                     <a href="{{ route('inventory::search') }}"
                         class="nav-link {{ request()->is(['inventory/search']) ? 'active' : '' }}">Product Search</a>
+                </li>
+            @endcan
+            @can('inventory.transfer')
+                <li class="nav-item">
+                    <a href="{{ route('inventory::employee-transfer') }}"
+                        class="nav-link {{ request()->is(['inventory/employee-transfer']) ? 'active' : '' }}">Employee Transfer</a>
                 </li>
             @endcan
             @can('inventory.barcode cart')

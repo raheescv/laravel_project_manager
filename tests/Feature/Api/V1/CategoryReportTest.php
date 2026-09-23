@@ -119,6 +119,53 @@ it('ranks by quantity when asked', function (): void {
     expect(array_column($data['rows'], 'category_name'))->toBe(['Shoes', 'General']);
 });
 
+it('reverses the ranking when the direction is asc', function (): void {
+    $data = ($this->report)(['direction' => 'asc']);
+
+    expect(array_column($data['rows'], 'category_name'))->toBe(['Shoes', 'General'])
+        ->and($data['filters'])->toMatchArray(['sort' => 'amount', 'direction' => 'asc']);
+});
+
+it('sorts by name in either direction', function (): void {
+    expect(array_column(($this->report)(['sort' => 'name', 'direction' => 'asc'])['rows'], 'category_name'))
+        ->toBe(['General', 'Shoes'])
+        ->and(array_column(($this->report)(['sort' => 'name'])['rows'], 'category_name'))
+        ->toBe(['Shoes', 'General']);
+});
+
+it('sorts by bill count', function (): void {
+    // A second General-only bill, so the two categories no longer tie on bills.
+    ($this->sell)($this->world->user, [[
+        'productId' => $this->world->product->id,
+        'quantity' => 1,
+        'unitPrice' => (float) $this->world->product->mrp,
+        'discount' => 0,
+    ]]);
+    Sanctum::actingAs($this->world->user);
+
+    expect(array_column(($this->report)(['sort' => 'bills'])['rows'], 'category_name'))
+        ->toBe(['General', 'Shoes'])
+        ->and(array_column(($this->report)(['sort' => 'bills', 'direction' => 'asc'])['rows'], 'category_name'))
+        ->toBe(['Shoes', 'General']);
+});
+
+it('sorts the item breakdown by name too', function (): void {
+    $rows = $this->getJson($this->world->url('/api/v1/admin/reports?'.http_build_query([
+        'type' => 'itemwise', 'sort' => 'name', 'direction' => 'asc',
+    ])))->assertSuccessful()->json('data.rows');
+
+    $names = array_column($rows, 'item_name');
+    $sorted = $names;
+    sort($sorted, SORT_NATURAL | SORT_FLAG_CASE);
+
+    expect($names)->toHaveCount(3)->and($names)->toBe($sorted);
+});
+
+it('rejects an unknown sort', function (): void {
+    $this->getJson($this->world->url('/api/v1/admin/reports?type=itemwise&sort=magic'))
+        ->assertStatus(422);
+});
+
 it('applies the item type filter', function (): void {
     $data = ($this->report)(['product_type' => 'service']);
 

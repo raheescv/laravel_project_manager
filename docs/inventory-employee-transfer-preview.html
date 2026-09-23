@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventory ▸ Transfer to Employee — Premium Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+/* ============================================================
+   PREVIEW SHELL  (not shipped — mockup only)
+   Two design samples for a dedicated "Transfer stock to an
+   employee" page. Accent swatches stand in for the tenant's
+   settings theme colour (--bs-primary in the real app).
+   ============================================================ */
+:root{ --p:#4f46e5; --p-rgb:79,70,229; }
+*{ box-sizing:border-box; }
+body{ margin:0; padding:0 0 80px; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  background:#eaeef3; color:#0b1220; transition:background .2s,color .2s; }
+body[data-t="dark"]{ background:#12161b; color:#eef2f7; }
+
+.bar{ position:sticky; top:0; z-index:90; display:flex; gap:7px; justify-content:center; align-items:center; flex-wrap:wrap;
+  padding:10px 12px; background:rgba(255,255,255,.88); backdrop-filter:blur(12px); border-bottom:1px solid #dbe2ea; }
+body[data-t="dark"] .bar{ background:rgba(23,28,34,.9); border-color:#2e353d; }
+.bar button{ border:1px solid #cbd5e1; background:#fff; color:#0b1220; padding:7px 13px; border-radius:9px;
+  font-weight:750; font-size:12.5px; cursor:pointer; font-family:inherit; transition:.15s; }
+body[data-t="dark"] .bar button{ background:#262c33; color:#cbd5e1; border-color:#39414a; }
+.bar button:hover{ transform:translateY(-1px); }
+.bar button.on{ background:var(--p); color:#fff; border-color:var(--p); }
+.bar .sep{ width:1px; height:22px; background:#cbd5e1; margin:0 4px; }
+body[data-t="dark"] .bar .sep{ background:#3a424c; }
+.bar .lab{ font-size:10px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; opacity:.5; }
+.sw{ width:23px; height:23px; border-radius:7px; border:2px solid transparent; cursor:pointer; padding:0; }
+.sw.on{ border-color:#0b1220; box-shadow:0 0 0 2px #fff inset; }
+body[data-t="dark"] .sw.on{ border-color:#fff; box-shadow:0 0 0 2px #12161b inset; }
+
+.wrap{ max-width:1360px; margin:22px auto 0; padding:0 16px; }
+.stage{ container-type:inline-size; margin:0 auto; transition:max-width .25s; }
+.vlabel{ font-size:11.5px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:#64748b;
+  margin:0 auto 13px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.vlabel .tag{ background:var(--p); color:#fff; padding:3px 10px; border-radius:7px; font-size:10.5px; letter-spacing:.4px; }
+.vlabel .note{ text-transform:none; letter-spacing:0; font-weight:600; color:#94a3b8; font-size:11.5px; }
+.variant{ display:none; }
+.variant.show{ display:block; }
+
+/* ============================================================
+   SHARED DESIGN SYSTEM  ·  .ivx   (Inventory transfer)
+   In the real view this lives in one @once <style> block and all
+   colour derives from var(--bs-primary) + color-mix ramps.
+   ============================================================ */
+.ivx{
+  --acc:var(--p); --acc-rgb:var(--p-rgb);
+  --acc-d:color-mix(in srgb,var(--p),#000 16%);
+  --acc-deep:color-mix(in srgb,var(--p),#000 46%);
+  --tint:color-mix(in srgb,var(--p),transparent 92%);
+  --tint2:color-mix(in srgb,var(--p),transparent 84%);
+  --sf:#fff; --sf2:#f7f9fc; --sf3:#eef2f7;
+  --ink:#0b1220; --ink2:#38455c; --mut:#7b8798;
+  --ln:#e4e9f0; --lns:#eef1f6;
+  --ok:#0f9d58; --ok-rgb:15,157,88; --warn:#d97706; --warn-rgb:217,119,6; --bad:#dc2626; --bad-rgb:220,38,38;
+  --r:14px; --sh:0 1px 2px rgba(16,24,40,.05),0 14px 32px -22px rgba(16,24,40,.4);
+  --ivx-fz:13px;
+  font-size:var(--ivx-fz); color:var(--ink); line-height:1.45;
+}
+body[data-t="dark"] .ivx{
+  --sf:#1d232a; --sf2:#232a32; --sf3:#2a323b; --ink:#f1f5f9; --ink2:#c7d2e0; --mut:#8c9aac;
+  --ln:#333c46; --lns:#2c343d; --tint:color-mix(in srgb,var(--p),transparent 84%); --tint2:color-mix(in srgb,var(--p),transparent 74%);
+  --sh:0 1px 2px rgba(0,0,0,.3),0 16px 34px -24px rgba(0,0,0,.9);
+}
+.ivx *{ box-sizing:border-box; }
+.ivx .card{ background:var(--sf); border:1px solid var(--ln); border-radius:var(--r); box-shadow:var(--sh); }
+.ivx .num{ font-variant-numeric:tabular-nums; }
+.ivx .k{ font-size:9.5px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--mut); }
+.ivx .muted{ color:var(--mut); }
+
+/* buttons */
+.ivx .btn{ border:1px solid var(--ln); background:var(--sf); color:var(--ink2); padding:8px 14px; border-radius:10px;
+  font-size:12.5px; font-weight:750; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+  transition:.15s; white-space:nowrap; }
+.ivx .btn:hover{ background:var(--sf2); transform:translateY(-1px); }
+.ivx .btn.pri{ background:linear-gradient(180deg,var(--acc),var(--acc-d)); border-color:var(--acc-d); color:#fff;
+  box-shadow:0 9px 20px -10px rgba(var(--acc-rgb),.85); }
+.ivx .btn.pri:disabled{ background:var(--sf3); border-color:var(--ln); color:var(--mut); box-shadow:none; cursor:not-allowed; transform:none; }
+.ivx .btn.gho{ background:transparent; }
+.ivx .btn.lg{ padding:12px 18px; font-size:13.5px; border-radius:12px; }
+.ivx .btn.block{ width:100%; justify-content:center; }
+.ivx .icobtn{ width:30px; height:30px; padding:0; justify-content:center; border-radius:9px; }
+
+/* chips / pills */
+.ivx .pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px;
+  font-size:10px; font-weight:800; letter-spacing:.4px; background:var(--sf3); color:var(--ink2); }
+.ivx .pill.acc{ background:var(--tint2); color:var(--acc); }
+.ivx .pill.ok{ background:rgba(var(--ok-rgb),.14); color:var(--ok); }
+.ivx .pill.warn{ background:rgba(var(--warn-rgb),.14); color:var(--warn); }
+.ivx .pill.bad{ background:rgba(var(--bad-rgb),.14); color:var(--bad); }
+.ivx code.bc{ font-size:10.5px; background:var(--sf3); border:1px solid var(--lns); border-radius:6px; padding:1px 6px; color:var(--ink2); }
+
+/* avatar */
+.ivx .av{ flex:none; width:38px; height:38px; border-radius:12px; display:grid; place-items:center; color:#fff;
+  font-weight:800; font-size:13px; letter-spacing:.3px; background:linear-gradient(145deg,var(--acc),var(--acc-deep));
+  box-shadow:0 8px 18px -10px rgba(var(--acc-rgb),.9); }
+.ivx .av.sm{ width:30px; height:30px; border-radius:10px; font-size:11px; }
+.ivx .av.lg{ width:50px; height:50px; border-radius:15px; font-size:17px; }
+.ivx .av.n1{ background:linear-gradient(145deg,#0ea5e9,#075985); box-shadow:none; }
+.ivx .av.n2{ background:linear-gradient(145deg,#10b981,#065f46); box-shadow:none; }
+.ivx .av.n3{ background:linear-gradient(145deg,#f59e0b,#92400e); box-shadow:none; }
+.ivx .av.n4{ background:linear-gradient(145deg,#ec4899,#9d174d); box-shadow:none; }
+.ivx .av.n5{ background:linear-gradient(145deg,#8b5cf6,#4c1d95); box-shadow:none; }
+.ivx .av.n6{ background:linear-gradient(145deg,#ef4444,#7f1d1d); box-shadow:none; }
+
+/* ---------- the searchable picker (TomSelect look, hand-rolled) ---------- */
+.ivx .pick{ position:relative; }
+.ivx .pick-field{ display:flex; align-items:center; gap:9px; background:var(--sf2); border:1.5px solid var(--ln);
+  border-radius:12px; padding:0 12px; transition:.15s; }
+.ivx .pick-field:focus-within{ border-color:var(--acc); background:var(--sf); box-shadow:0 0 0 4px var(--tint); }
+.ivx .pick-field > i{ color:var(--mut); font-size:14px; }
+.ivx .pick-field input{ flex:1; border:0; background:transparent; outline:none; font-family:inherit; font-size:13px;
+  color:var(--ink); padding:12px 0; min-width:0; }
+.ivx .pick-field input::placeholder{ color:var(--mut); }
+.ivx .pick-field kbd{ font-family:inherit; font-size:9.5px; font-weight:800; color:var(--mut); background:var(--sf3);
+  border:1px solid var(--lns); border-bottom-width:2px; border-radius:6px; padding:2px 6px; }
+.ivx .pick-menu{ position:absolute; inset-inline:0; top:calc(100% + 7px); z-index:50; background:var(--sf);
+  border:1px solid var(--ln); border-radius:13px; box-shadow:0 22px 48px -18px rgba(16,24,40,.42); overflow:hidden; display:none; }
+body[data-t="dark"] .ivx .pick-menu{ box-shadow:0 22px 48px -14px rgba(0,0,0,.8); }
+.ivx .pick.open .pick-menu{ display:block; }
+.ivx .pick-scroll{ max-height:310px; overflow:auto; }
+.ivx .pick-head{ padding:7px 13px; background:var(--sf2); border-bottom:1px solid var(--lns); display:flex; justify-content:space-between; align-items:center; }
+.ivx .pick-opt{ display:flex; align-items:center; gap:11px; padding:9px 13px; cursor:pointer; border-bottom:1px solid var(--lns); }
+.ivx .pick-opt:last-child{ border-bottom:0; }
+.ivx .pick-opt:hover,.ivx .pick-opt.hl{ background:var(--tint); }
+.ivx .pick-opt .nm{ font-weight:700; font-size:12.5px; }
+.ivx .pick-opt .sub{ font-size:11px; color:var(--mut); margin-top:1px; display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.ivx .pick-opt .end{ margin-inline-start:auto; text-align:end; flex:none; }
+.ivx .pick-opt mark{ background:var(--tint2); color:var(--acc); border-radius:3px; padding:0 1px; }
+.ivx .pick-empty{ padding:22px 14px; text-align:center; color:var(--mut); font-size:12px; }
+.ivx .pick-foot{ padding:7px 13px; background:var(--sf2); border-top:1px solid var(--lns); font-size:10.5px; color:var(--mut);
+  display:flex; gap:12px; flex-wrap:wrap; }
+
+/* ---------- inputs ---------- */
+.ivx label.fl{ display:block; font-size:11px; font-weight:800; letter-spacing:.4px; text-transform:uppercase;
+  color:var(--mut); margin-bottom:6px; }
+.ivx .inp{ width:100%; border:1.5px solid var(--ln); background:var(--sf2); border-radius:11px; padding:10px 12px;
+  font-family:inherit; font-size:13px; color:var(--ink); outline:none; transition:.15s; }
+.ivx .inp:focus{ border-color:var(--acc); background:var(--sf); box-shadow:0 0 0 4px var(--tint); }
+.ivx textarea.inp{ resize:vertical; min-height:74px; }
+.ivx .req{ color:var(--bad); }
+
+/* ---------- qty stepper ---------- */
+.ivx .qty{ display:inline-flex; align-items:center; background:var(--sf2); border:1.5px solid var(--ln); border-radius:11px; overflow:hidden; }
+.ivx .qty:focus-within{ border-color:var(--acc); box-shadow:0 0 0 4px var(--tint); }
+.ivx .qty button{ width:32px; height:34px; border:0; background:transparent; color:var(--ink2); font-size:13px; cursor:pointer; font-family:inherit; }
+.ivx .qty button:hover{ background:var(--tint2); color:var(--acc); }
+.ivx .qty input{ width:58px; border:0; background:transparent; text-align:center; font-family:inherit; font-size:13.5px;
+  font-weight:800; color:var(--ink); outline:none; font-variant-numeric:tabular-nums; }
+.ivx .qty.over{ border-color:var(--bad); box-shadow:0 0 0 4px rgba(var(--bad-rgb),.12); }
+</style>
+<style>
+/* ============================================================
+   A · "DISPATCH DESK"  — one screen, sticky deck + sticky rail
+   ============================================================ */
+.va .deck{ position:sticky; top:50px; z-index:45; background:var(--sf); border:1px solid var(--ln); border-radius:var(--r);
+  box-shadow:var(--sh); margin-bottom:13px; overflow:hidden; }
+.va .deck-top{ display:flex; align-items:center; gap:13px; padding:12px 15px; flex-wrap:wrap; }
+.va .dmark{ width:40px; height:40px; border-radius:13px; display:grid; place-items:center; font-size:17px; color:#fff;
+  background:linear-gradient(145deg,var(--acc-d),var(--acc-deep)); box-shadow:0 9px 20px -10px rgba(var(--acc-rgb),.85); }
+.va .dtitle{ font-size:16px; font-weight:800; letter-spacing:-.25px; }
+.va .dsub{ font-size:11px; color:var(--mut); margin-top:2px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.va .spacer{ flex:1; }
+.va .readout{ display:flex; gap:16px; padding-inline-end:14px; margin-inline-end:4px; border-inline-end:1px solid var(--ln); }
+.va .readout .v{ font-size:19px; font-weight:800; letter-spacing:-.4px; font-variant-numeric:tabular-nums; line-height:1.15; }
+.va .flow{ display:flex; align-items:stretch; border-top:1px solid var(--lns); background:var(--sf2); }
+.va .flow .node{ display:flex; align-items:center; gap:9px; padding:9px 15px; flex:1; min-width:0; }
+.va .flow .node + .node{ border-inline-start:1px solid var(--lns); }
+.va .flow .arrow{ display:grid; place-items:center; width:40px; color:var(--mut); font-size:13px; background:var(--sf3); flex:none; }
+.va .flow .nm{ font-weight:750; font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.va .flow .node.ghost .nm{ color:var(--mut); font-weight:600; font-style:italic; }
+
+.va .work{ display:grid; grid-template-columns:minmax(0,1fr) 352px; gap:13px; align-items:start; }
+.va .rail{ position:sticky; top:158px; display:flex; flex-direction:column; gap:13px; }
+
+.va .sec-h{ display:flex; align-items:center; gap:10px; padding:12px 15px 11px; border-bottom:1px solid var(--lns); }
+.va .sec-h .step{ width:23px; height:23px; border-radius:8px; display:grid; place-items:center; font-size:11px; font-weight:800;
+  background:var(--tint2); color:var(--acc); flex:none; }
+.va .sec-h h3{ margin:0; font-size:13.5px; font-weight:800; letter-spacing:-.15px; }
+.va .sec-h .hint{ font-size:11px; color:var(--mut); }
+.va .sec-b{ padding:14px 15px; }
+
+/* selected recipient */
+.va .who{ display:flex; align-items:center; gap:13px; padding:13px 14px; border-radius:13px;
+  background:linear-gradient(135deg,var(--tint),transparent 70%); border:1.5px solid var(--acc); }
+.va .who .nm{ font-size:14.5px; font-weight:800; letter-spacing:-.2px; }
+.va .who .sub{ font-size:11.5px; color:var(--mut); margin-top:2px; }
+.va .who .stats{ display:flex; gap:7px; margin-top:7px; flex-wrap:wrap; }
+.va .who .end{ margin-inline-start:auto; display:flex; gap:7px; flex:none; }
+
+/* recent employees quick row */
+.va .quick{ display:flex; gap:8px; flex-wrap:wrap; margin-top:11px; }
+.va .qchip{ display:flex; align-items:center; gap:8px; padding:6px 11px 6px 6px; border-radius:999px; cursor:pointer;
+  background:var(--sf2); border:1px solid var(--ln); font-size:12px; font-weight:700; color:var(--ink2); transition:.15s; }
+.va .qchip:hover{ border-color:var(--acc); color:var(--acc); transform:translateY(-1px); }
+
+/* items table */
+.va .tbl{ width:100%; border-collapse:collapse; }
+.va .tbl th{ font-size:9.5px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--mut);
+  text-align:start; padding:9px 12px; background:var(--sf2); border-bottom:1px solid var(--ln); white-space:nowrap; }
+.va .tbl td{ padding:11px 12px; border-bottom:1px solid var(--lns); vertical-align:middle; }
+.va .tbl tr:last-child td{ border-bottom:0; }
+.va .tbl tr:hover td{ background:var(--sf2); }
+.va .tbl .e{ text-align:end; }
+.va .pname{ font-weight:750; font-size:12.5px; }
+.va .pmeta{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px; }
+.va .thumb{ width:40px; height:40px; border-radius:10px; background:var(--sf3); border:1px solid var(--lns); display:grid;
+  place-items:center; color:var(--mut); font-size:15px; flex:none; }
+.va .cellwrap{ display:flex; gap:11px; align-items:center; }
+.va .rowlabel{ display:none; }
+
+.va .empty{ padding:40px 18px; text-align:center; }
+.va .empty .big{ width:56px; height:56px; border-radius:18px; margin:0 auto 12px; display:grid; place-items:center;
+  background:var(--tint2); color:var(--acc); font-size:23px; }
+.va .empty h4{ margin:0 0 5px; font-size:14px; font-weight:800; }
+.va .empty p{ margin:0; font-size:12px; color:var(--mut); }
+
+/* summary rail */
+.va .sum{ display:flex; flex-direction:column; gap:1px; background:var(--lns); border-radius:12px; overflow:hidden; border:1px solid var(--ln); }
+.va .sum .r{ display:flex; justify-content:space-between; align-items:center; padding:10px 13px; background:var(--sf); }
+.va .sum .r .lbl{ font-size:11.5px; color:var(--ink2); font-weight:650; }
+.va .sum .r .val{ font-size:13.5px; font-weight:800; font-variant-numeric:tabular-nums; }
+.va .sum .r.total{ background:var(--tint); }
+.va .sum .r.total .val{ font-size:17px; color:var(--acc); }
+.va .reasons{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:9px; }
+.va .rchip{ font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; background:var(--sf2); border:1px dashed var(--ln);
+  color:var(--ink2); cursor:pointer; font-family:inherit; }
+.va .rchip:hover,.va .rchip.on{ border-style:solid; border-color:var(--acc); background:var(--tint); color:var(--acc); }
+.va .guard{ display:flex; gap:9px; padding:10px 12px; border-radius:11px; background:rgba(var(--warn-rgb),.1);
+  border:1px solid rgba(var(--warn-rgb),.28); font-size:11.5px; color:var(--ink2); line-height:1.5; }
+.va .guard i{ color:var(--warn); font-size:14px; margin-top:1px; }
+
+/* ============================================================
+   B · "GUIDED JOURNEY" — 3 steps, tap-first, phone friendly
+   ============================================================ */
+.vb .hero{ border-radius:var(--r); padding:17px 18px; margin-bottom:13px; color:#fff; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,var(--acc-deep),var(--acc)); box-shadow:0 18px 38px -22px rgba(var(--acc-rgb),.95); }
+.vb .hero::after{ content:""; position:absolute; inset-inline-end:-60px; top:-70px; width:230px; height:230px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.2),transparent 68%); }
+.vb .hero h2{ margin:0; font-size:19px; font-weight:800; letter-spacing:-.4px; position:relative; }
+.vb .hero p{ margin:4px 0 0; font-size:12px; opacity:.85; position:relative; }
+.vb .steps{ display:flex; gap:8px; margin-top:15px; position:relative; }
+.vb .st{ flex:1; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18); border-radius:12px;
+  padding:9px 11px; display:flex; gap:9px; align-items:center; min-width:0; cursor:pointer; transition:.18s; }
+.vb .st .n{ width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.22); display:grid; place-items:center;
+  font-size:11px; font-weight:800; flex:none; }
+.vb .st .t{ display:block; font-size:11.5px; font-weight:750; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vb .st .d{ display:block; font-size:10px; opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+.vb .st.on{ background:#fff; color:var(--acc-deep); border-color:#fff; box-shadow:0 10px 22px -14px rgba(0,0,0,.6); }
+.vb .st.on .n{ background:var(--acc); color:#fff; }
+.vb .st.done .n{ background:#fff; color:var(--acc-deep); }
+
+.vb .pane{ display:none; }
+.vb .pane.show{ display:block; }
+.vb .pane-h{ padding:14px 16px 12px; border-bottom:1px solid var(--lns); }
+.vb .pane-h h3{ margin:0; font-size:15px; font-weight:800; letter-spacing:-.2px; }
+.vb .pane-h p{ margin:3px 0 0; font-size:12px; color:var(--mut); }
+.vb .pane-b{ padding:15px 16px; }
+
+/* employee card grid (tap, don't hunt a dropdown) */
+.vb .egrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:10px; margin-top:13px; }
+.vb .ecard{ display:flex; gap:11px; align-items:center; padding:12px; border-radius:13px; border:1.5px solid var(--ln);
+  background:var(--sf2); cursor:pointer; transition:.16s; text-align:start; font-family:inherit; }
+.vb .ecard:hover{ border-color:var(--acc); background:var(--sf); transform:translateY(-2px); box-shadow:var(--sh); }
+.vb .ecard.on{ border-color:var(--acc); background:var(--tint); }
+.vb .ecard .nm{ font-size:13px; font-weight:800; }
+.vb .ecard .sub{ font-size:11px; color:var(--mut); margin-top:2px; }
+.vb .ecard .tick{ margin-inline-start:auto; color:var(--acc); font-size:15px; opacity:0; flex:none; }
+.vb .ecard.on .tick{ opacity:1; }
+
+/* scan-first item entry */
+.vb .scan{ display:flex; gap:10px; align-items:stretch; }
+.vb .scan .pick{ flex:1; }
+.vb .lines{ display:flex; flex-direction:column; gap:9px; margin-top:14px; }
+.vb .line{ display:flex; gap:12px; align-items:center; padding:11px 12px; border:1px solid var(--ln); border-radius:13px; background:var(--sf2); }
+.vb .line .nm{ font-size:13px; font-weight:750; }
+.vb .line .meta{ font-size:11px; color:var(--mut); margin-top:3px; display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.vb .line .end{ margin-inline-start:auto; display:flex; align-items:center; gap:10px; flex:none; }
+
+/* review */
+.vb .revgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+.vb .rev{ padding:12px 13px; border-radius:12px; background:var(--sf2); border:1px solid var(--ln); }
+.vb .rev .v{ font-size:17px; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; }
+.vb .revlist{ margin-top:12px; border:1px solid var(--ln); border-radius:12px; overflow:hidden; }
+.vb .revlist .rr{ display:flex; gap:10px; align-items:center; padding:10px 13px; border-bottom:1px solid var(--lns); background:var(--sf); }
+.vb .revlist .rr:last-child{ border-bottom:0; }
+.vb .revlist .rr .e{ margin-inline-start:auto; font-weight:800; font-variant-numeric:tabular-nums; }
+
+.vb .foot{ position:sticky; bottom:0; margin-top:13px; display:flex; gap:10px; align-items:center; padding:11px 14px;
+  background:var(--sf); border:1px solid var(--ln); border-radius:var(--r); box-shadow:0 -10px 30px -22px rgba(16,24,40,.5); }
+.vb .foot .info{ font-size:11.5px; color:var(--mut); }
+.vb .foot .info b{ color:var(--ink); font-size:13px; }
+.vb .foot .sp{ flex:1; }
+
+/* ============================================================
+   RESPONSIVE — container queries so the width switcher is honest
+   ============================================================ */
+@container (max-width:1080px){
+  .va .work{ grid-template-columns:minmax(0,1fr); }
+  .va .rail{ position:static; }
+  .va .readout{ border:0; padding:0; margin:0; }
+}
+@container (max-width:760px){
+  .va .deck-top{ gap:10px; }
+  .va .deck-top .dact{ width:100%; display:flex; gap:8px; }
+  .va .deck-top .dact .btn{ flex:1; justify-content:center; }
+  .va .flow{ flex-direction:column; }
+  .va .flow .node + .node{ border-inline-start:0; border-top:1px solid var(--lns); }
+  .va .flow .arrow{ width:100%; height:26px; }
+  .va .flow .arrow i{ transform:rotate(90deg); display:block; }
+  .va .who{ flex-wrap:wrap; }
+  .va .who .end{ width:100%; margin:0; }
+  .va .who .end .btn{ flex:1; justify-content:center; }
+  /* table → stacked cards */
+  .va .tbl,.va .tbl tbody,.va .tbl tr,.va .tbl td{ display:block; width:100%; }
+  .va .tbl thead{ display:none; }
+  .va .tbl tr{ border:1px solid var(--ln); border-radius:13px; margin-bottom:9px; background:var(--sf2); overflow:hidden; }
+  .va .tbl td{ border-bottom:1px solid var(--lns); display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 12px; }
+  .va .tbl td:last-child{ border-bottom:0; }
+  .va .tbl tr:hover td{ background:transparent; }
+  .va .tbl td.e{ text-align:start; }
+  .va .rowlabel{ display:block; font-size:9.5px; font-weight:800; letter-spacing:.9px; text-transform:uppercase; color:var(--mut); }
+  .vb .steps{ gap:6px; }
+  .vb .st .d{ display:none; }
+  .vb .st{ padding:8px; }
+  .vb .egrid{ grid-template-columns:1fr 1fr; }
+  .vb .line{ flex-wrap:wrap; }
+  .vb .line .end{ width:100%; margin:0; justify-content:space-between; }
+  .vb .foot{ flex-wrap:wrap; }
+  .vb .foot .btn{ flex:1; justify-content:center; }
+}
+@container (max-width:470px){
+  .ivx{ --ivx-fz:12.5px; }
+  .va .readout{ width:100%; justify-content:space-between; }
+  .vb .egrid{ grid-template-columns:1fr; }
+  .vb .st .t{ font-size:11px; }
+  .va .pick-field kbd{ display:none; }
+}
+</style>
+</head>
+<body data-t="light">
+
+<div class="bar">
+  <span class="lab">Design</span>
+  <button class="vbtn on" data-v="A">A · Dispatch Desk</button>
+  <button class="vbtn" data-v="B">B · Guided Journey</button>
+  <span class="sep"></span>
+  <span class="lab">Width</span>
+  <button class="wbtn on" data-w="1360">Desktop</button>
+  <button class="wbtn" data-w="900">Tablet</button>
+  <button class="wbtn" data-w="420">Phone</button>
+  <span class="sep"></span>
+  <span class="lab">Theme</span>
+  <button id="themeBtn"><i class="fa fa-moon-o"></i> Dark</button>
+  <button id="dirBtn">RTL</button>
+  <span class="sep"></span>
+  <span class="lab">Accent</span>
+  <button class="sw on" data-c="#4f46e5,79,70,229" style="background:#4f46e5"></button>
+  <button class="sw" data-c="#0f766e,15,118,110" style="background:#0f766e"></button>
+  <button class="sw" data-c="#b45309,180,83,9" style="background:#b45309"></button>
+  <button class="sw" data-c="#1d4ed8,29,78,216" style="background:#1d4ed8"></button>
+  <button class="sw" data-c="#9d174d,157,23,77" style="background:#9d174d"></button>
+</div>
+
+<div class="wrap">
+  <div class="stage" id="stage" style="max-width:1360px">
+
+  <!-- ============================================================
+       VARIANT A · DISPATCH DESK
+       ============================================================ -->
+  <section class="variant show" data-v="A">
+    <div class="vlabel"><span class="tag">A</span> Dispatch Desk
+      <span class="note">Everything on one screen · pick the person, build the basket, transfer. Best for staff who do this many times a day.</span></div>
+
+    <div class="ivx va" id="A">
+      <!-- sticky deck -->
+      <div class="deck">
+        <div class="deck-top">
+          <div class="dmark"><i class="fa fa-exchange"></i></div>
+          <div>
+            <div class="dtitle">Transfer Stock to Employee</div>
+            <div class="dsub"><i class="fa fa-building-o"></i> Al Sadd Branch <span class="pill">23 Sep 2026</span> <span class="pill">TRF-000148</span></div>
+          </div>
+          <div class="spacer"></div>
+          <div class="readout">
+            <div><div class="k">Lines</div><div class="v" data-o="lines">0</div></div>
+            <div><div class="k">Units</div><div class="v" data-o="units">0</div></div>
+            <div><div class="k">Value</div><div class="v" data-o="value">0.00</div></div>
+          </div>
+          <div class="dact" style="display:flex;gap:8px">
+            <button class="btn gho"><i class="fa fa-times"></i> Cancel</button>
+            <button class="btn pri" data-o="submit" disabled><i class="fa fa-paper-plane"></i> Transfer Stock</button>
+          </div>
+        </div>
+        <div class="flow">
+          <div class="node"><div class="av sm n1"><i class="fa fa-building-o"></i></div>
+            <div style="min-width:0"><div class="k">From</div><div class="nm">Al Sadd Branch — Main Stock</div></div></div>
+          <div class="arrow"><i class="fa fa-long-arrow-right"></i></div>
+          <div class="node ghost" data-o="toNode"><div class="av sm" style="background:var(--sf3);color:var(--mut);box-shadow:none"><i class="fa fa-user-o"></i></div>
+            <div style="min-width:0"><div class="k">To</div><div class="nm">No employee selected yet</div></div></div>
+        </div>
+      </div>
+
+      <div class="work">
+        <div style="display:flex;flex-direction:column;gap:13px;min-width:0">
+
+          <!-- 1 · recipient -->
+          <div class="card">
+            <div class="sec-h"><div class="step">1</div><h3>Who is receiving the stock?</h3>
+              <span class="hint" style="margin-inline-start:auto">Type to search · ↑↓ to move · Enter to pick</span></div>
+            <div class="sec-b">
+              <div data-o="empSlot">
+                <div class="pick" data-pick="emp">
+                  <div class="pick-field">
+                    <i class="fa fa-search"></i>
+                    <input type="text" placeholder="Search employee by name, staff ID, designation or phone…" autocomplete="off">
+                    <kbd>/</kbd>
+                  </div>
+                  <div class="pick-menu"><div class="pick-head"><span class="k">Employees</span><span class="k" data-o="empCount"></span></div>
+                    <div class="pick-scroll"></div>
+                    <div class="pick-foot"><span><b>↵</b> select</span><span><b>esc</b> close</span><span>Only active employees of this branch</span></div></div>
+                </div>
+                <div class="quick" data-o="quick"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2 · items -->
+          <div class="card">
+            <div class="sec-h"><div class="step">2</div><h3>What is being handed over?</h3>
+              <span class="hint" style="margin-inline-start:auto"><i class="fa fa-barcode"></i> Scan a barcode or search by name</span></div>
+            <div class="sec-b" style="padding-bottom:0">
+              <div class="pick" data-pick="prd">
+                <div class="pick-field">
+                  <i class="fa fa-barcode"></i>
+                  <input type="text" placeholder="Scan barcode, or type product name / batch…" autocomplete="off">
+                  <kbd>F2</kbd>
+                </div>
+                <div class="pick-menu"><div class="pick-head"><span class="k">Available in this branch</span><span class="k" data-o="prdCount"></span></div>
+                  <div class="pick-scroll"></div>
+                  <div class="pick-foot"><span>Out-of-stock rows are hidden</span><span>Qty starts at 1 — adjust in the list</span></div></div>
+              </div>
+            </div>
+            <div data-o="itemsWrap"></div>
+          </div>
+
+          <!-- what the employee already holds -->
+          <div class="card" data-o="holdCard"></div>
+        </div>
+
+        <!-- rail -->
+        <aside class="rail">
+          <div class="card">
+            <div class="sec-h"><div class="step">3</div><h3>Confirm &amp; transfer</h3></div>
+            <div class="sec-b" style="display:flex;flex-direction:column;gap:13px">
+              <div class="sum">
+                <div class="r"><span class="lbl">Recipient</span><span class="val" style="font-size:12.5px" data-o="sumWho">—</span></div>
+                <div class="r"><span class="lbl">Products</span><span class="val num" data-o="lines">0</span></div>
+                <div class="r"><span class="lbl">Total units</span><span class="val num" data-o="units">0</span></div>
+                <div class="r total"><span class="lbl">Stock value</span><span class="val num"><span data-o="value">0.00</span> <small style="font-size:11px">QAR</small></span></div>
+              </div>
+              <div>
+                <label class="fl">Reason <span class="req">*</span></label>
+                <div class="reasons" data-o="reasons"></div>
+                <textarea class="inp" data-o="reason" placeholder="Why is this stock leaving the branch? e.g. site installation at Villa 12"></textarea>
+                <div class="muted" style="font-size:11px;margin-top:6px"><i class="fa fa-lock"></i> Saved to the inventory log against your user for audit.</div>
+              </div>
+              <div class="guard"><i class="fa fa-shield"></i>
+                <div>The employee becomes accountable for these units until they are returned or sold. A return entry reverses it back to the branch.</div></div>
+              <button class="btn pri lg block" data-o="submit" disabled><i class="fa fa-paper-plane"></i> Transfer Stock</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       VARIANT B · GUIDED JOURNEY
+       ============================================================ -->
+  <section class="variant" data-v="B">
+    <div class="vlabel"><span class="tag">B</span> Guided Journey
+      <span class="note">Three unhurried steps with tap-to-pick people. Best for occasional users, tablets and the store floor.</span></div>
+
+    <div class="ivx vb" id="B">
+      <div class="hero">
+        <h2>Transfer Stock to an Employee</h2>
+        <p>From <b>Al Sadd Branch</b> · 23 Sep 2026 · reference TRF-000148</p>
+        <div class="steps">
+          <button class="st on" data-step="1"><span class="n">1</span><span style="min-width:0"><span class="t">Employee</span><span class="d" data-o="d1">Who receives it</span></span></button>
+          <button class="st" data-step="2"><span class="n">2</span><span style="min-width:0"><span class="t">Items</span><span class="d" data-o="d2">Products &amp; quantity</span></span></button>
+          <button class="st" data-step="3"><span class="n">3</span><span style="min-width:0"><span class="t">Review</span><span class="d" data-o="d3">Reason &amp; confirm</span></span></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <!-- step 1 -->
+        <div class="pane show" data-pane="1">
+          <div class="pane-h"><h3>Choose the employee</h3><p>Tap a card, or search if the list is long.</p></div>
+          <div class="pane-b">
+            <div class="pick" data-pick="emp">
+              <div class="pick-field"><i class="fa fa-search"></i>
+                <input type="text" placeholder="Search by name, staff ID or designation…" autocomplete="off"></div>
+              <div class="pick-menu"><div class="pick-head"><span class="k">Employees</span><span class="k" data-o="empCount"></span></div>
+                <div class="pick-scroll"></div></div>
+            </div>
+            <div class="egrid" data-o="egrid"></div>
+            <div data-o="holdB"></div>
+          </div>
+        </div>
+
+        <!-- step 2 -->
+        <div class="pane" data-pane="2">
+          <div class="pane-h"><h3>Add the products</h3><p>Scan a barcode or search. Set the quantity on each line.</p></div>
+          <div class="pane-b">
+            <div class="scan">
+              <div class="pick" data-pick="prd">
+                <div class="pick-field"><i class="fa fa-barcode"></i>
+                  <input type="text" placeholder="Scan barcode or type product name…" autocomplete="off"></div>
+                <div class="pick-menu"><div class="pick-head"><span class="k">Available in this branch</span><span class="k" data-o="prdCount"></span></div>
+                  <div class="pick-scroll"></div></div>
+              </div>
+              <button class="btn"><i class="fa fa-camera"></i> Scan</button>
+            </div>
+            <div class="lines" data-o="lines2"></div>
+          </div>
+        </div>
+
+        <!-- step 3 -->
+        <div class="pane" data-pane="3">
+          <div class="pane-h"><h3>Review and confirm</h3><p>A reason is required — it is written to the inventory log.</p></div>
+          <div class="pane-b">
+            <div class="revgrid">
+              <div class="rev"><div class="k">Recipient</div><div class="v" style="font-size:14px" data-o="sumWho">—</div></div>
+              <div class="rev"><div class="k">Products</div><div class="v" data-o="lines">0</div></div>
+              <div class="rev"><div class="k">Total units</div><div class="v" data-o="units">0</div></div>
+              <div class="rev"><div class="k">Stock value</div><div class="v" data-o="value">0.00</div></div>
+            </div>
+            <div class="revlist" data-o="revlist"></div>
+            <div style="margin-top:14px">
+              <label class="fl">Reason for transfer <span class="req">*</span></label>
+              <div class="reasons" data-o="reasons" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px"></div>
+              <textarea class="inp" data-o="reason" placeholder="e.g. Site installation at Villa 12, handed to technician"></textarea>
+            </div>
+            <div class="guard" style="margin-top:13px"><i class="fa fa-shield"></i>
+              <div>These units move out of branch stock and onto the employee's name. Use <b>Return</b> to bring them back.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <div class="info"><b data-o="units">0</b> units · <b data-o="lines">0</b> products · <b data-o="value">0.00</b> QAR</div>
+        <div class="sp"></div>
+        <button class="btn" data-o="back"><i class="fa fa-arrow-left"></i> Back</button>
+        <button class="btn pri" data-o="next">Continue <i class="fa fa-arrow-right"></i></button>
+        <button class="btn pri" data-o="submit" style="display:none" disabled><i class="fa fa-paper-plane"></i> Transfer Stock</button>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /stage -->
+</div><!-- /wrap -->
+
+<script>
+/* ============================================================
+   SAMPLE DATA — shapes match the real tables
+   employees  → users (employees of the current branch)
+   stock      → inventories rows for this branch (employee_id null)
+   ============================================================ */
+const EMPLOYEES = [
+  {id:4,  name:'Rahees Muhammed',  code:'EMP-004', role:'Service Technician', phone:'3312 8890', tone:1, holding:[
+      {name:'Split AC 1.5 Ton — Cool Master', barcode:'8901234500011', batch:'B-2609', qty:2,  cost:1150.00, unit:'Nos', since:'12 Sep 2026'},
+      {name:'Copper Pipe 1/4" (per metre)',   barcode:'8901234500028', batch:'B-2601', qty:18, cost:12.50,   unit:'Mtr', since:'12 Sep 2026'},
+      {name:'Gas R410a Cylinder 11.3kg',      barcode:'8901234500035', batch:'B-2555', qty:1,  cost:410.00,  unit:'Cyl', since:'02 Sep 2026'}]},
+  {id:7,  name:'Aisha Al Kuwari',  code:'EMP-007', role:'Showroom Sales',      phone:'5540 1122', tone:4, holding:[
+      {name:'Sample Kit — Tiles',             barcode:'8901234500110', batch:'B-2590', qty:1,  cost:180.00,  unit:'Set', since:'28 Aug 2026'}]},
+  {id:11, name:'Sanjay Pillai',    code:'EMP-011', role:'Store Keeper',        phone:'6678 4410', tone:2, holding:[]},
+  {id:14, name:'Fatima Nasser',    code:'EMP-014', role:'Branch Supervisor',   phone:'3345 7781', tone:5, holding:[
+      {name:'Barcode Printer TSC-244',        barcode:'8901234500127', batch:'B-2544', qty:1,  cost:990.00,  unit:'Nos', since:'19 Jul 2026'},
+      {name:'Label Roll 40x25mm (1000 pcs)',  barcode:'8901234500042', batch:'B-2612', qty:6,  cost:18.00,   unit:'Roll',since:'15 Sep 2026'}]},
+  {id:19, name:'Joseph Mathew',    code:'EMP-019', role:'Delivery Driver',     phone:'7712 9080', tone:3, holding:[
+      {name:'Trolley Strap Heavy Duty',       barcode:'8901234500103', batch:'B-2599', qty:4,  cost:63.00,   unit:'Nos', since:'08 Sep 2026'}]},
+  {id:22, name:'Mohammed Farooq',  code:'EMP-022', role:'AC Technician',       phone:'5590 3321', tone:6, holding:[
+      {name:'Vacuum Pump 3CFM',               barcode:'8901234500059', batch:'B-2588', qty:1,  cost:640.00,  unit:'Nos', since:'01 Sep 2026'},
+      {name:'Flare Tool Set — 7pc',           barcode:'8901234500066', batch:'B-2588', qty:1,  cost:295.00,  unit:'Set', since:'01 Sep 2026'},
+      {name:'Insulation Tape (roll)',         barcode:'8901234500097', batch:'B-2610', qty:12, cost:4.75,    unit:'Roll',since:'18 Sep 2026'}]},
+  {id:25, name:'Divya Krishnan',   code:'EMP-025', role:'Accounts Assistant',  phone:'3390 2214', tone:1, holding:[]},
+  {id:31, name:'Abdul Rahman',     code:'EMP-031', role:'Site Supervisor',     phone:'6601 7788', tone:2, holding:[
+      {name:'Drill Machine 13mm',             barcode:'8901234500080', batch:'B-2571', qty:1,  cost:520.00,  unit:'Nos', since:'21 Aug 2026'},
+      {name:'Extension Cable 20m',            barcode:'8901234500073', batch:'B-2603', qty:2,  cost:85.00,   unit:'Nos', since:'05 Sep 2026'}]},
+];
+const STOCK = [
+  {id:101, name:'Split AC 1.5 Ton — Cool Master', barcode:'8901234500011', batch:'B-2609', qty:14,  cost:1150.00, unit:'Nos',  cat:'Air Conditioners'},
+  {id:102, name:'Copper Pipe 1/4" (per metre)',   barcode:'8901234500028', batch:'B-2601', qty:240, cost:12.50,   unit:'Mtr',  cat:'Plumbing'},
+  {id:103, name:'Gas R410a Cylinder 11.3kg',      barcode:'8901234500035', batch:'B-2555', qty:6,   cost:410.00,  unit:'Cyl',  cat:'Refrigerant'},
+  {id:104, name:'Label Roll 40x25mm (1000 pcs)',  barcode:'8901234500042', batch:'B-2612', qty:38,  cost:18.00,   unit:'Roll', cat:'Stationery'},
+  {id:105, name:'Vacuum Pump 3CFM',               barcode:'8901234500059', batch:'B-2588', qty:3,   cost:640.00,  unit:'Nos',  cat:'Tools'},
+  {id:106, name:'Flare Tool Set — 7pc',           barcode:'8901234500066', batch:'B-2588', qty:5,   cost:295.00,  unit:'Set',  cat:'Tools'},
+  {id:107, name:'Extension Cable 20m',            barcode:'8901234500073', batch:'B-2603', qty:11,  cost:85.00,   unit:'Nos',  cat:'Electrical'},
+  {id:108, name:'Drill Machine 13mm',             barcode:'8901234500080', batch:'B-2571', qty:2,   cost:520.00,  unit:'Nos',  cat:'Tools'},
+  {id:109, name:'Insulation Tape (roll)',         barcode:'8901234500097', batch:'B-2610', qty:120, cost:4.75,    unit:'Roll', cat:'Consumables'},
+  {id:110, name:'Trolley Strap Heavy Duty',       barcode:'8901234500103', batch:'B-2599', qty:9,   cost:63.00,   unit:'Nos',  cat:'Logistics'},
+];
+const REASONS = ['Site installation','Service call — tools','Sample / demo unit','Replacement stock','Van stock top-up'];
+
+/* ---------- helpers ---------- */
+const fmt = n => Number(n).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ini  = s => s.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const esc  = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const mark = (s,q) => { if(!q) return esc(s); const i=s.toLowerCase().indexOf(q.toLowerCase());
+  return i<0 ? esc(s) : esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length)); };
+const all = (root,sel) => Array.from(root.querySelectorAll(sel));
+const out = (root,name) => all(root,'[data-o="'+name+'"]');
+
+/* ============================================================
+   PICKER — the searchable dropdown (TomSelect-shaped)
+   ============================================================ */
+function picker(root, kind, onPick){
+  const box = root.querySelector('.pick[data-pick="'+kind+'"]'); if(!box) return null;
+  const inp = box.querySelector('input'), list = box.querySelector('.pick-scroll'),
+        cnt = box.querySelector('[data-o="'+(kind==='emp'?'empCount':'prdCount')+'"]');
+  let hl = 0, rows = [];
+
+  const source = () => kind === 'emp' ? EMPLOYEES : STOCK.filter(s => s.qty > 0);
+  const match = (o,q) => kind==='emp'
+      ? (o.name+' '+o.code+' '+o.role+' '+o.phone).toLowerCase().includes(q)
+      : (o.name+' '+o.barcode+' '+o.batch+' '+o.cat).toLowerCase().includes(q);
+
+  function draw(){
+    const q = inp.value.trim().toLowerCase();
+    rows = source().filter(o => !q || match(o,q));
+    if(cnt) cnt.textContent = rows.length + ' found';
+    if(!rows.length){
+      list.innerHTML = '<div class="pick-empty"><i class="fa fa-search" style="font-size:20px;opacity:.4"></i>'
+        + '<div style="margin-top:8px">Nothing matches “'+esc(inp.value)+'”</div></div>';
+      return;
+    }
+    list.innerHTML = rows.map((o,i) => kind==='emp'
+      ? '<div class="pick-opt'+(i===hl?' hl':'')+'" data-i="'+i+'">'
+        + '<div class="av sm n'+o.tone+'">'+ini(o.name)+'</div><div style="min-width:0">'
+        + '<div class="nm">'+mark(o.name,inp.value.trim())+'</div>'
+        + '<div class="sub"><span>'+esc(o.role)+'</span>·<span>'+esc(o.code)+'</span>·<span>'+esc(o.phone)+'</span></div></div>'
+        + '<div class="end">'+(o.holding.length
+            ? '<span class="pill acc">holds '+o.holding.length+'</span>'
+            : '<span class="pill">no stock</span>')+'</div></div>'
+      : '<div class="pick-opt'+(i===hl?' hl':'')+'" data-i="'+i+'">'
+        + '<div class="thumb" style="width:34px;height:34px;border-radius:9px"><i class="fa fa-cube"></i></div><div style="min-width:0">'
+        + '<div class="nm">'+mark(o.name,inp.value.trim())+'</div>'
+        + '<div class="sub"><code class="bc">'+mark(o.barcode,inp.value.trim())+'</code><span>'+esc(o.batch)+'</span><span>'+esc(o.cat)+'</span></div></div>'
+        + '<div class="end"><div class="pill '+(o.qty>5?'ok':'warn')+'">'+o.qty+' '+o.unit+'</div>'
+        + '<div class="k" style="margin-top:3px">'+fmt(o.cost)+'</div></div></div>'
+    ).join('');
+    const on = list.querySelector('.hl'); if(on) on.scrollIntoView({block:'nearest'});
+  }
+  function open(){ box.classList.add('open'); hl = 0; draw(); }
+  function close(){ box.classList.remove('open'); }
+  function choose(i){ const o = rows[i]; if(!o) return; onPick(o); inp.value=''; close(); }
+
+  inp.addEventListener('focus', open);
+  inp.addEventListener('input', () => { hl=0; open(); });
+  inp.addEventListener('keydown', e => {
+    if(e.key==='ArrowDown'){ e.preventDefault(); hl=Math.min(hl+1,rows.length-1); draw(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); hl=Math.max(hl-1,0); draw(); }
+    else if(e.key==='Enter'){ e.preventDefault(); choose(hl); }
+    else if(e.key==='Escape'){ close(); inp.blur(); }
+  });
+  list.addEventListener('mousedown', e => { const r=e.target.closest('.pick-opt'); if(r){ e.preventDefault(); choose(+r.dataset.i); } });
+  document.addEventListener('mousedown', e => { if(!box.contains(e.target)) close(); });
+  return { focus:()=>inp.focus(), clear:()=>{ inp.value=''; close(); } };
+}
+</script>
+<script>
+/* ============================================================
+   BASKET STATE — one per variant
+   ============================================================ */
+function makeState(){ return { emp:null, items:[], reason:'' }; }
+
+function addItem(st, prod){
+  const line = st.items.find(l => l.id === prod.id);
+  if(line){ line.qty = Math.min(line.qty + 1, prod.qty); }
+  else { st.items.push({ id:prod.id, qty:1 }); }
+}
+const prodOf = id => STOCK.find(s => s.id === id);
+const totals = st => st.items.reduce((a,l) => {
+  const p = prodOf(l.id); a.units += l.qty; a.value += l.qty * p.cost; return a;
+}, {units:0, value:0, lines:st.items.length});
+const valid = st => !!st.emp && st.items.length > 0 && st.reason.trim().length >= 3
+  && st.items.every(l => l.qty > 0 && l.qty <= prodOf(l.id).qty);
+
+function paintTotals(root, st){
+  const t = totals(st);
+  out(root,'lines').forEach(e => e.textContent = t.lines);
+  out(root,'units').forEach(e => e.textContent = t.units);
+  out(root,'value').forEach(e => e.textContent = fmt(t.value));
+  out(root,'sumWho').forEach(e => e.textContent = st.emp ? st.emp.name : '—');
+  out(root,'submit').forEach(b => b.disabled = !valid(st));
+}
+function reasonChips(root, st, render){
+  out(root,'reasons').forEach(wrap => {
+    wrap.innerHTML = REASONS.map(r => '<button class="rchip'+(st.reason===r?' on':'')+'">'+r+'</button>').join('');
+    wrap.onclick = e => { const b = e.target.closest('.rchip'); if(!b) return;
+      st.reason = b.textContent; out(root,'reason').forEach(t => t.value = st.reason); render(); };
+  });
+  out(root,'reason').forEach(t => { t.value = st.reason;
+    t.oninput = () => { st.reason = t.value; reasonChips(root, st, render); paintTotals(root, st); }; });
+}
+
+/* ============================================================
+   A · DISPATCH DESK
+   ============================================================ */
+(function(){
+  const root = document.getElementById('A'), st = makeState();
+  const prd = picker(root, 'prd', p => { addItem(st, p); render(); });
+  let emp = picker(root, 'emp', e => { st.emp = e; render(); });
+
+  function itemsHTML(){
+    if(!st.items.length){
+      return '<div class="empty"><div class="big"><i class="fa fa-inbox"></i></div>'
+        + '<h4>No products added yet</h4><p>Scan a barcode or search above — the line lands here with quantity 1.</p></div>';
+    }
+    return '<div style="overflow:auto"><table class="tbl"><thead><tr>'
+      + '<th>Product</th><th class="e">In branch</th><th>Transfer qty</th><th class="e">Left in branch</th>'
+      + '<th class="e">Unit cost</th><th class="e">Value</th><th></th></tr></thead><tbody>'
+      + st.items.map((l,i) => { const p = prodOf(l.id), left = p.qty - l.qty, over = l.qty > p.qty;
+        return '<tr>'
+        + '<td><div class="cellwrap"><div class="thumb"><i class="fa fa-cube"></i></div><div style="min-width:0">'
+        +   '<div class="pname">'+esc(p.name)+'</div><div class="pmeta"><code class="bc">'+p.barcode+'</code>'
+        +   '<span class="pill">'+p.batch+'</span><span class="pill">'+p.cat+'</span></div></div></div></td>'
+        + '<td class="e"><span class="rowlabel">In branch</span><span class="num" style="font-weight:750">'+p.qty+' <small class="muted">'+p.unit+'</small></span></td>'
+        + '<td><span class="rowlabel">Transfer qty</span><div class="qty'+(over?' over':'')+'">'
+        +   '<button data-act="dec" data-i="'+i+'">&minus;</button>'
+        +   '<input type="number" data-act="set" data-i="'+i+'" value="'+l.qty+'" min="1" max="'+p.qty+'">'
+        +   '<button data-act="inc" data-i="'+i+'">+</button></div>'
+        +   (over ? '<div class="pill bad" style="margin-top:5px">Only '+p.qty+' available</div>' : '')+'</td>'
+        + '<td class="e"><span class="rowlabel">Left in branch</span><span class="pill '+(left<=0?'bad':left<3?'warn':'ok')+'">'+left+'</span></td>'
+        + '<td class="e num"><span class="rowlabel">Unit cost</span>'+fmt(p.cost)+'</td>'
+        + '<td class="e num" style="font-weight:800"><span class="rowlabel">Value</span>'+fmt(p.cost * l.qty)+'</td>'
+        + '<td class="e"><span class="rowlabel">Remove</span><button class="btn gho icobtn" data-act="del" data-i="'+i+'" title="Remove"><i class="fa fa-trash-o"></i></button></td>'
+        + '</tr>'; }).join('')
+      + '</tbody></table></div>';
+  }
+
+  function holdingHTML(){
+    if(!st.emp){
+      return '<div class="sec-h"><div class="step"><i class="fa fa-archive"></i></div><h3>Stock already with the employee</h3></div>'
+        + '<div class="empty" style="padding:26px 18px"><p>Pick an employee above and everything currently on their name shows here.</p></div>';
+    }
+    const h = st.emp.holding, units = h.reduce((a,x)=>a+x.qty,0), val = h.reduce((a,x)=>a+x.qty*x.cost,0);
+    const head = '<div class="sec-h"><div class="step"><i class="fa fa-archive"></i></div>'
+      + '<h3>Already with ' + esc(st.emp.name.split(' ')[0]) + '</h3>'
+      + '<span class="pill acc">' + h.length + ' product' + (h.length===1?'':'s') + '</span>'
+      + '<span class="pill">' + units + ' units</span>'
+      + '<span class="pill">' + fmt(val) + ' QAR</span>'
+      + '<span style="margin-inline-start:auto;display:flex;gap:7px">'
+      +   (h.length ? '<button class="btn gho" data-act="returnall"><i class="fa fa-reply-all"></i> Return all</button>' : '')
+      +   '<button class="btn gho" data-act="ledger"><i class="fa fa-list"></i> Movement log</button></span></div>';
+    if(!h.length){
+      return head + '<div class="empty" style="padding:26px 18px"><div class="big"><i class="fa fa-user-o"></i></div>'
+        + '<h4>Nothing on their name yet</h4><p>This will be their first assignment from the branch.</p></div>';
+    }
+    return head + '<div style="overflow:auto"><table class="tbl"><thead><tr>'
+      + '<th>Product</th><th class="e">Held</th><th class="e">Unit cost</th><th class="e">Value</th><th>Since</th><th></th>'
+      + '</tr></thead><tbody>'
+      + h.map((x,i) => '<tr>'
+        + '<td><div class="cellwrap"><div class="thumb"><i class="fa fa-cube"></i></div><div style="min-width:0">'
+        +   '<div class="pname">'+esc(x.name)+'</div><div class="pmeta"><code class="bc">'+x.barcode+'</code>'
+        +   '<span class="pill">'+x.batch+'</span></div></div></div></td>'
+        + '<td class="e"><span class="rowlabel">Held</span><span class="pill acc">'+x.qty+' '+x.unit+'</span></td>'
+        + '<td class="e num"><span class="rowlabel">Unit cost</span>'+fmt(x.cost)+'</td>'
+        + '<td class="e num" style="font-weight:800"><span class="rowlabel">Value</span>'+fmt(x.cost*x.qty)+'</td>'
+        + '<td><span class="rowlabel">Since</span><span class="muted" style="font-size:11.5px">'+x.since+'</span></td>'
+        + '<td class="e"><span class="rowlabel">Return</span>'
+        +   '<button class="btn gho" data-act="return" data-h="'+i+'"><i class="fa fa-reply"></i> Return</button></td>'
+        + '</tr>').join('')
+      + '</tbody></table></div>';
+  }
+
+  function render(){
+    /* recipient slot */
+    const slot = out(root,'empSlot')[0];
+    if(st.emp){
+      const e = st.emp;
+      slot.innerHTML = '<div class="who"><div class="av lg n'+e.tone+'">'+ini(e.name)+'</div><div style="min-width:0">'
+        + '<div class="nm">'+esc(e.name)+'</div><div class="sub">'+esc(e.role)+' · '+e.code+' · '+e.phone+'</div>'
+        + '<div class="stats"><span class="pill ok"><i class="fa fa-check"></i> Active</span>'
+        + '<span class="pill">Al Sadd Branch</span>'
+        + '<span class="pill acc">Currently holds '+e.holding.length+' product'+(e.holding.length===1?'':'s')+'</span></div></div>'
+        + '<div class="end"><button class="btn" data-act="change"><i class="fa fa-refresh"></i> Change</button></div></div>';
+    } else {
+      slot.innerHTML = '<div class="pick" data-pick="emp"><div class="pick-field"><i class="fa fa-search"></i>'
+        + '<input type="text" placeholder="Search employee by name, staff ID, designation or phone…" autocomplete="off"><kbd>/</kbd></div>'
+        + '<div class="pick-menu"><div class="pick-head"><span class="k">Employees</span><span class="k" data-o="empCount"></span></div>'
+        + '<div class="pick-scroll"></div><div class="pick-foot"><span><b>↵</b> select</span><span><b>esc</b> close</span>'
+        + '<span>Only active employees of this branch</span></div></div></div>'
+        + '<div class="quick" data-o="quick"></div>';
+      emp = picker(root, 'emp', e => { st.emp = e; render(); });
+      out(root,'quick')[0].innerHTML = '<span class="k" style="align-self:center">Recent</span>'
+        + EMPLOYEES.slice(0,4).map(e => '<button class="qchip" data-pickemp="'+e.id+'">'
+        + '<span class="av sm n'+e.tone+'">'+ini(e.name)+'</span>'+esc(e.name.split(' ')[0])+'</button>').join('');
+    }
+
+    /* flow node */
+    const node = out(root,'toNode')[0];
+    node.classList.toggle('ghost', !st.emp);
+    node.innerHTML = st.emp
+      ? '<div class="av sm n'+st.emp.tone+'">'+ini(st.emp.name)+'</div><div style="min-width:0"><div class="k">To</div>'
+        + '<div class="nm">'+esc(st.emp.name)+' — '+esc(st.emp.role)+'</div></div>'
+      : '<div class="av sm" style="background:var(--sf3);color:var(--mut);box-shadow:none"><i class="fa fa-user-o"></i></div>'
+        + '<div style="min-width:0"><div class="k">To</div><div class="nm">No employee selected yet</div></div>';
+
+    /* items + holdings */
+    out(root,'itemsWrap')[0].innerHTML = itemsHTML();
+    out(root,'holdCard')[0].innerHTML = holdingHTML();
+
+    reasonChips(root, st, render);
+    paintTotals(root, st);
+  }
+
+  root.addEventListener('click', e => {
+    const q = e.target.closest('[data-pickemp]');
+    if(q){ st.emp = EMPLOYEES.find(x => x.id === +q.dataset.pickemp); render(); return; }
+    const b = e.target.closest('[data-act]'); if(!b) return;
+    const i = +b.dataset.i, l = st.items[i];
+    if(b.dataset.act === 'change'){ st.emp = null; render(); setTimeout(()=>emp && emp.focus(), 30); }
+    if(b.dataset.act === 'return'){ const x = st.emp.holding[+b.dataset.h];
+      alert('Demo only — opens the Return sheet:\n\n' + x.name + ' · ' + x.qty + ' ' + x.unit
+        + '\nBack from ' + st.emp.name + ' to Al Sadd Branch.'); }
+    if(b.dataset.act === 'returnall'){ alert('Demo only — returns every line on ' + st.emp.name + "'s name to the branch in one entry."); }
+    if(b.dataset.act === 'ledger'){ alert('Demo only — opens the inventory movement log filtered to ' + st.emp.name + '.'); }
+    if(b.dataset.act === 'inc'){ l.qty = Math.min(l.qty + 1, prodOf(l.id).qty); render(); }
+    if(b.dataset.act === 'dec'){ l.qty = Math.max(1, l.qty - 1); render(); }
+    if(b.dataset.act === 'del'){ st.items.splice(i,1); render(); }
+  });
+  root.addEventListener('change', e => {
+    const b = e.target.closest('[data-act="set"]'); if(!b) return;
+    st.items[+b.dataset.i].qty = Math.max(1, Number(b.value) || 1); render();
+  });
+  root.addEventListener('click', e => {
+    if(e.target.closest('[data-o="submit"]') && valid(st)){
+      const t = totals(st);
+      alert('Demo only — this is where the page would call TransferAction:\n\n'
+        + t.lines + ' product(s), ' + t.units + ' units → ' + st.emp.name
+        + '\nReason: ' + st.reason);
+    }
+  });
+  render();
+  if(prd){ /* keep reference */ }
+})();
+</script>
+<script>
+/* ============================================================
+   B · GUIDED JOURNEY
+   ============================================================ */
+(function(){
+  const root = document.getElementById('B'), st = makeState();
+  let step = 1;
+  picker(root, 'emp', e => { st.emp = e; render(); });
+  picker(root, 'prd', p => { addItem(st, p); render(); });
+
+  function go(n){ step = Math.min(3, Math.max(1, n)); render(); }
+
+  function render(){
+    all(root,'.st').forEach(b => { const n = +b.dataset.step;
+      b.classList.toggle('on', n === step); b.classList.toggle('done', n < step); });
+    all(root,'.pane').forEach(p => p.classList.toggle('show', +p.dataset.pane === step));
+
+    out(root,'d1')[0].textContent = st.emp ? st.emp.name.split(' ')[0] : 'Who receives it';
+    out(root,'d2')[0].textContent = st.items.length ? st.items.length + ' product(s)' : 'Products & quantity';
+    out(root,'d3')[0].textContent = st.reason.trim() ? 'Ready to send' : 'Reason & confirm';
+
+    /* step 1 — tappable employee cards */
+    out(root,'egrid')[0].innerHTML = EMPLOYEES.map(e =>
+      '<button class="ecard'+(st.emp && st.emp.id===e.id ? ' on':'')+'" data-emp="'+e.id+'">'
+      + '<span class="av n'+e.tone+'">'+ini(e.name)+'</span><span style="min-width:0">'
+      + '<span class="nm" style="display:block">'+esc(e.name)+'</span>'
+      + '<span class="sub" style="display:block">'+esc(e.role)+' · '+e.code+'</span></span>'
+      + '<i class="fa fa-check-circle tick"></i></button>').join('');
+
+    /* step 1 — what they already hold */
+    out(root,'holdB')[0].innerHTML = !st.emp ? '' : (function(){
+      const h = st.emp.holding, units = h.reduce((a,x)=>a+x.qty,0), val = h.reduce((a,x)=>a+x.qty*x.cost,0);
+      const head = '<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:18px 0 10px">'
+        + '<b style="font-size:13px">Already with ' + esc(st.emp.name.split(' ')[0]) + '</b>'
+        + '<span class="pill acc">' + h.length + ' product' + (h.length===1?'':'s') + '</span>'
+        + '<span class="pill">' + units + ' units</span><span class="pill">' + fmt(val) + ' QAR</span></div>';
+      if(!h.length){
+        return head + '<div class="line" style="justify-content:center;color:var(--mut);font-size:12px">'
+          + 'Nothing on their name yet — this will be their first assignment.</div>';
+      }
+      return head + '<div class="revlist">' + h.map(x =>
+        '<div class="rr"><span class="av sm" style="background:var(--sf3);color:var(--mut);box-shadow:none"><i class="fa fa-cube"></i></span>'
+        + '<span style="min-width:0"><b style="font-size:12.5px">'+esc(x.name)+'</b>'
+        + '<div class="muted" style="font-size:11px">'+x.batch+' · since '+x.since+'</div></span>'
+        + '<span class="e"><span class="pill acc">'+x.qty+' '+x.unit+'</span></span></div>').join('') + '</div>';
+    })();
+
+    /* step 2 — lines */
+    out(root,'lines2')[0].innerHTML = st.items.length ? st.items.map((l,i) => {
+      const p = prodOf(l.id), left = p.qty - l.qty, over = l.qty > p.qty;
+      return '<div class="line"><span class="av sm" style="background:var(--sf3);color:var(--mut);box-shadow:none"><i class="fa fa-cube"></i></span>'
+      + '<span style="min-width:0"><span class="nm" style="display:block">'+esc(p.name)+'</span>'
+      + '<span class="meta"><code class="bc">'+p.barcode+'</code><span class="pill">'+p.batch+'</span>'
+      + '<span class="pill '+(left<=0?'bad':'ok')+'">'+left+' left of '+p.qty+'</span></span></span>'
+      + '<span class="end"><span class="qty'+(over?' over':'')+'"><button data-act="dec" data-i="'+i+'">&minus;</button>'
+      + '<input type="number" data-act="set" data-i="'+i+'" value="'+l.qty+'" min="1" max="'+p.qty+'">'
+      + '<button data-act="inc" data-i="'+i+'">+</button></span>'
+      + '<b class="num" style="min-width:66px;text-align:end">'+fmt(p.cost*l.qty)+'</b>'
+      + '<button class="btn gho icobtn" data-act="del" data-i="'+i+'"><i class="fa fa-trash-o"></i></button></span></div>';
+    }).join('') : '<div class="empty" style="padding:34px 14px;text-align:center"><div class="big" style="width:52px;height:52px;border-radius:16px;margin:0 auto 10px;display:grid;place-items:center;background:var(--tint2);color:var(--acc);font-size:21px"><i class="fa fa-barcode"></i></div>'
+      + '<h4 style="margin:0 0 4px;font-size:14px">Nothing added yet</h4><p style="margin:0;font-size:12px;color:var(--mut)">Scan a barcode or search the product name above.</p></div>';
+
+    /* step 3 — review list */
+    out(root,'revlist')[0].innerHTML = st.items.map(l => { const p = prodOf(l.id);
+      return '<div class="rr"><span class="av sm" style="background:var(--sf3);color:var(--mut);box-shadow:none"><i class="fa fa-cube"></i></span>'
+      + '<span style="min-width:0"><b style="font-size:12.5px">'+esc(p.name)+'</b>'
+      + '<div class="muted" style="font-size:11px">'+p.batch+' · '+fmt(p.cost)+' / '+p.unit+'</div></span>'
+      + '<span class="e">'+l.qty+' <small class="muted">'+p.unit+'</small></span></div>'; }).join('')
+      || '<div class="rr muted" style="font-size:12px">No products in this transfer.</div>';
+
+    /* footer */
+    out(root,'back')[0].style.visibility = step === 1 ? 'hidden' : 'visible';
+    const nextable = step === 1 ? !!st.emp : step === 2 ? st.items.length > 0 : true;
+    out(root,'next')[0].style.display = step === 3 ? 'none' : '';
+    out(root,'next')[0].disabled = !nextable;
+    out(root,'submit')[0].style.display = step === 3 ? '' : 'none';
+
+    reasonChips(root, st, render);
+    paintTotals(root, st);
+  }
+
+  root.addEventListener('click', e => {
+    const s = e.target.closest('.st'); if(s){ go(+s.dataset.step); return; }
+    const c = e.target.closest('[data-emp]');
+    if(c){ st.emp = EMPLOYEES.find(x => x.id === +c.dataset.emp); render(); setTimeout(()=>go(2), 180); return; }
+    const b = e.target.closest('[data-act]');
+    if(b){ const i = +b.dataset.i, l = st.items[i];
+      if(b.dataset.act === 'inc'){ l.qty = Math.min(l.qty + 1, prodOf(l.id).qty); render(); }
+      if(b.dataset.act === 'dec'){ l.qty = Math.max(1, l.qty - 1); render(); }
+      if(b.dataset.act === 'del'){ st.items.splice(i,1); render(); }
+      return; }
+    if(e.target.closest('[data-o="next"]')) go(step + 1);
+    if(e.target.closest('[data-o="back"]')) go(step - 1);
+    if(e.target.closest('[data-o="submit"]') && valid(st)){
+      const t = totals(st);
+      alert('Demo only — TransferAction would run here:\n\n' + t.lines + ' product(s), ' + t.units
+        + ' units → ' + st.emp.name + '\nReason: ' + st.reason);
+    }
+  });
+  root.addEventListener('change', e => {
+    const b = e.target.closest('[data-act="set"]'); if(!b) return;
+    st.items[+b.dataset.i].qty = Math.max(1, Number(b.value) || 1); render();
+  });
+  render();
+})();
+
+/* ============================================================
+   PREVIEW SHELL CONTROLS
+   ============================================================ */
+document.querySelectorAll('.vbtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.vbtn').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  document.querySelectorAll('.variant').forEach(v => v.classList.toggle('show', v.dataset.v === b.dataset.v));
+});
+document.querySelectorAll('.wbtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.wbtn').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  document.getElementById('stage').style.maxWidth = b.dataset.w + 'px';
+});
+document.querySelectorAll('.sw').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.sw').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  const [hex, ...rgb] = b.dataset.c.split(',');
+  document.documentElement.style.setProperty('--p', hex);
+  document.documentElement.style.setProperty('--p-rgb', rgb.join(','));
+});
+themeBtn.onclick = () => {
+  const dark = document.body.dataset.t === 'dark';
+  document.body.dataset.t = dark ? 'light' : 'dark';
+  themeBtn.innerHTML = dark ? '<i class="fa fa-moon-o"></i> Dark' : '<i class="fa fa-sun-o"></i> Light';
+};
+dirBtn.onclick = () => {
+  const rtl = document.getElementById('stage').dir === 'rtl';
+  document.getElementById('stage').dir = rtl ? 'ltr' : 'rtl';
+  dirBtn.textContent = rtl ? 'RTL' : 'LTR';
+};
+document.addEventListener('keydown', e => {
+  if(e.key === '/' && !/input|textarea/i.test(e.target.tagName)){
+    e.preventDefault();
+    const v = document.querySelector('.variant.show');
+    const i = v && v.querySelector('.pick input'); if(i) i.focus();
+  }
+});
+</script>
+</body>
+</html>
