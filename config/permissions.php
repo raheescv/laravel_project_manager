@@ -156,7 +156,7 @@ return [
     'student' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'student card' => ['assign', 'block', 'unblock'],
     'student topup' => ['view', 'create', 'refund', 'release'],
-    'student guardian' => ['invite'],
+    'student guardian' => ['view', 'invite'],
     'student settings' => ['edit'],
     'student menu' => ['view', 'edit'],
 

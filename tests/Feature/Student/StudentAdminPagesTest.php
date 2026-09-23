@@ -8,6 +8,7 @@ use App\Imports\StudentImport;
 use App\Livewire\Settings\QPayPayments;
 use App\Livewire\Settings\StudentConfiguration;
 use App\Livewire\Student\CardTab;
+use App\Livewire\Student\GuardianTable;
 use App\Livewire\Student\Page;
 use App\Livewire\Student\Purchases;
 use App\Livewire\Student\Statement;
@@ -225,6 +226,41 @@ it('warns staff and still shows the link when the parent has no email', function
         ->assertSee('/#/set-password/');
 
     Mail::assertNothingSent();
+});
+
+it('lists parents with their linked students and filters by search and status', function (): void {
+    Livewire::test(GuardianTable::class)
+        ->assertOk()
+        ->assertSee('Ahmed Saleh')
+        ->assertSee('Sara Ahmed')
+        ->set('search', 'Sara Ahmed')
+        ->assertSee('Ahmed Saleh')
+        ->set('search', 'nobody-matches')
+        ->assertDontSee('Ahmed Saleh')
+        ->set('search', '')
+        ->set('status', 'disabled')
+        ->assertDontSee('Ahmed Saleh')
+        ->assertSee('parent is hidden by them')
+        ->call('clearFilters')
+        ->assertSet('status', '')
+        ->assertSee('Ahmed Saleh');
+
+    $this->get($this->world->url('/student/guardians'))->assertOk();
+});
+
+it('invites a parent from the guardians list and shows the link', function (): void {
+    Mail::fake();
+    $guardian = $this->student->guardians->first();
+    $guardian->forceFill(['email' => 'parent@example.com'])->save();
+
+    Livewire::test(GuardianTable::class)
+        ->call('invite', $guardian->id)
+        ->assertDispatched('success')
+        ->assertSet('invite_guardian_id', $guardian->id)
+        ->assertSee('/#/set-password/');
+
+    expect(Guardian::find($guardian->id)->invite_token_hash)->not->toBeNull();
+    Mail::assertSent(AppointmentMail::class, fn (AppointmentMail $mail) => $mail->hasTo('parent@example.com'));
 });
 
 it('records an office top-up and a deduction on the card', function (): void {

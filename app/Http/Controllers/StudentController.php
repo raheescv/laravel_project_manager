@@ -48,4 +48,10 @@ class StudentController extends Controller
 
         return view('student.view', compact('id'));
     }
+
+    /** Every parent portal login, across all students, with their linked children. */
+    public function guardians()
+    {
+        return view('student.guardians');
+    }
 }

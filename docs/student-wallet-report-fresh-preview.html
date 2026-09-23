@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Wallet Report — Fresh Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { font-family: 'Work Sans', sans-serif; background: #e9e4d6; color: #22332b; -webkit-font-smoothing: antialiased; }
+
+    /* ===== harness ===== */
+    .harness { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 12px 22px; background: #16181d; color: #eee; }
+    .harness h1 { font-family: 'Work Sans', sans-serif; font-size: .95rem; font-weight: 700; margin: 0; }
+    .harness h1 span { font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9aa; margin-left: .6rem; }
+    .seg-h { display: inline-flex; background: #23262e; border-radius: 11px; padding: 3px; gap: 2px; }
+    .seg-h button { border: 0; background: transparent; color: #9aa1b0; font: inherit; font-size: .8rem; font-weight: 700; padding: .5rem 1rem; border-radius: 8px; cursor: pointer; }
+    .seg-h button.on { background: #3a3f4d; color: #fff; }
+    .harness p { width: 100%; margin: 0; font-size: .78rem; color: #9aa1b0; max-width: 1180px; }
+    .harness p b { color: #fff; }
+
+    .stage-label { max-width: 1220px; margin: 26px auto 10px; padding: 0 20px; font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8a8a7a; display: flex; align-items: center; gap: 8px; }
+    .stage-label::after { content: ''; flex: 1; height: 1px; background: #d5cfba; }
+    .mock-header { max-width: 1220px; margin: 0 auto; padding: 0 20px; }
+    .mock-header .inner { border-radius: 12px; padding: 20px 24px 24px; background: linear-gradient(135deg, #2c56d6, #1c3d9e); color: #fff; }
+    .mock-header .crumb { font-size: .7rem; opacity: .8; margin-bottom: 8px; }
+    .mock-header h2 { font-size: 1.4rem; font-weight: 800; margin: 0; letter-spacing: -.02em; font-family: 'Work Sans', sans-serif; }
+    .mock-header p { margin: .3rem 0 0; opacity: .85; font-size: .86rem; }
+
+    /* ================================================================
+       DIRECTION 1 — "PASSBOOK"
+       Warm paper ledger. Fraunces serif numerals, Work Sans labels.
+       ================================================================ */
+    #viewPassbook {
+        --pbk-paper: #f8f3e8;
+        --pbk-paper2: #f0e9d6;
+        --pbk-ink: #1f332a;
+        --pbk-ink-soft: #3c5346;
+        --pbk-muted: #8a9186;
+        --pbk-line: #d9cfb3;
+        --pbk-accent: #1f4d3a;
+        --pbk-accent2: #b0863b;
+        --pbk-green: #276b45;
+        --pbk-red: #9a3a30;
+        max-width: 1220px; margin: 0 auto 60px; padding: 0 20px;
+    }
+    .pbk-wrap { background: var(--pbk-paper); border: 1px solid var(--pbk-line); border-radius: 16px; box-shadow: 0 24px 50px -30px rgba(40,32,10,.35); overflow: hidden; }
+
+    /* hero "spread" */
+    .pbk-hero { position: relative; display: grid; grid-template-columns: 1.15fr 1fr; gap: 0; padding: 30px 34px; }
+    .pbk-hero::after { content: ''; position: absolute; left: 50%; top: 14px; bottom: 14px; width: 0; border-left: 1px dashed var(--pbk-line); }
+    .pbk-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--pbk-accent2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .pbk-eyebrow i { font-size: .8rem; }
+    .pbk-left { padding-right: 30px; }
+    .pbk-left h2 { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; margin: 0 0 4px; color: var(--pbk-ink); }
+    .pbk-left > p.sub { margin: 0 0 18px; font-size: .84rem; color: var(--pbk-ink-soft); max-width: 34ch; }
+    .ledger-line { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; }
+    .ledger-line .lbl { font-size: .78rem; color: var(--pbk-ink-soft); white-space: nowrap; }
+    .ledger-line .dots { flex: 1; border-bottom: 1px dotted var(--pbk-line); transform: translateY(-4px); }
+    .ledger-line .val { font-family: 'Fraunces', serif; font-variant-numeric: tabular-nums; font-size: 1rem; font-weight: 500; color: var(--pbk-ink); white-space: nowrap; }
+    .ledger-line.in .val { color: var(--pbk-green); }
+    .ledger-line.out .val { color: var(--pbk-red); }
+
+    .pbk-right { padding-left: 30px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+    .pbk-balance-lbl { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--pbk-muted); }
+    .pbk-balance { font-family: 'Fraunces', serif; font-size: 2.75rem; font-weight: 600; color: var(--pbk-accent); line-height: 1; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+    .pbk-balance-note { font-size: .76rem; color: var(--pbk-muted); margin-bottom: 16px; }
+    .pbk-seals { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .pbk-seal { display: inline-flex; align-items: center; gap: 7px; font-size: .74rem; font-weight: 600; padding: .35rem .7rem; border-radius: 999px; border: 1px solid var(--pbk-line); color: var(--pbk-ink-soft); background: var(--pbk-paper2); }
+    .pbk-seal.warn { color: var(--pbk-red); border-color: rgba(154,58,48,.35); background: rgba(154,58,48,.07); }
+    .pbk-stamp { position: absolute; right: 30px; top: 22px; width: 74px; height: 74px; border: 1.5px dashed var(--pbk-accent2); border-radius: 50%; display: grid; place-items: center; transform: rotate(-9deg); color: var(--pbk-accent2); text-align: center; opacity: .8; }
+    .pbk-stamp i { font-size: 1.1rem; display: block; margin-bottom: 2px; }
+    .pbk-stamp span { font-size: .48rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; line-height: 1.1; display: block; }
+
+    /* filter strip */
+    .pbk-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 22px; padding: 18px 34px; border-top: 1px solid var(--pbk-line); background: var(--pbk-paper2); }
+    .pbk-field { display: flex; flex-direction: column; gap: 5px; }
+    .pbk-field label { font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--pbk-muted); }
+    .pbk-field input, .pbk-field select { border: none; border-bottom: 1px solid var(--pbk-ink-soft); background: transparent; font: inherit; font-size: .86rem; color: var(--pbk-ink); padding: 2px 2px 4px; outline: none; font-family: 'Work Sans', sans-serif; }
+    .pbk-field input[type="date"] { width: 122px; }
+    .pbk-field select { min-width: 116px; }
+    .pbk-field input:focus, .pbk-field select:focus { border-bottom-color: var(--pbk-accent); }
+    .pbk-search { position: relative; flex: 1 1 200px; }
+    .pbk-search input { width: 100%; padding-left: 20px; }
+    .pbk-search i { position: absolute; left: 0; bottom: 8px; color: var(--pbk-muted); font-size: .8rem; }
+    .pbk-check { display: flex; align-items: center; gap: 7px; padding-bottom: 4px; font-size: .8rem; color: var(--pbk-ink-soft); cursor: pointer; }
+    .pbk-check input { accent-color: var(--pbk-red); width: 15px; height: 15px; }
+    .pbk-spacer { flex: 1; }
+    .pbk-stamp-btn { display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--pbk-accent); color: var(--pbk-accent); background: transparent; font: inherit; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: .5rem 1rem; border-radius: 8px; cursor: pointer; transition: all .18s; }
+    .pbk-stamp-btn:hover { background: var(--pbk-accent); color: #fff; }
+
+    /* ledger table */
+    .pbk-table-wrap { overflow-x: auto; border-top: 1px solid var(--pbk-line); }
+    table.pbk-t { width: 100%; border-collapse: collapse; min-width: 760px; }
+    table.pbk-t thead th { text-align: left; font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--pbk-muted); padding: 14px 16px 10px; border-bottom: 3px double var(--pbk-line); white-space: nowrap; font-family: 'Work Sans', sans-serif; }
+    table.pbk-t thead th.num { text-align: right; }
+    table.pbk-t thead th button { border: none; background: none; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; padding: 0; }
+    table.pbk-t thead th button i { font-size: .62rem; opacity: .5; }
+    table.pbk-t thead th button.on { color: var(--pbk-accent); }
+    table.pbk-t tbody td { padding: 12px 16px; border-bottom: 1px dotted var(--pbk-line); vertical-align: middle; font-size: .87rem; color: var(--pbk-ink); }
+    table.pbk-t tbody tr:nth-child(even) td { background: rgba(176,134,59,.05); }
+    table.pbk-t tbody tr:hover td { background: rgba(176,134,59,.12); }
+    table.pbk-t .num { text-align: right; font-family: 'Fraunces', serif; font-variant-numeric: tabular-nums; }
+    table.pbk-t .stu { font-family: 'Fraunces', serif; font-weight: 500; }
+    table.pbk-t .adm { font-size: .78rem; color: var(--pbk-muted); }
+    table.pbk-t .in { color: var(--pbk-green); }
+    table.pbk-t .out { color: var(--pbk-red); }
+    table.pbk-t .bal { font-weight: 600; }
+    table.pbk-t .bal.neg { color: var(--pbk-red); }
+    table.pbk-t .bal.neg::after { content: ' \2193'; font-size: .7em; }
+    .pbk-dot { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--pbk-ink-soft); }
+    .pbk-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--pbk-green); }
+    .pbk-dot.blocked::before { background: var(--pbk-red); }
+    .pbk-dot.none::before { background: var(--pbk-muted); }
+    .pbk-foot { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; font-size: .78rem; color: var(--pbk-muted); }
+    .pbk-pager { display: flex; gap: 10px; align-items: center; font-family: 'Fraunces', serif; }
+    .pbk-pager .on { color: var(--pbk-accent); font-weight: 700; }
+
+    /* ================================================================
+       DIRECTION 2 — "CARD WALLET"
+       Dark holographic fintech statement. Manrope + JetBrains Mono.
+       ================================================================ */
+    #viewWallet { background: #0b0d14; padding: 0 0 60px; }
+    #viewWallet .wal-scope { max-width: 1220px; margin: 0 auto; padding: 0 20px; font-family: 'Manrope', sans-serif; color: #eef1f8; }
+    #viewWallet .wal-mockhdr p, #viewWallet .wal-mockhdr h2 { color: #eef1f8; }
+
+    .wal-hero { position: relative; border-radius: 22px; padding: 26px 28px 24px; overflow: hidden; margin-bottom: 16px;
+        background: linear-gradient(120deg, #4c3df0 0%, #7b3ff2 38%, #12b3a6 100%); box-shadow: 0 30px 60px -24px rgba(90,60,240,.5); }
+    .wal-hero::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(120deg, rgba(255,255,255,.10) 0 2px, transparent 2px 26px); mix-blend-mode: overlay; opacity: .5; pointer-events: none; }
+    .wal-hero::after { content: ''; position: absolute; top: -60%; left: -10%; width: 60%; height: 220%; background: rgba(255,255,255,.14); transform: rotate(18deg); filter: blur(6px); animation: walshine 6s ease-in-out infinite; }
+    @keyframes walshine { 0%, 100% { transform: translateX(0) rotate(18deg); opacity: .5; } 50% { transform: translateX(340px) rotate(18deg); opacity: .15; } }
+    .wal-hero-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; }
+    .wal-chip { width: 38px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #f4d78b, #c99a3d); position: relative; overflow: hidden; }
+    .wal-chip::before, .wal-chip::after { content: ''; position: absolute; background: rgba(0,0,0,.25); }
+    .wal-chip::before { left: 0; right: 0; top: 50%; height: 1px; }
+    .wal-chip::after { top: 0; bottom: 0; left: 50%; width: 1px; }
+    .wal-lbl { font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+    .wal-ic-badge { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); display: grid; place-items: center; color: #fff; }
+    .wal-balance { position: relative; font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 700; color: #fff; margin: 14px 0 2px; letter-spacing: -.01em; }
+    .wal-balance-note { position: relative; font-size: .8rem; color: rgba(255,255,255,.78); margin-bottom: 16px; }
+    .wal-dots { position: relative; display: flex; align-items: center; gap: 16px; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,.55); font-size: .85rem; letter-spacing: .12em; }
+
+    .wal-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .wal-chip-stat { display: inline-flex; align-items: center; gap: 9px; padding: 9px 14px; border-radius: 13px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); }
+    .wal-chip-stat i { font-size: .8rem; color: #9d8bff; }
+    .wal-chip-stat .lb { font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: #8992a8; display: block; }
+    .wal-chip-stat .vl { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .88rem; color: #eef1f8; }
+    .wal-chip-stat.warn i, .wal-chip-stat.warn .vl { color: #ff8095; }
+
+    .wal-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; border-radius: 15px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); margin-bottom: 14px; }
+    .wal-pill { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); }
+    .wal-pill i { color: #9d8bff; font-size: .78rem; }
+    .wal-pill input[type="date"] { background: none; border: none; color: #eef1f8; font: inherit; font-family: 'JetBrains Mono', monospace; font-size: .78rem; outline: none; width: 96px; }
+    .wal-pill select { background: none; border: none; color: #eef1f8; font: inherit; font-size: .8rem; font-weight: 600; outline: none; cursor: pointer; }
+    .wal-pill select option { background: #171b28; }
+    .wal-search { flex: 1 1 190px; position: relative; }
+    .wal-search input { width: 100%; height: 34px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #eef1f8; padding: 0 12px 0 32px; font: inherit; font-size: .82rem; outline: none; }
+    .wal-search input:focus, .wal-pill:focus-within { border-color: #9d8bff; box-shadow: 0 0 0 3px rgba(124,108,255,.18); }
+    .wal-search i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #8992a8; font-size: .8rem; }
+    .wal-toggle { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); cursor: pointer; font-size: .8rem; color: #c3c9dc; }
+    .wal-switch { width: 30px; height: 17px; border-radius: 99px; background: rgba(255,255,255,.15); position: relative; transition: background .2s; flex: none; }
+    .wal-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .wal-toggle.on .wal-switch { background: #ff6b81; }
+    .wal-toggle.on .wal-switch::after { transform: translateX(13px); }
+    .wal-spacer { flex: 1; }
+    .wal-export { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 16px; border-radius: 10px; border: none; color: #fff; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; background: linear-gradient(120deg,#4c3df0,#12b3a6); box-shadow: 0 10px 22px -10px rgba(76,61,240,.7); }
+
+    .wal-panel { border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); overflow: hidden; }
+    .wal-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,.07); font-size: .8rem; color: #8992a8; }
+    .wal-panel-head b { color: #eef1f8; }
+    .wal-list { }
+    .wal-row { display: grid; grid-template-columns: 1.7fr .9fr .9fr .9fr .9fr; gap: 10px; align-items: center; padding: 13px 18px; border-bottom: 1px solid rgba(255,255,255,.05); transition: background .15s; }
+    .wal-row:last-child { border-bottom: none; }
+    .wal-row:hover { background: rgba(255,255,255,.03); }
+    .wal-row.head { padding: 10px 18px; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: #6b7288; border-bottom: 1px solid rgba(255,255,255,.09); }
+    .wal-row.head span.num { text-align: right; }
+    .wal-who { display: flex; align-items: center; gap: 11px; }
+    .wal-av { width: 34px; height: 34px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg,#7b3ff2,#12b3a6); flex: none; }
+    .wal-av span { width: 100%; height: 100%; border-radius: 50%; background: #171b28; display: grid; place-items: center; font-size: .68rem; font-weight: 700; color: #fff; }
+    .wal-who .txt b { display: block; font-size: .87rem; font-weight: 700; }
+    .wal-who .txt small { color: #8992a8; font-size: .74rem; }
+    .wal-status { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: #c3c9dc; }
+    .wal-status .dot { width: 7px; height: 7px; border-radius: 50%; background: #35d399; box-shadow: 0 0 0 3px rgba(53,211,153,.18); }
+    .wal-status.blocked .dot { background: #ff6b81; box-shadow: 0 0 0 3px rgba(255,107,129,.18); }
+    .wal-status.none .dot { background: #59607a; box-shadow: none; }
+    .wal-num { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+    .wal-num.in { color: #35d399; }
+    .wal-num.out { color: #ff8095; }
+    .wal-num.zero { color: #4d5470; }
+    .wal-bal { font-weight: 700; }
+    .wal-bal.neg { display: inline-flex; align-items: center; gap: 5px; color: #ff6b81; background: rgba(255,107,129,.12); padding: 3px 9px; border-radius: 8px; }
+    .wal-panel-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; font-size: .78rem; color: #6b7288; }
+    .wal-pager { display: flex; gap: 6px; }
+    .wal-pager button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.04); color: #c3c9dc; font: inherit; font-size: .78rem; cursor: pointer; }
+    .wal-pager button.on { background: linear-gradient(120deg,#4c3df0,#12b3a6); border: none; color: #fff; }
+
+    @media (max-width: 900px) {
+        .pbk-hero { grid-template-columns: 1fr; }
+        .pbk-hero::after { display: none; }
+        .pbk-left { padding-right: 0; border-bottom: 1px dashed var(--pbk-line); padding-bottom: 18px; margin-bottom: 18px; }
+        .pbk-right { padding-left: 0; }
+        .wal-row { grid-template-columns: 1.4fr .8fr .8fr .8fr; }
+        .wal-row > :nth-child(3) { display: none; }
+    }
+    @media (max-width: 560px) {
+        .wal-row { grid-template-columns: 1.6fr 1fr 1fr; }
+        .wal-row > :nth-child(2) { display: none; }
+    }
+
+    .note { max-width: 1220px; margin: 20px auto 0; padding: 0 20px; font-size: .78rem; color: #8a8a7a; line-height: 1.6; }
+    #viewWallet + .note { color: #6b7288; }
+    .note b { color: inherit; }
+</style>
+</head>
+<body>
+    <div class="harness">
+        <h1>Student Wallet Report <span>Fresh directions — round 2</span></h1>
+        <div class="seg-h" id="dirSeg">
+            <button data-dir="passbook" class="on">Passbook</button>
+            <button data-dir="wallet">Card Wallet</button>
+        </div>
+        <p id="dirDesc"><b>Passbook</b> — a warm paper ledger. Leans into what this report actually is: a school passbook statement, not a generic admin dashboard. Serif numerals, dotted leader lines, a stamped "carried forward" balance.</p>
+    </div>
+
+    <div id="viewPassbook">
+        <div class="stage-label">Existing page header — unchanged</div>
+        <div class="mock-header"><div class="inner">
+            <div class="crumb">Home / Students / Wallet Report</div>
+            <h2>Student Wallet Report</h2>
+            <p>Every student's card balance, and what went on and off it over the period</p>
+        </div></div>
+
+        <div class="stage-label">Redesigned report — "Passbook"</div>
+        <div class="pbk-wrap">
+            <div class="pbk-hero">
+                <span class="pbk-stamp"><i class="fa fa-university"></i><span>School<br>Ledger</span></span>
+                <div class="pbk-left">
+                    <div class="pbk-eyebrow"><i class="fa fa-book"></i> Statement summary</div>
+                    <h2>01 Sep – 23 Sep 2026</h2>
+                    <p class="sub">Movement on every active student card this period.</p>
+                    <div class="ledger-line"><span class="lbl">Opening balance</span><span class="dots"></span><span class="val">AED 0.00</span></div>
+                    <div class="ledger-line in"><span class="lbl">Added to cards</span><span class="dots"></span><span class="val">+ 1,030.00</span></div>
+                    <div class="ledger-line out"><span class="lbl">Spent from cards</span><span class="dots"></span><span class="val">− 1,030.00</span></div>
+                </div>
+                <div class="pbk-right">
+                    <span class="pbk-balance-lbl">Balance carried forward</span>
+                    <span class="pbk-balance">AED 0.00</span>
+                    <span class="pbk-balance-note">Matches Student Card Balances in the books</span>
+                    <div class="pbk-seals">
+                        <span class="pbk-seal"><i class="fa fa-users"></i> 7 students</span>
+                        <span class="pbk-seal warn"><i class="fa fa-exclamation-triangle"></i> 2 overdrawn · AED 70.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pbk-filters">
+                <div class="pbk-field"><label>From</label><input type="date" value="2026-09-01"></div>
+                <div class="pbk-field"><label>To</label><input type="date" value="2026-09-23"></div>
+                <div class="pbk-field"><label>Grade</label><select><option>All grades</option></select></div>
+                <div class="pbk-field"><label>Section</label><select><option>All sections</option></select></div>
+                <div class="pbk-field"><label>Status</label><select><option selected>Active</option></select></div>
+                <div class="pbk-field pbk-search"><label>Search</label><i class="fa fa-search"></i><input placeholder="Name, admission no, card"></div>
+                <label class="pbk-check"><input type="checkbox"> Overdrawn only</label>
+                <div class="pbk-spacer"></div>
+                <button class="pbk-stamp-btn"><i class="fa fa-download"></i> Export</button>
+            </div>
+
+            <div class="pbk-table-wrap">
+                <table class="pbk-t">
+                    <thead>
+                        <tr>
+                            <th><button class="on">Student <i class="fa fa-sort-asc"></i></button></th>
+                            <th><button>Class <i class="fa fa-sort"></i></button></th>
+                            <th>Card</th>
+                            <th class="num">Opening</th>
+                            <th class="num"><button>Added <i class="fa fa-sort"></i></button></th>
+                            <th class="num"><button>Spent <i class="fa fa-sort"></i></button></th>
+                            <th class="num"><button>Balance <i class="fa fa-sort"></i></button></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><span class="stu">Cv Rahman</span> <span class="adm">CV001</span></td><td>Grade 4 - A</td><td><span class="pbk-dot">Active</span></td><td class="num">0.00</td><td class="num in">250.00</td><td class="num out">180.00</td><td class="num bal">70.00</td></tr>
+                        <tr><td><span class="stu">Cvcv Thomas</span> <span class="adm">CV002</span></td><td>—</td><td><span class="pbk-dot none">No card</span></td><td class="num">0.00</td><td class="num">—</td><td class="num">—</td><td class="num bal">0.00</td></tr>
+                        <tr><td><span class="stu">Aisha Al Farsi</span> <span class="adm">CV003</span></td><td>Grade 2 - B</td><td><span class="pbk-dot">Active</span></td><td class="num">0.00</td><td class="num in">200.00</td><td class="num out">240.00</td><td class="num bal neg">40.00</td></tr>
+                        <tr><td><span class="stu">Yusuf Khan</span> <span class="adm">CV004</span></td><td>Grade 6 - A</td><td><span class="pbk-dot blocked">Blocked</span></td><td class="num">0.00</td><td class="num in">150.00</td><td class="num out">150.00</td><td class="num bal">0.00</td></tr>
+                        <tr><td><span class="stu">Fatima Noor</span> <span class="adm">CV005</span></td><td>Grade 1 - C</td><td><span class="pbk-dot">Active</span></td><td class="num">0.00</td><td class="num in">430.00</td><td class="num out">460.00</td><td class="num bal neg">30.00</td></tr>
+                        <tr><td><span class="stu">Omar Saeed</span> <span class="adm">CV006</span></td><td>Grade 5 - A</td><td><span class="pbk-dot">Active</span></td><td class="num">0.00</td><td class="num">—</td><td class="num">—</td><td class="num bal">0.00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pbk-foot">
+                <span>Showing 1–6 of 7</span>
+                <div class="pbk-pager"><span class="on">1</span></div>
+            </div>
+        </div>
+        <p class="note"><b>Passbook</b> reframes the report as a statement rather than a spreadsheet: a ledger-style hero with dotted leader lines for the period's movement, a serif "balance carried forward" figure, stamp-style summary chips, underline-only form fields, and a ruled ledger table with double-rule header and dotted row lines. Every field still maps to the same <code>wire:model.live</code> bindings and sortable columns as today.</p>
+    </div>
+
+    <div id="viewWallet" style="display:none">
+        <div class="stage-label" style="max-width:1220px;margin:26px auto 10px;padding:0 20px;color:#6b7288;">Existing page header — unchanged</div>
+        <div class="mock-header wal-mockhdr" style="max-width:1220px;margin:0 auto;padding:0 20px;"><div class="inner">
+            <div class="crumb">Home / Students / Wallet Report</div>
+            <h2>Student Wallet Report</h2>
+            <p>Every student's card balance, and what went on and off it over the period</p>
+        </div></div>
+
+        <div class="stage-label" style="max-width:1220px;margin:26px auto 10px;padding:0 20px;color:#6b7288;">Redesigned report — "Card Wallet"</div>
+        <div class="wal-scope">
+            <div class="wal-hero">
+                <div class="wal-hero-top">
+                    <div class="wal-chip"></div>
+                    <span class="wal-ic-badge"><i class="fa fa-credit-card"></i></span>
+                </div>
+                <span class="wal-lbl" style="position:relative;display:block;margin-top:10px;">Total on cards</span>
+                <div class="wal-balance">AED 0.00</div>
+                <div class="wal-balance-note">Matches Student Card Balances in the books · 01 Sep – 23 Sep 2026</div>
+                <div class="wal-dots">•••• •••• •••• 7 cards</div>
+            </div>
+
+            <div class="wal-chips">
+                <span class="wal-chip-stat"><i class="fa fa-history"></i><span><span class="lb">Opening</span><span class="vl">AED 0.00</span></span></span>
+                <span class="wal-chip-stat"><i class="fa fa-arrow-down"></i><span><span class="lb">Added</span><span class="vl">AED 1,030.00</span></span></span>
+                <span class="wal-chip-stat"><i class="fa fa-arrow-up"></i><span><span class="lb">Spent</span><span class="vl">AED 1,030.00</span></span></span>
+                <span class="wal-chip-stat warn"><i class="fa fa-exclamation-triangle"></i><span><span class="lb">Overdrawn</span><span class="vl">2 · AED 70.00</span></span></span>
+            </div>
+
+            <div class="wal-toolbar">
+                <label class="wal-pill"><i class="fa fa-calendar-o"></i><input type="date" value="2026-09-01"></label>
+                <label class="wal-pill"><i class="fa fa-calendar-o"></i><input type="date" value="2026-09-23"></label>
+                <label class="wal-pill"><i class="fa fa-graduation-cap"></i><select><option>All grades</option></select></label>
+                <label class="wal-pill"><i class="fa fa-sitemap"></i><select><option>All sections</option></select></label>
+                <label class="wal-pill"><i class="fa fa-user-circle-o"></i><select><option selected>Active</option></select></label>
+                <div class="wal-search"><i class="fa fa-search"></i><input placeholder="Name, admission no, card"></div>
+                <div class="wal-toggle" id="walToggle"><span class="wal-switch"></span> Overdrawn only</div>
+                <div class="wal-spacer"></div>
+                <button class="wal-export"><i class="fa fa-download"></i> Export</button>
+            </div>
+
+            <div class="wal-panel">
+                <div class="wal-panel-head"><span><b>7</b> students in this filter</span><span>Showing 1–6 of 7</span></div>
+                <div class="wal-row head">
+                    <span>Student</span><span>Class</span><span>Card</span><span class="num">Added / Spent</span><span class="num">Balance</span>
+                </div>
+                <div class="wal-list">
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>CR</span></span><span class="txt"><b>Cv Rahman</b><small>CV001</small></span></span>
+                        <span>Grade 4 - A</span>
+                        <span class="wal-status"><span class="dot"></span>Active</span>
+                        <span class="wal-num"><span class="in">+250.00</span> <span class="out">−180.00</span></span>
+                        <span class="wal-num wal-bal">70.00</span>
+                    </div>
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>CT</span></span><span class="txt"><b>Cvcv Thomas</b><small>CV002</small></span></span>
+                        <span>—</span>
+                        <span class="wal-status none"><span class="dot"></span>No card</span>
+                        <span class="wal-num zero">—</span>
+                        <span class="wal-num wal-bal">0.00</span>
+                    </div>
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>AF</span></span><span class="txt"><b>Aisha Al Farsi</b><small>CV003</small></span></span>
+                        <span>Grade 2 - B</span>
+                        <span class="wal-status"><span class="dot"></span>Active</span>
+                        <span class="wal-num"><span class="in">+200.00</span> <span class="out">−240.00</span></span>
+                        <span class="wal-num"><span class="wal-bal neg"><i class="fa fa-arrow-down"></i> 40.00</span></span>
+                    </div>
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>YK</span></span><span class="txt"><b>Yusuf Khan</b><small>CV004</small></span></span>
+                        <span>Grade 6 - A</span>
+                        <span class="wal-status blocked"><span class="dot"></span>Blocked</span>
+                        <span class="wal-num"><span class="in">+150.00</span> <span class="out">−150.00</span></span>
+                        <span class="wal-num wal-bal">0.00</span>
+                    </div>
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>FN</span></span><span class="txt"><b>Fatima Noor</b><small>CV005</small></span></span>
+                        <span>Grade 1 - C</span>
+                        <span class="wal-status"><span class="dot"></span>Active</span>
+                        <span class="wal-num"><span class="in">+430.00</span> <span class="out">−460.00</span></span>
+                        <span class="wal-num"><span class="wal-bal neg"><i class="fa fa-arrow-down"></i> 30.00</span></span>
+                    </div>
+                    <div class="wal-row">
+                        <span class="wal-who"><span class="wal-av"><span>OS</span></span><span class="txt"><b>Omar Saeed</b><small>CV006</small></span></span>
+                        <span>Grade 5 - A</span>
+                        <span class="wal-status"><span class="dot"></span>Active</span>
+                        <span class="wal-num zero">—</span>
+                        <span class="wal-num wal-bal">0.00</span>
+                    </div>
+                </div>
+                <div class="wal-panel-foot">
+                    <span>Page 1 of 1</span>
+                    <div class="wal-pager"><button disabled><i class="fa fa-angle-left"></i></button><button class="on">1</button><button disabled><i class="fa fa-angle-right"></i></button></div>
+                </div>
+            </div>
+        </div>
+        <p class="note"><b>Card Wallet</b> reframes the report as a virtual card statement: a holographic gradient card showing the total held balance with a subtle animated shine, glass stat chips, a floating blurred toolbar, and a borderless transaction list (avatar, status dot, added/spent, balance) instead of a classic grid — negative balances surface as a glowing chip rather than plain red text.</p>
+    </div>
+
+<script>
+    const descs = {
+        passbook: '<b>Passbook</b> — a warm paper ledger. Leans into what this report actually is: a school passbook statement, not a generic admin dashboard. Serif numerals, dotted leader lines, a stamped "carried forward" balance.',
+        wallet: '<b>Card Wallet</b> — a dark holographic fintech statement. The total balance becomes an actual virtual-card visual with a shine sweep; the table becomes a borderless transaction list with glowing alerts for overdrawn cards.',
+    };
+    document.getElementById('dirSeg').addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        const dir = b.dataset.dir;
+        [...e.currentTarget.children].forEach(c => c.classList.toggle('on', c === b));
+        document.getElementById('dirDesc').innerHTML = descs[dir];
+        document.getElementById('viewPassbook').style.display = dir === 'passbook' ? '' : 'none';
+        document.getElementById('viewWallet').style.display = dir === 'wallet' ? '' : 'none';
+        document.body.style.background = dir === 'wallet' ? '#0b0d14' : '#e9e4d6';
+    });
+    document.getElementById('walToggle').addEventListener('click', e => e.currentTarget.classList.toggle('on'));
+</script>
+</body>
+</html>

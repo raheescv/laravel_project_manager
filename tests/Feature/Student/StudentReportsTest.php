@@ -87,6 +87,28 @@ it('separates the opening balance from the period, and filters', function (): vo
         ->toBe(['Omar Ahmed']);
 });
 
+it('sets the period from the rail shortcuts and resets every filter', function (): void {
+    $report = Livewire::test(WalletReport::class)->call('setRange', 'last_month');
+
+    expect($report->get('from_date'))->toBe(now()->subMonthNoOverflow()->startOfMonth()->toDateString())
+        ->and($report->get('to_date'))->toBe(now()->subMonthNoOverflow()->endOfMonth()->toDateString())
+        ->and($report->instance()->currentRange())->toBe('last_month');
+
+    // An unknown key is ignored rather than silently widening the report.
+    $report->call('setRange', 'all_time');
+    expect($report->get('from_date'))->toBe(now()->subMonthNoOverflow()->startOfMonth()->toDateString());
+
+    $report->set('search', 'Omar')->set('grade', 'Grade 2')->set('overdrawn_only', true)->set('status', '')
+        ->call('resetFilters');
+
+    expect($report->get('search'))->toBe('')
+        ->and($report->get('grade'))->toBe('')
+        ->and($report->get('overdrawn_only'))->toBeFalse()
+        ->and($report->get('status'))->toBe('active')
+        ->and($report->get('from_date'))->toBe(now()->startOfMonth()->toDateString())
+        ->and($report->instance()->currentRange())->toBe('this_month');
+});
+
 it('reports QPay recharges with the money actually collected', function (): void {
     $guardian = $this->sara->guardians->first();
     QpayTransaction::create(['type' => 'payment', 'pun' => 'PUNSUCCESS0000000001', 'account_id' => $this->sara->id, 'guardian_id' => $guardian->id, 'amount' => 150, 'status' => 'success', 'gateway_status' => '0000', 'masked_card' => '421537******3243', 'completed_at' => now()]);
@@ -107,6 +129,20 @@ it('reports QPay recharges with the money actually collected', function (): void
     expect(Livewire::test(QPayRechargeReport::class)->set('status', 'pending')->viewData('rows')->count())->toBe(1);
     expect(Livewire::test(QPayRechargeReport::class)->set('search', 'Omar')->viewData('rows')->count())->toBe(1);
     expect(Livewire::test(QPayRechargeReport::class)->set('type', 'refund')->viewData('rows')->count())->toBe(1);
+});
+
+it('resets the recharge report filters back to this month', function (): void {
+    $report = Livewire::test(QPayRechargeReport::class)
+        ->set('search', 'Omar')->set('status', 'pending')->set('type', 'refund')->set('gateway', 'mpgs')
+        ->call('setRange', 'last_30')
+        ->call('resetFilters');
+
+    expect($report->get('search'))->toBe('')
+        ->and($report->get('status'))->toBe('')
+        ->and($report->get('type'))->toBe('')
+        ->and($report->get('gateway'))->toBe('')
+        ->and($report->get('from_date'))->toBe(now()->startOfMonth()->toDateString())
+        ->and($report->instance()->currentRange())->toBe('this_month');
 });
 
 it('exports both reports', function (): void {

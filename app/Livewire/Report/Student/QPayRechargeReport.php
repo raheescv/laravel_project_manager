@@ -4,6 +4,7 @@ namespace App\Livewire\Report\Student;
 
 use App\Actions\QPay\InquireAction;
 use App\Exports\QPayRechargeReportExport;
+use App\Livewire\Concerns\HasReportPeriod;
 use App\Models\QpayTransaction;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -20,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class QPayRechargeReport extends Component
 {
+    use HasReportPeriod;
     use WithPagination;
 
     public $search = '';
@@ -67,6 +69,12 @@ class QPayRechargeReport extends Component
         }
         $this->sortDirection = $this->sortField === $field && $this->sortDirection === 'asc' ? 'desc' : 'asc';
         $this->sortField = $field;
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'status', 'type', 'gateway']);
+        $this->setRange('this_month');
     }
 
     /** Ask the gateway for the result of a payment that never came back. */
@@ -133,6 +141,8 @@ class QPayRechargeReport extends Component
 
         return view('livewire.report.student.qpay-recharge-report', [
             'rows' => self::filteredQuery($this->filters())->paginate($this->perPage),
+            'ranges' => self::RANGES,
+            'activeRange' => $this->currentRange(),
             'totals' => [
                 'collected' => (clone $base())->where('qpay_transactions.type', QpayTransaction::TYPE_PAYMENT)->where('qpay_transactions.status', QpayTransaction::STATUS_SUCCESS)->sum('qpay_transactions.amount'),
                 'refunded' => (clone $base())->where('qpay_transactions.type', QpayTransaction::TYPE_REFUND)->whereIn('qpay_transactions.status', [QpayTransaction::STATUS_SUCCESS, QpayTransaction::STATUS_REFUND_PENDING])->sum('qpay_transactions.amount'),

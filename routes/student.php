@@ -12,6 +12,7 @@ Route::middleware(['auth', EnsureModuleEnabled::class.':'.ModuleAccess::SCHOOL])
         Route::get('import', 'import')->name('import')->can('student.import');
         Route::get('edit/{id}', 'page')->name('edit')->can('student.edit');
         Route::get('view/{id}', 'view')->name('view')->can('student.view');
+        Route::get('guardians', 'guardians')->name('guardians')->can('student guardian.view');
 
         // Reports (Students menu). Module-gated by the group above.
         Route::name('report::')->prefix('report')->group(function (): void {

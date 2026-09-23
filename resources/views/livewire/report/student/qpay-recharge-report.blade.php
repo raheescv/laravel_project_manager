@@ -1,167 +1,259 @@
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-        <div class="row g-2 align-items-end">
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1" for="qr_from">From</label>
-                <input type="date" id="qr_from" class="form-control form-control-sm" wire:model.live="from_date">
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1" for="qr_to">To</label>
-                <input type="date" id="qr_to" class="form-control form-control-sm" wire:model.live="to_date" max="{{ date('Y-m-d') }}">
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1" for="qr_status">Status</label>
-                <select id="qr_status" class="form-select form-select-sm" wire:model.live="status">
-                    <option value="">All statuses</option>
-                    <option value="success">Successful</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="review">Needs review</option>
-                    <option value="unresolved">Unresolved</option>
-                    <option value="refunded">Refunded</option>
-                    <option value="refund_pending">Refund pending</option>
-                </select>
-            </div>
-            <div class="col-6 col-md-2">
-                <label class="form-label small fw-semibold text-muted mb-1" for="qr_type">Type</label>
-                <select id="qr_type" class="form-select form-select-sm" wire:model.live="type">
-                    <option value="">Payments &amp; refunds</option>
-                    <option value="payment">Payments</option>
-                    <option value="refund">Refunds</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label small fw-semibold text-muted mb-1" for="qr_search">Search</label>
-                <input type="text" id="qr_search" class="form-control form-control-sm" wire:model.live.debounce.400ms="search"
-                    placeholder="Student, admission no, parent, mobile, PUN or confirmation">
-            </div>
-        </div>
-        <div class="d-flex flex-wrap gap-3 align-items-center mt-3">
-            <select class="form-select form-select-sm" style="max-width: 7rem" wire:model.live="perPage" aria-label="Rows per page">
-                <option value="25">25</option>
-                <option value="100">100</option>
-                <option value="500">500</option>
-            </select>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Card type">
-                @foreach (['' => 'All cards', 'qpay' => 'Debit · QPay', 'mpgs' => 'Credit · MPGS'] as $value => $label)
-                    <input type="radio" class="btn-check" name="qr_gateway" id="qr_gateway_{{ $value ?: 'all' }}" value="{{ $value }}" wire:model.live="gateway" autocomplete="off">
-                    <label class="btn btn-outline-secondary" for="qr_gateway_{{ $value ?: 'all' }}">{{ $label }}</label>
-                @endforeach
-            </div>
-            @can('report.student recharge')
-                <button class="btn btn-success btn-sm ms-auto" wire:click="export">
-                    <i class="fa fa-file-excel-o me-1"></i> Export
-                </button>
-            @endcan
-        </div>
-    </div>
+<div>
+    <x-report.studio />
 
-    <div class="card-body pb-0">
-        <div class="row g-2">
-            @php($tiles = [
-                ['Collected', currency($totals['collected']), 'text-success'],
-                ['Successful top-ups', (int) $totals['payments'], 'text-body'],
-                ['Refunded', currency($totals['refunded']), 'text-danger'],
-                ['Pending', (int) $totals['pending'], 'text-warning'],
-                ['Failed', (int) $totals['failed'], 'text-muted'],
-                ['Needs review', (int) $totals['review'], 'text-danger'],
-            ])
-            @foreach ($tiles as [$label, $value, $class])
-                <div class="col-6 col-lg-2">
-                    <div class="border rounded p-2 h-100 text-center">
-                        <div class="small text-muted">{{ $label }}</div>
-                        <div class="fw-bold {{ $class }}">{{ $value }}</div>
+    @php
+        $statuses = [
+            '' => 'All statuses',
+            'success' => 'Successful',
+            'pending' => 'Pending',
+            'failed' => 'Failed',
+            'cancelled' => 'Cancelled',
+            'review' => 'Needs review',
+            'unresolved' => 'Unresolved',
+            'refunded' => 'Refunded',
+            'refund_pending' => 'Refund pending',
+        ];
+        $statusTone = fn (string $status) => match (true) {
+            $status === 'success' => '',
+            $status === 'failed' => 'bad',
+            in_array($status, ['pending', 'refund_pending', 'review'], true) => 'warn',
+            default => 'off',
+        };
+    @endphp
+
+    <div class="wrx" wire:loading.class="is-busy">
+        <div class="shell">
+            {{-- ── Filter rail ─────────────────────────────────── --}}
+            <aside class="rail">
+                <div class="grp">
+                    <h4>Period</h4>
+                    <div class="quick">
+                        @foreach ($ranges as $key => $label)
+                            <button type="button" class="{{ $activeRange === $key ? 'is-on' : '' }}" wire:click="setRange('{{ $key }}')">{{ $label }}</button>
+                        @endforeach
+                    </div>
+                    <div class="f">
+                        <label for="qr_from">From</label>
+                        <input type="date" id="qr_from" wire:model.live="from_date" max="{{ $to_date }}">
+                    </div>
+                    <div class="f">
+                        <label for="qr_to">To</label>
+                        <input type="date" id="qr_to" wire:model.live="to_date" max="{{ date('Y-m-d') }}">
                     </div>
                 </div>
-            @endforeach
-        </div>
-        <p class="small text-muted mt-2 mb-0">
-            "Collected" counts only payments the gateway confirmed — those are the ones on the students' cards and in the books.
-            A payment left pending can be checked with its gateway (QPay for debit cards, MPGS for credit cards) from its row.
-        </p>
-    </div>
 
-    <div class="card-body p-0 mt-3">
-        <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle border-bottom mb-0">
-                <thead class="bg-light text-muted small">
-                    <tr>
-                        <th class="ps-3"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="qpay_transactions.id" label="Date" /></th>
-                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="Student" /></th>
-                        <th>Parent</th>
-                        <th>PUN / confirmation</th>
-                        <th>Card</th>
-                        <th class="text-end"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="qpay_transactions.amount" label="Amount" /></th>
-                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="qpay_transactions.status" label="Status" /></th>
-                        <th>Gateway response</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $row)
-                        <tr wire:key="qpay-{{ $row->id }}">
-                            <td class="ps-3 text-nowrap">{{ systemDateTime($row->created_at) }}</td>
-                            <td class="text-nowrap">
-                                <a href="{{ route('student::view', $row->account_id) }}" class="text-decoration-none fw-medium">{{ $row->student_name }}</a>
-                                <div class="small text-muted">{{ $row->admission_no }}{{ $row->grade ? ' · ' . trim(implode(' - ', array_filter([$row->grade, $row->section]))) : '' }}</div>
-                            </td>
-                            <td class="small text-nowrap">
-                                {{ $row->guardian_name ?: '-' }}
-                                @if ($row->guardian_mobile)
-                                    <div class="text-muted">{{ $row->guardian_mobile }}</div>
-                                @endif
-                            </td>
-                            <td class="small font-monospace">
-                                {{ $row->pun }}
-                                @if ($row->confirmation_id)
-                                    <div class="text-muted">{{ $row->confirmation_id }}</div>
-                                @endif
-                            </td>
-                            <td class="small text-nowrap">
-                                <span class="badge {{ $row->isCreditCard() ? 'bg-primary-subtle text-primary-emphasis' : 'bg-info-subtle text-info-emphasis' }}">
-                                    <i class="fa {{ $row->isCreditCard() ? 'fa-credit-card' : 'fa-globe' }} me-1"></i>{{ $row->methodLabel() }}
-                                </span>
-                                <div class="font-monospace text-muted">{{ $row->cardLabel() ?: '-' }}</div>
-                            </td>
-                            <td class="text-end fw-semibold text-nowrap {{ $row->type === 'refund' ? 'text-danger' : '' }}">
-                                {{ $row->type === 'refund' ? '-' : '' }}{{ currency($row->amount) }}
-                            </td>
-                            <td>
-                                <span @class([
-                                    'badge',
-                                    'bg-success' => $row->status === 'success',
-                                    'bg-danger' => $row->status === 'failed',
-                                    'bg-warning text-dark' => in_array($row->status, ['pending', 'refund_pending', 'review']),
-                                    'bg-secondary' => in_array($row->status, ['refunded', 'unresolved', 'cancelled']),
-                                ])>{{ $row->statusLabel() }}</span>
-                                @if ($row->tampered_at)
-                                    <span class="badge bg-danger" title="The response failed the secure hash check and was verified by inquiry">Tampered</span>
-                                @endif
-                            </td>
-                            <td class="small text-muted">
-                                {{ $row->gateway_status }} {{ $row->gateway_status_message }}
-                                @if ($row->failure_reason)
-                                    <div class="text-danger">{{ $row->failure_reason }}</div>
-                                @endif
-                            </td>
-                            <td class="text-end pe-3">
-                                {{-- Released payments are still asked about, so they keep the Check button. --}}
-                                @if ($row->awaitsResult())
-                                    <button type="button" class="btn btn-sm btn-light text-nowrap" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask {{ $row->gatewayLabel() }} for the result">
-                                        <i class="fa fa-refresh"></i> Check
+                <div class="grp">
+                    <h4>Transactions</h4>
+                    <div class="f">
+                        <label for="qr_status">Status</label>
+                        <select id="qr_status" wire:model.live="status">
+                            @foreach ($statuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="f">
+                        <label for="qr_type">Type</label>
+                        <select id="qr_type" wire:model.live="type">
+                            <option value="">Payments &amp; refunds</option>
+                            <option value="payment">Payments</option>
+                            <option value="refund">Refunds</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grp">
+                    <h4>Card</h4>
+                    <div class="seg" role="radiogroup" aria-label="Card type">
+                        @foreach (['' => ['fa-th-large', 'All cards'], 'qpay' => ['fa-globe', 'Debit · QPay'], 'mpgs' => ['fa-credit-card', 'Credit · MPGS']] as $value => [$icon, $label])
+                            <label>
+                                <input type="radio" name="qr_gateway" value="{{ $value }}" wire:model.live="gateway">
+                                <i class="fa {{ $icon }}"></i> {{ $label }}
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="rail-foot">
+                    @can('report.student recharge')
+                        <button type="button" class="btn-x solid" wire:click="export">
+                            <i class="fa fa-download"></i> Export
+                        </button>
+                    @endcan
+                    <button type="button" class="btn-x ghost" wire:click="resetFilters">Reset filters</button>
+                </div>
+            </aside>
+
+            {{-- ── Main column ─────────────────────────────────── --}}
+            <div class="main">
+                <div class="wrxsum">
+                    <div class="wrxsum__row">
+                        <div class="stat hero">
+                            <span class="stat__ic"><i class="fa fa-money"></i></span>
+                            <div class="k">Collected</div>
+                            <div class="v">{{ currency($totals['collected']) }}</div>
+                        </div>
+                        <div class="stat">
+                            <span class="stat__ic"><i class="fa fa-check"></i></span>
+                            <div class="k">Top-ups</div>
+                            <div class="v">{{ number_format((int) $totals['payments']) }}</div>
+                        </div>
+                        <div class="stat out">
+                            <span class="stat__ic"><i class="fa fa-undo"></i></span>
+                            <div class="k">Refunded</div>
+                            <div class="v">{{ currency($totals['refunded']) }}</div>
+                        </div>
+                        <div class="stat warn">
+                            <span class="stat__ic"><i class="fa fa-clock-o"></i></span>
+                            <div class="k">Pending</div>
+                            <div class="v">{{ number_format((int) $totals['pending']) }}</div>
+                        </div>
+                        <div class="stat off">
+                            <span class="stat__ic"><i class="fa fa-times"></i></span>
+                            <div class="k">Failed</div>
+                            <div class="v">{{ number_format((int) $totals['failed']) }}</div>
+                        </div>
+                        <div class="stat bad">
+                            <span class="stat__ic"><i class="fa fa-exclamation-triangle"></i></span>
+                            <div class="k">Needs review</div>
+                            <div class="v">{{ number_format((int) $totals['review']) }}</div>
+                        </div>
+                    </div>
+                    <p class="wrxsum__note">
+                        "Collected" counts only payments the gateway confirmed — those are the ones on the students' cards and in the books.
+                        A payment left pending can be checked with its gateway (QPay for debit cards, MPGS for credit cards) from its row.
+                    </p>
+                </div>
+
+                <div class="tools">
+                    <div class="search">
+                        <i class="fa fa-search"></i>
+                        <input type="text" id="qr_search" wire:model.live.debounce.400ms="search"
+                            placeholder="Student, admission no, parent, mobile, PUN or confirmation" aria-label="Search recharges">
+                    </div>
+                    <span class="busy" wire:loading><i class="fa fa-refresh fa-spin"></i></span>
+                    <div class="tools__end">
+                        <span class="tools__cnt">{{ number_format($rows->total()) }} {{ Str::plural('transaction', $rows->total()) }}</span>
+                        <select wire:model.live="perPage" aria-label="Rows per page">
+                            <option value="25">25 rows</option>
+                            <option value="100">100 rows</option>
+                            <option value="500">500 rows</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tbl-wrap">
+                    <table class="wt wide">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <button type="button" class="th-sort {{ $sortField === 'qpay_transactions.id' ? 'is-on' : '' }}" wire:click="sortBy('qpay_transactions.id')">
+                                        Date <i class="fa fa-sort{{ $sortField === 'qpay_transactions.id' ? '-' . $sortDirection : '' }}"></i>
                                     </button>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="text-center text-muted py-4">No online recharges match these filters.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </th>
+                                <th>
+                                    <button type="button" class="th-sort {{ $sortField === 'accounts.name' ? 'is-on' : '' }}" wire:click="sortBy('accounts.name')">
+                                        Student <i class="fa fa-sort{{ $sortField === 'accounts.name' ? '-' . $sortDirection : '' }}"></i>
+                                    </button>
+                                </th>
+                                <th>Parent</th>
+                                <th>PUN / confirmation</th>
+                                <th>Card</th>
+                                <th class="num">
+                                    <button type="button" class="th-sort {{ $sortField === 'qpay_transactions.amount' ? 'is-on' : '' }}" wire:click="sortBy('qpay_transactions.amount')">
+                                        Amount <i class="fa fa-sort{{ $sortField === 'qpay_transactions.amount' ? '-' . $sortDirection : '' }}"></i>
+                                    </button>
+                                </th>
+                                <th>
+                                    <button type="button" class="th-sort {{ $sortField === 'qpay_transactions.status' ? 'is-on' : '' }}" wire:click="sortBy('qpay_transactions.status')">
+                                        Status <i class="fa fa-sort{{ $sortField === 'qpay_transactions.status' ? '-' . $sortDirection : '' }}"></i>
+                                    </button>
+                                </th>
+                                <th>Gateway response</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($rows as $row)
+                                <tr wire:key="qpay-{{ $row->id }}" class="{{ $row->status === 'review' || $row->tampered_at ? 'is-flagged' : '' }}">
+                                    <td class="nowrap">
+                                        {{ systemDate($row->created_at) }}
+                                        <div class="sub mono">{{ $row->created_at?->format('h:i A') }}</div>
+                                    </td>
+                                    <td class="nowrap">
+                                        <a href="{{ route('student::view', $row->account_id) }}" class="nm">{{ $row->student_name }}</a>
+                                        <div class="sub">{{ $row->admission_no }}{{ $row->grade ? ' · ' . trim(implode(' - ', array_filter([$row->grade, $row->section]))) : '' }}</div>
+                                    </td>
+                                    <td class="nowrap">
+                                        {{ $row->guardian_name ?: '—' }}
+                                        @if ($row->guardian_mobile)
+                                            <div class="sub mono">{{ $row->guardian_mobile }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="nowrap mono" style="font-size: 11.5px">
+                                        {{ $row->pun }}
+                                        @if ($row->confirmation_id)
+                                            <div class="sub mono">{{ $row->confirmation_id }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="nowrap">
+                                        <span class="tag {{ $row->isCreditCard() ? 'info' : 'off' }}">
+                                            <i class="fa {{ $row->isCreditCard() ? 'fa-credit-card' : 'fa-globe' }}"></i>{{ $row->methodLabel() }}
+                                        </span>
+                                        <div class="sub mono">{{ $row->cardLabel() ?: '—' }}</div>
+                                    </td>
+                                    <td class="num nowrap bal {{ $row->type === 'refund' ? 'neg' : '' }}">
+                                        {{ $row->type === 'refund' ? '−' : '' }}{{ currency($row->amount) }}
+                                    </td>
+                                    <td class="nowrap">
+                                        <span class="tag {{ $statusTone($row->status) }}">{{ $row->statusLabel() }}</span>
+                                        @if ($row->tampered_at)
+                                            <div class="sub"><span class="tag bad" title="The response failed the secure hash check and was verified by inquiry">Tampered</span></div>
+                                        @endif
+                                    </td>
+                                    <td class="sub" style="max-width: 180px; white-space: normal">
+                                        {{ $row->gateway_status }} {{ $row->gateway_status_message }}
+                                        @if ($row->failure_reason)
+                                            <div class="out">{{ $row->failure_reason }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="num">
+                                        {{-- Released payments are still asked about, so they keep the Check button. --}}
+                                        @if ($row->awaitsResult())
+                                            <button type="button" class="icon-btn" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask {{ $row->gatewayLabel() }} for the result">
+                                                <i class="fa fa-refresh"></i> Check
+                                            </button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9">
+                                        <div class="empty">
+                                            <div class="empty__ring"><i class="fa fa-credit-card"></i></div>
+                                            <h4>No online recharges match these filters</h4>
+                                            <p>Try a wider date range, another status, or clear the card type.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="foot">
+                    <span>
+                        @if ($rows->total())
+                            Showing {{ number_format($rows->firstItem()) }}–{{ number_format($rows->lastItem()) }} of {{ number_format($rows->total()) }}
+                        @else
+                            No rows
+                        @endif
+                    </span>
+                    @if ($rows->hasPages())
+                        {{ $rows->links() }}
+                    @endif
+                </div>
+            </div>
         </div>
-        <div class="p-3 border-top">{{ $rows->links() }}</div>
     </div>
 </div>

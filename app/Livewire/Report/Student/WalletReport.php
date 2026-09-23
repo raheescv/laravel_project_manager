@@ -3,6 +3,7 @@
 namespace App\Livewire\Report\Student;
 
 use App\Exports\StudentWalletReportExport;
+use App\Livewire\Concerns\HasReportPeriod;
 use App\Models\Account;
 use App\Models\StudentDetail;
 use App\Services\TenantService;
@@ -20,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class WalletReport extends Component
 {
+    use HasReportPeriod;
     use WithPagination;
 
     public $search = '';
@@ -58,6 +60,12 @@ class WalletReport extends Component
         if ($key !== 'perPage') {
             $this->resetPage();
         }
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'grade', 'section', 'status', 'overdrawn_only']);
+        $this->setRange('this_month');
     }
 
     public function sortBy($field)
@@ -167,6 +175,8 @@ class WalletReport extends Component
         return view('livewire.report.student.wallet-report', [
             'rows' => $rows,
             'totals' => $totals,
+            'ranges' => self::RANGES,
+            'activeRange' => $this->currentRange(),
             'grades' => StudentDetail::whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade'),
             'sections' => StudentDetail::whereNotNull('section')->distinct()->orderBy('section')->pluck('section'),
         ]);

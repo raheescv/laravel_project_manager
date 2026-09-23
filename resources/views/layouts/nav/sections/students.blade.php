@@ -17,6 +17,11 @@
             <li class="nav-item">
                 <a href="{{ route('student::index') }}" class="nav-link {{ request()->is(['student', 'student/view/*', 'student/edit/*']) ? 'active' : '' }}">Students</a>
             </li>
+            @can('student guardian.view')
+                <li class="nav-item">
+                    <a href="{{ route('student::guardians') }}" class="nav-link {{ request()->is(['student/guardians']) ? 'active' : '' }}">Parents</a>
+                </li>
+            @endcan
             @can('student menu.view')
                 <li class="nav-item">
                     <a href="{{ route('student::canteen-menu') }}" class="nav-link {{ request()->is(['student/canteen-menu']) ? 'active' : '' }}">Canteen Menu</a>
