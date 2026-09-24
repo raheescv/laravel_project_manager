@@ -133,7 +133,7 @@ class InvoiceScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
                     // Compact action bar: Print stays visible next to the dominant
-                    // "New Sale" CTA; every other action (Edit / Return / Share /
+                    // "New Sale" CTA; every other action (Edit / Return /
                     // Delete) lives one tap deep behind the "•••" overflow sheet.
                     child: IntrinsicHeight(
                       child: Row(
@@ -409,22 +409,10 @@ class InvoiceScreen extends StatelessWidget {
     return 'invoice_${base.isEmpty ? 'receipt' : base}.pdf';
   }
 
-  /// Open the share sheet with the receipt PDF attached.
-  Future<void> _share(BuildContext context) async {
-    final settings = context.read<PrintSettingsCubit>().snapshot;
-    try {
-      final bytes = await buildReceiptPdf(sale, settings);
-      await Printing.sharePdf(bytes: bytes, filename: _fileName);
-    } catch (_) {
-      if (context.mounted) _toast(context, 'Could not share the receipt.');
-    }
-  }
-
   /// The Print button. Once this till is paired with a printer, printing is the
   /// point — send the receipt straight there (one tap, no preview). Without a
   /// pairing we keep the preview-then-print path, which is the only way to
-  /// choose a printer on that device. The preview stays reachable either way
-  /// from the "•••" sheet.
+  /// choose a printer on that device (the preview's own bar also shares).
   Future<void> _print(BuildContext context) async {
     final print = context.read<PrintSettingsCubit>();
     if (!print.hasPrinter) {
@@ -688,7 +676,7 @@ class InvoiceScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text('Actions', style: serif(size: 22, color: p.ink)),
               const SizedBox(height: 16),
-              // Scrollable so all four actions never overflow the sheet in
+              // Scrollable so the actions never overflow the sheet in
               // landscape / on a short viewport.
               Flexible(
                 child: SingleChildScrollView(
@@ -710,10 +698,6 @@ class InvoiceScreen extends StatelessWidget {
                       if (_returnable)
                         _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
                             'Start a return against this invoice', () => _return(context)),
-                      _sheetAction(ctx, p, Icons.visibility_outlined, p.ink, 'Preview receipt',
-                          'See the thermal receipt before printing', () => _preview(context)),
-                      _sheetAction(ctx, p, Icons.ios_share, p.ink, 'Share',
-                          'Send the receipt as a PDF', () => _share(context)),
                       if (canDelete && _serverBacked)
                         _sheetAction(ctx, p, Icons.delete_outline, AstraPalette.danger, 'Delete',
                             'Permanently remove this sale', () => _delete(context)),

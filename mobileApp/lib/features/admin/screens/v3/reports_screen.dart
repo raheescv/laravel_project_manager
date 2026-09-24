@@ -1184,8 +1184,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ],
           const SizedBox(width: _colGap),
-          cell(isStaff ? 'REVENUE' : 'AMOUNT', 'amount',
-              width: wide ? _colAmount : 96, right: true),
+          // The currency rides on the head only where the column is wide
+          // enough to spell it out; a phone would clip it to `REVENUE (Q…`,
+          // so there the grand-total bar states it instead.
+          cell(
+              wide
+                  ? _withCurrency(isStaff ? 'REVENUE' : 'AMOUNT')
+                  : (isStaff ? 'REVENUE' : 'AMOUNT'),
+              'amount',
+              width: wide ? _colAmount : 96,
+              right: true),
         ],
       ),
     );
@@ -1262,7 +1270,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ],
     );
 
-    final amount = Text(r.value,
+    final amount = Text(Money.plain(r.amount),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.right,
@@ -1436,4 +1444,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     );
   }
+}
+
+/// Column label carrying the currency, e.g. `AMOUNT (QAR)` — the cells under it
+/// then print plain grouped numbers, so the symbol is stated once rather than
+/// repeated down every row.
+String _withCurrency(String label) {
+  final symbol = Money.symbol.trim();
+  return symbol.isEmpty ? label : '$label ($symbol)';
 }

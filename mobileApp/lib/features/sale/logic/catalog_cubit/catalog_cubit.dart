@@ -257,6 +257,17 @@ class CatalogCubit extends Cubit<CatalogState> {
     _searchDebounce = Timer(const Duration(milliseconds: 350), load);
   }
 
+  /// Drop a query left over from an earlier ticket. The search field is a
+  /// fresh, empty [TextEditingController] every time New Sale is built, but
+  /// this cubit lives for the life of the app — so without this the catalog
+  /// came back still filtered by a word nothing on screen was showing.
+  void resetSearch() {
+    _searchDebounce?.cancel();
+    if (state.search.isEmpty) return;
+    emit(state.copyWith(search: ''));
+    unawaited(load());
+  }
+
   void selectCategory(int? id) {
     if (id == state.selectedCategoryId) return;
     emit(state.copyWith(selectedCategoryId: id, clearCategory: id == null));

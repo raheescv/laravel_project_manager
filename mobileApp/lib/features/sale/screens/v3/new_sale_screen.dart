@@ -78,6 +78,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDay();
       final cat = context.read<CatalogCubit>();
+      // The search field is rebuilt empty with this screen, but the cubit is
+      // app-wide: clear its query first so a fresh open never lists yesterday's
+      // search behind a blank box. No-op (and no extra fetch) on a first open.
+      cat.resetSearch();
       cat.loadIfNeeded();
       // Warm the stylist list so the STAFF selector can show the assigned
       // staff's photo (e.g. when editing a sale) without opening the picker.

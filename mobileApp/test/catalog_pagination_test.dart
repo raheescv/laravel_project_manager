@@ -59,6 +59,33 @@ void main() {
     expect(cat.products.map((p) => p.id).toSet().length, 55);
   });
 
+  test('resetSearch drops a stale query and refetches unfiltered', () async {
+    final (cat: cat, repo: svc) = await makeController(total: 55);
+
+    await cat.load();
+    cat.setSearch('abc');
+    await Future<void>.delayed(const Duration(milliseconds: 400)); // debounce
+    expect(svc.requestedSearches.last, 'abc');
+
+    // Reopening New Sale builds an empty search field over this same app-wide
+    // cubit, so the query has to go with it — and the list has to come back.
+    cat.resetSearch();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(cat.search, isEmpty);
+    expect(svc.requestedSearches.last, isNull);
+    expect(svc.requestedPages.last, 1);
+  });
+
+  test('resetSearch is a no-op when nothing was searched', () async {
+    final (cat: cat, repo: svc) = await makeController(total: 55);
+
+    await cat.load();
+    final calls = svc.productCalls;
+    cat.resetSearch();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(svc.productCalls, calls, reason: 'a first open must not fetch twice');
+  });
+
   test('selecting a category reloads from page 1', () async {
     final (cat: cat, repo: svc) = await makeController(total: 55);
 

@@ -17,6 +17,10 @@ class FakeLookupRepository implements LookupRepository {
   int productCalls = 0;
   final List<int> requestedPages = [];
 
+  /// The `search` argument of every products() call, in order — null when the
+  /// catalog asked for the unfiltered list.
+  final List<String?> requestedSearches = [];
+
   Product _p(int id, {String? name, String? cat, double price = 10, String type = 'service'}) => Product(
         id: id,
         code: 'P$id',
@@ -41,6 +45,7 @@ class FakeLookupRepository implements LookupRepository {
   }) async {
     productCalls++;
     requestedPages.add(page);
+    requestedSearches.add(search);
     final last = (total / perPage).ceil().clamp(1, 1 << 30);
     final start = (page - 1) * perPage;
     final count = (total - start).clamp(0, perPage);
@@ -143,6 +148,7 @@ class DemoLookupRepository extends FakeLookupRepository {
   }) async {
     productCalls++;
     requestedPages.add(page);
+    requestedSearches.add(search);
     return Paginated(items: [
       _demo(1, name: 'Signature Cut', cat: 'Hair', price: 45),
       _demo(2, name: 'Balayage', cat: 'Color', price: 180),
