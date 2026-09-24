@@ -127,3 +127,42 @@ it('groups due payments received against the same invoice by reference instead o
         ->and(substr_count($duePaymentSection, 'Cash'))->toBe(1)
         ->and(substr_count($duePaymentSection, 'Card'))->toBe(1);
 });
+
+it('hides the due payment report from the A4 pdf when nothing was received against an older bill', function (): void {
+    $sessionDate = Carbon::parse('2026-09-12 09:00:00');
+    $session = ($this->makeSession)([
+        'opened_at' => $sessionDate,
+        'closed_at' => $sessionDate->copy()->addHours(8),
+    ]);
+
+    // Paid in full, in its own session — nothing lands in Due Payment Report.
+    $saleId = ($this->makeSale)($sessionDate->toDateString(), $session->id, 100.0, 'INV-PDF-NODUE-1');
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionDate->toDateString(), 100.0);
+
+    $html = app(BuildDaySessionReportAction::class)->executePdf($session->fresh(['branch', 'opener', 'closer']))->render();
+
+    expect($html)->not->toContain('Due Payment Report')
+        ->and($html)->not->toContain('No due payment receipts found.');
+});
+
+it('shows the due payment report on the A4 pdf when an earlier invoice is paid off', function (): void {
+    $sessionADate = Carbon::parse('2026-09-13 09:00:00');
+    $sessionBDate = Carbon::parse('2026-09-15 09:00:00');
+
+    $sessionA = ($this->makeSession)([
+        'opened_at' => $sessionADate,
+        'closed_at' => $sessionADate->copy()->addHours(8),
+    ]);
+    $saleId = ($this->makeSale)($sessionADate->toDateString(), $sessionA->id, 100.0, 'INV-PDF-CROSS-1');
+
+    $sessionB = ($this->makeSession)([
+        'opened_at' => $sessionBDate,
+        'closed_at' => $sessionBDate->copy()->addHours(8),
+    ]);
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionBDate->toDateString(), 100.0);
+
+    $html = app(BuildDaySessionReportAction::class)->executePdf($sessionB->fresh(['branch', 'opener', 'closer']))->render();
+
+    expect($html)->toContain('Due Payment Report')
+        ->and($html)->toContain('INV-PDF-CROSS-1');
+});

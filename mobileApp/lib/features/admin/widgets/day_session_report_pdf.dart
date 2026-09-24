@@ -82,31 +82,38 @@ Future<Uint8List> buildDaySessionThermalPdf(
           layout == TransactionsLayout.combined
               ? _transactionsGrid(s, report.transactions)
               : _transactionsGridDetailed(s, report.transactions),
-          pw.SizedBox(height: s(6)),
-          _heading('DUE AMOUNT DETAILS', s),
-          _grid(
-            s,
-            head: const ['Type', 'Reference', 'Due Amount'],
-            flex: const [1.2, 1.6, 1.4],
-            right: const {2},
-            rows: [
-              for (final due in report.dues) _GridRow([due.source, _orNa(due.referenceNo), _amt(due.dueAmount)]),
-            ],
-            empty: 'No due amounts.',
-          ),
-          pw.SizedBox(height: s(6)),
-          _heading('DUE PAYMENT RECEIVED', s),
-          _grid(
-            s,
-            head: const ['Type', 'Reference', 'Payment Method', 'Amount'],
-            flex: const [1.1, 1.4, 1.3, 1.2],
-            right: const {3},
-            rows: [
-              for (final pay in report.duePayments)
-                _GridRow([_orNa(pay.source), _orNa(pay.referenceNo), pay.paymentMethod, _amt(pay.amount)]),
-            ],
-            empty: 'No due payment receipts.',
-          ),
+          // Nothing outstanding and nothing collected against an older bill
+          // leaves these two off the roll entirely — an empty table is paper
+          // spent on saying nothing.
+          if (report.dues.isNotEmpty) ...[
+            pw.SizedBox(height: s(6)),
+            _heading('DUE AMOUNT DETAILS', s),
+            _grid(
+              s,
+              head: const ['Type', 'Reference', 'Due Amount'],
+              flex: const [1.2, 1.6, 1.4],
+              right: const {2},
+              rows: [
+                for (final due in report.dues) _GridRow([due.source, _orNa(due.referenceNo), _amt(due.dueAmount)]),
+              ],
+              empty: 'No due amounts.',
+            ),
+          ],
+          if (report.duePayments.isNotEmpty) ...[
+            pw.SizedBox(height: s(6)),
+            _heading('DUE PAYMENT RECEIVED', s),
+            _grid(
+              s,
+              head: const ['Type', 'Reference', 'Payment Method', 'Amount'],
+              flex: const [1.1, 1.4, 1.3, 1.2],
+              right: const {3},
+              rows: [
+                for (final pay in report.duePayments)
+                  _GridRow([_orNa(pay.source), _orNa(pay.referenceNo), pay.paymentMethod, _amt(pay.amount)]),
+              ],
+              empty: 'No due payment receipts.',
+            ),
+          ],
           _rule(),
           // ---- totals ----
           _heading('TOTAL SUMMARY', s),

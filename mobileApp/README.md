@@ -192,3 +192,7 @@ Connecting via a non-tenant subdomain host that isn't an IP would still 404.
   the logged-in user (a `GET /employees` endpoint would enable a picker).
 - **Profile update** and **barcode camera** are stubbed (manual barcode entry
   works; camera needs `mobile_scanner`).
+
+
+<!-- pkill -9 -f "bin/flutter" ; pkill -9 -f dart -->
+<!-- rm -f "$(dirname "$(dirname "$(which flutter)")")/bin/cache/lockfile" -->

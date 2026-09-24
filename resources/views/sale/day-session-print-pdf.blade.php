@@ -284,33 +284,32 @@
             </tbody>
         </table>
 
-        <div class="section-title">Due Payment Report</div>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Reference</th>
-                    <th>Payment Method</th>
-                    <th class="text-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($pendingPayments as $pendingPayment)
+        {{-- Nothing collected against an older bill leaves the section off the page entirely. --}}
+        @if (filled($pendingPayments))
+            <div class="section-title">Due Payment Report</div>
+            <table class="report-table">
+                <thead>
                     <tr>
-                        <td>{{ systemDate($pendingPayment['date']) }}</td>
-                        <td>{{ $pendingPayment['source'] ?? 'N/A' }}</td>
-                        <td>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</td>
-                        <td>{{ $pendingPayment['payment_method'] ?? 'N/A' }}</td>
-                        <td class="text-right">{{ currency($pendingPayment['amount']) }}</td>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Reference</th>
+                        <th>Payment Method</th>
+                        <th class="text-right">Amount</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="text-center muted">No due payment receipts found.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($pendingPayments as $pendingPayment)
+                        <tr>
+                            <td>{{ systemDate($pendingPayment['date']) }}</td>
+                            <td>{{ $pendingPayment['source'] ?? 'N/A' }}</td>
+                            <td>{{ $pendingPayment['reference_no'] ?? 'N/A' }}</td>
+                            <td>{{ $pendingPayment['payment_method'] ?? 'N/A' }}</td>
+                            <td class="text-right">{{ currency($pendingPayment['amount']) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
 
         <div class="section-title">Total Summary</div>
         <div class="summary-grid">
