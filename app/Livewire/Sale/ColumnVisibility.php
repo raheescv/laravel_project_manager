@@ -27,6 +27,7 @@ class ColumnVisibility extends Component
     {
         return [
             'created_at' => false,
+            'time_ago' => false,
             'reference_no' => false,
             'source' => false,
             'branch_id' => false,

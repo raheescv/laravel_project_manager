@@ -70,3 +70,25 @@ it('adds and clears a whole run of rows for a shift-click range', function (): v
         ->call('toggleRange', array_slice($ids, 1, 2), false)
         ->assertSet('selected', [$ids[0]]);
 });
+
+/**
+ * "Time ago" is an optional column: it repeats created_at as a relative label
+ * ("3 hours ago") and stays off until the tenant turns it on.
+ */
+it('shows the relative created-at label only when the time ago column is on', function (): void {
+    insertListedSale($this->world, 'INVRELATIVE', now()->toDateString(), now()->subHours(3)->toDateTimeString());
+
+    Livewire::test(Table::class)
+        ->assertDontSee('3 hours ago')
+        ->set('sale_visible_column.time_ago', true)
+        ->assertSee('3 hours ago');
+});
+
+it('offers the time ago column in the toggle panel, hidden by default', function (): void {
+    expect(App\Livewire\Sale\ColumnVisibility::defaultColumns())->toHaveKey('time_ago', false);
+
+    Livewire::test(App\Livewire\Sale\ColumnVisibility::class)
+        ->assertSee('Time ago')
+        ->call('toggleColumn', 'time_ago')
+        ->assertSet('sale_visible_column.time_ago', true);
+});

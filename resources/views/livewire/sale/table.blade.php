@@ -172,6 +172,9 @@
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="date" label="date" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.created_at" label="created at" /> </th>
+                        @if ($sale_visible_column['time_ago'] ?? false)
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.created_at" label="time ago" /> </th>
+                        @endif
                         <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="invoice_no" label="invoice no" /> </th>
                         @if ($sale_visible_column['reference_no'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
@@ -246,6 +249,14 @@
                                     <span>{{ systemDateTime($item->created_at) }}</span>
                                 </div>
                             </td>
+                            @if ($sale_visible_column['time_ago'] ?? false)
+                                <td class="text-nowrap">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa fa-clock-o fs-5 text-muted"></i>
+                                        <span title="{{ systemDateTime($item->created_at) }}">{{ $item->created_at?->diffForHumans() }}</span>
+                                    </div>
+                                </td>
+                            @endif
                             <td class="text-nowrap">
                                 <a href="{{ route('sale::view', $item->id) }}" class="text-primary fw-semibold text-decoration-none">
                                     {{ $item->invoice_no }}
@@ -350,6 +361,9 @@
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
                         <th colspan="3" class="ps-3"><strong>TOTALS</strong></th>
+                        @if ($sale_visible_column['time_ago'] ?? false)
+                            <th></th>
+                        @endif
                         <th></th>
                         @if ($sale_visible_column['reference_no'])
                             <th></th>
