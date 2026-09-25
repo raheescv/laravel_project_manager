@@ -298,17 +298,13 @@ class SaleController extends Controller
                 'label' => $session->opened_at->format('D, d M Y'),
                 'opened_at' => $session->opened_at->format('h:i A'),
                 'is_today' => $session->opened_at->isToday(),
-                'print_url' => route('print::sale::day-session-report', $session->id),
-                'print_combined_url' => route('print::sale::day-session-report-combined', $session->id),
             ] : null,
-            'canPrintDaySession' => Auth::user()->can('day session.print'),
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultQuantity' => $defaultQuantity,
             'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
             'canFeedback' => Auth::user()->can('sale.feedback'),
-            'feedbackReportUrl' => Auth::user()->can('report.sale feedback') ? route('report::sale_feedback') : '',
             // Premium colour preset for the POS screen and its modals. 'theme'
             // follows the app theme colour; the rest are fixed palettes.
             'colorPreset' => Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme',

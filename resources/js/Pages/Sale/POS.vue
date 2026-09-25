@@ -35,25 +35,6 @@
                                     <span v-else></span>
 
                                     <div class="posx-ctx-end">
-                                        <template v-if="daySession && canPrintDaySession">
-                                            <a :href="daySession.print_url" target="_blank" rel="noopener"
-                                                class="posx-btn posx-btn-ghost posx-btn-sm"
-                                                title="Print the day session report — a row per payment method">
-                                                <i class="fa fa-print"></i>
-                                                <span>Print</span>
-                                            </a>
-                                            <a :href="daySession.print_combined_url" target="_blank" rel="noopener"
-                                                class="posx-btn posx-btn-ghost posx-btn-sm"
-                                                title="Print the day session report — one row per invoice, payment methods combined">
-                                                <i class="fa fa-compress"></i>
-                                                <span>Combined</span>
-                                            </a>
-                                        </template>
-                                        <a v-if="feedbackReportUrl" :href="feedbackReportUrl" target="_blank" rel="noopener"
-                                            class="posx-btn posx-btn-ghost posx-btn-sm" title="Open the sale feedback report">
-                                            <i class="fa fa-star-o"></i>
-                                            <span>Feedback</span>
-                                        </a>
                                         <button type="button" @click="viewDraftSales"
                                             class="posx-btn posx-btn-ghost posx-btn-sm" title="Open draft sales">
                                             <i class="fa fa-file-text-o"></i>
@@ -394,19 +375,8 @@ export default {
             type: Boolean,
             default: false
         },
-        // `day session.print` — shows the session's Print / Combined buttons.
-        canPrintDaySession: {
-            type: Boolean,
-            default: false
-        },
-        // Link to /report/sale_feedback; empty when the user lacks
-        // report.sale feedback, which hides the header button.
-        feedbackReportUrl: {
-            type: String,
-            default: ''
-        },
         // The open sale-day session this ticket books into: { id, date, label,
-        // opened_at, is_today, print_url, print_combined_url }. The sale takes its date from the session rather
+        // opened_at, is_today }. The sale takes its date from the session rather
         // than from today, so the header shows it.
         daySession: {
             type: Object,

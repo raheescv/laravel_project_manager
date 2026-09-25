@@ -6,9 +6,8 @@ use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
- * The POS context strip carries the open day session's two thermal prints —
- * the detailed "Sale Bill Report" and its combined variant — for staff with
- * `day session.print`.
+ * The POS context strip no longer carries the day session's thermal prints —
+ * those stay on the day session pages.
  */
 beforeEach(function (): void {
     $this->world = PosWorld::create();
@@ -28,17 +27,14 @@ beforeEach(function (): void {
     ]);
 });
 
-it('hands the POS both day session print links', function (): void {
+it('does not hand the POS the day session print links', function (): void {
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
         'tenant_id' => $this->world->tenant->id, 'name' => 'day session.print', 'guard_name' => 'web',
     ]));
 
     $this->get($this->world->url(route('sale::pos', absolute: false)))->assertInertia(fn ($page) => $page
-        ->where('canPrintDaySession', true)
-        ->where('daySession.print_url', route('print::sale::day-session-report', $this->session->id))
-        ->where('daySession.print_combined_url', route('print::sale::day-session-report-combined', $this->session->id)));
-});
-
-it('hides the day session prints without the permission', function (): void {
-    $this->get($this->world->url(route('sale::pos', absolute: false)))->assertInertia(fn ($page) => $page->where('canPrintDaySession', false));
+        ->missing('canPrintDaySession')
+        ->where('daySession.id', $this->session->id)
+        ->missing('daySession.print_url')
+        ->missing('daySession.print_combined_url'));
 });

@@ -98,16 +98,12 @@ it('guards the page behind report.sale feedback', function (): void {
     $this->get(route('report::sale_feedback'))->assertForbidden();
 });
 
-it('hands the POS a feedback report link only with the permission', function (): void {
+it('does not hand the POS a feedback report link', function (): void {
     $this->withoutMiddleware(\App\Http\Middleware\RequireOpenDaySession::class);
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
         'tenant_id' => $this->world->tenant->id, 'name' => 'sale.create', 'guard_name' => 'web',
     ]));
 
     $this->get(route('sale::pos'))
-        ->assertInertia(fn ($page) => $page->where('feedbackReportUrl', route('report::sale_feedback')));
-
-    $this->world->user->revokePermissionTo('report.sale feedback');
-    $this->get(route('sale::pos'))
-        ->assertInertia(fn ($page) => $page->where('feedbackReportUrl', ''));
+        ->assertInertia(fn ($page) => $page->missing('feedbackReportUrl'));
 });

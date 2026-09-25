@@ -102,11 +102,16 @@
                         <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
                         <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
                         <td align="right">
-                            @forelse ($transaction['payment_rows'] ?? [] as $paymentRow)
-                                <div><strong>{{ $paymentRow['method'] }}&nbsp; {{ currency($paymentRow['amount']) }}</strong></div>
-                            @empty
-                                <strong>_</strong>
-                            @endforelse
+                            @php($paymentRows = $transaction['payment_rows'] ?? [])
+                            @if (count($paymentRows) === 1)
+                                <strong>{{ $paymentRows[0]['method'] }}</strong>
+                            @else
+                                @forelse ($paymentRows as $paymentRow)
+                                    <div><strong>{{ $paymentRow['method'] }}&nbsp; {{ currency($paymentRow['amount']) }}</strong></div>
+                                @empty
+                                    <strong>_</strong>
+                                @endforelse
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -166,30 +171,56 @@
 
         @if ($pendingPaymentGroups->isNotEmpty())
             <center><strong>DUE PAYMENT RECEIVED</strong></center>
-            <table width="100%" cellpadding="2" cellspacing="0" border="1">
-                <tr>
-                    <th align="left">Type</th>
-                    <th align="left">Reference</th>
-                    <th align="left">Payment Method</th>
-                    <th align="right">Amount</th>
-                </tr>
-                @foreach ($pendingPaymentGroups as $group)
+            @if ($combined ?? false)
+                <table width="100%" cellpadding="2" cellspacing="0" border="1">
                     <tr>
-                        <td><strong>{{ $group['source'] }}</strong></td>
-                        <td><strong>{{ $group['reference_no'] }}</strong></td>
-                        <td><strong>_</strong></td>
-                        <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
+                        <th align="left">Reference</th>
+                        <th align="right">Amount</th>
+                        <th align="right">Payment</th>
                     </tr>
-                    @foreach ($group['payment_rows'] as $paymentRow)
+                    @foreach ($pendingPaymentGroups as $group)
                         <tr>
-                            <td><strong>{{ $paymentRow['method'] }}</strong></td>
                             <td><strong>{{ $group['reference_no'] }}</strong></td>
-                            <td><strong>_</strong></td>
-                            <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                            <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
+                            <td align="right">
+                                @php($methodRows = collect($group['payment_rows'])->groupBy('method')->map(fn ($rows, $method) => ['method' => $method, 'amount' => $rows->sum('amount')])->values())
+                                @if ($methodRows->count() === 1)
+                                    <strong>{{ $methodRows[0]['method'] }}</strong>
+                                @else
+                                    @foreach ($methodRows as $paymentRow)
+                                        <div><strong>{{ $paymentRow['method'] }}&nbsp; {{ currency($paymentRow['amount']) }}</strong></div>
+                                    @endforeach
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
-                @endforeach
-            </table>
+                </table>
+            @else
+                <table width="100%" cellpadding="2" cellspacing="0" border="1">
+                    <tr>
+                        <th align="left">Type</th>
+                        <th align="left">Reference</th>
+                        <th align="left">Payment Method</th>
+                        <th align="right">Amount</th>
+                    </tr>
+                    @foreach ($pendingPaymentGroups as $group)
+                        <tr>
+                            <td><strong>{{ $group['source'] }}</strong></td>
+                            <td><strong>{{ $group['reference_no'] }}</strong></td>
+                            <td><strong>_</strong></td>
+                            <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
+                        </tr>
+                        @foreach ($group['payment_rows'] as $paymentRow)
+                            <tr>
+                                <td><strong>{{ $paymentRow['method'] }}</strong></td>
+                                <td><strong>{{ $group['reference_no'] }}</strong></td>
+                                <td><strong>_</strong></td>
+                                <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                            </tr>
+                        @endforeach
+                    @endforeach
+                </table>
+            @endif
         @endif
 
         <hr>

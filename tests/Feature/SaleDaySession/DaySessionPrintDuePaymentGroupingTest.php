@@ -192,6 +192,53 @@ it('folds each invoice payment methods into one row on the combined thermal prin
         ->and(substr_count($detailed, 'INV-COMBINED-1'))->toBe(3);
 });
 
+it('shows just the method name on the combined print when an invoice has one payment method', function (): void {
+    $sessionDate = Carbon::parse('2026-09-17 09:00:00');
+    $session = ($this->makeSession)([
+        'opened_at' => $sessionDate,
+        'closed_at' => $sessionDate->copy()->addHours(8),
+    ]);
+
+    $saleId = ($this->makeSale)($sessionDate->toDateString(), $session->id, 219.0, 'INV-SINGLE-1');
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionDate->toDateString(), 219.0);
+
+    $html = app(BuildDaySessionReportAction::class)->execute($session->fresh(['branch', 'opener', 'closer']), true)->render();
+    $section = Str::between($html, 'SALE TRANSACTIONS', 'TOTAL SUMMARY');
+
+    expect(substr_count($section, currency(219)))->toBe(1)
+        ->and($section)->toContain('<strong>Cash</strong>');
+});
+
+it('folds due payments received into one row per invoice on the combined print', function (): void {
+    $sessionADate = Carbon::parse('2026-09-18 09:00:00');
+    $sessionBDate = Carbon::parse('2026-09-20 09:00:00');
+
+    $sessionA = ($this->makeSession)([
+        'opened_at' => $sessionADate,
+        'closed_at' => $sessionADate->copy()->addHours(8),
+    ]);
+    $splitSaleId = ($this->makeSale)($sessionADate->toDateString(), $sessionA->id, 100.0, 'INV-DUE-SPLIT');
+    $cashSaleId = ($this->makeSale)($sessionADate->toDateString(), $sessionA->id, 80.0, 'INV-DUE-CASH');
+
+    $sessionB = ($this->makeSession)([
+        'opened_at' => $sessionBDate,
+        'closed_at' => $sessionBDate->copy()->addHours(8),
+    ]);
+    ($this->makePayment)($splitSaleId, $this->world->cashAccountId, $sessionBDate->toDateString(), 60.0);
+    ($this->makePayment)($splitSaleId, $this->world->accounts['card'], $sessionBDate->toDateString(), 40.0);
+    ($this->makePayment)($cashSaleId, $this->world->cashAccountId, $sessionBDate->toDateString(), 50.0);
+    ($this->makePayment)($cashSaleId, $this->world->cashAccountId, $sessionBDate->toDateString(), 30.0);
+
+    $html = app(BuildDaySessionReportAction::class)->execute($sessionB->fresh(['branch', 'opener', 'closer']), true)->render();
+    $section = Str::between($html, 'DUE PAYMENT RECEIVED', 'TOTAL SUMMARY');
+
+    expect(substr_count($section, 'INV-DUE-SPLIT'))->toBe(1)
+        ->and(substr_count($section, 'INV-DUE-CASH'))->toBe(1)
+        ->and($section)->not->toContain('<th align="left">Type</th>')
+        ->and($section)->toContain('Card&nbsp; '.currency(40))
+        ->and($section)->toContain('<strong>Cash</strong>');
+});
+
 it('serves the combined thermal print behind the day session print permission', function (): void {
     $session = ($this->makeSession)();
     $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'day session.print', 'guard_name' => 'web']));
