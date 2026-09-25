@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS · Combo Offers modal — preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Combo Offers modal — three directions on the same live sample.
+   Tokens mirror resources/css/pos-premium.css (.posx preset layer).
+   Everything is interactive: pick an offer, tick services, Add, remove.
+   ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1115;color:#e8eaee;-webkit-font-smoothing:antialiased}
+
+.chrome{position:sticky;top:0;z-index:50;background:#15181e;border-bottom:1px solid rgba(255,255,255,.08);padding:12px 20px}
+.chrome-row{display:flex;flex-wrap:wrap;gap:16px;align-items:center;max-width:1400px;margin:0 auto}
+.chrome h1{font-size:14px;font-weight:800;margin:0}
+.chrome h1 span{color:#8b93a5;font-weight:600}
+.ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctl-label{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#6f7789}
+.chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#c7cdd9;font:600 12px/1 'Manrope',sans-serif;padding:7px 12px;border-radius:99px;cursor:pointer}
+.chip:hover{background:rgba(255,255,255,.09);color:#fff}
+.chip.on{background:#fff;color:#15181e;border-color:#fff}
+.wrap{max-width:1400px;margin:0 auto;padding:22px 16px 80px}
+.note{font-size:12.5px;line-height:1.65;color:#9aa2b2;max-width:980px;margin:0 0 18px}
+.note b{color:#e2e6ee}
+
+/* ---------------- tokens (graphite / sapphire / emerald, light + dark) */
+#stage{
+  --ok:#1f9d63;--ok-soft:rgba(31,157,99,.12);--danger:#c2483f;--danger-soft:rgba(194,72,63,.1);
+  --pri-soft:color-mix(in srgb,var(--pri) 8%,transparent);
+  --pri-tint:color-mix(in srgb,var(--pri) 15%,transparent);
+  --pri-line:color-mix(in srgb,var(--pri) 42%,transparent);
+  --pri-deep:color-mix(in srgb,var(--pri) 82%,#000);
+  --acc-soft:color-mix(in srgb,var(--acc) 13%,transparent);
+  --acc-line:color-mix(in srgb,var(--acc) 45%,transparent);
+  --muted:color-mix(in srgb,var(--ink2) 75%,transparent);
+  background:var(--canvas);color:var(--ink);border-radius:18px;padding:28px 18px;
+}
+#stage[data-preset="graphite"]{--pri:#24272c;--on-pri:#fff;--acc:#a8813e;--canvas:#e9e6e0;--panel:#fff;--panel2:#faf9f6;--ink:#16181a;--ink2:#55595e;--line:#e7e3dc;--line-strong:#d8d2c8;--shadow:0 30px 70px -30px rgba(24,22,18,.55)}
+#stage[data-preset="graphite"][data-theme="dark"]{--pri:#e7e3da;--on-pri:#1a1b1c;--acc:#c8a257;--canvas:#0c0d0c;--panel:#1b1d1e;--panel2:#212324;--ink:#f2f0ec;--ink2:#b2b6b4;--line:rgba(255,255,255,.09);--line-strong:rgba(255,255,255,.16);--ok:#3fbf86;--danger:#e8695f;--shadow:0 30px 70px -30px #000}
+#stage[data-preset="sapphire"]{--pri:#1c3e73;--on-pri:#fff;--acc:#c2933d;--canvas:#e3e8f1;--panel:#fff;--panel2:#f8fafd;--ink:#101828;--ink2:#52607a;--line:#e3e8f0;--line-strong:#d0d8e4;--shadow:0 30px 70px -30px rgba(16,24,40,.5)}
+#stage[data-preset="sapphire"][data-theme="dark"]{--pri:#8fb0e6;--on-pri:#0d1526;--acc:#d6ac5c;--canvas:#0a0f18;--panel:#141b28;--panel2:#1a2232;--ink:#eef2f8;--ink2:#a3aec2;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--ok:#3fbf86;--danger:#e8695f;--shadow:0 30px 70px -30px #000}
+#stage[data-preset="emerald"]{--pri:#0f5c4a;--on-pri:#fff;--acc:#b8863b;--canvas:#e4ebe7;--panel:#fff;--panel2:#f7faf8;--ink:#0f1c17;--ink2:#51645c;--line:#e1e9e4;--line-strong:#cfdcd5;--shadow:0 30px 70px -30px rgba(10,30,22,.5)}
+#stage[data-preset="emerald"][data-theme="dark"]{--pri:#6fcfae;--on-pri:#0b1a14;--acc:#d7ac62;--canvas:#08100d;--panel:#131c18;--panel2:#18231e;--ink:#edf5f1;--ink2:#a2b5ac;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--ok:#3fbf86;--danger:#e8695f;--shadow:0 30px 70px -30px #000}
+
+/* ---------------- modal shell (shared) */
+.m{max-width:1040px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;font-size:12px}
+.m-head{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--pri);color:var(--on-pri)}
+.m-head .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--on-pri) 14%,transparent);font-size:14px}
+.m-head h4{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em}
+.m-head small{display:block;font-size:11px;font-weight:600;opacity:.72;margin-top:1px}
+.m-head .sp{flex:1}
+.m-head .x{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--on-pri) 26%,transparent);background:color-mix(in srgb,var(--on-pri) 14%,transparent);color:var(--on-pri);cursor:pointer}
+.m-head .pill{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:99px;background:color-mix(in srgb,var(--on-pri) 14%,transparent);white-space:nowrap}
+.m-body{padding:16px;background:var(--panel);min-height:0}
+.m-foot{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--line);background:var(--panel2);flex-wrap:wrap}
+.m-foot .sum{flex:1;display:flex;gap:18px;align-items:center;flex-wrap:wrap;min-width:0}
+.kv{display:flex;flex-direction:column;gap:1px}
+.kv span{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kv b{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.kv b.ok{color:var(--ok)}
+.kv b s{color:var(--muted);font-weight:600;font-size:12px;margin-right:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid transparent;font:700 12px/1 'Manrope',sans-serif;cursor:pointer;white-space:nowrap;transition:background .15s,transform .1s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn-pri{background:var(--pri);color:var(--on-pri)}
+.btn-pri:hover:not(:disabled){background:var(--pri-deep)}
+.btn-ghost{background:var(--panel);color:var(--ink2);border-color:var(--line-strong)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--pri-line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-lg{height:38px;padding:0 18px;font-size:12.5px}
+
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.eyebrow .n{width:18px;height:18px;border-radius:99px;background:var(--pri);color:var(--on-pri);display:grid;place-items:center;font-size:10px;letter-spacing:0}
+.eyebrow .aside{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:700;font-size:11px;color:var(--ink2)}
+.money{font-variant-numeric:tabular-nums;font-weight:800}
+.strike{text-decoration:line-through;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.save{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;color:var(--ok);background:var(--ok-soft);padding:3px 7px;border-radius:99px;white-space:nowrap}
+.staff{color:var(--muted);font-weight:600}
+.search{display:flex;align-items:center;gap:8px;height:34px;padding:0 11px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--muted)}
+.search input{flex:1;border:0;outline:0;background:transparent;font:600 12px 'Manrope',sans-serif;color:var(--ink);min-width:0}
+.empty{border:1px dashed var(--line-strong);border-radius:12px;padding:22px;text-align:center;color:var(--ink2);font-weight:600}
+.empty i{display:block;font-size:20px;color:var(--muted);margin-bottom:6px}
+.lock{font-size:10px;font-weight:800;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);padding:2px 7px;border-radius:99px;white-space:nowrap}
+.check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line-strong);display:grid;place-items:center;flex-shrink:0;color:transparent;font-size:10px;background:var(--panel)}
+.on>.check,.on .check{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+
+/* progress slots */
+.slots{display:flex;gap:4px}
+.slots i{flex:1;height:5px;border-radius:99px;background:var(--line-strong)}
+.slots i.f{background:var(--pri)}
+.slots.done i.f{background:var(--ok)}
+
+/* ============================================================ A — BUILDER */
+.A .grid{display:grid;grid-template-columns:270px 1fr;gap:16px;min-height:420px}
+.A .rail{display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--line);padding-right:16px}
+.A .offer{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:var(--panel);transition:border-color .15s,background .15s}
+.A .offer:hover{border-color:var(--pri-line)}
+.A .offer.on{border-color:var(--pri);background:var(--pri-soft);box-shadow:inset 3px 0 0 var(--pri)}
+.A .offer .badge{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--panel2);border:1px solid var(--line);font-weight:800;font-size:12px;flex-shrink:0}
+.A .offer.on .badge{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.A .offer .t{flex:1;min-width:0}
+.A .offer .t b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.A .offer .t span{font-size:10.5px;color:var(--muted);font-weight:700}
+.A .offer .p{font-weight:800;font-variant-numeric:tabular-nums;color:var(--acc)}
+.A .offer .used{font-size:9.5px;font-weight:800;color:var(--ok)}
+.A .build{display:flex;flex-direction:column;gap:12px;min-width:0}
+.A .build-head{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.A .build-head h5{margin:0;font-size:16px;font-weight:800;letter-spacing:-.01em}
+.A .build-head .meta{font-size:11px;color:var(--ink2);font-weight:600}
+.A .build-head .prog{margin-left:auto;min-width:180px;text-align:right}
+.A .build-head .prog b{font-size:11px}
+.A .build-head .prog .slots{margin-top:5px}
+.A .svc-list{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.A .svc{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;cursor:pointer;background:var(--panel);transition:border-color .15s,background .15s}
+.A .svc:hover{border-color:var(--pri-line)}
+.A .svc.on{border-color:var(--pri);background:var(--pri-soft)}
+.A .svc.locked{cursor:not-allowed;opacity:.55;background:var(--panel2)}
+.A .svc.dim{opacity:.45;cursor:not-allowed}
+.A .svc .nm{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.A .preview{display:flex;align-items:center;gap:14px;padding:11px 12px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);flex-wrap:wrap}
+.A .preview .grow{flex:1;display:flex;gap:18px;flex-wrap:wrap}
+.A .applied{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.A .ap-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.A .ap{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--panel)}
+.A .ap-h{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.A .ap-h b{font-size:12.5px}
+.A .ap-h .sp{flex:1}
+.A .ap-h .rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font:700 11px 'Manrope',sans-serif;padding:4px 6px;border-radius:6px}
+.A .ap-h .rm:hover{color:var(--danger);background:var(--danger-soft)}
+.A .ap-l{display:flex;align-items:center;gap:8px;padding:6px 11px;border-bottom:1px dashed var(--line)}
+.A .ap-l:last-of-type{border-bottom:0}
+.A .ap-l .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.A .ap-f{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;border-top:1px solid var(--line);background:var(--panel2)}
+
+/* ============================================================ B — GUIDED */
+.B .step{margin-bottom:18px}
+.B .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.B .tile{position:relative;padding:13px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--panel);transition:border-color .15s,transform .15s,box-shadow .15s}
+.B .tile:hover{border-color:var(--pri-line);transform:translateY(-1px)}
+.B .tile.on{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-tint)}
+.B .tile .tk{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:99px;background:var(--pri);color:var(--on-pri);display:none;place-items:center;font-size:10px}
+.B .tile.on .tk{display:grid}
+.B .tile b{display:block;font-size:13px;margin-bottom:8px;padding-right:22px}
+.B .tile .p{font-size:20px;font-weight:800;color:var(--acc);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.B .tile .c{font-size:10.5px;font-weight:700;color:var(--ink2);margin-top:3px}
+.B .tile .used{position:absolute;bottom:10px;right:12px;font-size:9.5px;font-weight:800;color:var(--ok)}
+.B .chips{display:flex;flex-wrap:wrap;gap:7px}
+.B .sc{display:inline-flex;align-items:center;gap:8px;padding:7px 11px 7px 8px;border:1px solid var(--line-strong);border-radius:99px;cursor:pointer;background:var(--panel);font-weight:700;transition:all .15s}
+.B .sc:hover{border-color:var(--pri-line)}
+.B .sc .check{border-radius:99px;width:17px;height:17px}
+.B .sc.on{background:var(--pri);border-color:var(--pri);color:var(--on-pri)}
+.B .sc.on .check{background:var(--on-pri);color:var(--pri);border-color:var(--on-pri)}
+.B .sc.on .staff{color:color-mix(in srgb,var(--on-pri) 70%,transparent)}
+.B .sc .pr{font-variant-numeric:tabular-nums;color:var(--ink2);font-weight:700}
+.B .sc.on .pr{color:color-mix(in srgb,var(--on-pri) 80%,transparent)}
+.B .sc.dim{opacity:.4;cursor:not-allowed}
+.B .sc.locked{opacity:.5;cursor:not-allowed;border-style:dashed}
+.B .bar{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--pri-soft);border:1px solid var(--pri-tint);flex-wrap:wrap}
+.B .bar .slots{width:150px}
+.B .bar .t{flex:1;min-width:180px;font-weight:700;color:var(--ink2)}
+.B .bar .t b{color:var(--ink)}
+.B .rows{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.B .r{border-bottom:1px solid var(--line)}
+.B .r:last-child{border-bottom:0}
+.B .r-h{display:flex;align-items:center;gap:12px;padding:11px 13px;cursor:pointer;background:var(--panel)}
+.B .r-h:hover{background:var(--panel2)}
+.B .r-h .car{color:var(--muted);transition:transform .15s;width:10px}
+.B .r.open .r-h .car{transform:rotate(90deg)}
+.B .r-h .nm{flex:1;min-width:0}
+.B .r-h .nm b{font-size:13px}
+.B .r-h .nm span{display:block;font-size:10.5px;color:var(--muted);font-weight:700}
+.B .r-h .rm{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.B .r-h .rm:hover{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
+.B .r-b{display:none;padding:4px 13px 10px 35px;background:var(--panel2)}
+.B .r.open .r-b{display:block}
+.B .r-b .l{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.B .r-b .l:last-child{border-bottom:0}
+.B .r-b .l .nm{flex:1;min-width:0;font-weight:600}
+
+/* ============================================================ C — CART-FIRST LEDGER */
+.C .grid{display:grid;grid-template-columns:1fr 290px;gap:16px}
+.C .picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px}
+.C .op{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:9px;background:var(--panel);cursor:pointer;font-weight:700}
+.C .op span{color:var(--muted);font-size:10.5px}
+.C .op .p{color:var(--acc);font-weight:800}
+.C .op.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}
+.C .op.on span,.C .op.on .p{color:color-mix(in srgb,var(--on-pri) 78%,transparent)}
+.C table{width:100%;border-collapse:collapse}
+.C .tbl{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.C th{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.C th.r,.C td.r{text-align:right}
+.C td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.C tr:last-child td{border-bottom:0}
+.C tr.pick{cursor:pointer}
+.C tr.pick:hover td{background:var(--pri-soft)}
+.C tr.pick.on td{background:var(--pri-soft)}
+.C tr.pick.dim{opacity:.45;cursor:not-allowed}
+.C tr.grp td{background:var(--panel2);padding:7px 12px;font-weight:800}
+.C tr.grp .rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font:700 11px 'Manrope',sans-serif}
+.C tr.grp .rm:hover{color:var(--danger)}
+.C tr.in td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
+.C tr.in .nm{font-weight:600}
+.C .nm{font-weight:700}
+.C .side{display:flex;flex-direction:column;gap:12px}
+.C .card{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--panel2)}
+.C .card h6{margin:0 0 2px;font-size:14px;font-weight:800}
+.C .card .meta{font-size:11px;color:var(--ink2);font-weight:600;margin-bottom:10px}
+.C .card .ln{display:flex;justify-content:space-between;padding:5px 0;font-weight:700;color:var(--ink2)}
+.C .card .ln b{color:var(--ink);font-variant-numeric:tabular-nums}
+.C .card .ln.tot{border-top:1px solid var(--line-strong);margin-top:4px;padding-top:9px;font-size:13px;color:var(--ink)}
+.C .card .ln.ok b{color:var(--ok)}
+.C .card .btn{width:100%;margin-top:10px}
+.C .hint{font-size:11px;font-weight:700;color:var(--ink2);margin-top:8px;text-align:center}
+
+@media (max-width:860px){
+  .A .grid,.C .grid{grid-template-columns:1fr}
+  .A .rail{border-right:0;padding-right:0;border-bottom:1px solid var(--line);padding-bottom:14px}
+  .A .svc-list{grid-template-columns:1fr}
+  .B .tiles{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="chrome"><div class="chrome-row">
+  <h1>Combo Offers modal <span>· pick a direction</span></h1>
+  <div class="ctl"><span class="ctl-label">Direction</span>
+    <button class="chip on" data-dir="A">A · Builder</button>
+    <button class="chip" data-dir="B">B · Guided steps</button>
+    <button class="chip" data-dir="C">C · Cart ledger</button>
+  </div>
+  <div class="ctl"><span class="ctl-label">Preset</span>
+    <button class="chip on" data-preset="graphite">Graphite</button>
+    <button class="chip" data-preset="sapphire">Sapphire</button>
+    <button class="chip" data-preset="emerald">Emerald</button>
+  </div>
+  <div class="ctl"><span class="ctl-label">Mode</span>
+    <button class="chip on" data-theme="light">Light</button>
+    <button class="chip" data-theme="dark">Dark</button>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <p class="note" id="note"></p>
+  <div id="stage" data-preset="graphite" data-theme="light"><div id="modal"></div></div>
+</div>
+
+<script>
+const cart = [
+  {k:'1',s:'Rosy',n:'Jacuzzi',p:250},{k:'2',s:'Rosy',n:'Turkish bath',p:300},{k:'3',s:'Rosy',n:'Sauna bath',p:200},
+  {k:'4',s:'Rosy',n:'Shampoo',p:30},{k:'5',s:'Rosy',n:'Shampoo with half dry',p:70},{k:'6',s:'Rosy',n:'Blow dry short thin hair',p:90},
+  {k:'7',s:'Rosy',n:'Blow dry medium thin hair',p:150},{k:'8',s:'Rosy',n:'Blow dry short thick hair',p:120},
+  {k:'9',s:'Anu',n:'Haircut',p:180},{k:'10',s:'Anu',n:'Facial',p:350},
+];
+const offers = [
+  {id:1,n:'combo 3',a:99,c:3},{id:2,n:'5 COMBO',a:99,c:5},{id:3,n:'Spa Duo',a:399,c:2},{id:4,n:'Bridal Glow',a:1499,c:4},
+];
+const notes = {
+  A:'<b>A · Builder.</b> Offers live in a left rail (price + required count visible, no dropdown to open). The right side is the workspace: a progress meter shows how many services are still needed, services already inside a combo stay visible but locked with the combo\'s name, and a live preview shows the regular price, combo price and saving <i>before</i> you commit. Applied combos sit underneath as compact receipts. Footer totals every combo.',
+  B:'<b>B · Guided steps.</b> Numbered 1-2-3 flow for staff who rarely use combos. Offers are big price tiles, services are tap chips, and a highlighted bar tells you exactly what\'s left ("Pick 3 more"). Applied combos collapse into one-line rows (tap to expand the per-service breakdown) so the modal stays short even with several combos.',
+  C:'<b>C · Cart ledger.</b> The cart itself is the canvas: every line is shown once, grouped under the combo it belongs to, with free lines selectable below. Offers are a horizontal chip strip; a right-hand summary card shows the selected offer\'s preview and running totals for the whole sale. Best when carts are long and staff think in terms of "which lines are discounted".',
+};
+
+let dir='A', applied=[], sel=2, picked=['4','5'], open={};
+const fmt=v=>'₹'+Number(v).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const r2=v=>Math.round(v*100)/100;
+const offer=id=>offers.find(o=>o.id===id);
+const item=k=>cart.find(c=>c.k===k);
+const lockedBy=k=>applied.find(a=>a.items.some(i=>i.k===k));
+function price(o,keys){const its=keys.map(item),tot=its.reduce((s,i)=>s+i.p,0);return its.map(i=>({...i,cp:r2(i.p/tot*o.a)}))}
+function pct(reg,pay){return reg?Math.round((reg-pay)/reg*1000)/10:0}
+function totals(){const reg=applied.reduce((s,a)=>s+a.items.reduce((t,i)=>t+i.p,0),0),pay=applied.reduce((s,a)=>s+a.a,0);return{reg,pay,save:reg-pay,count:applied.reduce((s,a)=>s+a.items.length,0)}}
+function pickState(){const o=offer(sel);if(!o)return null;const reg=picked.reduce((s,k)=>s+item(k).p,0);return{o,reg,need:o.c-picked.length,ready:picked.length===o.c}}
+function slots(o,n){return `<div class="slots ${n===o.c?'done':''}">${Array.from({length:o.c},(_,i)=>`<i class="${i<n?'f':''}"></i>`).join('')}</div>`}
+function usedCount(id){return applied.filter(a=>a.id===id).length}
+
+applied.push({id:1,n:'combo 3',a:99,items:price(offer(1),['1','2','3'])});
+
+function head(){const t=totals();return `<div class="m-head"><div class="ic"><i class="fa fa-cube"></i></div><div><h4>Combo Offers</h4><small>Bundle cart services into a fixed-price offer</small></div><div class="sp"></div>${applied.length?`<span class="pill">${applied.length} applied · save ${fmt(t.save)}</span>`:''}<button class="x"><i class="fa fa-times"></i></button></div>`}
+function foot(){const t=totals();return `<div class="m-foot"><div class="sum">
+  <div class="kv"><span>Combos</span><b>${applied.length}</b></div>
+  <div class="kv"><span>Services</span><b>${t.count}</b></div>
+  <div class="kv"><span>Combo price</span><b>${t.reg?`<s>${fmt(t.reg)}</s>`:''}${fmt(t.pay)}</b></div>
+  <div class="kv"><span>Customer saves</span><b class="ok">${fmt(t.save)}</b></div>
+  </div><button class="btn btn-ghost btn-lg" data-act="close">Cancel</button><button class="btn btn-pri btn-lg"><i class="fa fa-check"></i> Apply ${applied.length?applied.length+' offer'+(applied.length>1?'s':''):'offers'}</button></div>`}
+function addLabel(ps){if(!ps)return 'Choose an offer';if(ps.ready)return `<i class="fa fa-plus"></i> Add ${ps.o.n}`;return `Pick ${ps.need} more`}
+function previewBits(ps){if(!ps||!picked.length)return '';const save=ps.ready?ps.reg-ps.o.a:0;return `<div class="kv"><span>Regular</span><b>${fmt(ps.reg)}</b></div><div class="kv"><span>Combo price</span><b>${fmt(ps.o.a)}</b></div><div class="kv"><span>Saving</span><b class="ok">${ps.ready?fmt(save)+' · '+pct(ps.reg,ps.o.a)+'%':'—'}</b></div>`}
+
+/* ---------------- A */
+function renderA(){
+  const ps=pickState();
+  const rail=`<div class="rail"><div class="search"><i class="fa fa-search"></i><input placeholder="Search offers…"></div>
+    ${offers.map(o=>`<div class="offer ${o.id===sel?'on':''}" data-offer="${o.id}"><div class="badge">${o.c}</div><div class="t"><b>${o.n}</b><span>${o.c} services${usedCount(o.id)?` · <span class="used">${usedCount(o.id)}× added</span>`:''}</span></div><div class="p">${fmt(o.a)}</div></div>`).join('')}</div>`;
+  let build;
+  if(!ps){build=`<div class="empty"><i class="fa fa-hand-o-left"></i>Choose an offer on the left to start building a combo</div>`}
+  else{
+    build=`<div class="build-head"><div><h5>${ps.o.n}</h5><div class="meta">Pick any ${ps.o.c} services · customer pays ${fmt(ps.o.a)} for all</div></div>
+      <div class="prog"><b>${picked.length} of ${ps.o.c} picked</b>${slots(ps.o,picked.length)}</div></div>
+      <div class="svc-list">${cart.map(c=>{const l=lockedBy(c.k),on=picked.includes(c.k),dim=!on&&!l&&ps.ready;
+        return `<div class="svc ${on?'on':''} ${l?'locked':''} ${dim?'dim':''}" ${l||dim?'':`data-pick="${c.k}"`}><span class="check"><i class="fa fa-check"></i></span><span class="nm"><span class="staff">${c.s} ·</span> ${c.n}</span>${l?`<span class="lock"><i class="fa fa-lock"></i> ${l.n}</span>`:`<span class="money">${fmt(c.p)}</span>`}</div>`}).join('')}</div>
+      <div class="preview"><div class="grow">${previewBits(ps)||'<span class="staff">Tick services above — the saving appears here before you add.</span>'}</div>
+        ${picked.length?'<button class="btn btn-ghost" data-act="clear">Clear</button>':''}<button class="btn btn-pri" data-act="add" ${ps.ready?'':'disabled'}>${addLabel(ps)}</button></div>`;
+  }
+  const ap=applied.length?`<div class="applied"><p class="eyebrow">Applied to this sale<span class="aside">${applied.length} combo${applied.length>1?'s':''}</span></p><div class="ap-row">${applied.map((a,ix)=>{const reg=a.items.reduce((s,i)=>s+i.p,0);return `<div class="ap"><div class="ap-h"><i class="fa fa-cube" style="color:var(--acc)"></i><b>${a.n}</b><span class="save">save ${pct(reg,a.a)}%</span><span class="sp"></span><button class="rm" data-rm="${ix}"><i class="fa fa-trash-o"></i> Remove</button></div>
+    ${a.items.map(i=>`<div class="ap-l"><span class="nm"><span class="staff">${i.s} ·</span> ${i.n}</span><span class="strike">${fmt(i.p)}</span><span class="money">${fmt(i.cp)}</span></div>`).join('')}
+    <div class="ap-f"><span class="staff"><span class="strike">${fmt(reg)}</span></span><span class="money" style="font-size:14px">${fmt(a.a)}</span></div></div>`}).join('')}</div></div>`:'';
+  return `<div class="m A">${head()}<div class="m-body"><div class="grid">${rail}<div class="build">${build}</div></div>${ap}</div>${foot()}</div>`;
+}
+
+/* ---------------- B */
+function renderB(){
+  const ps=pickState();
+  const s1=`<div class="step"><p class="eyebrow"><span class="n">1</span> Choose an offer</p><div class="tiles">${offers.map(o=>`<div class="tile ${o.id===sel?'on':''}" data-offer="${o.id}"><span class="tk"><i class="fa fa-check"></i></span><b>${o.n}</b><div class="p">${fmt(o.a)}</div><div class="c">for any ${o.c} services</div>${usedCount(o.id)?`<span class="used">${usedCount(o.id)}× added</span>`:''}</div>`).join('')}</div></div>`;
+  const s2=ps?`<div class="step"><p class="eyebrow"><span class="n">2</span> Pick ${ps.o.c} services<span class="aside">${picked.length?`<a href="#" data-act="clear" style="color:var(--ink2)">Clear selection</a>`:''}</span></p>
+    <div class="chips">${cart.map(c=>{const l=lockedBy(c.k),on=picked.includes(c.k),dim=!on&&!l&&ps.ready;return `<span class="sc ${on?'on':''} ${l?'locked':''} ${dim?'dim':''}" ${l||dim?'':`data-pick="${c.k}"`} title="${l?'Already in '+l.n:''}"><span class="check"><i class="fa fa-${l?'lock':'check'}"></i></span><span><span class="staff">${c.s} ·</span> ${c.n}</span><span class="pr">${l?l.n:fmt(c.p)}</span></span>`}).join('')}</div>
+    <div class="bar">${slots(ps.o,picked.length)}<div class="t">${ps.ready?`Ready — <b>${fmt(ps.reg)}</b> becomes <b>${fmt(ps.o.a)}</b>, customer saves <b style="color:var(--ok)">${fmt(ps.reg-ps.o.a)}</b>`:`<b>${picked.length} of ${ps.o.c}</b> picked · tap ${ps.need} more service${ps.need>1?'s':''}`}</div><button class="btn btn-pri" data-act="add" ${ps.ready?'':'disabled'}>${addLabel(ps)}</button></div></div>`
+    :`<div class="step"><p class="eyebrow"><span class="n">2</span> Pick services</p><div class="empty">Choose an offer above first</div></div>`;
+  const s3=`<div class="step" style="margin-bottom:0"><p class="eyebrow"><span class="n">3</span> In this sale<span class="aside">${applied.length} combo${applied.length===1?'':'s'}</span></p>${applied.length?`<div class="rows">${applied.map((a,ix)=>{const reg=a.items.reduce((s,i)=>s+i.p,0);return `<div class="r ${open[ix]?'open':''}"><div class="r-h" data-tog="${ix}"><i class="fa fa-chevron-right car"></i><div class="nm"><b>${a.n}</b><span>${a.items.map(i=>i.n).join(' · ')}</span></div><span class="save">save ${pct(reg,a.a)}%</span><span class="strike">${fmt(reg)}</span><span class="money" style="font-size:14px">${fmt(a.a)}</span><button class="rm" data-rm="${ix}" title="Remove"><i class="fa fa-trash-o"></i></button></div><div class="r-b">${a.items.map(i=>`<div class="l"><span class="nm"><span class="staff">${i.s} ·</span> ${i.n}</span><span class="strike">${fmt(i.p)}</span><span class="money">${fmt(i.cp)}</span></div>`).join('')}</div></div>`}).join('')}</div>`:`<div class="empty"><i class="fa fa-cube"></i>No combos yet — they'll appear here after you add one</div>`}</div>`;
+  return `<div class="m B">${head()}<div class="m-body">${s1}${s2}${s3}</div>${foot()}</div>`;
+}
+
+/* ---------------- C */
+function renderC(){
+  const ps=pickState();
+  const picker=`<div class="picker">${offers.map(o=>`<span class="op ${o.id===sel?'on':''}" data-offer="${o.id}">${o.n} <span>${o.c} svc</span> <b class="p">${fmt(o.a)}</b></span>`).join('')}</div>`;
+  let rows='';
+  applied.forEach((a,ix)=>{const reg=a.items.reduce((s,i)=>s+i.p,0);rows+=`<tr class="grp"><td colspan="2"><i class="fa fa-cube" style="color:var(--acc)"></i>&nbsp; ${a.n} <span class="save" style="margin-left:6px">save ${pct(reg,a.a)}%</span></td><td class="r"><span class="strike">${fmt(reg)}</span></td><td class="r"><span class="money">${fmt(a.a)}</span> &nbsp;<button class="rm" data-rm="${ix}"><i class="fa fa-times"></i> Remove</button></td></tr>`;
+    a.items.forEach(i=>rows+=`<tr class="in"><td style="width:34px"><i class="fa fa-lock staff"></i></td><td class="nm"><span class="staff">${i.s} ·</span> ${i.n}</td><td class="r strike">${fmt(i.p)}</td><td class="r money">${fmt(i.cp)}</td></tr>`)});
+  const free=cart.filter(c=>!lockedBy(c.k));
+  if(free.length){rows+=`<tr class="grp"><td colspan="4"><span style="color:var(--ink2)">Not in a combo</span>${ps?` <span class="staff" style="font-weight:700"> — tap to add to <b style="color:var(--ink)">${ps.o.n}</b></span>`:''}</td></tr>`;
+    free.forEach(c=>{const on=picked.includes(c.k),dim=!on&&ps&&ps.ready;rows+=`<tr class="pick ${on?'on':''} ${dim?'dim':''}" ${dim||!ps?'':`data-pick="${c.k}"`}><td style="width:34px"><span class="check" style="${on?'background:var(--pri);border-color:var(--pri);color:var(--on-pri)':''}"><i class="fa fa-check"></i></span></td><td class="nm"><span class="staff">${c.s} ·</span> ${c.n}</td><td class="r money">${fmt(c.p)}</td><td class="r staff">—</td></tr>`})}
+  const table=`<div class="tbl"><table><thead><tr><th></th><th>Service</th><th class="r">Regular</th><th class="r">Combo price</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const t=totals();
+  const side=`<div class="side">${ps?`<div class="card"><h6>${ps.o.n}</h6><div class="meta">Any ${ps.o.c} services for ${fmt(ps.o.a)}</div>${slots(ps.o,picked.length)}
+      <div class="ln" style="margin-top:10px"><span>Picked</span><b>${picked.length} / ${ps.o.c}</b></div><div class="ln"><span>Regular</span><b>${fmt(ps.reg)}</b></div><div class="ln ok"><span>Saving</span><b>${ps.ready?fmt(ps.reg-ps.o.a):'—'}</b></div>
+      <button class="btn btn-pri" data-act="add" ${ps.ready?'':'disabled'}>${addLabel(ps)}</button>${picked.length?'<div class="hint"><a href="#" data-act="clear" style="color:var(--ink2)">Clear selection</a></div>':''}</div>`:`<div class="card"><div class="meta" style="margin:0">Choose an offer above, then tick lines in the cart.</div></div>`}
+    <div class="card"><h6>This sale</h6><div class="meta">${applied.length} combo${applied.length===1?'':'s'} · ${t.count} services</div><div class="ln"><span>Regular</span><b>${fmt(t.reg)}</b></div><div class="ln ok"><span>Discount</span><b>− ${fmt(t.save)}</b></div><div class="ln tot"><span>Combo total</span><b>${fmt(t.pay)}</b></div></div></div>`;
+  return `<div class="m C">${head()}<div class="m-body">${picker}<div class="grid"><div>${table}</div>${side}</div></div>${foot()}</div>`;
+}
+
+function render(){document.getElementById('note').innerHTML=notes[dir];document.getElementById('modal').innerHTML={A:renderA,B:renderB,C:renderC}[dir]()}
+
+document.getElementById('modal').addEventListener('click',e=>{
+  const t=e.target.closest('[data-offer],[data-pick],[data-act],[data-rm],[data-tog]');if(!t)return;e.preventDefault();
+  if(t.dataset.rm!==undefined){e.stopPropagation();applied.splice(+t.dataset.rm,1);open={};}
+  else if(t.dataset.offer){const id=+t.dataset.offer;sel=sel===id&&dir==='C'?null:id;picked=[];}
+  else if(t.dataset.pick){const k=t.dataset.pick;picked=picked.includes(k)?picked.filter(x=>x!==k):[...picked,k];}
+  else if(t.dataset.tog!==undefined){open[t.dataset.tog]=!open[t.dataset.tog];}
+  else if(t.dataset.act==='clear'){picked=[];}
+  else if(t.dataset.act==='add'){const o=offer(sel);if(picked.length===o.c){applied.push({id:o.id,n:o.n,a:o.a,items:price(o,picked)});picked=[];}}
+  render();
+});
+document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{
+  const key=['dir','preset','theme'].find(k=>b.dataset[k]);
+  document.querySelectorAll(`.chip[data-${key}]`).forEach(x=>x.classList.toggle('on',x===b));
+  if(key==='dir'){dir=b.dataset.dir}else{document.getElementById('stage').dataset[key]=b.dataset[key]}
+  render();
+}));
+render();
+</script>
+</body>
+</html>

@@ -1,256 +1,221 @@
 <template>
-    <div v-if="show" class="posx-modal-backdrop" aria-labelledby="modal-title" role="dialog" aria-modal="true"
-        @click.self="$emit('close')">
-        <div class="posx-modal" style="max-width: 64rem" @click.stop>
-                <div class="posx-modal-head">
-                    <h4 class="posx-modal-title">
-                        <i class="fa fa-cube"></i>
-                        <span>
-                            Combo Offers
-                            <span class="posx-modal-sub">Manage combo offers for your cart</span>
-                        </span>
-                    </h4>
-                    <button type="button" class="posx-modal-close" @click="$emit('close')" aria-label="Close">
-                        <i class="fa fa-times"></i>
-                    </button>
+    <div v-if="show" class="posx-modal-backdrop" aria-labelledby="combo-offer-modal-title" role="dialog"
+        aria-modal="true" @click.self="$emit('close')">
+        <div class="posx-modal cbx" style="max-width: 68rem" @click.stop>
+            <div class="posx-modal-head">
+                <h4 id="combo-offer-modal-title" class="posx-modal-title">
+                    <i class="fa fa-cube"></i>
+                    <span>
+                        Combo Offers
+                        <span class="posx-modal-sub">Bundle cart services into a fixed-price offer</span>
+                    </span>
+                </h4>
+                <span v-if="selectedComboOffers.length" class="cbx-head-pill">
+                    {{ selectedComboOffers.length }} applied · save {{ formatCurrency(summaryTotals.saving) }}
+                </span>
+                <button type="button" class="posx-modal-close" @click="$emit('close')" aria-label="Close">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <div class="posx-modal-body">
+                <div v-if="cartServices.length === 0" class="cbx-empty">
+                    <i class="fa fa-shopping-cart"></i>
+                    No services in the cart yet — add items first, then build a combo.
                 </div>
 
-                <!-- Modal Body -->
-                <div class="posx-modal-body">
-                    <!-- Combo Offer Selection -->
-                    <div class="mb-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
-                            <div class="lg:col-span-3">
-                                <label class="block text-sm font-semibold posx-ink-2 mb-2 flex items-center">
-                                    <i class="fa fa-tags posx-ok-ink mr-2"></i>
-                                    Select Combo Offer
-                                </label>
-                                <SearchableSelect v-model="selectedComboOfferId" :options="comboOfferOptions"
-                                    placeholder="Choose a combo offer..." filter-placeholder="Search combo offers..."
-                                    :visibleItems="6" @change="onComboOfferSelected"
-                                    input-class="w-full rounded-lg posx-hairline shadow-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all duration-200 posx-surface backdrop-blur-sm hover:shadow-md text-sm py-2 px-3" />
-                            </div>
-                            <div class="lg:col-span-1 flex items-end">
-                                <button type="button" @click="addComboOffer"
-                                    class="posx-btn posx-btn-primary w-full">
-                                    <i class="fa fa-plus mr-1.5 text-sm"></i>
-                                    Add
-                                    <span v-if="selectedComboOffers.length > 0"
-                                        class="ml-1.5 posx-surface posx-ok-ink px-1.5 py-0.5 rounded-full text-xs font-bold">
-                                        {{ selectedComboOffers.length }}
+                <div v-else class="cbx-grid">
+                    <!-- Offer rail -->
+                    <div class="cbx-rail">
+                        <label class="cbx-search">
+                            <i class="fa fa-search"></i>
+                            <input v-model="offerSearch" type="text" placeholder="Search offers…">
+                        </label>
+                        <div v-if="loading && comboOffers.length === 0" class="cbx-rail-note">
+                            <i class="fa fa-spinner fa-spin"></i> Loading offers…
+                        </div>
+                        <div v-else-if="filteredComboOffers.length === 0" class="cbx-rail-note">
+                            {{ offerSearch ? 'No offer matches your search' : 'No combo offers configured' }}
+                        </div>
+                        <div class="cbx-offers">
+                            <button v-for="offer in filteredComboOffers" :key="offer.id" type="button" class="cbx-offer"
+                                :class="{ 'is-on': offer.id === selectedComboOfferId }"
+                                @click="selectComboOffer(offer.id)">
+                                <span class="cbx-offer-count">{{ offer.count }}</span>
+                                <span class="cbx-offer-text">
+                                    <b>{{ offer.name }}</b>
+                                    <span>
+                                        {{ offer.count }} services
+                                        <em v-if="appliedCountByOfferId[offer.id]"> · {{ appliedCountByOfferId[offer.id] }}× added</em>
                                     </span>
+                                </span>
+                                <span class="cbx-offer-price">{{ formatCurrency(offer.amount) }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Builder -->
+                    <div class="cbx-build">
+                        <div v-if="!selectedComboOffer" class="cbx-empty cbx-empty-fill">
+                            <i class="fa fa-hand-o-left"></i>
+                            Choose an offer on the left to start building a combo
+                        </div>
+
+                        <template v-else>
+                            <div class="cbx-build-head">
+                                <div>
+                                    <h5>{{ selectedComboOffer.name }}</h5>
+                                    <p>
+                                        Pick any {{ selectedComboOffer.count }} services · customer pays
+                                        {{ formatCurrency(selectedComboOffer.amount) }} for all
+                                    </p>
+                                </div>
+                                <div class="cbx-progress">
+                                    <b>{{ selectedServices.length }} of {{ selectedComboOffer.count }} picked</b>
+                                    <div class="cbx-slots" :class="{ 'is-done': isSelectionComplete }">
+                                        <i v-for="slot in Number(selectedComboOffer.count)" :key="slot"
+                                            :class="{ 'is-filled': slot <= selectedServices.length }"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="cbx-services">
+                                <button v-for="service in cartServices" :key="service.key" type="button"
+                                    class="cbx-service" :class="{
+                                        'is-on': selectedServices.includes(service.key),
+                                        'is-locked': lockedComboNameByKey[service.key],
+                                        'is-dim': isServiceDimmed(service.key)
+                                    }" :disabled="!!lockedComboNameByKey[service.key] || isServiceDimmed(service.key)"
+                                    :title="lockedComboNameByKey[service.key] ? `Already in ${lockedComboNameByKey[service.key]}` : ''"
+                                    @click="toggleService(service.key)">
+                                    <span class="cbx-check"><i class="fa fa-check"></i></span>
+                                    <span class="cbx-service-name">
+                                        <span v-if="service.employee_name" class="cbx-staff">{{ service.employee_name }} ·</span>
+                                        {{ service.name }}
+                                    </span>
+                                    <span v-if="lockedComboNameByKey[service.key]" class="cbx-lock">
+                                        <i class="fa fa-lock"></i> {{ lockedComboNameByKey[service.key] }}
+                                    </span>
+                                    <span v-else class="cbx-money">{{ formatCurrency(service.unit_price) }}</span>
                                 </button>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Service Selection -->
-                    <div v-if="selectedComboOfferId && selectedComboOffer" class="mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h6 class="font-bold posx-ink flex items-center text-base">
-                                <i class="fa fa-list-ul mr-2 posx-ok-ink"></i>
-                                Available Services
-                            </h6>
-                            <span
-                                class="badge posx-surface-2 posx-ok-ink px-3 py-1 rounded-full text-xs font-semibold border posx-hairline">
-                                {{ selectedServices.length }} Selected
-                            </span>
-                        </div>
-
-                        <div v-if="Object.keys(comboOfferItems).length === 0"
-                            class="posx-surface-2 border posx-hairline rounded-lg p-4 text-center">
-                            <div class="flex items-center justify-center mb-2">
-                                <i class="fa fa-exclamation-triangle posx-acc-ink text-lg mr-2"></i>
-                                <span class="posx-acc-ink font-medium text-sm">No cart items available</span>
-                            </div>
-                            <p class="posx-acc-ink text-xs">Please add items to cart first.</p>
-                        </div>
-                        <div v-else-if="Object.keys(filteredComboOfferItems).length > 0"
-                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <div v-for="(item, key) in filteredComboOfferItems" :key="key" class="w-full">
-                                <label class="w-full mb-0 cursor-pointer" :for="`service-${key}`">
-                                    <div class="card service-card h-full transition-all duration-300 rounded-lg border-2 hover:shadow-md"
-                                        :class="selectedServices.includes(key) ? 'border-emerald-500 posx-surface-2 shadow-emerald-100' : 'posx-hairline posx-surface hover:posx-hairline'">
-                                        <div class="card-body p-3">
-                                            <div class="flex items-center">
-                                                <div class="flex-grow-1">
-                                                    <input type="checkbox" :value="key" v-model="selectedServices"
-                                                        :id="`service-${key}`"
-                                                        class="form-check-input mr-2 posx-ok-ink focus:ring-emerald-500">
-                                                    <span class="text-xs font-medium posx-ink-2">
-                                                        {{ item.employee_name }} - {{ item.name }}
-                                                    </span>
-                                                </div>
-                                                <div class="text-end ml-2">
-                                                    <div class="posx-ok-ink font-bold text-xs">
-                                                        {{ formatCurrency(item.unit_price) }}
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <div class="cbx-preview">
+                                <div class="cbx-preview-figures">
+                                    <template v-if="selectedServices.length">
+                                        <div class="cbx-kv">
+                                            <span>Regular</span>
+                                            <b>{{ formatCurrency(pickedRegularTotal) }}</b>
                                         </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        <div v-else class="posx-surface-2 border posx-hairline rounded-lg p-4 text-center">
-                            <div class="flex items-center justify-center mb-2">
-                                <i class="fa fa-info-circle posx-pri-ink text-lg mr-2"></i>
-                                <span class="posx-pri-ink font-medium text-sm">No services available</span>
-                            </div>
-                            <p class="posx-pri-ink text-xs">
-                                All cart items are already in combo offers.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Selected Combo Offers Summary -->
-                    <div v-if="selectedComboOffers.length > 0" class="selected-combo-offer-summary">
-                        <div class="card border-0 shadow-md rounded-lg overflow-hidden">
-                            <div class="card-body p-3 sm:p-4 posx-surface-2">
-                                <div class="summary-header flex items-center justify-between mb-3">
-                                    <div class="flex items-center">
-                                        <div class="summary-icon mr-2 p-1.5 posx-surface-2 rounded-md">
-                                            <i class="fa fa-shopping-cart posx-ok-ink text-sm"></i>
+                                        <div class="cbx-kv">
+                                            <span>Combo price</span>
+                                            <b>{{ formatCurrency(selectedComboOffer.amount) }}</b>
                                         </div>
-                                        <div>
-                                            <h6 class="font-bold mb-0 posx-ink text-base">Combo Summary</h6>
-                                            <small class="posx-ink-2 text-xs">Review selected offers</small>
+                                        <div class="cbx-kv">
+                                            <span>Saving</span>
+                                            <b class="is-ok">
+                                                <template v-if="isSelectionComplete">
+                                                    {{ formatCurrency(pickedRegularTotal - selectedComboOffer.amount) }}
+                                                    · {{ savingPercentage(pickedRegularTotal, selectedComboOffer.amount) }}%
+                                                </template>
+                                                <template v-else>—</template>
+                                            </b>
                                         </div>
-                                    </div>
+                                    </template>
+                                    <span v-else class="cbx-staff">
+                                        Tick services above — the saving appears here before you add.
+                                    </span>
                                 </div>
+                                <button v-if="selectedServices.length" type="button" class="posx-btn posx-btn-ghost"
+                                    @click="selectedServices = []">
+                                    Clear
+                                </button>
+                                <button type="button" class="posx-btn posx-btn-primary" :disabled="!isSelectionComplete"
+                                    @click="addComboOffer">
+                                    <template v-if="isSelectionComplete">
+                                        <i class="fa fa-plus"></i> Add {{ selectedComboOffer.name }}
+                                    </template>
+                                    <template v-else>Pick {{ servicesStillNeeded }} more</template>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
-                                <div class="selected-combo-offer">
-                                    <div class="combo-offer-grid">
-                                        <div v-for="(comboOffer, index) in selectedComboOffers" :key="index"
-                                            class="combo-offer-summary-item">
-                                            <div
-                                                class="card combo-offer-summary-card h-full rounded-md border-0 shadow-sm">
-                                                <div
-                                                    class="card-header py-2 px-3 posx-surface-2 border-b posx-hairline">
-                                                    <div class="flex justify-between items-center">
-                                                        <div class="flex items-center gap-1.5">
-                                                            <div class="combo-offer-indicator"></div>
-                                                            <h6
-                                                                class="combo-offer-name mb-0 posx-ok-ink font-semibold text-xs">
-                                                                {{ comboOffer.combo_offer_name }}</h6>
-                                                        </div>
-                                                        <button type="button" @click="removeComboOffer(index)"
-                                                            class="btn-close btn-close-sm posx-muted hover:posx-danger-ink transition-colors p-1 rounded-md hover:posx-surface-2">
-                                                            <i class="fa fa-times text-xs"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body p-2 sm:p-3 flex flex-col">
-                                                    <div class="combo-offer-quick-stats rounded-md mb-2 p-2">
-                                                        <div class="flex justify-around gap-3">
-                                                            <div class="stat-item text-center">
-                                                                <div class="stat-info">
-                                                                    <div
-                                                                        class="stat-value font-bold text-base posx-ok-ink">
-                                                                        {{ comboOffer.items.length }}</div>
-                                                                    <div
-                                                                        class="stat-label posx-ink-2 text-xs font-medium">
-                                                                        Services</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="stat-item text-center">
-                                                                <div class="stat-info">
-                                                                    <div
-                                                                        class="stat-value font-bold text-base posx-ok-ink">
-                                                                        {{ calculateDiscountPercentage(comboOffer) }}%
-                                                                    </div>
-                                                                    <div
-                                                                        class="stat-label posx-ink-2 text-xs font-medium">
-                                                                        Savings</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="combo-offer-services flex-grow-1">
-                                                        <div class="table-responsive h-full">
-                                                            <table class="table table-sm service-price-table mb-0">
-                                                                <tbody>
-                                                                    <tr v-for="item in comboOffer.items" :key="item.key"
-                                                                        class="border-b posx-hairline">
-                                                                        <td class="py-1.5 w-60">
-                                                                            <span
-                                                                                class="service-name text-xs posx-ink-2">{{
-                                                                                item.employee_name }} - {{ item.name
-                                                                                }}</span>
-                                                                        </td>
-                                                                        <td class="text-end py-1.5 w-40">
-                                                                            <div
-                                                                                class="flex items-center justify-end gap-1">
-                                                                                <span
-                                                                                    class="posx-muted line-through text-xs">
-                                                                                    {{ formatCurrency(item.unit_price)
-                                                                                    }}
-                                                                                </span>
-                                                                                <span
-                                                                                    class="badge posx-surface-2 posx-danger-ink rounded-full text-xs px-1 py-0.5"
-                                                                                    :title="`You Save ${formatCurrency(item.unit_price - item.combo_offer_price)}`">
-                                                                                    -{{ formatCurrency(item.unit_price -
-                                                                                    item.combo_offer_price) }}
-                                                                                </span>
-                                                                                <span
-                                                                                    class="posx-ok-ink font-bold text-xs">
-                                                                                    {{
-                                                                                    formatCurrency(item.combo_offer_price)
-                                                                                    }}
-                                                                                </span>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                    <div class="combo-offer-footer mt-2">
-                                                        <div
-                                                            class="total-row flex justify-between items-center py-2 px-2.5 posx-surface-2 rounded-md border posx-hairline">
-                                                            <span class="font-semibold posx-ink-2 text-xs">Combo
-                                                                Total</span>
-                                                            <span class="font-bold text-base posx-ok-ink">{{
-                                                                formatCurrency(comboOffer.amount) }}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                <!-- Applied combos -->
+                <div v-if="selectedComboOffers.length" class="cbx-applied">
+                    <p class="cbx-eyebrow">
+                        Applied to this sale
+                        <span>{{ selectedComboOffers.length }} combo{{ selectedComboOffers.length > 1 ? 's' : '' }}</span>
+                    </p>
+                    <div class="cbx-receipts">
+                        <div v-for="(comboOffer, index) in selectedComboOffers" :key="index" class="cbx-receipt">
+                            <div class="cbx-receipt-head">
+                                <i class="fa fa-cube"></i>
+                                <b>{{ comboOffer.combo_offer_name }}</b>
+                                <span class="cbx-save">save {{ savingPercentage(comboRegularTotal(comboOffer), comboOffer.amount) }}%</span>
+                                <button type="button" class="cbx-remove" @click="removeComboOffer(index)">
+                                    <i class="fa fa-trash-o"></i> Remove
+                                </button>
+                            </div>
+                            <div v-for="item in comboOffer.items" :key="item.key" class="cbx-receipt-line">
+                                <span class="cbx-service-name">
+                                    <span v-if="item.employee_name" class="cbx-staff">{{ item.employee_name }} ·</span>
+                                    {{ item.name }}
+                                </span>
+                                <span class="cbx-strike">{{ formatCurrency(item.unit_price) }}</span>
+                                <span class="cbx-money">{{ formatCurrency(item.combo_offer_price) }}</span>
+                            </div>
+                            <div class="cbx-receipt-foot">
+                                <span class="cbx-strike">{{ formatCurrency(comboRegularTotal(comboOffer)) }}</span>
+                                <span class="cbx-money cbx-money-lg">{{ formatCurrency(comboOffer.amount) }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Modal Footer -->
-                <div class="posx-modal-foot">
-                    <button type="button" class="posx-btn posx-btn-ghost" @click="$emit('close')">
-                        <i class="fa fa-times"></i> Close
-                    </button>
-                    <button type="button" class="posx-btn posx-btn-primary" @click="saveComboOffers">
-                        <i class="fa fa-check"></i> Apply Offers
-                    </button>
+            <div class="posx-modal-foot cbx-foot">
+                <div class="cbx-foot-summary">
+                    <div class="cbx-kv">
+                        <span>Combos</span>
+                        <b>{{ selectedComboOffers.length }}</b>
+                    </div>
+                    <div class="cbx-kv">
+                        <span>Services</span>
+                        <b>{{ summaryTotals.serviceCount }}</b>
+                    </div>
+                    <div class="cbx-kv">
+                        <span>Combo price</span>
+                        <b>
+                            <s v-if="summaryTotals.regular">{{ formatCurrency(summaryTotals.regular) }}</s>
+                            {{ formatCurrency(summaryTotals.payable) }}
+                        </b>
+                    </div>
+                    <div class="cbx-kv">
+                        <span>Customer saves</span>
+                        <b class="is-ok">{{ formatCurrency(summaryTotals.saving) }}</b>
+                    </div>
                 </div>
+                <button type="button" class="posx-btn posx-btn-ghost" @click="$emit('close')">
+                    Cancel
+                </button>
+                <button type="button" class="posx-btn posx-btn-primary" @click="saveComboOffers">
+                    <i class="fa fa-check"></i>
+                    Apply {{ selectedComboOffers.length ? `${selectedComboOffers.length} offer${selectedComboOffers.length > 1 ? 's' : ''}` : 'offers' }}
+                </button>
+            </div>
         </div>
     </div>
 </template>
 
 <script>
-import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import { ref, computed, watch, onMounted } from 'vue'
 import { useToast } from 'vue-toastification'
-import {
-    calculateComboOfferPrices as calculateComboOfferPricesUtil,
-    calculateDiscountPercentage as calculateDiscountPercentageUtil
-} from '@/utils/comboOfferCalculations'
+import { calculateComboOfferPrices as calculateComboOfferPricesUtil } from '@/utils/comboOfferCalculations'
 
 export default {
     name: 'ComboOfferModal',
-    components: {
-        SearchableSelect
-    },
     props: {
         show: {
             type: Boolean,
@@ -324,37 +289,98 @@ export default {
             }
         }
 
-        // Combo offer options for select
-        const comboOfferOptions = computed(() => {
-            return comboOffers.value.map(offer => ({
-                value: offer.id,
-                label: `${offer.name} - ${formatCurrency(offer.amount)} (${offer.count} services)`,
-                name: offer.name,
-                amount: offer.amount,
-                count: offer.count,
-                description: offer.description
-            }))
+        const offerSearch = ref('')
+
+        // Offers shown in the rail, narrowed by the search box
+        const filteredComboOffers = computed(() => {
+            const term = offerSearch.value.trim().toLowerCase()
+            if (!term) {
+                return comboOffers.value
+            }
+            return comboOffers.value.filter(offer => String(offer.name).toLowerCase().includes(term))
         })
 
-        // Filtered combo offer items (excluding already selected services)
-        const filteredComboOfferItems = computed(() => {
-            // Get all items that are already in any combo offer (including initial ones)
-            const existingComboOfferServices = selectedComboOffers.value
-                .flatMap(combo => combo.items)
-                .map(item => item.key)
-            const filtered = Object.entries(comboOfferItems.value)
-                .filter(([key, item]) => {
-                    // Only show items that are not already in any combo offer
-                    const isExcluded = existingComboOfferServices.includes(key)
-                    return !isExcluded && item
+        // How many times each offer has already been added to this sale
+        const appliedCountByOfferId = computed(() => {
+            return selectedComboOffers.value.reduce((counts, combo) => {
+                counts[combo.combo_offer_id] = (counts[combo.combo_offer_id] || 0) + 1
+                return counts
+            }, {})
+        })
+
+        // Cart line key -> name of the combo that already holds it
+        const lockedComboNameByKey = computed(() => {
+            const locked = {}
+            selectedComboOffers.value.forEach(combo => {
+                combo.items.forEach(item => {
+                    locked[item.key] = combo.combo_offer_name
                 })
-                .reduce((acc, [key, item]) => {
-                    acc[key] = item
-                    return acc
-                }, {})
-
-            return filtered
+            })
+            return locked
         })
+
+        // Every cart service, including ones already inside a combo (shown locked)
+        const cartServices = computed(() => Object.values(comboOfferItems.value).filter(Boolean))
+
+        const isSelectionComplete = computed(() => {
+            return !!selectedComboOffer.value && selectedServices.value.length === Number(selectedComboOffer.value.count)
+        })
+
+        const servicesStillNeeded = computed(() => {
+            return selectedComboOffer.value ? Math.max(Number(selectedComboOffer.value.count) - selectedServices.value.length, 0) : 0
+        })
+
+        const pickedRegularTotal = computed(() => {
+            return selectedServices.value.reduce((sum, key) => sum + (parseFloat(comboOfferItems.value[key]?.unit_price) || 0), 0)
+        })
+
+        const comboRegularTotal = (comboOffer) => {
+            return comboOffer.items.reduce((sum, item) => sum + (parseFloat(item.unit_price) || 0), 0)
+        }
+
+        const summaryTotals = computed(() => {
+            const regular = selectedComboOffers.value.reduce((sum, combo) => sum + comboRegularTotal(combo), 0)
+            const payable = selectedComboOffers.value.reduce((sum, combo) => sum + (parseFloat(combo.amount) || 0), 0)
+            return {
+                regular,
+                payable,
+                saving: Math.max(regular - payable, 0),
+                serviceCount: selectedComboOffers.value.reduce((sum, combo) => sum + combo.items.length, 0)
+            }
+        })
+
+        const savingPercentage = (regular, payable) => {
+            if (!regular) {
+                return 0
+            }
+            return Math.round((1 - (parseFloat(payable) || 0) / regular) * 1000) / 10
+        }
+
+        const isServiceDimmed = (key) => {
+            return isSelectionComplete.value && !selectedServices.value.includes(key) && !lockedComboNameByKey.value[key]
+        }
+
+        const toggleService = (key) => {
+            if (lockedComboNameByKey.value[key]) {
+                return
+            }
+            if (selectedServices.value.includes(key)) {
+                selectedServices.value = selectedServices.value.filter(selectedKey => selectedKey !== key)
+                return
+            }
+            if (isSelectionComplete.value) {
+                return
+            }
+            selectedServices.value = [...selectedServices.value, key]
+        }
+
+        const selectComboOffer = (comboOfferId) => {
+            if (selectedComboOfferId.value === comboOfferId) {
+                return
+            }
+            selectedComboOfferId.value = comboOfferId
+            onComboOfferSelected(comboOfferId)
+        }
 
         // Handle combo offer selection
         const onComboOfferSelected = (comboOfferId) => {
@@ -419,8 +445,7 @@ export default {
             selectedComboOffers.value.push(item)
 
 
-            // Reset selection (matching PHP: $this->selectedComboOfferId = null; $this->selectedServices = [])
-            selectedComboOfferId.value = null
+            // Keep the offer selected so the same combo can be built again straight away
             selectedServices.value = []
 
             toast.success('Combo Offer added successfully')
@@ -499,11 +524,6 @@ export default {
                 comboOfferItems: itemsWithComboOffers, // Only send items that are in combo offers
                 selectedComboOffers: selectedComboOffers.value
             }
-        }
-
-        // Calculate discount percentage using utility function
-        const calculateDiscountPercentage = (comboOffer) => {
-            return calculateDiscountPercentageUtil(comboOffer)
         }
 
         // Save combo offers
@@ -646,12 +666,22 @@ export default {
             comboOfferItems,
             comboOffers,
             loading,
-            comboOfferOptions,
-            filteredComboOfferItems,
-            onComboOfferSelected,
+            offerSearch,
+            filteredComboOffers,
+            appliedCountByOfferId,
+            lockedComboNameByKey,
+            cartServices,
+            isSelectionComplete,
+            servicesStillNeeded,
+            pickedRegularTotal,
+            comboRegularTotal,
+            summaryTotals,
+            savingPercentage,
+            isServiceDimmed,
+            toggleService,
+            selectComboOffer,
             addComboOffer,
             removeComboOffer,
-            calculateDiscountPercentage,
             saveComboOffers,
             formatCurrency
         }
@@ -660,197 +690,557 @@ export default {
 </script>
 
 <style scoped>
-.combo-offer-quick-stats {
-    background: linear-gradient(to right, rgba(16, 185, 129, 0.05), rgba(20, 184, 166, 0.05));
-    border: 1px solid rgba(16, 185, 129, 0.1);
+/* Combo Offers — "Builder": offer rail · service picker with live preview ·
+   applied receipts. Colours come from the POS preset tokens (.posx root). */
+.cbx-head-pill {
+    margin-left: auto;
+    padding: 4px 9px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--pos-on-pri) 14%, transparent);
+    color: var(--pos-on-pri);
+    font-size: var(--pos-fs-meta);
+    font-weight: 800;
+    white-space: nowrap;
 }
 
-.stat-icon-wrapper {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: white;
+.cbx .posx-modal-body {
+    font-size: var(--pos-fs-body);
+}
+
+.cbx-grid {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 16px;
+    min-height: 360px;
+}
+
+/* ------------------------------------------------------------ offer rail */
+.cbx-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding-right: 16px;
+    border-right: 1px solid var(--pos-line);
+}
+
+.cbx-search {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    gap: 8px;
+    height: var(--pos-h-field);
+    margin: 0;
+    padding: 0 11px;
+    border: 1px solid var(--pos-field-line);
+    border-radius: var(--pos-radius-sm);
+    background: var(--pos-field);
+    color: var(--pos-muted);
 }
 
-.stat-info {
-    text-align: center;
+.cbx-search:focus-within {
+    border-color: var(--pos-pri-line);
+    box-shadow: 0 0 0 3px var(--pos-pri-ring);
 }
 
-.stat-value {
-    font-size: 1.125rem;
-    line-height: 1.2;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-
-.combo-offer-summary-card {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(16, 185, 129, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.combo-offer-summary-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.combo-offer-indicator {
-    width: 2px;
-    height: 12px;
-    background: #10b981;
-    border-radius: 1px;
-}
-
-.combo-offer-name {
-    font-size: 0.75rem;
+.cbx-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--pos-ink);
+    font-size: var(--pos-fs-body);
     font-weight: 600;
 }
 
-.btn-close-sm {
-    font-size: 0.75rem;
-    padding: 0.25rem;
+.cbx-rail-note {
+    padding: 10px 2px;
+    color: var(--pos-ink-2);
+    font-size: var(--pos-fs-meta);
+    font-weight: 600;
 }
 
-.service-card {
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border-radius: 6px;
-}
-
-.service-card:hover {
-    border-color: #10b981 !important;
-    background-color: #f0fdf4;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
-}
-
-.service-card .form-check-input {
-    pointer-events: none;
-}
-
-.combo-offer-grid {
-    display: grid;
-    gap: 0.75rem;
-    padding: 0.125rem;
-}
-
-.combo-offer-grid:has(.combo-offer-summary-item:only-child) {
-    grid-template-columns: 1fr;
-}
-
-.combo-offer-grid:not(:has(.combo-offer-summary-item:only-child)) {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-@media (max-width: 767.98px) {
-    .combo-offer-grid {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-.combo-offer-summary-item {
-    min-width: 0;
-}
-
-.combo-offer-summary-card {
-    height: 100%;
+.cbx-offers {
     display: flex;
     flex-direction: column;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-}
-
-.combo-offer-summary-card .card-body {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0.75rem;
-}
-
-.combo-offer-services {
-    flex: 1;
-    min-height: 0;
+    gap: 6px;
+    max-height: 52vh;
     overflow-y: auto;
 }
 
-.service-price-table {
-    margin-bottom: 0;
-    font-size: 0.6875rem;
+.cbx-offer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--pos-line);
+    border-radius: var(--pos-radius);
+    background: var(--pos-panel);
+    color: var(--pos-ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
 }
 
-.service-price-table td {
-    border: none;
-    vertical-align: middle;
-    padding: 0.375rem 0.5rem;
+.cbx-offer:hover {
+    border-color: var(--pos-pri-line);
 }
 
-.service-name {
-    font-size: 0.6875rem;
-    color: #374151;
+.cbx-offer.is-on {
+    border-color: var(--pos-pri);
+    background: var(--pos-pri-soft);
+    box-shadow: inset 3px 0 0 var(--pos-pri);
 }
 
-.w-60 {
-    width: 60%;
+.cbx-offer-count {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--pos-line);
+    border-radius: 8px;
+    background: var(--pos-panel-2);
+    font-weight: 800;
 }
 
-.w-40 {
-    width: 40%;
+.cbx-offer.is-on .cbx-offer-count {
+    border-color: var(--pos-pri);
+    background: var(--pos-pri);
+    color: var(--pos-on-pri);
 }
 
-.total-row {
-    border-top: 1px solid #e5e7eb;
-    background: rgba(16, 185, 129, 0.02);
+.cbx-offer-text {
+    flex: 1;
+    min-width: 0;
 }
 
-@media (max-width: 767.98px) {
-    .combo-offer-quick-stats {
-        flex-wrap: wrap;
-    }
-
-    .service-name {
-        font-size: 0.625rem;
-    }
-
-    .stat-value {
-        font-size: 0.875rem;
-    }
-
-    .combo-offer-summary-card .card-body {
-        padding: 0.5rem;
-    }
-
-    .service-price-table td {
-        padding: 0.25rem 0.375rem;
-    }
+.cbx-offer-text b {
+    display: block;
+    overflow: hidden;
+    font-size: .78rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
-@media (max-width: 480px) {
-    .combo-offer-grid {
-        gap: 0.5rem;
+.cbx-offer-text span {
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-meta);
+    font-weight: 700;
+}
+
+.cbx-offer-text em {
+    color: var(--pos-ok);
+    font-style: normal;
+}
+
+.cbx-offer-price {
+    color: var(--pos-acc);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* --------------------------------------------------------------- builder */
+.cbx-build {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cbx-build-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.cbx-build-head h5 {
+    margin: 0;
+    color: var(--pos-ink);
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+}
+
+.cbx-build-head p {
+    margin: 2px 0 0;
+    color: var(--pos-ink-2);
+    font-size: var(--pos-fs-meta);
+    font-weight: 600;
+}
+
+.cbx-progress {
+    min-width: 180px;
+    margin-left: auto;
+    text-align: right;
+    font-size: var(--pos-fs-meta);
+}
+
+.cbx-slots {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+}
+
+.cbx-slots i {
+    flex: 1;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--pos-line-strong);
+    transition: background .2s ease;
+}
+
+.cbx-slots i.is-filled {
+    background: var(--pos-pri);
+}
+
+.cbx-slots.is-done i.is-filled {
+    background: var(--pos-ok);
+}
+
+.cbx-services {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.cbx-service {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 11px;
+    border: 1px solid var(--pos-line);
+    border-radius: 9px;
+    background: var(--pos-panel);
+    color: var(--pos-ink);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.cbx-service:hover:not(:disabled) {
+    border-color: var(--pos-pri-line);
+}
+
+.cbx-service.is-on {
+    border-color: var(--pos-pri);
+    background: var(--pos-pri-soft);
+}
+
+.cbx-service.is-locked {
+    background: var(--pos-panel-2);
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.cbx-service.is-dim {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.cbx-check {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--pos-line-strong);
+    border-radius: 5px;
+    background: var(--pos-panel);
+    color: transparent;
+    font-size: var(--pos-ico-micro);
+}
+
+.cbx-service.is-on .cbx-check {
+    border-color: var(--pos-pri);
+    background: var(--pos-pri);
+    color: var(--pos-on-pri);
+}
+
+.cbx-service-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cbx-staff {
+    color: var(--pos-muted);
+    font-weight: 600;
+}
+
+.cbx-lock {
+    padding: 2px 7px;
+    border: 1px solid var(--pos-line);
+    border-radius: 99px;
+    background: var(--pos-panel);
+    color: var(--pos-ink-2);
+    font-size: var(--pos-fs-micro);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.cbx-money {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cbx-money-lg {
+    font-size: .875rem;
+}
+
+.cbx-strike {
+    color: var(--pos-muted);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-decoration: line-through;
+    white-space: nowrap;
+}
+
+.cbx-preview {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin-top: auto;
+    padding: 11px 12px;
+    border: 1px solid var(--pos-line);
+    border-radius: 11px;
+    background: var(--pos-panel-2);
+}
+
+.cbx-preview-figures {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 18px;
+    min-width: 0;
+}
+
+.cbx-kv {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.cbx-kv > span {
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-micro);
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.cbx-kv > b {
+    color: var(--pos-ink);
+    font-size: .875rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cbx-kv > b.is-ok {
+    color: var(--pos-ok);
+}
+
+.cbx-kv > b > s {
+    margin-right: 4px;
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-body);
+    font-weight: 600;
+}
+
+.cbx-empty {
+    padding: 22px;
+    border: 1px dashed var(--pos-line-strong);
+    border-radius: 12px;
+    color: var(--pos-ink-2);
+    font-weight: 600;
+    text-align: center;
+}
+
+.cbx-empty > i {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--pos-muted);
+    font-size: 1.25rem;
+}
+
+.cbx-empty-fill {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --------------------------------------------------------------- applied */
+.cbx-applied {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--pos-line);
+}
+
+.cbx-eyebrow {
+    display: flex;
+    align-items: center;
+    margin: 0 0 8px;
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-micro);
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.cbx-eyebrow span {
+    margin-left: auto;
+    color: var(--pos-ink-2);
+    font-size: var(--pos-fs-meta);
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.cbx-receipts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+}
+
+.cbx-receipt {
+    overflow: hidden;
+    border: 1px solid var(--pos-line);
+    border-radius: 11px;
+    background: var(--pos-panel);
+}
+
+.cbx-receipt-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 8px 8px 11px;
+    border-bottom: 1px solid var(--pos-line);
+    background: var(--pos-panel-2);
+}
+
+.cbx-receipt-head > i {
+    color: var(--pos-acc);
+}
+
+.cbx-receipt-head > b {
+    overflow: hidden;
+    font-size: .78rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cbx-save {
+    padding: 3px 7px;
+    border-radius: 99px;
+    background: var(--pos-ok-soft);
+    color: var(--pos-ok);
+    font-size: var(--pos-fs-micro);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.cbx-remove {
+    margin-left: auto;
+    padding: 4px 7px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-meta);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.cbx-remove:hover {
+    background: var(--pos-danger-soft);
+    color: var(--pos-danger);
+}
+
+.cbx-receipt-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 11px;
+    border-bottom: 1px dashed var(--pos-line);
+}
+
+.cbx-receipt-line .cbx-service-name {
+    font-weight: 600;
+}
+
+.cbx-receipt-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 11px;
+    background: var(--pos-panel-2);
+}
+
+/* ---------------------------------------------------------------- footer */
+.cbx-foot {
+    flex-wrap: wrap;
+}
+
+.cbx-foot-summary {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+}
+
+@media (max-width: 860px) {
+    .cbx-grid {
+        grid-template-columns: 1fr;
+        min-height: 0;
     }
 
-    .stat-value {
-        font-size: 0.75rem;
+    .cbx-rail {
+        padding: 0 0 14px;
+        border-right: 0;
+        border-bottom: 1px solid var(--pos-line);
     }
 
-    .stat-label {
-        font-size: 0.625rem;
+    .cbx-offers {
+        flex-direction: row;
+        max-height: none;
+        overflow-x: auto;
     }
 
-    .combo-offer-summary-card .card-body {
-        padding: 0.375rem;
+    .cbx-offer {
+        flex: 0 0 220px;
+    }
+
+    .cbx-services {
+        grid-template-columns: 1fr;
+    }
+
+    .cbx-progress {
+        margin-left: 0;
+        text-align: left;
+        width: 100%;
+    }
+
+    .cbx-foot-summary {
+        flex-basis: 100%;
+        gap: 14px;
     }
 }
 </style>
