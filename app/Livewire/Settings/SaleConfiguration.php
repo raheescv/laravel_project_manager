@@ -53,6 +53,8 @@ class SaleConfiguration extends Component
 
     public $enable_company_name_in_print;
 
+    public $enable_customer_mobile_in_print;
+
     public $enable_tip;
 
     /** Palette for the POS screen and its modals — see posColorPresets(). */
@@ -85,6 +87,7 @@ class SaleConfiguration extends Component
         $this->sale_item_row_mode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
         $this->prevent_out_of_stock_sales = Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes';
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
+        $this->enable_customer_mobile_in_print = Configuration::where('key', 'enable_customer_mobile_in_print')->value('value') ?? 'yes';
         $this->enable_tip = Configuration::where('key', 'enable_tip')->value('value') ?? 'yes';
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
         $this->pos_grid_columns = Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto';
@@ -115,6 +118,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'sale_item_row_mode'], ['value' => $this->sale_item_row_mode]);
         Configuration::updateOrCreate(['key' => 'prevent_out_of_stock_sales'], ['value' => $this->prevent_out_of_stock_sales]);
         Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);
+        Configuration::updateOrCreate(['key' => 'enable_customer_mobile_in_print'], ['value' => $this->enable_customer_mobile_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_tip'], ['value' => $this->enable_tip]);
         Configuration::updateOrCreate(
             ['key' => 'pos_color_preset'],

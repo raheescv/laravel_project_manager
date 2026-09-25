@@ -71,6 +71,7 @@ return [
     'invoice_date' => 'Invoice Date',
     'customer_name' => 'Customer Name',
     'payment_mode' => 'Payment Mode',
+    'mobile' => 'Mobile',
     'item' => 'Item',
     'price' => 'Price',
     'qty' => 'Qty',

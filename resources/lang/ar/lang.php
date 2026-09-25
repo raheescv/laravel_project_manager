@@ -17,6 +17,7 @@ return [
     'date' => 'التاريخ',
     'customer_name' => 'اسم الزبون',
     'customer' => 'العميل',
+    'mobile' => 'الجوال',
     'payment_mode' => 'طريقة الدفع',
     'item' => 'بند',
     'price' => 'السعر',

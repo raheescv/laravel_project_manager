@@ -421,7 +421,7 @@
                     </td>
                 </tr>
             </table>
-            @if ($sale->account?->mobile)
+            @if ($enable_customer_mobile_in_print == 'yes' && $sale->account?->mobile)
                 <table class="table info-table">
                     <colgroup>
                         <col style="width: 30%;">
@@ -430,7 +430,10 @@
                     </colgroup>
                     <tr>
                         <td class="text-left"><b>Mobile</b></td>
-                        <td colspan="2" class="text-left"><b>{{ $sale->account->mobile }}</b></td>
+                        <td class="text-left"><b>{{ $sale->account->mobile }}</b></td>
+                        <td class="text-right">
+                            <b>{{ __('lang.mobile', [], 'ar') }}</b>
+                        </td>
                     </tr>
                 </table>
             @endif
@@ -510,7 +513,7 @@
                         </b>
                     </td>
                 </tr>
-                @if ($sale->account?->mobile)
+                @if ($enable_customer_mobile_in_print == 'yes' && $sale->account?->mobile)
                     <tr>
                         <td class="nowrap text-left"><b>Mobile</b></td>
                         <td class="text-left"><b>{{ $sale->account->mobile }}</b></td>
