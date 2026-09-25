@@ -164,35 +164,33 @@
             </table>
         @endif
 
-        <center><strong>DUE PAYMENT RECEIVED</strong></center>
-        <table width="100%" cellpadding="2" cellspacing="0" border="1">
-            <tr>
-                <th align="left">Type</th>
-                <th align="left">Reference</th>
-                <th align="left">Payment Method</th>
-                <th align="right">Amount</th>
-            </tr>
-            @forelse ($pendingPaymentGroups as $group)
+        @if ($pendingPaymentGroups->isNotEmpty())
+            <center><strong>DUE PAYMENT RECEIVED</strong></center>
+            <table width="100%" cellpadding="2" cellspacing="0" border="1">
                 <tr>
-                    <td><strong>{{ $group['source'] }}</strong></td>
-                    <td><strong>{{ $group['reference_no'] }}</strong></td>
-                    <td><strong>_</strong></td>
-                    <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
+                    <th align="left">Type</th>
+                    <th align="left">Reference</th>
+                    <th align="left">Payment Method</th>
+                    <th align="right">Amount</th>
                 </tr>
-                @foreach ($group['payment_rows'] as $paymentRow)
+                @foreach ($pendingPaymentGroups as $group)
                     <tr>
-                        <td><strong>{{ $paymentRow['method'] }}</strong></td>
+                        <td><strong>{{ $group['source'] }}</strong></td>
                         <td><strong>{{ $group['reference_no'] }}</strong></td>
                         <td><strong>_</strong></td>
-                        <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                        <td align="right"><strong>{{ currency($group['amount']) }}</strong></td>
                     </tr>
+                    @foreach ($group['payment_rows'] as $paymentRow)
+                        <tr>
+                            <td><strong>{{ $paymentRow['method'] }}</strong></td>
+                            <td><strong>{{ $group['reference_no'] }}</strong></td>
+                            <td><strong>_</strong></td>
+                            <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                        </tr>
+                    @endforeach
                 @endforeach
-            @empty
-                <tr>
-                    <td colspan="4" align="center">No due payment receipts.</td>
-                </tr>
-            @endforelse
-        </table>
+            </table>
+        @endif
 
         <hr>
 

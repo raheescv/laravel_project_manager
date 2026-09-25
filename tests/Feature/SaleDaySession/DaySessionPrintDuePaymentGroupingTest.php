@@ -77,7 +77,9 @@ it('hides the due amount details table when nothing is due', function (): void {
 
     $html = app(BuildDaySessionReportAction::class)->execute($session->fresh(['branch', 'opener', 'closer']))->render();
 
-    expect($html)->not->toContain('DUE AMOUNT DETAILS');
+    expect($html)->not->toContain('DUE AMOUNT DETAILS')
+        ->and($html)->not->toContain('DUE PAYMENT RECEIVED')
+        ->and($html)->not->toContain('No due payment receipts.');
 });
 
 it('shows the due amount details table when a transaction is unpaid', function (): void {
@@ -182,8 +184,8 @@ it('folds each invoice payment methods into one row on the combined thermal prin
     $session = $session->fresh(['branch', 'opener', 'closer']);
     $action = app(BuildDaySessionReportAction::class);
 
-    $combined = Str::between($action->execute($session, true)->render(), 'SALE TRANSACTIONS', 'DUE PAYMENT RECEIVED');
-    $detailed = Str::between($action->execute($session)->render(), 'SALE TRANSACTIONS', 'DUE PAYMENT RECEIVED');
+    $combined = Str::between($action->execute($session, true)->render(), 'SALE TRANSACTIONS', 'TOTAL SUMMARY');
+    $detailed = Str::between($action->execute($session)->render(), 'SALE TRANSACTIONS', 'TOTAL SUMMARY');
 
     expect(substr_count($combined, 'INV-COMBINED-1'))->toBe(1)
         ->and($combined)->not->toContain('<th align="left">Type</th>')
