@@ -104,16 +104,16 @@ export const applyComboOfferPricing = (cartItems, comboOfferItems) => {
     Object.entries(comboOfferItems).forEach(([key, comboItem]) => {
         if (cartItems[key]) {
             // Update combo offer related fields
-            cartItems[key].combo_offer_price = Number(comboItem.combo_offer_price) || 0
-            cartItems[key].discount = Number(comboItem.discount) || 0
+            cartItems[key].combo_offer_price = roundToTwoDecimals(Number(comboItem.combo_offer_price) || 0)
+            cartItems[key].discount = roundToTwoDecimals(Number(comboItem.discount) || 0)
             cartItems[key].combo_offer_id = comboItem.combo_offer_id || null
             updatedCount++
         } else {
             // Try to find item by constructing key from comboItem properties
             const constructedKey = comboItem.key || `${comboItem.employee_id}-${comboItem.inventory_id}`
             if (cartItems[constructedKey]) {
-                cartItems[constructedKey].combo_offer_price = Number(comboItem.combo_offer_price) || 0
-                cartItems[constructedKey].discount = Number(comboItem.discount) || 0
+                cartItems[constructedKey].combo_offer_price = roundToTwoDecimals(Number(comboItem.combo_offer_price) || 0)
+                cartItems[constructedKey].discount = roundToTwoDecimals(Number(comboItem.discount) || 0)
                 cartItems[constructedKey].combo_offer_id = comboItem.combo_offer_id || null
                 updatedCount++
             } else {

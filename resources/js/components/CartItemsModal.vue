@@ -72,23 +72,14 @@
 
                                         <!-- Price -->
                                         <td class="num">
-                                            <div v-if="item.combo_offer_price && item.combo_offer_price > 0"
-                                                class="flex flex-col items-end gap-1">
-                                                <span class="posx-muted text-xs line-through">{{ formatNumber(item.unit_price) }}</span>
-                                                <div class="flex items-center gap-1">
-                                                    <input :value="item.combo_offer_price"
-                                                        @input="updateItemField(item.key, 'combo_offer_price', $event.target.value)"
-                                                        @change="$emit('update-item-quantity', item.key)" type="number"
-                                                        step="0.01" min="0" :disabled="!canEditItemPrice"
-                                                        class="posx-field posx-field-sm text-end">
-                                                    <span class="posx-chip-ok">Combo</span>
-                                                </div>
+                                            <div class="flex items-center justify-end gap-1">
+                                                <input :value="item.unit_price"
+                                                    @input="updateItemField(item.key, 'unit_price', $event.target.value)"
+                                                    @change="$emit('update-item-quantity', item.key)" type="number" step="1"
+                                                    min="0" :disabled="!canEditItemPrice"
+                                                    class="posx-field posx-field-sm text-end">
+                                                <span v-if="isComboItem(item)" class="posx-chip-ok">Combo</span>
                                             </div>
-                                            <input v-else :value="item.unit_price"
-                                                @input="updateItemField(item.key, 'unit_price', $event.target.value)"
-                                                @change="$emit('update-item-quantity', item.key)" type="number" step="1"
-                                                min="0" :disabled="!canEditItemPrice"
-                                                class="posx-field posx-field-sm text-end">
                                         </td>
 
                                         <!-- Qty -->
@@ -104,7 +95,8 @@
                                             <input :value="item.discount"
                                                 @input="updateItemField(item.key, 'discount', $event.target.value)"
                                                 @change="$emit('update-item-quantity', item.key)" type="number" step="1"
-                                                min="0" placeholder="0" class="posx-field posx-field-sm text-end">
+                                                min="0" placeholder="0"
+                                                class="posx-field posx-field-sm text-end">
                                         </td>
 
                                         <!-- Tax -->
@@ -180,6 +172,9 @@ export default {
     },
     emits: ['close', 'update-item-quantity', 'remove-cart-item', 'update-item-field'],
     methods: {
+        isComboItem(item) {
+            return Number(item.combo_offer_price) > 0
+        },
         formatNumber(value, decimals = 2) {
             const num = parseFloat(value) || 0;
             return num.toLocaleString('en-US', {

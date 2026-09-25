@@ -225,8 +225,8 @@ class SaleController extends Controller
                         $comboOfferItems = [];
                         foreach ($saleComboOffer->items as $item) {
                             $key = $this->buildSaleItemKey($item->employee_id, $item->inventory_id, $item->id);
-                            $comboOfferPrice = (float) ($item->unit_price - $item->discount);
-                            $discount = (float) ($item->unit_price - $comboOfferPrice);
+                            $comboOfferPrice = round((float) $item->unit_price - (float) $item->discount, 2);
+                            $discount = round((float) $item->unit_price - $comboOfferPrice, 2);
 
                             $comboOfferItems[] = [
                                 'key' => $key,

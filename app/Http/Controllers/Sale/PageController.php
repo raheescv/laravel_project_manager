@@ -401,7 +401,7 @@ class PageController extends Controller
             $items = collect($saleData['items'])
                 ->filter(fn ($item) => $item['sale_combo_offer_id'] == $package['id'])
                 ->map(fn ($item) => array_merge($item, [
-                    'combo_offer_price' => $item['unit_price'] - $item['discount'],
+                    'combo_offer_price' => round((float) $item['unit_price'] - (float) $item['discount'], 2),
                 ]))
                 ->toArray();
 
