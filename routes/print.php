@@ -8,6 +8,7 @@ Route::middleware('auth')->group(function (): void {
         Route::name('sale::')->prefix('sale')->group(function (): void {
             Route::get('invoice/{id}', 'saleInvoice')->name('invoice')->can('sale.receipts');
             Route::get('day-session-report/{id}', 'daySessionReport')->name('day-session-report')->can('day session.print');
+            Route::get('day-session-report-combined/{id}', 'daySessionReportCombined')->name('day-session-report-combined')->can('day session.print');
             Route::get('day-session-report-pdf/{id}', 'daySessionReportPdf')->name('day-session-report-pdf')->can('day session.print');
             Route::get('customer-receipt', 'customerReceipt')->name('customer-receipt')->can('sale.receipts');
         });

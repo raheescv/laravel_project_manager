@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
@@ -165,4 +166,36 @@ it('shows the due payment report on the A4 pdf when an earlier invoice is paid o
 
     expect($html)->toContain('Due Payment Report')
         ->and($html)->toContain('INV-PDF-CROSS-1');
+});
+
+it('folds each invoice payment methods into one row on the combined thermal print', function (): void {
+    $sessionDate = Carbon::parse('2026-09-16 09:00:00');
+    $session = ($this->makeSession)([
+        'opened_at' => $sessionDate,
+        'closed_at' => $sessionDate->copy()->addHours(8),
+    ]);
+
+    $saleId = ($this->makeSale)($sessionDate->toDateString(), $session->id, 100.0, 'INV-COMBINED-1');
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionDate->toDateString(), 60.0);
+    ($this->makePayment)($saleId, $this->world->accounts['card'], $sessionDate->toDateString(), 40.0);
+
+    $session = $session->fresh(['branch', 'opener', 'closer']);
+    $action = app(BuildDaySessionReportAction::class);
+
+    $combined = Str::between($action->execute($session, true)->render(), 'SALE TRANSACTIONS', 'DUE PAYMENT RECEIVED');
+    $detailed = Str::between($action->execute($session)->render(), 'SALE TRANSACTIONS', 'DUE PAYMENT RECEIVED');
+
+    expect(substr_count($combined, 'INV-COMBINED-1'))->toBe(1)
+        ->and($combined)->not->toContain('<th align="left">Type</th>')
+        ->and(substr_count($detailed, 'INV-COMBINED-1'))->toBe(3);
+});
+
+it('serves the combined thermal print behind the day session print permission', function (): void {
+    $session = ($this->makeSession)();
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'day session.print', 'guard_name' => 'web']));
+
+    $this->actingAs($this->world->user)
+        ->get($this->world->url('/print/sale/day-session-report-combined/'.$session->id))
+        ->assertOk()
+        ->assertSee('SALE BILL REPORT');
 });

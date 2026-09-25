@@ -1295,6 +1295,12 @@ html.dark .posx[data-pos-preset="indigo"] {
     border-color: var(--pos-pri-line);
 }
 
+/* Header actions that navigate are <a> tags; keep them looking like buttons. */
+.posx a.posx-btn,
+.posx a.posx-btn:hover {
+    text-decoration: none;
+}
+
 .posx .posx-btn:disabled {
     opacity: .5;
     cursor: not-allowed;

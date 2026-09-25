@@ -105,6 +105,7 @@ return [
         'income vs expense dashboard bar chart',
         'sale item',
         'sale category',
+        'sale feedback',
         'sale return item',
         'purchase return item',
         'day book',

@@ -108,11 +108,11 @@ class SaleHelper
         return $result;
     }
 
-    public function daySessionReport($id)
+    public function daySessionReport($id, bool $combined = false)
     {
         $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
 
-        return $this->daySessionReportView($session);
+        return $this->daySessionReportView($session, $combined);
     }
 
     public function daySessionReportPdf($id)
@@ -125,9 +125,9 @@ class SaleHelper
     /**
      * Build the day session report view for a given session (e.g. for PDF export).
      */
-    public function daySessionReportView(SaleDaySession $session)
+    public function daySessionReportView(SaleDaySession $session, bool $combined = false)
     {
-        return app(BuildDaySessionReportAction::class)->execute($session);
+        return app(BuildDaySessionReportAction::class)->execute($session, $combined);
     }
 
     public function daySessionReportPdfView(SaleDaySession $session)

@@ -395,6 +395,7 @@ return [
             'label' => 'Reports - HR',
             'permissions' => [
                 'report.employee',
+                'report.sale feedback',
                 'report.employee productivity',
             ],
         ],

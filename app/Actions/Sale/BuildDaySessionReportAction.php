@@ -7,9 +7,13 @@ use App\Services\SaleDaySessionDataService;
 
 class BuildDaySessionReportAction
 {
-    public function execute(SaleDaySession $session)
+    /**
+     * The thermal "Sale Bill Report". $combined folds each invoice's payment
+     * methods into its own SALE TRANSACTIONS row instead of one row per method.
+     */
+    public function execute(SaleDaySession $session, bool $combined = false)
     {
-        return view('sale.day-session-print', $this->payload($session));
+        return view('sale.day-session-print', [...$this->payload($session), 'combined' => $combined]);
     }
 
     public function executePdf(SaleDaySession $session)

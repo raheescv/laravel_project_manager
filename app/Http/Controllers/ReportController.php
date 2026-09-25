@@ -16,6 +16,11 @@ class ReportController extends Controller
         return view('report.sale_category');
     }
 
+    public function sale_feedback()
+    {
+        return view('report.sale_feedback');
+    }
+
     public function sale_return_item()
     {
         return view('report.sale_return_item');

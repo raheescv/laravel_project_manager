@@ -74,6 +74,7 @@
                             @endif
                             @can('day session.print')
                                 <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="hbtn hbtn--green" target="_blank" title="Print thermal receipt"><i class="fa fa-print"></i> Print</a>
+                                <a href="{{ route('print::sale::day-session-report-combined', $session->id) }}" class="hbtn hbtn--green" target="_blank" title="Print thermal receipt — one row per invoice, payment methods combined"><i class="fa fa-compress"></i> Print Combined</a>
                                 <a href="{{ route('print::sale::day-session-report-pdf', $session->id) }}" class="hbtn hbtn--accent" target="_blank" title="Open PDF report"><i class="fa fa-file-pdf-o"></i> PDF</a>
                             @endcan
                         </div>

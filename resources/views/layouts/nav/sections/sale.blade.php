@@ -2,6 +2,7 @@
         auth()->user()->can('sale.create') ||
         auth()->user()->can('report.sale item') ||
         auth()->user()->can('report.sale category') ||
+        auth()->user()->can('report.sale feedback') ||
         auth()->user()->can('sale.receipts') ||
         auth()->user()->can('sales return.view') ||
         auth()->user()->can('sales return.create') ||
@@ -19,6 +20,7 @@
                 'sale/view/*',
                 'report/sale_item',
                 'report/sale_category',
+                'report/sale_feedback',
                 'sale/receipts',
                 'sale_return',
                 'sale_return/create',
@@ -55,6 +57,12 @@
                 <li class="nav-item">
                     <a href="{{ route('report::sale_category') }}"
                         class="nav-link {{ request()->is(['report/sale_category']) ? 'active' : '' }}">Category Wise Report</a>
+                </li>
+            @endcan
+            @can('report.sale feedback')
+                <li class="nav-item">
+                    <a href="{{ route('report::sale_feedback') }}"
+                        class="nav-link {{ request()->is(['report/sale_feedback']) ? 'active' : '' }}">Feedback</a>
                 </li>
             @endcan
             @can('sale.receipts')

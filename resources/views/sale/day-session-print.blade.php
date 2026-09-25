@@ -90,34 +90,61 @@
         @endphp
 
         <center><strong>SALE TRANSACTIONS</strong></center>
-        <table width="100%" cellpadding="2" cellspacing="0" border="1">
-            <tr>
-                <th align="left">Type</th>
-                <th align="left">Reference</th>
-                <th align="right">Amount</th>
-                <th align="right">Payment</th>
-            </tr>
-            @forelse ($transactions as $transaction)
+        @if ($combined ?? false)
+            <table width="100%" cellpadding="2" cellspacing="0" border="1">
                 <tr>
-                    <td><strong>Invoice</strong></td>
-                    <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
-                    <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
-                    <td align="right"><strong>_</strong></td>
+                    <th align="left">Reference</th>
+                    <th align="right">Amount</th>
+                    <th align="right">Payment</th>
                 </tr>
-                @foreach ($transaction['payment_rows'] ?? [] as $paymentRow)
+                @forelse ($transactions as $transaction)
                     <tr>
-                        <td align="right"><strong>{{ $paymentRow['method'] }}</strong></td>
                         <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
-                        <td align="right"><strong>_</strong></td>
-                        <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                        <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
+                        <td align="right">
+                            @forelse ($transaction['payment_rows'] ?? [] as $paymentRow)
+                                <div><strong>{{ $paymentRow['method'] }}&nbsp; {{ currency($paymentRow['amount']) }}</strong></div>
+                            @empty
+                                <strong>_</strong>
+                            @endforelse
+                        </td>
                     </tr>
-                @endforeach
-            @empty
+                @empty
+                    <tr>
+                        <td colspan="3" align="center">No transactions.</td>
+                    </tr>
+                @endforelse
+            </table>
+        @else
+            <table width="100%" cellpadding="2" cellspacing="0" border="1">
                 <tr>
-                    <td colspan="4" align="center">No transactions.</td>
+                    <th align="left">Type</th>
+                    <th align="left">Reference</th>
+                    <th align="right">Amount</th>
+                    <th align="right">Payment</th>
                 </tr>
-            @endforelse
-        </table>
+                @forelse ($transactions as $transaction)
+                    <tr>
+                        <td><strong>Invoice</strong></td>
+                        <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
+                        <td align="right"><strong>{{ currency($transaction['amount']) }}</strong></td>
+                        <td align="right"><strong>_</strong></td>
+                    </tr>
+                    @foreach ($transaction['payment_rows'] ?? [] as $paymentRow)
+                        <tr>
+                            <td align="right"><strong>{{ $paymentRow['method'] }}</strong></td>
+                            <td><strong>{{ $transaction['reference_no'] ?? 'N/A' }}</strong></td>
+                            <td align="right"><strong>_</strong></td>
+                            <td align="right"><strong>{{ currency($paymentRow['amount']) }}</strong></td>
+                        </tr>
+                    @endforeach
+                @empty
+                    <tr>
+                        <td colspan="4" align="center">No transactions.</td>
+                    </tr>
+                @endforelse
+            </table>
+        @endif
 
         @if ($dueRows->isNotEmpty())
             <center><strong>DUE AMOUNT DETAILS</strong></center>

@@ -90,6 +90,11 @@ class PrintController extends Controller
         return SaleHelper::daySessionReport($id);
     }
 
+    public function daySessionReportCombined($id)
+    {
+        return SaleHelper::daySessionReport($id, true);
+    }
+
     public function daySessionReportPdf($id)
     {
         return SaleHelper::daySessionReportPdf($id);
