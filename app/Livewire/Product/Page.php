@@ -89,7 +89,7 @@ class Page extends Component
                 $mrp = rand(1000, 9000);
             }
             $department = Department::first(['id', 'name']);
-            $unit = Unit::first(['id', 'name']);
+            $unit = Unit::defaultBaseUnit();
             $this->products = [
                 'type' => $this->type,
                 'code' => $code,

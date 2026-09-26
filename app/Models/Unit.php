@@ -37,6 +37,15 @@ class Unit extends Model
         $this->attributes['code'] = trim($value);
     }
 
+    /**
+     * The unit a new product starts with: "Nos" when the tenant has it, otherwise the oldest unit.
+     */
+    public static function defaultBaseUnit(): ?self
+    {
+        return self::query()->where(fn ($query) => $query->where('name', 'Nos')->orWhere('code', 'Nos'))->first(['id', 'name'])
+            ?? self::query()->orderBy('id')->first(['id', 'name']);
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
