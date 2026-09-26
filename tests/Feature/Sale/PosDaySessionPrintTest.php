@@ -12,7 +12,7 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'sale.create', 'guard_name' => 'web',
+        'name' => 'sale.create', 'guard_name' => 'web',
     ]));
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);
@@ -29,7 +29,7 @@ beforeEach(function (): void {
 
 it('does not hand the POS the day session print links', function (): void {
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'day session.print', 'guard_name' => 'web',
+        'name' => 'day session.print', 'guard_name' => 'web',
     ]));
 
     $this->get($this->world->url(route('sale::pos', absolute: false)))->assertInertia(fn ($page) => $page

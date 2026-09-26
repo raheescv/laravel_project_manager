@@ -15,9 +15,7 @@ beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->tapAccountId = $this->world->addPaymentMethod('Tap Payments');
 
-    // `permissions` carries a tenant_id, so the row is built with one (see PermissionSeeder).
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id,
         'name' => 'configuration.settings',
         'guard_name' => 'web',
     ]));

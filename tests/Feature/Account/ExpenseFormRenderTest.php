@@ -24,7 +24,6 @@ beforeEach(function (): void {
 
     foreach (['expense.create', 'expense.edit'] as $name) {
         $this->world->user->givePermissionTo(Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id,
             'name' => $name,
             'guard_name' => 'web',
         ]));

@@ -20,17 +20,17 @@ use Tests\Support\StudentWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'role.permissions', 'guard_name' => 'web',
+        'name' => 'role.permissions', 'guard_name' => 'web',
     ]));
     $this->actingAs($this->world->user);
 
     // Every ability in config/permissions.php, for this tenant.
     foreach (config('permissions') as $group => $actions) {
         foreach ($actions as $action) {
-            Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => "{$group}.{$action}", 'guard_name' => 'web']);
+            Permission::firstOrCreate(['name' => "{$group}.{$action}", 'guard_name' => 'web']);
         }
     }
-    $this->role = Role::create(['tenant_id' => $this->world->tenant->id, 'name' => 'School Admin '.uniqid(), 'guard_name' => 'web']);
+    $this->role = Role::create(['name' => 'School Admin '.uniqid(), 'guard_name' => 'web']);
 });
 
 /** The ability names a role editor can tick right now. */

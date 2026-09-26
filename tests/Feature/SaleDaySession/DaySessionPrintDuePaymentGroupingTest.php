@@ -241,7 +241,7 @@ it('folds due payments received into one row per invoice on the combined print',
 
 it('serves the combined thermal print behind the day session print permission', function (): void {
     $session = ($this->makeSession)();
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'day session.print', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'day session.print', 'guard_name' => 'web']));
 
     $this->actingAs($this->world->user)
         ->get($this->world->url('/print/sale/day-session-report-combined/'.$session->id))

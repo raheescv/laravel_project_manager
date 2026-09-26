@@ -15,7 +15,7 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'report.sale feedback', 'guard_name' => 'web',
+        'name' => 'report.sale feedback', 'guard_name' => 'web',
     ]));
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);
@@ -101,7 +101,7 @@ it('guards the page behind report.sale feedback', function (): void {
 it('does not hand the POS a feedback report link', function (): void {
     $this->withoutMiddleware(\App\Http\Middleware\RequireOpenDaySession::class);
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'sale.create', 'guard_name' => 'web',
+        'name' => 'sale.create', 'guard_name' => 'web',
     ]));
 
     $this->get(route('sale::pos'))

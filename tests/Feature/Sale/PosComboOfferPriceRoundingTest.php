@@ -14,7 +14,7 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create(price: 150);
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'sale.create', 'guard_name' => 'web',
+        'name' => 'sale.create', 'guard_name' => 'web',
     ]));
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);

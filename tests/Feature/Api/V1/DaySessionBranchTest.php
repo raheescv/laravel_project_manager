@@ -18,7 +18,6 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id,
         'name' => 'day session.create',
         'guard_name' => 'web',
     ]));

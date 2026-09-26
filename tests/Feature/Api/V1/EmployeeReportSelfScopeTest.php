@@ -26,14 +26,11 @@ beforeEach(function (): void {
         'is_admin' => 0,
     ]);
 
-    // `permissions` carries a tenant_id, so the rows have to be built with one
-    // rather than through Spatie's findOrCreate (see PermissionSeeder). Every
-    // account here holds the permission: what separates them is the account
+    // Every account here holds the permission: what separates them is the account
     // type, not the grant — a cashier needs it for the dashboard to load at all.
     $this->grantReportAccess = function (User $user): void {
         foreach (['report.sale item', 'report.sales overview'] as $name) {
             $user->givePermissionTo(Permission::firstOrCreate([
-                'tenant_id' => $this->world->tenant->id,
                 'name' => $name,
                 'guard_name' => 'web',
             ]));

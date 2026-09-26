@@ -19,7 +19,6 @@ beforeEach(function (): void {
 
     $this->grantDaySession = fn () => $this->world->user->givePermissionTo(
         Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id,
             'name' => 'day session.create',
             'guard_name' => 'web',
         ])

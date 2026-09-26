@@ -13,11 +13,8 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
 
-    // `permissions` carries a tenant_id, so the row has to be built with one
-    // rather than through Spatie's findOrCreate (see PermissionSeeder).
     foreach (['branch.create', 'branch.edit'] as $name) {
         $this->world->user->givePermissionTo(Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id,
             'name' => $name,
             'guard_name' => 'web',
         ]));

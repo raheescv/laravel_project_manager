@@ -197,7 +197,7 @@ it('ignores a pre-order id that does not belong to the sale\'s student', functio
 });
 
 it('lets the school set up pre-orders in Settings', function (): void {
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student settings.edit', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student settings.edit', 'guard_name' => 'web']));
     $this->actingAs($this->world->user);
 
     Livewire::test(StudentConfiguration::class)
@@ -218,7 +218,7 @@ it('lets the school set up pre-orders in Settings', function (): void {
 });
 
 it('shows each day\'s dishes and only takes orders on days the meal is served', function (): void {
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student menu.edit', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student menu.edit', 'guard_name' => 'web']));
     $this->actingAs($this->world->user);
 
     Livewire::test(CanteenMenu::class)
@@ -252,7 +252,7 @@ it('keeps the canteen menu read-only without the edit permission', function (): 
 });
 
 it('writes the week with the quick-fill presets', function (): void {
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student menu.edit', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student menu.edit', 'guard_name' => 'web']));
     $this->actingAs($this->world->user);
 
     Livewire::test(CanteenMenu::class)
@@ -281,7 +281,7 @@ it('writes the week with the quick-fill presets', function (): void {
 });
 
 it('copies another meal\'s menu without saving it', function (): void {
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student menu.edit', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student menu.edit', 'guard_name' => 'web']));
     $this->actingAs($this->world->user);
 
     $other = Product::create([

@@ -105,7 +105,7 @@ it('refuses Student Card for anyone who is not a student', function (): void {
 });
 
 it('checks an edited card sale against the balance without the sale being edited', function (): void {
-    $permission = Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'sale.edit completed', 'guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'sale.edit completed', 'guard_name' => 'web']);
     $this->world->user->givePermissionTo($permission);
     $this->actingAs($this->world->user);
 

@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
             ['name' => 'Employee', 'email' => 'employee@astra.com', 'type' => 'employee', 'is_super_admin' => 0],
         ];
 
-        $role = Role::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Admin', 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
         $branchId = Branch::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->orderBy('id')->value('id');
         $action = new BranchAction();
 

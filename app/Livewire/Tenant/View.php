@@ -251,15 +251,15 @@ class View extends Component
     }
 
     /**
-     * Applied on tap: the role is this tenant's own (roles are per tenant), so
-     * a role id from another tenant can never be attached here.
+     * Applied on tap. Roles are shared by every tenant; the assignment stays
+     * per tenant because the user belongs to this tenant alone.
      */
     public function toggleRole(int $userId, int $roleId): void
     {
         abort_unless(Auth::user()?->is_super_admin, 403);
 
         $user = $this->tenantUser($userId);
-        $role = Role::where('tenant_id', $this->tenantId)->findOrFail($roleId);
+        $role = Role::findOrFail($roleId);
 
         $user->hasRole($role) ? $user->removeRole($role) : $user->assignRole($role);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -294,7 +294,7 @@ class View extends Component
             : collect();
 
         $roles = isset($this->loaded_tabs['users'])
-            ? Role::where('tenant_id', $tenant->id)->withCount('permissions')->orderBy('name')->get()
+            ? Role::withCount('permissions')->orderBy('name')->get()
             : collect();
 
         $branches = collect();

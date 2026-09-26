@@ -158,8 +158,6 @@ class Table extends Component
 
     public function render()
     {
-        $tenantId = app(TenantService::class)->getCurrentTenantId();
-
         $data = User::getFilteredQuery($this->getFilters())
             ->with(['roles:id,name', 'designation:id,name', 'branch:id,name'])
             ->orderBy($this->sortField, $this->sortDirection)
@@ -174,7 +172,6 @@ class Table extends Component
         return view('livewire.user.table', [
             'data' => $data,
             'roles' => Role::query()
-                ->when($tenantId, fn ($query) => $query->where('tenant_id', $tenantId))
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'designations' => Designation::orderBy('order_no')->orderBy('name')->get(['id', 'name']),

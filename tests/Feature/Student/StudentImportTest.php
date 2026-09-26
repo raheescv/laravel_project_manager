@@ -32,7 +32,7 @@ beforeEach(function (): void {
         }
         foreach ($actions as $action) {
             $this->world->user->givePermissionTo(Permission::firstOrCreate([
-                'tenant_id' => $this->world->tenant->id, 'name' => "{$group}.{$action}", 'guard_name' => 'web',
+                'name' => "{$group}.{$action}", 'guard_name' => 'web',
             ]));
         }
     }

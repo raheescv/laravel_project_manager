@@ -153,9 +153,7 @@ it('ignores soft deleted sales', function (): void {
  * a session no longer blows up, and drafts leave the frozen till figures alone.
  */
 it('moves a sale from the Change Session modal through the shared action', function (): void {
-    // `permissions` carries a tenant_id, so the row has to be built with one.
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id,
         'name' => 'sale.change day session',
         'guard_name' => 'web',
     ]));

@@ -121,7 +121,7 @@ it('links a card from the app only with permission', function (): void {
 
     $this->postJson($this->world->url("/api/v1/students/{$other->id}/card"), ['cardUid' => '11:22:33:44'])->assertForbidden();
 
-    $this->world->user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'student card.assign', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student card.assign', 'guard_name' => 'web']));
 
     $this->getJson($this->world->url('/api/v1/students?search=Omar'))->assertOk()->assertJsonPath('data.0.account_id', $other->id);
     $this->postJson($this->world->url("/api/v1/students/{$other->id}/card"), ['cardUid' => '11:22:33:44'])

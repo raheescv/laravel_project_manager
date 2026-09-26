@@ -92,19 +92,19 @@ it('provisions a tenant idempotently without touching the current tenant', funct
     $first = (new ProvisionAction())->execute($this->other->id, ['name' => 'Acme Admin', 'email' => 'admin@acme.test', 'password' => 'secret-pass'], 'POS Module');
 
     expect($first['success'])->toBeTrue($first['message'])
-        ->and(collect($first['steps'])->where('status', 'created')->count())->toBe(count($first['steps']));
+        ->and(collect($first['steps'])->whereNotIn('key', ['permissions', 'role'])->pluck('status')->unique()->all())->toBe(['created']);
 
     $cashAndCard = Account::withTenant($this->other->id)->whereIn('slug', ['cash', 'card'])->pluck('id')->all();
     expect(Account::withTenant($this->other->id)->where('slug', 'cash')->exists())->toBeTrue()
         ->and(Branch::withTenant($this->other->id)->count())->toBe(1)
-        ->and(Permission::where('tenant_id', $this->other->id)->count())->toBeGreaterThan(0)
+        ->and(Permission::count())->toBeGreaterThan(0)
         ->and(json_decode(Configuration::withTenant($this->other->id)->where('key', 'payment_methods')->value('value'), true))->toEqualCanonicalizing($cashAndCard)
         ->and(Configuration::withTenant($this->other->id)->where('key', 'active_module')->value('value'))->toBe('POS Module')
         ->and(Account::withTenant($this->world->tenant->id)->count())->toBe($ownAccounts);
 
     $admin = User::withTenant($this->other->id)->where('email', 'admin@acme.test')->first();
     expect($admin->is_admin)->toBeTruthy()
-        ->and($admin->roles->pluck('tenant_id')->all())->toBe([$this->other->id]);
+        ->and($admin->roles->pluck('name')->all())->toBe(['Admin']);
 
     $second = (new ProvisionAction())->execute($this->other->id, ['email' => 'admin@acme.test']);
     expect($second['success'])->toBeTrue()
@@ -121,7 +121,7 @@ it('seeds the default users into the provisioned tenant without super admin', fu
 
     expect($users->keys()->all())->toEqualCanonicalizing(['system@astra.com', 'admin@astra.com', 'rahees@astra.com', 'employee@astra.com'])
         ->and($users->every(fn (User $user) => ! $user->is_super_admin))->toBeTrue()
-        ->and($users->every(fn (User $user) => $user->roles->pluck('tenant_id')->all() === [$this->other->id]))->toBeTrue()
+        ->and($users->every(fn (User $user) => $user->roles->pluck('name')->all() === ['Admin']))->toBeTrue()
         ->and($users['admin@astra.com']->default_branch_id)->toBe($branchId);
 
     (new ProvisionAction())->execute($this->other->id);
@@ -131,8 +131,7 @@ it('seeds the default users into the provisioned tenant without super admin', fu
 it('grants and removes a tenant user\'s roles from the Users tab', function (): void {
     (new ProvisionAction())->execute($this->other->id);
     $employee = User::withTenant($this->other->id)->where('email', 'employee@astra.com')->first();
-    $role = Spatie\Permission\Models\Role::where('tenant_id', $this->other->id)->where('name', 'Admin')->first();
-    $foreignRole = Spatie\Permission\Models\Role::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'Admin', 'guard_name' => 'web']);
+    $role = App\Models\Role::where('name', 'Admin')->firstOrFail();
 
     $component = Livewire::actingAs($this->world->user)->test(View::class, ['tenantId' => $this->other->id])
         ->call('selectTab', 'users')
@@ -145,25 +144,27 @@ it('grants and removes a tenant user\'s roles from the Users tab', function (): 
     $component->call('toggleRole', $employee->id, $role->id)
         ->call('toggleAdmin', $employee->id);
     expect($employee->fresh()->hasRole($role))->toBeTrue()
-        ->and($employee->fresh()->is_admin)->toBeTruthy();
-
-    expect(fn () => $component->call('toggleRole', $employee->id, $foreignRole->id))->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
-    expect($employee->fresh()->roles->pluck('id')->all())->toBe([$role->id]);
+        ->and($employee->fresh()->is_admin)->toBeTruthy()
+        ->and($employee->fresh()->roles->pluck('id')->all())->toBe([$role->id]);
 });
 
-it('gives a provisioned admin every permission even though the names repeat across tenants', function (): void {
-    Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'sale.view', 'guard_name' => 'web']);
-    Spatie\Permission\Models\Role::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'Admin', 'guard_name' => 'web']);
+it('shares one role and permission catalogue across tenants while role assignment stays per user', function (): void {
+    $permission = Permission::firstOrCreate(['name' => 'sale.view', 'guard_name' => 'web']);
+    $permissionCount = Permission::count();
 
     $response = (new ProvisionAction())->execute($this->other->id, ['name' => 'Acme Admin', 'email' => 'admin@acme.test', 'password' => 'secret-pass'], 'POS Module');
     expect($response['success'])->toBeTrue($response['message']);
     $admin = User::withoutGlobalScopes()->where('email', 'admin@acme.test')->firstOrFail();
+    $employee = User::withTenant($this->other->id)->where('email', 'employee@astra.com')->firstOrFail();
+    $employee->syncRoles([]);
     app(TenantService::class)->setCurrentTenant($this->other);
 
-    expect($admin->can('sale.view'))->toBeTrue()
+    expect(Permission::where('name', 'sale.view')->count())->toBe(1)
+        ->and(App\Models\Role::where('name', 'Admin')->count())->toBe(1)
+        ->and(Permission::count())->toBeGreaterThanOrEqual($permissionCount)
+        ->and($admin->can($permission->name))->toBeTrue()
         ->and($admin->hasRole('Admin'))->toBeTrue()
-        ->and(App\Models\Role::findByName('Admin')->tenant_id)->toBe($this->other->id)
-        ->and(App\Models\Permission::findByName('sale.view')->tenant_id)->toBe($this->other->id);
+        ->and($employee->fresh()->hasRole('Admin'))->toBeFalse();
 });
 
 it('never deactivates or deletes the tenant you are signed into', function (): void {

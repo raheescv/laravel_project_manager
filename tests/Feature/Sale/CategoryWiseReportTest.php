@@ -26,7 +26,7 @@ beforeEach(function (): void {
     session(['branch_id' => $this->world->branch->id]);
     DB::table('user_has_branches')->insert(['user_id' => $user->id, 'branch_id' => $this->world->branch->id, 'created_at' => now(), 'updated_at' => now()]);
 
-    $user->givePermissionTo(Permission::firstOrCreate(['tenant_id' => $tenant, 'name' => 'report.sale category', 'guard_name' => 'web']));
+    $user->givePermissionTo(Permission::firstOrCreate(['name' => 'report.sale category', 'guard_name' => 'web']));
 
     $this->shoesId = DB::table('categories')->insertGetId(['tenant_id' => $tenant, 'name' => 'Shoes']);
 

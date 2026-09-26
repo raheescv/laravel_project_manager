@@ -19,7 +19,6 @@ beforeEach(function (): void {
 
     foreach (['report.sale item', 'report.sales overview'] as $name) {
         $this->world->user->givePermissionTo(Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id,
             'name' => $name,
             'guard_name' => 'web',
         ]));

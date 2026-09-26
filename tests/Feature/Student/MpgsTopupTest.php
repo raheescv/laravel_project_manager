@@ -63,7 +63,7 @@ function mpgsAnswer($test, array $body, int $status = 200): void
 function mpgsGrantSettings($test): void
 {
     $test->world->user->givePermissionTo(\Spatie\Permission\Models\Permission::firstOrCreate([
-        'tenant_id' => $test->world->tenant->id, 'name' => 'student settings.edit', 'guard_name' => 'web',
+        'name' => 'student settings.edit', 'guard_name' => 'web',
     ]));
     $test->actingAs($test->world->user);
 }

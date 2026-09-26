@@ -9,8 +9,8 @@ use Spatie\Permission\Models\Role;
 
 function impersonatorAdmin(): User
 {
-    $permission = Permission::firstOrCreate(['tenant_id' => 1, 'name' => 'user.impersonate'], ['guard_name' => 'web']);
-    $role = Role::firstOrCreate(['tenant_id' => 1, 'name' => 'Impersonation Admin'], ['guard_name' => 'web']);
+    $permission = Permission::firstOrCreate(['name' => 'user.impersonate'], ['guard_name' => 'web']);
+    $role = Role::firstOrCreate(['name' => 'Impersonation Admin'], ['guard_name' => 'web']);
     $role->givePermissionTo($permission);
 
     $admin = User::factory()->create(['tenant_id' => 1, 'is_active' => 1]);

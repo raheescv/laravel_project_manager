@@ -23,7 +23,6 @@ beforeEach(function (): void {
 
     foreach (['purchase.create', 'purchase.scan invoice'] as $name) {
         $this->world->user->givePermissionTo(Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id,
             'name' => $name,
             'guard_name' => 'web',
         ]));

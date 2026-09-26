@@ -25,7 +25,7 @@ beforeEach(function (): void {
     StudentWorld::enableSchool($this->world);
     foreach (['report.student wallet', 'report.student recharge'] as $name) {
         $this->world->user->givePermissionTo(Permission::firstOrCreate([
-            'tenant_id' => $this->world->tenant->id, 'name' => $name, 'guard_name' => 'web',
+            'name' => $name, 'guard_name' => 'web',
         ]));
     }
     $this->actingAs($this->world->user);

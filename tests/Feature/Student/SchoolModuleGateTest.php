@@ -16,7 +16,7 @@ use Tests\Support\StudentWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->world->user->givePermissionTo(Permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id, 'name' => 'student.view', 'guard_name' => 'web',
+        'name' => 'student.view', 'guard_name' => 'web',
     ]));
 });
 
