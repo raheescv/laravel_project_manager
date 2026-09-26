@@ -535,15 +535,30 @@
                             </div>
                         </div>
                         @if (!$tenant->hasCustomDomain())
+                            @php($wildcardSite = config('tenant_server.wildcard_site'))
                             <div class="empty">
                                 <i class="fa fa-globe"></i>
-                                No custom domain. This tenant is reached at <b>{{ $host }}</b> through the shared wildcard site, so there is nothing to set up.
+                                @if ($wildcardSite)
+                                    No custom domain. This tenant is reached at <b>{{ $host }}</b> through the shared wildcard site, so there is nothing to set up.
+                                @else
+                                    No domain set up yet. Point a DNS <b>A record</b> to this server, then enter it here — the server writes its nginx site and Let's Encrypt certificate.
+                                @endif
                                 @unless ($tenant->deleted_at)
-                                    <div class="mt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="$dispatch('Tenant-Page-Update-Component', { id: '{{ $tenant->id }}' })">
-                                            <i class="fa fa-plus me-1"></i>Add a custom domain
-                                        </button>
-                                    </div>
+                                    <form class="mt-3 mx-auto text-start" style="max-width: 420px" wire:submit="saveCustomDomain">
+                                        <label for="customDomain" class="form-label small fw-medium mb-1">Domain</label>
+                                        <div class="input-group input-group-sm">
+                                            <input id="customDomain" type="text" class="form-control font-monospace" wire:model="customDomain" placeholder="{{ $wildcardSite ? 'shop.example.com' : $host }}" autocomplete="off">
+                                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="saveCustomDomain">
+                                                <i class="fa fa-plus me-1"></i>Set up
+                                            </button>
+                                        </div>
+                                        @error('customDomain') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
+                                        @unless ($wildcardSite)
+                                            <button type="button" class="btn btn-link btn-sm px-0 mt-1" wire:click="$set('customDomain', '{{ $host }}')">
+                                                Use the subdomain <span class="font-monospace">{{ $host }}</span>
+                                            </button>
+                                        @endunless
+                                    </form>
                                 @endunless
                             </div>
                         @else
@@ -569,7 +584,7 @@
                                 <div class="col-sm-6">
                                     <div class="fld">
                                         <div class="k"><i class="fa fa-file-text-o"></i>nginx site</div>
-                                        <div class="v mono small">{{ basename(app(\App\Services\TenantServerService::class)->sitePath($tenant->id)) }}</div>
+                                        <div class="v mono small">{{ basename(app(\App\Services\TenantServerService::class)->sitePath($tenant)) }}</div>
                                     </div>
                                 </div>
                                 @if ($tenant->domain_error)
@@ -586,6 +601,10 @@
                                 <p>Create an <b>A record</b> for <span class="mono">{{ $tenant->domain }}</span> pointing to this server's IP address. The server writes the nginx site and requests the certificate within a minute of any change.</p>
                                 <button type="button" class="btn btn-sm btn-primary" wire:click="requestDomainSync" wire:loading.attr="disabled" wire:target="requestDomainSync" @disabled($tenant->deleted_at)>
                                     <i class="fa fa-refresh me-1"></i>{{ $tenant->domain_status === \App\Models\Tenant::DOMAIN_FAILED ? 'Retry now' : 'Sync again' }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeCustomDomain" wire:loading.attr="disabled" wire:target="removeCustomDomain" @disabled($tenant->deleted_at)
+                                    wire:confirm="Remove {{ $tenant->domain }}? Its nginx site is taken down and the tenant is no longer reachable at that address.">
+                                    <i class="fa fa-trash me-1"></i>Remove
                                 </button>
                             </div>
                             @if ($nginxPreview)

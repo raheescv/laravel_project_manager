@@ -13,6 +13,7 @@ use App\Services\TenantAnalyticsService;
 use App\Services\TenantServerService;
 use App\Services\TenantService;
 use App\Services\TenantSwitchService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -36,6 +37,7 @@ class View extends Component
 
     /** The Users-tab row whose roles are open for editing. */
     public ?int $accessUserId = null;
+    public string $customDomain = '';
 
     protected $listeners = [
         'Tenant-Refresh-Component' => '$refresh',
@@ -43,7 +45,7 @@ class View extends Component
 
     public function mount(int $tenantId): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can access this page.');
+        abort_unless(Auth::user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can access this page.');
 
         $this->tenantId = $tenantId;
         $this->provision['system'] = (string) Configuration::withTenant($tenantId)->where('key', 'active_module')->value('value');
@@ -57,7 +59,7 @@ class View extends Component
 
     public function restore(): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403);
+        abort_unless(Auth::user()?->is_super_admin, 403);
 
         Tenant::onlyTrashed()->findOrFail($this->tenantId)->restore();
         $this->dispatch('success', ['message' => 'Tenant restored']);
@@ -68,7 +70,7 @@ class View extends Component
      */
     public function requestDomainSync(): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403);
+        abort_unless(Auth::user()?->is_super_admin, 403);
 
         $tenant = Tenant::findOrFail($this->tenantId);
         if (! $tenant->hasCustomDomain()) {
@@ -80,6 +82,47 @@ class View extends Component
         $this->dispatch('success', ['message' => 'Queued — the server applies it within a minute']);
     }
 
+    /**
+     * Point a domain (the tenant's own subdomain or the client's domain) at
+     * this tenant; the next tenant:server-sync writes its site and certificate.
+     */
+    public function saveCustomDomain(): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $tenant = Tenant::findOrFail($this->tenantId);
+        $this->validate([
+            'customDomain' => ['required', ...Tenant::rules($tenant->id)['domain']],
+        ], [
+            'customDomain.required' => 'Enter the domain that points to this server',
+            'customDomain.regex' => 'Enter a host name such as shop.example.com',
+            'customDomain.not_in' => 'That is the main app address, which already has its own site',
+            'customDomain.unique' => 'Another tenant already uses this domain',
+        ]);
+
+        $tenant->domain = $this->customDomain;
+        if (! $tenant->hasCustomDomain()) {
+            $this->addError('customDomain', 'This address is already served by the wildcard site — nothing to set up');
+
+            return;
+        }
+        $tenant->save();
+
+        $this->customDomain = '';
+        $this->dispatch('success', ['message' => "Saved — the server sets up {$tenant->domain} within a minute"]);
+    }
+
+    /**
+     * Drop the domain; the next tenant:server-sync removes its nginx site.
+     */
+    public function removeCustomDomain(): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        Tenant::findOrFail($this->tenantId)->update(['domain' => null]);
+        $this->dispatch('success', ['message' => 'Domain removed — its nginx site is taken down within a minute']);
+    }
+
     public function refreshAnalytics(): void
     {
         TenantAnalyticsService::forget($this->tenantId);
@@ -88,7 +131,7 @@ class View extends Component
 
     public function runProvision(): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403);
+        abort_unless(Auth::user()?->is_super_admin, 403);
 
         $this->validate([
             'provision.name' => ['nullable', 'string', 'max:255'],
@@ -129,7 +172,7 @@ class View extends Component
      */
     public function toggleRole(int $userId, int $roleId): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403);
+        abort_unless(Auth::user()?->is_super_admin, 403);
 
         $user = $this->tenantUser($userId);
         $role = Role::where('tenant_id', $this->tenantId)->findOrFail($roleId);
@@ -142,7 +185,7 @@ class View extends Component
     /** `is_admin` is stripped from mass assignment by the user actions, so it is set explicitly. */
     public function toggleAdmin(int $userId): void
     {
-        abort_unless(auth()->user()?->is_super_admin, 403);
+        abort_unless(Auth::user()?->is_super_admin, 403);
 
         $user = $this->tenantUser($userId);
         $user->forceFill(['is_admin' => ! $user->is_admin])->save();

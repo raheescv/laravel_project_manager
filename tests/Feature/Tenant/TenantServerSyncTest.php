@@ -1,10 +1,14 @@
 <?php
 
+use App\Livewire\Tenant\View;
 use App\Models\Tenant;
+use App\Services\TenantServerService;
 use App\Services\TenantService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Livewire;
+use Tests\Support\PosWorld;
 
 /**
  * tenant:server-sync against a throw-away /etc: nginx, certbot and
@@ -101,12 +105,18 @@ it('writes the site, issues the certificate and switches to HTTPS', function ():
 
     $this->artisan('tenant:server-sync')->assertSuccessful();
 
-    $site = File::get("{$this->etc}/available/qloud-tenant-{$tenant->id}.conf");
+    $site = File::get("{$this->etc}/available/acme");
     expect($site)->toContain('server_name shop.acme.com;')
         ->toContain('listen 443 ssl')
         ->toContain('/var/www/qloud/public')
         ->toContain('/.well-known/acme-challenge/')
-        ->and(is_link("{$this->etc}/enabled/qloud-tenant-{$tenant->id}.conf"))->toBeTrue()
+        ->toStartWith(TenantServerService::SITE_MARKER.$tenant->id)
+        ->toContain('ssl_protocols TLSv1.2 TLSv1.3;')
+        ->toContain('add_header Referrer-Policy strict-origin-when-cross-origin always;')
+        ->toContain('fastcgi_read_timeout 180;')
+        ->toContain('location ~* ^/(build|storage)/')
+        ->toContain('access_log /var/log/nginx/acme.access.log;')
+        ->and(is_link("{$this->etc}/enabled/acme"))->toBeTrue()
         ->and($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_ACTIVE);
 
     Process::assertRan(fn ($process) => str_contains(implode(' ', (array) $process->command), 'certonly --webroot'));
@@ -121,7 +131,7 @@ it('keeps the site on HTTP and records why when the certificate fails', function
     $tenant->refresh();
     expect($tenant->domain_status)->toBe(Tenant::DOMAIN_FAILED)
         ->and($tenant->domain_error)->toContain('DNS A record')
-        ->and(File::get("{$this->etc}/available/qloud-tenant-{$tenant->id}.conf"))->not->toContain('listen 443');
+        ->and(File::get("{$this->etc}/available/acme"))->not->toContain('listen 443');
 
     // Failed tenants are not retried every minute (Let's Encrypt rate limits) unless asked.
     Process::swap(new \Illuminate\Process\Factory());
@@ -136,7 +146,7 @@ it('rolls a rejected site back so nginx keeps serving everyone else', function (
 
     $this->artisan('tenant:server-sync')->assertSuccessful();
 
-    expect(File::exists("{$this->etc}/available/qloud-tenant-{$tenant->id}.conf"))->toBeFalse()
+    expect(File::exists("{$this->etc}/available/acme"))->toBeFalse()
         ->and($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_FAILED);
     Process::assertNotRan(ranCommand('systemctl reload nginx'));
 });
@@ -145,7 +155,7 @@ it('takes the site down when the tenant is deactivated or deleted', function ():
     fakeServer($this->etc);
     $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => 'shop.acme.com']);
     $this->artisan('tenant:server-sync')->assertSuccessful();
-    $site = "{$this->etc}/available/qloud-tenant-{$tenant->id}.conf";
+    $site = "{$this->etc}/available/acme";
     expect(File::exists($site))->toBeTrue();
 
     $tenant->refresh()->update(['is_active' => false]);
@@ -159,7 +169,7 @@ it('takes the site down when the tenant is deactivated or deleted', function ():
     $tenant->refresh()->delete();
     $this->artisan('tenant:server-sync')->assertSuccessful();
     expect(File::exists($site))->toBeFalse()
-        ->and(is_link("{$this->etc}/enabled/qloud-tenant-{$tenant->id}.conf"))->toBeFalse();
+        ->and(is_link("{$this->etc}/enabled/acme"))->toBeFalse();
 });
 
 it('installs the shared queue worker and cron file', function (): void {
@@ -200,4 +210,96 @@ it('refuses to run without root', function (): void {
     }
 
     $this->artisan('tenant:server-sync')->expectsOutputToContain('Run this as root')->assertFailed();
+});
+
+it('sets up a pointed subdomain from the Server tab when there is no wildcard site', function (): void {
+    fakeServer($this->etc);
+    config(['tenant_server.wildcard_site' => false]);
+    $world = PosWorld::create();
+    $world->user->forceFill(['is_super_admin' => true])->save();
+    $tenant = Tenant::factory()->create(['subdomain' => 'orga', 'domain' => null]);
+
+    Livewire::actingAs($world->user)->test(View::class, ['tenantId' => $tenant->id])
+        ->call('selectTab', 'server')
+        ->assertSee('Use the subdomain')
+        ->set('customDomain', 'orga'.Tenant::subdomainSuffix())
+        ->call('saveCustomDomain')
+        ->assertHasNoErrors()
+        ->assertDispatched('success')
+        ->assertSet('customDomain', '')
+        ->assertSee('Waiting for the server');
+
+    expect($tenant->fresh())->domain->toBe('orga.test')->domain_status->toBe(Tenant::DOMAIN_PENDING);
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_ACTIVE)
+        ->and(File::get("{$this->etc}/available/orga"))
+        ->toContain('server_name orga.test;')
+        ->toContain("ssl_certificate {$this->etc}/live/orga.test/fullchain.pem;");
+});
+
+it('refuses the subdomain address when a wildcard site already serves it', function (): void {
+    config(['tenant_server.wildcard_site' => true]);
+    $world = PosWorld::create();
+    $world->user->forceFill(['is_super_admin' => true])->save();
+    $tenant = Tenant::factory()->create(['subdomain' => 'orga', 'domain' => null]);
+
+    Livewire::actingAs($world->user)->test(View::class, ['tenantId' => $tenant->id])
+        ->call('selectTab', 'server')
+        ->assertSee('shared wildcard site')
+        ->assertDontSee('Use the subdomain')
+        ->set('customDomain', 'orga.test')->call('saveCustomDomain')->assertHasErrors('customDomain')
+        ->set('customDomain', 'app.test')->call('saveCustomDomain')->assertHasErrors(['customDomain' => 'not_in'])
+        ->set('customDomain', '')->call('saveCustomDomain')->assertHasErrors(['customDomain' => 'required'])
+        ->set('customDomain', 'https://Shop.Orga.com/')->call('saveCustomDomain')->assertHasNoErrors();
+
+    expect($tenant->fresh()->domain)->toBe('shop.orga.com');
+});
+
+it('removes the domain and its nginx site from the Server tab', function (): void {
+    fakeServer($this->etc);
+    $world = PosWorld::create();
+    $world->user->forceFill(['is_super_admin' => true])->save();
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => 'shop.acme.com']);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+    $site = "{$this->etc}/available/acme";
+    expect(File::exists($site))->toBeTrue();
+
+    Livewire::actingAs($world->user)->test(View::class, ['tenantId' => $tenant->id])
+        ->call('selectTab', 'server')
+        ->call('removeCustomDomain')
+        ->assertDispatched('success');
+
+    expect($tenant->fresh()->domain)->toBeNull();
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+    expect(File::exists($site))->toBeFalse();
+});
+
+it('never overwrites a hand-written site with the same name', function (): void {
+    fakeServer($this->etc);
+    File::put("{$this->etc}/available/solan", "# hand-written\n");
+    $tenant = Tenant::factory()->create(['subdomain' => 'solan', 'domain' => 'shop.solan.com']);
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect(File::get("{$this->etc}/available/solan"))->toBe("# hand-written\n")
+        ->and($tenant->fresh())->domain_status->toBe(Tenant::DOMAIN_FAILED)
+        ->domain_error->toContain('not written by Tenant Control');
+});
+
+it('renames the site when the subdomain changes', function (): void {
+    fakeServer($this->etc);
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => 'shop.acme.com']);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    $tenant->refresh()->update(['subdomain' => 'acme-retail']);
+    expect($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_PENDING);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect(File::exists("{$this->etc}/available/acme-retail"))->toBeTrue()
+        ->and(is_link("{$this->etc}/enabled/acme-retail"))->toBeTrue()
+        ->and(File::exists("{$this->etc}/available/acme"))->toBeFalse()
+        ->and(is_link("{$this->etc}/enabled/acme"))->toBeFalse();
 });

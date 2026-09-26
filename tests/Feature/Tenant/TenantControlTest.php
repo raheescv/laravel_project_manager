@@ -149,6 +149,19 @@ it('grants and removes a tenant user\'s roles from the Users tab', function (): 
 
     expect(fn () => $component->call('toggleRole', $employee->id, $foreignRole->id))->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
     expect($employee->fresh()->roles->pluck('id')->all())->toBe([$role->id]);
+it('gives a provisioned admin every permission even though the names repeat across tenants', function (): void {
+    Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'sale.view', 'guard_name' => 'web']);
+    Spatie\Permission\Models\Role::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'Admin', 'guard_name' => 'web']);
+
+    $response = (new ProvisionAction())->execute($this->other->id, ['name' => 'Acme Admin', 'email' => 'admin@acme.test', 'password' => 'secret-pass'], 'POS Module');
+    expect($response['success'])->toBeTrue($response['message']);
+    $admin = User::withoutGlobalScopes()->where('email', 'admin@acme.test')->firstOrFail();
+    app(TenantService::class)->setCurrentTenant($this->other);
+
+    expect($admin->can('sale.view'))->toBeTrue()
+        ->and($admin->hasRole('Admin'))->toBeTrue()
+        ->and(App\Models\Role::findByName('Admin')->tenant_id)->toBe($this->other->id)
+        ->and(App\Models\Permission::findByName('sale.view')->tenant_id)->toBe($this->other->id);
 });
 
 it('never deactivates or deletes the tenant you are signed into', function (): void {

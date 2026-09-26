@@ -59,7 +59,7 @@ class TenantServerSyncCommand extends Command
             $wanted = ! $tenant->trashed() && $tenant->is_active && $tenant->hasCustomDomain();
 
             if ($dryRun) {
-                $this->line("<comment>#{$tenant->id} {$tenant->name}</comment> → ".($wanted ? "write {$server->sitePath($tenant->id)}" : 'remove site'));
+                $this->line("<comment>#{$tenant->id} {$tenant->name}</comment> → ".($wanted ? "write {$server->sitePath($tenant)}" : 'remove site'));
                 if ($wanted) {
                     $this->line($server->renderSite($tenant, $server->certificateExists($tenant->domain)));
                 }
@@ -106,11 +106,12 @@ class TenantServerSyncCommand extends Command
 
     /**
      * Sites on disk for tenants that no longer exist, or no longer want one
-     * and are not waiting to be processed.
+     * and are not waiting to be processed. A renamed subdomain's old file is
+     * dropped by the sync that writes the new one.
      */
     private function removeOrphans(TenantServerService $server): void
     {
-        $siteIds = $server->managedSiteIds();
+        $siteIds = array_values(array_unique($server->managedSites()));
         if (! $siteIds) {
             return;
         }

@@ -57,7 +57,7 @@ class Tenant extends Model
             if ($tenant->isDirty('domain') && ($tenant->hasCustomDomain() || $tenant->getOriginal('domain_status') !== null)) {
                 $tenant->domain_status = $tenant->hasCustomDomain() ? self::DOMAIN_PENDING : null;
                 $tenant->domain_error = null;
-            } elseif ($tenant->isDirty('is_active') && $tenant->hasCustomDomain()) {
+            } elseif ($tenant->isDirty(['is_active', 'subdomain']) && $tenant->hasCustomDomain()) {
                 $tenant->domain_status = self::DOMAIN_PENDING;
             }
         });
@@ -86,7 +86,8 @@ class Tenant extends Model
 
     /**
      * A domain that needs its own nginx site: set, and not already covered by
-     * the app host or this tenant's wildcard subdomain address.
+     * the app host or — when the server has a wildcard site — this tenant's
+     * subdomain address.
      */
     public function hasCustomDomain(): bool
     {
@@ -94,7 +95,12 @@ class Tenant extends Model
             return false;
         }
 
-        return ! in_array($this->domain, [parse_url(config('app.url'), PHP_URL_HOST), parse_url($this->url(), PHP_URL_HOST)], true);
+        $coveredHosts = [parse_url(config('app.url'), PHP_URL_HOST)];
+        if (config('tenant_server.wildcard_site')) {
+            $coveredHosts[] = parse_url($this->url(), PHP_URL_HOST);
+        }
+
+        return ! in_array($this->domain, $coveredHosts, true);
     }
 
     public static function rules($id = 0, $merge = [])
