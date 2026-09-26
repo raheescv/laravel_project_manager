@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use App\Services\TenantService;
 use Closure;
 use Illuminate\Http\Request;
@@ -20,6 +21,12 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
+        // A tenant's own custom domain (shop.client.com) wins over reading its
+        // first label as a subdomain.
+        if ($tenant = $this->tenantService->findTenantByDomain($this->removePort($request->getHost()))) {
+            return $this->useTenant($request, $tenant, $next);
+        }
+
         // Extract subdomain from host
         $subdomain = $this->extractSubdomain($request->getHost());
 
@@ -40,7 +47,11 @@ class IdentifyTenant
             abort(404, 'Tenant not found or inactive');
         }
 
-        // Set the current tenant
+        return $this->useTenant($request, $tenant, $next);
+    }
+
+    protected function useTenant(Request $request, Tenant $tenant, Closure $next): Response
+    {
         $this->tenantService->setCurrentTenant($tenant);
 
         // Add tenant to request for easy access

@@ -118,4 +118,25 @@ class TenantService
                 ->first();
         });
     }
+
+    /**
+     * Find an active tenant by its custom domain (an exact host match). The app
+     * host itself is never a custom domain, so it always falls through to the
+     * subdomain lookup.
+     */
+    public function findTenantByDomain(string $host): ?Tenant
+    {
+        $host = strtolower($host);
+        if ($host === '' || $host === strtolower((string) parse_url(config('app.url'), PHP_URL_HOST))) {
+            return null;
+        }
+
+        // `false` marks "no tenant here" — Cache::remember never stores null, and
+        // every ordinary subdomain request passes through this lookup first.
+        return Cache::remember("tenant_domain_{$host}", now()->addHours(24), function () use ($host) {
+            return Tenant::where('domain', $host)
+                ->where('is_active', true)
+                ->first() ?? false;
+        }) ?: null;
+    }
 }

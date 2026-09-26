@@ -24,6 +24,12 @@
         'branches' => ['fa-sitemap', 'Branches', $summary['branches']],
         'analytics' => ['fa-bar-chart', 'Analytics', null],
         'seeding' => ['fa-magic', 'Seeding', null],
+        'server' => ['fa-server', 'Server', null],
+    ];
+    $domainStatus = [
+        \App\Models\Tenant::DOMAIN_ACTIVE => ['ok', 'fa-lock', 'Live with SSL'],
+        \App\Models\Tenant::DOMAIN_PENDING => ['', 'fa-clock-o', 'Waiting for the server'],
+        \App\Models\Tenant::DOMAIN_FAILED => ['off', 'fa-exclamation-triangle', 'Failed'],
     ];
 @endphp
 
@@ -474,6 +480,140 @@
                         @else
                             <div class="empty"><i class="fa fa-list-ul"></i>Run provisioning to see what was added.</div>
                         @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+        @if ($selected_tab === 'server')
+            @php
+                $heartbeat = $serverHealth['scheduler_last_run'] ? \Illuminate\Support\Carbon::parse($serverHealth['scheduler_last_run']) : null;
+                $schedulerOk = $heartbeat && $heartbeat->gt(now()->subMinutes(3));
+                $oldestJob = $serverHealth['oldest_job'] ? \Illuminate\Support\Carbon::parse($serverHealth['oldest_job']) : null;
+                $queueStalled = $oldestJob && $oldestJob->lt(now()->subMinutes(5));
+                [$statusTone, $statusIcon, $statusLabel] = $domainStatus[$tenant->domain_status] ?? ['', 'fa-question', 'Not synced yet'];
+            @endphp
+            <div class="pane">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="ph">
+                            <span class="pi"><i class="fa fa-globe"></i></span>
+                            <div>
+                                <h6>Custom domain</h6>
+                                <div class="hint">Its own nginx site and Let's Encrypt certificate</div>
+                            </div>
+                        </div>
+                        @if (!$tenant->hasCustomDomain())
+                            <div class="empty">
+                                <i class="fa fa-globe"></i>
+                                No custom domain. This tenant is reached at <b>{{ $host }}</b> through the shared wildcard site, so there is nothing to set up.
+                                @unless ($tenant->deleted_at)
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" wire:click="$dispatch('Tenant-Page-Update-Component', { id: '{{ $tenant->id }}' })">
+                                            <i class="fa fa-plus me-1"></i>Add a custom domain
+                                        </button>
+                                    </div>
+                                @endunless
+                            </div>
+                        @else
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <div class="fld">
+                                        <div class="k"><i class="fa fa-link"></i>Domain</div>
+                                        <div class="v mono"><a href="https://{{ $tenant->domain }}" target="_blank" rel="noopener">{{ $tenant->domain }}</a></div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="fld">
+                                        <div class="k"><i class="fa fa-heartbeat"></i>Status</div>
+                                        <div class="v"><span @class(['chip', $statusTone => $statusTone])><i class="fa {{ $statusIcon }}"></i>{{ $statusLabel }}</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="fld">
+                                        <div class="k"><i class="fa fa-refresh"></i>Last synced</div>
+                                        <div @class(['v', 'none' => !$tenant->domain_synced_at])>{{ $tenant->domain_synced_at?->diffForHumans() ?? 'Never' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="fld">
+                                        <div class="k"><i class="fa fa-file-text-o"></i>nginx site</div>
+                                        <div class="v mono small">{{ basename(app(\App\Services\TenantServerService::class)->sitePath($tenant->id)) }}</div>
+                                    </div>
+                                </div>
+                                @if ($tenant->domain_error)
+                                    <div class="col-12">
+                                        <div class="fld note">
+                                            <div class="k"><i class="fa fa-exclamation-triangle"></i>Last error</div>
+                                            <div class="v small" style="white-space: pre-wrap">{{ $tenant->domain_error }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="act">
+                                <h6><i class="fa fa-sitemap me-1 text-primary"></i>DNS</h6>
+                                <p>Create an <b>A record</b> for <span class="mono">{{ $tenant->domain }}</span> pointing to this server's IP address. The server writes the nginx site and requests the certificate within a minute of any change.</p>
+                                <button type="button" class="btn btn-sm btn-primary" wire:click="requestDomainSync" wire:loading.attr="disabled" wire:target="requestDomainSync" @disabled($tenant->deleted_at)>
+                                    <i class="fa fa-refresh me-1"></i>{{ $tenant->domain_status === \App\Models\Tenant::DOMAIN_FAILED ? 'Retry now' : 'Sync again' }}
+                                </button>
+                            </div>
+                            @if ($nginxPreview)
+                                <details class="act">
+                                    <summary class="small fw-medium">nginx configuration (with SSL)</summary>
+                                    <pre class="mono small mb-0 mt-2 p-2 rounded-3 bg-body-tertiary" style="max-height: 320px; overflow: auto">{{ $nginxPreview }}</pre>
+                                </details>
+                            @endif
+                        @endif
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="ph">
+                            <span class="pi"><i class="fa fa-server"></i></span>
+                            <div>
+                                <h6>Shared services</h6>
+                                <div class="hint">One scheduler and one queue serve every tenant</div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <div class="mini">
+                                    <div class="k">Scheduler (cron)</div>
+                                    <div @class(['v', 'text-success-emphasis' => $schedulerOk, 'text-danger-emphasis' => !$schedulerOk])>
+                                        <i class="fa {{ $schedulerOk ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>{{ $schedulerOk ? 'Running' : 'Not running' }}
+                                    </div>
+                                    <div class="small text-body-secondary">{{ $heartbeat ? 'Last run ' . $heartbeat->diffForHumans() : 'No run recorded' }}</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="mini">
+                                    <div class="k">Queue · {{ $serverHealth['queue_driver'] }}</div>
+                                    <div @class(['v', 'text-danger-emphasis' => $queueStalled])>
+                                        {{ $serverHealth['pending_jobs'] ?? '—' }} <small>pending</small> · {{ $serverHealth['failed_jobs'] ?? '—' }} <small>failed</small>
+                                    </div>
+                                    <div class="small text-body-secondary">
+                                        @if ($queueStalled)
+                                            <span class="text-danger-emphasis"><i class="fa fa-exclamation-triangle me-1"></i>Oldest job waiting {{ $oldestJob->diffForHumans(null, true) }}; workers may be down</span>
+                                        @elseif ($serverHealth['queue_driver'] === 'sync')
+                                            Jobs run inline, no worker needed
+                                        @else
+                                            Nothing stuck
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="act" x-data="{ copied: false }">
+                            <h6><i class="fa fa-terminal me-1 text-primary"></i>One-time server setup</h6>
+                            <p>
+                                Run once as root on the server (and again after moving the app). It installs the Supervisor queue workers and a cron file that
+                                runs the scheduler and applies custom domains every minute. Paths come from <span class="mono">config/tenant_server.php</span>.
+                            </p>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control font-monospace" value="{{ $serverSetupCommand }}" readonly x-ref="cmd" onclick="this.select()" aria-label="Setup command">
+                                <button type="button" class="btn btn-outline-primary bg-body" x-on:click="navigator.clipboard.writeText($refs.cmd.value); copied = true; setTimeout(() => copied = false, 2000)">
+                                    <i class="fa" :class="copied ? 'fa-check' : 'fa-files-o'"></i> <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+                                </button>
+                            </div>
+                            <div class="form-text">Preview first with <span class="mono">--dry-run</span>.</div>
+                        </div>
                     </div>
                 </div>
             </div>

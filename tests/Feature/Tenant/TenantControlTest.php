@@ -215,3 +215,27 @@ it('builds the workspace address from the subdomain, never a copied domain', fun
 
     expect($tenant->url('tenants/enter/abc'))->toBe('https://solan.test/tenants/enter/abc');
 });
+
+it('creates and edits tenants from the modal', function (): void {
+    Livewire::actingAs($this->world->user)->test(\App\Livewire\Tenant\Page::class)
+        ->assertSee('New tenant')
+        ->set('tenants.name', 'Nova Mart')
+        ->set('tenants.code', 'NOVA')
+        ->set('tenants.subdomain', 'nova')
+        ->assertSee('nova'.Tenant::subdomainSuffix())
+        ->set('tenants.domain', '')
+        ->set('tenants.is_active', '0')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('success');
+
+    $tenant = Tenant::where('code', 'NOVA')->first();
+    expect($tenant->is_active)->toBeFalse();
+
+    Livewire::actingAs($this->world->user)->test(\App\Livewire\Tenant\Page::class)
+        ->call('edit', $tenant->id)
+        ->assertSee('Edit tenant')
+        ->set('tenants.domain', parse_url(config('app.url'), PHP_URL_HOST))
+        ->call('save')
+        ->assertHasErrors(['tenants.domain' => 'not_in']);
+});

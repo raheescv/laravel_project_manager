@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantAnalyticsService;
+use App\Services\TenantServerService;
 use App\Services\TenantService;
 use App\Services\TenantSwitchService;
 use Livewire\Component;
@@ -57,6 +58,23 @@ class View extends Component
         $this->dispatch('success', ['message' => 'Tenant restored']);
     }
 
+    /**
+     * Queue the custom domain for the next root-run tenant:server-sync.
+     */
+    public function requestDomainSync(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        $tenant = Tenant::findOrFail($this->tenantId);
+        if (! $tenant->hasCustomDomain()) {
+            $this->dispatch('error', ['message' => 'Set a custom domain on this tenant first.']);
+
+            return;
+        }
+        Tenant::whereKey($tenant->id)->update(['domain_status' => Tenant::DOMAIN_PENDING, 'domain_error' => null]);
+        $this->dispatch('success', ['message' => 'Queued — the server applies it within a minute']);
+    }
+
     public function refreshAnalytics(): void
     {
         TenantAnalyticsService::forget($this->tenantId);
@@ -95,7 +113,7 @@ class View extends Component
         $this->dispatch('success', ['message' => $response['message']]);
     }
 
-    public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch)
+    public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch, TenantServerService $server)
     {
         $tenant = Tenant::withTrashed()->findOrFail($this->tenantId);
 
@@ -124,6 +142,9 @@ class View extends Component
             'switchUser' => $switch->targetUserFor($tenant),
             'isCurrentTenant' => $tenant->id === app(TenantService::class)->getCurrentTenantId(),
             'systems' => array_keys(config('modules.systems', [])),
+            'serverHealth' => isset($this->loaded_tabs['server']) ? $server->health() : null,
+            'nginxPreview' => isset($this->loaded_tabs['server']) && $tenant->hasCustomDomain() ? $server->renderSite($tenant, true) : null,
+            'serverSetupCommand' => 'cd '.config('tenant_server.app_path').' && sudo '.config('tenant_server.php_binary').' artisan tenant:server-sync --shared',
         ]);
     }
 }

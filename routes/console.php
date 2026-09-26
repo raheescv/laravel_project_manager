@@ -1,7 +1,14 @@
 <?php
 
+use App\Services\TenantServerService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 use Spatie\Health\Commands\RunHealthChecksCommand;
+
+// Heartbeat for Tenant Control → Server: proves cron is calling schedule:run.
+Schedule::call(fn () => Cache::put(TenantServerService::HEARTBEAT_KEY, now()->toDateTimeString(), now()->addDay()))
+    ->everyMinute()
+    ->name('tenant-server-heartbeat');
 
 Schedule::command('backup:run --only-db')->daily();
 Schedule::command('property:status-check')->daily();

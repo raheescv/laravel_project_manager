@@ -53,7 +53,6 @@ class Page extends Component
                 $name = $faker->company();
                 $code = strtoupper($faker->lexify('???'));
                 $subdomain = $faker->slug();
-                $domain = $faker->domainName();
             }
             $this->tenants = [
                 'name' => $name,
@@ -92,6 +91,9 @@ class Page extends Component
         'tenants.code.unique' => 'The code is already registered',
         'tenants.subdomain.required' => 'The subdomain field is required',
         'tenants.subdomain.unique' => 'The subdomain is already registered',
+        'tenants.domain.regex' => 'Enter a domain like shop.example.com',
+        'tenants.domain.unique' => 'This domain already belongs to another tenant',
+        'tenants.domain.not_in' => 'That is the main app address. Leave the domain empty; the tenant is reached by its subdomain',
     ];
 
     public function save($close = false)
@@ -122,6 +124,10 @@ class Page extends Component
 
     public function render()
     {
-        return view('livewire.tenant.page');
+        return view('livewire.tenant.page', [
+            'scheme' => parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https',
+            'suffix' => Tenant::subdomainSuffix(),
+            'appHost' => parse_url(config('app.url'), PHP_URL_HOST),
+        ]);
     }
 }
