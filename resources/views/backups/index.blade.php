@@ -39,6 +39,7 @@
                                 <tr class="bg-primary">
                                     <th class="text-white">#</th>
                                     <th class="text-white">Date</th>
+                                    <th class="text-white">Age</th>
                                     <th class="text-white">Size</th>
                                     @can('backup.download')
                                         <th class="text-white">Action</th>
@@ -50,6 +51,7 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ date('d-m-Y H:i:s', $file['last_modified']) }}</td>
+                                        <td>{{ $file['age'] }}</td>
                                         <td>{{ $file['size'] }}</td>
                                         @can('backup.download')
                                             <td> <a href="{{ route('backup::download', ['file' => $file['name']]) }}"> <i class="fa fa-2x fa-download"></i> </a> </td>

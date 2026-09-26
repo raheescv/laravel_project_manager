@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +17,8 @@ class BackupController extends Controller
             return [
                 'name' => basename($file),
                 'size' => round(Storage::size($file) / (1024 * 1024), 2).' MB',
-                'last_modified' => Storage::lastModified($file),
+                'last_modified' => $lastModified = Storage::lastModified($file),
+                'age' => Carbon::createFromTimestamp($lastModified)->diffForHumans(),
             ];
         })->sortByDesc('last_modified')->values();
 
