@@ -16,7 +16,7 @@ class Table extends Component
 
     public $search = '';
 
-    /** all | active | inactive | trashed */
+    /** all | active | inactive | renewal_due | trashed */
     public $status = 'all';
 
     /** An active_module value, or '' for every system. */
@@ -74,6 +74,14 @@ class Table extends Component
             case 'date-modified':
                 $this->sortField = 'updated_at';
                 $this->sortDirection = 'asc';
+                break;
+            case 'renewal-date':
+                $this->sortField = 'renews_on';
+                $this->sortDirection = 'asc';
+                break;
+            case 'last-login':
+                $this->sortField = 'users_max_last_login_at';
+                $this->sortDirection = 'desc';
                 break;
             case 'alphabetically':
                 $this->sortField = 'name';
@@ -133,6 +141,7 @@ class Table extends Component
             ->when(! in_array('status', $except, true), fn ($query) => match ($this->status) {
                 'active' => $query->where('is_active', true),
                 'inactive' => $query->where('is_active', false),
+                'renewal_due' => $query->whereDate('renews_on', '<=', today()->addDays(Tenant::RENEWAL_WARNING_DAYS)),
                 'trashed' => $query->onlyTrashed(),
                 default => $query,
             })
@@ -154,6 +163,8 @@ class Table extends Component
         $data = $this->filteredQuery()
             ->withCount(['users' => $unscoped, 'branches' => $unscoped, 'products' => fn ($query) => $query->withoutGlobalScopes()->whereNull('products.deleted_at')])
             ->withMax(['sales' => $unscoped], 'created_at')
+            ->withMax(['users' => $unscoped], 'last_login_at')
+            ->when($this->sortField === 'renews_on', fn ($query) => $query->orderByRaw('renews_on IS NULL'))
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->limit);
 
@@ -162,6 +173,7 @@ class Table extends Component
             ->selectRaw('SUM(deleted_at IS NULL AND is_active = 1) as active_count')
             ->selectRaw('SUM(deleted_at IS NULL AND is_active = 0) as inactive_count')
             ->selectRaw('SUM(deleted_at IS NOT NULL) as trashed_count')
+            ->selectRaw('SUM(deleted_at IS NULL AND renews_on <= ?) as renewal_due_count', [today()->addDays(Tenant::RENEWAL_WARNING_DAYS)->toDateString()])
             ->first();
 
         $systemsByTenant = Configuration::withoutGlobalScopes()->where('key', 'active_module')
@@ -174,6 +186,7 @@ class Table extends Component
                 'active' => (int) $counts->active_count,
                 'inactive' => (int) $counts->inactive_count,
                 'trashed' => (int) $counts->trashed_count,
+                'renewal_due' => (int) $counts->renewal_due_count,
             ],
             'systemsByTenant' => $systemsByTenant,
             'systems' => array_keys(config('modules.systems', [])),

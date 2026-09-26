@@ -57,7 +57,7 @@
                 .tmx .tm-in:focus-within { border-color: var(--acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 18%, transparent); }
                 .tmx .tm-in.is-invalid { border-color: var(--bs-danger); }
                 .tmx .tm-in > i { width: 38px; text-align: center; color: var(--mut); flex: none; }
-                .tmx .tm-in input, .tmx .tm-in textarea { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 12px 10px 0; font-size: 14px; color: var(--ink); }
+                .tmx .tm-in input, .tmx .tm-in textarea, .tmx .tm-in select { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 12px 10px 0; font-size: 14px; color: var(--ink); }
                 .tmx .tm-in textarea { padding-inline-start: 12px; resize: vertical; min-height: 70px; }
                 .tmx .tm-in .affix { padding: 0 12px; align-self: stretch; display: flex; align-items: center; font-family: var(--mono); font-size: 12.5px;
                     color: var(--mut); background: var(--soft); white-space: nowrap; }
@@ -94,7 +94,8 @@
                 .tmx .tm-lab { font-size: 10px; margin-bottom: 4px; }
                 .tmx .tm-in { border-radius: 10px; }
                 .tmx .tm-in > i { width: 32px; font-size: 13px; }
-                .tmx .tm-in input { padding: 7px 10px 7px 0; font-size: 13px; }
+                .tmx .tm-in input, .tmx .tm-in select { padding: 7px 10px 7px 0; font-size: 13px; }
+                .tmx .tm-in input.ps-2 { padding-inline-start: 10px; }
                 .tmx .tm-in input.mono { font-size: 12.5px; padding-inline-start: 10px; }
                 .tmx .tm-in textarea { min-height: 0; padding: 7px 10px; font-size: 13px; }
                 .tmx .tm-in .affix { padding: 0 9px; font-size: 11.5px; }
@@ -191,6 +192,44 @@
                             Client's own domain · DNS A record to this server, SSL is automatic
                         </div>
                     @enderror
+                </div>
+            </div>
+
+            <div class="row g-2 mb-2">
+                <div class="col-6 col-md-3">
+                    <label class="tm-lab" for="tm_started_on">Start date</label>
+                    <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.started_on')])>
+                        <input id="tm_started_on" type="date" class="ps-2" wire:model="tenants.started_on">
+                    </div>
+                    @error('tenants.started_on') <div class="tm-err">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="tm-lab" for="tm_renews_on">Renewal date</label>
+                    <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.renews_on')])>
+                        <input id="tm_renews_on" type="date" class="ps-2" wire:model="tenants.renews_on">
+                    </div>
+                    @error('tenants.renews_on') <div class="tm-err">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="tm-lab" for="tm_amc_amount">AMC amount</label>
+                    <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.amc_amount')])>
+                        <i class="fa fa-money"></i>
+                        <input id="tm_amc_amount" type="number" step="0.01" min="0" wire:model="tenants.amc_amount" placeholder="0.00">
+                    </div>
+                    @error('tenants.amc_amount') <div class="tm-err">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="tm-lab" for="tm_amc_cycle">AMC cycle</label>
+                    <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.amc_cycle')])>
+                        <i class="fa fa-refresh"></i>
+                        <select id="tm_amc_cycle" wire:model="tenants.amc_cycle">
+                            <option value="">No AMC</option>
+                            @foreach ($amcCycles as $value => [$label])
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @error('tenants.amc_cycle') <div class="tm-err">{{ $message }}</div> @enderror
                 </div>
             </div>
 

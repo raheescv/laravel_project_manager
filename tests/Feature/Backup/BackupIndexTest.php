@@ -13,7 +13,7 @@ it('shows how long ago each backup was taken', function (): void {
     session(['branch_id' => $world->branch->id]);
 
     Storage::fake();
-    $path = config('app.name').'/backup.zip';
+    $path = config('backup.backup.name').'/backup.zip';
     Storage::put($path, 'dump');
     touch(Storage::path($path), now()->subHours(3)->timestamp);
 

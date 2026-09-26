@@ -61,6 +61,10 @@ class Page extends Component
                 'domain' => $domain,
                 'is_active' => true,
                 'description' => '',
+                'started_on' => today()->toDateString(),
+                'renews_on' => today()->addYear()->toDateString(),
+                'amc_amount' => '',
+                'amc_cycle' => 'yearly',
             ];
         } else {
             $tenant = Tenant::withoutGlobalScopes()->find($this->table_id);
@@ -70,6 +74,8 @@ class Page extends Component
                 return;
             }
             $this->tenants = $tenant->toArray();
+            $this->tenants['started_on'] = $tenant->started_on?->toDateString();
+            $this->tenants['renews_on'] = $tenant->renews_on?->toDateString();
         }
     }
 
@@ -81,6 +87,9 @@ class Page extends Component
             $rules["tenants.{$key}"] = $rule;
         }
         $rules['tenants.description'] = ['nullable', 'string'];
+        if (filled($this->tenants['started_on'] ?? null)) {
+            $rules['tenants.renews_on'][] = 'after_or_equal:tenants.started_on';
+        }
 
         return $rules;
     }
@@ -94,11 +103,19 @@ class Page extends Component
         'tenants.domain.regex' => 'Enter a domain like shop.example.com',
         'tenants.domain.unique' => 'This domain already belongs to another tenant',
         'tenants.domain.not_in' => 'That is the main app address. Leave the domain empty; the tenant is reached by its subdomain',
+        'tenants.renews_on.after_or_equal' => 'The renewal date cannot be before the start date',
+        'tenants.amc_amount.numeric' => 'Enter the AMC amount as a number',
+        'tenants.amc_amount.min' => 'The AMC amount cannot be negative',
     ];
 
     public function save($close = false)
     {
         abort_unless(auth()->user()?->is_super_admin, 403);
+        foreach (['started_on', 'renews_on', 'amc_amount', 'amc_cycle'] as $key) {
+            if (($this->tenants[$key] ?? null) === '') {
+                $this->tenants[$key] = null;
+            }
+        }
         $this->validate();
         try {
             if (! $this->table_id) {
@@ -128,6 +145,7 @@ class Page extends Component
             'scheme' => parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https',
             'suffix' => Tenant::subdomainSuffix(),
             'appHost' => parse_url(config('app.url'), PHP_URL_HOST),
+            'amcCycles' => Tenant::AMC_CYCLES,
         ]);
     }
 }

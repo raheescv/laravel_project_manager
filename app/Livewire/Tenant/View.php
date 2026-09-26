@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Tenant;
 
+use App\Actions\Tenant\Payment\CreateAction as CreatePaymentAction;
+use App\Actions\Tenant\Payment\DeleteAction as DeletePaymentAction;
 use App\Actions\Tenant\ProvisionAction;
 use App\Livewire\Tenant\Concerns\ControlsTenants;
 use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Tenant;
+use App\Models\TenantPayment;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantAnalyticsService;
@@ -14,6 +17,7 @@ use App\Services\TenantServerService;
 use App\Services\TenantService;
 use App\Services\TenantSwitchService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -37,7 +41,14 @@ class View extends Component
 
     /** The Users-tab row whose roles are open for editing. */
     public ?int $accessUserId = null;
+
     public string $customDomain = '';
+
+    /** @var array{paid_on: string, type: string, amount: string, method: string, reference: string, note: string} */
+    public array $payment = [];
+
+    /** AMC payments move the renewal date one cycle forward unless unticked. */
+    public bool $extendRenewal = true;
 
     protected $listeners = [
         'Tenant-Refresh-Component' => '$refresh',
@@ -48,6 +59,7 @@ class View extends Component
         abort_unless(Auth::user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can access this page.');
 
         $this->tenantId = $tenantId;
+        $this->resetPaymentForm();
         $this->provision['system'] = (string) Configuration::withTenant($tenantId)->where('key', 'active_module')->value('value');
     }
 
@@ -121,6 +133,75 @@ class View extends Component
 
         Tenant::findOrFail($this->tenantId)->update(['domain' => null]);
         $this->dispatch('success', ['message' => 'Domain removed — its nginx site is taken down within a minute']);
+    }
+
+    public function resetPaymentForm(): void
+    {
+        $amcAmount = Tenant::withTrashed()->whereKey($this->tenantId)->value('amc_amount');
+        $this->payment = [
+            'paid_on' => today()->toDateString(),
+            'type' => 'amc',
+            'amount' => $amcAmount ? (string) $amcAmount : '',
+            'method' => 'Cash',
+            'reference' => '',
+            'note' => '',
+        ];
+        $this->extendRenewal = true;
+        $this->resetValidation();
+    }
+
+    public function savePayment(): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $this->validate([
+            'payment.paid_on' => ['required', 'date'],
+            'payment.type' => ['required', 'in:'.implode(',', array_keys(TenantPayment::TYPES))],
+            'payment.amount' => ['required', 'numeric', 'gt:0'],
+            'payment.method' => ['nullable', 'string', 'max:30'],
+            'payment.reference' => ['nullable', 'string', 'max:255'],
+            'payment.note' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'payment.paid_on.required' => 'Enter the date the payment was received',
+            'payment.amount.required' => 'Enter the amount received',
+            'payment.amount.gt' => 'The amount must be more than zero',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $response = (new CreatePaymentAction())->execute(
+                ['tenant_id' => $this->tenantId, ...array_map(fn ($value) => $value === '' ? null : $value, $this->payment)],
+                $this->extendRenewal,
+            );
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            DB::commit();
+            $this->resetPaymentForm();
+            $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('RefreshTenantTable');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
+    }
+
+    public function deletePayment(int $paymentId): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        try {
+            DB::beginTransaction();
+            $response = (new DeletePaymentAction())->execute($paymentId, $this->tenantId);
+            if (! $response['success']) {
+                throw new \Exception($response['message'], 1);
+            }
+            DB::commit();
+            $this->dispatch('success', ['message' => $response['message']]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            $this->dispatch('error', ['message' => $th->getMessage()]);
+        }
     }
 
     public function refreshAnalytics(): void
@@ -221,7 +302,15 @@ class View extends Component
             $branches->each(fn (Branch $branch) => $branch->setAttribute('users_count', (int) ($userCounts[$branch->id] ?? 0)));
         }
 
+        $payments = isset($this->loaded_tabs['billing'])
+            ? TenantPayment::where('tenant_id', $tenant->id)->with('createdBy:id,name')->latest('paid_on')->latest('id')->get()
+            : collect();
+
         return view('livewire.tenant.view', [
+            'payments' => $payments,
+            'paymentTotal' => (float) TenantPayment::where('tenant_id', $tenant->id)->sum('amount'),
+            'lastPayment' => TenantPayment::where('tenant_id', $tenant->id)->latest('paid_on')->latest('id')->first(),
+            'lastLoginAt' => User::withoutGlobalScopes()->where('tenant_id', $tenant->id)->max('last_login_at'),
             'tenant' => $tenant,
             'settings' => $settings,
             'summary' => $analytics->summary($tenant),

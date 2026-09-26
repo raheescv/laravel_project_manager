@@ -18,10 +18,18 @@
         !$switchUser => 'No active user to sign in as. Create an admin from the Seeding tab.',
         default => null,
     };
+    $renewal = $tenant->renewalState();
+    $renewalText = $tenant->renews_on
+        ? match ($renewal) {
+            'overdue' => 'Overdue since ' . $tenant->renews_on->format('d M Y'),
+            default => 'Renews ' . $tenant->renews_on->format('d M Y'),
+        }
+        : null;
     $tabs = [
         'overview' => ['fa-info-circle', 'Overview', null],
         'users' => ['fa-users', 'Users', $summary['users']['total']],
         'branches' => ['fa-sitemap', 'Branches', $summary['branches']],
+        'billing' => ['fa-money', 'Billing', null],
         'analytics' => ['fa-bar-chart', 'Analytics', null],
         'seeding' => ['fa-magic', 'Seeding', null],
         'server' => ['fa-server', 'Server', null],
@@ -80,7 +88,10 @@
                         <i class="fa fa-circle"></i>{{ $tenant->deleted_at ? 'Deleted' : ($tenant->is_active ? 'Active' : 'Inactive') }}
                     </span>
                     <span class="chip"><i class="fa fa-cubes"></i>{{ $system ?: 'No system chosen' }}</span>
-                    <span class="chip"><i class="fa fa-calendar-o"></i>Since {{ $tenant->created_at?->format('M Y') }}</span>
+                    <span class="chip"><i class="fa fa-calendar-o"></i>Since {{ ($tenant->started_on ?? $tenant->created_at)?->format('M Y') }}</span>
+                    @if ($renewalText)
+                        <span @class(['chip', 'off' => $renewal === 'overdue'])><i class="fa {{ $renewal === 'ok' ? 'fa-refresh' : 'fa-exclamation-triangle' }}"></i>{{ $renewalText }}</span>
+                    @endif
                     @if ($isCurrentTenant)
                         <span class="chip"><i class="fa fa-map-marker"></i>You are here</span>
                     @endif
@@ -181,6 +192,10 @@
                                 ['fa-hashtag', 'Code', $tenant->code],
                                 ['fa-sitemap', 'Subdomain', $tenant->subdomain],
                                 ['fa-link', 'Domain', $tenant->domain],
+                                ['fa-play-circle', 'Start date', $tenant->started_on?->format('d M Y')],
+                                ['fa-refresh', 'Renewal date', $tenant->renews_on ? $tenant->renews_on->format('d M Y') . ' · ' . $tenant->renewalCountdown() : null],
+                                ['fa-money', 'AMC', $tenant->amc_amount !== null ? number_format((float) $tenant->amc_amount, 2) . ($tenant->amcCycleLabel() ? ' · ' . $tenant->amcCycleLabel() : '') : null],
+                                ['fa-sign-in', 'Last login', $lastLoginAt ? \Illuminate\Support\Carbon::parse($lastLoginAt)->format('d M Y, h:i A') . ' · ' . \Illuminate\Support\Carbon::parse($lastLoginAt)->diffForHumans() : null],
                                 ['fa-calendar-o', 'Created', $tenant->created_at?->format('d M Y, h:i A')],
                                 ['fa-clock-o', 'Updated', $tenant->updated_at?->format('d M Y, h:i A')],
                             ] as [$icon, $label, $value])
@@ -252,6 +267,7 @@
                                     <th>Type</th>
                                     <th>Access</th>
                                     <th>Status</th>
+                                    <th class="text-end">Last login</th>
                                     <th class="text-end">Joined</th>
                                     <th></th>
                                 </tr>
@@ -281,6 +297,7 @@
                                             </div>
                                         </td>
                                         <td><span @class(['chip', 'ok' => $user->is_active, 'off' => !$user->is_active])><i class="fa fa-circle"></i>{{ $user->is_active ? 'Active' : 'Inactive' }}</span></td>
+                                        <td class="text-end text-body-secondary text-nowrap" title="{{ $user->last_login_at?->format('d M Y, h:i A') }}">{{ $user->last_login_at?->diffForHumans() ?? 'Never' }}</td>
                                         <td class="text-end text-body-secondary text-nowrap">{{ $user->created_at?->format('d M Y') }}</td>
                                         <td class="text-end">
                                             <button type="button" @class(['btn btn-sm', 'btn-primary' => $accessUserId === $user->id, 'btn-light' => $accessUserId !== $user->id]) wire:click="editAccess({{ $user->id }})" title="Roles & permissions">
@@ -293,7 +310,7 @@
                                             $userRoleIds = $user->roles->pluck('id')->all();
                                         @endphp
                                         <tr wire:key="tenant-user-access-{{ $user->id }}">
-                                            <td colspan="7" class="bg-body-tertiary">
+                                            <td colspan="8" class="bg-body-tertiary">
                                                 <div class="small text-body-secondary mb-2"><i class="fa fa-key me-1"></i>Tap to grant or remove — applies straight away.</div>
                                                 <div class="d-flex flex-wrap gap-2">
                                                     <button type="button" @class(['chip', 'ok' => $user->is_admin]) wire:click="toggleAdmin({{ $user->id }})" wire:loading.attr="disabled">
@@ -316,7 +333,7 @@
                                     @endif
                                 @empty
                                     <tr class="none">
-                                        <td colspan="7">No users yet. Create an admin from the Seeding tab.</td>
+                                        <td colspan="8">No users yet. Create an admin from the Seeding tab.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -356,6 +373,151 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($selected_tab === 'billing')
+            <div class="pane">
+                <div class="row g-2 mb-4">
+                    @foreach ([
+                        ['Renewal date', $tenant->renews_on?->format('d M Y') ?? 'Not set', $tenant->renewalCountdown() ?? 'Set it with Edit'],
+                        ['AMC', $tenant->amc_amount !== null ? number_format((float) $tenant->amc_amount, 2) : 'Not set', $tenant->amcCycleLabel() ?? 'No cycle'],
+                        ['Total received', number_format($paymentTotal, 2), $tenant->started_on ? 'Since ' . $tenant->started_on->format('d M Y') : 'All time'],
+                        ['Last payment', $lastPayment ? number_format((float) $lastPayment->amount, 2) : 'None', $lastPayment ? $lastPayment->paid_on->format('d M Y') : 'Nothing recorded yet'],
+                    ] as $index => [$label, $value, $hint])
+                        <div class="col-6 col-md-3">
+                            <div @class(['mini', 'border-danger-subtle bg-danger-subtle' => $index === 0 && $renewal === 'overdue', 'border-warning-subtle bg-warning-subtle' => $index === 0 && $renewal === 'due'])>
+                                <div class="k">{{ $label }}</div>
+                                <div class="v">{{ $value }} <small>· {{ $hint }}</small></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <form wire:submit="savePayment" class="act">
+                            <h6><i class="fa fa-plus-circle me-1 text-primary"></i>Record a payment</h6>
+                            <p>Money received from this tenant.</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small fw-medium mb-1" for="payPaidOn">Date</label>
+                                    <input id="payPaidOn" type="date" class="form-control form-control-sm" wire:model="payment.paid_on">
+                                    @error('payment.paid_on') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-medium mb-1" for="payAmount">Amount</label>
+                                    <input id="payAmount" type="number" step="0.01" min="0" class="form-control form-control-sm" wire:model="payment.amount" placeholder="0.00">
+                                    @error('payment.amount') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-12">
+                                    <span class="form-label small fw-medium mb-1 d-block">For</span>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (\App\Models\TenantPayment::TYPES as $value => $label)
+                                            <button type="button" wire:key="pay-type-{{ $value }}" @class(['chip', 'ok' => $payment['type'] === $value]) wire:click="$set('payment.type', '{{ $value }}')">
+                                                <i @class(['fa', 'fa-dot-circle-o' => $payment['type'] === $value, 'fa-circle-o' => $payment['type'] !== $value])></i>{{ $label }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-medium mb-1" for="payMethod">Method</label>
+                                    <select id="payMethod" class="form-select form-select-sm" wire:model="payment.method">
+                                        @foreach (\App\Models\TenantPayment::METHODS as $method)
+                                            <option value="{{ $method }}">{{ $method }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-medium mb-1" for="payReference">Reference</label>
+                                    <input id="payReference" type="text" class="form-control form-control-sm" wire:model="payment.reference" placeholder="Receipt / cheque no.">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-medium mb-1" for="payNote">Note</label>
+                                    <input id="payNote" type="text" class="form-control form-control-sm" wire:model="payment.note" placeholder="Optional">
+                                </div>
+                                @if ($payment['type'] === 'amc')
+                                    <div class="col-12">
+                                        <div class="form-check small">
+                                            <input id="payExtend" type="checkbox" class="form-check-input" wire:model.live="extendRenewal">
+                                            <label class="form-check-label" for="payExtend">
+                                                Move renewal to <b>{{ $tenant->nextRenewalFrom($tenant->renews_on ?? today())->format('d M Y') }}</b>
+                                                <span class="text-body-secondary">({{ $tenant->amcCycleLabel() ?? 'Yearly' }})</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100" wire:loading.attr="disabled" wire:target="savePayment">
+                                        <i class="fa fa-check me-1" wire:loading.remove wire:target="savePayment"></i>
+                                        <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="savePayment"></i>Save payment
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="tblw">
+                            <div class="table-responsive">
+                                <table class="table tbl">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>For</th>
+                                            <th>Method</th>
+                                            <th>Reference</th>
+                                            <th class="text-end">Amount</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($payments as $row)
+                                            <tr wire:key="tenant-payment-{{ $row->id }}">
+                                                <td class="text-nowrap">{{ $row->paid_on->format('d M Y') }}</td>
+                                                <td>
+                                                    <span class="tc plain">{{ \App\Models\TenantPayment::TYPES[$row->type] ?? $row->type }}</span>
+                                                    @if ($row->renewed_to)
+                                                        <div class="small text-body-secondary mt-1"><i class="fa fa-refresh me-1"></i>Renewed to {{ $row->renewed_to->format('d M Y') }}</div>
+                                                    @endif
+                                                    @if ($row->note)
+                                                        <div class="small text-body-secondary mt-1">{{ $row->note }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="text-body-secondary">{{ $row->method ?: '-' }}</td>
+                                                <td class="text-body-secondary">
+                                                    {{ $row->reference ?: '-' }}
+                                                    @if ($row->createdBy)
+                                                        <div class="small">by {{ $row->createdBy->name }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="text-end fw-medium text-nowrap">{{ number_format((float) $row->amount, 2) }}</td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-light text-danger" title="Delete payment" wire:click="deletePayment({{ $row->id }})"
+                                                        wire:confirm="Delete this payment of {{ number_format((float) $row->amount, 2) }}?{{ $row->renewed_to ? ' The renewal date goes back to ' . ($row->renewed_from?->format('d M Y') ?? 'not set') . '.' : '' }}">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr class="none">
+                                                <td colspan="6">No payments recorded yet.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                    @if ($payments->isNotEmpty())
+                                        <tfoot>
+                                            <tr>
+                                                <th colspan="4" class="text-end">Total</th>
+                                                <th class="text-end text-nowrap">{{ number_format($paymentTotal, 2) }}</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    @endif
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

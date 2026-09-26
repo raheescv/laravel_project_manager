@@ -11,7 +11,7 @@ class BackupController extends Controller
 {
     public function index()
     {
-        $files = Storage::allFiles(config('app.name'));
+        $files = Storage::allFiles(config('backup.backup.name'));
 
         $files = collect($files)->map(function ($file) {
             return [
@@ -41,6 +41,6 @@ class BackupController extends Controller
     {
         $filePath = "app/private/{$file}";
 
-        return response()->download(storage_path('app/private/'.config('app.name').'/'.$file));
+        return response()->download(storage_path('app/private/'.config('backup.backup.name').'/'.$file));
     }
 }

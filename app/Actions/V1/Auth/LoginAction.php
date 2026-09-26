@@ -29,6 +29,7 @@ class LoginAction
 
         $guard = $user->is_admin ? 'admin' : 'mobile';
         $token = $user->createToken($guard, [$guard])->plainTextToken;
+        User::stampLogin($user->id);
 
         // Eager-load everything AuthUserResource reads so serialization doesn't
         // fire lazy queries per field (permissions/roles/designation).

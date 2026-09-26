@@ -34,6 +34,7 @@
                     <option value="all">All tenants ({{ $counts['all'] }})</option>
                     <option value="active">Active ({{ $counts['active'] }})</option>
                     <option value="inactive">Inactive ({{ $counts['inactive'] }})</option>
+                    <option value="renewal_due">Renewal due / overdue ({{ $counts['renewal_due'] }})</option>
                     <option value="trashed">Deleted ({{ $counts['trashed'] }})</option>
                 </select>
             </div>
@@ -51,6 +52,8 @@
                 <select id="tn_sort" class="form-select form-select-sm" wire:model.live="filter">
                     <option value="date-created">Date created</option>
                     <option value="date-modified">Date modified</option>
+                    <option value="renewal-date">Renewal date (soonest)</option>
+                    <option value="last-login">Last login</option>
                     <option value="alphabetically">Name A → Z</option>
                     <option value="alphabetically-reversed">Name Z → A</option>
                 </select>
@@ -72,7 +75,10 @@
                         <th class="fw-semibold text-end">Users</th>
                         <th class="fw-semibold text-end">Branches</th>
                         <th class="fw-semibold text-end">Products</th>
+                        <th class="fw-semibold">Started</th>
+                        <th class="fw-semibold">Renewal</th>
                         <th class="fw-semibold">Last sale</th>
+                        <th class="fw-semibold">Last login</th>
                         <th class="fw-semibold">Status</th>
                     </tr>
                 </thead>
@@ -111,8 +117,24 @@
                             <td class="text-end">{{ number_format($tenant->users_count) }}</td>
                             <td class="text-end">{{ number_format($tenant->branches_count) }}</td>
                             <td class="text-end">{{ number_format($tenant->products_count) }}</td>
+                            <td class="text-nowrap small">{{ $tenant->started_on?->format('d M Y') ?? '-' }}</td>
+                            <td class="text-nowrap small">
+                                @if ($tenant->renews_on)
+                                    @php($renewal = $tenant->renewalState())
+                                    <div>{{ $tenant->renews_on->format('d M Y') }}</div>
+                                    <span @class(['badge', 'bg-danger' => $renewal === 'overdue', 'bg-warning text-dark' => $renewal === 'due', 'bg-light text-body-secondary border' => $renewal === 'ok'])>{{ $tenant->renewalCountdown() }}</span>
+                                @else
+                                    <span class="text-body-secondary">-</span>
+                                @endif
+                                @if ($tenant->amc_amount !== null)
+                                    <div class="text-body-secondary mt-1">AMC {{ number_format((float) $tenant->amc_amount, 2) }}{{ $tenant->amcCycleLabel() ? ' / ' . strtolower($tenant->amcCycleLabel()) : '' }}</div>
+                                @endif
+                            </td>
                             <td class="text-nowrap text-body-secondary small">
                                 {{ $tenant->sales_max_created_at ? \Illuminate\Support\Carbon::parse($tenant->sales_max_created_at)->diffForHumans() : 'Never' }}
+                            </td>
+                            <td class="text-nowrap text-body-secondary small" title="{{ $tenant->users_max_last_login_at }}">
+                                {{ $tenant->users_max_last_login_at ? \Illuminate\Support\Carbon::parse($tenant->users_max_last_login_at)->diffForHumans() : 'Never' }}
                             </td>
                             <td>
                                 @if ($tenant->deleted_at)
@@ -126,7 +148,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-body-secondary py-4">
+                            <td colspan="13" class="text-center text-body-secondary py-4">
                                 @if ($counts['all'] + $counts['trashed'])
                                     <div class="mb-2">No tenants match these filters.</div>
                                     <button type="button" class="btn btn-light btn-sm" wire:click="clearFilters"><i class="fa fa-filter me-1"></i>Show all tenants</button>

@@ -54,6 +54,10 @@ class IdentifyTenant
     {
         $this->tenantService->setCurrentTenant($tenant);
 
+        // Tenants share one .env, so APP_NAME would brand every tenant alike —
+        // the tab title, sidebar, footer and print fallbacks follow the tenant.
+        config(['app.name' => $tenant->name]);
+
         // Add tenant to request for easy access
         $request->merge(['tenant' => $tenant]);
         $request->attributes->set('tenant', $tenant);

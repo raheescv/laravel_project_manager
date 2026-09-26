@@ -149,6 +149,8 @@ it('grants and removes a tenant user\'s roles from the Users tab', function (): 
 
     expect(fn () => $component->call('toggleRole', $employee->id, $foreignRole->id))->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
     expect($employee->fresh()->roles->pluck('id')->all())->toBe([$role->id]);
+});
+
 it('gives a provisioned admin every permission even though the names repeat across tenants', function (): void {
     Permission::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'sale.view', 'guard_name' => 'web']);
     Spatie\Permission\Models\Role::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'Admin', 'guard_name' => 'web']);

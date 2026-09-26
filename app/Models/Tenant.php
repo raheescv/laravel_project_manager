@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
@@ -20,12 +22,34 @@ class Tenant extends Model
         'domain',
         'is_active',
         'description',
+        'started_on',
+        'renews_on',
+        'amc_amount',
+        'amc_cycle',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'domain_synced_at' => 'datetime',
+        'started_on' => 'date',
+        'renews_on' => 'date',
+        'amc_amount' => 'decimal:2',
     ];
+
+    /**
+     * AMC billing cycles: label and length in months.
+     *
+     * @var array<string, array{0: string, 1: int}>
+     */
+    public const AMC_CYCLES = [
+        'monthly' => ['Monthly', 1],
+        'quarterly' => ['Quarterly', 3],
+        'half_yearly' => ['Half-yearly', 6],
+        'yearly' => ['Yearly', 12],
+    ];
+
+    /** Renewals this close (in days) are flagged as due soon. */
+    public const RENEWAL_WARNING_DAYS = 30;
 
     public const DOMAIN_PENDING = 'pending';
 
@@ -116,6 +140,10 @@ class Tenant extends Model
                 Rule::unique(self::class, 'domain')->ignore($id),
             ],
             'is_active' => ['boolean'],
+            'started_on' => ['nullable', 'date'],
+            'renews_on' => ['nullable', 'date'],
+            'amc_amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'amc_cycle' => ['nullable', Rule::in(array_keys(self::AMC_CYCLES))],
         ], $merge);
     }
 
@@ -149,6 +177,61 @@ class Tenant extends Model
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class, 'tenant_id');
+    }
+
+    /**
+     * Payments this tenant made to the installation owner.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(TenantPayment::class, 'tenant_id');
+    }
+
+    public function amcCycleLabel(): ?string
+    {
+        return self::AMC_CYCLES[$this->amc_cycle][0] ?? null;
+    }
+
+    /**
+     * The renewal date one AMC cycle after $from (yearly when no cycle is set).
+     */
+    public function nextRenewalFrom(CarbonInterface $from): Carbon
+    {
+        $months = self::AMC_CYCLES[$this->amc_cycle][1] ?? 12;
+
+        return Carbon::parse($from)->addMonthsNoOverflow($months);
+    }
+
+    /**
+     * overdue | due (within RENEWAL_WARNING_DAYS) | ok, or null with no renewal date.
+     */
+    public function renewalState(): ?string
+    {
+        if (! $this->renews_on) {
+            return null;
+        }
+        if ($this->renews_on->lt(today())) {
+            return 'overdue';
+        }
+
+        return today()->diffInDays($this->renews_on) <= self::RENEWAL_WARNING_DAYS ? 'due' : 'ok';
+    }
+
+    /**
+     * "Today", "in 12 days", "3 days overdue" — counted in whole days.
+     */
+    public function renewalCountdown(): ?string
+    {
+        if (! $this->renews_on) {
+            return null;
+        }
+        $days = (int) today()->diffInDays($this->renews_on, false);
+
+        return match (true) {
+            $days === 0 => 'Today',
+            $days > 0 => 'in '.$days.' '.str('day')->plural($days),
+            default => abs($days).' '.str('day')->plural(abs($days)).' overdue',
+        };
     }
 
     /**

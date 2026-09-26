@@ -181,8 +181,18 @@ class User extends Authenticatable implements AuditableContracts
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Written on the base query so a sign-in neither bumps updated_at nor
+     * lands in the audit log.
+     */
+    public static function stampLogin(int $userId): void
+    {
+        static::withoutGlobalScopes()->whereKey($userId)->toBase()->update(['last_login_at' => now()]);
     }
 
     /**
