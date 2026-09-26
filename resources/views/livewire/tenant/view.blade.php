@@ -253,6 +253,7 @@
                                     <th>Access</th>
                                     <th>Status</th>
                                     <th class="text-end">Joined</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -281,10 +282,41 @@
                                         </td>
                                         <td><span @class(['chip', 'ok' => $user->is_active, 'off' => !$user->is_active])><i class="fa fa-circle"></i>{{ $user->is_active ? 'Active' : 'Inactive' }}</span></td>
                                         <td class="text-end text-body-secondary text-nowrap">{{ $user->created_at?->format('d M Y') }}</td>
+                                        <td class="text-end">
+                                            <button type="button" @class(['btn btn-sm', 'btn-primary' => $accessUserId === $user->id, 'btn-light' => $accessUserId !== $user->id]) wire:click="editAccess({{ $user->id }})" title="Roles & permissions">
+                                                <i class="fa fa-key"></i>
+                                            </button>
+                                        </td>
                                     </tr>
+                                    @if ($accessUserId === $user->id)
+                                        @php
+                                            $userRoleIds = $user->roles->pluck('id')->all();
+                                        @endphp
+                                        <tr wire:key="tenant-user-access-{{ $user->id }}">
+                                            <td colspan="7" class="bg-body-tertiary">
+                                                <div class="small text-body-secondary mb-2"><i class="fa fa-key me-1"></i>Tap to grant or remove — applies straight away.</div>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <button type="button" @class(['chip', 'ok' => $user->is_admin]) wire:click="toggleAdmin({{ $user->id }})" wire:loading.attr="disabled">
+                                                        <i @class(['fa', 'fa-check-square-o' => $user->is_admin, 'fa-square-o' => !$user->is_admin])></i>Administrator
+                                                    </button>
+                                                    @forelse ($roles as $role)
+                                                        @php
+                                                            $hasRole = in_array($role->id, $userRoleIds, true);
+                                                        @endphp
+                                                        <button type="button" wire:key="tenant-user-{{ $user->id }}-role-{{ $role->id }}" @class(['chip', 'ok' => $hasRole]) wire:click="toggleRole({{ $user->id }}, {{ $role->id }})" wire:loading.attr="disabled">
+                                                            <i @class(['fa', 'fa-check-square-o' => $hasRole, 'fa-square-o' => !$hasRole])></i>{{ $role->name }}
+                                                            <span class="opacity-75">· {{ $role->permissions_count }} {{ Str::plural('permission', $role->permissions_count) }}</span>
+                                                        </button>
+                                                    @empty
+                                                        <span class="small text-body-secondary">This tenant has no roles yet. Run provisioning from the Seeding tab to add the Admin role.</span>
+                                                    @endforelse
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @empty
                                     <tr class="none">
-                                        <td colspan="6">No users yet. Create an admin from the Seeding tab.</td>
+                                        <td colspan="7">No users yet. Create an admin from the Seeding tab.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -410,7 +442,7 @@
                             <h6><i class="fa fa-magic me-1 text-primary"></i>Provision defaults</h6>
                             <p>
                                 Adds whatever this tenant is missing: permissions, the Admin role, a Main branch, the chart of accounts,
-                                units, working days and basic settings. Nothing existing is changed, so it is safe to run again.
+                                units, working days, basic settings and the default users (System, Admin, Rahees, Employee — all on the Admin role). Nothing existing is changed, so it is safe to run again.
                                 Company details and receipt wording are left for the tenant to fill in.
                             </p>
                             <div class="row g-2">

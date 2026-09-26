@@ -14,6 +14,8 @@ use App\Services\TenantServerService;
 use App\Services\TenantService;
 use App\Services\TenantSwitchService;
 use Livewire\Component;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class View extends Component
 {
@@ -31,6 +33,9 @@ class View extends Component
 
     /** @var list<array{key: string, label: string, created: int, status: string}> */
     public array $provisionSteps = [];
+
+    /** The Users-tab row whose roles are open for editing. */
+    public ?int $accessUserId = null;
 
     protected $listeners = [
         'Tenant-Refresh-Component' => '$refresh',
@@ -113,6 +118,42 @@ class View extends Component
         $this->dispatch('success', ['message' => $response['message']]);
     }
 
+    public function editAccess(?int $userId): void
+    {
+        $this->accessUserId = $this->accessUserId === $userId ? null : $userId;
+    }
+
+    /**
+     * Applied on tap: the role is this tenant's own (roles are per tenant), so
+     * a role id from another tenant can never be attached here.
+     */
+    public function toggleRole(int $userId, int $roleId): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        $user = $this->tenantUser($userId);
+        $role = Role::where('tenant_id', $this->tenantId)->findOrFail($roleId);
+
+        $user->hasRole($role) ? $user->removeRole($role) : $user->assignRole($role);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->dispatch('success', ['message' => ($user->hasRole($role) ? 'Granted ' : 'Removed ').$role->name.' for '.$user->name]);
+    }
+
+    /** `is_admin` is stripped from mass assignment by the user actions, so it is set explicitly. */
+    public function toggleAdmin(int $userId): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        $user = $this->tenantUser($userId);
+        $user->forceFill(['is_admin' => ! $user->is_admin])->save();
+        $this->dispatch('success', ['message' => $user->name.($user->is_admin ? ' is now an administrator' : ' is no longer an administrator')]);
+    }
+
+    private function tenantUser(int $userId): User
+    {
+        return User::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->findOrFail($userId);
+    }
+
     public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch, TenantServerService $server)
     {
         $tenant = Tenant::withTrashed()->findOrFail($this->tenantId);
@@ -123,6 +164,10 @@ class View extends Component
 
         $users = isset($this->loaded_tabs['users'])
             ? User::withoutGlobalScopes()->where('tenant_id', $tenant->id)->with('roles:id,name')->orderByDesc('is_admin')->orderBy('name')->limit(200)->get()
+            : collect();
+
+        $roles = isset($this->loaded_tabs['users'])
+            ? Role::where('tenant_id', $tenant->id)->withCount('permissions')->orderBy('name')->get()
             : collect();
 
         $branches = collect();
@@ -138,6 +183,7 @@ class View extends Component
             'settings' => $settings,
             'summary' => $analytics->summary($tenant),
             'users' => $users,
+            'roles' => $roles,
             'branches' => $branches,
             'switchUser' => $switch->targetUserFor($tenant),
             'isCurrentTenant' => $tenant->id === app(TenantService::class)->getCurrentTenantId(),

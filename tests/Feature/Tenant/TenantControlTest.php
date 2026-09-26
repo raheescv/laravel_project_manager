@@ -112,6 +112,45 @@ it('provisions a tenant idempotently without touching the current tenant', funct
         ->and(app(TenantService::class)->getCurrentTenantId())->toBe($this->world->tenant->id);
 });
 
+it('seeds the default users into the provisioned tenant without super admin', function (): void {
+    $response = (new ProvisionAction())->execute($this->other->id);
+    expect($response['success'])->toBeTrue($response['message']);
+
+    $users = User::withTenant($this->other->id)->with('roles')->get()->keyBy('email');
+    $branchId = Branch::withTenant($this->other->id)->value('id');
+
+    expect($users->keys()->all())->toEqualCanonicalizing(['system@astra.com', 'admin@astra.com', 'rahees@astra.com', 'employee@astra.com'])
+        ->and($users->every(fn (User $user) => ! $user->is_super_admin))->toBeTrue()
+        ->and($users->every(fn (User $user) => $user->roles->pluck('tenant_id')->all() === [$this->other->id]))->toBeTrue()
+        ->and($users['admin@astra.com']->default_branch_id)->toBe($branchId);
+
+    (new ProvisionAction())->execute($this->other->id);
+    expect(User::withTenant($this->other->id)->count())->toBe(4);
+});
+
+it('grants and removes a tenant user\'s roles from the Users tab', function (): void {
+    (new ProvisionAction())->execute($this->other->id);
+    $employee = User::withTenant($this->other->id)->where('email', 'employee@astra.com')->first();
+    $role = Spatie\Permission\Models\Role::where('tenant_id', $this->other->id)->where('name', 'Admin')->first();
+    $foreignRole = Spatie\Permission\Models\Role::firstOrCreate(['tenant_id' => $this->world->tenant->id, 'name' => 'Admin', 'guard_name' => 'web']);
+
+    $component = Livewire::actingAs($this->world->user)->test(View::class, ['tenantId' => $this->other->id])
+        ->call('selectTab', 'users')
+        ->call('editAccess', $employee->id)
+        ->assertSee('Tap to grant or remove')
+        ->call('toggleRole', $employee->id, $role->id)
+        ->assertDispatched('success');
+    expect($employee->fresh()->hasRole($role))->toBeFalse();
+
+    $component->call('toggleRole', $employee->id, $role->id)
+        ->call('toggleAdmin', $employee->id);
+    expect($employee->fresh()->hasRole($role))->toBeTrue()
+        ->and($employee->fresh()->is_admin)->toBeTruthy();
+
+    expect(fn () => $component->call('toggleRole', $employee->id, $foreignRole->id))->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+    expect($employee->fresh()->roles->pluck('id')->all())->toBe([$role->id]);
+});
+
 it('never deactivates or deletes the tenant you are signed into', function (): void {
     $this->actingAs($this->world->user);
 
@@ -180,7 +219,7 @@ it('provisions from the Seeding tab', function (): void {
         ->set('provision.system', 'POS Module')
         ->call('runProvision')
         ->assertDispatched('success')
-        ->assertSet('provisionSteps', fn (array $steps) => count($steps) === 7)
+        ->assertSet('provisionSteps', fn (array $steps) => count($steps) === 8)
         ->assertSee('added')
         ->assertViewHas('summary', fn (array $summary) => $summary['branches'] === 1);
 });

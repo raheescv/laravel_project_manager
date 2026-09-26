@@ -15,6 +15,7 @@ use App\Support\TenantCache;
 use Database\Seeders\AccountSeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\UnitSeeder;
+use Database\Seeders\UserSeeder;
 use Database\Seeders\WorkingDaySeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,8 @@ use Spatie\Permission\PermissionRegistrar;
 /**
  * Gives a tenant the base data it needs to be usable: permissions, the Admin
  * role, a main branch, the chart of accounts, units, working days, neutral
- * configuration defaults and (optionally) its first admin user.
+ * configuration defaults, the default users (UserSeeder) and (optionally)
+ * its own first admin user.
  *
  * Every step is idempotent — it only fills what is missing — so running it
  * again on a live tenant is safe and reports "already present". Tenant
@@ -66,6 +68,7 @@ class ProvisionAction
                 $steps[] = $this->step('units', 'Units', fn () => Unit::withTenant($tenant->id)->count(), fn () => $this->runSeeder(UnitSeeder::class, $tenant->id));
                 $steps[] = $this->step('working_days', 'Working days', fn () => WorkingDay::withTenant($tenant->id)->count(), fn () => $this->runSeeder(WorkingDaySeeder::class, $tenant->id));
                 $steps[] = $this->step('configuration', 'Configuration defaults', fn () => Configuration::withTenant($tenant->id)->count(), fn () => $this->seedConfiguration($tenant->id, $system));
+                $steps[] = $this->step('users', 'Default users', fn () => User::withTenant($tenant->id)->count(), fn () => $this->runSeeder(UserSeeder::class, $tenant->id, ['withSuperAdmins' => false]));
                 if (filled($admin['email'] ?? null)) {
                     $steps[] = $this->step('admin', 'Admin user', fn () => User::withTenant($tenant->id)->count(), fn () => $this->ensureAdmin($tenant->id, $admin));
                 }
@@ -112,11 +115,16 @@ class ProvisionAction
     /**
      * The seeders echo progress for the console; that output has no place in
      * a web response.
+     *
+     * @param  array<string, mixed>  $options  extra public seeder properties to set
      */
-    private function runSeeder(string $seederClass, int $tenantId): void
+    private function runSeeder(string $seederClass, int $tenantId, array $options = []): void
     {
         $seeder = app($seederClass);
         $seeder->tenantId = $tenantId;
+        foreach ($options as $property => $value) {
+            $seeder->{$property} = $value;
+        }
 
         ob_start();
         try {
