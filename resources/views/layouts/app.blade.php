@@ -135,7 +135,7 @@
         .impersonation-banner {
             position: sticky;
             top: 0;
-            z-index: 1030;
+            z-index: 11;
             background: repeating-linear-gradient(135deg, #b45309 0 14px, #a34e08 14px 28px);
             color: #fff;
             font-size: 0.875rem;
