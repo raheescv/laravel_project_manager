@@ -59,6 +59,9 @@ class View extends Component
         abort_unless(Auth::user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can access this page.');
 
         $this->tenantId = $tenantId;
+        if (in_array(request()->query('tab'), ['users', 'branches', 'billing', 'analytics', 'seeding', 'server'], true)) {
+            $this->selectTab(request()->query('tab'));
+        }
         $this->resetPaymentForm();
         $this->provision['system'] = (string) Configuration::withTenant($tenantId)->where('key', 'active_module')->value('value');
     }

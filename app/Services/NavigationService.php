@@ -152,7 +152,7 @@ class NavigationService
                 'label' => 'Tenant Control',
                 'icon' => 'fa fa-building',
                 'visible' => true,
-                'children' => [],
+                'children' => ['List', 'AMC Reminders'],
             ],
             [
                 'id' => 'flat-trade',

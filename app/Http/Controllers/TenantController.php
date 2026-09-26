@@ -15,6 +15,11 @@ class TenantController extends Controller
         return view('tenant.index');
     }
 
+    public function amcReminders(): View
+    {
+        return view('tenant.amc-reminder');
+    }
+
     public function view(int $id): View
     {
         $tenant = Tenant::withTrashed()->findOrFail($id);

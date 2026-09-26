@@ -10,6 +10,7 @@ Route::middleware(['auth', RequireSuperAdmin::class])->group(function (): void {
     Route::name('tenants::')->prefix('tenants')->controller(TenantController::class)->group(function (): void {
         Route::get('', 'index')->name('index');
         Route::get('view/{id}', 'view')->name('view');
+        Route::get('amc-reminders', 'amcReminders')->name('amc-reminders');
     });
 });
 
