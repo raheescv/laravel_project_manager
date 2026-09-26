@@ -13,8 +13,10 @@ use Illuminate\Support\Facades\Process;
 /**
  * Renders and applies the server side of Tenant Control.
  *
- * - Custom domains: one nginx site per tenant (HTTP first so Let's Encrypt can
- *   answer the webroot challenge, then HTTPS once the certificate exists).
+ * - Custom domains: one nginx site per tenant, named after its subdomain
+ *   (sites-available/orga), HTTP first so Let's Encrypt can answer the webroot
+ *   challenge, then HTTPS once the certificate exists. Managed files carry a
+ *   marker line; hand-written vhosts (solan, hsg…) are never touched.
  * - Shared, installed once: the queue worker Supervisor program and the cron
  *   file (Laravel scheduler as the web user + this sync as root).
  *
@@ -25,6 +27,9 @@ use Illuminate\Support\Facades\Process;
 class TenantServerService
 {
     public const HEARTBEAT_KEY = 'tenant_server:scheduler_heartbeat';
+
+    /** First line of every site this service writes, followed by the tenant id. */
+    public const SITE_MARKER = '# Managed by Tenant Control — tenant #';
 
     /**
      * @return array{status: string, error: ?string}
@@ -63,13 +68,12 @@ class TenantServerService
      */
     public function removeSite(int $tenantId): bool
     {
-        $available = $this->sitePath($tenantId);
-        $enabled = $this->enabledPath($tenantId);
-        if (! File::exists($available) && ! is_link($enabled) && ! File::exists($enabled)) {
+        $paths = array_keys(array_filter($this->managedSites(), fn (int $id): bool => $id === $tenantId));
+        if (! $paths) {
             return false;
         }
 
-        File::delete([$enabled, $available]);
+        $this->deleteSites($paths);
         if ($this->run(config('tenant_server.nginx.test_command'))->successful()) {
             $this->run(config('tenant_server.nginx.reload_command'));
         }
@@ -78,19 +82,21 @@ class TenantServerService
     }
 
     /**
-     * Tenant ids that currently have a managed nginx site on disk.
+     * Sites this service wrote, found by their marker line.
      *
-     * @return list<int>
+     * @return array<string, int> sites-available path => tenant id
      */
-    public function managedSiteIds(): array
+    public function managedSites(): array
     {
-        $pattern = config('tenant_server.nginx.sites_available').'/'.config('tenant_server.name').'-tenant-*.conf';
+        $sites = [];
+        foreach (File::files(config('tenant_server.nginx.sites_available')) as $file) {
+            $firstLine = (string) strtok((string) file_get_contents($file->getPathname(), length: 200), "\n");
+            if (str_starts_with($firstLine, self::SITE_MARKER)) {
+                $sites[$file->getPathname()] = (int) substr($firstLine, strlen(self::SITE_MARKER));
+            }
+        }
 
-        return collect(File::glob($pattern))
-            ->map(fn (string $path): int => (int) preg_replace('/\D/', '', basename($path, '.conf')))
-            ->filter()
-            ->values()
-            ->all();
+        return $sites;
     }
 
     /**
@@ -117,18 +123,44 @@ class TenantServerService
         return $done;
     }
 
+    /**
+     * The same shape as the hand-written vhosts on this server (see solan):
+     * port 80 answers ACME challenges and redirects, 443 serves the app.
+     * Before the certificate exists, port 80 serves the app so certbot's
+     * webroot challenge can be answered.
+     */
     public function renderSite(Tenant $tenant, bool $withSsl): string
     {
         $domain = $tenant->domain;
         $root = rtrim(config('tenant_server.app_path'), '/').'/public';
         $live = rtrim(config('tenant_server.certbot.live_path'), '/').'/'.$domain;
         $app = $this->appLocations();
-        $header = "# Managed by Tenant Control — tenant #{$tenant->id} ({$tenant->code}).\n# Do not edit: it is rewritten by `php artisan tenant:server-sync`.\n";
+        $name = $this->siteName($tenant);
+        $logs = "    access_log /var/log/nginx/{$name}.access.log;\n    error_log  /var/log/nginx/{$name}.error.log;";
+        $header = <<<NGINX
+{$this->marker($tenant)} ({$tenant->code}), {$domain}.
+# Do not edit: it is rewritten by `php artisan tenant:server-sync`.
+#
+# Served from {$root}. The app resolves the tenant from
+# the request host in App\Http\Middleware\IdentifyTenant, so this server_name
+# must match the tenant's domain — otherwise every route 404s, not an nginx error.
 
-        $challenge = "    location ^~ /.well-known/acme-challenge/ {\n        root {$root};\n        default_type \"text/plain\";\n    }\n";
+
+NGINX;
+
+        $challenge = <<<NGINX
+    # Certbot writes HTTP-01 challenges here. This must stay ABOVE the redirect,
+    # otherwise the challenge request is bounced to HTTPS and validation fails.
+    location ^~ /.well-known/acme-challenge/ {
+        root {$root};
+        default_type "text/plain";
+        allow all;
+    }
+NGINX;
 
         if (! $withSsl) {
             return $header.<<<NGINX
+# Port 80 only until the Let's Encrypt certificate is issued.
 server {
     listen 80;
     listen [::]:80;
@@ -136,22 +168,29 @@ server {
     root {$root};
 
 {$challenge}
+
 {$app}
+
+{$logs}
 }
 
 NGINX;
         }
 
         return $header.<<<NGINX
+# Port 80: ACME challenges plus a redirect to HTTPS.
 server {
     listen 80;
     listen [::]:80;
     server_name {$domain};
 
 {$challenge}
+
     location / {
         return 301 https://\$host\$request_uri;
     }
+
+{$logs}
 }
 
 server {
@@ -160,10 +199,20 @@ server {
     server_name {$domain};
     root {$root};
 
+    # Let's Encrypt via the HTTP-01 webroot challenge; renewed by certbot's
+    # systemd timer (the deploy hook reloads nginx).
     ssl_certificate {$live}/fullchain.pem;
     ssl_certificate_key {$live}/privkey.pem;
 
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
 {$app}
+
+{$logs}
 }
 
 NGINX;
@@ -268,14 +317,23 @@ CRON;
         ];
     }
 
-    public function sitePath(int $tenantId): string
+    /**
+     * The site file is named after the subdomain, like the hand-written
+     * vhosts here (sites-available/solan).
+     */
+    public function siteName(Tenant $tenant): string
     {
-        return config('tenant_server.nginx.sites_available').'/'.config('tenant_server.name')."-tenant-{$tenantId}.conf";
+        return trim((string) preg_replace('/[^a-z0-9-]+/', '-', strtolower($tenant->subdomain)), '-') ?: "tenant-{$tenant->id}";
     }
 
-    public function enabledPath(int $tenantId): string
+    public function sitePath(Tenant $tenant): string
     {
-        return config('tenant_server.nginx.sites_enabled').'/'.config('tenant_server.name')."-tenant-{$tenantId}.conf";
+        return config('tenant_server.nginx.sites_available').'/'.$this->siteName($tenant);
+    }
+
+    public function enabledPath(Tenant $tenant): string
+    {
+        return config('tenant_server.nginx.sites_enabled').'/'.$this->siteName($tenant);
     }
 
     public function supervisorPath(): string
@@ -294,10 +352,15 @@ CRON;
      */
     private function writeSite(Tenant $tenant, bool $withSsl): ?string
     {
-        $available = $this->sitePath($tenant->id);
-        $enabled = $this->enabledPath($tenant->id);
-        $previous = File::exists($available) ? File::get($available) : null;
+        $available = $this->sitePath($tenant);
+        $enabled = $this->enabledPath($tenant);
+        $managed = $this->managedSites();
 
+        if ((File::exists($available) || is_link($enabled) || File::exists($enabled)) && ($managed[$available] ?? null) !== $tenant->id) {
+            return "A site named '".basename($available)."' already exists and was not written by Tenant Control — rename the subdomain or remove that site by hand.";
+        }
+
+        $previous = File::exists($available) ? File::get($available) : null;
         File::put($available, $this->renderSite($tenant, $withSsl));
         if (! is_link($enabled) && ! File::exists($enabled)) {
             File::link($available, $enabled);
@@ -314,9 +377,30 @@ CRON;
             return "nginx rejected the site, previous configuration kept.\n".$this->tail($test);
         }
 
+        // A renamed subdomain leaves the old file behind; drop it now the new one is accepted.
+        $stale = array_keys(array_filter($managed, fn (int $id, string $path): bool => $id === $tenant->id && $path !== $available, ARRAY_FILTER_USE_BOTH));
+        if ($stale) {
+            $this->deleteSites($stale);
+        }
+
         $reload = $this->run(config('tenant_server.nginx.reload_command'));
 
         return $reload->successful() ? null : "nginx did not reload.\n".$this->tail($reload);
+    }
+
+    /**
+     * @param  list<string>  $availablePaths
+     */
+    private function deleteSites(array $availablePaths): void
+    {
+        foreach ($availablePaths as $available) {
+            File::delete([config('tenant_server.nginx.sites_enabled').'/'.basename($available), $available]);
+        }
+    }
+
+    private function marker(Tenant $tenant): string
+    {
+        return self::SITE_MARKER.$tenant->id;
     }
 
     /**
@@ -345,8 +429,18 @@ CRON;
     charset utf-8;
     client_max_body_size {$maxBody};
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
+    # No HSTS: the header is hard to walk back once browsers have seen it.
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    # Built assets and uploaded storage: fingerprinted or immutable, cache hard.
+    location ~* ^/(build|storage)/.*\.(webp|jpg|jpeg|png|gif|svg|css|js|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files \$uri =404;
+    }
 
     location / {
         try_files \$uri \$uri/ /index.php?\$query_string;
@@ -355,18 +449,16 @@ CRON;
     location = /favicon.ico { access_log off; log_not_found off; }
     location = /robots.txt  { access_log off; log_not_found off; }
 
-    error_page 404 /index.php;
-
     location ~ \.php$ {
         fastcgi_pass unix:{$socket};
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
+        fastcgi_read_timeout 180;
         fastcgi_hide_header X-Powered-By;
     }
 
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
+    # Hide dotfiles (.env, .git) but leave ACME challenges reachable.
+    location ~ /\.(?!well-known).* { deny all; }
 NGINX;
     }
 

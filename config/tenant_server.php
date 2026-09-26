@@ -9,10 +9,12 @@
 | as ROOT (from the cron file it installs with --shared), never from a web
 | request: the web user cannot and should not touch /etc.
 |
-| Subdomain tenants need nothing here — one wildcard nginx site and a
-| wildcard certificate already serve them. Only CUSTOM domains get their own
-| nginx site and Let's Encrypt certificate. The scheduler and queue workers
-| are shared by every tenant, so they are installed once (--shared).
+| With a wildcard nginx site and wildcard certificate (wildcard_site=true),
+| subdomain tenants need nothing here and only CUSTOM domains get their own
+| nginx site and Let's Encrypt certificate. Without one, a tenant's pointed
+| subdomain (orga.example.com) gets its own site and certificate too, the
+| same way. The scheduler and queue workers are shared by every tenant, so
+| they are installed once (--shared).
 |
 */
 
@@ -25,6 +27,9 @@ return [
     'php_binary' => env('TENANT_SERVER_PHP', '/usr/bin/php'),
 
     'php_fpm_socket' => env('TENANT_SERVER_PHP_FPM_SOCKET', '/run/php/php8.4-fpm.sock'),
+
+    /* A wildcard site + certificate already serves every tenant subdomain. */
+    'wildcard_site' => env('TENANT_SERVER_WILDCARD', true),
 
     'web_user' => env('TENANT_SERVER_WEB_USER', 'www-data'),
 

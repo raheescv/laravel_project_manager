@@ -32,6 +32,8 @@ class View extends Component
     /** @var list<array{key: string, label: string, created: int, status: string}> */
     public array $provisionSteps = [];
 
+    public string $customDomain = '';
+
     protected $listeners = [
         'Tenant-Refresh-Component' => '$refresh',
     ];
@@ -73,6 +75,47 @@ class View extends Component
         }
         Tenant::whereKey($tenant->id)->update(['domain_status' => Tenant::DOMAIN_PENDING, 'domain_error' => null]);
         $this->dispatch('success', ['message' => 'Queued — the server applies it within a minute']);
+    }
+
+    /**
+     * Point a domain (the tenant's own subdomain or the client's domain) at
+     * this tenant; the next tenant:server-sync writes its site and certificate.
+     */
+    public function saveCustomDomain(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        $tenant = Tenant::findOrFail($this->tenantId);
+        $this->validate([
+            'customDomain' => ['required', ...Tenant::rules($tenant->id)['domain']],
+        ], [
+            'customDomain.required' => 'Enter the domain that points to this server',
+            'customDomain.regex' => 'Enter a host name such as shop.example.com',
+            'customDomain.not_in' => 'That is the main app address, which already has its own site',
+            'customDomain.unique' => 'Another tenant already uses this domain',
+        ]);
+
+        $tenant->domain = $this->customDomain;
+        if (! $tenant->hasCustomDomain()) {
+            $this->addError('customDomain', 'This address is already served by the wildcard site — nothing to set up');
+
+            return;
+        }
+        $tenant->save();
+
+        $this->customDomain = '';
+        $this->dispatch('success', ['message' => "Saved — the server sets up {$tenant->domain} within a minute"]);
+    }
+
+    /**
+     * Drop the domain; the next tenant:server-sync removes its nginx site.
+     */
+    public function removeCustomDomain(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        Tenant::findOrFail($this->tenantId)->update(['domain' => null]);
+        $this->dispatch('success', ['message' => 'Domain removed — its nginx site is taken down within a minute']);
     }
 
     public function refreshAnalytics(): void
