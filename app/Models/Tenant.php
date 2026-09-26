@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class Tenant extends Model
@@ -24,6 +25,24 @@ class Tenant extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    /**
+     * IdentifyTenant resolves hosts through a 24h cache of active tenants, so a
+     * renamed, deactivated or deleted tenant must drop its entries at once —
+     * otherwise a switched-off tenant keeps serving requests for a day.
+     */
+    protected static function booted(): void
+    {
+        $forget = function (Tenant $tenant): void {
+            foreach (array_unique(array_filter([$tenant->subdomain, $tenant->getOriginal('subdomain')])) as $subdomain) {
+                Cache::forget("tenant_subdomain_{$subdomain}");
+            }
+        };
+
+        static::saved($forget);
+        static::deleted($forget);
+        static::restored($forget);
+    }
 
     public static function rules($id = 0, $merge = [])
     {
@@ -98,5 +117,27 @@ class Tenant extends Model
     public function inventories(): HasMany
     {
         return $this->hasMany(Inventory::class, 'tenant_id');
+    }
+
+    /**
+     * The tenant's own workspace address, built from the SUBDOMAIN because that
+     * is the only thing IdentifyTenant resolves a host by — `domain` is never
+     * read there, so trusting it could point at another tenant's workspace.
+     * The subdomain replaces the first label of the app host (acme.test,
+     * acme.example.com); a bare host such as localhost gets it prefixed.
+     */
+    public function url(string $path = ''): string
+    {
+        $appUrl = config('app.url');
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?: 'https';
+        $port = parse_url($appUrl, PHP_URL_PORT);
+
+        $labels = explode('.', (string) parse_url($appUrl, PHP_URL_HOST));
+        $replaceFirstLabel = count($labels) >= 3 || (count($labels) === 2 && in_array($labels[1], ['test', 'local'], true));
+        $host = $replaceFirstLabel
+            ? implode('.', [$this->subdomain, ...array_slice($labels, 1)])
+            : $this->subdomain.'.'.implode('.', $labels);
+
+        return $scheme.'://'.$host.($port ? ':'.$port : '').'/'.ltrim($path, '/');
     }
 }

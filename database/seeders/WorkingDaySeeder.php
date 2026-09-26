@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 
 class WorkingDaySeeder extends Seeder
 {
+    /** The tenant these rows belong to; the Tenant Control provisioner points it elsewhere. */
+    public int $tenantId = 1;
+
     /**
      * Run the database seeds.
      */
@@ -24,7 +27,7 @@ class WorkingDaySeeder extends Seeder
 
         foreach ($days as $index => $day) {
             WorkingDay::firstOrCreate([
-                'tenant_id' => 1,
+                'tenant_id' => $this->tenantId,
                 'day_name' => $day,
             ], [
                 'is_working' => true,

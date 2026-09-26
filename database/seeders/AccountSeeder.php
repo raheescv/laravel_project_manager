@@ -9,6 +9,9 @@ use Illuminate\Support\Str;
 
 class AccountSeeder extends Seeder
 {
+    /** The tenant these rows belong to; the Tenant Control provisioner points it elsewhere. */
+    public int $tenantId = 1;
+
     public function run(): void
     {
         // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -17,37 +20,37 @@ class AccountSeeder extends Seeder
         // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Create Master Groups (Top Level Categories)
-        $vendorsMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Vendors']);
-        $currentAssetMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Current Asset']);
-        $currentLiabilityMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Current Liabilities']);
-        $directIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Direct Income']);
-        $indirectIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Indirect Income']);
-        $directExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Direct Expense']);
-        $indirectExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Indirect Expense']);
+        $vendorsMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Vendors']);
+        $currentAssetMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Current Asset']);
+        $currentLiabilityMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Current Liabilities']);
+        $directIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Direct Income']);
+        $indirectIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Indirect Income']);
+        $directExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Direct Expense']);
+        $indirectExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Indirect Expense']);
 
         // Create Groups under Current Asset
-        $cashGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Cash', 'parent_id' => $currentAssetMaster->id]);
-        $bankGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Bank', 'parent_id' => $currentAssetMaster->id]);
-        $accountReceivableGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Account Receivable', 'parent_id' => $currentAssetMaster->id]);
-        $stockGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Stock', 'parent_id' => $currentAssetMaster->id]);
+        $cashGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Cash', 'parent_id' => $currentAssetMaster->id]);
+        $bankGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Bank', 'parent_id' => $currentAssetMaster->id]);
+        $accountReceivableGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Account Receivable', 'parent_id' => $currentAssetMaster->id]);
+        $stockGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Stock', 'parent_id' => $currentAssetMaster->id]);
 
         // Create Groups under Current Liabilities
-        $provisionForTaxationGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Provision for Taxation', 'parent_id' => $currentLiabilityMaster->id]);
+        $provisionForTaxationGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Provision for Taxation', 'parent_id' => $currentLiabilityMaster->id]);
 
         // Create Groups under Direct Income
-        $salesGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Sales', 'parent_id' => $directIncomeMaster->id]);
-        $purchaseReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Purchase Return', 'parent_id' => $directIncomeMaster->id]);
+        $salesGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Sales', 'parent_id' => $directIncomeMaster->id]);
+        $purchaseReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Purchase Return', 'parent_id' => $directIncomeMaster->id]);
 
         // Create Groups under Indirect Income
-        $discountReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Discount Received', 'parent_id' => $indirectIncomeMaster->id]);
-        $roundOffReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Round Off Received', 'parent_id' => $indirectIncomeMaster->id]);
+        $discountReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Discount Received', 'parent_id' => $indirectIncomeMaster->id]);
+        $roundOffReceivedGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Round Off Received', 'parent_id' => $indirectIncomeMaster->id]);
 
         // Create Groups under Direct Expense
-        $purchaseGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Purchase', 'parent_id' => $directExpenseMaster->id]);
-        $salesReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Sales Return', 'parent_id' => $directExpenseMaster->id]);
+        $purchaseGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Purchase', 'parent_id' => $directExpenseMaster->id]);
+        $salesReturnGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Sales Return', 'parent_id' => $directExpenseMaster->id]);
 
         // Create Groups under Indirect Expense
-        $discountPaidGroup = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Discount Paid', 'parent_id' => $indirectExpenseMaster->id]);
+        $discountPaidGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Discount Paid', 'parent_id' => $indirectExpenseMaster->id]);
 
         $data = [];
 
@@ -81,15 +84,15 @@ class AccountSeeder extends Seeder
 
         // Process existing accounts first
         foreach ($data as $value) {
-            $value['tenant_id'] = 1;
+            $value['tenant_id'] = $this->tenantId;
             $value['is_locked'] = 1;
-            $exists = DB::table('accounts')->where('name', $value['name'])->where('account_type', $value['account_type'])->exists();
+            $exists = DB::table('accounts')->where('tenant_id', $this->tenantId)->where('name', $value['name'])->where('account_type', $value['account_type'])->exists();
             if (! $exists) {
                 echo $value['name']." Created \n";
                 DB::table('accounts')->insert($value);
             } else {
                 // need to update the fields if the account already exists
-                DB::table('accounts')->where('name', $value['name'])->where('account_type', $value['account_type'])->update($value);
+                DB::table('accounts')->where('tenant_id', $this->tenantId)->where('name', $value['name'])->where('account_type', $value['account_type'])->update($value);
             }
         }
 
@@ -161,14 +164,14 @@ class AccountSeeder extends Seeder
             if (! $masterCategoryName) {
                 // For equity, create if doesn't exist
                 if ($internalGroup === 'equity') {
-                    $masterCategory = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Equity']);
+                    $masterCategory = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Equity']);
                 } else {
                     echo "Skipping {$accountName}: Unknown internal_group '{$internalGroup}'\n";
 
                     continue;
                 }
             } else {
-                $masterCategory = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => $masterCategoryName]);
+                $masterCategory = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => $masterCategoryName]);
             }
 
             // Get or create sub-category (group) if group_id exists
@@ -178,7 +181,7 @@ class AccountSeeder extends Seeder
 
                 if (! isset($categoryCache[$cacheKey])) {
                     $subCategory = AccountCategory::firstOrCreate([
-                        'tenant_id' => 1,
+                        'tenant_id' => $this->tenantId,
                         'name' => $groupDisplayName,
                     ], [
                         'parent_id' => $masterCategory->id,
@@ -192,7 +195,7 @@ class AccountSeeder extends Seeder
             // Create account
             $slug = Str::slug($accountName);
             $accountData = [
-                'tenant_id' => 1,
+                'tenant_id' => $this->tenantId,
                 'name' => $accountName,
                 'slug' => $slug,
                 'account_type' => $accountType,
@@ -204,7 +207,7 @@ class AccountSeeder extends Seeder
 
             // Check if account already exists
             $exists = DB::table('accounts')
-                ->where('tenant_id', 1)
+                ->where('tenant_id', $this->tenantId)
                 ->where('name', $accountName)
                 ->where('account_type', $accountType)
                 ->exists();
@@ -215,7 +218,7 @@ class AccountSeeder extends Seeder
             } else {
                 // Update existing account with new category if needed
                 DB::table('accounts')
-                    ->where('tenant_id', 1)
+                    ->where('tenant_id', $this->tenantId)
                     ->where('name', $accountName)
                     ->where('account_type', $accountType)
                     ->update([

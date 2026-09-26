@@ -3,7 +3,9 @@
 namespace App\Livewire\Tenant;
 
 use App\Actions\Tenant\DeleteAction;
+use App\Models\Configuration;
 use App\Models\Tenant;
+use App\Services\TenantService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,6 +15,12 @@ class Table extends Component
     use WithPagination;
 
     public $search = '';
+
+    /** all | active | inactive | trashed */
+    public $status = 'all';
+
+    /** An active_module value, or '' for every system. */
+    public $system = '';
 
     public $limit = 10;
 
@@ -50,7 +58,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = Tenant::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = $this->filteredQuery()->whereKeyNot(app(TenantService::class)->getCurrentTenantId())->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
@@ -106,10 +114,29 @@ class Table extends Component
         }
     }
 
-    public function render()
+    public function clearFilters(): void
     {
-        $data = Tenant::withoutGlobalScopes()
-            ->orderBy($this->sortField, $this->sortDirection)
+        $this->reset('search', 'status', 'system');
+    }
+
+    /**
+     * The tenant list shared by the table and the status counts. $except drops
+     * one filter so each status chip counts across the others.
+     */
+    private function filteredQuery(array $except = [])
+    {
+        $systemTenantIds = $this->system
+            ? Configuration::withoutGlobalScopes()->where('key', 'active_module')->where('value', $this->system)->pluck('tenant_id')
+            : null;
+
+        return Tenant::query()
+            ->when(! in_array('status', $except, true), fn ($query) => match ($this->status) {
+                'active' => $query->where('is_active', true),
+                'inactive' => $query->where('is_active', false),
+                'trashed' => $query->onlyTrashed(),
+                default => $query,
+            })
+            ->when($systemTenantIds, fn ($query, $ids) => $query->whereIn('id', $ids))
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
                     $q->where('name', 'like', "%{$value}%")
@@ -117,9 +144,40 @@ class Table extends Component
                         ->orWhere('subdomain', 'like', "%{$value}%")
                         ->orWhere('domain', 'like', "%{$value}%");
                 });
-            })
+            });
+    }
+
+    public function render()
+    {
+        $unscoped = fn ($query) => $query->withoutGlobalScopes();
+
+        $data = $this->filteredQuery()
+            ->withCount(['users' => $unscoped, 'branches' => $unscoped, 'products' => fn ($query) => $query->withoutGlobalScopes()->whereNull('products.deleted_at')])
+            ->withMax(['sales' => $unscoped], 'created_at')
+            ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->limit);
 
-        return view('livewire.tenant.table', compact('data'));
+        $counts = $this->filteredQuery(['status'])->withTrashed()
+            ->selectRaw('SUM(deleted_at IS NULL) as all_count')
+            ->selectRaw('SUM(deleted_at IS NULL AND is_active = 1) as active_count')
+            ->selectRaw('SUM(deleted_at IS NULL AND is_active = 0) as inactive_count')
+            ->selectRaw('SUM(deleted_at IS NOT NULL) as trashed_count')
+            ->first();
+
+        $systemsByTenant = Configuration::withoutGlobalScopes()->where('key', 'active_module')
+            ->whereIn('tenant_id', $data->pluck('id'))->pluck('value', 'tenant_id');
+
+        return view('livewire.tenant.table', [
+            'data' => $data,
+            'counts' => [
+                'all' => (int) $counts->all_count,
+                'active' => (int) $counts->active_count,
+                'inactive' => (int) $counts->inactive_count,
+                'trashed' => (int) $counts->trashed_count,
+            ],
+            'systemsByTenant' => $systemsByTenant,
+            'systems' => array_keys(config('modules.systems', [])),
+            'currentTenantId' => app(TenantService::class)->getCurrentTenantId(),
+        ]);
     }
 }

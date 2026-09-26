@@ -29,6 +29,14 @@ class ImpersonationService
 
     private const KEY_EXPIRES = 'impersonation_expires_at';
 
+    /**
+     * Set only when the impersonation was opened on ANOTHER tenant's host
+     * (Tenant Control → Switch into). Sessions are per host, so leaving means
+     * signing out here and going back to the super admin's own workspace,
+     * not logging the super admin in on a host whose tenant is not theirs.
+     */
+    private const KEY_RETURN_URL = 'impersonation_return_url';
+
     public function isImpersonating(): bool
     {
         return session()->has(self::KEY_IMPERSONATOR);
@@ -76,13 +84,21 @@ class ImpersonationService
      */
     public function start(User $target): void
     {
-        $impersonatorId = Auth::id();
+        $this->startAs(Auth::id(), $target);
+    }
 
-        session([
+    /**
+     * Log in as $target on behalf of $impersonatorId. $returnUrl marks a
+     * cross-tenant session (see KEY_RETURN_URL).
+     */
+    public function startAs(int $impersonatorId, User $target, ?string $returnUrl = null): void
+    {
+        session(array_filter([
             self::KEY_IMPERSONATOR => $impersonatorId,
             self::KEY_BRANCH => session('branch_id'),
             self::KEY_EXPIRES => now()->addMinutes(self::DURATION_MINUTES)->timestamp,
-        ]);
+            self::KEY_RETURN_URL => $returnUrl,
+        ], fn ($value): bool => $value !== null));
 
         Auth::login($target);
         $this->putBranch($target->default_branch_id);
@@ -94,7 +110,39 @@ class ImpersonationService
             'impersonator_id' => $impersonatorId,
             'target_user_id' => $target->id,
             'expires_at' => $this->expiresAt()?->toDateTimeString(),
+            'tenant_id' => $target->tenant_id,
+            'cross_tenant' => $returnUrl !== null,
         ]);
+    }
+
+    public function returnUrl(): ?string
+    {
+        return session(self::KEY_RETURN_URL);
+    }
+
+    /**
+     * End a cross-tenant impersonation: sign out of this host entirely and
+     * hand back the URL of the super admin's own workspace (where their own
+     * session is still alive). Returns null for an ordinary impersonation.
+     */
+    public function endCrossTenant(): ?string
+    {
+        $returnUrl = $this->returnUrl();
+        if (! $returnUrl) {
+            return null;
+        }
+
+        Log::info('Tenant switch ended', [
+            'impersonator_id' => session(self::KEY_IMPERSONATOR),
+            'target_user_id' => Auth::id(),
+        ]);
+
+        $this->forget();
+        Auth::guard('web')->logout();
+        session()->invalidate();
+        session()->regenerateToken();
+
+        return $returnUrl;
     }
 
     /**
@@ -129,7 +177,7 @@ class ImpersonationService
 
     public function forget(): void
     {
-        session()->forget([self::KEY_IMPERSONATOR, self::KEY_BRANCH, self::KEY_EXPIRES]);
+        session()->forget([self::KEY_IMPERSONATOR, self::KEY_BRANCH, self::KEY_EXPIRES, self::KEY_RETURN_URL]);
     }
 
     private function putBranch(?int $branchId): void

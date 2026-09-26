@@ -23,6 +23,10 @@ class EndExpiredImpersonation
             return $next($request);
         }
 
+        if ($returnUrl = $this->impersonation->endCrossTenant()) {
+            return redirect()->away($returnUrl);
+        }
+
         if (! $this->impersonation->stop()) {
             // The original account is gone; leaving the session authenticated as
             // the target would turn a lapsed impersonation into a real login.

@@ -9,12 +9,15 @@ class PermissionSeeder extends Seeder
 {
     public $data = [];
 
+    /** The tenant these rows belong to; the Tenant Control provisioner points it elsewhere. */
+    public int $tenantId = 1;
+
     public function run(): void
     {
         $permissions = config('permissions');
         foreach ($permissions as $group => $actions) {
             foreach ($actions as $action) {
-                Permission::firstOrCreate(['tenant_id' => 1, 'name' => "{$group}.{$action}"]);
+                Permission::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => "{$group}.{$action}"]);
             }
         }
         foreach ($this->data as $key => $value) {

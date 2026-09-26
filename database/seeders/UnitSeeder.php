@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 
 class UnitSeeder extends Seeder
 {
+    /** The tenant these rows belong to; the Tenant Control provisioner points it elsewhere. */
+    public int $tenantId = 1;
+
     public function run(): void
     {
         $units = [
@@ -42,7 +45,7 @@ class UnitSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            Unit::firstOrCreate(['tenant_id' => 1, 'code' => $unit['code']], $unit);
+            Unit::firstOrCreate(['tenant_id' => $this->tenantId, 'code' => $unit['code']], $unit);
         }
     }
 }

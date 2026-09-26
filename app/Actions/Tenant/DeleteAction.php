@@ -3,6 +3,7 @@
 namespace App\Actions\Tenant;
 
 use App\Models\Tenant;
+use App\Services\TenantService;
 
 class DeleteAction
 {
@@ -12,6 +13,9 @@ class DeleteAction
             $model = Tenant::find($id);
             if (! $model) {
                 throw new \Exception("Tenant not found with the specified ID: $id.", 1);
+            }
+            if ($model->id === app(TenantService::class)->getCurrentTenantId()) {
+                throw new \Exception('You cannot delete the tenant you are signed into.', 1);
             }
             $model->delete();
 

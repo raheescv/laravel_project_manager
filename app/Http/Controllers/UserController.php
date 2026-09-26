@@ -49,6 +49,10 @@ class UserController extends Controller
     {
         abort_unless($impersonation->isImpersonating(), 403, 'You are not impersonating anyone.');
 
+        if ($returnUrl = $impersonation->endCrossTenant()) {
+            return redirect()->away($returnUrl);
+        }
+
         $impersonatedId = Auth::id();
 
         if (! $impersonation->stop()) {

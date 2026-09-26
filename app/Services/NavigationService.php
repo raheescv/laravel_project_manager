@@ -149,7 +149,7 @@ class NavigationService
             ],
             [
                 'id' => 'tenants',
-                'label' => 'Tenants',
+                'label' => 'Tenant Control',
                 'icon' => 'fa fa-building',
                 'visible' => true,
                 'children' => [],
@@ -292,7 +292,7 @@ class NavigationService
             'purchase-workflow' => ['advanced_purchase_management'],
             'asset-supply' => ['maintenance'],
             'users' => ['core'],
-            'tenants' => ['property_management'],
+            'tenants' => ['core'],
             'flat-trade' => ['core'],
             'tickets' => ['core'],
             'log' => ['core'],

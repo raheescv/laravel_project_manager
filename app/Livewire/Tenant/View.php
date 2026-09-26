@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Livewire\Tenant;
+
+use App\Actions\Tenant\ProvisionAction;
+use App\Livewire\Tenant\Concerns\ControlsTenants;
+use App\Models\Branch;
+use App\Models\Configuration;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Models\UserHasBranch;
+use App\Services\TenantAnalyticsService;
+use App\Services\TenantService;
+use App\Services\TenantSwitchService;
+use Livewire\Component;
+
+class View extends Component
+{
+    use ControlsTenants;
+
+    public int $tenantId;
+
+    public string $selected_tab = 'overview';
+
+    /** Tabs opened at least once — users and branches only query once opened. */
+    public array $loaded_tabs = ['overview' => true];
+
+    /** @var array{name: string, email: string, password: string, system: string} */
+    public array $provision = ['name' => 'Admin', 'email' => '', 'password' => '', 'system' => ''];
+
+    /** @var list<array{key: string, label: string, created: int, status: string}> */
+    public array $provisionSteps = [];
+
+    protected $listeners = [
+        'Tenant-Refresh-Component' => '$refresh',
+    ];
+
+    public function mount(int $tenantId): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403, 'Unauthorized access. Only super admin users can access this page.');
+
+        $this->tenantId = $tenantId;
+        $this->provision['system'] = (string) Configuration::withTenant($tenantId)->where('key', 'active_module')->value('value');
+    }
+
+    public function selectTab(string $tab): void
+    {
+        $this->selected_tab = $tab;
+        $this->loaded_tabs[$tab] = true;
+    }
+
+    public function restore(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        Tenant::onlyTrashed()->findOrFail($this->tenantId)->restore();
+        $this->dispatch('success', ['message' => 'Tenant restored']);
+    }
+
+    public function refreshAnalytics(): void
+    {
+        TenantAnalyticsService::forget($this->tenantId);
+        $this->dispatch('success', ['message' => 'Analytics refreshed']);
+    }
+
+    public function runProvision(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+
+        $this->validate([
+            'provision.name' => ['nullable', 'string', 'max:255'],
+            'provision.email' => ['nullable', 'email', 'max:255'],
+            'provision.password' => ['nullable', 'string', 'min:6'],
+            'provision.system' => ['nullable', 'string', 'in:'.implode(',', array_keys(config('modules.systems', [])))],
+        ], [
+            'provision.email.email' => 'Enter a valid admin email address',
+            'provision.password.min' => 'The admin password must be at least 6 characters',
+            'provision.system.in' => 'Choose one of the listed systems',
+        ]);
+
+        $response = (new ProvisionAction())->execute(
+            $this->tenantId,
+            ['name' => $this->provision['name'], 'email' => $this->provision['email'], 'password' => $this->provision['password']],
+            $this->provision['system'] ?: null,
+        );
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->provisionSteps = $response['steps'];
+        $this->provision['password'] = '';
+        TenantAnalyticsService::forget($this->tenantId);
+        $this->dispatch('success', ['message' => $response['message']]);
+    }
+
+    public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch)
+    {
+        $tenant = Tenant::withTrashed()->findOrFail($this->tenantId);
+
+        $settings = Configuration::withTenant($tenant->id)
+            ->whereIn('key', ['active_module', 'company_name', 'base_currency_code', 'currency_code', 'mobile', 'email'])
+            ->pluck('value', 'key');
+
+        $users = isset($this->loaded_tabs['users'])
+            ? User::withoutGlobalScopes()->where('tenant_id', $tenant->id)->with('roles:id,name')->orderByDesc('is_admin')->orderBy('name')->limit(200)->get()
+            : collect();
+
+        $branches = collect();
+        if (isset($this->loaded_tabs['branches'])) {
+            $branches = Branch::withoutGlobalScopes()->where('tenant_id', $tenant->id)->orderBy('name')->get();
+            $userCounts = UserHasBranch::withoutGlobalScopes()->whereIn('branch_id', $branches->pluck('id'))
+                ->selectRaw('branch_id, COUNT(*) as total')->groupBy('branch_id')->pluck('total', 'branch_id');
+            $branches->each(fn (Branch $branch) => $branch->setAttribute('users_count', (int) ($userCounts[$branch->id] ?? 0)));
+        }
+
+        return view('livewire.tenant.view', [
+            'tenant' => $tenant,
+            'settings' => $settings,
+            'summary' => $analytics->summary($tenant),
+            'users' => $users,
+            'branches' => $branches,
+            'switchUser' => $switch->targetUserFor($tenant),
+            'isCurrentTenant' => $tenant->id === app(TenantService::class)->getCurrentTenantId(),
+            'systems' => array_keys(config('modules.systems', [])),
+        ]);
+    }
+}
