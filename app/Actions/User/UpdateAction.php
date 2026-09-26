@@ -25,6 +25,9 @@ class UpdateAction
                 throw new \Exception("User not found with the specified ID: $id.", 1);
             }
             $data = Arr::except($data, self::PROTECTED_FIELDS);
+            if (array_key_exists('password', $data) && blank($data['password'])) {
+                unset($data['password']);
+            }
             validationHelper(User::updateRules($id), $data);
             $model->update($data);
 

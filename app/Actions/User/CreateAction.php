@@ -4,6 +4,7 @@ namespace App\Actions\User;
 
 use App\Models\User;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 class CreateAction
 {
@@ -21,7 +22,9 @@ class CreateAction
     {
         try {
             $data = Arr::except($data, self::PROTECTED_FIELDS);
-            $data['password'] = $data['password'] ?? 'password';
+            if (blank($data['password'] ?? null)) {
+                $data['password'] = Str::random(40);
+            }
             validationHelper(User::createRules(), $data);
             $model = User::create($data);
             $return['success'] = true;
