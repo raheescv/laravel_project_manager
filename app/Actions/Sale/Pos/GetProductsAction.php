@@ -14,7 +14,7 @@ class GetProductsAction
             $branchId = $branchId ?? session('branch_id');
             $saleType = $filters['sale_type'] ?? 'normal';
 
-            $products = Inventory::with(['product', 'product.unit'])
+            $query = Inventory::with(['product', 'product.unit'])
                 ->join('products', 'inventories.product_id', '=', 'products.id')
                 ->join('categories', 'products.main_category_id', '=', 'categories.id')
                 ->select('inventories.*')
@@ -29,12 +29,15 @@ class GetProductsAction
                 ->when(! empty($filters['search']), function ($q) use ($filters): void {
                     $search = trim($filters['search']);
                     $q->where(fn ($s) => $s->where('products.name', 'LIKE', "%{$search}%")->orWhere('products.barcode', 'LIKE', "%{$search}%"));
-                })
-                ->limit(50)
+                });
+
+            $total = (clone $query)->count();
+
+            $products = $query->limit(50)
                 ->get()
                 ->map(fn ($inventory) => $this->formatProduct($inventory, $saleType));
 
-            return ['success' => true, 'data' => $products];
+            return ['success' => true, 'data' => $products, 'total' => $total];
         } catch (\Exception $e) {
             Log::error('Error loading products: '.$e->getMessage());
 

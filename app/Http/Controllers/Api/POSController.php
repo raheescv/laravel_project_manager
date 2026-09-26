@@ -28,7 +28,7 @@ class POSController extends Controller
             return response()->json(['error' => 'Failed to load products'], 500);
         }
 
-        return response()->json($result['data']);
+        return response()->json($result['data'])->header('X-Total-Count', (string) $result['total']);
     }
 
     public function getProductByBarcode(Request $request)

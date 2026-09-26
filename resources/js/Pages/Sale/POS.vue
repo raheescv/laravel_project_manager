@@ -115,8 +115,12 @@
                                         <div class="posx-f has-ico">
                                             <i class="fa fa-search posx-field-ico"></i>
                                             <input v-model="productKey" @input="searchProducts" type="text"
-                                                class="posx-field"
+                                                class="posx-field has-count"
                                                 placeholder="Search products" autocomplete="off">
+                                            <span v-if="!loading" class="posx-prods-count"
+                                                :title="products.length < productsTotal ? `Showing ${products.length} of ${productsTotal} items` : `${productsTotal} items`">
+                                                {{ products.length < productsTotal ? `${products.length}/${productsTotal}` : productsTotal }}
+                                            </span>
                                         </div>
                                         <SearchableSelect v-model="form.sale_type" :options="priceTypes"
                                             placeholder="Sale type" filter-placeholder="Search sale types..."
@@ -403,6 +407,7 @@ export default {
         // Reactive data
         const loading = ref(false)
         const products = ref([])
+        const productsTotal = ref(0)
         const employeeSelectRef = ref(null)
         // Initialize serverCustomers with default customer and props.customers
         const serverCustomers = ref({
@@ -666,6 +671,7 @@ export default {
                 })
 
                 products.value = validProducts
+                productsTotal.value = parseInt(response.headers['x-total-count'], 10) || validProducts.length
             } catch (error) {
                 toast.error('Failed to load products')
             } finally {
@@ -1569,6 +1575,7 @@ export default {
             // Reactive data
             loading,
             products,
+            productsTotal,
             serverCustomers,
             loadingCustomers,
             selectedCategory,

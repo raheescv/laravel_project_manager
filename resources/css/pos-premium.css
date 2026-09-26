@@ -924,6 +924,27 @@ html.dark .posx[data-pos-preset="indigo"] {
     pointer-events: none;
 }
 
+/* filtered item count, tucked inside the search field's end */
+.posx .posx-f > .posx-field.has-count {
+    padding-inline-end: 52px;
+}
+
+.posx .posx-f > .posx-prods-count {
+    position: absolute;
+    inset-inline-end: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: var(--pos-fs-micro);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--pos-muted);
+    background: var(--pos-panel-2);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+}
+
 .posx .posx-field::placeholder {
     color: var(--pos-muted);
     font-weight: 500;
