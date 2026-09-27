@@ -272,8 +272,8 @@ class View extends Component
         abort_unless(Auth::user()?->is_super_admin, 403);
 
         $user = $this->tenantUser($userId);
-        $user->forceFill(['is_admin' => ! $user->is_admin])->save();
-        $this->dispatch('success', ['message' => $user->name.($user->is_admin ? ' is now an administrator' : ' is no longer an administrator')]);
+        $user->forceFill(['is_super_admin' => ! $user->is_super_admin])->save();
+        $this->dispatch('success', ['message' => $user->name.($user->is_super_admin ? ' is now an administrator' : ' is no longer an administrator')]);
     }
 
     private function tenantUser(int $userId): User

@@ -313,9 +313,10 @@
                                             <td colspan="8" class="bg-body-tertiary">
                                                 <div class="small text-body-secondary mb-2"><i class="fa fa-key me-1"></i>Tap to grant or remove — applies straight away.</div>
                                                 <div class="d-flex flex-wrap gap-2">
-                                                    <button type="button" @class(['chip', 'ok' => $user->is_admin]) wire:click="toggleAdmin({{ $user->id }})" wire:loading.attr="disabled">
-                                                        <i @class(['fa', 'fa-check-square-o' => $user->is_admin, 'fa-square-o' => !$user->is_admin])></i>Administrator
+                                                    <button type="button" @class(['chip', 'ok' => $user->is_super_admin]) wire:click="toggleAdmin({{ $user->id }})" wire:loading.attr="disabled">
+                                                        <i @class(['fa', 'fa-check-square-o' => $user->is_super_admin, 'fa-square-o' => !$user->is_super_admin])></i>Administrator
                                                     </button>
+                                                    
                                                     @forelse ($roles as $role)
                                                         @php
                                                             $hasRole = in_array($role->id, $userRoleIds, true);
