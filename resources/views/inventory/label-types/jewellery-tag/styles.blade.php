@@ -48,6 +48,10 @@
         background: #fff;
         overflow: hidden;
         page-break-inside: avoid;
+        /* Makes the tag unbreakable. Without it Chrome's PDF paginates the
+           barcode box by its pre-transform position, which runs past the tag
+           bottom, and pushes the bars onto the next page on every tag but the last. */
+        contain: size layout paint;
         font-family: {!! BarcodeFonts::templateStack($settings) !!};
         font-weight: {{ BarcodeFonts::templateWeight($settings) }};
         color: #000;

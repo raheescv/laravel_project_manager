@@ -2,9 +2,14 @@
 
 namespace App\Livewire\Inventory\Barcode;
 
+use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\ProductUnit;
 use App\Models\Unit;
+use App\Support\BarcodeLabel;
+use App\Support\BarcodeTemplateConfiguration;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class CartPage extends Component
@@ -25,6 +30,21 @@ class CartPage extends Component
 
     public $selectedUnitId = '';
 
+    /**
+     * The label template the batch prints with. Its `cart` switches decide
+     * whether rows carry their own price, grams instead of a count, and a new
+     * row per scan.
+     */
+    public string $templateKey = '';
+
+    public string $selectedRowKey = '';
+
+    /**
+     * Console switch: scanning an item already in the cart adds a new row for
+     * it instead of raising that row's label count. Saved per tenant.
+     */
+    public bool $separateRows = false;
+
     protected $listeners = [
         'productSelected' => 'addToCart',
         // 'barcodeScanned' => 'handleBarcodeScan'
@@ -33,11 +53,63 @@ class CartPage extends Component
     public function mount()
     {
         // Initialize cart from session if exists
-        $this->cartItems = session('cart_items', []);
+        $this->cartItems = array_map(fn (array $item): array => $item + [
+            'price' => round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2),
+            'weight' => null,
+        ], session('cart_items', []));
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
+
+        $templates = $this->templates();
+        $savedTemplateKey = (string) session('barcode_cart_template', '');
+        $this->templateKey = isset($templates[$savedTemplateKey])
+            ? $savedTemplateKey
+            : BarcodeTemplateConfiguration::getConfiguration()['default_template'];
+
+        $this->separateRows = Configuration::where('key', 'barcode_cart_separate_rows')->value('value') === '1';
 
         // Set default quantity
         $this->quantity = 1;
+    }
+
+    /**
+     * @return array<string, array{name: string, type: string}>
+     */
+    #[Computed]
+    public function templates(): array
+    {
+        return collect(BarcodeTemplateConfiguration::getConfiguration()['templates'])
+            ->map(fn (array $template): array => ['name' => $template['name'], 'type' => $template['type']])
+            ->all();
+    }
+
+    /**
+     * `separate_rows` from the console switch, `weight_mode` from the sale
+     * setting "Quantity Label In Print": with Weight, every row takes its grams.
+     *
+     * @return array{separate_rows: bool, weight_mode: bool}
+     */
+    #[Computed]
+    public function cartSettings(): array
+    {
+        return [
+            'separate_rows' => $this->separateRows,
+            'weight_mode' => BarcodeLabel::usesWeight(),
+        ];
+    }
+
+    public function updatedSeparateRows(): void
+    {
+        unset($this->cartSettings);
+        Configuration::updateOrCreate(['key' => 'barcode_cart_separate_rows'], ['value' => $this->separateRows ? '1' : '0']);
+    }
+
+    public function updatedTemplateKey(): void
+    {
+        if (! isset($this->templates()[$this->templateKey])) {
+            $this->templateKey = BarcodeTemplateConfiguration::getConfiguration()['default_template'];
+        }
+
+        session(['barcode_cart_template' => $this->templateKey]);
     }
 
     private function sortCartItemsByProductId($cartItems)
@@ -275,47 +347,26 @@ class CartPage extends Component
                 return;
             }
 
-            $cartKey = 'product_unit_'.$productUnit->id;
+            $added = $this->putRow('product_unit_'.$productUnit->id, [
+                'item_type' => 'product_unit',
+                'product_unit_id' => $productUnit->id,
+                'product_id' => $productUnit->product_id,
+                'name' => $productUnit->product->name.' ('.($productUnit->subUnit->name ?? 'N/A').')',
+                'barcode' => $productUnit->barcode,
+                'size' => $productUnit->product->size,
+                'mrp' => $productUnit->product->mrp,
+                'price' => round((float) $productUnit->product->mrp * (float) $productUnit->conversion_factor, 2),
+                'image' => $productUnit->product->thumbnail,
+                'type' => $productUnit->product->type,
+                'conversion_factor' => $productUnit->conversion_factor,
+                'sub_unit_name' => $productUnit->subUnit->name ?? 'N/A',
+            ], $suppressMessage);
 
-            if (isset($this->cartItems[$cartKey])) {
-                $this->cartItems[$cartKey]['quantity'] += $this->quantity;
-            } else {
-                $this->cartItems[$cartKey] = [
-                    'item_type' => 'product_unit',
-                    'product_unit_id' => $productUnit->id,
-                    'product_id' => $productUnit->product_id,
-                    'name' => $productUnit->product->name.' ('.($productUnit->subUnit->name ?? 'N/A').')',
-                    'barcode' => $productUnit->barcode,
-                    'size' => $productUnit->product->size,
-                    'mrp' => $productUnit->product->mrp,
-                    'quantity' => $this->quantity,
-                    'image' => $productUnit->product->thumbnail,
-                    'type' => $productUnit->product->type,
-                    'conversion_factor' => $productUnit->conversion_factor,
-                    'sub_unit_name' => $productUnit->subUnit->name ?? 'N/A',
-                ];
-            }
-
-            // Update session
-            $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
-            session(['cart_items' => $this->cartItems]);
-
-            if (! $suppressMessage) {
-                $this->dispatch('success', ['message' => 'Product unit added to cart successfully.']);
-            }
-
-            $this->quantity = 1;
-            $this->selectedProductId = '';
-
-            // Clear search results after adding to cart
-            if (! $suppressMessage) {
-                $this->products = [];
-            }
+            $this->afterAdd($added, $suppressMessage, 'Product unit added to cart successfully.');
 
             return;
         }
 
-        // Handle Inventory items (existing logic)
         $inventory = Inventory::with('product')->find($itemId);
 
         if (! $inventory) {
@@ -326,41 +377,128 @@ class CartPage extends Component
             return;
         }
 
-        $cartKey = 'inventory_'.$inventory->id;
+        $added = $this->putRow('inventory_'.$inventory->id, [
+            'item_type' => 'inventory',
+            'inventory_id' => $inventory->id,
+            'product_id' => $inventory->product_id,
+            'name' => $inventory->product->name,
+            'barcode' => $inventory->barcode,
+            'size' => $inventory->product->size,
+            'mrp' => $inventory->product->mrp,
+            'price' => round((float) $inventory->product->mrp, 2),
+            'image' => $inventory->product->thumbnail,
+            'type' => $inventory->product->type,
+            'available_quantity' => $inventory->quantity,
+        ], $suppressMessage);
 
-        if (isset($this->cartItems[$cartKey])) {
-            $this->cartItems[$cartKey]['quantity'] += $this->quantity;
-        } else {
-            $this->cartItems[$cartKey] = [
-                'item_type' => 'inventory',
-                'inventory_id' => $inventory->id,
-                'product_id' => $inventory->product_id,
-                'name' => $inventory->product->name,
-                'barcode' => $inventory->barcode,
-                'size' => $inventory->product->size,
-                'mrp' => $inventory->product->mrp,
-                'quantity' => $this->quantity,
-                'image' => $inventory->product->thumbnail,
-                'type' => $inventory->product->type,
-                'available_quantity' => $inventory->quantity,
-            ];
+        $this->afterAdd($added, $suppressMessage, 'Product added to cart successfully.');
+    }
+
+    /**
+     * Put one item into the cart. With separate rows on, an item already in the
+     * cart gets a new row of its own; otherwise its row's label count goes up.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function putRow(string $itemKey, array $row, bool $suppressMessage): bool
+    {
+        $cart = $this->cartSettings();
+        $existingKey = collect($this->cartItems)->search(fn (array $item, string $key): bool => $this->itemKey($key) === $itemKey);
+
+        if ($existingKey !== false && ! $cart['separate_rows']) {
+            $this->cartItems[$existingKey]['quantity'] += $this->quantity;
+            $this->selectedRowKey = $existingKey;
+
+            return true;
         }
 
-        // Update session
-        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
-        session(['cart_items' => $this->cartItems]);
+        $rowKey = $existingKey === false ? $itemKey : $itemKey.'__'.Str::lower(Str::random(6));
+        $this->cartItems[$rowKey] = $row + [
+            'quantity' => $this->quantity,
+            'weight' => null,
+        ];
+        $this->selectedRowKey = $rowKey;
 
-        if (! $suppressMessage) {
-            $this->dispatch('success', ['message' => 'Product added to cart successfully.']);
+        return true;
+    }
+
+    /**
+     * The item a row belongs to: `inventory_12` for both `inventory_12` and its
+     * extra rows `inventory_12__ab3kq9`.
+     */
+    private function itemKey(string $rowKey): string
+    {
+        return Str::before($rowKey, '__');
+    }
+
+    private function afterAdd(bool $added, bool $suppressMessage, string $message): void
+    {
+        $this->persistCart();
+
+        if ($added && ! $suppressMessage) {
+            $this->dispatch('success', ['message' => $message]);
         }
 
         $this->quantity = 1;
         $this->selectedProductId = '';
 
-        // Clear search results after adding to cart
         if (! $suppressMessage) {
             $this->products = [];
         }
+    }
+
+    private function persistCart(): void
+    {
+        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
+        session(['cart_items' => $this->cartItems]);
+    }
+
+    /**
+     * Rows are edited in place (price, grams, count); keep each edit sane and saved.
+     */
+    public function updatedCartItems($value, $key): void
+    {
+        [$rowKey, $field] = array_pad(explode('.', (string) $key, 2), 2, null);
+
+        if (! isset($this->cartItems[$rowKey])) {
+            return;
+        }
+
+        $row = &$this->cartItems[$rowKey];
+
+        match ($field) {
+            'price' => $row['price'] = is_numeric($value) && $value >= 0
+                ? round((float) $value, 2)
+                : round((float) ($row['mrp'] ?? 0) * (float) ($row['conversion_factor'] ?? 1), 2),
+            'weight' => $row['weight'] = is_numeric($value) && $value > 0 ? round((float) $value, 3) : null,
+            'quantity' => $row['quantity'] = max(1, (int) $value),
+            default => null,
+        };
+
+        unset($row);
+        session(['cart_items' => $this->cartItems]);
+    }
+
+    public function selectRow(string $rowKey): void
+    {
+        if (isset($this->cartItems[$rowKey])) {
+            $this->selectedRowKey = $rowKey;
+        }
+    }
+
+    /**
+     * Another row for the same item, e.g. the next piece of the same design.
+     */
+    public function duplicateRow(string $rowKey): void
+    {
+        if (! isset($this->cartItems[$rowKey])) {
+            return;
+        }
+
+        $newKey = $this->itemKey($rowKey).'__'.Str::lower(Str::random(6));
+        $this->cartItems[$newKey] = array_merge($this->cartItems[$rowKey], ['weight' => null]);
+        $this->selectedRowKey = $newKey;
+        $this->persistCart();
     }
 
     public function updateQuantity($cartKey, $newQuantity)
@@ -371,22 +509,23 @@ class CartPage extends Component
             $this->cartItems[$cartKey]['quantity'] = $newQuantity;
         }
 
-        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
-        session(['cart_items' => $this->cartItems]);
-        $this->dispatch('success', ['message' => 'Cart updated successfully.']);
+        $this->persistCart();
     }
 
     public function removeFromCart($cartKey)
     {
         unset($this->cartItems[$cartKey]);
-        $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
-        session(['cart_items' => $this->cartItems]);
+        if ($this->selectedRowKey === $cartKey) {
+            $this->selectedRowKey = '';
+        }
+        $this->persistCart();
         $this->dispatch('success', ['message' => 'Product removed from cart.']);
     }
 
     public function clearCart()
     {
         $this->cartItems = [];
+        $this->selectedRowKey = '';
         session()->forget('cart_items');
         $this->dispatch('success', ['message' => 'Cart cleared successfully.']);
     }
@@ -394,6 +533,11 @@ class CartPage extends Component
     public function getTotalQuantity()
     {
         return collect($this->cartItems)->sum('quantity');
+    }
+
+    public function getTotalWeight(): float
+    {
+        return (float) collect($this->cartItems)->sum(fn (array $item): float => (float) ($item['weight'] ?? 0));
     }
 
     public function printBarcodes()
@@ -404,11 +548,23 @@ class CartPage extends Component
             return;
         }
 
-        // Store cart items in session for printing
-        session(['print_cart_items' => $this->cartItems]);
+        $cart = $this->cartSettings();
+        $printItems = $this->cartItems;
+
+        if ($cart['weight_mode']) {
+            $missing = collect($printItems)->filter(fn (array $item): bool => ! is_numeric($item['weight'] ?? null) || (float) $item['weight'] <= 0);
+            if ($missing->isNotEmpty()) {
+                $this->selectedRowKey = (string) $missing->keys()->first();
+                $this->dispatch('error', ['message' => "Enter the weight for every row ({$missing->count()} missing)."]);
+
+                return;
+            }
+        }
+
+        session(['print_cart_items' => $printItems]);
 
         // The page sends the PDF to QZ Tray, or opens it when QZ Tray isn't set up
-        $this->dispatch('label-print', url: route('inventory::barcode::cart::print'));
+        $this->dispatch('label-print', url: route('inventory::barcode::cart::print', ['template' => $this->templateKey]));
     }
 
     public function render()

@@ -41,6 +41,13 @@
     </label>
 
     <template v-if="selected === 'qty'">
+      <label class="bcx-field">
+        <span>Weight prefix</span>
+        <input v-model="field.weight_prefix" type="text" placeholder="none" @input="$emit('change')" />
+      </label>
+      <p class="bcx-note">
+        With Quantity Label In Print set to Weight, this line prints the cart row's weight with this prefix.
+      </p>
       <div class="bcx-drawer__title">Quantity Source</div>
       <label class="bcx-field">
         <span>Source</span>

@@ -181,6 +181,7 @@ class BarcodeTemplateConfiguration
         $normalized['type'] = $type;
         $normalized = self::normalizeFonts($normalized);
         $normalized = self::normalizePrintSettings($normalized);
+        $normalized = self::dropLegacyCartSettings($normalized);
 
         if ($type === 'jewellery_tag') {
             $normalized = self::normalizeJewelleryTagSettings($normalized);
@@ -241,6 +242,17 @@ class BarcodeTemplateConfiguration
             'gap' => is_numeric($gap) ? round(max(0, min(20, (float) $gap)), 1) : null,
             'flip' => filter_var($print['flip'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
+
+        return $settings;
+    }
+
+    /**
+     * Drops print cart keys an earlier build saved on templates: the row per
+     * scan switch lives on the cart console now, and grams print on `qty`.
+     */
+    protected static function dropLegacyCartSettings(array $settings): array
+    {
+        unset($settings['cart'], $settings['weight'], $settings['elements']['weight'], $settings['fields']['weight']);
 
         return $settings;
     }

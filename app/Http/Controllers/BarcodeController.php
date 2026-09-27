@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Support\BarcodeFonts;
+use App\Support\BarcodeLabel;
 use App\Support\BarcodeTemplateConfiguration;
 use App\Traits\RendersTsplLabels;
 use App\Traits\UsesBrowsershot;
@@ -156,6 +157,8 @@ class BarcodeController extends Controller
             'types' => BarcodeTemplateConfiguration::types(),
             'barcodeTypes' => $this->barcodeTypes(),
             'qtySources' => $this->qtySources(),
+            // "Qty" or "Weight", from the sale setting Quantity Label In Print.
+            'quantityCaption' => BarcodeLabel::quantityCaption(),
             'fonts' => BarcodeFonts::options(),
             'fontWeights' => BarcodeFonts::weights(),
             // Lets the designer render each font option in its own face.
@@ -169,32 +172,41 @@ class BarcodeController extends Controller
         ]);
     }
 
+    /**
+     * One label as it will print. The print cart previews a row by passing its
+     * `unit_id` (product unit rows), `price` and `weight`; the designer passes
+     * neither, and then (in weight mode) shows a sample weight so the Qty field
+     * can be placed.
+     */
     public function preview(Request $request, $id = null)
     {
-        if ($id) {
-            $inventory = Inventory::with('product')->find($id);
-        } else {
-            $inventory = Inventory::with('product')->first();
-        }
+        $inventory = $id ? Inventory::with('product')->find($id) : null;
+        $productUnit = $request->integer('unit_id') ? ProductUnit::with('product.unit')->find($request->integer('unit_id')) : null;
 
         $productId = $request->integer('product_id');
         $product = $productId ? Product::with('unit')->find($productId) : null;
+        $product ??= $productUnit?->product ?? $inventory?->product;
 
-        if (! $product && $inventory?->product) {
-            $product = $inventory->product;
+        if (! $product && ! $id) {
+            $inventory = Inventory::with('product')->first();
+            $product = $inventory?->product;
         }
 
         $product ??= Product::with('unit')->orderBy('name')->first();
         abort_unless($product, 404);
 
-        $barcode = $product->barcode ?: ($inventory->barcode ?? '');
-        $conversionFactor = 1;
+        $barcode = $productUnit?->barcode ?? ($inventory?->barcode ?: ($product->barcode ?: ''));
+        $conversionFactor = $productUnit ? (float) $productUnit->conversion_factor : 1;
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
+        $row = BarcodeLabel::rowValues($settings, [
+            'price' => $request->query('price'),
+            'weight' => $request->has('weight') ? $request->query('weight') : 4.25,
+        ]);
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
         $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
         $isPreview = true;
 
-        return view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'company_name', 'company_logo', 'isPreview'));
+        return view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'row', 'company_name', 'company_logo', 'isPreview'));
     }
 
     public function saveConfigurationTemplate(Request $request, string $templateKey): JsonResponse

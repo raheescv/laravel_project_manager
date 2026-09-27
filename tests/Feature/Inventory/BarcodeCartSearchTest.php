@@ -13,6 +13,7 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
 
     $this->inventoryBarcode = DB::table('inventories')->where('product_id', $this->world->product->id)->value('barcode');
 });
@@ -51,4 +52,31 @@ it('matches a partly typed barcode in the scanner box without listing unrelated 
         ->set('barcodeInput', 'BOX-0')
         ->assertCount('products', 1)
         ->assertSet('products.0.item_type', 'product_unit');
+});
+
+it('lists only the current branch stock', function (): void {
+    $this->world->addBranch();
+
+    expect(DB::table('inventories')->where('product_id', $this->world->product->id)->count())->toBe(2);
+
+    Livewire::test(CartPage::class)
+        ->set('searchQuery', $this->world->product->name)
+        ->assertCount('products', 1)
+        ->assertSet('products.0.barcode', $this->inventoryBarcode);
+});
+
+it('adds the current branch row when a barcode scan matches several branches', function (): void {
+    $secondBranch = $this->world->addBranch();
+    DB::table('inventories')->where('product_id', $this->world->product->id)->update(['barcode_number' => $this->inventoryBarcode]);
+    session(['branch_id' => $secondBranch->id]);
+    $branchInventoryId = DB::table('inventories')
+        ->where('product_id', $this->world->product->id)
+        ->where('branch_id', $secondBranch->id)
+        ->value('id');
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->set('barcodeInput', $this->inventoryBarcode)
+        ->call('handleBarcodeScan')
+        ->assertSet("cartItems.inventory_{$branchInventoryId}.inventory_id", $branchInventoryId);
 });

@@ -31,3 +31,11 @@ it('keeps a gap typed in the designer', function (): void {
 
     expect($print['gap'])->toBe(2.5);
 });
+
+it('keeps each jewellery tag whole so a multi-tag PDF never pushes the bars onto the next page', function (): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings([], 'jewellery_tag');
+
+    $css = view('inventory.label-types.jewellery-tag.styles', ['settings' => $settings])->render();
+
+    expect($css)->toContain('contain: size layout paint;');
+});

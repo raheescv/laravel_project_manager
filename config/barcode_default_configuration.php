@@ -157,6 +157,17 @@ return [
                     'align' => 'right',
                     'visible' => true,
                 ],
+                // Qty, or the row's grams when Quantity Label In Print is Weight;
+                // `weight_prefix` is the prefix used in that case.
+                'qty' => [
+                    'font_size' => 8,
+                    'font_family' => '',
+                    'font_weight' => 700,
+                    'align' => 'left',
+                    'visible' => false,
+                    'prefix' => 'Qty',
+                    'weight_prefix' => 'Wt',
+                ],
                 'elements' => [
                     'product_name' => [
                         'top' => 1,
@@ -199,6 +210,12 @@ return [
                         'left' => 95,
                         'width' => 85,
                         'height' => 18,
+                    ],
+                    'qty' => [
+                        'top' => 64,
+                        'left' => 2,
+                        'width' => 85,
+                        'height' => 12,
                     ],
                 ],
             ],
@@ -281,6 +298,9 @@ return [
                         'align' => 'left',
                         'bold' => false,
                         'prefix' => 'Qty',
+                        // Used instead of `prefix` when the line prints the row's
+                        // grams (Quantity Label In Print = Weight).
+                        'weight_prefix' => 'Wt',
                         'source' => 'unit',
                         'custom_text' => '1',
                     ],

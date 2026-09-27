@@ -58,6 +58,18 @@
       <input v-model.number="settings[element.key].char_limit" type="number" min="5" @input="$emit('change')" />
     </label>
 
+    <template v-if="element.key === 'qty'">
+      <label class="bcx-field">
+        <span>Prefix</span>
+        <input v-model="settings.qty.prefix" type="text" placeholder="none" @input="$emit('change')" />
+      </label>
+      <label class="bcx-field">
+        <span>Weight prefix</span>
+        <input v-model="settings.qty.weight_prefix" type="text" placeholder="none" @input="$emit('change')" />
+      </label>
+      <p class="bcx-note">Weight prefix is used when Quantity Label In Print is Weight and the row has a weight.</p>
+    </template>
+
     <template v-if="element.key === 'barcode'">
       <div class="bcx-drawer__title">Barcode</div>
       <label class="bcx-field">

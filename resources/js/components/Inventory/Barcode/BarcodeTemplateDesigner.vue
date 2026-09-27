@@ -106,6 +106,7 @@ import InspStandard from './panels/inspectors/InspStandard.vue'
 import SecJewelleryBarcode from './panels/sections/SecJewelleryBarcode.vue'
 import SecJewelleryFields from './panels/sections/SecJewelleryFields.vue'
 import SecJewellerySize from './panels/sections/SecJewellerySize.vue'
+import { applyQuantityCaption } from './panels/labels'
 import SecPrint from './panels/sections/SecPrint.vue'
 import SecProduct from './panels/sections/SecProduct.vue'
 import SecStandardElements from './panels/sections/SecStandardElements.vue'
@@ -233,6 +234,7 @@ async function loadData() {
   version.value = data.version || ''
   barcodeTypes.value = data.barcodeTypes
   qtySources.value = data.qtySources || {}
+  applyQuantityCaption(data.quantityCaption)
   fonts.value = data.fonts || {}
   fontWeights.value = data.fontWeights || {}
   installFontFaces(data.fontFaceCss)

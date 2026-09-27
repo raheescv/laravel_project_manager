@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
 
@@ -43,25 +44,79 @@ class BarcodeLabel
     }
 
     /**
+     * Whether quantities print as a weight, from the sale setting "Quantity
+     * Label In Print" (`print_quantity_label`: quantity | weight). In weight
+     * mode the print cart asks for grams per row and the Qty field prints them.
+     */
+    public static function usesWeight(): bool
+    {
+        return Configuration::where('key', 'print_quantity_label')->value('value') === 'weight';
+    }
+
+    public static function quantityCaption(): string
+    {
+        return self::usesWeight() ? 'Weight' : 'Qty';
+    }
+
+    /**
+     * The per-row values a print cart row carries onto its label, kept only
+     * where they make sense: the row's MRP always, its grams only when the
+     * quantity label is Weight.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array{price: ?float, weight: ?float}
+     */
+    public static function rowValues(array $settings, array $item): array
+    {
+        $price = $item['price'] ?? null;
+        $weight = $item['weight'] ?? null;
+
+        return [
+            'price' => is_numeric($price) ? (float) $price : null,
+            'weight' => is_numeric($weight) && (float) $weight > 0 && self::usesWeight() ? (float) $weight : null,
+        ];
+    }
+
+    /**
+     * The price a label prints: the row's own price when it has one, else the MRP.
+     *
+     * @param  array{price?: ?float, weight?: ?float}  $row
+     */
+    public static function price(Product $product, float $conversionFactor = 1, array $row = []): float
+    {
+        return $row['price'] ?? (float) $product->mrp * $conversionFactor;
+    }
+
+    public static function weightText(?float $weight): string
+    {
+        return $weight === null ? '' : number_format($weight, 3).' g';
+    }
+
+    /**
      * Rendered value for one text wing field, or '' when there is nothing to show.
+     *
+     * @param  array{price?: ?float, weight?: ?float}  $row
      */
     public static function fieldValue(
         string $key,
         array $field,
         ?Product $product,
         float $conversionFactor = 1,
-        ?Inventory $inventory = null
+        ?Inventory $inventory = null,
+        array $row = []
     ): string {
         if (! $product) {
             return '';
         }
 
+        $weight = $row['weight'] ?? null;
+
         $value = match ($key) {
             'product_name' => (string) $product->name,
             'product_name_arabic' => (string) ($product->name_arabic ?? ''),
             'size' => (string) ($product->size ?? ''),
-            'price' => number_format((float) $product->mrp * $conversionFactor, 2),
-            'qty' => self::qtyValue($field, $product, $conversionFactor, $inventory),
+            'price' => number_format(self::price($product, $conversionFactor, $row), 2),
+            'qty' => $weight === null ? self::qtyValue($field, $product, $conversionFactor, $inventory) : self::weightText($weight),
             default => '',
         };
 
@@ -75,7 +130,9 @@ class BarcodeLabel
             $value = mb_substr($value, 0, $limit);
         }
 
-        $prefix = trim((string) ($field['prefix'] ?? ''));
+        $prefix = trim((string) ($key === 'qty' && $weight !== null
+            ? ($field['weight_prefix'] ?? $field['prefix'] ?? '')
+            : ($field['prefix'] ?? '')));
 
         return $prefix === '' ? $value : $prefix.' '.$value;
     }

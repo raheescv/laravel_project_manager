@@ -171,6 +171,12 @@
             font-size: 90%;
         }
 
+        .qty {
+            font-size: {{ $settings['qty']['font_size'] ?? 8 }}px;
+            font-family: {!! BarcodeFonts::elementStack($settings, 'qty') !!};
+            font-weight: {{ BarcodeFonts::elementWeight($settings, 'qty', 700) }};
+        }
+
         .price-arabic {
             font-size: {{ $settings['price_arabic']['font_size'] ?? 14 }}px;
             font-family: {!! BarcodeFonts::elementStack($settings, 'price_arabic') !!};
@@ -199,6 +205,10 @@
         }
     </style>
 </head>
+
+@php
+    $row ??= [];
+@endphp
 
 <body class="label-stack">
     <div class="barcode-container">
@@ -251,13 +261,24 @@
 
         @if ($settings['price']['visible'] ?? true)
             <div class="barcode-element price" style="{{ getElementStyle('price', $settings) }}">
-                <span>{{ number_format($product->mrp * $conversionFactor, 2) }}</span>
+                <span>{{ number_format(\App\Support\BarcodeLabel::price($product, $conversionFactor, $row), 2) }}</span>
             </div>
         @endif
 
         @if ($settings['price_arabic']['visible'] ?? true)
             <div class="barcode-element price-arabic" style="{{ getElementStyle('price_arabic', $settings) }}">
-                <span>{{ arabicNumber($product->mrp * $conversionFactor) }}</span>
+                <span>{{ arabicNumber(\App\Support\BarcodeLabel::price($product, $conversionFactor, $row)) }}</span>
+            </div>
+        @endif
+
+        @php
+            $qtyText = ($settings['qty']['visible'] ?? false)
+                ? \App\Support\BarcodeLabel::fieldValue('qty', $settings['qty'], $product, (float) $conversionFactor, $inventory ?? null, $row)
+                : '';
+        @endphp
+        @if ($qtyText !== '')
+            <div class="barcode-element qty" style="{{ getElementStyle('qty', $settings) }}">
+                <span>{{ $qtyText }}</span>
             </div>
         @endif
     </div>

@@ -9,7 +9,6 @@ use App\Models\Tenant;
 use App\Services\TenantService;
 use App\Support\TenantCache;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -92,7 +91,7 @@ class SyncInventoryBarcodesCommand extends Command
 
                     $barcodeNumber = $product->barcode_number;
                     if (blank($barcodeNumber)) {
-                        $barcodeNumber = filled($inventory->barcode_number) ? null : $this->nextBarcode();
+                        $barcodeNumber = filled($inventory->barcode_number) ? null : generateBarcode();
                     }
 
                     if ($barcodeNumber !== null && $barcodeNumber !== $inventory->barcode_number) {
@@ -119,7 +118,7 @@ class SyncInventoryBarcodesCommand extends Command
                 $seen[$barcodeNumber] = true;
 
                 if ($needsBarcode) {
-                    $this->saveBarcode($inventory, $this->nextBarcode());
+                    $this->saveBarcode($inventory, generateBarcode());
                     $updated++;
                 }
             }
@@ -128,20 +127,14 @@ class SyncInventoryBarcodesCommand extends Command
         return $updated;
     }
 
-    /** The next barcode from the tenant counter; a dry run never consumes one. */
-    protected function nextBarcode(): string
-    {
-        return $this->option('dry-run') ? '(new)' : generateBarcode();
-    }
-
-    protected function inventoryQuery(): Builder
+    protected function inventoryQuery()
     {
         return Inventory::withoutGlobalScope(AssignedBranchScope::class)->orderBy('id');
     }
 
     protected function assignProductBarcode(Product $product): void
     {
-        $product->barcode_number = $this->nextBarcode();
+        $product->barcode_number = generateBarcode();
         if (! $this->option('dry-run')) {
             $product->save();
         }

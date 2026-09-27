@@ -25,6 +25,7 @@
             $inventory = null;
             $barcode = '';
             $conversionFactor = 1;
+            $row = \App\Support\BarcodeLabel::rowValues($settings, $item);
 
             if ($itemType === 'product_unit') {
                 $productUnit = \App\Models\ProductUnit::with('product.unit', 'subUnit')->find(

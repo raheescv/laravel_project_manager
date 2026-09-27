@@ -9,6 +9,7 @@ export const STANDARD_ELEMENTS = [
   { key: 'price', label: 'Price' },
   { key: 'price_arabic', label: 'Price Arabic' },
   { key: 'size', label: 'Size' },
+  { key: 'qty', label: 'Qty' },
 ]
 
 export const JEWELLERY_FIELD_LABELS = {
@@ -17,4 +18,14 @@ export const JEWELLERY_FIELD_LABELS = {
   qty: 'Qty',
   price: 'Price / MRP',
   size: 'Size',
+}
+
+// "Qty" or "Weight", from the sale setting Quantity Label In Print. The qty
+// field prints the cart row's weight when it is "Weight".
+export let quantityCaption = 'Qty'
+
+export function applyQuantityCaption(caption) {
+  quantityCaption = caption || 'Qty'
+  JEWELLERY_FIELD_LABELS.qty = quantityCaption
+  STANDARD_ELEMENTS.find((element) => element.key === 'qty').label = quantityCaption
 }

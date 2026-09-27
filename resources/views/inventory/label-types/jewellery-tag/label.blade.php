@@ -3,7 +3,7 @@
     three can never drift apart.
 
     Expects: $settings, $product, $barcode, $conversionFactor
-    Optional: $inventory, $isPreview
+    Optional: $inventory, $isPreview, $row (per-row price / grams, see BarcodeLabel::rowValues)
 --}}
 @php
     use App\Support\BarcodeFonts;
@@ -14,6 +14,7 @@
     $jtShowValue = (bool) ($settings['barcode']['show_value'] ?? true);
     $jtBarcodeVisible = (bool) ($settings['barcode']['visible'] ?? true);
     $jtInventory = $inventory ?? null;
+    $jtRow = $row ?? [];
     $jtFields = BarcodeLabel::orderedFields($settings);
     $jtPreview = ! empty($isPreview);
 @endphp
@@ -42,7 +43,7 @@
         class="jt-wing jt-text {{ $jtBarcodeOnLeft ? 'jt-wing--right' : 'jt-wing--left' }} {{ $jtRotateText ? 'jt-text--rotated' : '' }}">
         @foreach ($jtFields as $jtKey => $jtField)
             @php
-                $jtValue = BarcodeLabel::fieldValue($jtKey, $jtField, $product, (float) $conversionFactor, $jtInventory);
+                $jtValue = BarcodeLabel::fieldValue($jtKey, $jtField, $product, (float) $conversionFactor, $jtInventory, $jtRow);
             @endphp
             @if ($jtValue !== '')
                 <span
