@@ -88,6 +88,7 @@ class CartPage extends Component
                     });
                 }
             })
+            ->where('inventories.branch_id', session('branch_id'))
             ->where('quantity', '>', 0)
             ->limit(10)
             ->get()
@@ -239,7 +240,7 @@ class CartPage extends Component
         }
 
         // First try to find in Inventory
-        $inventory = Inventory::with('product')->where('barcode', $barcode)->first();
+        $inventory = Inventory::with('product')->where('barcode', $barcode)->where('branch_id', session('branch_id'))->first();
         if ($inventory) {
             $this->addToCart($inventory->id, false, 'inventory');
             $this->barcodeInput = '';
