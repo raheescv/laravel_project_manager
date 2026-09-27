@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Jobs\TrackVisitorJob;
+use App\Services\TenantService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,6 +57,7 @@ class TrackVisitor
     private function prepareVisitorData(Request $request, Agent $agent): array
     {
         return [
+            'tenant_id' => app(TenantService::class)->getCurrentTenantId() ?? Auth::user()?->tenant_id,
             'branch_id' => session('branch_id', 1),
             'ip_address' => $request->ip(),
             'user_agent' => substr($request->userAgent(), 0, 255),

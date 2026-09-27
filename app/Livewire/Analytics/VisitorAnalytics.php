@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Analytics;
 
-use App\Models\Branch;
 use App\Models\User;
 use App\Models\Visitor;
+use App\Support\TenantCache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -58,13 +58,11 @@ class VisitorAnalytics extends Component
     public function mount()
     {
         // Cache users and branches for 1 hour since they don't change often
-        $this->users = Cache::remember('analytics_users', 3600, function () {
+        $this->users = Cache::remember(TenantCache::key('analytics_users'), 3600, function () {
             return User::select(['id', 'name'])->get();
         });
 
-        $this->branches = Cache::remember('analytics_branches', 3600, function () {
-            return Branch::select(['id', 'name'])->get();
-        });
+        $this->branches = tenant_cache('branches', collect());
 
         $this->setDateRange($this->dateRange);
 
@@ -106,7 +104,7 @@ class VisitorAnalytics extends Component
 
     public function loadData()
     {
-        $cacheKey = "analytics_{$this->dateRange}_{$this->user_id}_{$this->branch_id}";
+        $cacheKey = TenantCache::key("analytics_{$this->dateRange}_{$this->user_id}_{$this->branch_id}");
 
         $data = Cache::remember($cacheKey, 1, function () {
             $query = Visitor::query()

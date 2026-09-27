@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Visitor extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
+        'tenant_id',
         'branch_id',
         'user_id',
         'user_name',
