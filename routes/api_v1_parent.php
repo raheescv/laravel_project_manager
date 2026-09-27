@@ -43,6 +43,10 @@ Route::prefix('v1/parent')
         Route::match(['get', 'post'], 'mpgs/return/{pun}', 'mpgsReturn')->where('pun', '[A-Za-z0-9]{1,40}')->middleware('throttle:60,1')->name('mpgs.return');
         Route::match(['get', 'post'], 'mpgs/cancel/{pun}', 'mpgsCancel')->where('pun', '[A-Za-z0-9]{1,40}')->middleware('throttle:60,1')->name('mpgs.cancel');
 
+        // The Mastercard Gateway's webhook, server to server. Authenticated by the
+        // X-Notification-Secret header; the order is still read back from the gateway.
+        Route::post('mpgs/notification', 'mpgsNotification')->middleware('throttle:120,1')->name('mpgs.notification');
+
         Route::middleware(AuthenticateParent::class)->group(function (): void {
             Route::get('me', 'me')->name('me');
             Route::post('password', 'changePassword')->middleware('throttle:10,1')->name('password.change');

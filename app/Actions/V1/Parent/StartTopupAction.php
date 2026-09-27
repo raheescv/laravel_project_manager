@@ -102,6 +102,7 @@ class StartTopupAction
                 returnUrl: $this->apiUrl($request, 'api.v1.parent.mpgs.return', ['pun' => $transaction->pun]),
                 cancelUrl: $this->apiUrl($request, 'api.v1.parent.mpgs.cancel', ['pun' => $transaction->pun]),
                 locale: $transaction->lang === 'Ar' ? 'ar' : 'en',
+                notificationUrl: $settings->receivesNotifications() ? $this->apiUrl($request, 'api.v1.parent.mpgs.notification') : null,
             );
         } catch (\Throwable $th) {
             report($th);

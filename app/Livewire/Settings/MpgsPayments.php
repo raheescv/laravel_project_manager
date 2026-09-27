@@ -41,6 +41,11 @@ class MpgsPayments extends Component
 
     public ?string $saved_password_hint = null;
 
+    /** A newly typed webhook secret. Left blank, the saved one is kept. */
+    public string $notification_secret = '';
+
+    public ?string $saved_notification_secret_hint = null;
+
     public function mount(): void
     {
         $settings = MpgsSettings::current();
@@ -52,6 +57,7 @@ class MpgsPayments extends Component
         // Most schools record both card types as the same person: start from QPay's, else whoever is setting it up.
         $this->user_id = (string) ($settings->userId ?? QPaySettings::current()->userId ?? auth()->id() ?? '');
         $this->saved_password_hint = MpgsSettings::hint($settings->apiPassword);
+        $this->saved_notification_secret_hint = MpgsSettings::hint($settings->notificationSecret);
     }
 
     public function save(): void
@@ -60,7 +66,9 @@ class MpgsPayments extends Component
 
         try {
             $password = trim($this->api_password);
-            $saved = MpgsSettings::current()->apiPassword;
+            $notificationSecret = trim($this->notification_secret);
+            $current = MpgsSettings::current();
+            $saved = $current->apiPassword;
             $url = MpgsSettings::normaliseUrl($this->gateway_url);
 
             if (! $url) {
@@ -92,7 +100,7 @@ class MpgsPayments extends Component
                 }
             }
 
-            DB::transaction(function () use ($url, $password): void {
+            DB::transaction(function () use ($url, $password, $notificationSecret): void {
                 Configuration::updateOrCreate(['key' => MpgsSettings::KEY], ['value' => json_encode([
                     'enabled' => $this->enabled,
                     'gateway_url' => $url,
@@ -104,11 +112,16 @@ class MpgsPayments extends Component
                 if ($password !== '') {
                     Configuration::updateOrCreate(['key' => MpgsSettings::PASSWORD_KEY], ['value' => MpgsSettings::encryptSecret($password)]);
                 }
+                if ($notificationSecret !== '') {
+                    Configuration::updateOrCreate(['key' => MpgsSettings::NOTIFICATION_SECRET_KEY], ['value' => MpgsSettings::encryptSecret($notificationSecret)]);
+                }
             });
 
             $this->gateway_url = $url;
             $this->api_password = '';
             $this->saved_password_hint = MpgsSettings::hint($password !== '' ? $password : $saved);
+            $this->notification_secret = '';
+            $this->saved_notification_secret_hint = MpgsSettings::hint($notificationSecret !== '' ? $notificationSecret : $current->notificationSecret);
             $this->dispatch('success', ['message' => 'Credit card settings saved']);
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
@@ -148,6 +161,7 @@ class MpgsPayments extends Component
             'paymentAccounts' => $this->paymentAccounts(),
             'users' => User::query()->where('is_active', 1)->orderBy('name')->get(['id', 'name']),
             'isTest' => str_starts_with(strtoupper(trim($this->merchant_id)), 'TEST'),
+            'notificationUrl' => route('api.v1.parent.mpgs.notification'),
         ]);
     }
 

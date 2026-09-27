@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Mpgs\HandleNotificationAction as MpgsHandleNotificationAction;
 use App\Actions\Mpgs\HandleReturnAction as MpgsHandleReturnAction;
 use App\Actions\Parent\FindStudentAction;
 use App\Actions\Parent\GetBillAction;
@@ -460,6 +461,26 @@ class ParentPortalController extends Controller
     public function mpgsCancel(string $pun): Response
     {
         return $this->backFromCardPage($pun, cancelled: true);
+    }
+
+    /**
+     * Credit card webhook.
+     *
+     * The Mastercard Gateway posts a checkout's outcome here, server to server.
+     * Answered 2xx once handled (or not ours), 401 for a wrong secret and 503 when
+     * the order could not be read back, so the gateway sends it again.
+     */
+    public function mpgsNotification(Request $request): JsonResponse
+    {
+        try {
+            $response = (new MpgsHandleNotificationAction())->execute($request->header('X-Notification-Secret'), $request->json()->all());
+        } catch (\Throwable $e) {
+            return $this->failure($e, 'Notification could not be processed');
+        }
+
+        return $response['success']
+            ? $this->sendSuccess(null, $response['message'])
+            : $this->sendError($response['message'], [], $response['status']);
     }
 
     private function backFromCardPage(string $pun, bool $cancelled, bool $final = false): Response

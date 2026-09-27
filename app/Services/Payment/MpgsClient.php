@@ -36,6 +36,8 @@ class MpgsClient
 
     public const LOG_REFUND = 'MPGS Refund';
 
+    public const LOG_NOTIFICATION = 'MPGS Notification';
+
     /** Order statuses meaning the money was taken and is still with the merchant. */
     public const PAID = ['CAPTURED'];
 
@@ -60,11 +62,13 @@ class MpgsClient
     }
 
     /**
-     * INITIATE_CHECKOUT for a PURCHASE (authorise + capture in one).
+     * INITIATE_CHECKOUT for a PURCHASE (authorise + capture in one). With a
+     * [$notificationUrl] the gateway also POSTs the outcome there (webhook), so a
+     * payment is settled even when the parent's browser never comes back.
      *
      * @return array{session_id: string, success_indicator: ?string}
      */
-    public function initiateCheckout(string $orderId, float $amount, string $description, string $returnUrl, string $cancelUrl, string $locale = 'en'): array
+    public function initiateCheckout(string $orderId, float $amount, string $description, string $returnUrl, string $cancelUrl, string $locale = 'en', ?string $notificationUrl = null): array
     {
         $body = [
             'apiOperation' => 'INITIATE_CHECKOUT',
@@ -89,6 +93,9 @@ class MpgsClient
                 'description' => mb_substr($description, 0, 127),
             ],
         ];
+        if ($notificationUrl) {
+            $body['order']['notificationUrl'] = $notificationUrl;
+        }
 
         $response = $this->send('POST', '/session', $body, self::LOG_CHECKOUT);
         if (($response['result'] ?? null) !== 'SUCCESS' || blank($response['session']['id'] ?? null)) {

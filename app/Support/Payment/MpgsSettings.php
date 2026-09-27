@@ -24,6 +24,8 @@ final class MpgsSettings
 
     public const PASSWORD_KEY = 'mpgs_api_password';
 
+    public const NOTIFICATION_SECRET_KEY = 'mpgs_notification_secret';
+
     /** REST API version. Hosted Checkout's INITIATE_CHECKOUT needs 63+. */
     public const API_VERSION = 100;
 
@@ -40,11 +42,13 @@ final class MpgsSettings
         public readonly ?int $paymentAccountId,
         /** User top-up journals are recorded under; their default branch books the journal. */
         public readonly ?int $userId,
+        /** Merchant Administration → Admin → Webhook Notifications; the gateway sends it with every notification. */
+        public readonly ?string $notificationSecret = null,
     ) {}
 
     public static function current(): self
     {
-        $values = Configuration::whereIn('key', [self::KEY, self::PASSWORD_KEY])->pluck('value', 'key');
+        $values = Configuration::whereIn('key', [self::KEY, self::PASSWORD_KEY, self::NOTIFICATION_SECRET_KEY])->pluck('value', 'key');
         $config = json_decode((string) ($values[self::KEY] ?? ''), true) ?: [];
 
         return new self(
@@ -55,6 +59,7 @@ final class MpgsSettings
             merchantName: filled($config['merchant_name'] ?? null) ? (string) $config['merchant_name'] : null,
             paymentAccountId: self::id($config['payment_account_id'] ?? null),
             userId: self::id($config['user_id'] ?? null),
+            notificationSecret: self::decrypt($values[self::NOTIFICATION_SECRET_KEY] ?? null),
         );
     }
 
@@ -62,6 +67,18 @@ final class MpgsSettings
     public function isReady(): bool
     {
         return $this->enabled && $this->merchantId && $this->apiPassword && $this->merchantName && $this->paymentAccountId && $this->userId;
+    }
+
+    /** The school saved the webhook secret, so each checkout asks the gateway to notify us. */
+    public function receivesNotifications(): bool
+    {
+        return filled($this->notificationSecret);
+    }
+
+    /** The secret a notification arrived with is the saved one. */
+    public function isNotificationSecret(?string $secret): bool
+    {
+        return $this->receivesNotifications() && is_string($secret) && hash_equals((string) $this->notificationSecret, $secret);
     }
 
     /** The bank's simulator: no real card is charged. */

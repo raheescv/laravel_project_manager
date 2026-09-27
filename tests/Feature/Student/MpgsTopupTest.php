@@ -470,3 +470,107 @@ it('starts "Record top-ups as" from the QPay user and names the field that is mi
         ->call('save')
         ->assertDispatched('error', fn ($name, $params) => $params[0]['message'] === 'Choose a user under "Record top-ups as" to switch on credit card top-ups.');
 });
+
+const MPGS_TEST_NOTIFICATION_SECRET = 'F3A1C9E0B7D24E6A8C5F1B3D7E9A2C4F';
+
+function mpgsReceiveNotifications($test): void
+{
+    Configuration::updateOrCreate(['tenant_id' => $test->world->tenant->id, 'key' => MpgsSettings::NOTIFICATION_SECRET_KEY], ['value' => MpgsSettings::encryptSecret(MPGS_TEST_NOTIFICATION_SECRET)]);
+}
+
+/** The gateway's webhook POST for an order, as it sends it. */
+function mpgsNotify($test, QpayTransaction|string $order, ?string $secret = MPGS_TEST_NOTIFICATION_SECRET)
+{
+    $orderId = $order instanceof QpayTransaction ? $order->pun : $order;
+
+    return $test->withHeaders(array_filter(['X-Notification-Secret' => $secret, 'X-Notification-Id' => 'NTF-1', 'X-Notification-Attempt' => '1']))
+        ->postJson($test->world->url('/api/v1/parent/mpgs/notification'), [
+            'order' => ['id' => $orderId, 'status' => 'CAPTURED', 'amount' => 100, 'currency' => 'QAR'],
+            'result' => 'SUCCESS',
+            'transaction' => ['id' => '1', 'type' => 'PAYMENT'],
+        ]);
+}
+
+it('asks the gateway for a webhook only once the school saved the notification secret', function (): void {
+    mpgsAnswer($this, ['result' => 'SUCCESS', 'session' => ['id' => 'SESSION0002345678901234567'], 'successIndicator' => 'x'], 201);
+    $start = fn () => $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['amount' => 50, 'method' => 'credit'])
+        ->assertCreated();
+
+    $start();
+    Http::assertSent(fn (Request $request) => ($request->data()['apiOperation'] ?? null) === 'INITIATE_CHECKOUT' && ! isset($request->data()['order']['notificationUrl']));
+
+    mpgsReceiveNotifications($this);
+    QpayTransaction::query()->update(['status' => 'cancelled']);
+    $start();
+    Http::assertSent(fn (Request $request) => str_ends_with((string) ($request->data()['order']['notificationUrl'] ?? ''), '/api/v1/parent/mpgs/notification'));
+});
+
+it('credits a paid top-up from the webhook when the parent never came back', function (): void {
+    mpgsReceiveNotifications($this);
+    $transaction = mpgsStart($this, 100);
+    mpgsAnswer($this, mpgsOrder($transaction));
+
+    mpgsNotify($this, $transaction)->assertOk()->assertJsonPath('message', 'Processed');
+    mpgsNotify($this, $transaction)->assertOk();
+    mpgsBack($this, $transaction);
+
+    expect($transaction->refresh()->status)->toBe('success')
+        ->and(mpgsBalance($this))->toBe(100.0)
+        ->and(ApiLog::where('service_name', MpgsClient::LOG_NOTIFICATION)->count())->toBe(2);
+});
+
+it('never believes the webhook body: it only credits what Retrieve Order confirms', function (): void {
+    mpgsReceiveNotifications($this);
+    $transaction = mpgsStart($this, 100);
+    mpgsUnknownOrder($this);
+
+    mpgsNotify($this, $transaction)->assertOk();
+
+    expect($transaction->refresh()->status)->toBe('pending')
+        ->and(mpgsBalance($this))->toBe(0.0);
+});
+
+it('rejects a webhook without the saved secret', function (): void {
+    $transaction = mpgsStart($this, 100);
+    mpgsAnswer($this, mpgsOrder($transaction));
+
+    // No secret saved yet: nothing is accepted.
+    mpgsNotify($this, $transaction)->assertUnauthorized();
+
+    mpgsReceiveNotifications($this);
+    mpgsNotify($this, $transaction, 'wrong-secret')->assertUnauthorized();
+    mpgsNotify($this, $transaction, null)->assertUnauthorized();
+
+    expect($transaction->refresh()->status)->toBe('pending')
+        ->and(mpgsBalance($this))->toBe(0.0);
+    Http::assertNotSent(fn (Request $request) => $request->method() === 'GET');
+});
+
+it('acknowledges a webhook for an order that is not ours, and asks for a resend when the gateway is down', function (): void {
+    mpgsReceiveNotifications($this);
+
+    mpgsNotify($this, 'SOMEONEELSE123')->assertOk()->assertJsonPath('message', 'Ignored');
+
+    $transaction = mpgsStart($this, 100);
+    // The beforeEach answer: the gateway errors on Retrieve Order.
+    mpgsNotify($this, $transaction)->assertStatus(503);
+    expect($transaction->refresh()->status)->toBe('pending');
+});
+
+it('saves the webhook secret encrypted and keeps it when left blank', function (): void {
+    mpgsGrantSettings($this);
+
+    Livewire::test(MpgsPayments::class)
+        ->assertSet('saved_notification_secret_hint', null)
+        ->set('notification_secret', MPGS_TEST_NOTIFICATION_SECRET)
+        ->call('save')
+        ->assertDispatched('success')
+        ->assertSet('notification_secret', '')
+        ->assertSet('saved_notification_secret_hint', '…2C4F');
+
+    Livewire::test(MpgsPayments::class)->call('save')->assertSet('saved_notification_secret_hint', '…2C4F');
+
+    expect(MpgsSettings::current()->notificationSecret)->toBe(MPGS_TEST_NOTIFICATION_SECRET)
+        ->and(Configuration::where('key', MpgsSettings::NOTIFICATION_SECRET_KEY)->value('value'))->not->toContain(MPGS_TEST_NOTIFICATION_SECRET);
+});

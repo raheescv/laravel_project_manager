@@ -38,6 +38,17 @@
                     <div class="form-text">Stored encrypted. If you generate a new password in Merchant Administration, paste it here straight away.</div>
                 </div>
                 <div class="col-md-6">
+                    <label class="form-label fw-medium small mb-1" for="mp_notification_secret">Webhook notification secret <span class="fw-normal text-body-secondary">(optional)</span></label>
+                    <input type="password" id="mp_notification_secret" class="form-control form-control-sm" wire:model="notification_secret" autocomplete="new-password" spellcheck="false"
+                        placeholder="{{ $saved_notification_secret_hint ? 'Saved (' . $saved_notification_secret_hint . ') — leave blank to keep it' : 'From Merchant Administration → Admin → Webhook Notifications' }}">
+                    <div class="form-text">Once saved, each payment asks the gateway to confirm it to us directly, so a top-up is credited even if the parent closes the page before coming back.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-medium small mb-1" for="mp_notification_url">Webhook address</label>
+                    <input type="text" id="mp_notification_url" class="form-control form-control-sm" value="{{ $notificationUrl }}" readonly onclick="this.select()">
+                    <div class="form-text">Sent with every payment. Give it to the bank if they ask for the notification URL.</div>
+                </div>
+                <div class="col-md-6">
                     <label class="form-label fw-medium small mb-1" for="mp_payment_account_id">Credit card top-ups are paid into</label>
                     <select id="mp_payment_account_id" class="form-select form-select-sm" wire:model="payment_account_id">
                         <option value="">Choose a payment method…</option>
