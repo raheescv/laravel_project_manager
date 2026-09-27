@@ -285,6 +285,15 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="hiw-card d-flex gap-3 h-100">
+                                        <span class="hiw-icon text-danger bg-danger bg-opacity-10"><i class="fa fa-picture-o"></i></span>
+                                        <div>
+                                            <div class="fw-bold small mb-1">Images From Links</div>
+                                            <p class="text-muted small mb-0">Add an <strong>Image</strong> column with one or more image links (comma separated). Dropbox &amp; Google Drive share links work too.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

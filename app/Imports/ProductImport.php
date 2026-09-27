@@ -6,8 +6,10 @@ use App\Actions\Product\Inventory\UpdateAction as InventoryUpdateAction;
 use App\Actions\Product\UpdateAction as ProductUpdateAction;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
+use App\Jobs\Product\ImportProductImagesFromUrlsJob;
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Services\ProductImageUrlImporter;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -160,6 +162,9 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             return;
         }
 
+        $imageUrls = app(ProductImageUrlImporter::class)->parseUrls($productRow['image'] ?? null);
+        unset($productRow['image']);
+
         $data = Product::constructData($productRow, $this->userId);
         $data['type'] = $this->defaultType;
 
@@ -173,12 +178,14 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
             }
 
             $this->updateExistingProduct($existing, $data, $productRow, $quantity);
+            $this->queueImageDownloads($existing->id, $imageUrls);
 
             return;
         }
 
         validationHelper(Product::rules($data), $data, $this->moduleLabel);
         $model = $this->createOrRestoreProduct($data);
+        $this->queueImageDownloads($model->id, $imageUrls);
 
         if ($this->defaultType !== 'service') {
             Inventory::selfCreateByProduct($model, $this->userId, $quantity, $this->branchId);
@@ -221,6 +228,18 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         if (! $inventoryResponse['success']) {
             throw new Exception($inventoryResponse['message'], 1);
         }
+    }
+
+    /**
+     * @param  array<int, string>  $imageUrls
+     */
+    private function queueImageDownloads(int $productId, array $imageUrls): void
+    {
+        if (empty($imageUrls)) {
+            return;
+        }
+
+        ImportProductImagesFromUrlsJob::dispatch($productId, $imageUrls, $this->tenantId);
     }
 
     private function createOrRestoreProduct(array $data): Product

@@ -39,6 +39,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
                 'plu' => '001',
                 'stock' => '50',
                 'upload_type' => 'new',
+                'image' => 'https://example.com/images/prd001-front.jpg, https://example.com/images/prd001-back.jpg',
             ],
             [
                 'name' => 'Sample Product Update',
@@ -69,6 +70,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
                 'plu' => '001',
                 'stock' => '50',
                 'upload_type' => 'update',
+                'image' => 'https://example.com/images/prd001-front.jpg',
             ],
         ];
     }
@@ -104,6 +106,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
             'plu',
             'stock',
             'upload_type',
+            'image',
         ];
     }
 }

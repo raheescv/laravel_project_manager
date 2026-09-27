@@ -81,6 +81,7 @@ class Import extends Component
         'location' => 'Location',
         'reorder_level' => 'Reorder Level',
         'plu' => 'PLU',
+        'image' => 'Image URL(s)',
     ];
 
     /**
@@ -119,6 +120,7 @@ class Import extends Component
             'reorder_level' => ['reorder_level', 'reorderlevel', 'reorder level'],
             'plu' => ['plu'],
             'status' => ['status', 'active', 'inactive'],
+            'image' => ['image', 'images', 'image_url', 'imageurl', 'image url', 'image_urls', 'photo', 'picture', 'thumbnail'],
         ];
     }
 
