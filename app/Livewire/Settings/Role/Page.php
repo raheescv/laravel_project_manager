@@ -4,9 +4,9 @@ namespace App\Livewire\Settings\Role;
 
 use App\Actions\Settings\Role\CreateAction;
 use App\Actions\Settings\Role\UpdateAction;
+use App\Models\Role;
 use Faker\Factory;
 use Livewire\Component;
-use Spatie\Permission\Models\Role;
 
 class Page extends Component
 {
@@ -44,7 +44,7 @@ class Page extends Component
                 'name' => $name,
             ];
         } else {
-            $role = Role::find($this->table_id);
+            $role = Role::forCurrentTenant()->find($this->table_id);
             $this->roles = $role->toArray();
         }
     }

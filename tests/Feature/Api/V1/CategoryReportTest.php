@@ -199,7 +199,7 @@ it('scopes a non-admin employee to the lines they sold', function (): void {
         'is_admin' => 0,
     ]);
     foreach (['report.sale item', 'report.sales overview'] as $name) {
-        $employee->givePermissionTo(Permission::where('tenant_id', $this->world->tenant->id)->where('name', $name)->first());
+        $employee->givePermissionTo(Permission::where('name', $name)->first());
     }
 
     ($this->sell)($employee, [[

@@ -30,7 +30,7 @@ beforeEach(function (): void {
             Permission::firstOrCreate(['name' => "{$group}.{$action}", 'guard_name' => 'web']);
         }
     }
-    $this->role = Role::create(['name' => 'School Admin '.uniqid(), 'guard_name' => 'web']);
+    $this->role = Role::create(['tenant_id' => $this->world->tenant->id, 'name' => 'School Admin '.uniqid(), 'guard_name' => 'web']);
 });
 
 /** The ability names a role editor can tick right now. */
@@ -72,8 +72,6 @@ it('creates the report abilities when permissions are seeded', function (): void
 
     (new PermissionSeeder())->run();
 
-    // The seeder writes tenant 1 (see PermissionSeeder); that is the tenant a
-    // fresh install rolls out to.
-    expect(Permission::withoutGlobalScopes()->where('tenant_id', 1)->pluck('name'))
+    expect(Permission::pluck('name'))
         ->toContain('report.student wallet', 'report.student recharge', 'student topup.create');
 });

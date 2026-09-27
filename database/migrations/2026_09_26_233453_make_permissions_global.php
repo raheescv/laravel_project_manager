@@ -6,11 +6,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Roles and permissions are one shared catalogue for every tenant; only a
- * user's role assignment is per tenant (users carry tenant_id). Each tenant
- * used to get its own copy of every row, so the copies are folded into the
- * lowest id per name — every role and user link is repointed first — and
- * the tenant_id column goes.
+ * Permissions are one shared catalogue for every tenant; roles stay per
+ * tenant. Each tenant used to get its own copy of every permission, so the
+ * copies are folded into the lowest id per name — every role and user link
+ * is repointed first — and permissions.tenant_id goes.
  */
 return new class() extends Migration
 {
@@ -22,31 +21,20 @@ return new class() extends Migration
             [$tables['role_has_permissions'], 'permission_id', ['role_id']],
             [$tables['model_has_permissions'], 'permission_id', ['model_type', 'model_id']],
         ]);
-        $this->fold($tables['roles'], [
-            [$tables['role_has_permissions'], 'role_id', ['permission_id']],
-            [$tables['model_has_roles'], 'role_id', ['model_type', 'model_id']],
-        ]);
-
-        foreach ([$tables['permissions'], $tables['roles']] as $table) {
-            $this->dropTenantColumn($table);
-        }
+        $this->dropTenantColumn($tables['permissions']);
 
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function down(): void
     {
-        $tables = config('permission.table_names');
-
-        foreach ([$tables['permissions'], $tables['roles']] as $table) {
-            Schema::table($table, function (Blueprint $blueprint): void {
-                $blueprint->unsignedBigInteger('tenant_id')->default(1)->after('id');
-                $blueprint->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-                $blueprint->index('tenant_id');
-                $blueprint->dropUnique(['name', 'guard_name']);
-                $blueprint->unique(['tenant_id', 'name', 'guard_name']);
-            });
-        }
+        Schema::table(config('permission.table_names.permissions'), function (Blueprint $blueprint): void {
+            $blueprint->unsignedBigInteger('tenant_id')->default(1)->after('id');
+            $blueprint->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $blueprint->index('tenant_id');
+            $blueprint->dropUnique(['name', 'guard_name']);
+            $blueprint->unique(['tenant_id', 'name', 'guard_name']);
+        });
     }
 
     /**

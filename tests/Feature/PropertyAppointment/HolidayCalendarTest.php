@@ -50,7 +50,7 @@ function hcGrant(User $user, string $ability): void
 {
     $user->givePermissionTo(
         Spatie\Permission\Models\Permission::firstOrCreate(
-            ['name' => $ability, 'guard_name' => 'web', 'tenant_id' => $user->tenant_id]
+            ['name' => $ability, 'guard_name' => 'web']
         )
     );
 }

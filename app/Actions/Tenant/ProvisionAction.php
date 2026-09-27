@@ -62,7 +62,7 @@ class ProvisionAction
             $steps = DB::transaction(function () use ($tenant, $admin, $system): array {
                 $steps = [];
                 $steps[] = $this->step('permissions', 'Permissions', fn () => Permission::count(), fn () => $this->runSeeder(PermissionSeeder::class));
-                $steps[] = $this->step('role', 'Admin role', fn () => $this->adminRolePermissionCount(), fn () => $this->ensureAdminRole());
+                $steps[] = $this->step('role', 'Admin role', fn () => $this->adminRolePermissionCount($tenant->id), fn () => $this->grantAdminRole($tenant->id));
                 $steps[] = $this->step('branch', 'Main branch', fn () => Branch::withTenant($tenant->id)->count(), fn () => $this->ensureBranch($tenant->id));
                 $steps[] = $this->step('accounts', 'Chart of accounts', fn () => Account::withTenant($tenant->id)->count(), fn () => $this->runSeeder(AccountSeeder::class, $tenant->id));
                 $steps[] = $this->step('units', 'Units', fn () => Unit::withTenant($tenant->id)->count(), fn () => $this->runSeeder(UnitSeeder::class, $tenant->id));
@@ -132,21 +132,24 @@ class ProvisionAction
     }
 
     /**
-     * Roles are shared by every tenant, so provisioning never widens an Admin
-     * role that already exists — only a brand-new one is filled with every
-     * permission.
+     * Roles are per tenant (roles.tenant_id) while permissions are one shared
+     * catalogue, so this tenant gets its own Admin role holding every
+     * permission. Given, never synced: a role an earlier run or the tenant
+     * itself extended keeps what it has.
      */
-    private function ensureAdminRole(): void
+    private function grantAdminRole(int $tenantId): void
     {
-        $role = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
-        if ($role->wasRecentlyCreated) {
-            $role->givePermissionTo(Permission::all());
-        }
+        $this->adminRole($tenantId)->givePermissionTo(Permission::all());
     }
 
-    private function adminRolePermissionCount(): int
+    private function adminRole(int $tenantId): Role
     {
-        $role = Role::where('name', 'Admin')->where('guard_name', 'web')->first();
+        return Role::firstOrCreate(['tenant_id' => $tenantId, 'name' => 'Admin', 'guard_name' => 'web']);
+    }
+
+    private function adminRolePermissionCount(int $tenantId): int
+    {
+        $role = Role::where('tenant_id', $tenantId)->where('name', 'Admin')->where('guard_name', 'web')->first();
 
         return $role ? $role->permissions()->count() : 0;
     }
@@ -220,7 +223,7 @@ class ProvisionAction
         }
 
         $this->markAdmin($user);
-        $user->assignRole(Role::where('name', 'Admin')->where('guard_name', 'web')->firstOrFail());
+        $user->assignRole($this->adminRole($tenantId));
 
         if ($branchId) {
             (new BranchAction())->execute($user->id, [$branchId], BranchAction::MODE_APPEND, $user->default_branch_id ?: $branchId);

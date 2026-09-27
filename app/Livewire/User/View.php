@@ -4,13 +4,13 @@ namespace App\Livewire\User;
 
 use App\Actions\User\BranchAction;
 use App\Models\Branch;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\ImpersonationService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Spatie\Permission\Models\Role;
 
 class View extends Component
 {
@@ -133,7 +133,7 @@ class View extends Component
 
     public function render()
     {
-        $roles = Role::pluck('name', 'name')->toArray();
+        $roles = Role::forCurrentTenant()->pluck('name', 'name')->toArray();
 
         return view('livewire.user.view', compact('roles'));
     }

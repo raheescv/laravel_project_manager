@@ -3,10 +3,10 @@
 namespace App\Livewire\Settings\Role;
 
 use App\Actions\Settings\Role\DeleteAction;
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Role;
 
 class Table extends Component
 {
@@ -72,7 +72,7 @@ class Table extends Component
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selected = Role::latest()->limit(2000)->pluck('id')->toArray();
+            $this->selected = Role::forCurrentTenant()->latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
         }
@@ -90,7 +90,7 @@ class Table extends Component
 
     public function render()
     {
-        $data = Role::orderBy($this->sortField, $this->sortDirection)
+        $data = Role::forCurrentTenant()->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%");
             })

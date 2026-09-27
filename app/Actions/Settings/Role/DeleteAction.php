@@ -2,14 +2,14 @@
 
 namespace App\Actions\Settings\Role;
 
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 
 class DeleteAction
 {
     public function execute($id)
     {
         try {
-            $model = Role::find($id);
+            $model = Role::forCurrentTenant()->find($id);
             if (! $model) {
                 throw new \Exception("Role not found with the specified ID: $id.", 1);
             }

@@ -3,13 +3,13 @@
 namespace App\Livewire\Settings\Role;
 
 use App\Models\Configuration;
+use App\Models\Role;
 use App\Support\ModuleAccess;
 use Database\Seeders\PermissionSeeder;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class Permissions extends Component
 {
@@ -38,7 +38,7 @@ class Permissions extends Component
     public function mount($role_id)
     {
         $this->role_id = $role_id;
-        $this->role = Role::find($role_id);
+        $this->role = Role::forCurrentTenant()->findOrFail($role_id);
         $assignedIds = $this->role->permissions()->pluck('id')->toArray();
         $this->assigned = $assignedIds;
         $this->selected = array_fill_keys($assignedIds, true);

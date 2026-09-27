@@ -24,7 +24,6 @@ beforeEach(function (): void {
             $this->world->user->givePermissionTo(Permission::firstOrCreate([
                 'name' => $name,
                 'guard_name' => 'web',
-                'tenant_id' => $this->world->tenant->id,
             ]));
         }
         $this->actingAs($this->world->user->fresh());

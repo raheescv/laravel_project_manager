@@ -26,7 +26,6 @@ function leadBoardGrant(string $action): void
     $permission = config('permission.models.permission');
 
     test()->world->user->givePermissionTo($permission::firstOrCreate([
-        'tenant_id' => test()->world->tenant->id,
         'name' => "property lead.{$action}",
         'guard_name' => 'web',
     ]));

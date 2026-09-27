@@ -7,13 +7,13 @@ use App\Actions\User\DeleteAction;
 use App\Exports\UserExport;
 use App\Jobs\Export\ExportUserJob;
 use App\Models\Branch;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
-use Spatie\Permission\Models\Role;
 
 class Table extends Component
 {
@@ -195,7 +195,7 @@ class Table extends Component
             ])
             ->paginate($this->limit);
 
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::forCurrentTenant()->orderBy('name')->get();
 
         return view('livewire.user.employee.table', [
             'data' => $data,

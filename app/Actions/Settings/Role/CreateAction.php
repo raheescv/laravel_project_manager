@@ -2,7 +2,8 @@
 
 namespace App\Actions\Settings\Role;
 
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
+use App\Services\TenantService;
 
 class CreateAction
 {
@@ -10,6 +11,7 @@ class CreateAction
     {
         try {
             $data['name'] = trim($data['name']);
+            $data['tenant_id'] ??= app(TenantService::class)->getCurrentTenantId() ?? 1;
             $model = Role::create($data);
             $return['success'] = true;
             $return['message'] = 'Successfully Created Role';

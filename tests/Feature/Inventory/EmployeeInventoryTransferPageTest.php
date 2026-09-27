@@ -33,7 +33,6 @@ beforeEach(function (): void {
 
     $permission = config('permission.models.permission');
     $this->world->user->givePermissionTo($permission::firstOrCreate([
-        'tenant_id' => $this->world->tenant->id,
         'name' => 'inventory.transfer',
         'guard_name' => 'web',
     ]));

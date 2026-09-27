@@ -4,12 +4,12 @@ namespace App\Livewire\User;
 
 use App\Actions\User\CreateAction;
 use App\Actions\User\UpdateAction;
+use App\Models\Role;
 use App\Models\User;
 use App\Traits\OptimizesUploadedImage;
 use Faker\Factory;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Spatie\Permission\Models\Role;
 
 class Page extends Component
 {
@@ -203,7 +203,7 @@ class Page extends Component
 
     public function render()
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::forCurrentTenant()->orderBy('name')->get();
 
         return view('livewire.user.page', [
             'roles' => $roles,

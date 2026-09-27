@@ -3,11 +3,10 @@
 namespace App\Livewire\User;
 
 use App\Models\Designation;
+use App\Models\Role;
 use App\Models\User;
-use App\Services\TenantService;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Role;
 
 class Table extends Component
 {
@@ -171,7 +170,7 @@ class Table extends Component
 
         return view('livewire.user.table', [
             'data' => $data,
-            'roles' => Role::query()
+            'roles' => Role::forCurrentTenant()
                 ->orderBy('name')
                 ->get(['id', 'name']),
             'designations' => Designation::orderBy('order_no')->orderBy('name')->get(['id', 'name']),
