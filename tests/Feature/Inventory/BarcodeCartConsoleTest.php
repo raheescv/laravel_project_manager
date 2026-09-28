@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\BarcodeController;
 use App\Livewire\Inventory\Barcode\CartPage;
 use App\Models\Configuration;
 use App\Support\BarcodeLabel;
 use App\Support\BarcodeTemplateConfiguration;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\PosWorld;
@@ -186,6 +188,55 @@ it('follows Quantity Label In Print for the qty caption', function (): void {
 
     expect(BarcodeLabel::quantityCaption())->toBe('Weight')
         ->and(BarcodeLabel::rowValues([], ['price' => '10', 'weight' => '1.5']))->toBe(['price' => 10.0, 'weight' => 1.5]);
+});
+
+it('shows each cart row with its product category', function (): void {
+    ($this->useTemplate)('standard');
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId);
+
+    expect($component->get("cartItems.inventory_{$this->inventoryId}.category_name"))->toBe('General');
+    $component->assertSeeHtml('<span class="bcx-cart__category">General</span>');
+});
+
+it('fills in the category for cart rows saved before it was carried', function (): void {
+    session(['cart_items' => [
+        "inventory_{$this->inventoryId}" => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'product_id' => $this->world->product->id, 'name' => 'Old row', 'barcode' => $this->barcode, 'mrp' => 50, 'quantity' => 1],
+    ]]);
+
+    expect(Livewire::test(CartPage::class)->get("cartItems.inventory_{$this->inventoryId}.category_name"))->toBe('General');
+});
+
+it('follows Item Label In Print for the name line on the label', function (): void {
+    $product = $this->world->product;
+    $render = fn (): string => view('inventory.barcode-cart-print', [
+        'settings' => BarcodeTemplateConfiguration::normalizeSettings([], 'jewellery_tag'),
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => ['a' => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 1, 'price' => 50]],
+    ])->render();
+
+    expect(BarcodeLabel::itemName($product))->toBe($product->name)
+        ->and($render())->toContain($product->name);
+
+    Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => 'category']);
+
+    expect(BarcodeLabel::itemName($product))->toBe('General')
+        ->and(BarcodeLabel::itemNameArabic($product))->toBe('')
+        ->and($render())->toContain('>General</span>')->toContain('jt-line--wrap')->not->toContain($product->name);
+});
+
+it('previews the category name in the template designer when Item Label In Print is Category', function (): void {
+    ($this->useTemplate)('jewellery_tag');
+    Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => 'category']);
+
+    $html = app(BarcodeController::class)
+        ->preview(Request::create('/', 'GET', ['template' => 'shop', 'product_id' => $this->world->product->id]))
+        ->render();
+
+    expect($html)->toContain('>General</span>')->not->toContain($this->world->product->name);
 });
 
 it('renders the console with weight and MRP columns in weight mode', function (): void {

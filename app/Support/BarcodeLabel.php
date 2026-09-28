@@ -53,6 +53,40 @@ class BarcodeLabel
         return Configuration::where('key', 'print_quantity_label')->value('value') === 'weight';
     }
 
+    /**
+     * Whether the name lines print the product's main category instead of its
+     * own name, from the sale setting "Item Label In Print" (`print_item_label`:
+     * product | category).
+     */
+    public static function usesCategoryName(): bool
+    {
+        return Configuration::where('key', 'print_item_label')->value('value') === 'category';
+    }
+
+    /**
+     * The name a label prints: the main category's name in category mode, when
+     * the product has one, else the product's own name.
+     */
+    public static function itemName(Product $product): string
+    {
+        $category = self::usesCategoryName() ? $product->mainCategory : null;
+
+        return (string) ($category?->name ?: $product->name);
+    }
+
+    /**
+     * Arabic counterpart of itemName(); in category mode it never falls back to
+     * the product's Arabic name when the category has none.
+     */
+    public static function itemNameArabic(Product $product): string
+    {
+        if (self::usesCategoryName() && $product->mainCategory) {
+            return (string) ($product->mainCategory->name_arabic ?? '');
+        }
+
+        return (string) ($product->name_arabic ?? '');
+    }
+
     public static function quantityCaption(): string
     {
         return self::usesWeight() ? 'Weight' : 'Qty';
@@ -112,8 +146,8 @@ class BarcodeLabel
         $weight = $row['weight'] ?? null;
 
         $value = match ($key) {
-            'product_name' => (string) $product->name,
-            'product_name_arabic' => (string) ($product->name_arabic ?? ''),
+            'product_name' => self::itemName($product),
+            'product_name_arabic' => self::itemNameArabic($product),
             'size' => (string) ($product->size ?? ''),
             'price' => number_format(self::price($product, $conversionFactor, $row), 2),
             'qty' => $weight === null ? self::qtyValue($field, $product, $conversionFactor, $inventory) : self::weightText($weight),

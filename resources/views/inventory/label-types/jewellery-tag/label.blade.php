@@ -47,7 +47,7 @@
             @endphp
             @if ($jtValue !== '')
                 <span
-                    class="jt-line {{ ($jtField['bold'] ?? false) ? 'jt-line--bold' : '' }} {{ $jtKey === 'product_name_arabic' ? 'jt-line--rtl' : '' }}"
+                    class="jt-line {{ ($jtField['bold'] ?? false) ? 'jt-line--bold' : '' }} {{ $jtKey === 'product_name_arabic' ? 'jt-line--rtl' : '' }} {{ in_array($jtKey, ['product_name', 'product_name_arabic'], true) ? 'jt-line--wrap' : '' }}"
                     style="font-size: {{ $jtField['font_size'] ?? 6 }}px; text-align: {{ $jtField['align'] ?? 'left' }}; font-family: {!! BarcodeFonts::blockStack($settings, $jtField) !!};">{{ $jtValue }}</span>
             @endif
         @endforeach

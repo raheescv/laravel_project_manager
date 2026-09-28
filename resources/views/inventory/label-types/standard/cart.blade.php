@@ -3,6 +3,7 @@
 
 @php
     use App\Support\BarcodeFonts;
+    use App\Support\BarcodeLabel;
 
     function convertToUnits($value)
     {
@@ -222,7 +223,7 @@
                             <div id="product-name" class="barcode-element product-name"
                                 style="{{ getElementStyle('product_name', $settings) }}">
                                 <bdo
-                                    dir="ltr">{{ mb_substr($product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
+                                    dir="ltr">{{ mb_substr(BarcodeLabel::itemName($product), 0, (int) $settings['product_name']['char_limit']) }}</bdo>
                             </div>
                         @endif
 
@@ -230,7 +231,7 @@
                             <div id="product-name-arabic" class="barcode-element product-name-arabic"
                                 style="{{ getElementStyle('product_name_arabic', $settings) }}">
                                 <bdo
-                                    dir="rtl">{{ mb_substr($product->name_arabic ?? '', 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                                    dir="rtl">{{ mb_substr(BarcodeLabel::itemNameArabic($product), 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
                             </div>
                         @endif
 

@@ -4,6 +4,7 @@ namespace App\Livewire\Inventory\Barcode;
 
 use App\Models\Configuration;
 use App\Models\Inventory;
+use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Unit;
 use App\Support\BarcodeLabel;
@@ -57,6 +58,7 @@ class CartPage extends Component
             'price' => round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2),
             'weight' => null,
         ], session('cart_items', []));
+        $this->cartItems = $this->withCategoryNames($this->cartItems);
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
 
         $templates = $this->templates();
@@ -110,6 +112,25 @@ class CartPage extends Component
         }
 
         session(['barcode_cart_template' => $this->templateKey]);
+    }
+
+    /**
+     * Rows saved before the cart carried a category get theirs filled in, in one query.
+     *
+     * @param  array<string, array<string, mixed>>  $cartItems
+     * @return array<string, array<string, mixed>>
+     */
+    private function withCategoryNames(array $cartItems): array
+    {
+        $productIds = collect($cartItems)->reject(fn (array $item): bool => array_key_exists('category_name', $item))->pluck('product_id')->unique();
+        if ($productIds->isEmpty()) {
+            return $cartItems;
+        }
+
+        $categoryNames = Product::with('mainCategory:id,name')->whereIn('id', $productIds)->get(['id', 'main_category_id'])
+            ->mapWithKeys(fn (Product $product): array => [$product->id => $product->mainCategory?->name]);
+
+        return array_map(fn (array $item): array => $item + ['category_name' => $categoryNames[$item['product_id']] ?? null], $cartItems);
     }
 
     private function sortCartItemsByProductId($cartItems)
@@ -337,7 +358,7 @@ class CartPage extends Component
     public function addToCart($itemId, $suppressMessage = false, $itemType = 'inventory')
     {
         if ($itemType === 'product_unit') {
-            $productUnit = ProductUnit::with('product', 'subUnit')->find($itemId);
+            $productUnit = ProductUnit::with('product.mainCategory', 'subUnit')->find($itemId);
 
             if (! $productUnit) {
                 if (! $suppressMessage) {
@@ -352,6 +373,7 @@ class CartPage extends Component
                 'product_unit_id' => $productUnit->id,
                 'product_id' => $productUnit->product_id,
                 'name' => $productUnit->product->name.' ('.($productUnit->subUnit->name ?? 'N/A').')',
+                'category_name' => $productUnit->product->mainCategory?->name,
                 'barcode' => $productUnit->barcode,
                 'size' => $productUnit->product->size,
                 'mrp' => $productUnit->product->mrp,
@@ -367,7 +389,7 @@ class CartPage extends Component
             return;
         }
 
-        $inventory = Inventory::with('product')->find($itemId);
+        $inventory = Inventory::with('product.mainCategory')->find($itemId);
 
         if (! $inventory) {
             if (! $suppressMessage) {
@@ -382,6 +404,7 @@ class CartPage extends Component
             'inventory_id' => $inventory->id,
             'product_id' => $inventory->product_id,
             'name' => $inventory->product->name,
+            'category_name' => $inventory->product->mainCategory?->name,
             'barcode' => $inventory->barcode,
             'size' => $inventory->product->size,
             'mrp' => $inventory->product->mrp,

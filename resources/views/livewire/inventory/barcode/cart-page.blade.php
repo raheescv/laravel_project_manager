@@ -229,6 +229,7 @@
                                                 <div style="min-width:0">
                                                     <div class="bcx-table__name bcx-cart__name" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
                                                     <div class="bcx-table__meta">
+                                                        @if (!empty($item['category_name']))<span class="bcx-cart__category">{{ $item['category_name'] }}</span> · @endif
                                                         {{ $item['barcode'] }}
                                                         @if (($item['item_type'] ?? '') === 'product_unit') · unit @endif
                                                         @if (!empty($item['size'])) · size {{ $item['size'] }} @endif
@@ -286,7 +287,7 @@
                     </div>
 
                     <div class="bcx-drawer__title">Row <span>{{ $selectedRow['barcode'] }}</span></div>
-                    <div class="bcx-row__label" style="margin-bottom:8px">{{ $selectedRow['name'] }}</div>
+                    <div class="bcx-row__label" style="margin-bottom:8px">{{ $selectedRow['name'] }}@if (!empty($selectedRow['category_name'])) <span class="bcx-cart__category">· {{ $selectedRow['category_name'] }}</span>@endif</div>
                     <label class="bcx-field">
                         <span>MRP</span>
                         <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.price">
@@ -449,6 +450,11 @@
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 32ch;
+        }
+
+        .bcx-cart__category {
+            color: var(--bcx-brand);
+            font-weight: 600;
         }
 
         .bcx-cart__num {

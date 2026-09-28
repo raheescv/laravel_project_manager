@@ -96,6 +96,17 @@
         text-overflow: ellipsis;
     }
 
+    /* Name lines wrap instead of cutting off (a category name is often longer
+       than the product's), clamped at two lines so the rest still fits. */
+    .jt-line--wrap {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        flex: 0 0 auto;
+    }
+
     .jt-line--bold {
         font-weight: 700;
     }
