@@ -248,3 +248,97 @@ it('serves the combined thermal print behind the day session print permission', 
         ->assertOk()
         ->assertSee('SALE BILL REPORT');
 });
+
+it('drops the due rows and zero values from the total summary when no due payment was received', function (): void {
+    $sessionDate = Carbon::parse('2026-09-21 09:00:00');
+    $session = ($this->makeSession)([
+        'opened_at' => $sessionDate,
+        'closed_at' => $sessionDate->copy()->addHours(8),
+    ]);
+
+    $saleId = ($this->makeSale)($sessionDate->toDateString(), $session->id, 100.0, 'INV-SUMMARY-1');
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionDate->toDateString(), 100.0);
+
+    $html = app(BuildDaySessionReportAction::class)->execute($session->fresh(['branch', 'opener', 'closer']))->render();
+    $summary = Str::after($html, 'TOTAL SUMMARY');
+
+    expect($summary)->toContain('TOTAL CASH (INVOICE)')
+        ->and($summary)->toContain('TOTAL SALE AMOUNT')
+        ->and($summary)->toContain('TOTAL PAYMENT (INVOICE)')
+        ->and($summary)->not->toContain('TOTAL CREDIT (UNPAID)')
+        ->and($summary)->not->toContain('TOTAL CARD (INVOICE)')
+        ->and($summary)->not->toContain('DUE')
+        ->and($summary)->not->toContain('GRAND TOTAL PAYMENT');
+});
+
+it('keeps the due rows in the total summary when a due payment was received', function (): void {
+    $sessionADate = Carbon::parse('2026-09-22 09:00:00');
+    $sessionBDate = Carbon::parse('2026-09-24 09:00:00');
+
+    $sessionA = ($this->makeSession)([
+        'opened_at' => $sessionADate,
+        'closed_at' => $sessionADate->copy()->addHours(8),
+    ]);
+    $saleId = ($this->makeSale)($sessionADate->toDateString(), $sessionA->id, 100.0, 'INV-SUMMARY-DUE');
+
+    $sessionB = ($this->makeSession)([
+        'opened_at' => $sessionBDate,
+        'closed_at' => $sessionBDate->copy()->addHours(8),
+    ]);
+    ($this->makePayment)($saleId, $this->world->cashAccountId, $sessionBDate->toDateString(), 100.0);
+
+    $html = app(BuildDaySessionReportAction::class)->execute($sessionB->fresh(['branch', 'opener', 'closer']))->render();
+    $summary = Str::after($html, 'TOTAL SUMMARY');
+
+    expect($summary)->toContain('TOTAL DUE PAYMENT CASH')
+        ->and($summary)->toContain('TOTAL DUE PAYMENT<')
+        ->and($summary)->toContain('TOTAL CASH (INVOICE + DUE)')
+        ->and($summary)->toContain('GRAND TOTAL PAYMENT')
+        ->and($summary)->not->toContain('TOTAL DUE PAYMENT CARD');
+});
+
+it('totals each payment method on its own, not only cash and card', function (): void {
+    $axisBankId = $this->world->addPaymentMethod('Axis Bank');
+
+    $sessionADate = Carbon::parse('2026-09-25 09:00:00');
+    $sessionBDate = Carbon::parse('2026-09-27 09:00:00');
+
+    $sessionA = ($this->makeSession)([
+        'opened_at' => $sessionADate,
+        'closed_at' => $sessionADate->copy()->addHours(8),
+    ]);
+    $olderSaleId = ($this->makeSale)($sessionADate->toDateString(), $sessionA->id, 50.0, 'INV-AXIS-OLD');
+
+    $sessionB = ($this->makeSession)([
+        'opened_at' => $sessionBDate,
+        'closed_at' => $sessionBDate->copy()->addHours(8),
+    ]);
+    $saleId = ($this->makeSale)($sessionBDate->toDateString(), $sessionB->id, 100.0, 'INV-AXIS-1');
+    ($this->makePayment)($saleId, $axisBankId, $sessionBDate->toDateString(), 100.0);
+    ($this->makePayment)($olderSaleId, $axisBankId, $sessionBDate->toDateString(), 50.0);
+
+    $action = app(BuildDaySessionReportAction::class);
+    $session = $sessionB->fresh(['branch', 'opener', 'closer']);
+
+    expect($action->payload($session)['methodTotals'])->toBe([
+        ['method' => 'Axis Bank', 'invoice' => 100.0, 'due' => 50.0],
+    ]);
+
+    $summary = Str::after($action->execute($session)->render(), 'TOTAL SUMMARY');
+
+    expect($summary)->toContain('TOTAL AXIS BANK (INVOICE)')
+        ->and($summary)->toContain('TOTAL DUE PAYMENT AXIS BANK')
+        ->and($summary)->toContain('TOTAL AXIS BANK (INVOICE + DUE)')
+        ->and($summary)->toContain(currency(150))
+        ->and($summary)->not->toContain('TOTAL CASH');
+});
+
+it('leaves the receipt footer off the day session thermal print', function (): void {
+    $session = ($this->makeSession)();
+
+    $html = app(BuildDaySessionReportAction::class)->execute($session->fresh(['branch', 'opener', 'closer']))
+        ->with('thermal_printer_footer_english', 'Thank You For Shopping With Us')
+        ->render();
+
+    expect($html)->not->toContain('Thank You For Shopping With Us');
+});

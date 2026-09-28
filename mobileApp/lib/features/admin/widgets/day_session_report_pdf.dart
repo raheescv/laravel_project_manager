@@ -118,29 +118,26 @@ Future<Uint8List> buildDaySessionThermalPdf(
           // ---- totals ----
           _heading('TOTAL SUMMARY', s),
           _pairs([
-            ('TOTAL CREDIT (UNPAID)', _amt(t.credit)),
-            ('TOTAL CASH (INVOICE)', _amt(t.cash)),
-            ('TOTAL CARD (INVOICE)', _amt(t.card)),
+            if (t.credit != 0) ('TOTAL CREDIT (UNPAID)', _amt(t.credit)),
+            for (final m in report.methodTotals)
+              if (m.invoice != 0) ('TOTAL ${m.method.toUpperCase()} (INVOICE)', _amt(m.invoice)),
             ('TOTAL SALE AMOUNT', _amt(t.saleAmount)),
             ('TOTAL PAYMENT (INVOICE)', _amt(t.paymentTotal)),
-            ('TOTAL DUE PAYMENT CASH', _amt(t.dueCash)),
-            ('TOTAL DUE PAYMENT CARD', _amt(t.dueCard)),
-            ('TOTAL DUE PAYMENT', _amt(t.dueTotal)),
-            ('TOTAL CARD (INVOICE + DUE)', _amt(t.cardWithDue)),
-            ('TOTAL CASH (INVOICE + DUE)', _amt(t.cashWithDue)),
-            ('GRAND TOTAL PAYMENT', _amt(t.grandTotalPayment)),
+            // Due rows only mean something when a due payment was received.
+            if (t.dueTotal != 0) ...[
+              for (final m in report.methodTotals)
+                if (m.due != 0) ('TOTAL DUE PAYMENT ${m.method.toUpperCase()}', _amt(m.due)),
+              ('TOTAL DUE PAYMENT', _amt(t.dueTotal)),
+              for (final m in report.methodTotals)
+                if (m.withDue != 0) ('TOTAL ${m.method.toUpperCase()} (INVOICE + DUE)', _amt(m.withDue)),
+              ('GRAND TOTAL PAYMENT', _amt(t.grandTotalPayment)),
+            ],
           ], s),
           _rule(),
           // ---- footer ----
+          // The receipt footer ("Thank you for shopping…") is for customers,
+          // not an end-of-day report, so it stays off this roll.
           _centred('Printed: $printed', s(8.5)),
-          if (settings.footerEnglish.trim().isNotEmpty) ...[
-            pw.SizedBox(height: 3),
-            _centred(settings.footerEnglish.trim(), s(8)),
-          ],
-          if (settings.style.isArabic && settings.footerArabic.trim().isNotEmpty) ...[
-            pw.SizedBox(height: 3),
-            _centred(settings.footerArabic.trim(), s(8)),
-          ],
         ],
       ),
     ),
@@ -269,10 +266,9 @@ pw.Widget _grid(
 pw.Widget _transactionsGrid(double Function(double) s, List<DaySessionTransaction> transactions) {
   pw.Widget paymentCell(DaySessionTransaction tx) {
     if (tx.payments.isEmpty) return _cell('_', s(7.5), right: true);
-    if (tx.payments.length == 1) {
-      final p = tx.payments.first;
-      return _cell('${p.method}  ${_amt(p.amount)}', s(7.5), right: true);
-    }
+    // One method pays the whole bill, so the Amount column already says how
+    // much — the web print shows just the method name.
+    if (tx.payments.length == 1) return _cell(tx.payments.first.method, s(7.5), right: true);
     return pw.Container(
       alignment: pw.Alignment.centerRight,
       padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 2),

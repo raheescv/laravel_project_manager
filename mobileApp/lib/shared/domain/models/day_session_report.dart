@@ -64,6 +64,7 @@ class DaySessionReport extends Equatable {
     required this.dues,
     required this.duePayments,
     required this.totals,
+    this.methodTotals = const [],
   });
 
   final DaySessionSummary session;
@@ -72,16 +73,42 @@ class DaySessionReport extends Equatable {
   final List<DaySessionDuePayment> duePayments;
   final DaySessionTotals totals;
 
+  /// Invoice / due totals per payment method used — a method's name ("Axis
+  /// Bank") says nothing reliable about cash vs card, so each prints its own.
+  final List<DaySessionMethodTotal> methodTotals;
+
   factory DaySessionReport.fromJson(Map<String, dynamic> j) => DaySessionReport(
         session: DaySessionSummary.fromJson(Map<String, dynamic>.from((j['session'] as Map?) ?? const {})),
         transactions: _list(j['transactions'], DaySessionTransaction.fromJson),
         dues: _list(j['due_transactions'], DaySessionDue.fromJson),
         duePayments: _list(j['due_payments'], DaySessionDuePayment.fromJson),
         totals: DaySessionTotals.fromJson(Map<String, dynamic>.from((j['totals'] as Map?) ?? const {})),
+        methodTotals: _list(j['method_totals'], DaySessionMethodTotal.fromJson),
       );
 
   @override
-  List<Object?> get props => [session, transactions, dues, duePayments, totals];
+  List<Object?> get props => [session, transactions, dues, duePayments, totals, methodTotals];
+}
+
+/// One payment method's takings in the session: on its own invoices, and
+/// against earlier sessions' invoices (due payments).
+class DaySessionMethodTotal extends Equatable {
+  const DaySessionMethodTotal({required this.method, this.invoice = 0, this.due = 0});
+
+  final String method;
+  final double invoice;
+  final double due;
+
+  double get withDue => invoice + due;
+
+  factory DaySessionMethodTotal.fromJson(Map<String, dynamic> j) => DaySessionMethodTotal(
+        method: asStr(j['method']),
+        invoice: asNum(j['invoice']).toDouble(),
+        due: asNum(j['due']).toDouble(),
+      );
+
+  @override
+  List<Object?> get props => [method, invoice, due];
 }
 
 List<T> _list<T>(dynamic raw, T Function(Map<String, dynamic>) fromJson) =>

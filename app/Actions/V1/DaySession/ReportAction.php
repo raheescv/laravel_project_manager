@@ -91,6 +91,11 @@ class ReportAction
                 'payment_method' => $row['payment_method'],
                 'amount' => (float) $row['amount'],
             ])->values()->all(),
+            'method_totals' => array_map(fn (array $row) => [
+                'method' => $row['method'],
+                'invoice' => (float) $row['invoice'],
+                'due' => (float) $row['due'],
+            ], $payload['methodTotals']),
             'totals' => array_merge($totals, [
                 // The three the web views work out inline.
                 'card_with_due' => $totals['card'] + $totals['due_total_card'],

@@ -227,18 +227,20 @@
 
         <center><strong>TOTAL SUMMARY</strong></center>
         <table width="100%" cellpadding="2" cellspacing="0" border="1">
-            <tr>
-                <td><strong>TOTAL CREDIT (UNPAID)</strong></td>
-                <td align="right"><strong>{{ currency($totals['credit']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL CASH (INVOICE)</strong></td>
-                <td align="right"><strong>{{ currency($totals['cash']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL CARD (INVOICE)</strong></td>
-                <td align="right"><strong>{{ currency($totals['card']) }}</strong></td>
-            </tr>
+            @if ($totals['credit'] != 0)
+                <tr>
+                    <td><strong>TOTAL CREDIT (UNPAID)</strong></td>
+                    <td align="right"><strong>{{ currency($totals['credit']) }}</strong></td>
+                </tr>
+            @endif
+            @foreach ($methodTotals as $methodTotal)
+                @if ($methodTotal['invoice'] != 0)
+                    <tr>
+                        <td><strong>TOTAL {{ mb_strtoupper($methodTotal['method']) }} (INVOICE)</strong></td>
+                        <td align="right"><strong>{{ currency($methodTotal['invoice']) }}</strong></td>
+                    </tr>
+                @endif
+            @endforeach
             <tr>
                 <td><strong>TOTAL SALE AMOUNT</strong></td>
                 <td align="right"><strong>{{ currency($totals['sale_tailoring_amount']) }}</strong></td>
@@ -247,42 +249,38 @@
                 <td><strong>TOTAL PAYMENT (INVOICE)</strong></td>
                 <td align="right"><strong>{{ currency($totals['payment_total']) }}</strong></td>
             </tr>
-            <tr>
-                <td><strong>TOTAL DUE PAYMENT CASH</strong></td>
-                <td align="right"><strong>{{ currency($totals['due_total_cash']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL DUE PAYMENT CARD</strong></td>
-                <td align="right"><strong>{{ currency($totals['due_total_card']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL DUE PAYMENT</strong></td>
-                <td align="right"><strong>{{ currency($totals['due_total']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL CARD (INVOICE + DUE)</strong></td>
-                <td align="right"><strong>{{ currency($totals['card'] + $totals['due_total_card']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>TOTAL CASH (INVOICE + DUE)</strong></td>
-                <td align="right"><strong>{{ currency($totals['cash'] + $totals['due_total_cash']) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>GRAND TOTAL PAYMENT</strong></td>
-                <td align="right"><strong>{{ currency($totals['payment_total'] + $totals['due_total']) }}</strong></td>
-            </tr>
+            @if ($totals['due_total'] != 0)
+                @foreach ($methodTotals as $methodTotal)
+                    @if ($methodTotal['due'] != 0)
+                        <tr>
+                            <td><strong>TOTAL DUE PAYMENT {{ mb_strtoupper($methodTotal['method']) }}</strong></td>
+                            <td align="right"><strong>{{ currency($methodTotal['due']) }}</strong></td>
+                        </tr>
+                    @endif
+                @endforeach
+                <tr>
+                    <td><strong>TOTAL DUE PAYMENT</strong></td>
+                    <td align="right"><strong>{{ currency($totals['due_total']) }}</strong></td>
+                </tr>
+                @foreach ($methodTotals as $methodTotal)
+                    @if ($methodTotal['invoice'] + $methodTotal['due'] != 0)
+                        <tr>
+                            <td><strong>TOTAL {{ mb_strtoupper($methodTotal['method']) }} (INVOICE + DUE)</strong></td>
+                            <td align="right"><strong>{{ currency($methodTotal['invoice'] + $methodTotal['due']) }}</strong></td>
+                        </tr>
+                    @endif
+                @endforeach
+                <tr>
+                    <td><strong>GRAND TOTAL PAYMENT</strong></td>
+                    <td align="right"><strong>{{ currency($totals['payment_total'] + $totals['due_total']) }}</strong></td>
+                </tr>
+            @endif
         </table>
 
         <hr>
 
         <center>
             <div><strong>Printed: {{ now()->format('d/m/Y h:i A') }}</strong></div>
-            @if (!empty($thermal_printer_footer_english))
-                <div>{!! $thermal_printer_footer_english !!}</div>
-            @endif
-            @if (($thermal_printer_style ?? '') == 'with_arabic' && !empty($thermal_printer_footer_arabic))
-                <div dir="rtl">{!! $thermal_printer_footer_arabic !!}</div>
-            @endif
         </center>
 
         <script>

@@ -26,7 +26,7 @@ class BuildDaySessionReportAction
      * and totals — shared by both web views and the mobile API
      * (App\Actions\V1\DaySession\ReportAction).
      *
-     * @return array{session: SaleDaySession, pendingPayments: array<int, array<string, mixed>>, transactions: \Illuminate\Support\Collection, dueTransactions: \Illuminate\Support\Collection, totals: array<string, float|int>}
+     * @return array{session: SaleDaySession, pendingPayments: array<int, array<string, mixed>>, transactions: \Illuminate\Support\Collection, dueTransactions: \Illuminate\Support\Collection, totals: array<string, float|int>, methodTotals: array<int, array{method: string, invoice: float, due: float}>}
      */
     public function payload(SaleDaySession $session): array
     {
@@ -72,9 +72,11 @@ class BuildDaySessionReportAction
             ->values()
             ->all();
 
-        $totals['due_total'] = (float) $totals['due_total_cash'] + (float) $totals['due_total_card'];
+        $totals['due_total'] = (float) collect($pendingPayments)->sum(fn (array $row) => (float) $row['amount']);
 
-        return compact('session', 'pendingPayments', 'transactions', 'dueTransactions', 'totals');
+        $methodTotals = $this->methodTotals($transactions, $pendingPayments);
+
+        return compact('session', 'pendingPayments', 'transactions', 'dueTransactions', 'totals', 'methodTotals');
     }
 
     private function loadSessionSales(SaleDaySessionDataService $service, int $sessionId, string $sessionDate)
@@ -117,6 +119,38 @@ class BuildDaySessionReportAction
                 'payment_rows' => $this->paymentRowsFromCollection($row->payments),
             ];
         });
+    }
+
+    /**
+     * Invoice and due-payment totals per payment method actually used, since a
+     * method name ("Axis Bank") says nothing reliable about cash vs card.
+     *
+     * @param  array<int, array<string, mixed>>  $pendingPayments
+     * @return array<int, array{method: string, invoice: float, due: float}>
+     */
+    private function methodTotals($transactions, array $pendingPayments): array
+    {
+        $methods = [];
+        $add = function (?string $name, float $amount, string $bucket) use (&$methods): void {
+            if ($amount <= 0) {
+                return;
+            }
+            $name = trim((string) $name) ?: 'Payment';
+            $key = strtolower($name);
+            $methods[$key] ??= ['method' => $name, 'invoice' => 0.0, 'due' => 0.0];
+            $methods[$key][$bucket] += $amount;
+        };
+
+        foreach ($transactions as $transaction) {
+            foreach ($transaction['payment_rows'] ?? [] as $paymentRow) {
+                $add($paymentRow['method'], (float) $paymentRow['amount'], 'invoice');
+            }
+        }
+        foreach ($pendingPayments as $payment) {
+            $add($payment['payment_method'], (float) $payment['amount'], 'due');
+        }
+
+        return array_values($methods);
     }
 
     private function paymentRowsFromCollection($payments): array

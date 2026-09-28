@@ -97,6 +97,7 @@ it('returns the figures the thermal report prints', function (): void {
         ->assertJsonStructure(['data' => [
             'due_transactions',
             'due_payments',
+            'method_totals',
             'totals' => [
                 'credit', 'cash', 'card', 'sale_tailoring_amount', 'payment_total',
                 'due_total_cash', 'due_total_card', 'due_total',
