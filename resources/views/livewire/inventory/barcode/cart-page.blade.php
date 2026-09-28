@@ -116,6 +116,13 @@
                             <span></span>
                         </label>
                     </label>
+                    <label class="bcx-field" title="Auto: new rows start with the product MRP{{ $cart['weight_column'] ? ' and 1 g' : '' }}. Custom: they start blank for you to fill.">
+                        <span>Fill {{ $autoFill ? 'Auto' : 'Custom' }}</span>
+                        <label class="bcx-switch" style="margin-inline-start:auto">
+                            <input type="checkbox" wire:model.live="autoFill" id="autoFillSwitch">
+                            <span></span>
+                        </label>
+                    </label>
 
                     <div class="bcx-drawer__title">Search</div>
                     <div class="bcx-cart__scan">
@@ -207,8 +214,10 @@
                                 <tr>
                                     <th style="width:36px">#</th>
                                     <th>Item</th>
-                                    <th class="bcx-cart__num">MRP</th>
-                                    @if ($cart['weight_mode'])
+                                    @if ($cart['price_column'])
+                                        <th class="bcx-cart__num">MRP</th>
+                                    @endif
+                                    @if ($cart['weight_column'])
                                         <th class="bcx-cart__num">Weight</th>
                                     @endif
                                     <th class="bcx-cart__num">Labels</th>
@@ -218,7 +227,9 @@
                             <tbody>
                                 @foreach ($cartItems as $cartKey => $item)
                                     @php
-                                        $missingWeight = $cart['weight_mode'] && empty($item['weight']);
+                                        $missingWeight = $cart['weight_column'] && empty($item['weight']);
+                                        $missingPrice = !is_numeric($item['price'] ?? null);
+                                        $titledByCategory = $cart['category_name'] && !empty($item['category_name']);
                                     @endphp
                                     <tr wire:key="cart-{{ $cartKey }}" class="{{ $cartKey === $selectedRowKey ? 'is-selected' : '' }}"
                                         wire:click="selectRow('{{ $cartKey }}')">
@@ -227,9 +238,17 @@
                                             <div style="display:flex;align-items:center;gap:10px;min-width:0">
                                                 <img src="{{ $item['thumbnail'] ?? ($item['image'] ?? tenant_cache('logo')) }}" alt="" class="bcx-cart__thumb">
                                                 <div style="min-width:0">
-                                                    <div class="bcx-table__name bcx-cart__name" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
+                                                    @if ($titledByCategory)
+                                                        <div class="bcx-table__name bcx-cart__name" title="{{ $item['category_name'] }}">{{ $item['category_name'] }}</div>
+                                                    @else
+                                                        <div class="bcx-table__name bcx-cart__name" title="{{ $item['name'] }}">{{ $item['name'] }}</div>
+                                                    @endif
                                                     <div class="bcx-table__meta">
-                                                        @if (!empty($item['category_name']))<span class="bcx-cart__category">{{ $item['category_name'] }}</span> · @endif
+                                                        @if ($titledByCategory)
+                                                            <span class="bcx-cart__category">{{ $item['name'] }}</span> ·
+                                                        @elseif (!empty($item['category_name']))
+                                                            <span class="bcx-cart__category">{{ $item['category_name'] }}</span> ·
+                                                        @endif
                                                         {{ $item['barcode'] }}
                                                         @if (($item['item_type'] ?? '') === 'product_unit') · unit @endif
                                                         @if (!empty($item['size'])) · size {{ $item['size'] }} @endif
@@ -237,11 +256,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="bcx-cart__num" @click.stop>
-                                            <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell"
-                                                wire:model.blur="cartItems.{{ $cartKey }}.price" title="MRP printed on this row's labels">
-                                        </td>
-                                        @if ($cart['weight_mode'])
+                                        @if ($cart['price_column'])
+                                            <td class="bcx-cart__num" @click.stop>
+                                                <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell {{ $missingPrice ? 'is-missing' : '' }}"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.price" placeholder="MRP" title="MRP printed on this row's labels">
+                                            </td>
+                                        @endif
+                                        @if ($cart['weight_column'])
                                             <td class="bcx-cart__num" @click.stop>
                                                 <div class="bcx-field__unit bcx-cart__gram {{ $missingWeight ? 'is-missing' : '' }}">
                                                     <input type="number" step="0.001" min="0" class="bcx-input bcx-cart__cell" data-gram-input
@@ -287,12 +308,24 @@
                     </div>
 
                     <div class="bcx-drawer__title">Row <span>{{ $selectedRow['barcode'] }}</span></div>
-                    <div class="bcx-row__label" style="margin-bottom:8px">{{ $selectedRow['name'] }}@if (!empty($selectedRow['category_name'])) <span class="bcx-cart__category">· {{ $selectedRow['category_name'] }}</span>@endif</div>
-                    <label class="bcx-field">
-                        <span>MRP</span>
-                        <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.price">
-                    </label>
-                    @if ($cart['weight_mode'])
+                    @php
+                        $selectedTitledByCategory = $cart['category_name'] && !empty($selectedRow['category_name']);
+                    @endphp
+                    <div class="bcx-row__label" style="margin-bottom:8px">
+                        {{ $selectedTitledByCategory ? $selectedRow['category_name'] : $selectedRow['name'] }}
+                        @if ($selectedTitledByCategory)
+                            <span class="bcx-cart__category">· {{ $selectedRow['name'] }}</span>
+                        @elseif (!empty($selectedRow['category_name']))
+                            <span class="bcx-cart__category">· {{ $selectedRow['category_name'] }}</span>
+                        @endif
+                    </div>
+                    @if ($cart['price_column'])
+                        <label class="bcx-field">
+                            <span>MRP</span>
+                            <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.price">
+                        </label>
+                    @endif
+                    @if ($cart['weight_column'])
                         <label class="bcx-field">
                             <span>Weight</span>
                             <div class="bcx-field__unit">
@@ -315,14 +348,35 @@
                     <p class="bcx-note">Add an item, then pick a row to see its label.</p>
                 @endif
 
+                @if (!empty($cartItems) && ($cart['price_column'] || $cart['weight_column']))
+                    <div class="bcx-drawer__title">Fill all rows</div>
+                    @if ($cart['price_column'])
+                        <label class="bcx-field">
+                            <span>MRP</span>
+                            <input type="number" step="0.01" min="0" wire:model="fillPrice" placeholder="Leave as is">
+                        </label>
+                    @endif
+                    @if ($cart['weight_column'])
+                        <label class="bcx-field">
+                            <span>Weight</span>
+                            <div class="bcx-field__unit">
+                                <input type="number" step="0.001" min="0" wire:model="fillWeight" placeholder="Leave as is">
+                                <em>g</em>
+                            </div>
+                        </label>
+                    @endif
+                    <button wire:click="fillAllRows" class="bcx-btn bcx-cart__wide"><i class="fa fa-magic"></i> Apply to {{ count($cartItems) }} row(s)</button>
+                @endif
+
                 <div class="bcx-drawer__title">Print settings</div>
                 <div class="bcx-cart__flags">
                     <span class="bcx-chip {{ $cart['weight_mode'] ? 'bcx-chip--brand' : '' }}"><i class="fa fa-balance-scale"></i> {{ $cart['weight_mode'] ? 'Weight' : 'Qty' }}</span>
                     <span class="bcx-chip {{ $cart['separate_rows'] ? 'bcx-chip--brand' : '' }}"><i class="fa fa-{{ $cart['separate_rows'] ? 'check' : 'minus' }}"></i> Row per scan</span>
+                    <span class="bcx-chip {{ $cart['auto_fill'] ? 'bcx-chip--brand' : '' }}"><i class="fa fa-{{ $cart['auto_fill'] ? 'magic' : 'pencil' }}"></i> {{ $cart['auto_fill'] ? 'Auto fill' : 'Custom fill' }}</span>
                 </div>
                 <p class="bcx-note">
-                    Qty or Weight follows <b>Quantity Label In Print</b> in Sale settings. Row per scan is the switch
-                    under the scanner.
+                    Qty or Weight follows <b>Quantity Label In Print</b> in Sale settings. Row per scan and Auto/Custom
+                    fill are the switches under the scanner.
                 </p>
             </aside>
         </div>
@@ -332,10 +386,11 @@
             <span>TEMPLATE <b>{{ $activeTemplate['name'] ?? '—' }}</b></span>
             <span>ROWS <b>{{ count($cartItems) }}</b></span>
             <span>LABELS <b>{{ $this->getTotalQuantity() }}</b></span>
-            @if ($cart['weight_mode'])
+            @if ($cart['weight_column'])
                 <span>WEIGHT <b>{{ number_format($this->getTotalWeight(), 3) }} g</b></span>
             @endif
             <span>ROW PER SCAN <b>{{ $separateRows ? 'on' : 'off' }}</b></span>
+            <span>FILL <b>{{ $autoFill ? 'auto' : 'custom' }}</b></span>
             <span>UNIT FILTER <b>{{ $selectedUnitId ? 'on' : 'all' }}</b></span>
             <span class="bcx-spacer"></span>
             <span>CTRL+B SCANNER · CTRL+K SEARCH · CTRL+P PRINT</span>
@@ -472,7 +527,8 @@
             display: inline-flex;
         }
 
-        .bcx-cart__gram.is-missing input {
+        .bcx-cart__gram.is-missing input,
+        .bcx-cart__cell.is-missing {
             border-color: var(--bs-danger, #dc3545);
         }
 

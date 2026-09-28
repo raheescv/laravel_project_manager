@@ -73,12 +73,13 @@ it('adds a new row per scan when the console switch is on, and remembers it', fu
     Livewire::test(CartPage::class)->assertSet('separateRows', true);
 });
 
-it('asks for a weight per row when quantities print as weight', function (): void {
+it('asks for a weight per row when quantities print as weight and rows are custom filled', function (): void {
     ($this->printWeights)();
     ($this->useTemplate)('jewellery_tag');
     $key = "inventory_{$this->inventoryId}";
 
     Livewire::test(CartPage::class)
+        ->set('autoFill', false)
         ->set('cartItems', [])
         ->call('addToCart', $this->inventoryId)
         ->call('printBarcodes')
@@ -86,6 +87,7 @@ it('asks for a weight per row when quantities print as weight', function (): voi
         ->assertNotDispatched('label-print')
         ->set("cartItems.{$key}.weight", '4.2567')
         ->assertSet("cartItems.{$key}.weight", 4.257)
+        ->set("cartItems.{$key}.price", '99')
         ->call('printBarcodes')
         ->assertDispatched('label-print', url: route('inventory::barcode::cart::print', ['template' => 'shop']));
 
@@ -124,6 +126,7 @@ it('duplicates a row as a new piece without its weight', function (): void {
 
     $component = Livewire::test(CartPage::class)
         ->set('cartItems', [])
+        ->set('autoFill', false)
         ->call('addToCart', $this->inventoryId)
         ->set("cartItems.{$key}.weight", 3)
         ->call('duplicateRow', $key);
@@ -201,6 +204,17 @@ it('shows each cart row with its product category', function (): void {
     $component->assertSeeHtml('<span class="bcx-cart__category">General</span>');
 });
 
+it('titles cart rows with the category when Item Label In Print is Category', function (): void {
+    ($this->useTemplate)('standard');
+    Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => 'category']);
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('title="General">General</div>')
+        ->assertSeeHtml('<span class="bcx-cart__category">'.$this->world->product->name.'</span>');
+});
+
 it('fills in the category for cart rows saved before it was carried', function (): void {
     session(['cart_items' => [
         "inventory_{$this->inventoryId}" => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'product_id' => $this->world->product->id, 'name' => 'Old row', 'barcode' => $this->barcode, 'mrp' => 50, 'quantity' => 1],
@@ -237,6 +251,110 @@ it('previews the category name in the template designer when Item Label In Print
         ->render();
 
     expect($html)->toContain('>General</span>')->not->toContain($this->world->product->name);
+});
+
+it('auto fills new rows with the product MRP and 1 g, and remembers the switch', function (): void {
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSet("cartItems.{$key}.price", round((float) $this->world->product->mrp, 2))
+        ->assertSet("cartItems.{$key}.weight", 1.0)
+        ->call('printBarcodes')
+        ->assertDispatched('label-print');
+
+    Livewire::test(CartPage::class)->set('autoFill', false);
+
+    expect(Configuration::where('key', 'barcode_cart_auto_fill')->value('value'))->toBe('0')
+        ->and(Livewire::test(CartPage::class)->get('autoFill'))->toBeFalse();
+});
+
+it('starts custom filled rows blank and asks for the MRP before printing', function (): void {
+    ($this->useTemplate)('jewellery_tag');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('autoFill', false)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSet("cartItems.{$key}.price", null)
+        ->call('printBarcodes')
+        ->assertDispatched('error')
+        ->assertNotDispatched('label-print')
+        ->set("cartItems.{$key}.price", '')
+        ->assertSet("cartItems.{$key}.price", null)
+        ->set("cartItems.{$key}.price", '80')
+        ->call('printBarcodes')
+        ->assertDispatched('label-print');
+});
+
+it('applies the fill switch to rows already in the cart', function (): void {
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+    $mrp = round((float) $this->world->product->mrp, 2);
+
+    $component = Livewire::test(CartPage::class)
+        ->set('separateRows', true)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->call('addToCart', $this->inventoryId);
+    [$first, $second] = array_keys($component->get('cartItems'));
+
+    $component->set("cartItems.{$second}.price", '75')->set("cartItems.{$second}.weight", '2.5')
+        ->set('autoFill', false)
+        ->assertSet("cartItems.{$first}.price", null)
+        ->assertSet("cartItems.{$first}.weight", null)
+        ->assertSet("cartItems.{$second}.price", 75.0)
+        ->assertSet("cartItems.{$second}.weight", 2.5)
+        ->set('autoFill', true)
+        ->assertSet("cartItems.{$first}.price", $mrp)
+        ->assertSet("cartItems.{$first}.weight", 1.0)
+        ->assertSet("cartItems.{$second}.price", 75.0);
+});
+
+it('fills the MRP and weight of every row at once', function (): void {
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+
+    $component = Livewire::test(CartPage::class)
+        ->set('autoFill', false)
+        ->set('separateRows', true)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->call('addToCart', $this->inventoryId)
+        ->set('fillPrice', '250')
+        ->set('fillWeight', '3.5')
+        ->call('fillAllRows')
+        ->assertDispatched('success');
+
+    expect(collect($component->get('cartItems'))->map(fn (array $row): array => [$row['price'], $row['weight']])->values()->all())
+        ->toEqual([[250.0, 3.5], [250.0, 3.5]]);
+});
+
+it('hides the MRP and Weight columns when the template prints neither', function (): void {
+    ($this->printWeights)();
+    BarcodeTemplateConfiguration::saveConfiguration([
+        'default_template' => 'plain',
+        'templates' => [
+            'plain' => ['name' => 'Plain', 'type' => 'jewellery_tag', 'settings' => [
+                'type' => 'jewellery_tag',
+                'fields' => ['price' => ['visible' => false], 'qty' => ['visible' => false]],
+            ]],
+        ],
+    ]);
+
+    Livewire::test(CartPage::class)
+        ->set('autoFill', false)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertDontSeeHtml('<th class="bcx-cart__num">MRP</th>')
+        ->assertDontSeeHtml('<th class="bcx-cart__num">Weight</th>')
+        ->assertDontSee('Fill all rows')
+        ->call('printBarcodes')
+        ->assertDispatched('label-print');
 });
 
 it('renders the console with weight and MRP columns in weight mode', function (): void {

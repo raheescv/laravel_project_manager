@@ -87,6 +87,31 @@ class BarcodeLabel
         return (string) ($product->name_arabic ?? '');
     }
 
+    /**
+     * Whether the template prints a price at all: a jewellery tag's price
+     * field, or a sticker's price or Arabic price element.
+     */
+    public static function printsPrice(array $settings): bool
+    {
+        if (self::type($settings) === 'jewellery_tag') {
+            return (bool) ($settings['fields']['price']['visible'] ?? false);
+        }
+
+        return (bool) (($settings['price']['visible'] ?? true) || ($settings['price_arabic']['visible'] ?? true));
+    }
+
+    /**
+     * Whether the template prints the Qty line, which carries the weight in weight mode.
+     */
+    public static function printsQty(array $settings): bool
+    {
+        if (self::type($settings) === 'jewellery_tag') {
+            return (bool) ($settings['fields']['qty']['visible'] ?? false);
+        }
+
+        return (bool) ($settings['qty']['visible'] ?? false);
+    }
+
     public static function quantityCaption(): string
     {
         return self::usesWeight() ? 'Weight' : 'Qty';

@@ -46,6 +46,17 @@ class CartPage extends Component
      */
     public bool $separateRows = false;
 
+    /**
+     * Console switch: on (Auto), a new row starts with the product MRP and, in
+     * weight mode, 1 g; off (Custom), both start blank and every row must be
+     * filled in before printing. Saved per tenant.
+     */
+    public bool $autoFill = true;
+
+    public $fillPrice = '';
+
+    public $fillWeight = '';
+
     protected $listeners = [
         'productSelected' => 'addToCart',
         // 'barcodeScanned' => 'handleBarcodeScan'
@@ -68,6 +79,7 @@ class CartPage extends Component
             : BarcodeTemplateConfiguration::getConfiguration()['default_template'];
 
         $this->separateRows = Configuration::where('key', 'barcode_cart_separate_rows')->value('value') === '1';
+        $this->autoFill = Configuration::where('key', 'barcode_cart_auto_fill')->value('value') !== '0';
 
         // Set default quantity
         $this->quantity = 1;
@@ -88,14 +100,27 @@ class CartPage extends Component
      * `separate_rows` from the console switch, `weight_mode` from the sale
      * setting "Quantity Label In Print": with Weight, every row takes its grams.
      *
-     * @return array{separate_rows: bool, weight_mode: bool}
+     * `category_name` from "Item Label In Print": rows are titled with the
+     * name their label prints.
+     *
+     * `price_column` and `weight_column` show the MRP and Weight inputs only
+     * when the chosen template prints a price and a Qty line.
+     *
+     * @return array{separate_rows: bool, auto_fill: bool, weight_mode: bool, category_name: bool, price_column: bool, weight_column: bool}
      */
     #[Computed]
     public function cartSettings(): array
     {
+        $settings = BarcodeTemplateConfiguration::resolveSettings($this->templateKey)['settings'];
+        $weightMode = BarcodeLabel::usesWeight();
+
         return [
             'separate_rows' => $this->separateRows,
-            'weight_mode' => BarcodeLabel::usesWeight(),
+            'auto_fill' => $this->autoFill,
+            'weight_mode' => $weightMode,
+            'category_name' => BarcodeLabel::usesCategoryName(),
+            'price_column' => BarcodeLabel::printsPrice($settings),
+            'weight_column' => $weightMode && BarcodeLabel::printsQty($settings),
         ];
     }
 
@@ -105,12 +130,54 @@ class CartPage extends Component
         Configuration::updateOrCreate(['key' => 'barcode_cart_separate_rows'], ['value' => $this->separateRows ? '1' : '0']);
     }
 
+    /**
+     * The switch applies to rows already in the cart too: Auto fills their
+     * blank MRP and grams, Custom blanks the values Auto put there and keeps
+     * anything typed by hand.
+     */
+    public function updatedAutoFill(): void
+    {
+        unset($this->cartSettings);
+        Configuration::updateOrCreate(['key' => 'barcode_cart_auto_fill'], ['value' => $this->autoFill ? '1' : '0']);
+
+        $autoWeight = $this->cartSettings()['weight_mode'] ? 1.0 : null;
+
+        foreach ($this->cartItems as $rowKey => $item) {
+            $autoPrice = $this->mrpPrice($item);
+
+            if ($this->autoFill) {
+                $this->cartItems[$rowKey]['price'] = is_numeric($item['price'] ?? null) ? $item['price'] : $autoPrice;
+                $this->cartItems[$rowKey]['weight'] = ($item['weight'] ?? null) ?: $autoWeight;
+
+                continue;
+            }
+
+            if (is_numeric($item['price'] ?? null) && (float) $item['price'] === $autoPrice) {
+                $this->cartItems[$rowKey]['price'] = null;
+            }
+            if ($autoWeight !== null && (float) ($item['weight'] ?? 0) === $autoWeight) {
+                $this->cartItems[$rowKey]['weight'] = null;
+            }
+        }
+
+        $this->persistCart();
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private function mrpPrice(array $item): float
+    {
+        return round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2);
+    }
+
     public function updatedTemplateKey(): void
     {
         if (! isset($this->templates()[$this->templateKey])) {
             $this->templateKey = BarcodeTemplateConfiguration::getConfiguration()['default_template'];
         }
 
+        unset($this->cartSettings);
         session(['barcode_cart_template' => $this->templateKey]);
     }
 
@@ -436,13 +503,24 @@ class CartPage extends Component
         }
 
         $rowKey = $existingKey === false ? $itemKey : $itemKey.'__'.Str::lower(Str::random(6));
-        $this->cartItems[$rowKey] = $row + [
+        $this->cartItems[$rowKey] = array_merge($row, [
+            'price' => $cart['auto_fill'] ? $row['price'] : null,
             'quantity' => $this->quantity,
-            'weight' => null,
-        ];
+            'weight' => $this->startingWeight(),
+        ]);
         $this->selectedRowKey = $rowKey;
 
         return true;
+    }
+
+    /**
+     * The grams a new row starts with: 1 when auto filling in weight mode.
+     */
+    private function startingWeight(): ?float
+    {
+        $cart = $this->cartSettings();
+
+        return $cart['auto_fill'] && $cart['weight_mode'] ? 1.0 : null;
     }
 
     /**
@@ -490,9 +568,11 @@ class CartPage extends Component
         $row = &$this->cartItems[$rowKey];
 
         match ($field) {
-            'price' => $row['price'] = is_numeric($value) && $value >= 0
-                ? round((float) $value, 2)
-                : round((float) ($row['mrp'] ?? 0) * (float) ($row['conversion_factor'] ?? 1), 2),
+            'price' => $row['price'] = match (true) {
+                is_numeric($value) && $value >= 0 => round((float) $value, 2),
+                $this->autoFill => $this->mrpPrice($row),
+                default => null,
+            },
             'weight' => $row['weight'] = is_numeric($value) && $value > 0 ? round((float) $value, 3) : null,
             'quantity' => $row['quantity'] = max(1, (int) $value),
             default => null,
@@ -519,9 +599,38 @@ class CartPage extends Component
         }
 
         $newKey = $this->itemKey($rowKey).'__'.Str::lower(Str::random(6));
-        $this->cartItems[$newKey] = array_merge($this->cartItems[$rowKey], ['weight' => null]);
+        $this->cartItems[$newKey] = array_merge($this->cartItems[$rowKey], ['weight' => $this->startingWeight()]);
         $this->selectedRowKey = $newKey;
         $this->persistCart();
+    }
+
+    /**
+     * Custom fill: one MRP and/or weight typed once, applied to every row.
+     */
+    public function fillAllRows(): void
+    {
+        $price = is_numeric($this->fillPrice) && $this->fillPrice >= 0 ? round((float) $this->fillPrice, 2) : null;
+        $weight = is_numeric($this->fillWeight) && $this->fillWeight > 0 && $this->cartSettings()['weight_column'] ? round((float) $this->fillWeight, 3) : null;
+
+        if ($price === null && $weight === null) {
+            $this->dispatch('error', ['message' => 'Enter an MRP or a weight to fill.']);
+
+            return;
+        }
+
+        foreach ($this->cartItems as $rowKey => $item) {
+            if ($price !== null) {
+                $this->cartItems[$rowKey]['price'] = $price;
+            }
+            if ($weight !== null) {
+                $this->cartItems[$rowKey]['weight'] = $weight;
+            }
+        }
+
+        $this->fillPrice = '';
+        $this->fillWeight = '';
+        $this->persistCart();
+        $this->dispatch('success', ['message' => 'Filled '.count($this->cartItems).' row(s).']);
     }
 
     public function updateQuantity($cartKey, $newQuantity)
@@ -574,7 +683,15 @@ class CartPage extends Component
         $cart = $this->cartSettings();
         $printItems = $this->cartItems;
 
-        if ($cart['weight_mode']) {
+        $missingPrice = collect($printItems)->filter(fn (array $item): bool => $cart['price_column'] && ! is_numeric($item['price'] ?? null));
+        if ($missingPrice->isNotEmpty()) {
+            $this->selectedRowKey = (string) $missingPrice->keys()->first();
+            $this->dispatch('error', ['message' => "Enter the MRP for every row ({$missingPrice->count()} missing)."]);
+
+            return;
+        }
+
+        if ($cart['weight_column']) {
             $missing = collect($printItems)->filter(fn (array $item): bool => ! is_numeric($item['weight'] ?? null) || (float) $item['weight'] <= 0);
             if ($missing->isNotEmpty()) {
                 $this->selectedRowKey = (string) $missing->keys()->first();
