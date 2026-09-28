@@ -400,4 +400,9 @@ class SaleController extends Controller
     {
         return view('sale.day-sessions-report');
     }
+
+    public function onlinePayments()
+    {
+        return view('sale.online-payments');
+    }
 }

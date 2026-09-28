@@ -4,6 +4,7 @@
         auth()->user()->can('report.sale category') ||
         auth()->user()->can('report.sale feedback') ||
         auth()->user()->can('sale.receipts') ||
+        auth()->user()->can('sale.online payments') ||
         auth()->user()->can('sales return.view') ||
         auth()->user()->can('sales return.create') ||
         auth()->user()->can('report.sale return item') ||
@@ -22,6 +23,7 @@
                 'report/sale_category',
                 'report/sale_feedback',
                 'sale/receipts',
+                'sale/online-payments',
                 'sale_return',
                 'sale_return/create',
                 'sale_return/edit/*',
@@ -69,6 +71,12 @@
                 <li class="nav-item">
                     <a href="{{ route('sale::receipts') }}"
                         class="nav-link {{ request()->is(['sale/receipts']) ? 'active' : '' }}">Receipts</a>
+                </li>
+            @endcan
+            @can('sale.online payments')
+                <li class="nav-item">
+                    <a href="{{ route('sale::online-payments') }}"
+                        class="nav-link {{ request()->is(['sale/online-payments']) ? 'active' : '' }}">Online Payments</a>
                 </li>
             @endcan
             @can('sales return.create')

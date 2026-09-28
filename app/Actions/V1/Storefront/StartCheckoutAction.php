@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\StorefrontCheckout;
 use App\Services\Payment\TapClient;
 use App\Services\Payment\TapException;
+use App\Services\QnasAddressService;
 use App\Services\TenantService;
 use App\Support\Storefront\TapSettings;
 use Illuminate\Support\Str;
@@ -45,6 +46,13 @@ class StartCheckoutAction
             throw new StorefrontCheckoutException('There is nothing in your bag to pay for.');
         }
 
+        $address = $fulfilment === 'delivery' ? $this->deliveryAddress($request) : [];
+        $pin = $address ? app(QnasAddressService::class)->cachedLocation(
+            $address['zone_number'],
+            $address['street_number'],
+            $address['building_number'],
+        ) : null;
+
         $checkout = StorefrontCheckout::create([
             'reference' => Str::random(32),
             'branch_id' => $branch->id,
@@ -52,7 +60,19 @@ class StartCheckoutAction
             'customer_name' => trim($request->validated('customerName')),
             'customer_mobile' => $request->validated('customerMobile'),
             'customer_email' => $request->validated('customerEmail'),
-            'address' => $fulfilment === 'delivery' ? trim((string) $request->validated('address')) : null,
+            'zone_number' => $address['zone_number'] ?? null,
+            'street_number' => $address['street_number'] ?? null,
+            'building_number' => $address['building_number'] ?? null,
+            'city' => $address['city'] ?? null,
+            'latitude' => $pin['lat'] ?? null,
+            'longitude' => $pin['lng'] ?? null,
+            'address' => $address ? sprintf(
+                'Zone %s, Street %s, Building %s, %s',
+                $address['zone_number'],
+                $address['street_number'],
+                $address['building_number'],
+                $address['city'],
+            ) : null,
             'items' => $items,
             'amount' => $amount,
             'currency' => $currency,
@@ -86,6 +106,21 @@ class StartCheckoutAction
         }
 
         return $checkout;
+    }
+
+    /**
+     * The delivery address parts, trimmed.
+     *
+     * @return array{zone_number: string, street_number: string, building_number: string, city: string}
+     */
+    private function deliveryAddress(StartCheckoutRequest $request): array
+    {
+        return [
+            'zone_number' => trim((string) $request->validated('zoneNumber')),
+            'street_number' => trim((string) $request->validated('streetNumber')),
+            'building_number' => trim((string) $request->validated('buildingNumber')),
+            'city' => trim((string) $request->validated('city')),
+        ];
     }
 
     /**

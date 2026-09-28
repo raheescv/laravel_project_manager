@@ -68,7 +68,7 @@ export function fetchCheckoutConfig() {
 /**
  * POST /storefront/checkout — prices the bag server-side and opens a Tap charge.
  * Body: { fulfilment, branchId, customerName, customerEmail, countryCode,
- * customerMobile, address, items: [{ productId, quantity }], returnUrl }.
+ * customerMobile, zoneNumber, streetNumber, buildingNumber, city, items: [{ productId, quantity }], returnUrl }.
  * Returns the checkout; send the customer to its `payment_url`.
  */
 export function startCheckout(payload) {
@@ -82,6 +82,27 @@ export function startCheckout(payload) {
  */
 export function fetchCheckout(reference) {
   return client.get(`/storefront/checkout/${encodeURIComponent(reference)}`)
+}
+
+/**
+ * Qatar National Address lookups (QNAS, proxied and cached by the API).
+ * A 503 means lookups are off — the delivery form falls back to typed numbers.
+ *   zones     → [{ number, name_en, name_ar }]
+ *   streets   → [{ number, name_en, name_ar }]   (names are often null)
+ *   buildings → [{ number, lat, lng }]
+ */
+export function fetchZones() {
+  return client.get('/storefront/address/zones')
+}
+
+export function fetchStreets(zone) {
+  return client.get(`/storefront/address/zones/${encodeURIComponent(zone)}/streets`)
+}
+
+export function fetchBuildings(zone, street) {
+  return client.get(
+    `/storefront/address/zones/${encodeURIComponent(zone)}/streets/${encodeURIComponent(street)}/buildings`,
+  )
 }
 
 /** Drop null / undefined / '' params so URLs stay clean. */

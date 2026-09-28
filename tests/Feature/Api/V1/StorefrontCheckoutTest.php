@@ -6,6 +6,7 @@ use App\Models\StorefrontCheckout;
 use App\Support\Storefront\TapSettings;
 use App\Support\TenantCache;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\PosWorld;
@@ -275,19 +276,45 @@ it('ships delivery orders from the configured branch', function (): void {
         'user_id' => $this->world->user->id,
         'delivery_branch_id' => $warehouse->id,
     ])]);
+    // The customer picked building 12 from the QNAS list, so its position is cached.
+    Cache::put('qnas:buildings:56:340', [['number' => '12', 'lat' => 25.2854473, 'lng' => 51.5310398]]);
 
     $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world, [
         'fulfilment' => 'delivery',
         'branchId' => null,
-        'address' => 'Villa 12, Street 340, Doha',
+        'zoneNumber' => '56',
+        'streetNumber' => '340',
+        'buildingNumber' => '12',
+        'city' => 'Doha',
     ]))->assertCreated()->json('data.reference');
 
     $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
 
+    $checkout = StorefrontCheckout::withoutGlobalScopes()->sole();
+    expect($checkout->zone_number)->toBe('56')
+        ->and($checkout->street_number)->toBe('340')
+        ->and($checkout->building_number)->toBe('12')
+        ->and($checkout->city)->toBe('Doha')
+        ->and($checkout->latitude)->toBe(25.2854473)
+        ->and($checkout->longitude)->toBe(51.5310398);
+
     $sale = Sale::withoutGlobalScopes()->sole();
     expect($sale->branch_id)->toBe($warehouse->id)
-        ->and($sale->address)->toBe('Villa 12, Street 340, Doha')
+        ->and($sale->address)->toBe('Zone 56, Street 340, Building 12, Doha')
         ->and(storefrontStockAt($this->world, $warehouse->id))->toBe(98.0);
+});
+
+it('needs every part of the delivery address', function (): void {
+    Http::fake();
+
+    $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world, [
+        'fulfilment' => 'delivery',
+        'branchId' => null,
+        'zoneNumber' => '56',
+        'city' => 'Doha',
+    ]))->assertUnprocessable()->assertJsonValidationErrors(['streetNumber', 'buildingNumber']);
+
+    Http::assertNothingSent();
 });
 
 it('refuses delivery when the store ships from nowhere', function (): void {
@@ -296,7 +323,10 @@ it('refuses delivery when the store ships from nowhere', function (): void {
     $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world, [
         'fulfilment' => 'delivery',
         'branchId' => null,
-        'address' => 'Villa 12, Street 340, Doha',
+        'zoneNumber' => '56',
+        'streetNumber' => '340',
+        'buildingNumber' => '12',
+        'city' => 'Doha',
     ]))->assertUnprocessable();
 
     Http::assertNothingSent();

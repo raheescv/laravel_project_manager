@@ -41,6 +41,12 @@ class StorefrontCheckout extends Model implements AuditableContracts
         'customer_name',
         'customer_mobile',
         'customer_email',
+        'zone_number',
+        'street_number',
+        'building_number',
+        'city',
+        'latitude',
+        'longitude',
         'address',
         'items',
         'amount',
@@ -58,6 +64,8 @@ class StorefrontCheckout extends Model implements AuditableContracts
         'items' => 'array',
         'gateway_response' => 'array',
         'amount' => 'decimal:2',
+        'latitude' => 'float',
+        'longitude' => 'float',
         'paid_at' => 'datetime',
     ];
 

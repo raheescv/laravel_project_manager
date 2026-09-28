@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function (): void {
         Route::get('view/{id}', 'view')->name('view')->can('sale.view');
         Route::get('invoices', 'get')->name('invoice-list');
         Route::get('receipts', 'receipts')->name('receipts')->can('sale.receipts');
+        Route::get('online-payments', 'onlinePayments')->name('online-payments')->can('sale.online payments');
 
         Route::get('day-management', 'dayManagement')->name('day-management')->can('day session.create');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('day session.view');

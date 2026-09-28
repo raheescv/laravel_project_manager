@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\SaleReturnController;
 use App\Http\Controllers\Api\V1\SaleSettingController;
 use App\Http\Controllers\Api\V1\SizeController;
 use App\Http\Controllers\Api\V1\StockCheckController;
+use App\Http\Controllers\Api\V1\StorefrontAddressController;
 use App\Http\Controllers\Api\V1\StorefrontCheckoutController;
 use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Controllers\Api\V1\StudentCardController;
@@ -81,6 +82,17 @@ Route::prefix('v1')->group(function () {
 
         // Storefront branding (accent color the showcase website applies at boot)
         Route::get('settings/branding', [StorefrontController::class, 'branding'])->name('api.v1.settings.branding');
+
+        // Qatar National Address pickers for the storefront delivery form (QNAS, proxied + cached)
+        Route::prefix('storefront/address')->middleware('throttle:60,1')->group(function () {
+            Route::get('zones', [StorefrontAddressController::class, 'zones'])->name('api.v1.storefront.address.zones');
+            Route::get('zones/{zone}/streets', [StorefrontAddressController::class, 'streets'])
+                ->whereNumber('zone')
+                ->name('api.v1.storefront.address.streets');
+            Route::get('zones/{zone}/streets/{street}/buildings', [StorefrontAddressController::class, 'buildings'])
+                ->whereNumber(['zone', 'street'])
+                ->name('api.v1.storefront.address.buildings');
+        });
 
         // Storefront checkout through Tap Payments (Settings → Online Payments)
         Route::prefix('storefront/checkout')->group(function () {

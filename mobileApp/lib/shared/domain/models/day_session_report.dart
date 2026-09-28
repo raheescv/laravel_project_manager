@@ -77,14 +77,47 @@ class DaySessionReport extends Equatable {
   /// Bank") says nothing reliable about cash vs card, so each prints its own.
   final List<DaySessionMethodTotal> methodTotals;
 
-  factory DaySessionReport.fromJson(Map<String, dynamic> j) => DaySessionReport(
-        session: DaySessionSummary.fromJson(Map<String, dynamic>.from((j['session'] as Map?) ?? const {})),
-        transactions: _list(j['transactions'], DaySessionTransaction.fromJson),
-        dues: _list(j['due_transactions'], DaySessionDue.fromJson),
-        duePayments: _list(j['due_payments'], DaySessionDuePayment.fromJson),
-        totals: DaySessionTotals.fromJson(Map<String, dynamic>.from((j['totals'] as Map?) ?? const {})),
-        methodTotals: _list(j['method_totals'], DaySessionMethodTotal.fromJson),
-      );
+  factory DaySessionReport.fromJson(Map<String, dynamic> j) {
+    final transactions = _list(j['transactions'], DaySessionTransaction.fromJson);
+    final duePayments = _list(j['due_payments'], DaySessionDuePayment.fromJson);
+    return DaySessionReport(
+      session: DaySessionSummary.fromJson(Map<String, dynamic>.from((j['session'] as Map?) ?? const {})),
+      transactions: transactions,
+      dues: _list(j['due_transactions'], DaySessionDue.fromJson),
+      duePayments: duePayments,
+      totals: DaySessionTotals.fromJson(Map<String, dynamic>.from((j['totals'] as Map?) ?? const {})),
+      // An older server sends no `method_totals` — work them out from the rows.
+      methodTotals: j['method_totals'] is List
+          ? _list(j['method_totals'], DaySessionMethodTotal.fromJson)
+          : _methodTotals(transactions, duePayments),
+    );
+  }
+
+  /// Invoice / due totals per payment method, grouped case-insensitively in
+  /// the order each method first appears — as the server works them out.
+  static List<DaySessionMethodTotal> _methodTotals(
+      List<DaySessionTransaction> transactions, List<DaySessionDuePayment> duePayments) {
+    final byKey = <String, ({String method, double invoice, double due})>{};
+    void add(String name, double amount, {required bool due}) {
+      if (amount <= 0) return;
+      final method = name.trim().isEmpty ? 'Payment' : name.trim();
+      final key = method.toLowerCase();
+      final row = byKey[key] ?? (method: method, invoice: 0.0, due: 0.0);
+      byKey[key] = due
+          ? (method: row.method, invoice: row.invoice, due: row.due + amount)
+          : (method: row.method, invoice: row.invoice + amount, due: row.due);
+    }
+
+    for (final tx in transactions) {
+      for (final p in tx.payments) {
+        add(p.method, p.amount, due: false);
+      }
+    }
+    for (final p in duePayments) {
+      add(p.paymentMethod, p.amount, due: true);
+    }
+    return [for (final r in byKey.values) DaySessionMethodTotal(method: r.method, invoice: r.invoice, due: r.due)];
+  }
 
   @override
   List<Object?> get props => [session, transactions, dues, duePayments, totals, methodTotals];

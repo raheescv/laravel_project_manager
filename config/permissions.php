@@ -74,6 +74,8 @@ return [
         // Mobile POS only: pick any staff member as a ticket's / line's
         // employee. Without it the app locks the selector to the signed-in user.
         'mobile change employee',
+        // Storefront checkouts through Tap (Sale → Online Payments).
+        'online payments',
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'receipts', 'view journal entries'],
     'purchase' => [

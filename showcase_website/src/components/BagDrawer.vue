@@ -8,6 +8,7 @@ import { useCatalogStore } from '@/stores/catalog'
 import { useShopsStore } from '@/stores/shops'
 import { toast } from '@/toast'
 import { initialOf } from '@/utils/catalog'
+import DeliveryAddress from './DeliveryAddress.vue'
 
 const bag = useBagStore()
 const catalog = useCatalogStore()
@@ -150,10 +151,7 @@ function keepShopping() {
               <span v-if="s.location" class="shop__meta">{{ s.location }}</span>
             </label>
           </div>
-          <label v-else class="fld">
-            <span class="sr-only">{{ t('address') }}</span>
-            <textarea v-model="bag.customer.address" rows="3" maxlength="500" autocomplete="street-address"></textarea>
-          </label>
+          <DeliveryAddress v-else />
         </div>
 
         <div class="co__group">

@@ -9,7 +9,11 @@ const STORAGE_KEY = 'sr.bag'
 // survive the round trip to Tap, but a shared device forgets them with the tab.
 const CUSTOMER_KEY = 'sr.checkout.customer'
 const PENDING_KEY = 'sr.checkout.pending'
+// Pickup vs delivery (and the shop), kept so the round trip to Tap doesn't reset them.
+const FULFILMENT_KEY = 'sr.checkout.fulfilment'
 const MAX_QTY = 9
+// Delivery address fields, sent as-is to the checkout API.
+const ADDRESS_PARTS = ['zoneNumber', 'streetNumber', 'buildingNumber', 'city']
 // Tap can report a just-paid charge as still in flight for a moment; re-ask a
 // few times before showing "not finished yet".
 const POLL_MS = 2500
@@ -58,8 +62,9 @@ function restore() {
 export const useBagStore = defineStore('bag', () => {
   const lines = ref(restore())
   const open = ref(false)
-  const fulfilment = ref('pickup') // pickup | delivery
-  const branchId = ref(null) // the shop to collect from
+  const savedFulfilment = load('session', FULFILMENT_KEY, {})
+  const fulfilment = ref(savedFulfilment.fulfilment === 'delivery' ? 'delivery' : 'pickup') // pickup | delivery
+  const branchId = ref(savedFulfilment.branchId ?? null) // the shop to collect from
 
   const step = ref('bag') // bag | details | redirecting | confirming | result
   // `checked` flips once the first attempt settles either way, so the drawer can
@@ -70,7 +75,10 @@ export const useBagStore = defineStore('bag', () => {
     email: '',
     countryCode: COUNTRY_CODE,
     mobile: '',
-    address: '',
+    zoneNumber: '',
+    streetNumber: '',
+    buildingNumber: '',
+    city: '',
     ...load('session', CUSTOMER_KEY, {}),
   })
   const submitting = ref(false)
@@ -151,7 +159,7 @@ export const useBagStore = defineStore('bag', () => {
     const cc = digits(customer.countryCode)
     const mobile = digits(customer.mobile)
     if (!cc || cc.length > 4 || mobile.length < 6 || mobile.length > 15) return t('badMobile')
-    if (fulfilment.value === 'delivery' && !customer.address.trim()) return t('needAddress')
+    if (fulfilment.value === 'delivery' && ADDRESS_PARTS.some((k) => !String(customer[k] || '').trim())) return t('needAddress')
     return ''
   }
 
@@ -163,6 +171,7 @@ export const useBagStore = defineStore('bag', () => {
 
     submitting.value = true
     keep('session', CUSTOMER_KEY, { ...customer })
+    keep('session', FULFILMENT_KEY, { fulfilment: fulfilment.value, branchId: branchId.value })
     try {
       const checkout = await startCheckout({
         fulfilment: fulfilment.value,
@@ -171,7 +180,9 @@ export const useBagStore = defineStore('bag', () => {
         customerEmail: customer.email.trim(),
         countryCode: digits(customer.countryCode),
         customerMobile: digits(customer.mobile),
-        address: fulfilment.value === 'delivery' ? customer.address.trim() : null,
+        ...Object.fromEntries(
+          ADDRESS_PARTS.map((k) => [k, fulfilment.value === 'delivery' ? String(customer[k]).trim() : null]),
+        ),
         items: lines.value.map((l) => ({ productId: l.id, quantity: l.qty })),
         // Tap brings the customer back here. No hash: the API appends
         // ?checkout=REF, which a #/route would swallow.
@@ -200,6 +211,12 @@ export const useBagStore = defineStore('bag', () => {
         if (e?.status === 404) break
       }
       if (i < tries - 1) await sleep(POLL_MS)
+    }
+
+    // A retry after a failed payment should reopen the same form the customer filled in.
+    if (result.value?.fulfilment === 'delivery' || result.value?.fulfilment === 'pickup') {
+      fulfilment.value = result.value.fulfilment
+      if (result.value.fulfilment === 'pickup' && result.value.branch?.id) branchId.value = result.value.branch.id
     }
 
     const status = result.value?.status

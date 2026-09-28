@@ -84,6 +84,13 @@ return [
     'tap' => [
         'base_url' => env('TAP_BASE_URL', 'https://api.tap.company/v2'),
     ],
+    // Qatar National Address Service: zone/street/building pickers at storefront checkout.
+    // The token (https://qnas.qa/customer/tokens/view) is issued for one registered domain.
+    'qnas' => [
+        'base_url' => env('QNAS_BASE_URL', 'https://qnas.qa'),
+        'token' => env('QNAS_TOKEN'),
+        'domain' => env('QNAS_DOMAIN'),
+    ],
     // QCB QPay EZ-Connect (student card top-ups). Payment, inquiry and refund share one URL.
     // Merchant credentials are per tenant, encrypted, in Settings -> Student Cards.
     'qpay' => [

@@ -32,7 +32,11 @@ class StartCheckoutRequest extends FormRequest
             // customer account stores the local number the shop staff search by.
             'countryCode' => ['required', 'string', 'regex:/^\d{1,4}$/'],
             'customerMobile' => ['required', 'string', 'regex:/^\d{6,15}$/'],
-            'address' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:500'],
+            // Qatar blue-plate address parts, only asked for on delivery.
+            'zoneNumber' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:10'],
+            'streetNumber' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:10'],
+            'buildingNumber' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:10'],
+            'city' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:100'],
             // Ids and quantities only — prices are always read from the catalogue,
             // never taken from the browser.
             'items' => ['required', 'array', 'min:1', 'max:30'],
