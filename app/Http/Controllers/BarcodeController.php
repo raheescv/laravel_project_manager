@@ -160,6 +160,7 @@ class BarcodeController extends Controller
             // "Qty" or "Weight", from the sale setting Quantity Label In Print.
             'quantityCaption' => BarcodeLabel::quantityCaption(),
             'fonts' => BarcodeFonts::options(),
+            'currency' => BarcodeLabel::currency(),
             'fontWeights' => BarcodeFonts::weights(),
             // Lets the designer render each font option in its own face.
             'fontFaceCss' => BarcodeFonts::faceCss(null, false),
