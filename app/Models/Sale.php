@@ -105,6 +105,12 @@ class Sale extends Model implements AuditableContracts
                 return;
             }
 
+            // An online (showcase) sale is paid through Tap, not at a till: it keeps the
+            // date it was paid and stays out of the branch's day session and cash count.
+            if ($sale->source === 'storefront') {
+                return;
+            }
+
             // Check if sale needs to be associated with an open day session
             if ($sale->branch_id) {
                 // If no sale_day_session_id is provided, find the open session for the branch

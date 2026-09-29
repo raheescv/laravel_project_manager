@@ -2,6 +2,7 @@
 
 use App\Models\Configuration;
 use App\Models\Sale;
+use App\Models\SaleDaySession;
 use App\Models\StorefrontCheckout;
 use App\Support\Storefront\TapSettings;
 use App\Support\TenantCache;
@@ -394,4 +395,24 @@ it('takes delivery stock from a shop when the online branch cannot fill the bag'
     expect(Sale::withoutGlobalScopes()->sole()->branch_id)->toBe($online->id)
         ->and(storefrontStockAt($this->world, $this->world->branch->id))->toBe(3.0)
         ->and(storefrontStockAt($this->world, $online->id))->toBe(0.0);
+});
+
+it('dates an online sale today and keeps it out of the open day session', function (): void {
+    storefrontFakeTap('CAPTURED');
+    $session = SaleDaySession::create([
+        'tenant_id' => $this->world->tenant->id,
+        'branch_id' => $this->world->branch->id,
+        'opened_by' => $this->world->user->id,
+        'opened_at' => now()->subDay(),
+        'opening_amount' => 0,
+        'status' => 'open',
+    ]);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $sale = Sale::withoutGlobalScopes()->sole();
+    expect($sale->date)->toBe(today()->toDateString())
+        ->and($sale->sale_day_session_id)->toBeNull()
+        ->and($session->fresh()->status)->toBe('open');
 });

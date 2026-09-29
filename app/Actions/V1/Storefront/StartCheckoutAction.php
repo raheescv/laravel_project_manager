@@ -38,8 +38,9 @@ class StartCheckoutAction
 
         $fulfilment = $request->validated('fulfilment');
         $currency = $this->currency();
-        $branch = $this->resolveBranch($fulfilment, $request->validated('branchId'), $settings);
-        $items = $this->priceItems($request->validated('items'), $branch);
+        [$branch, $items] = $fulfilment === 'delivery'
+            ? $this->deliverySource($request->validated('items'), $settings)
+            : $this->pickupSource($request->validated('items'), $request->validated('branchId'));
         $amount = round(array_sum(array_column($items, 'total')), 2);
 
         if ($amount <= 0) {
@@ -124,31 +125,60 @@ class StartCheckoutAction
     }
 
     /**
-     * Where the order's stock comes from.
+     * Pickup: the stock of the shop the customer chose — only shops the storefront
+     * lists, since a back-office branch hidden from the showcase is not somewhere to
+     * collect from.
      *
-     * Pickup: the shop the customer chose — only shops the storefront lists, since a
-     * back-office branch hidden from the showcase is not somewhere to collect from.
-     * Delivery: the branch set in Settings → Online Payments; none means no delivery.
+     * @param  array<int, array{productId: int, quantity: int}>  $lines
+     * @return array{0: Branch, 1: array<int, array<string, mixed>>}
      */
-    private function resolveBranch(string $fulfilment, mixed $branchId, TapSettings $settings): Branch
+    private function pickupSource(array $lines, mixed $branchId): array
     {
-        if ($fulfilment === 'delivery') {
-            $branch = $settings->deliveryEnabled() ? Branch::query()->whereKey($settings->deliveryBranchId)->first() : null;
-
-            if (! $branch) {
-                throw new StorefrontCheckoutException('Delivery is not available — please choose a shop to collect from.');
-            }
-
-            return $branch;
-        }
-
         $branch = Branch::query()->whereKey($branchId)->where('exclude_from_showcase', false)->first();
 
         if (! $branch) {
             throw new StorefrontCheckoutException('Please choose a shop to collect your order from.');
         }
 
-        return $branch;
+        return [$branch, $this->priceItems($lines, $branch)];
+    }
+
+    /**
+     * Delivery: the branch set in Settings → Online Payments (none means no
+     * delivery) when it can fill the whole bag, otherwise the first listed shop
+     * that can. Once paid, the stock is transferred from that shop to the
+     * ship-from branch (SyncCheckoutAction).
+     *
+     * @param  array<int, array{productId: int, quantity: int}>  $lines
+     * @return array{0: Branch, 1: array<int, array<string, mixed>>}
+     */
+    private function deliverySource(array $lines, TapSettings $settings): array
+    {
+        $shipFrom = $settings->deliveryEnabled() ? Branch::query()->whereKey($settings->deliveryBranchId)->first() : null;
+
+        if (! $shipFrom) {
+            throw new StorefrontCheckoutException('Delivery is not available — please choose a shop to collect from.');
+        }
+
+        $shops = Branch::query()
+            ->whereKeyNot($shipFrom->id)
+            ->where('exclude_from_showcase', false)
+            ->orderBy('id')
+            ->get();
+
+        try {
+            return [$shipFrom, $this->priceItems($lines, $shipFrom)];
+        } catch (StorefrontCheckoutException $shortage) {
+            foreach ($shops as $shop) {
+                try {
+                    return [$shop, $this->priceItems($lines, $shop)];
+                } catch (StorefrontCheckoutException) {
+                    continue;
+                }
+            }
+
+            throw $shortage;
+        }
     }
 
     /**

@@ -3,10 +3,13 @@
 namespace App\Actions\V1\Storefront;
 
 use App\Actions\Account\CreateAction as AccountCreateAction;
+use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Exceptions\StorefrontCheckoutException;
 use App\Models\Account;
 use App\Models\AccountCategory;
+use App\Models\Branch;
+use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\StorefrontCheckout;
 use App\Models\User;
@@ -133,11 +136,15 @@ class SyncCheckoutAction
 
         $customer = $this->resolveCustomer($checkout->customer_name, $checkout->customer_mobile);
         $amount = (float) $checkout->amount;
+        $branchId = (int) ($settings->deliveryBranchId ?? $checkout->branch_id);
+        $lines = $branchId === (int) $checkout->branch_id
+            ? $checkout->items
+            : $this->transferToOnlineBranch($checkout, $branchId, (int) $user->id);
 
         $data = [
             'status' => 'completed',
             'source' => 'storefront',
-            'branch_id' => $checkout->branch_id,
+            'branch_id' => $branchId,
             // The Tap charge id, so the sale can be matched to the payment in Tap's dashboard.
             'reference_no' => $checkout->gateway_charge_id,
             'account_id' => $customer->id,
@@ -166,7 +173,7 @@ class SyncCheckoutAction
                 'conversion_factor' => 1,
                 'discount' => 0,
                 'tax' => $line['tax'],
-            ], $checkout->items),
+            ], $lines),
             'payments' => [['payment_method_id' => $account->id, 'amount' => $amount]],
             'comboOffers' => [],
         ];
@@ -186,6 +193,52 @@ class SyncCheckoutAction
         }
 
         return $sale;
+    }
+
+    /**
+     * Move the order's stock from the shop it was taken from to the online branch
+     * ("Delivery orders ship from"), so every online sale is booked at one branch
+     * and filtering reports by it shows them all.
+     *
+     * @return array<int, array<string, mixed>> the checkout lines, re-pointed at the online branch's inventory
+     */
+    private function transferToOnlineBranch(StorefrontCheckout $checkout, int $branchId, int $userId): array
+    {
+        if (! Branch::query()->whereKey($branchId)->exists()) {
+            throw new RuntimeException('The branch set to ship online orders from no longer exists.');
+        }
+
+        $sources = Inventory::withoutGlobalScopes()
+            ->whereIn('id', array_column($checkout->items, 'inventory_id'))
+            ->get()
+            ->keyBy('id');
+
+        $response = (new InventoryTransferCreateAction())->execute([
+            'date' => today()->toDateString(),
+            'branch_id' => $branchId,
+            'from_branch_id' => $checkout->branch_id,
+            'to_branch_id' => $branchId,
+            'description' => 'Online order '.$checkout->gateway_charge_id,
+            'status' => 'completed',
+            'items' => array_map(fn (array $line) => [
+                'inventory_id' => $line['inventory_id'],
+                'name' => $line['name'],
+                'quantity' => $line['quantity'],
+                'current_stock' => (float) ($sources->get($line['inventory_id'])?->quantity ?? 0),
+            ], $checkout->items),
+        ], $userId);
+
+        if (! $response['success']) {
+            throw new RuntimeException($response['message']);
+        }
+
+        $targets = Inventory::withoutGlobalScopes()
+            ->whereIn('product_id', array_column($checkout->items, 'product_id'))
+            ->where('branch_id', $branchId)
+            ->whereNull('employee_id')
+            ->pluck('id', 'product_id');
+
+        return array_map(fn (array $line) => [...$line, 'inventory_id' => $targets[$line['product_id']]], $checkout->items);
     }
 
     private function needsReview(StorefrontCheckout $checkout, string $reason): void
