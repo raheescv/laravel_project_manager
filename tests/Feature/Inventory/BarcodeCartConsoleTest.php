@@ -334,6 +334,62 @@ it('fills the MRP and weight of every row at once', function (): void {
         ->toEqual([[250.0, 3.5], [250.0, 3.5]]);
 });
 
+it('works out the MRP from unit price, weight and tax', function (): void {
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+    $key = "inventory_{$this->inventoryId}";
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSee('Unit Price')
+        ->assertSee('Tax %')
+        ->set("cartItems.{$key}.unit_price", '300')
+        ->set("cartItems.{$key}.weight", '2.5')
+        ->set("cartItems.{$key}.tax", '5');
+
+    expect($component->get("cartItems.{$key}.price"))->toBe(787.5);
+
+    $component->set("cartItems.{$key}.price", '800');
+    expect($component->get("cartItems.{$key}.price"))->toBe(800.0);
+
+    $component->set("cartItems.{$key}.weight", '1');
+    expect($component->get("cartItems.{$key}.price"))->toBe(315.0);
+});
+
+it('works out the MRP from unit price and tax per piece when quantities print as qty', function (): void {
+    ($this->useTemplate)('standard');
+    $key = "inventory_{$this->inventoryId}";
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->set("cartItems.{$key}.tax", '10')
+        ->set("cartItems.{$key}.unit_price", '100');
+
+    expect($component->get("cartItems.{$key}.price"))->toBe(110.0);
+});
+
+it('fills the unit price and tax of every row and works out each MRP', function (): void {
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+
+    $component = Livewire::test(CartPage::class)
+        ->set('separateRows', true)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->call('addToCart', $this->inventoryId);
+
+    $keys = array_keys($component->get('cartItems'));
+    $component->set("cartItems.{$keys[1]}.weight", '2')
+        ->set('fillUnitPrice', '200')
+        ->set('fillTax', '5')
+        ->call('fillAllRows')
+        ->assertDispatched('success');
+
+    expect(collect($component->get('cartItems'))->pluck('price')->sort()->values()->all())->toEqual([210.0, 420.0]);
+});
+
 it('hides the MRP and Weight columns when the template prints neither', function (): void {
     ($this->printWeights)();
     BarcodeTemplateConfiguration::saveConfiguration([

@@ -215,10 +215,14 @@
                                     <th style="width:36px">#</th>
                                     <th>Item</th>
                                     @if ($cart['price_column'])
-                                        <th class="bcx-cart__num">MRP</th>
+                                        <th class="bcx-cart__num">Unit Price</th>
                                     @endif
                                     @if ($cart['weight_column'])
                                         <th class="bcx-cart__num">Weight</th>
+                                    @endif
+                                    @if ($cart['price_column'])
+                                        <th class="bcx-cart__num bcx-cart__num--tax">Tax %</th>
+                                        <th class="bcx-cart__num">MRP</th>
                                     @endif
                                     <th class="bcx-cart__num">Labels</th>
                                     <th style="width:76px"></th>
@@ -258,8 +262,9 @@
                                         </td>
                                         @if ($cart['price_column'])
                                             <td class="bcx-cart__num" @click.stop>
-                                                <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell {{ $missingPrice ? 'is-missing' : '' }}"
-                                                    wire:model.blur="cartItems.{{ $cartKey }}.price" placeholder="MRP" title="MRP printed on this row's labels">
+                                                <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.unit_price" placeholder="—"
+                                                    title="{{ $cart['weight_column'] ? 'Price per gram' : 'Price per piece' }}: fills the MRP with tax">
                                             </td>
                                         @endif
                                         @if ($cart['weight_column'])
@@ -270,6 +275,17 @@
                                                         @focus="$wire.selectRow('{{ $cartKey }}')">
                                                     <em>g</em>
                                                 </div>
+                                            </td>
+                                        @endif
+                                        @if ($cart['price_column'])
+                                            <td class="bcx-cart__num bcx-cart__num--tax" @click.stop>
+                                                <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.tax" placeholder="0" title="Tax % added to the unit price">
+                                            </td>
+                                            <td class="bcx-cart__num" @click.stop>
+                                                <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell {{ $missingPrice ? 'is-missing' : '' }}"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.price" placeholder="MRP"
+                                                    title="MRP printed on this row's labels{{ is_numeric($item['unit_price'] ?? null) ? ' — worked out from unit price, weight and tax' : '' }}">
                                             </td>
                                         @endif
                                         <td class="bcx-cart__num" @click.stop>
@@ -321,6 +337,14 @@
                     </div>
                     @if ($cart['price_column'])
                         <label class="bcx-field">
+                            <span>Unit Price</span>
+                            <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.unit_price" placeholder="—">
+                        </label>
+                        <label class="bcx-field">
+                            <span>Tax %</span>
+                            <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.tax" placeholder="0">
+                        </label>
+                        <label class="bcx-field">
                             <span>MRP</span>
                             <input type="number" step="0.01" min="0" wire:model.blur="cartItems.{{ $selectedRowKey }}.price">
                         </label>
@@ -351,6 +375,14 @@
                 @if (!empty($cartItems) && ($cart['price_column'] || $cart['weight_column']))
                     <div class="bcx-drawer__title">Fill all rows</div>
                     @if ($cart['price_column'])
+                        <label class="bcx-field">
+                            <span>Unit Price</span>
+                            <input type="number" step="0.01" min="0" wire:model="fillUnitPrice" placeholder="Leave as is">
+                        </label>
+                        <label class="bcx-field">
+                            <span>Tax %</span>
+                            <input type="number" step="0.01" min="0" wire:model="fillTax" placeholder="Leave as is">
+                        </label>
                         <label class="bcx-field">
                             <span>MRP</span>
                             <input type="number" step="0.01" min="0" wire:model="fillPrice" placeholder="Leave as is">
@@ -515,6 +547,14 @@
         .bcx-cart__num {
             text-align: end;
             width: 130px;
+        }
+
+        .bcx-cart__num--tax {
+            width: 96px;
+        }
+
+        .bcx-cart__num--tax .bcx-cart__cell {
+            width: 76px;
         }
 
         .bcx-cart__cell {

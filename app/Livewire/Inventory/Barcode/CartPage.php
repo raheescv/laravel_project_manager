@@ -57,6 +57,10 @@ class CartPage extends Component
 
     public $fillWeight = '';
 
+    public $fillUnitPrice = '';
+
+    public $fillTax = '';
+
     protected $listeners = [
         'productSelected' => 'addToCart',
         // 'barcodeScanned' => 'handleBarcodeScan'
@@ -68,6 +72,8 @@ class CartPage extends Component
         $this->cartItems = array_map(fn (array $item): array => $item + [
             'price' => round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2),
             'weight' => null,
+            'unit_price' => null,
+            'tax' => 0,
         ], session('cart_items', []));
         $this->cartItems = $this->withCategoryNames($this->cartItems);
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
@@ -169,6 +175,31 @@ class CartPage extends Component
     private function mrpPrice(array $item): float
     {
         return round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2);
+    }
+
+    /**
+     * With a unit price, the MRP is worked out: unit price × weight (grams in
+     * weight mode, else 1) plus tax. Without one, the MRP stays as typed.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function calculatedPrice(array $item): ?float
+    {
+        if (! is_numeric($item['unit_price'] ?? null)) {
+            return null;
+        }
+
+        $weight = $this->cartSettings()['weight_column'] ? (float) ($item['weight'] ?? 0) : 1.0;
+
+        return round((float) $item['unit_price'] * $weight * (1 + (float) ($item['tax'] ?? 0) / 100), 2);
+    }
+
+    private function recalculatePrice(string $rowKey): void
+    {
+        $price = $this->calculatedPrice($this->cartItems[$rowKey]);
+        if ($price !== null) {
+            $this->cartItems[$rowKey]['price'] = $price;
+        }
     }
 
     public function updatedTemplateKey(): void
@@ -444,6 +475,8 @@ class CartPage extends Component
                 'barcode' => $productUnit->barcode,
                 'size' => $productUnit->product->size,
                 'mrp' => $productUnit->product->mrp,
+                'unit_price' => null,
+                'tax' => (float) $productUnit->product->tax,
                 'price' => round((float) $productUnit->product->mrp * (float) $productUnit->conversion_factor, 2),
                 'image' => $productUnit->product->thumbnail,
                 'type' => $productUnit->product->type,
@@ -475,6 +508,8 @@ class CartPage extends Component
             'barcode' => $inventory->barcode,
             'size' => $inventory->product->size,
             'mrp' => $inventory->product->mrp,
+            'unit_price' => null,
+            'tax' => (float) $inventory->product->tax,
             'price' => round((float) $inventory->product->mrp, 2),
             'image' => $inventory->product->thumbnail,
             'type' => $inventory->product->type,
@@ -574,11 +609,17 @@ class CartPage extends Component
                 default => null,
             },
             'weight' => $row['weight'] = is_numeric($value) && $value > 0 ? round((float) $value, 3) : null,
+            'unit_price' => $row['unit_price'] = is_numeric($value) && $value >= 0 ? round((float) $value, 2) : null,
+            'tax' => $row['tax'] = is_numeric($value) && $value >= 0 ? round((float) $value, 2) : 0,
             'quantity' => $row['quantity'] = max(1, (int) $value),
             default => null,
         };
 
         unset($row);
+
+        if (in_array($field, ['weight', 'unit_price', 'tax'], true)) {
+            $this->recalculatePrice($rowKey);
+        }
         session(['cart_items' => $this->cartItems]);
     }
 
@@ -600,20 +641,24 @@ class CartPage extends Component
 
         $newKey = $this->itemKey($rowKey).'__'.Str::lower(Str::random(6));
         $this->cartItems[$newKey] = array_merge($this->cartItems[$rowKey], ['weight' => $this->startingWeight()]);
+        $this->recalculatePrice($newKey);
         $this->selectedRowKey = $newKey;
         $this->persistCart();
     }
 
     /**
-     * Custom fill: one MRP and/or weight typed once, applied to every row.
+     * Custom fill: one MRP, weight, unit price and/or tax typed once, applied to
+     * every row. Rows with a unit price get their MRP worked out again.
      */
     public function fillAllRows(): void
     {
         $price = is_numeric($this->fillPrice) && $this->fillPrice >= 0 ? round((float) $this->fillPrice, 2) : null;
         $weight = is_numeric($this->fillWeight) && $this->fillWeight > 0 && $this->cartSettings()['weight_column'] ? round((float) $this->fillWeight, 3) : null;
+        $unitPrice = is_numeric($this->fillUnitPrice) && $this->fillUnitPrice >= 0 ? round((float) $this->fillUnitPrice, 2) : null;
+        $tax = is_numeric($this->fillTax) && $this->fillTax >= 0 ? round((float) $this->fillTax, 2) : null;
 
-        if ($price === null && $weight === null) {
-            $this->dispatch('error', ['message' => 'Enter an MRP or a weight to fill.']);
+        if ($price === null && $weight === null && $unitPrice === null && $tax === null) {
+            $this->dispatch('error', ['message' => 'Enter an MRP, weight, unit price or tax to fill.']);
 
             return;
         }
@@ -625,10 +670,21 @@ class CartPage extends Component
             if ($weight !== null) {
                 $this->cartItems[$rowKey]['weight'] = $weight;
             }
+            if ($unitPrice !== null) {
+                $this->cartItems[$rowKey]['unit_price'] = $unitPrice;
+            }
+            if ($tax !== null) {
+                $this->cartItems[$rowKey]['tax'] = $tax;
+            }
+            if ($weight !== null || $unitPrice !== null || $tax !== null) {
+                $this->recalculatePrice($rowKey);
+            }
         }
 
         $this->fillPrice = '';
         $this->fillWeight = '';
+        $this->fillUnitPrice = '';
+        $this->fillTax = '';
         $this->persistCart();
         $this->dispatch('success', ['message' => 'Filled '.count($this->cartItems).' row(s).']);
     }
