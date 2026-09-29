@@ -16,7 +16,7 @@
       <div v-if="product.name_arabic" dir="rtl">{{ product.name_arabic }}</div>
       <div>Barcode <span class="bcx-num">{{ product.barcode || '—' }}</span></div>
       <div>Size <span class="bcx-num">{{ product.size || '—' }}</span></div>
-      <div>Price <span class="bcx-num">QR {{ price }}</span></div>
+      <div>Price <span class="bcx-num">{{ currency ? `${currency} ` : '' }}{{ price }}</span></div>
     </div>
 
     <p class="bcx-note">The proof always renders with real data, so you can see how long names actually behave.</p>
@@ -32,6 +32,7 @@ const props = defineProps({
   products: { type: Array, default: () => [] },
   product: { type: Object, default: null },
   modelValue: { type: String, default: '' },
+  currency: { type: String, default: '' },
 })
 
 defineEmits(['update:modelValue'])
