@@ -40,12 +40,12 @@
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                         <button type="button" class="posx-pay"
-                            :class="{ 'is-active': localPaymentMethod === 1 || localPaymentMethod === '' }"
-                            @click="$emit('update:paymentMethod', 1)">
+                            :class="{ 'is-active': localPaymentMethod === cashPaymentMethodId || localPaymentMethod === '' }"
+                            @click="$emit('update:paymentMethod', cashPaymentMethodId)">
                             <i class="fa fa-money"></i><span>Cash</span>
                         </button>
-                        <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === 2 }"
-                            @click="$emit('update:paymentMethod', 2)">
+                        <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === cardPaymentMethodId }"
+                            @click="$emit('update:paymentMethod', cardPaymentMethodId)">
                             <i class="fa fa-credit-card"></i><span>Card</span>
                         </button>
                         <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === 'credit' }"
@@ -123,7 +123,15 @@ export default {
             default: false
         },
         paymentMethod: {
-            default: 1
+            default: null
+        },
+        cashPaymentMethodId: {
+            type: Number,
+            default: null
+        },
+        cardPaymentMethodId: {
+            type: Number,
+            default: null
         },
         sendToWhatsapp: {
             default: false
@@ -225,8 +233,9 @@ export default {
                     .map(p => `${p.name}: ${formatNumber(parseFloat(p.amount))}`)
                     .join(', ')
             }
-            if (props.saleData.payment_method === 1 || props.paymentMethod === 1) return 'Cash Payment'
-            if (props.saleData.payment_method === 2 || props.paymentMethod === 2) return 'Card Payment'
+            const isMethod = id => id !== null && (props.saleData.payment_method === id || props.paymentMethod === id)
+            if (isMethod(props.cashPaymentMethodId)) return 'Cash Payment'
+            if (isMethod(props.cardPaymentMethodId)) return 'Card Payment'
             if (props.saleData.payment_method === 'credit' || props.paymentMethod === 'credit') return 'Credit Payment (No Payment)'
             return null
         })

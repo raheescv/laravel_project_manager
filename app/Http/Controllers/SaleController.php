@@ -66,6 +66,9 @@ class SaleController extends Controller
 
         // Get payment methods from configuration
         $paymentMethodIds = json_decode(Configuration::where('key', 'payment_methods')->value('value'), true);
+        $accountSlugIds = Account::slugIdMap();
+        $cashPaymentMethodId = $accountSlugIds['cash'] ?? null;
+        $cardPaymentMethodId = $accountSlugIds['card'] ?? null;
         $paymentMethods = [];
         if ($paymentMethodIds) {
             $paymentMethods = Account::whereIn('id', $paymentMethodIds)
@@ -97,7 +100,7 @@ class SaleController extends Controller
             'grand_total' => 0,
             'items' => [],
             'comboOffers' => [],
-            'payment_method' => 1,
+            'payment_method' => $cashPaymentMethodId,
             'custom_payment_data' => null,
             'status' => null,
         ];
@@ -305,6 +308,8 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultCustomer' => $defaultCustomer,
+            'cashPaymentMethodId' => $cashPaymentMethodId,
+            'cardPaymentMethodId' => $cardPaymentMethodId,
             'defaultQuantity' => $defaultQuantity,
             'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),

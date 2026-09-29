@@ -267,7 +267,8 @@
 
         <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="submitting"
-            :payment-method="selectedPaymentMethod" :send-to-whatsapp="sendToWhatsapp"
+            :payment-method="selectedPaymentMethod" :cash-payment-method-id="cashPaymentMethodId"
+            :card-payment-method-id="cardPaymentMethodId" :send-to-whatsapp="sendToWhatsapp"
             @update:paymentMethod="selectPaymentMethod" @update:sendToWhatsapp="val => sendToWhatsapp = val"
             @openCustomPayment="showCustomPaymentModal = true" @close="closeConfirmationModal"
             @submit="processSubmitSale" />
@@ -368,6 +369,15 @@ export default {
             type: Object,
             default: null
         },
+        // The current tenant's Cash / Card payment-method account ids.
+        cashPaymentMethodId: {
+            type: Number,
+            default: null
+        },
+        cardPaymentMethodId: {
+            type: Number,
+            default: null
+        },
         defaultQuantity: {
             type: Number,
             default: 0.001
@@ -426,7 +436,7 @@ export default {
         const selectedCategory = ref('favorite')
         const productKey = ref('')
         const barcodeKey = ref('')
-        const selectedPaymentMethod = ref(1)
+        const selectedPaymentMethod = ref(props.cashPaymentMethodId)
         const sendToWhatsapp = ref(false)
         const showCartModal = ref(false)
         const showCustomerModal = ref(false)
@@ -487,7 +497,7 @@ export default {
             balance: 0,
             items: {},
             comboOffers: [],
-            payment_method: 1,
+            payment_method: props.cashPaymentMethodId,
             custom_payment_data: {},
             rating: 0,
             feedback_type: 'compliment',
@@ -537,8 +547,8 @@ export default {
                     form.payment_method = 'custom'
                     form.custom_payment_data = props.saleData.custom_payment_data
                 } else {
-                    selectedPaymentMethod.value = props.saleData.payment_method || 1
-                    form.payment_method = props.saleData.payment_method || 1
+                    selectedPaymentMethod.value = props.saleData.payment_method || props.cashPaymentMethodId
+                    form.payment_method = props.saleData.payment_method || props.cashPaymentMethodId
                     customPaymentData.value = {
                         payments: [],
                         totalPaid: 0,
@@ -1107,8 +1117,8 @@ export default {
             showCustomPaymentModal.value = false
             // If no custom payment was saved and custom was selected, reset to cash
             if (selectedPaymentMethod.value === 'custom' && (!customPaymentData.value.payments || customPaymentData.value.payments.length === 0)) {
-                selectedPaymentMethod.value = 1
-                form.payment_method = 1
+                selectedPaymentMethod.value = props.cashPaymentMethodId
+                form.payment_method = props.cashPaymentMethodId
             }
         }
 
@@ -1276,7 +1286,7 @@ export default {
                             totalPaid: 0,
                             balanceDue: 0
                         };
-                        selectedPaymentMethod.value = 1;
+                        selectedPaymentMethod.value = props.cashPaymentMethodId;
                     }
                 }, 1000)); // 1 second delay to ensure print window opens first
             } catch (error) {
@@ -1391,10 +1401,10 @@ export default {
             form.round_off = 0
             form.total = 0
             form.grand_total = 0
-            form.payment_method = 1
+            form.payment_method = props.cashPaymentMethodId
 
             // Reset payment method
-            selectedPaymentMethod.value = 1
+            selectedPaymentMethod.value = props.cashPaymentMethodId
             customPaymentData.value = {
                 payments: [],
                 totalPaid: 0,
