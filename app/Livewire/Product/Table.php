@@ -110,6 +110,36 @@ class Table extends Component
         }
     }
 
+    public function updateSelling(bool $isSelling): void
+    {
+        abort_unless(auth()->user()?->can('product.edit'), 403);
+        if (! count($this->selected)) {
+            $this->dispatch('error', ['message' => 'Please select any item to update.']);
+
+            return;
+        }
+        try {
+            DB::beginTransaction();
+            $products = Product::product()->whereIn('id', $this->selected)->get();
+            foreach ($products as $product) {
+                $product->update(['is_selling' => $isSelling]);
+            }
+            DB::commit();
+            $label = $isSelling ? 'selling' : 'not selling';
+            $this->dispatch('success', ['message' => 'Marked '.$products->count().' items as '.$label]);
+            $this->clearSelection();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+        $this->selectAll = false;
+    }
+
     public function updated($key, $value)
     {
         if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {

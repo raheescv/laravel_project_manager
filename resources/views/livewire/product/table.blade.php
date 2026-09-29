@@ -16,13 +16,6 @@
                                 <span class="d-none d-md-inline">Export</span>
                             </button>
                         @endcan
-                        @can('product.delete')
-                            <button class="btn btn-danger btn-sm d-flex align-items-center" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()"
-                                wire:confirm="Are you sure you want to delete the selected items?">
-                                <i class="demo-pli-recycling me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Delete</span>
-                            </button>
-                        @endcan
                         @can('product.import')
                             <a class="btn btn-info btn-sm d-flex align-items-center text-white shadow-sm" title="Import" href="{{ route('product::import') }}">
                                 <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
@@ -455,14 +448,6 @@
                         </a>
                     </li>
                 @endcan
-                @can('product.delete')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="#" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?">
-                            <i class="demo-pli-recycling me-2 text-danger"></i>
-                            Delete Selected
-                        </a>
-                    </li>
-                @endcan
                 <li>
                     <hr class="dropdown-divider">
                 </li>
@@ -475,6 +460,70 @@
             </ul>
         </div>
     </div>
+
+    @if (count($selected))
+        <div class="product-bulk-bar" role="toolbar" aria-label="Bulk actions for selected products">
+            <div class="d-flex align-items-center gap-2 bg-dark text-white rounded-pill shadow-lg px-3 py-2">
+                <span class="badge bg-primary rounded-pill">{{ count($selected) }}</span>
+                <span class="small fw-semibold text-nowrap me-1 d-none d-sm-inline">selected</span>
+                <span class="vr opacity-25"></span>
+                @can('product.delete')
+                    <button type="button" class="btn btn-sm btn-danger rounded-pill d-flex align-items-center" wire:click="delete()"
+                        wire:confirm="Are you sure you want to delete the {{ count($selected) }} selected items?" wire:loading.attr="disabled">
+                        <i class="demo-pli-recycling me-1"></i>
+                        Delete
+                    </button>
+                @endcan
+                @can('product.edit')
+                    <div class="dropup">
+                        <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                            wire:loading.attr="disabled">
+                            <i class="demo-psi-shop me-1"></i>
+                            Sellable
+                        </button>
+                        <ul class="dropdown-menu shadow-lg">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateSelling(true)">
+                                    <i class="fa fa-check-circle me-2 text-success"></i>
+                                    Mark as selling
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateSelling(false)">
+                                    <i class="fa fa-ban me-2 text-danger"></i>
+                                    Mark as not selling
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                @endcan
+                <button type="button" class="btn btn-sm btn-link text-white-50 p-1 ms-1" title="Clear selection" aria-label="Clear selection" wire:click="clearSelection()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @push('styles')
+        <style>
+            .product-bulk-bar {
+                position: fixed;
+                bottom: 1.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1060;
+                max-width: calc(100vw - 2rem);
+            }
+
+            @media (max-width: 767.98px) {
+                .product-bulk-bar {
+                    left: 1rem;
+                    right: 5.5rem;
+                    transform: none;
+                }
+            }
+        </style>
+    @endpush
 
     @push('scripts')
         <script>
