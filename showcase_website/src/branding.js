@@ -43,6 +43,18 @@ export function applyPrimaryColor(hex) {
   root.setProperty('--blue', toHex(base))
   root.setProperty('--blue-600', toHex(shade(base, 0.14)))
   root.setProperty('--blue-900', toHex(shade(base, -0.5)))
+  tintFavicon(toHex(base))
+}
+
+/** Re-ink the tab icon and browser chrome in the store's accent. */
+function tintFavicon(hex) {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${hex}"/>` +
+    '<rect x="10" y="10" width="44" height="44" rx="8" fill="none" stroke="#fff" stroke-width="4"/>' +
+    '<path d="M32 43V21M32 21l-8 8M32 21l8 8" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  const icon = document.getElementById('favicon')
+  if (icon) icon.href = `data:image/svg+xml,${encodeURIComponent(svg)}`
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hex)
 }
 
 /** Load branding from the API and apply it. Best-effort — CSS defaults stay otherwise. */
