@@ -4,6 +4,7 @@ use App\Livewire\Product\Table;
 use App\Models\Product;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
@@ -13,6 +14,9 @@ use Tests\Support\PosWorld;
 beforeEach(function (): void {
     Queue::fake();
     $this->world = PosWorld::create();
+    foreach (['product.edit', 'product.delete'] as $permission) {
+        $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']));
+    }
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);
 });
@@ -55,4 +59,13 @@ it('refuses a bulk selling update with nothing selected', function (): void {
 it('no longer offers delete in the top toolbar', function (): void {
     Livewire::test(Table::class)
         ->assertDontSeeHtml('title="Delete Selected"');
+});
+
+it('forbids a bulk selling update without edit permission', function (): void {
+    $this->world->user->revokePermissionTo('product.edit');
+
+    Livewire::test(Table::class)
+        ->set('selected', [$this->world->product->id])
+        ->call('updateSelling', false)
+        ->assertForbidden();
 });
