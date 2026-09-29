@@ -59,7 +59,7 @@
                                                 @search="searchCustomers" @change="handleCustomerChange"
                                                 input-class="posx-field posx-field-select" />
                                             <button type="button" class="posx-gbtn" @click="viewCustomerDetails"
-                                                :disabled="!form.account_id || form.account_id === 3"
+                                                :disabled="!form.account_id || form.account_id === defaultCustomerId"
                                                 :class="{ 'has-flag': hasCustomerFeedbacks }"
                                                 :title="hasCustomerFeedbacks ? 'View customer details — has feedback' : 'View customer details'">
                                                 <i class="fa fa-eye"></i>
@@ -363,6 +363,11 @@ export default {
             type: Boolean,
             default: true
         },
+        // The current tenant's "General Customer" account ({ id, name, mobile }).
+        defaultCustomer: {
+            type: Object,
+            default: null
+        },
         defaultQuantity: {
             type: Number,
             default: 0.001
@@ -410,13 +415,10 @@ export default {
         const productsTotal = ref(0)
         const employeeSelectRef = ref(null)
         // Initialize serverCustomers with default customer and props.customers
+        const defaultCustomerId = props.defaultCustomerEnabled && props.defaultCustomer ? props.defaultCustomer.id : null
         const serverCustomers = ref({
-            ...(props.defaultCustomerEnabled ? {
-                3: {
-                    id: 3,
-                    name: 'General Customer',
-                    mobile: ''
-                }
+            ...(defaultCustomerId ? {
+                [defaultCustomerId]: { ...props.defaultCustomer }
             } : {}),
             ...props.customers || {}
         })
@@ -475,7 +477,7 @@ export default {
             date: new Date().toISOString().split('T')[0],
             employee_id: props.saleData.employee_id || '',
             sale_type: 'normal',
-            account_id: props.defaultCustomerEnabled ? 3 : null,
+            account_id: defaultCustomerId,
             customer_mobile: '',
             other_discount: 0,
             round_off: 0,
@@ -506,9 +508,9 @@ export default {
                 form.date = props.saleData.date || form.date
                 form.employee_id = props.saleData.employee_id || ''
                 form.sale_type = props.saleData.sale_type || 'normal'
-                form.account_id = props.saleData.account_id || 3
+                form.account_id = props.saleData.account_id || defaultCustomerId
                 form.customer_mobile = props.saleData.customer_mobile || ''
-                form.account_id = props.saleData.account_id || 3
+                form.account_id = props.saleData.account_id || defaultCustomerId
                 form.other_discount = props.saleData.other_discount || 0
                 form.round_off = props.saleData.round_off || 0
                 form.total = props.saleData.total || 0
@@ -618,19 +620,17 @@ export default {
                     const customerObj = {
                         ...serverCustomers.value
                     }
-                    if (props.defaultCustomerEnabled) {
+                    if (defaultCustomerId) {
                         // Ensure default customer is always present
-                        customerObj[3] = {
-                            id: 3,
-                            name: 'General Customer',
-                            mobile: '',
+                        customerObj[defaultCustomerId] = {
+                            ...props.defaultCustomer,
                             phone: ''
                         }
                     }
 
                     // Add props customers (excluding default to avoid duplicates)
                     Object.entries(props.customers || {}).forEach(([id, customer]) => {
-                        if (parseInt(id) !== 3) customerObj[id] = customer
+                        if (parseInt(id) !== defaultCustomerId) customerObj[id] = customer
                     })
 
                     // Add/update server customers from API response
@@ -641,8 +641,8 @@ export default {
                     serverCustomers.value = customerObj
 
                     // Update mobile if default customer is selected
-                    if (form.account_id === 3 && customerObj[3]) {
-                        form.customer_mobile = customerObj[3].mobile || customerObj[3].phone || form.customer_mobile || ''
+                    if (defaultCustomerId && form.account_id === defaultCustomerId && customerObj[defaultCustomerId]) {
+                        form.customer_mobile = customerObj[defaultCustomerId].mobile || customerObj[defaultCustomerId].phone || form.customer_mobile || ''
                     }
                 }
             } catch (error) {
@@ -1018,7 +1018,7 @@ export default {
         }
 
         const viewCustomerDetails = () => {
-            if (!form.account_id || form.account_id === 3) {
+            if (!form.account_id || form.account_id === defaultCustomerId) {
                 toast.error('Please select a customer first')
                 return
             }
@@ -1062,7 +1062,7 @@ export default {
         }
 
         const checkCustomerFeedbacks = async (customerId) => {
-            if (!customerId || customerId === 3) {
+            if (!customerId || customerId === defaultCustomerId) {
                 hasCustomerFeedbacks.value = false
                 return
             }
@@ -1385,7 +1385,7 @@ export default {
             form.date = new Date().toISOString().split('T')[0]
             form.employee_id = ''
             form.sale_type = 'normal'
-            form.account_id = 3
+            form.account_id = defaultCustomerId
             form.customer_mobile = ''
             form.other_discount = 0
             form.round_off = 0
@@ -1577,6 +1577,7 @@ export default {
             products,
             productsTotal,
             serverCustomers,
+            defaultCustomerId,
             loadingCustomers,
             selectedCategory,
             productKey,

@@ -49,13 +49,16 @@ class SaleController extends Controller
         $employees = $employees->pluck('name', 'id')->toArray();
 
         $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes') === 'yes';
+        $generalCustomer = Account::where('slug', 'general_customer')->first(['id', 'name', 'mobile']);
+        $defaultCustomer = $generalCustomer ? [
+            'id' => $generalCustomer->id,
+            'name' => $generalCustomer->name,
+            'mobile' => $generalCustomer->mobile ?? '',
+        ] : null;
+        $useDefaultCustomer = $useDefaultCustomer && $defaultCustomer !== null;
         $customers = [];
         if ($useDefaultCustomer) {
-            $customers[3] = [
-                'id' => 3,
-                'name' => 'General Customer',
-                'mobile' => '',
-            ];
+            $customers[$defaultCustomer['id']] = $defaultCustomer;
         }
         $priceTypes = priceTypes();
         $customerTypes = CustomerType::pluck('name', 'id')->toArray();
@@ -85,8 +88,8 @@ class SaleController extends Controller
             'id' => null,
             'employee_id' => $defaultEmployeeId,
             'sale_type' => 'normal',
-            'account_id' => $useDefaultCustomer ? 3 : null,
-            'account_name' => $useDefaultCustomer ? 'General Customer' : null,
+            'account_id' => $useDefaultCustomer ? $defaultCustomer['id'] : null,
+            'account_name' => $useDefaultCustomer ? $defaultCustomer['name'] : null,
             'customer_mobile' => '',
             'other_discount' => 0,
             'round_off' => 0,
@@ -119,13 +122,13 @@ class SaleController extends Controller
                 ])->findOrFail($id);
 
                 // Add the sale's customer to the customers array if it exists
-                if ($sale->account && $sale->account_id !== 3) {
+                if ($sale->account && $sale->account_id !== ($defaultCustomer['id'] ?? null)) {
                     $customers[$sale->account_id] = [
                         'id' => $sale->account->id,
                         'name' => $sale->account->name,
                         'mobile' => $sale->account->mobile ?? ($sale->customer_mobile ?? ''),
                     ];
-                } elseif ($sale->account_id && $sale->account_id !== 3 && $sale->customer_name) {
+                } elseif ($sale->account_id && $sale->account_id !== ($defaultCustomer['id'] ?? null) && $sale->customer_name) {
                     // Handle case where account relation doesn't exist but we have customer data
                     $customers[$sale->account_id] = [
                         'id' => $sale->account_id,
@@ -301,6 +304,7 @@ class SaleController extends Controller
             ] : null,
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
+            'defaultCustomer' => $defaultCustomer,
             'defaultQuantity' => $defaultQuantity,
             'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
