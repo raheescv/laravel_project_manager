@@ -16,7 +16,7 @@ const STRINGS = {
     step1: 'Step 1 — your size',
     step2: 'Step 2 — brand',
     step3: 'Step 3 — the pairs',
-    sizeTitle: "Pick your size. See what’s in store now.?",
+    sizeTitle: "Pick your size. See what’s in store now.",
     sizeLede: 'Pick it once. From there you only see pairs that are actually on the shelf in your size.',
     allSizes: 'Show every size',
     allSizesHint: 'Not sure of your size? Browse the whole shop instead.',
