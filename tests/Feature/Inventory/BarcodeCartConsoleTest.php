@@ -334,6 +334,26 @@ it('fills the MRP and weight of every row at once', function (): void {
         ->toEqual([[250.0, 3.5], [250.0, 3.5]]);
 });
 
+it('starts the unit price at the product MRP and adds the product tax to the MRP', function (): void {
+    $this->world = PosWorld::create(price: 50, tax: 10);
+    session(['branch_id' => $this->world->branch->id]);
+    $inventoryId = DB::table('inventories')->where('product_id', $this->world->product->id)->value('id');
+    ($this->printWeights)();
+    ($this->useTemplate)('jewellery_tag');
+    $key = "inventory_{$inventoryId}";
+    $mrp = round((float) $this->world->product->mrp, 2);
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $inventoryId)
+        ->assertSet("cartItems.{$key}.unit_price", $mrp)
+        ->assertSet("cartItems.{$key}.tax", 10.0)
+        ->assertSet("cartItems.{$key}.price", round($mrp * 1.1, 2))
+        ->set("cartItems.{$key}.weight", '2');
+
+    expect($component->get("cartItems.{$key}.price"))->toBe(round($mrp * 2 * 1.1, 2));
+});
+
 it('works out the MRP from unit price, weight and tax', function (): void {
     ($this->printWeights)();
     ($this->useTemplate)('jewellery_tag');

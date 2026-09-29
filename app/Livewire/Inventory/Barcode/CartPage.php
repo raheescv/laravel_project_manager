@@ -70,9 +70,9 @@ class CartPage extends Component
     {
         // Initialize cart from session if exists
         $this->cartItems = array_map(fn (array $item): array => $item + [
-            'price' => round((float) ($item['mrp'] ?? 0) * (float) ($item['conversion_factor'] ?? 1), 2),
+            'price' => $this->mrpPrice($item),
             'weight' => null,
-            'unit_price' => null,
+            'unit_price' => $this->mrpPrice($item),
             'tax' => 0,
         ], session('cart_items', []));
         $this->cartItems = $this->withCategoryNames($this->cartItems);
@@ -149,14 +149,14 @@ class CartPage extends Component
         $autoWeight = $this->cartSettings()['weight_mode'] ? 1.0 : null;
 
         foreach ($this->cartItems as $rowKey => $item) {
-            $autoPrice = $this->mrpPrice($item);
-
             if ($this->autoFill) {
-                $this->cartItems[$rowKey]['price'] = is_numeric($item['price'] ?? null) ? $item['price'] : $autoPrice;
                 $this->cartItems[$rowKey]['weight'] = ($item['weight'] ?? null) ?: $autoWeight;
+                $this->cartItems[$rowKey]['price'] = is_numeric($item['price'] ?? null) ? $item['price'] : $this->autoPrice($this->cartItems[$rowKey]);
 
                 continue;
             }
+
+            $autoPrice = $this->autoPrice($item);
 
             if (is_numeric($item['price'] ?? null) && (float) $item['price'] === $autoPrice) {
                 $this->cartItems[$rowKey]['price'] = null;
@@ -178,8 +178,19 @@ class CartPage extends Component
     }
 
     /**
+     * The MRP Auto fill puts on a row: worked out from its unit price, else the product MRP.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function autoPrice(array $item): float
+    {
+        return $this->calculatedPrice($item) ?? $this->mrpPrice($item);
+    }
+
+    /**
      * With a unit price, the MRP is worked out: unit price × weight (grams in
-     * weight mode, else 1) plus tax. Without one, the MRP stays as typed.
+     * weight mode, else 1) plus tax. Without one, or before the row has its
+     * grams, the MRP stays as typed.
      *
      * @param  array<string, mixed>  $item
      */
@@ -190,6 +201,9 @@ class CartPage extends Component
         }
 
         $weight = $this->cartSettings()['weight_column'] ? (float) ($item['weight'] ?? 0) : 1.0;
+        if ($weight <= 0) {
+            return null;
+        }
 
         return round((float) $item['unit_price'] * $weight * (1 + (float) ($item['tax'] ?? 0) / 100), 2);
     }
@@ -475,7 +489,7 @@ class CartPage extends Component
                 'barcode' => $productUnit->barcode,
                 'size' => $productUnit->product->size,
                 'mrp' => $productUnit->product->mrp,
-                'unit_price' => null,
+                'unit_price' => round((float) $productUnit->product->mrp * (float) $productUnit->conversion_factor, 2),
                 'tax' => (float) $productUnit->product->tax,
                 'price' => round((float) $productUnit->product->mrp * (float) $productUnit->conversion_factor, 2),
                 'image' => $productUnit->product->thumbnail,
@@ -508,7 +522,7 @@ class CartPage extends Component
             'barcode' => $inventory->barcode,
             'size' => $inventory->product->size,
             'mrp' => $inventory->product->mrp,
-            'unit_price' => null,
+            'unit_price' => round((float) $inventory->product->mrp, 2),
             'tax' => (float) $inventory->product->tax,
             'price' => round((float) $inventory->product->mrp, 2),
             'image' => $inventory->product->thumbnail,
@@ -539,10 +553,13 @@ class CartPage extends Component
 
         $rowKey = $existingKey === false ? $itemKey : $itemKey.'__'.Str::lower(Str::random(6));
         $this->cartItems[$rowKey] = array_merge($row, [
-            'price' => $cart['auto_fill'] ? $row['price'] : null,
+            'price' => null,
             'quantity' => $this->quantity,
             'weight' => $this->startingWeight(),
         ]);
+        if ($cart['auto_fill']) {
+            $this->cartItems[$rowKey]['price'] = $this->autoPrice($this->cartItems[$rowKey]);
+        }
         $this->selectedRowKey = $rowKey;
 
         return true;
@@ -605,7 +622,7 @@ class CartPage extends Component
         match ($field) {
             'price' => $row['price'] = match (true) {
                 is_numeric($value) && $value >= 0 => round((float) $value, 2),
-                $this->autoFill => $this->mrpPrice($row),
+                $this->autoFill => $this->autoPrice($row),
                 default => null,
             },
             'weight' => $row['weight'] = is_numeric($value) && $value > 0 ? round((float) $value, 3) : null,
@@ -648,7 +665,7 @@ class CartPage extends Component
 
     /**
      * Custom fill: one MRP, weight, unit price and/or tax typed once, applied to
-     * every row. Rows with a unit price get their MRP worked out again.
+     * every row. A typed MRP wins; otherwise rows get their MRP worked out again.
      */
     public function fillAllRows(): void
     {
@@ -676,7 +693,7 @@ class CartPage extends Component
             if ($tax !== null) {
                 $this->cartItems[$rowKey]['tax'] = $tax;
             }
-            if ($weight !== null || $unitPrice !== null || $tax !== null) {
+            if ($price === null && ($weight !== null || $unitPrice !== null || $tax !== null)) {
                 $this->recalculatePrice($rowKey);
             }
         }
