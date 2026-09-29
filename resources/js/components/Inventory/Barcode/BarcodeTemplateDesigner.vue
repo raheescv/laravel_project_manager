@@ -47,6 +47,7 @@
           :fonts="fonts"
           :font-weights="fontWeights"
           :products="productOptions"
+          :currency="currency"
           :product="selectedProduct"
           :model-value="selectedProductId"
           v-model:selected="selectedElementKey"
@@ -162,6 +163,7 @@ const settings = ref({})
 const barcodeTypes = ref({})
 const qtySources = ref({})
 const fonts = ref({})
+const currency = ref('')
 const fontWeights = ref({})
 const templateType = ref('standard')
 const types = ref({})
@@ -236,6 +238,7 @@ async function loadData() {
   qtySources.value = data.qtySources || {}
   applyQuantityCaption(data.quantityCaption)
   fonts.value = data.fonts || {}
+  currency.value = data.currency || ''
   fontWeights.value = data.fontWeights || {}
   installFontFaces(data.fontFaceCss)
   types.value = data.types || {}

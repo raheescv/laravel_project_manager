@@ -44,6 +44,51 @@ class BarcodeLabel
     }
 
     /**
+     * Font sizes (px) that fit a jewellery tag's text lines into its wing. A
+     * line wider than the wing shrinks until it fits (name lines wrap to two
+     * lines instead), then the whole stack shrinks evenly when it is taller
+     * than the wing. The designer's sizes are the most a line ever gets.
+     *
+     * Widths are estimated from the character count, close enough for the
+     * narrow sans and mono faces labels print in.
+     *
+     * @param  array<string, array{field: array<string, mixed>, value: string}>  $lines
+     * @return array<string, float>
+     */
+    public static function fitFontSizes(array $settings, array $lines): array
+    {
+        $pxPerMm = 96 / 25.4;
+        $padding = (float) ($settings['inner_padding'] ?? 1.5);
+        $width = max(1, (float) ($settings['wing_width'] ?? 25) - $padding * 2) * $pxPerMm;
+        $height = max(1, (float) ($settings['height'] ?? 13) - $padding * 2) * $pxPerMm;
+        $lineHeight = 1.15;
+        $minimum = 4.0;
+
+        $sizes = [];
+        $rows = [];
+        foreach ($lines as $key => $line) {
+            $size = max($minimum, (float) ($line['field']['font_size'] ?? 6));
+            $glyph = ($line['field']['bold'] ?? false) ? 0.6 : 0.55;
+            $textWidth = max(1, mb_strlen($line['value'])) * $glyph;
+            $wraps = in_array($key, ['product_name', 'product_name_arabic'], true);
+
+            if ($wraps) {
+                $rows[$key] = $textWidth * $size > $width ? 2 : 1;
+            } else {
+                $size = max($minimum, min($size, $width / $textWidth));
+                $rows[$key] = 1;
+            }
+
+            $sizes[$key] = $size;
+        }
+
+        $stack = array_sum(array_map(fn (string $key): float => $sizes[$key] * $lineHeight * $rows[$key], array_keys($sizes)));
+        $scale = $stack > $height ? $height / $stack : 1;
+
+        return array_map(fn (float $size): float => round(max($minimum, $size * $scale), 1), $sizes);
+    }
+
+    /**
      * Whether quantities print as a weight, from the sale setting "Quantity
      * Label In Print" (`print_quantity_label`: quantity | weight). In weight
      * mode the print cart asks for grams per row and the Qty field prints them.
@@ -119,21 +164,45 @@ class BarcodeLabel
 
     /**
      * The per-row values a print cart row carries onto its label, kept only
-     * where they make sense: the row's MRP always, its grams only when the
-     * quantity label is Weight.
+     * where they make sense: the row's MRP and tax % always, its grams only
+     * when the quantity label is Weight.
      *
      * @param  array<string, mixed>  $item
-     * @return array{price: ?float, weight: ?float}
+     * @return array{price: ?float, weight: ?float, tax: ?float}
      */
     public static function rowValues(array $settings, array $item): array
     {
         $price = $item['price'] ?? null;
         $weight = $item['weight'] ?? null;
+        $tax = $item['tax'] ?? null;
 
         return [
             'price' => is_numeric($price) ? (float) $price : null,
             'weight' => is_numeric($weight) && (float) $weight > 0 && self::usesWeight() ? (float) $weight : null,
+            'tax' => is_numeric($tax) && (float) $tax >= 0 ? (float) $tax : null,
         ];
+    }
+
+    /**
+     * The tax % inside a label's price: the row's own, else the product's.
+     *
+     * @param  array{tax?: ?float}  $row
+     */
+    public static function taxRate(Product $product, array $row = []): float
+    {
+        return (float) ($row['tax'] ?? $product->tax ?? 0);
+    }
+
+    /**
+     * The tax part of a label's price (MRP includes tax).
+     *
+     * @param  array{price?: ?float, tax?: ?float}  $row
+     */
+    public static function taxAmount(Product $product, float $conversionFactor = 1, array $row = []): float
+    {
+        $rate = self::taxRate($product, $row);
+
+        return round(self::price($product, $conversionFactor, $row) * $rate / (100 + $rate), 2);
     }
 
     /**
@@ -178,7 +247,10 @@ class BarcodeLabel
     /**
      * Rendered value for one text wing field, or '' when there is nothing to show.
      *
-     * @param  array{price?: ?float, weight?: ?float}  $row
+     * `amount` is the price before tax, `tax` its rate and amount, and `price`
+     * the total with tax in the Settings currency.
+     *
+     * @param  array{price?: ?float, weight?: ?float, tax?: ?float}  $row
      */
     public static function fieldValue(
         string $key,
@@ -199,6 +271,10 @@ class BarcodeLabel
             'product_name_arabic' => self::itemNameArabic($product),
             'size' => (string) ($product->size ?? ''),
             'price' => number_format(self::price($product, $conversionFactor, $row), 2),
+            'amount' => number_format(self::price($product, $conversionFactor, $row) - self::taxAmount($product, $conversionFactor, $row), 2),
+            'tax' => self::taxRate($product, $row) > 0
+                ? rtrim(rtrim(number_format(self::taxRate($product, $row), 2), '0'), '.').'% '.number_format(self::taxAmount($product, $conversionFactor, $row), 2)
+                : '',
             'qty' => $weight === null ? self::qtyValue($field, $product, $conversionFactor, $inventory) : self::weightText($weight),
             default => '',
         };
@@ -214,7 +290,7 @@ class BarcodeLabel
         }
 
         $prefix = trim((string) match (true) {
-            $key === 'price' => self::currency(),
+            $key === 'price' => ($field['prefix'] ?? '').' '.self::currency(),
             $key === 'qty' && $weight !== null => $field['weight_prefix'] ?? $field['prefix'] ?? '',
             default => $field['prefix'] ?? '',
         });

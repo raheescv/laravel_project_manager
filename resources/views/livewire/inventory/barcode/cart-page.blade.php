@@ -23,6 +23,7 @@
             'template' => $templateKey,
             'unit_id' => $isUnit ? ($selectedRow['product_unit_id'] ?? null) : null,
             'price' => $selectedRow['price'] ?? null,
+            'tax' => $selectedRow['tax'] ?? null,
         ], fn ($value) => $value !== null && $value !== '') + ['weight' => $selectedRow['weight'] ?? '']);
     }
 @endphp

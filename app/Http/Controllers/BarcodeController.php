@@ -201,6 +201,7 @@ class BarcodeController extends Controller
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
         $row = BarcodeLabel::rowValues($settings, [
             'price' => $request->query('price'),
+            'tax' => $request->query('tax'),
             'weight' => $request->has('weight') ? $request->query('weight') : 4.25,
         ]);
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');

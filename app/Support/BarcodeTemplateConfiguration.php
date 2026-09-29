@@ -281,7 +281,9 @@ class BarcodeTemplateConfiguration
             $settings['barcode']['orientation'] = 'horizontal';
         }
 
-        unset($settings['fields']['price']['prefix']);
+        if (strtoupper(trim((string) ($settings['fields']['price']['prefix'] ?? ''))) === 'QR') {
+            $settings['fields']['price']['prefix'] = '';
+        }
 
         return $settings;
     }

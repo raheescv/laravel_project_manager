@@ -5,6 +5,7 @@ use App\Livewire\Inventory\Barcode\CartPage;
 use App\Models\Configuration;
 use App\Support\BarcodeLabel;
 use App\Support\BarcodeTemplateConfiguration;
+use App\Support\TenantCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -21,6 +22,14 @@ beforeEach(function (): void {
 
     $this->inventoryId = DB::table('inventories')->where('product_id', $this->world->product->id)->value('id');
     $this->barcode = DB::table('inventories')->where('id', $this->inventoryId)->value('barcode');
+
+    $this->useCurrency = function (string $code, string $symbol): void {
+        foreach (['currency_code' => $code, 'base_currency_code' => $code, 'currency_symbol' => $symbol] as $key => $value) {
+            Configuration::updateOrCreate(['key' => $key], ['value' => $value]);
+            TenantCache::forget($key);
+        }
+    };
+    ($this->useCurrency)('RS', 'ر.ق');
 
     $this->printWeights = fn () => Configuration::updateOrCreate(['key' => 'print_quantity_label'], ['value' => 'weight']);
 
@@ -148,9 +157,79 @@ it('prints the row MRP and its weight on the jewellery qty line', function (): v
         ],
     ])->render();
 
-    expect($html)->toContain('QR 99.00')->toContain('QR 120.50')
+    expect($html)->toContain('RS 99.00')->toContain('RS 120.50')
         ->toContain('Wt 4.250 g')->toContain('Wt 5.100 g')
         ->not->toContain('Qty 1');
+});
+
+it('replaces a legacy QR price prefix on a jewellery tag with the Settings currency', function (): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings(['fields' => ['price' => ['prefix' => 'QR']]], 'jewellery_tag');
+
+    expect($settings['fields']['price']['prefix'])->toBe('')
+        ->and(BarcodeLabel::fieldValue('price', $settings['fields']['price'], $this->world->product, 1, null, ['price' => 10]))->toBe('RS 10.00');
+});
+
+it('prints the amount before tax, the tax and the total on a jewellery tag', function (): void {
+    ($this->printWeights)();
+    $settings = BarcodeTemplateConfiguration::normalizeSettings(['fields' => [
+        'amount' => ['visible' => true],
+        'tax' => ['visible' => true, 'prefix' => 'GST'],
+        'price' => ['prefix' => 'Total'],
+    ]], 'jewellery_tag');
+
+    $html = view('inventory.barcode-cart-print', [
+        'settings' => $settings,
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => [
+            'a' => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 1, 'price' => 1030, 'weight' => 20, 'tax' => 3],
+        ],
+    ])->render();
+
+    expect($html)->toContain('Wt 20.000 g')
+        ->toContain('Amount 1,000.00')
+        ->toContain('GST 3% 30.00')
+        ->toContain('Total RS 1,030.00');
+});
+
+it('fits the jewellery tag text lines into the wing', function (): void {
+    $settings = ['wing_width' => 20, 'height' => 13, 'inner_padding' => 1.5];
+    $line = fn (string $value, int $size, bool $bold = false): array => ['field' => ['font_size' => $size, 'bold' => $bold], 'value' => $value];
+
+    $roomy = BarcodeLabel::fitFontSizes($settings, ['product_name' => $line('RING', 7, true), 'price' => $line('RS 99.00', 8, true)]);
+    expect($roomy)->toBe(['product_name' => 7.0, 'price' => 8.0]);
+
+    $lines = [
+        'product_name' => $line('RING SILVER 925', 7, true),
+        'qty' => $line('Wt 20.000 g', 6),
+        'amount' => $line('Amount 1,000.00', 6),
+        'tax' => $line('GST 3% 30.00', 6),
+        'price' => $line('Total RS 1,030.00', 8, true),
+        'size' => $line('Size 12', 6),
+    ];
+    $sizes = BarcodeLabel::fitFontSizes($settings, $lines);
+    $contentPx = (20 - 3) * 96 / 25.4;
+    $stackPx = array_sum(array_map(fn (float $size): float => $size * 1.15, $sizes));
+
+    expect($sizes['price'] * 0.6 * mb_strlen('Total RS 1,030.00'))->toBeLessThanOrEqual($contentPx + 0.5)
+        ->and($stackPx)->toBeLessThanOrEqual((13 - 3) * 96 / 25.4 + 0.5)
+        ->and(min($sizes))->toBeGreaterThanOrEqual(4.0);
+});
+
+it('resets a jewellery tag to name, weight, amount, tax and MRP, sized to fit', function (): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings([], 'jewellery_tag');
+
+    expect(array_keys(BarcodeLabel::orderedFields($settings)))->toBe(['product_name', 'qty', 'amount', 'tax', 'price'])
+        ->and($settings['fields']['price']['prefix'])->toBe('MRP')
+        ->and(BarcodeLabel::fieldValue('tax', $settings['fields']['tax'], $this->world->product, 1, null, ['price' => 50, 'tax' => 0]))->toBe('');
+
+    $lines = collect(BarcodeLabel::orderedFields($settings))->map(fn (array $field): array => ['field' => $field, 'value' => 'Amount 1,000.00'])->all();
+    $lines['price']['value'] = 'Total RS 1,030.00';
+    $lines['product_name']['value'] = 'RING';
+    $fitted = BarcodeLabel::fitFontSizes($settings, $lines);
+
+    expect(array_sum(array_map(fn (float $size): float => $size * 1.15, $fitted)))
+        ->toBeLessThanOrEqual(((float) $settings['height'] - 2 * (float) $settings['inner_padding']) * 96 / 25.4);
 });
 
 it('prints the quantity, not a stale weight, when quantities print as qty', function (): void {
@@ -165,11 +244,12 @@ it('prints the quantity, not a stale weight, when quantities print as qty', func
         ],
     ])->render();
 
-    expect($html)->toContain('QR 99.00')->toContain('Qty 1')->not->toContain('4.250 g');
+    expect($html)->toContain('RS 99.00')->toContain('Qty 1')->not->toContain('4.250 g');
 });
 
-it('prints the weight on a standard sticker qty element', function (): void {
+it('prints the weight and the Settings currency on a standard sticker', function (): void {
     ($this->printWeights)();
+    ($this->useCurrency)('AED', 'د.إ');
     $settings = BarcodeTemplateConfiguration::normalizeSettings(['qty' => ['visible' => true]], 'standard');
 
     $html = view('inventory.barcode-cart-print', [
@@ -181,7 +261,8 @@ it('prints the weight on a standard sticker qty element', function (): void {
         ],
     ])->render();
 
-    expect($html)->toContain('77.00')->toContain('Wt 2.500 g');
+    expect($html)->toContain('77.00')->toContain('Wt 2.500 g')
+        ->toContain('content: "AED "')->toContain('content: "د.إ "')->not->toContain('"QR ');
 });
 
 it('follows Quantity Label In Print for the qty caption', function (): void {
@@ -190,7 +271,7 @@ it('follows Quantity Label In Print for the qty caption', function (): void {
     ($this->printWeights)();
 
     expect(BarcodeLabel::quantityCaption())->toBe('Weight')
-        ->and(BarcodeLabel::rowValues([], ['price' => '10', 'weight' => '1.5']))->toBe(['price' => 10.0, 'weight' => 1.5]);
+        ->and(BarcodeLabel::rowValues([], ['price' => '10', 'weight' => '1.5']))->toBe(['price' => 10.0, 'weight' => 1.5, 'tax' => null]);
 });
 
 it('shows each cart row with its product category', function (): void {

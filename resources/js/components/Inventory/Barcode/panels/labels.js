@@ -16,8 +16,10 @@ export const JEWELLERY_FIELD_LABELS = {
   product_name: 'Product Name',
   product_name_arabic: 'Product Name (Arabic)',
   qty: 'Qty',
-  price: 'Price / MRP',
+  price: 'MRP',
   size: 'Size',
+  amount: 'Amount (before tax)',
+  tax: 'Tax',
 }
 
 // "Qty" or "Weight", from the sale setting Quantity Label In Print. The qty
