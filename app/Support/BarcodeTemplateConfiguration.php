@@ -281,6 +281,8 @@ class BarcodeTemplateConfiguration
             $settings['barcode']['orientation'] = 'horizontal';
         }
 
+        unset($settings['fields']['price']['prefix']);
+
         return $settings;
     }
 

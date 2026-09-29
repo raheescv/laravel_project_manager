@@ -146,6 +146,30 @@ class BarcodeLabel
         return $row['price'] ?? (float) $product->mrp * $conversionFactor;
     }
 
+    /**
+     * The currency a label's price reads in: the default currency code from Settings.
+     */
+    public static function currency(): string
+    {
+        return trim((string) (tenant_cache('base_currency_code') ?: tenant_cache('currency_code')));
+    }
+
+    /**
+     * The currency beside the Arabic price: the symbol when it is Arabic (ر.ق),
+     * else the same one the Latin price uses.
+     */
+    public static function currencyArabic(): string
+    {
+        $symbol = trim((string) tenant_cache('currency_symbol'));
+
+        return self::isArabic($symbol) ? $symbol : self::currency();
+    }
+
+    private static function isArabic(string $text): bool
+    {
+        return preg_match('/\p{Arabic}/u', $text) === 1;
+    }
+
     public static function weightText(?float $weight): string
     {
         return $weight === null ? '' : number_format($weight, 3).' g';
@@ -189,9 +213,11 @@ class BarcodeLabel
             $value = mb_substr($value, 0, $limit);
         }
 
-        $prefix = trim((string) ($key === 'qty' && $weight !== null
-            ? ($field['weight_prefix'] ?? $field['prefix'] ?? '')
-            : ($field['prefix'] ?? '')));
+        $prefix = trim((string) match (true) {
+            $key === 'price' => self::currency(),
+            $key === 'qty' && $weight !== null => $field['weight_prefix'] ?? $field['prefix'] ?? '',
+            default => $field['prefix'] ?? '',
+        });
 
         return $prefix === '' ? $value : $prefix.' '.$value;
     }

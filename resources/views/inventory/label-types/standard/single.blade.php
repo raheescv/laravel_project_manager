@@ -168,7 +168,7 @@
         }
 
         .price:before {
-            content: "QR ";
+            content: {!! json_encode(\App\Support\BarcodeLabel::currency().' ', JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
         }
 
@@ -187,7 +187,7 @@
         }
 
         .price-arabic:before {
-            content: 'ق ر';
+            content: {!! json_encode(\App\Support\BarcodeLabel::currencyArabic().' ', JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
         }
 

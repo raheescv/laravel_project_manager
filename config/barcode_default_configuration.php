@@ -311,7 +311,6 @@ return [
                         'font_family' => '',
                         'align' => 'left',
                         'bold' => true,
-                        'prefix' => 'QR',
                     ],
                     'size' => [
                         'visible' => true,

@@ -303,7 +303,7 @@ it('applies the fill switch to rows already in the cart', function (): void {
         ->call('addToCart', $this->inventoryId);
     [$first, $second] = array_keys($component->get('cartItems'));
 
-    $component->set("cartItems.{$second}.price", '75')->set("cartItems.{$second}.weight", '2.5')
+    $component->set("cartItems.{$second}.weight", '2.5')->set("cartItems.{$second}.price", '75')
         ->set('autoFill', false)
         ->assertSet("cartItems.{$first}.price", null)
         ->assertSet("cartItems.{$first}.weight", null)
