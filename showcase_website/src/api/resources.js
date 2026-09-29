@@ -35,6 +35,7 @@ export async function fetchSizes(params = {}) {
       .map((s) => ({
         size: String(s.size),
         stock_total: Number(s.stock_total) || 0,
+        sold_qty: Number(s.sold_qty) || 0,
         in_stock: s.in_stock === undefined ? true : Boolean(s.in_stock),
       }))
   if (Array.isArray(data)) return { adult: norm(data), young: [] }

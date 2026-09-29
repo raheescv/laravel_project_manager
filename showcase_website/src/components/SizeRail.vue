@@ -91,6 +91,8 @@ watch(() => [catalog.size, props.sizes.length], centreSelected)
           class="tick"
           :class="{
             'tick--half': isHalfSize(s.size),
+            'tick--top': s.top,
+            'tick--top-last': s.top && !sizes[i + 1]?.top,
             'is-on': catalog.size === s.size,
             'is-out': !s.in_stock,
           }"

@@ -119,6 +119,13 @@ fieldset{border:0;padding:0} legend{padding:0}
 .tick:hover .tick__num{color:#fff}
 .tick.is-on .tick__mark{background:#fff;height:42px;width:3px}
 .tick.is-on .tick__num{background:#fff;color:var(--blue);font-weight:500}
+.tick--top .tick__mark{background:#ffd27a}
+.tick--top .tick__num{background:rgba(255,210,122,.16);color:#ffe2a8}
+.tick--top:hover .tick__mark{background:#ffe2a8}
+.tick--top:hover .tick__num{color:#fff3d6}
+.tick--top.is-on .tick__mark{background:#fff}
+.tick--top.is-on .tick__num{background:#fff;color:var(--blue)}
+.tick--top-last{margin-inline-end:28px}
 
 /* --- stage 2: brands ------------------------------------------------------ */
 .brand{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 14px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
@@ -383,6 +390,11 @@ html[dir="rtl"] .bag{transform:translateX(-102%)}
   .tick__num,.tick--half .tick__num{font-size:.86rem;color:#fff;background:none;padding:0}
   .tick.is-on{background:#fff;border-color:#fff}
   .tick.is-on .tick__num{color:var(--blue);font-weight:500}
+  .tick--top{background:rgba(255,210,122,.16);border-color:rgba(255,210,122,.6)}
+  .tick--top .tick__num{background:none;color:#ffe2a8}
+  .tick--top.is-on{background:#fff;border-color:#fff}
+  .tick--top.is-on .tick__num{color:var(--blue)}
+  .tick--top-last{margin-inline-end:0}
   .size__escape{margin-block-start:14px}
   .hero__title{font-size:clamp(2.3rem,11vw,3.2rem)}
   .hero__lede{font-size:1rem}

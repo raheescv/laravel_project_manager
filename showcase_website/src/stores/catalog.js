@@ -7,6 +7,7 @@ import { sortSizes } from '@/utils/catalog'
 
 const STORAGE_KEY = 'sr.catalog'
 const PER_PAGE = 24
+const TOP_SIZES = 5
 
 /** UI sort key → API sort_by / sort_direction. */
 export const SORTS = {
@@ -55,18 +56,31 @@ export const useCatalogStore = defineStore('catalog', () => {
   const productCount = computed(() => pagination.value?.total ?? products.value.length)
   /**
    * One ruler for the whole shop: adult and kids sizes merged into a single
-   * ascending run (numbers first, letter sizes after). A size string that the
-   * backend files under both groups collapses to one tick.
+   * run. A size string that the backend files under both groups collapses to
+   * one tick. The five best-selling sizes lead (flagged `top`); every other
+   * size follows in ascending order (numbers first, letter sizes after).
    */
   const allSizes = computed(() => {
     const bySize = new Map()
     for (const s of [...sizes.value.adult, ...sizes.value.young]) {
       const prev = bySize.get(s.size)
       bySize.set(s.size, prev
-        ? { size: s.size, stock_total: prev.stock_total + s.stock_total, in_stock: prev.in_stock || s.in_stock }
+        ? {
+            size: s.size,
+            stock_total: prev.stock_total + s.stock_total,
+            sold_qty: prev.sold_qty + s.sold_qty,
+            in_stock: prev.in_stock || s.in_stock,
+          }
         : { ...s })
     }
-    return sortSizes([...bySize.values()], (s) => s.size)
+    const ascending = sortSizes([...bySize.values()], (s) => s.size)
+    const top = new Set(
+      [...ascending].filter((s) => s.sold_qty > 0).sort((a, b) => b.sold_qty - a.sold_qty).slice(0, TOP_SIZES),
+    )
+    return [
+      ...[...top].map((s) => ({ ...s, top: true })),
+      ...ascending.filter((s) => !top.has(s)),
+    ]
   })
 
   // ---- persistence ------------------------------------------------------

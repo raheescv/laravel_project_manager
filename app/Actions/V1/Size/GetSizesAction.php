@@ -4,6 +4,7 @@ namespace App\Actions\V1\Size;
 
 use App\Http\Requests\V1\GetSizesRequest;
 use App\Models\Product;
+use App\Models\SaleItem;
 
 class GetSizesAction
 {
@@ -51,6 +52,8 @@ class GetSizesAction
             ->groupBy('products.size', 'products.size_category')
             ->get();
 
+        $soldBySize = $this->unitsSoldBySize($filters);
+
         $young = [];
         $adult = [];
 
@@ -66,6 +69,7 @@ class GetSizesAction
             $entry = [
                 'size' => $size,
                 'stock_total' => (int) $row->stock_total,
+                'sold_qty' => (int) ($soldBySize[$size] ?? 0),
                 // Availability follows the product count, not the unit total: a
                 // live catalogue accumulates negative quantities, and a size
                 // whose totals net out below zero can still hold something
@@ -96,5 +100,33 @@ class GetSizesAction
             'kids_sizes' => $young,
             'other_sizes' => $adult,
         ];
+    }
+
+    /**
+     * Units sold per size across completed sales.
+     * The showcase leads its size run with the fastest movers, so this is the
+     * one number it ranks by.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, float>
+     */
+    private function unitsSoldBySize(array $filters): array
+    {
+        return SaleItem::query()
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->where('sales.status', 'completed')
+            ->whereNull('sales.deleted_at')
+            ->whereNotNull('products.size')
+            ->where('products.size', '!=', '')
+            ->when($filters['branch_id'] ?? null, fn ($q, $v) => $q->where('sales.branch_id', $v))
+            ->when($filters['brand_id'] ?? null, fn ($q, $v) => $q->where('products.brand_id', $v))
+            ->when($filters['main_category_id'] ?? null, fn ($q, $v) => $q->where('products.main_category_id', $v))
+            ->when($filters['sub_category_id'] ?? null, fn ($q, $v) => $q->where('products.sub_category_id', $v))
+            ->groupBy('products.size')
+            ->selectRaw('products.size as size, SUM(sale_items.quantity) as sold_qty')
+            ->pluck('sold_qty', 'size')
+            ->map(fn ($qty) => (float) $qty)
+            ->all();
     }
 }
