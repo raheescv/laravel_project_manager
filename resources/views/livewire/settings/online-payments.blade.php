@@ -78,7 +78,7 @@
                             <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                         @endforeach
                     </select>
-                    <div class="form-text">Collect-in-shop orders use the stock of the shop the customer picks.</div>
+                    <div class="form-text">Every paid online order is booked here — its stock is transferred in from the shop it came from.</div>
                 </div>
             </div>
         </div>

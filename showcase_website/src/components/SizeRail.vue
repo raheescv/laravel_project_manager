@@ -56,13 +56,17 @@ function onKey(e) {
   }
 }
 
-/** Bring the chosen tick into the middle of the rail when it overflows. */
+/** Bring the chosen tick into the middle of the rail (sideways ruler, or the phone grid). */
 async function centreSelected() {
   await nextTick()
   const el = rail.value
   const on = el?.querySelector('.tick.is-on')
-  if (on && el.scrollWidth > el.clientWidth + 4) {
+  if (!on) return
+  if (el.scrollWidth > el.clientWidth + 4) {
     on.scrollIntoView({ block: 'nearest', inline: 'center' })
+  } else if (el.scrollHeight > el.clientHeight + 4) {
+    const offset = on.getBoundingClientRect().top - el.getBoundingClientRect().top
+    el.scrollTop += offset - (el.clientHeight - on.offsetHeight) / 2
   }
 }
 

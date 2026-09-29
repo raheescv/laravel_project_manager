@@ -331,3 +331,67 @@ it('refuses delivery when the store ships from nowhere', function (): void {
 
     Http::assertNothingSent();
 });
+
+/** Point "Delivery orders ship from" at [$branchId]. */
+function storefrontShipFrom(object $test, int $branchId): void
+{
+    Configuration::where('key', TapSettings::KEY)->update(['value' => json_encode([
+        'enabled' => true,
+        'payment_account_id' => $test->tapAccountId,
+        'user_id' => $test->world->user->id,
+        'delivery_branch_id' => $branchId,
+    ])]);
+}
+
+it('transfers a paid pickup order to the online branch and books the sale there', function (): void {
+    storefrontFakeTap('CAPTURED');
+    $online = $this->world->addBranch('Online', 'ON');
+    storefrontShipFrom($this, $online->id);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))
+        ->assertCreated()
+        ->json('data.reference');
+
+    // The shop the customer collects from is kept on the checkout.
+    expect(StorefrontCheckout::withoutGlobalScopes()->sole()->branch_id)->toBe($this->world->branch->id);
+
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $transfer = DB::table('inventory_transfers')->sole();
+    expect($transfer->from_branch_id)->toBe($this->world->branch->id)
+        ->and($transfer->to_branch_id)->toBe($online->id)
+        ->and($transfer->status)->toBe('completed')
+        ->and(DB::table('inventory_transfer_items')->where('inventory_transfer_id', $transfer->id)->value('quantity'))->toEqual(2);
+
+    $sale = Sale::withoutGlobalScopes()->sole();
+    expect($sale->branch_id)->toBe($online->id)
+        ->and(DB::table('sale_items')->where('sale_id', $sale->id)->value('inventory_id'))
+        ->toBe(DB::table('inventories')->where('branch_id', $online->id)->where('product_id', $this->world->product->id)->value('id'))
+        // Out of the shop, through the online branch, and sold: 5 − 2 there, 100 + 2 − 2 here.
+        ->and(storefrontStockAt($this->world, $this->world->branch->id))->toBe(3.0)
+        ->and(storefrontStockAt($this->world, $online->id))->toBe(100.0);
+});
+
+it('takes delivery stock from a shop when the online branch cannot fill the bag', function (): void {
+    storefrontFakeTap('CAPTURED');
+    $online = $this->world->addBranch('Online', 'ON');
+    DB::table('inventories')->where('branch_id', $online->id)->update(['quantity' => 0]);
+    storefrontShipFrom($this, $online->id);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world, [
+        'fulfilment' => 'delivery',
+        'branchId' => null,
+        'zoneNumber' => '56',
+        'streetNumber' => '340',
+        'buildingNumber' => '12',
+        'city' => 'Doha',
+    ]))->assertCreated()->json('data.reference');
+
+    expect(StorefrontCheckout::withoutGlobalScopes()->sole()->branch_id)->toBe($this->world->branch->id);
+
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    expect(Sale::withoutGlobalScopes()->sole()->branch_id)->toBe($online->id)
+        ->and(storefrontStockAt($this->world, $this->world->branch->id))->toBe(3.0)
+        ->and(storefrontStockAt($this->world, $online->id))->toBe(0.0);
+});
