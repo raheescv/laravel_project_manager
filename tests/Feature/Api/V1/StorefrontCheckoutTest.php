@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\NotificationCreatedEvent;
+use App\Livewire\Sale\OnlinePayments;
 use App\Livewire\Sale\View as SaleView;
 use App\Models\Account;
 use App\Models\Configuration;
@@ -575,3 +576,128 @@ it('fills a missing email on a returning customer but never replaces one', funct
     'no email yet' => [null, 'aisha@example.com'],
     'staff recorded one' => ['aisha.office@example.com', 'aisha.office@example.com'],
 ]);
+
+/**
+ * Pays a checkout through the storefront, then fakes Tap so charges read CAPTURED
+ * and a refund is answered [$created] and later retrieved as [$retrieved].
+ */
+function storefrontPaidThenRefundable(PosWorld $world, string $created, ?string $retrieved = null, int $refundHttpStatus = 200): StorefrontCheckout
+{
+    Http::fake(function (Request $request) use ($created, $retrieved, $refundHttpStatus) {
+        if (str_contains($request->url(), '/refunds')) {
+            if ($refundHttpStatus !== 200) {
+                return Http::response(['errors' => [['description' => 'Refund amount exceeds the charge']]], $refundHttpStatus);
+            }
+
+            return Http::response([
+                'id' => 're_TS_test_0001',
+                'object' => 'refund',
+                'charge_id' => 'chg_TS_test_0001',
+                'amount' => 500,
+                'currency' => 'QAR',
+                'status' => $request->method() === 'POST' ? $created : ($retrieved ?? $created),
+                'response' => ['code' => '000', 'message' => 'Refund '.strtolower($request->method() === 'POST' ? $created : ($retrieved ?? $created))],
+            ]);
+        }
+
+        return $request->method() === 'POST'
+            ? Http::response(storefrontTapCharge())
+            : Http::response(storefrontTapCharge(['status' => 'CAPTURED']));
+    });
+
+    $reference = test()->postJson($world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($world))->assertCreated()->json('data.reference');
+    test()->getJson($world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $world->user->givePermissionTo(Permission::findOrCreate('sale.online payments', 'web'), Permission::findOrCreate('sale.online payments refund', 'web'));
+    test()->actingAs($world->user);
+    session(['branch_id' => $world->branch->id]);
+
+    return StorefrontCheckout::withoutGlobalScopes()->sole();
+}
+
+it('refunds a paid online order through Tap and cancels its sale', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'REFUNDED');
+    expect(storefrontStockAt($this->world, $this->world->branch->id))->toBe(3.0);
+
+    Livewire::test(OnlinePayments::class)->call('refund', $checkout->id, 'Customer changed mind')->assertDispatched('success');
+
+    $checkout->refresh();
+    expect($checkout->status)->toBe(StorefrontCheckout::STATUS_REFUNDED)
+        ->and($checkout->refund_id)->toBe('re_TS_test_0001')
+        ->and($checkout->refund_status)->toBe('REFUNDED')
+        ->and((float) $checkout->refund_amount)->toBe(500.0)
+        ->and($checkout->refund_reason)->toBe('Customer changed mind')
+        ->and($checkout->refund_requested_by)->toBe($this->world->user->id)
+        ->and($checkout->refunded_at)->not->toBeNull()
+        ->and($checkout->refund_request['charge_id'])->toBe('chg_TS_test_0001')
+        ->and($checkout->refund_response['status'])->toBe('REFUNDED')
+        ->and($checkout->gateway_request['amount'])->toEqual(500)
+        ->and($checkout->failure_reason)->toBeNull();
+
+    expect(Sale::withoutGlobalScopes()->sole()->status)->toBe('cancelled')
+        ->and(storefrontStockAt($this->world, $this->world->branch->id))->toBe(5.0);
+
+    Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+        && $request->url() === 'https://api.tap.company/v2/refunds'
+        && $request['charge_id'] === 'chg_TS_test_0001'
+        && (float) $request['amount'] === 500.0
+        && str_contains($request['post']['url'], '/api/v1/storefront/checkout/tap-webhook'));
+
+    // A refunded payment cannot be refunded again.
+    Livewire::test(OnlinePayments::class)->call('refund', $checkout->id)->assertDispatched('error');
+    Http::assertSentCount(3);
+});
+
+it('keeps a pending refund open until Tap reports it refunded', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'PENDING', 'REFUNDED');
+
+    Livewire::test(OnlinePayments::class)->call('refund', $checkout->id)->assertDispatched('success');
+
+    expect($checkout->fresh()->status)->toBe(StorefrontCheckout::STATUS_PAID)
+        ->and($checkout->fresh()->refund_status)->toBe('PENDING')
+        ->and($checkout->fresh()->refundPending())->toBeTrue()
+        ->and(Sale::withoutGlobalScopes()->sole()->status)->toBe('completed');
+
+    // Tap's webhook only names the refund; the outcome is re-read from Tap.
+    $this->postJson($this->world->url('/api/v1/storefront/checkout/tap-webhook'), ['id' => 're_TS_test_0001', 'object' => 'refund', 'status' => 'REFUNDED'])
+        ->assertSuccessful();
+
+    expect($checkout->fresh()->status)->toBe(StorefrontCheckout::STATUS_REFUNDED)
+        ->and(Sale::withoutGlobalScopes()->sole()->status)->toBe('cancelled');
+});
+
+it('records what Tap said when it refuses a refund', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'REFUNDED', refundHttpStatus: 400);
+
+    Livewire::test(OnlinePayments::class)->call('refund', $checkout->id)->assertDispatched('error');
+
+    $checkout->refresh();
+    expect($checkout->status)->toBe(StorefrontCheckout::STATUS_PAID)
+        ->and($checkout->refund_id)->toBeNull()
+        ->and($checkout->refund_request['charge_id'])->toBe('chg_TS_test_0001')
+        ->and($checkout->refund_response['error'])->toBe('Refund amount exceeds the charge')
+        ->and($checkout->isRefundable())->toBeTrue();
+});
+
+it('does not refund without the refund permission', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'REFUNDED');
+    $this->world->user->revokePermissionTo('sale.online payments refund');
+
+    Livewire::test(OnlinePayments::class)->call('refund', $checkout->id)->assertForbidden();
+
+    expect($checkout->fresh()->status)->toBe(StorefrontCheckout::STATUS_PAID);
+});
+
+it('shows the full transaction with Tap requests and responses in the details popup', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'REFUNDED');
+
+    Livewire::test(OnlinePayments::class)
+        ->call('showDetails', $checkout->id)
+        ->assertSee('Charge request')
+        ->assertSee('Charge response')
+        ->assertSee('&quot;src_all&quot;', false)
+        ->assertSee($checkout->reference)
+        ->assertSee('Aisha Khan')
+        ->call('closeDetails')
+        ->assertDontSee('Charge request');
+});

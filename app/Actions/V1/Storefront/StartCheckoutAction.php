@@ -81,13 +81,11 @@ class StartCheckoutAction
             'status' => StorefrontCheckout::STATUS_PENDING,
         ]);
 
+        $payload = $this->chargePayload($checkout, $request->validated('countryCode'), $request->validated('returnUrl'), $settings);
+        $checkout->update(['gateway_request' => $payload]);
+
         try {
-            $charge = (new TapClient($settings->secretKey))->createCharge($this->chargePayload(
-                $checkout,
-                $request->validated('countryCode'),
-                $request->validated('returnUrl'),
-                $settings,
-            ));
+            $charge = (new TapClient($settings->secretKey))->createCharge($payload);
         } catch (TapException $e) {
             $checkout->update(['status' => StorefrontCheckout::STATUS_FAILED, 'failure_reason' => $e->getMessage()]);
 

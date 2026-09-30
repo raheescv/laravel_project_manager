@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  * Thin client for the Tap Payments Charges API.
  *
  * Built per tenant with that tenant's secret key — there is no platform-wide Tap
- * account. Only the two calls the hosted-page flow needs are exposed.
+ * account. Only the calls the hosted-page flow and its refunds need are exposed.
  *
  * @see https://developers.tap.company/reference/create-a-charge
  * @see https://developers.tap.company/reference/retrieve-a-charges
@@ -41,6 +41,29 @@ class TapClient
                 ->retry(2, 300, fn ($exception) => $exception instanceof ConnectionException, throw: false)
                 ->get('charges/'.rawurlencode($chargeId)),
             'retrieve charge',
+        );
+    }
+
+    /**
+     * POST /refunds — returns the money of a captured charge to the customer.
+     * Tap may answer PENDING and settle it later. Not retried, for the same
+     * reason as createCharge: a second refund must never be sent by accident.
+     *
+     * @see https://developers.tap.company/reference/create-a-refund
+     */
+    public function createRefund(array $payload): array
+    {
+        return $this->send(fn (PendingRequest $http) => $http->post('refunds', $payload), 'create refund');
+    }
+
+    /** GET /refunds/{id} — the authoritative state of a refund. Safe to retry. */
+    public function retrieveRefund(string $refundId): array
+    {
+        return $this->send(
+            fn (PendingRequest $http) => $http
+                ->retry(2, 300, fn ($exception) => $exception instanceof ConnectionException, throw: false)
+                ->get('refunds/'.rawurlencode($refundId)),
+            'retrieve refund',
         );
     }
 

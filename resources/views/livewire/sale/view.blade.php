@@ -172,7 +172,7 @@
             $tap = $checkout->paymentDetails();
             $checkoutTone = match ($checkout->status) {
                 'paid' => 'b-ok',
-                'failed' => 'b-bad',
+                'failed', 'refunded' => 'b-bad',
                 default => 'b-wn',
             };
             $methodIcon = match (strtolower((string) $tap['method'])) {
@@ -230,6 +230,24 @@
                     @endif
                     <div class="s-dr"><span class="l"><i class="fa fa-clock-o"></i>Paid at</span><span class="v">{{ $checkout->paid_at ? systemDateTime($checkout->paid_at) : '—' }}</span></div>
                     <div class="s-dr"><span class="l"><i class="fa fa-envelope-o"></i>Customer email</span><span class="v">{{ $checkout->customer_email ?: '—' }}</span></div>
+                    @if ($checkout->refund_id)
+                        <div class="s-dr">
+                            <span class="l"><i class="fa fa-undo"></i>Refund</span>
+                            <span class="v">
+                                <span class="mono s-copy" title="Click to copy" onclick="navigator.clipboard?.writeText(this.textContent.trim())">{{ $checkout->refund_id }}</span>
+                                <span class="s-badge {{ $checkout->status === 'refunded' ? 'b-bad' : 'b-wn' }}">{{ $checkout->refund_status }}</span>
+                            </span>
+                        </div>
+                        @if (data_get($checkout->refund_response, 'response.message'))
+                            <div class="s-dr"><span class="l"><i class="fa fa-comment-o"></i>Refund response</span><span class="v">{{ data_get($checkout->refund_response, 'response.message') }}</span></div>
+                        @endif
+                        @if ($checkout->refund_reason)
+                            <div class="s-dr"><span class="l"><i class="fa fa-pencil"></i>Refund reason</span><span class="v">{{ $checkout->refund_reason }}</span></div>
+                        @endif
+                        @if ($checkout->refunded_at)
+                            <div class="s-dr"><span class="l"><i class="fa fa-clock-o"></i>Refunded at</span><span class="v">{{ systemDateTime($checkout->refunded_at) }}</span></div>
+                        @endif
+                    @endif
                     @if ($checkout->failure_reason)
                         <div class="s-dr"><span class="l"><i class="fa fa-exclamation-triangle"></i>Note</span><span class="v" style="color:var(--bad)">{{ $checkout->failure_reason }}</span></div>
                     @endif

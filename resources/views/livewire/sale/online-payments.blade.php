@@ -8,10 +8,12 @@
             'pending' => 'Pending',
             'failed' => 'Failed',
             'review' => 'Needs review',
+            'refunded' => 'Refunded',
         ];
         $statusTone = fn (string $status) => match ($status) {
             'paid' => '',
             'failed' => 'off',
+            'refunded' => 'info',
             'pending' => 'warn',
             default => 'bad',
         };
@@ -99,10 +101,16 @@
                             <div class="k">Needs review</div>
                             <div class="v">{{ number_format($totals['review']) }}</div>
                         </div>
+                        <div class="stat off">
+                            <span class="stat__ic"><i class="fa fa-undo"></i></span>
+                            <div class="k">Refunded</div>
+                            <div class="v">{{ number_format($totals['refunded']) }}</div>
+                        </div>
                     </div>
                     <p class="wrxsum__note">
                         "Collected" is every charge Tap captured, including "Needs review" — money taken for an order that could not be recorded as a sale
                         (stock ran out, amount mismatch…). Fix the cause, then press Check on the row to record the sale.
+                        Refunded payments ({{ currency($totals['refunded_amount']) }}) are not counted; refunding cancels the order's sale.
                     </p>
                 </div>
 
@@ -148,7 +156,7 @@
                                         Status <i class="fa fa-sort{{ $sortField === 'storefront_checkouts.status' ? '-' . $sortDirection : '' }}"></i>
                                     </button>
                                 </th>
-                                <th>Tap charge</th>
+                                <th>Tap status</th>
                                 <th>Invoice</th>
                                 <th></th>
                             </tr>
@@ -193,13 +201,15 @@
                                         @if ($row->failure_reason && $row->status !== 'paid')
                                             <div class="sub out">{{ $row->failure_reason }}</div>
                                         @endif
-                                    </td>
-                                    <td class="nowrap mono" style="font-size: 11.5px">
-                                        {{ $row->gateway_charge_id ?: '—' }}
-                                        @if ($row->gateway_status)
-                                            <div class="sub mono">{{ $row->gateway_status }}</div>
+                                        @if ($row->refundPending())
+                                            <div class="sub"><i class="fa fa-undo"></i> Refund {{ $row->refund_status }}</div>
+                                        @elseif ($row->refundFailed())
+                                            <div class="sub out"><i class="fa fa-undo"></i> Refund {{ $row->refund_status }}</div>
+                                        @elseif ($row->refunded_at)
+                                            <div class="sub">{{ systemDateTime($row->refunded_at) }}</div>
                                         @endif
                                     </td>
+                                    <td class="nowrap mono" style="font-size: 11.5px" title="{{ $row->gateway_charge_id }}">{{ $row->gateway_status ?: '—' }}</td>
                                     <td class="nowrap">
                                         @if ($row->sale)
                                             <a href="{{ route('sale::view', $row->sale_id) }}" class="nm">{{ $row->sale->invoice_no }}</a>
@@ -207,12 +217,25 @@
                                             <span class="sub">—</span>
                                         @endif
                                     </td>
-                                    <td class="num">
+                                    <td class="num nowrap">
                                         @if (in_array($row->status, ['pending', 'review'], true) && $row->gateway_charge_id)
                                             <button type="button" class="icon-btn" wire:click="check({{ $row->id }})" wire:loading.attr="disabled" title="Ask Tap for the result">
                                                 <i class="fa fa-refresh"></i> Check
                                             </button>
                                         @endif
+                                        @if ($row->refundPending())
+                                            <button type="button" class="icon-btn" wire:click="checkRefund({{ $row->id }})" wire:loading.attr="disabled" title="Ask Tap where the refund stands">
+                                                <i class="fa fa-refresh"></i> Refund status
+                                            </button>
+                                        @elseif ($canRefund && $row->isRefundable())
+                                            <button type="button" class="icon-btn" wire:loading.attr="disabled" title="Send the payment back to the customer"
+                                                onclick="confirmOnlineRefund({{ $row->id }}, @js($row->currency . ' ' . currency($row->amount)), @js($row->customer_name), @js($row->sale?->invoice_no))">
+                                                <i class="fa fa-undo"></i> Refund
+                                            </button>
+                                        @endif
+                                        <button type="button" class="icon-btn" wire:click="showDetails({{ $row->id }})" title="Full transaction details">
+                                            <i class="fa fa-eye"></i> Details
+                                        </button>
                                     </td>
                                 </tr>
                             @empty
@@ -245,4 +268,36 @@
             </div>
         </div>
     </div>
+
+    @if ($detail)
+        @include('livewire.sale.partials.online-payment-details', ['detail' => $detail, 'statuses' => $statuses, 'statusTone' => $statusTone])
+    @endif
 </div>
+
+@push('scripts')
+    <script>
+        function confirmOnlineRefund(id, amount, customer, invoice) {
+            const esc = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+            Swal.fire({
+                title: 'Refund ' + amount + '?',
+                html: 'The full payment goes back to <b>' + esc(customer) + '</b> through Tap.' +
+                    (invoice ? '<br>Sale <b>' + esc(invoice) + '</b> will be cancelled once Tap completes the refund — stock returns and its journal is reversed.' : '') +
+                    '<br><small>This cannot be undone.</small>',
+                icon: 'warning',
+                input: 'text',
+                inputPlaceholder: 'Reason (optional)',
+                inputAttributes: { maxlength: 250 },
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa fa-undo me-2"></i>Refund',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true,
+                focusCancel: true,
+                customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-secondary' },
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    @this.call('refund', id, result.value || '');
+                }
+            });
+        }
+    </script>
+@endpush

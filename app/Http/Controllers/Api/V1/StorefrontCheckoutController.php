@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\Storefront\StartCheckoutAction;
 use App\Actions\V1\Storefront\SyncCheckoutAction;
+use App\Actions\V1\Storefront\SyncRefundAction;
 use App\Exceptions\StorefrontCheckoutException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Storefront\StartCheckoutRequest;
@@ -60,6 +61,7 @@ class StorefrontCheckoutController extends Controller
             report($e);
 
             return $this->sendServerError($e->getMessage() ?: 'Checkout could not be started. Please try again.');
+
             return $this->sendServerError('Checkout could not be started. Please try again.');
         }
     }
@@ -100,26 +102,28 @@ class StorefrontCheckoutController extends Controller
      * Tap webhook.
      *
      * Tap POSTs the finished charge here (its `post.url`), which covers a customer
-     * who pays and closes the tab before being redirected back. The body is only
-     * used to find the checkout: the outcome is re-read from Tap with the secret
-     * key before anything is recorded, so a forged post can at most trigger a
-     * status check. A failure answers 500 so Tap retries.
+     * who pays and closes the tab before being redirected back — and, for a refund
+     * sent from Online Payments, the settled refund. The body is only used to find
+     * the checkout: the outcome is re-read from Tap with the secret key before
+     * anything is recorded, so a forged post can at most trigger a status check.
+     * A failure answers 500 so Tap retries.
      */
-    public function webhook(Request $request, SyncCheckoutAction $action): JsonResponse
+    public function webhook(Request $request, SyncCheckoutAction $action, SyncRefundAction $refundAction): JsonResponse
     {
-        $chargeId = $request->input('id');
+        $id = $request->input('id');
+        $isRefund = $request->input('object') === 'refund' || (is_string($id) && str_starts_with($id, 're_'));
 
-        $checkout = is_string($chargeId) && $chargeId !== ''
-            ? StorefrontCheckout::query()->where('gateway_charge_id', $chargeId)->first()
+        $checkout = is_string($id) && $id !== ''
+            ? StorefrontCheckout::query()->where($isRefund ? 'refund_id' : 'gateway_charge_id', $id)->first()
             : null;
 
         if (! $checkout) {
-            // Not a charge this tenant started: acknowledge so Tap stops retrying.
+            // Not a charge or refund this tenant started: acknowledge so Tap stops retrying.
             return $this->sendSuccess(null, 'Ignored');
         }
 
         try {
-            $action->execute($checkout);
+            $isRefund ? $refundAction->execute($checkout) : $action->execute($checkout);
         } catch (\Throwable $e) {
             report($e);
 

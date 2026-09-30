@@ -76,6 +76,8 @@ return [
         'mobile change employee',
         // Storefront checkouts through Tap (Sale → Online Payments).
         'online payments',
+        // Send a captured Tap payment back to the customer; cancels its sale.
+        'online payments refund',
     ],
     'sales return' => ['create', 'view', 'edit', 'edit completed', 'delete', 'cancel', 'export', 'payments', 'receipts', 'view journal entries'],
     'purchase' => [

@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Sale;
 
+use App\Actions\V1\Storefront\RefundCheckoutAction;
 use App\Actions\V1\Storefront\SyncCheckoutAction;
+use App\Actions\V1\Storefront\SyncRefundAction;
+use App\Exceptions\StorefrontCheckoutException;
 use App\Exports\OnlinePaymentsExport;
 use App\Livewire\Concerns\HasReportPeriod;
 use App\Models\StorefrontCheckout;
+use App\Services\Payment\TapException;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -28,6 +32,8 @@ class OnlinePayments extends Component
 
     private const PERMISSION = 'sale.online payments';
 
+    private const REFUND_PERMISSION = 'sale.online payments refund';
+
     private const SORTABLE = ['storefront_checkouts.id', 'storefront_checkouts.amount', 'storefront_checkouts.status', 'storefront_checkouts.customer_name'];
 
     public string $search = '';
@@ -43,6 +49,9 @@ class OnlinePayments extends Component
     public ?string $to_date = null;
 
     public int $perPage = 25;
+
+    /** The checkout open in the details popup. */
+    public ?int $detailId = null;
 
     public string $sortField = 'storefront_checkouts.id';
 
@@ -106,6 +115,74 @@ class OnlinePayments extends Component
         $this->dispatch($checkout->status === StorefrontCheckout::STATUS_REVIEW ? 'error' : 'success', ['message' => $message]);
     }
 
+    /**
+     * Send the whole captured amount back to the customer through Tap. Once Tap
+     * reports it REFUNDED the checkout is marked refunded and its sale cancelled.
+     */
+    public function refund(int $id, string $reason = ''): void
+    {
+        abort_unless(auth()->user()?->can(self::REFUND_PERMISSION), 403);
+
+        $checkout = StorefrontCheckout::query()->findOrFail($id);
+
+        try {
+            $checkout = (new RefundCheckoutAction())->execute($checkout, $reason, (int) auth()->id());
+        } catch (StorefrontCheckoutException|TapException $e) {
+            $this->dispatch('error', ['message' => 'Refund not sent: '.$e->getMessage()]);
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('error', ['message' => 'Refund not sent: '.$e->getMessage()]);
+
+            return;
+        }
+
+        $this->dispatch(...$this->refundOutcome($checkout));
+    }
+
+    /** Ask Tap where a pending refund stands. */
+    public function checkRefund(int $id): void
+    {
+        abort_unless(auth()->user()?->can(self::PERMISSION), 403);
+
+        $checkout = StorefrontCheckout::query()->findOrFail($id);
+
+        try {
+            $checkout = (new SyncRefundAction())->execute($checkout);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('error', ['message' => 'Could not reach Tap: '.$e->getMessage()]);
+
+            return;
+        }
+
+        $this->dispatch(...$this->refundOutcome($checkout));
+    }
+
+    /** @return array{0: string, 1: array{message: string}} */
+    private function refundOutcome(StorefrontCheckout $checkout): array
+    {
+        return match (true) {
+            $checkout->status === StorefrontCheckout::STATUS_REFUNDED && $checkout->failure_reason !== null => ['error', ['message' => $checkout->failure_reason]],
+            $checkout->status === StorefrontCheckout::STATUS_REFUNDED => ['success', ['message' => 'Refunded'.($checkout->sale ? ' — sale '.$checkout->sale->invoice_no.' cancelled.' : '.')]],
+            $checkout->refundFailed() => ['error', ['message' => 'Tap did not refund: '.(data_get($checkout->refund_response, 'response.message') ?: $checkout->refund_status)]],
+            default => ['success', ['message' => 'Refund sent — Tap reports it '.$checkout->refund_status.'. It will be marked refunded once Tap completes it.']],
+        };
+    }
+
+    public function showDetails(int $id): void
+    {
+        abort_unless(auth()->user()?->can(self::PERMISSION), 403);
+
+        $this->detailId = StorefrontCheckout::query()->whereKey($id)->value('id');
+    }
+
+    public function closeDetails(): void
+    {
+        $this->detailId = null;
+    }
+
     public function export(): BinaryFileResponse
     {
         abort_unless(auth()->user()?->can(self::PERMISSION), 403);
@@ -137,6 +214,7 @@ class OnlinePayments extends Component
             StorefrontCheckout::STATUS_PAID,
             StorefrontCheckout::STATUS_FAILED,
             StorefrontCheckout::STATUS_REVIEW,
+            StorefrontCheckout::STATUS_REFUNDED,
         ];
     }
 
@@ -147,7 +225,7 @@ class OnlinePayments extends Component
     public static function filteredQuery(array $filters): Builder
     {
         return StorefrontCheckout::query()
-            ->with(['branch:id,name', 'sale:id,invoice_no'])
+            ->with(['branch:id,name', 'sale:id,invoice_no,status'])
             ->when(trim((string) ($filters['search'] ?? '')), function (Builder $q, string $value): void {
                 $q->where(function (Builder $inner) use ($value): void {
                     $inner->where('storefront_checkouts.customer_name', 'like', "%{$value}%")
@@ -179,7 +257,13 @@ class OnlinePayments extends Component
                 'pending' => $count(StorefrontCheckout::STATUS_PENDING),
                 'failed' => $count(StorefrontCheckout::STATUS_FAILED),
                 'review' => $count(StorefrontCheckout::STATUS_REVIEW),
+                'refunded' => $count(StorefrontCheckout::STATUS_REFUNDED),
+                'refunded_amount' => (float) $base()->where('storefront_checkouts.status', StorefrontCheckout::STATUS_REFUNDED)->sum('storefront_checkouts.amount'),
             ],
+            'detail' => $this->detailId
+                ? StorefrontCheckout::query()->with(['branch:id,name', 'sale:id,invoice_no,status', 'refundRequestedBy:id,name'])->find($this->detailId)
+                : null,
+            'canRefund' => (bool) auth()->user()?->can(self::REFUND_PERMISSION),
         ]);
     }
 }

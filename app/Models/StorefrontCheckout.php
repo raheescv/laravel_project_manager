@@ -32,6 +32,12 @@ class StorefrontCheckout extends Model implements AuditableContracts
     /** Money captured but no sale could be recorded — a person has to resolve it. */
     public const STATUS_REVIEW = 'review';
 
+    /** The captured money went back to the customer through Tap; any sale is cancelled. */
+    public const STATUS_REFUNDED = 'refunded';
+
+    /** Tap refund statuses that end a refund without returning the money. */
+    public const REFUND_FAILED_STATUSES = ['FAILED', 'CANCELLED', 'DECLINED', 'REJECTED', 'VOID'];
+
     protected $fillable = [
         'tenant_id',
         'reference',
@@ -54,23 +60,39 @@ class StorefrontCheckout extends Model implements AuditableContracts
         'gateway',
         'gateway_charge_id',
         'gateway_status',
+        'gateway_request',
         'gateway_response',
         'status',
         'failure_reason',
         'paid_at',
+        'refund_id',
+        'refund_status',
+        'refund_amount',
+        'refund_reason',
+        'refund_request',
+        'refund_response',
+        'refund_requested_by',
+        'refund_requested_at',
+        'refunded_at',
     ];
 
     protected $casts = [
         'items' => 'array',
+        'gateway_request' => 'array',
         'gateway_response' => 'array',
         'amount' => 'decimal:2',
         'latitude' => 'float',
         'longitude' => 'float',
         'paid_at' => 'datetime',
+        'refund_request' => 'array',
+        'refund_response' => 'array',
+        'refund_amount' => 'decimal:2',
+        'refund_requested_at' => 'datetime',
+        'refunded_at' => 'datetime',
     ];
 
-    /** The raw Tap payload is re-written on every status check; auditing it is noise. */
-    protected $auditExclude = ['gateway_response'];
+    /** The raw Tap payloads are re-written on every status check; auditing them is noise. */
+    protected $auditExclude = ['gateway_request', 'gateway_response', 'refund_request', 'refund_response'];
 
     protected static function booted()
     {
@@ -85,6 +107,30 @@ class StorefrontCheckout extends Model implements AuditableContracts
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
+    }
+
+    public function refundRequestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'refund_requested_by');
+    }
+
+    /** Money was captured and nothing has gone back yet, or an earlier refund attempt failed. */
+    public function isRefundable(): bool
+    {
+        return in_array($this->status, [self::STATUS_PAID, self::STATUS_REVIEW], true)
+            && $this->gateway_charge_id
+            && (! $this->refund_id || $this->refundFailed());
+    }
+
+    /** A refund has been sent to Tap and Tap has not settled it either way yet. */
+    public function refundPending(): bool
+    {
+        return $this->refund_id !== null && $this->status !== self::STATUS_REFUNDED && ! $this->refundFailed();
+    }
+
+    public function refundFailed(): bool
+    {
+        return in_array($this->refund_status, self::REFUND_FAILED_STATUSES, true);
     }
 
     public function isDelivery(): bool
