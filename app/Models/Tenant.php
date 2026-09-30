@@ -203,6 +203,21 @@ class Tenant extends Model
     }
 
     /**
+     * How far through the current AMC cycle today is (0–100), for the list's renewal bar.
+     */
+    public function renewalProgress(): ?int
+    {
+        if (! $this->renews_on) {
+            return null;
+        }
+        $months = self::AMC_CYCLES[$this->amc_cycle][1] ?? 12;
+        $cycleStart = $this->renews_on->copy()->subMonthsNoOverflow($months);
+        $cycleDays = max(1, $cycleStart->diffInDays($this->renews_on));
+
+        return (int) round(min(100, max(0, $cycleStart->diffInDays(today(), false) / $cycleDays * 100)));
+    }
+
+    /**
      * overdue | due (within RENEWAL_WARNING_DAYS) | ok, or null with no renewal date.
      */
     public function renewalState(): ?string
@@ -215,6 +230,21 @@ class Tenant extends Model
         }
 
         return today()->diffInDays($this->renews_on) <= self::RENEWAL_WARNING_DAYS ? 'due' : 'ok';
+    }
+
+    /**
+     * "Today", "3 days ago", "2 years ago", or "5 days from now" for a future start.
+     */
+    public function startedAgo(): ?string
+    {
+        if (! $this->started_on) {
+            return null;
+        }
+        if ($this->started_on->isToday()) {
+            return 'Today';
+        }
+
+        return $this->started_on->copy()->startOfDay()->diffForHumans(today(), CarbonInterface::DIFF_RELATIVE_TO_NOW);
     }
 
     /**

@@ -13,7 +13,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
+            <div class="mb-3">
                 @livewire('tenant.table')
             </div>
         </div>

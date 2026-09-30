@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tenant Control · Premium Redesign — 3 Samples</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Ubuntu:wght@500;700&display=swap">
+<style>
+  :root{
+    --bs-primary:#2d4379; --bs-primary-rgb:45,67,121;
+    --bs-success:#1f9d63; --bs-success-rgb:31,157,99;
+    --bs-warning:#d99a17; --bs-warning-rgb:217,154,23;
+    --bs-danger:#d64545;  --bs-danger-rgb:214,69,69;
+    --bs-emphasis-color:#0f1522; --bs-body-color:#333b49;
+    --bs-secondary-color:#697488; --bs-tertiary-color:#98a1b0;
+    --page:#eef1f6;
+  }
+  [data-bs-theme="dark"]{
+    --bs-primary:#6f8fd8; --bs-primary-rgb:111,143,216;
+    --bs-emphasis-color:#eef1f6; --bs-body-color:#c4ccd8;
+    --bs-secondary-color:#8b95a5; --bs-tertiary-color:#5f6a7a;
+    --page:#1b2027;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--page); font-family:Poppins,system-ui,sans-serif; padding:20px 16px 70px; color:var(--bs-body-color); }
+
+  .demo-bar{ max-width:1320px; margin:0 auto 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .demo-bar h6{ margin:0; font-size:12px; letter-spacing:1.6px; text-transform:uppercase; color:var(--bs-secondary-color); font-weight:700; flex:1; }
+  .demo-bar button{ border:0; padding:8px 14px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; background:#fff; color:#333; box-shadow:0 2px 8px rgba(0,0,0,.12); font-family:inherit; }
+  .demo-bar button.on{ background:var(--bs-primary); color:#fff; }
+  [data-bs-theme="dark"] .demo-bar button:not(.on){ background:#2b323b; color:#eee; }
+  .frame{ max-width:1320px; margin:0 auto; transition:max-width .25s; container-type:inline-size; }
+  .frame.w1024{ max-width:1024px; } .frame.w390{ max-width:390px; }
+  .sample-head{ margin:40px 0 12px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .sample-head .n{ background:var(--bs-primary); color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; }
+  .sample-head h2{ margin:0; font-size:18px; font-weight:700; color:var(--bs-emphasis-color); }
+  .sample-head p{ margin:0; font-size:12.5px; color:var(--bs-secondary-color); flex:1 1 260px; }
+
+  /* ============================================================
+     .tnx — shared token layer (derives from --bs-primary)
+     ============================================================ */
+  .tnx{
+    --acc:var(--bs-primary); --acc-rgb:var(--bs-primary-rgb);
+    --acc-deep:color-mix(in srgb, var(--bs-primary), #000 45%);
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 90%);
+    --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 80%);
+    --surface:#fff; --surface-2:#f6f8fb; --surface-3:#eef1f6;
+    --ink:var(--bs-emphasis-color); --ink-2:var(--bs-body-color);
+    --muted:var(--bs-secondary-color); --faint:var(--bs-tertiary-color);
+    --line:#e6eaf0; --line-soft:#f0f2f6;
+    --ok:var(--bs-success); --warn:var(--bs-warning); --bad:var(--bs-danger);
+    --r:14px; --r-sm:9px;
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 10px 28px -14px rgba(16,24,40,.18);
+    --tnx-fz:12.5px;
+    color:var(--ink-2); font-size:var(--tnx-fz); line-height:1.5;
+  }
+  [data-bs-theme="dark"] .tnx{
+    --surface:#232a33; --surface-2:#1f252d; --surface-3:#2a323c;
+    --line:#333c48; --line-soft:#2b333e;
+    --acc-tint:color-mix(in srgb, var(--bs-primary), transparent 84%);
+    --acc-tint-2:color-mix(in srgb, var(--bs-primary), transparent 72%);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 30px -14px rgba(0,0,0,.55);
+  }
+  .tnx a{ color:inherit; text-decoration:none; }
+  .tnx .shell{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; }
+
+  /* ---- shared atoms ---- */
+  .tnx .btn{ display:inline-flex; align-items:center; gap:7px; border:1px solid transparent; border-radius:var(--r-sm); padding:8px 14px; font:600 12.5px Poppins,sans-serif; cursor:pointer; white-space:nowrap; }
+  .tnx .btn-acc{ background:var(--acc); color:#fff; box-shadow:0 6px 16px -8px rgba(var(--acc-rgb),.8); }
+  .tnx .btn-ghost{ background:var(--surface); border-color:var(--line); color:var(--ink-2); }
+  .tnx .btn-danger{ background:color-mix(in srgb,var(--bad),transparent 88%); color:var(--bad); }
+  .tnx .btn[disabled]{ opacity:.45; cursor:not-allowed; }
+  .tnx .search{ display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-sm); padding:0 12px; min-width:0; flex:1 1 240px; }
+  .tnx .search input{ border:0; background:none; outline:none; font:inherit; color:var(--ink); padding:8px 0; width:100%; min-width:0; }
+  .tnx .sel{ appearance:none; background:var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23889' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; border:1px solid var(--line); border-radius:var(--r-sm); padding:8px 28px 8px 11px; font:inherit; color:var(--ink); }
+  [dir="rtl"] .tnx .sel{ background-position:left 10px center; padding:8px 11px 8px 28px; }
+  .tnx .avatar{ width:38px; height:38px; flex:0 0 38px; border-radius:11px; display:grid; place-items:center; font:700 15px Ubuntu,sans-serif; color:#fff; background:linear-gradient(135deg,var(--acc),var(--acc-deep)); }
+  .tnx .avatar.muted{ background:linear-gradient(135deg,#9aa3b2,#5e6776); }
+  .tnx .t-name{ font-weight:600; color:var(--ink); font-size:13.5px; }
+  .tnx .t-host{ color:var(--muted); font-size:11.5px; }
+  .tnx .here{ display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; color:var(--acc); background:var(--acc-tint); padding:1px 8px; border-radius:20px; }
+  .tnx .chip{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; background:var(--surface-3); color:var(--ink-2); white-space:nowrap; }
+  .tnx .pill{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+  .tnx .pill::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .tnx .pill.ok{ color:var(--ok); background:color-mix(in srgb,var(--ok),transparent 88%); }
+  .tnx .pill.off{ color:var(--muted); background:var(--surface-3); }
+  .tnx .pill.del{ color:var(--bad); background:color-mix(in srgb,var(--bad),transparent 88%); }
+  .tnx .when{ color:var(--ink); font-weight:500; }
+  .tnx .when-sub{ color:var(--faint); font-size:11px; }
+  .tnx .renew{ font-size:11px; font-weight:600; }
+  .tnx .renew.ok{ color:var(--muted); } .tnx .renew.due{ color:var(--warn); } .tnx .renew.overdue{ color:var(--bad); }
+  .tnx .bar{ height:4px; border-radius:4px; background:var(--surface-3); overflow:hidden; margin-top:5px; width:110px; max-width:100%; }
+  .tnx .bar i{ display:block; height:100%; border-radius:4px; background:var(--acc); }
+  .tnx .bar.due i{ background:var(--warn); } .tnx .bar.overdue i{ background:var(--bad); }
+  .tnx .num{ font:600 14px Ubuntu,sans-serif; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .tnx .num-l{ font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; }
+  .tnx .cb{ width:16px; height:16px; accent-color:var(--acc); }
+  .tnx .dim{ color:var(--faint); }
+  .tnx .pager{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 18px; border-top:1px solid var(--line-soft); color:var(--muted); font-size:12px; flex-wrap:wrap; }
+
+  /* ---- facet chips (status segmented) ---- */
+  .tnx .segs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .tnx .segs::-webkit-scrollbar{ display:none; }
+  .tnx .seg{ display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:30px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); font-weight:500; white-space:nowrap; cursor:pointer; }
+  .tnx .seg b{ font:700 11px Ubuntu,sans-serif; background:var(--surface-3); color:var(--muted); border-radius:20px; padding:1px 7px; }
+  .tnx .seg.on{ background:var(--acc); border-color:var(--acc); color:#fff; }
+  .tnx .seg.on b{ background:rgba(255,255,255,.22); color:#fff; }
+  .tnx .seg.warn b{ background:color-mix(in srgb,var(--warn),transparent 82%); color:var(--warn); }
+
+  /* ================= A · Fleet Console ================= */
+  .tnx-a .kpis{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+  .tnx-a .kpi{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 16px; box-shadow:var(--shadow); display:flex; gap:12px; align-items:center; min-width:0; }
+  .tnx-a .kpi .ic{ width:40px; height:40px; flex:0 0 40px; border-radius:12px; display:grid; place-items:center; background:var(--acc-tint); color:var(--acc); font-size:16px; }
+  .tnx-a .kpi .ic.ok{ background:color-mix(in srgb,var(--ok),transparent 88%); color:var(--ok); }
+  .tnx-a .kpi .ic.warn{ background:color-mix(in srgb,var(--warn),transparent 86%); color:var(--warn); }
+  .tnx-a .kpi .v{ font:700 22px Ubuntu,sans-serif; color:var(--ink); line-height:1.1; }
+  .tnx-a .kpi .l{ font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tnx-a .toolbar{ display:flex; gap:10px; align-items:center; padding:14px 18px; flex-wrap:wrap; border-bottom:1px solid var(--line-soft); }
+  .tnx-a .toolbar .grow{ flex:1 1 auto; }
+  .tnx-a .filters{ display:flex; gap:10px; align-items:center; padding:10px 18px; background:var(--surface-2); border-bottom:1px solid var(--line-soft); flex-wrap:wrap; }
+  .tnx-a .filters .segs{ flex:1 1 320px; min-width:0; }
+  .tnx-a .filters .sels{ display:flex; gap:8px; flex-wrap:wrap; }
+  .tnx-a table{ width:100%; border-collapse:collapse; }
+  .tnx-a th{ text-align:start; font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--faint); font-weight:600; padding:10px 14px; background:var(--surface); border-bottom:1px solid var(--line-soft); white-space:nowrap; }
+  .tnx-a td{ padding:12px 14px; border-bottom:1px solid var(--line-soft); vertical-align:middle; }
+  .tnx-a tr.row:hover td{ background:var(--surface-2); }
+  .tnx-a tr.row.current td{ background:color-mix(in srgb,var(--acc),transparent 95%); }
+  .tnx-a tr.row.current td:first-child{ box-shadow:inset 3px 0 0 var(--acc); }
+  [dir="rtl"] .tnx-a tr.row.current td:first-child{ box-shadow:inset -3px 0 0 var(--acc); }
+  .tnx-a .who{ display:flex; gap:11px; align-items:center; min-width:0; }
+  .tnx-a .who .meta{ min-width:0; }
+  .tnx-a .who .top{ display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
+  .tnx-a .code{ font:500 11px ui-monospace,Menlo,monospace; color:var(--muted); background:var(--surface-3); padding:1px 6px; border-radius:5px; }
+  .tnx-a .size{ display:flex; gap:16px; }
+  .tnx-a .size > div{ text-align:center; min-width:42px; }
+  .tnx-a .act{ display:flex; flex-direction:column; gap:2px; font-size:11.5px; white-space:nowrap; }
+  .tnx-a .act span i{ width:14px; color:var(--faint); }
+
+  /* ================= B · Workspace Cards ================= */
+  .tnx-b .head{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .tnx-b .head .search{ background:var(--surface); }
+  .tnx-b .head .sel{ background-color:var(--surface); }
+  .tnx-b .segs{ margin-bottom:14px; }
+  .tnx-b .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .tnx-b .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; position:relative; }
+  .tnx-b .card.current{ border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-tint-2), var(--shadow); }
+  .tnx-b .card .band{ height:54px; background:linear-gradient(120deg,var(--acc),var(--acc-deep)); position:relative; }
+  .tnx-b .card .band.muted{ background:linear-gradient(120deg,#9aa3b2,#5e6776); }
+  .tnx-b .card .band .cb{ position:absolute; top:12px; inset-inline-start:12px; }
+  .tnx-b .card .band .pill{ position:absolute; top:12px; inset-inline-end:12px; background:rgba(255,255,255,.92); }
+  .tnx-b .card .avatar{ width:52px; height:52px; border-radius:15px; font-size:20px; border:3px solid var(--surface); margin:-26px 16px 0; }
+  .tnx-b .card .body{ padding:8px 16px 14px; }
+  .tnx-b .card .t-name{ font-size:15px; }
+  .tnx-b .card .line1{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:4px 0 12px; }
+  .tnx-b .card .stats{ display:grid; grid-template-columns:repeat(3,1fr); background:var(--surface-2); border-radius:var(--r-sm); padding:10px 4px; text-align:center; }
+  .tnx-b .card .stats > div + div{ border-inline-start:1px solid var(--line); }
+  .tnx-b .card .life{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .tnx-b .card .life .k{ font-size:10.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; }
+  .tnx-b .card .foot{ margin-top:auto; display:flex; justify-content:space-between; gap:8px; padding:10px 16px; border-top:1px solid var(--line-soft); font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
+  .tnx-b .card .foot i{ color:var(--faint); margin-inline-end:4px; }
+  .tnx-b .pager{ border:0; padding:14px 2px 0; }
+
+  /* ================= C · Facet Rail ================= */
+  .tnx-c .layout{ display:grid; grid-template-columns:230px minmax(0,1fr); gap:14px; align-items:start; }
+  .tnx-c .rail{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); padding:14px; position:sticky; top:12px; }
+  .tnx-c .rail h6{ margin:14px 4px 6px; font-size:10.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--faint); font-weight:600; }
+  .tnx-c .rail h6:first-of-type{ margin-top:12px; }
+  .tnx-c .facet{ display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:var(--r-sm); cursor:pointer; color:var(--ink-2); }
+  .tnx-c .facet i{ width:16px; text-align:center; color:var(--faint); }
+  .tnx-c .facet span{ flex:1; }
+  .tnx-c .facet b{ font:600 11px Ubuntu,sans-serif; color:var(--muted); }
+  .tnx-c .facet:hover{ background:var(--surface-2); }
+  .tnx-c .facet.on{ background:var(--acc-tint); color:var(--acc); font-weight:600; }
+  .tnx-c .facet.on i,.tnx-c .facet.on b{ color:var(--acc); }
+  .tnx-c .rail .btn-acc{ width:100%; justify-content:center; }
+  .tnx-c .main .top{ display:flex; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line-soft); flex-wrap:wrap; }
+  .tnx-c .main .top .sel{ flex:0 0 auto; }
+  .tnx-c .list .item{ display:grid; grid-template-columns:22px minmax(200px,1.6fr) minmax(170px,1fr) minmax(150px,1fr) minmax(150px,1fr) 80px; gap:14px; align-items:center; padding:13px 16px; border-bottom:1px solid var(--line-soft); }
+  .tnx-c .list .item.hd{ padding:9px 16px; font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--faint); font-weight:600; background:var(--surface-2); }
+  .tnx-c .list .item.current{ background:color-mix(in srgb,var(--acc),transparent 95%); }
+  .tnx-c .list .item:not(.hd):hover{ background:var(--surface-2); }
+  .tnx-c .who{ display:flex; gap:11px; align-items:center; min-width:0; }
+  .tnx-c .who .meta{ min-width:0; }
+  .tnx-c .who .t-host{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tnx-c .sizes{ display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--ink-2); }
+  .tnx-c .sizes i{ color:var(--faint); margin-inline-end:4px; }
+  .tnx-c .mobile-facets{ display:none; }
+  .tnx .lbl{ display:none; }
+
+  /* ================= responsive ================= */
+  @container (max-width: 1100px){
+    .tnx-c .layout{ grid-template-columns:1fr; }
+    .tnx-c .rail{ display:none; }
+    .tnx-c .mobile-facets{ display:block; padding:12px 16px 0; }
+  }
+  @container (max-width: 900px){
+    .tnx-a .kpis{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    /* table → stacked cards */
+    .tnx-a table, .tnx-a tbody, .tnx-a tr, .tnx-a td{ display:block; width:100%; }
+    .tnx-a thead{ display:none; }
+    .tnx-a tr.row{ display:grid; grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto; gap:10px 12px; padding:14px 16px; border-bottom:1px solid var(--line-soft); }
+    .tnx-a tr.row td{ padding:0; border:0; background:none !important; box-shadow:none !important; }
+    .tnx-a tr.row.current{ background:color-mix(in srgb,var(--acc),transparent 95%); box-shadow:inset 3px 0 0 var(--acc); }
+    .tnx-a td.c-cb{ grid-row:1; grid-column:1; } .tnx-a td.c-who{ grid-row:1; grid-column:2 / 4; } .tnx-a td.c-status{ grid-row:1; grid-column:4; }
+    .tnx-a td.c-sys{ grid-column:2 / -1; margin-top:-6px; }
+    .tnx-a td.c-size, .tnx-a td.c-act{ grid-column:1 / -1; }
+    .tnx-a td.c-start{ grid-column:1 / 3; } .tnx-a td.c-renew{ grid-column:3 / -1; }
+    .tnx-a .size{ justify-content:space-between; background:var(--surface-2); border-radius:var(--r-sm); padding:8px 6px; }
+    .tnx-a .act{ flex-direction:row; justify-content:space-between; }
+    .tnx-a .lbl{ display:block; }
+
+    .tnx-c .list .item.hd{ display:none; }
+    .tnx-c .list .item{ grid-template-columns:auto minmax(0,1fr) auto; gap:10px 12px; }
+    .tnx-c .list .item{ grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto; }
+    .tnx-c .list .item > .who{ grid-column:2 / 4; grid-row:1; }
+    .tnx-c .list .item > .c-status{ grid-column:4; grid-row:1; }
+    .tnx-c .list .item > .c-size{ grid-column:1 / -1; }
+    .tnx-c .list .item > .c-start{ grid-column:1 / 3; } .tnx-c .list .item > .c-renew{ grid-column:3 / -1; }
+    .tnx-c .lbl, .tnx-a .lbl{ display:block; font-size:10px; color:var(--faint); text-transform:uppercase; letter-spacing:.5px; }
+  }
+  @container (max-width: 560px){
+    .tnx-a .kpi{ padding:11px 12px; } .tnx-a .kpi .ic{ width:34px; height:34px; flex-basis:34px; }
+    .tnx-a .kpi .v{ font-size:18px; }
+    .tnx .toolbar .btn .txt{ display:none; }
+    .tnx-a .toolbar .search{ order:3; flex-basis:100%; }
+    .tnx-a .filters .sels{ width:100%; } .tnx-a .filters .sels .sel{ flex:1 1 0; min-width:0; }
+    .tnx-b .grid{ grid-template-columns:1fr; }
+    .tnx-b .head .search{ flex-basis:100%; }
+    .tnx-b .head .sel{ flex:1 1 0; min-width:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <h6>Tenant Control · 3 directions</h6>
+  <button data-w="" class="on">Desktop</button>
+  <button data-w="w1024">Tablet 1024</button>
+  <button data-w="w390">Phone 390</button>
+  <button id="theme">Toggle dark</button>
+  <button id="dir">Toggle RTL</button>
+</div>
+
+<div class="frame" id="frame">
+
+  <div class="sample-head"><span class="n">A</span><h2>Fleet Console</h2><p>KPI strip, one toolbar, status chips with counts. Rows group identity, size, lifecycle and activity. Under 900px each row becomes a card.</p></div>
+  <div class="tnx tnx-a" id="A"></div>
+
+  <div class="sample-head"><span class="n">B</span><h2>Workspace Cards</h2><p>Every tenant is a card: gradient band, big avatar, size stats, a lifecycle panel and an activity footer. Works the same at every width.</p></div>
+  <div class="tnx tnx-b" id="B"></div>
+
+  <div class="sample-head"><span class="n">C</span><h2>Facet Rail</h2><p>Same look as the /users screen. Status and System filters sit in a left rail with live counts, beside a compact list. On tablet the rail folds into chips.</p></div>
+  <div class="tnx tnx-c" id="C"></div>
+</div>
+
+<script>
+const T = [
+  {n:'Nyly', code:'nyly', host:'project_manager.test', sys:'School Module', users:29, br:7, pr:36, started:'29 Sep 2024', startedAgo:'2 years ago', renew:'—', renewTxt:null, renewState:null, pct:0, sale:'1 day ago', login:'9 hours ago', status:'ok', current:true},
+  {n:'Solan', code:'solan', host:'solan.test', sys:'Issues Module', users:1, br:1, pr:0, started:'29 Sep 2026', startedAgo:'Today', renew:'26 Sep 2027', renewTxt:'in 362 days', renewState:'ok', pct:1, amc:'AMC 1,200.00 / yearly', sale:'Never', login:'Never', status:'ok'},
+  {n:'Al Rawda Boutique', code:'rawda', host:'rawda.qloud.app', sys:'POS Module', users:12, br:3, pr:1840, started:'14 Mar 2025', startedAgo:'1 year ago', renew:'12 Oct 2026', renewTxt:'in 13 days', renewState:'due', pct:96, amc:'AMC 900.00 / yearly', sale:'4 minutes ago', login:'2 minutes ago', status:'ok'},
+  {n:'Marina Estates', code:'marina', host:'estates.marina.qa', sys:'Property Module', users:6, br:2, pr:0, started:'2 Jul 2026', startedAgo:'2 months ago', renew:'20 Sep 2026', renewTxt:'9 days overdue', renewState:'overdue', pct:100, sale:'3 weeks ago', login:'12 days ago', status:'off'},
+];
+const esc = s => s;
+const pill = t => t.status==='ok' ? '<span class="pill ok">Active</span>' : t.status==='del' ? '<span class="pill del">Deleted</span>' : '<span class="pill off">Inactive</span>';
+const av = t => `<span class="avatar ${t.status==='off'?'muted':''}">${t.n[0]}</span>`;
+const started = t => `<div class="when" title="${t.started}">${t.startedAgo}</div><div class="when-sub">${t.started}</div>`;
+const renew = t => t.renewTxt ? `<div class="when">${t.renew}</div><div class="renew ${t.renewState}">${t.renewTxt}</div><div class="bar ${t.renewState}"><i style="width:${t.pct}%"></i></div>` : '<span class="dim">No renewal set</span>';
+const here = t => t.current ? '<span class="here"><i class="fa fa-map-marker"></i> You are here</span>' : '';
+const segs = (active='all') => `<div class="segs">
+  ${[['all','All',4],['active','Active',3],['inactive','Inactive',1],['renewal_due','Renewal due',2,'warn'],['trashed','Deleted',0]].map(([k,l,c,x])=>`<span class="seg ${k===active?'on':''} ${x||''}">${l} <b>${c}</b></span>`).join('')}
+</div>`;
+const sels = `<select class="sel"><option>All systems</option></select><select class="sel"><option>Date created</option></select>`;
+const pager = `<div class="pager"><span>Showing 1–4 of 4 tenants</span><select class="sel"><option>10 / page</option><option>100 / page</option></select></div>`;
+
+document.getElementById('A').innerHTML = `
+  <div class="kpis">
+    <div class="kpi"><span class="ic"><i class="fa fa-building"></i></span><div><div class="v">4</div><div class="l">Workspaces</div></div></div>
+    <div class="kpi"><span class="ic ok"><i class="fa fa-check-circle"></i></span><div><div class="v">3</div><div class="l">Active</div></div></div>
+    <div class="kpi"><span class="ic warn"><i class="fa fa-refresh"></i></span><div><div class="v">2</div><div class="l">Renewal due</div></div></div>
+    <div class="kpi"><span class="ic"><i class="fa fa-users"></i></span><div><div class="v">48</div><div class="l">Users across tenants</div></div></div>
+  </div>
+  <div class="shell">
+    <div class="toolbar">
+      <button class="btn btn-acc"><i class="fa fa-plus"></i><span class="txt">Add Tenant</span></button>
+      <button class="btn btn-danger" disabled><i class="fa fa-trash"></i><span class="txt">Delete</span></button>
+      <div class="grow"></div>
+      <label class="search"><i class="fa fa-search dim"></i><input placeholder="Name, code, subdomain or domain…"></label>
+    </div>
+    <div class="filters">${segs()}<div class="sels">${sels}</div></div>
+    <table>
+      <thead><tr><th style="width:36px"><input type="checkbox" class="cb"></th><th>Tenant</th><th>System</th><th>Size</th><th>Started</th><th>Renewal</th><th>Activity</th><th>Status</th></tr></thead>
+      <tbody>${T.map(t=>`<tr class="row ${t.current?'current':''}">
+        <td class="c-cb">${t.current?'':'<input type="checkbox" class="cb">'}</td>
+        <td class="c-who"><a href="#" class="who">${av(t)}<div class="meta"><div class="top"><span class="t-name">${t.n}</span><span class="code">${t.code}</span></div><div class="t-host"><i class="fa fa-globe"></i> ${t.host}</div>${here(t)}</div></a></td>
+        <td class="c-sys"><span class="chip"><i class="fa fa-cube"></i>${t.sys}</span></td>
+        <td class="c-size"><div class="size"><div><div class="num">${t.users}</div><div class="num-l">Users</div></div><div><div class="num">${t.br}</div><div class="num-l">Branches</div></div><div><div class="num">${t.pr.toLocaleString()}</div><div class="num-l">Products</div></div></div></td>
+        <td class="c-start"><span class="lbl">Started</span>${started(t)}</td>
+        <td class="c-renew"><span class="lbl">Renewal</span>${renew(t)}${t.amc?`<div class="when-sub">${t.amc}</div>`:''}</td>
+        <td class="c-act"><div class="act"><span><i class="fa fa-shopping-cart"></i> Sale ${t.sale}</span><span><i class="fa fa-sign-in"></i> Login ${t.login}</span></div></td>
+        <td class="c-status">${pill(t)}</td></tr>`).join('')}</tbody>
+    </table>
+    ${pager}
+  </div>`;
+
+document.getElementById('B').innerHTML = `
+  <div class="head">
+    <button class="btn btn-acc"><i class="fa fa-plus"></i>Add Tenant</button>
+    <button class="btn btn-danger" disabled><i class="fa fa-trash"></i></button>
+    <label class="search"><i class="fa fa-search dim"></i><input placeholder="Name, code, subdomain or domain…"></label>
+    ${sels}
+  </div>
+  ${segs()}
+  <div class="grid">${T.map(t=>`<article class="card ${t.current?'current':''}">
+    <div class="band ${t.status==='off'?'muted':''}">${t.current?'':'<input type="checkbox" class="cb">'}${pill(t)}</div>
+    ${av(t)}
+    <div class="body">
+      <a href="#" class="t-name">${t.n}</a>
+      <div class="line1"><span class="t-host"><i class="fa fa-globe"></i> ${t.host}</span><span class="chip">${t.sys}</span>${here(t)}</div>
+      <div class="stats"><div><div class="num">${t.users}</div><div class="num-l">Users</div></div><div><div class="num">${t.br}</div><div class="num-l">Branches</div></div><div><div class="num">${t.pr.toLocaleString()}</div><div class="num-l">Products</div></div></div>
+      <div class="life"><div><div class="k">Started</div>${started(t)}</div><div><div class="k">Renewal</div>${renew(t)}</div></div>
+    </div>
+    <div class="foot"><span><i class="fa fa-shopping-cart"></i>Sale ${t.sale}</span><span><i class="fa fa-sign-in"></i>Login ${t.login}</span></div>
+  </article>`).join('')}</div>
+  ${pager}`;
+
+const facets = `
+  <h6>Status</h6>
+  ${[['th-large','All tenants',4,1],['check-circle','Active',3],['pause-circle','Inactive',1],['refresh','Renewal due',2],['trash','Deleted',0]].map(([i,l,c,on])=>`<div class="facet ${on?'on':''}"><i class="fa fa-${i}"></i><span>${l}</span><b>${c}</b></div>`).join('')}
+  <h6>System</h6>
+  ${[['All systems',4,1],['School Module',1],['POS Module',1],['Property Module',1],['Issues Module',1]].map(([l,c,on])=>`<div class="facet ${on?'on':''}"><i class="fa fa-cube"></i><span>${l}</span><b>${c}</b></div>`).join('')}`;
+document.getElementById('C').innerHTML = `
+  <div class="layout">
+    <aside class="rail"><button class="btn btn-acc"><i class="fa fa-plus"></i>Add Tenant</button>${facets}</aside>
+    <div class="shell main">
+      <div class="top">
+        <label class="search"><i class="fa fa-search dim"></i><input placeholder="Name, code, subdomain or domain…"></label>
+        <select class="sel"><option>Date created</option></select>
+        <button class="btn btn-danger" disabled><i class="fa fa-trash"></i></button>
+      </div>
+      <div class="mobile-facets">${segs()}</div>
+      <div class="list">
+        <div class="item hd"><span><input type="checkbox" class="cb"></span><span>Tenant</span><span>Size</span><span>Started</span><span>Renewal</span><span>Status</span></div>
+        ${T.map(t=>`<div class="item ${t.current?'current':''}">
+          <span>${t.current?'':'<input type="checkbox" class="cb">'}</span>
+          <a href="#" class="who">${av(t)}<div class="meta"><div class="t-name">${t.n} ${here(t)}</div><div class="t-host">${t.host} · ${t.sys}</div></div></a>
+          <div class="c-size sizes"><span><i class="fa fa-users"></i>${t.users}</span><span><i class="fa fa-sitemap"></i>${t.br}</span><span><i class="fa fa-cubes"></i>${t.pr.toLocaleString()}</span><div class="when-sub" style="flex-basis:100%">Last sale ${t.sale} · login ${t.login}</div></div>
+          <div class="c-start"><span class="lbl">Started</span>${started(t)}</div>
+          <div class="c-renew"><span class="lbl">Renewal</span>${renew(t)}</div>
+          <div class="c-status">${pill(t)}</div>
+        </div>`).join('')}
+      </div>
+      ${pager}
+    </div>
+  </div>`;
+
+document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-w]').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById('frame').className='frame '+b.dataset.w;});
+document.getElementById('theme').onclick=()=>{const h=document.documentElement;h.dataset.bsTheme=h.dataset.bsTheme==='dark'?'light':'dark';};
+document.getElementById('dir').onclick=()=>{const h=document.documentElement;h.dir=h.dir==='rtl'?'ltr':'rtl';};
+</script>
+</body>
+</html>

@@ -124,7 +124,9 @@ it('shows renewal and last login on the list and filters tenants due for renewal
 
     Livewire::actingAs($this->world->user)->test(Table::class)
         ->assertSee('01 Sep 2025')
+        ->assertSee($this->other->fresh()->startedAgo())
         ->assertSee('in 5 days')
+        ->assertViewHas('usersTotal', fn ($total) => $total >= 2)
         ->assertViewHas('data', fn ($data) => $data->firstWhere('id', $this->other->id)->users_max_last_login_at !== null)
         ->set('status', 'renewal_due')
         ->assertSee('Acme Retail')
@@ -156,4 +158,14 @@ it('stamps last_login_at when the mobile app signs in', function (): void {
     ])->assertOk();
 
     expect($this->world->user->fresh()->last_login_at)->not->toBeNull();
+});
+
+it('describes the start date in words', function (): void {
+    $this->travelTo('2026-09-29 15:00:00');
+
+    expect(Tenant::factory()->make(['started_on' => '2024-09-29'])->startedAgo())->toBe('2 years ago')
+        ->and(Tenant::factory()->make(['started_on' => '2026-09-26'])->startedAgo())->toBe('3 days ago')
+        ->and(Tenant::factory()->make(['started_on' => '2026-09-29'])->startedAgo())->toBe('Today')
+        ->and(Tenant::factory()->make(['started_on' => '2026-10-04'])->startedAgo())->toBe('5 days from now')
+        ->and(Tenant::factory()->make(['started_on' => null])->startedAgo())->toBeNull();
 });

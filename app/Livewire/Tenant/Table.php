@@ -5,6 +5,7 @@ namespace App\Livewire\Tenant;
 use App\Actions\Tenant\DeleteAction;
 use App\Models\Configuration;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\TenantService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -188,6 +189,7 @@ class Table extends Component
                 'trashed' => (int) $counts->trashed_count,
                 'renewal_due' => (int) $counts->renewal_due_count,
             ],
+            'usersTotal' => User::withoutGlobalScopes()->whereIn('tenant_id', Tenant::query()->select('id'))->count(),
             'systemsByTenant' => $systemsByTenant,
             'systems' => array_keys(config('modules.systems', [])),
             'currentTenantId' => app(TenantService::class)->getCurrentTenantId(),
