@@ -700,7 +700,7 @@ abstract class L {
   /// No description provided for @cannotReach.
   ///
   /// In en, this message translates to:
-  /// **'Cannot reach the store. Check the connection and try again.'**
+  /// **'Cannot reach the shop. Check the connection and try again.'**
   String get cannotReach;
 
   /// No description provided for @searching.
@@ -730,7 +730,7 @@ abstract class L {
   /// No description provided for @searchNoMatch.
   ///
   /// In en, this message translates to:
-  /// **'No product matches \"{query}\" in this store.'**
+  /// **'No product matches \"{query}\" in this shop.'**
   String searchNoMatch(Object query);
 
   /// No description provided for @underAmount.

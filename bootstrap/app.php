@@ -3,6 +3,7 @@
 use App\Http\Middleware\EndExpiredImpersonation;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IdentifyTenant;
+use App\Http\Middleware\LogClientApiCall;
 use App\Http\Middleware\TrackVisitor;
 use App\Http\Middleware\TrustProxies;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -60,6 +61,9 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleCors::class,
             TrackVisitor::class,
         ]);
+
+        // Log first-party app calls (X-App-Name / X-App-Version) into api_logs
+        $middleware->api(append: [LogClientApiCall::class]);
 
         // Add tenant identification early in web middleware stack
         $middleware->web(prepend: [IdentifyTenant::class]);

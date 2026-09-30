@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
 import '../../../shared/api/end_points.dart';
 import '../../domain/constants/app_config.dart';
 import '../../domain/constants/global_variables.dart';
@@ -16,7 +19,7 @@ Future<void> setUpServiceLocator() async {
     savedBaseUrl: storage.baseUrl,
     savedTenant: storage.tenant,
   );
-  final http = HttpService(config: config);
+  final http = HttpService(config: config)..appHeaders = await _appHeaders();
 
   // Drives the offline banner. Wired to the one HttpService so every request,
   // from every feature, reports reachability without a call site remembering to.
@@ -36,4 +39,18 @@ Future<void> setUpServiceLocator() async {
     // Constructed last: it reads the saved branch and pushes it onto
     // HttpService, so the first catalog request already carries branch_id.
     ..registerSingleton<BranchCubit>(BranchCubit());
+}
+
+/// The build identity sent with every API call. A platform that will not
+/// report its package info still sends the app name, so calls stay attributable.
+Future<Map<String, String>> _appHeaders() async {
+  final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+  try {
+    final info = await PackageInfo.fromPlatform();
+    final build = info.buildNumber;
+    final version = build.isEmpty || build == info.version ? info.version : '${info.version}+$build';
+    return {'X-App-Name': 'showcase', 'X-App-Version': version, 'X-App-Platform': platform};
+  } catch (_) {
+    return {'X-App-Name': 'showcase', 'X-App-Platform': platform};
+  }
 }

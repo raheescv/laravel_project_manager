@@ -355,7 +355,7 @@ class LEn extends L {
 
   @override
   String get cannotReach =>
-      'Cannot reach the store. Check the connection and try again.';
+      'Cannot reach the shop. Check the connection and try again.';
 
   @override
   String get searching => 'Searching';
@@ -371,7 +371,7 @@ class LEn extends L {
 
   @override
   String searchNoMatch(Object query) {
-    return 'No product matches \"$query\" in this store.';
+    return 'No product matches \"$query\" in this shop.';
   }
 
   @override

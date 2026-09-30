@@ -53,7 +53,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final info = await PackageInfo.fromPlatform();
       if (!mounted) return;
-      setState(() => _build = '${info.version} (${info.buildNumber})');
+      final number = info.buildNumber;
+      setState(() => _build = number.isEmpty || number == info.version ? info.version : '${info.version} ($number)');
     } catch (_) {
       // Left null; the footer never appears.
     }

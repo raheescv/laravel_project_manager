@@ -52,6 +52,11 @@ class HttpService {
   /// `branch_id` so stock counts describe the shop the customer is standing in.
   int? activeBranchId;
 
+  /// Identifies this build to the server on every call (`X-App-Name`,
+  /// `X-App-Version`, `X-App-Platform`), which logs them into `api_logs` so
+  /// support can tell which version a shop is running. Filled once at boot.
+  Map<String, String> appHeaders = {};
+
   /// A hard ceiling on one request.
   ///
   /// Dio's receive timeout only fires between chunks, so a server that trickles
@@ -119,7 +124,7 @@ class HttpService {
   }
 
   Map<String, dynamic> _headers() {
-    final headers = <String, dynamic>{};
+    final headers = <String, dynamic>{...appHeaders};
     if (config.tenant.isNotEmpty) headers['X-Tenant-Subdomain'] = config.tenant;
     // Hitting a LAN IP: override Host so nginx routes to the right vhost.
     if (config.hostHeader.isNotEmpty) headers['Host'] = config.hostHeader;

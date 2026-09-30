@@ -15,6 +15,8 @@ class ApiLog extends Model
         'endpoint',
         'method',
         'service_name',
+        'app_version',
+        'app_platform',
         'request',
         'response',
         'status',

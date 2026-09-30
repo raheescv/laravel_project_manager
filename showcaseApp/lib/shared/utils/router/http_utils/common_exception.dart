@@ -21,5 +21,5 @@ class ApiException implements Exception {
 /// Raised when no request reached the server at all.
 class OfflineException extends ApiException {
   OfflineException()
-      : super('Cannot reach the store. Check the connection and try again.');
+      : super('Cannot reach the shop. Check the connection and try again.');
 }

@@ -152,6 +152,9 @@
                                 <td>
                                     @if ($item->service_name)
                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $item->service_name }}</span>
+                                        @if ($item->app_version)
+                                            <div class="text-muted small">v{{ $item->app_version }}{{ $item->app_platform ? ' · '.$item->app_platform : '' }}</div>
+                                        @endif
                                     @else
                                         <span class="text-muted small">-</span>
                                     @endif

@@ -222,12 +222,12 @@
   "languageHint": "Labels only. Product names come from the catalogue.",
   "english": "English",
   "arabic": "العربية",
-  "cannotReach": "Cannot reach the store. Check the connection and try again.",
+  "cannotReach": "Cannot reach the shop. Check the connection and try again.",
   "searching": "Searching",
   "nothingFound": "Nothing found",
   "searchPrompt": "Name, code or barcode",
   "searchEmpty": "Type a name or a product code.",
-  "searchNoMatch": "No product matches \"{query}\" in this store.",
+  "searchNoMatch": "No product matches \"{query}\" in this shop.",
   "@searchNoMatch": {
     "placeholders": {
       "query": {}

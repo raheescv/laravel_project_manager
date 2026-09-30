@@ -65,6 +65,9 @@
                                 <span class="fw-semibold">Service:</span>
                                 @if ($apiLog->service_name)
                                     <span class="text-primary">{{ $apiLog->service_name }}</span>
+                                    @if ($apiLog->app_version)
+                                        <span>v{{ $apiLog->app_version }}{{ $apiLog->app_platform ? ' · '.$apiLog->app_platform : '' }}</span>
+                                    @endif
                                 @else
                                     <span>N/A</span>
                                 @endif
