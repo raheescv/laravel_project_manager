@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:invo/features/admin/domain/repository/admin_repository.dart';
 import 'package:invo/features/admin/domain/services/admin_service.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
@@ -34,6 +35,7 @@ import 'package:invo/shared/logic/haptics_cubit/haptics_cubit.dart';
 import 'package:invo/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Registers every app-wide dependency. Called once at boot before `runApp`.
 Future<void> setUpServiceLocator() async {
@@ -43,7 +45,7 @@ Future<void> setUpServiceLocator() async {
     savedBaseUrl: storage.baseUrl,
     savedTenant: storage.tenant,
   );
-  final http = HttpService(storage: storage, config: config);
+  final http = HttpService(storage: storage, config: config)..appHeaders = await _appHeaders();
 
   // The plain online sale service, kept aside from the registration below: the
   // registered SaleRepository is the offline-first decorator wrapping this one,
@@ -93,4 +95,18 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<OfflineSyncCubit>(() => OfflineSyncCubit(onlineSales))
     // One per tap sheet / Link Card screen; the owner closes it.
     ..registerFactory<StudentCardCubit>(() => StudentCardCubit(serviceLocator()));
+}
+
+/// The build identity sent with every API call. A platform that will not
+/// report its package info still sends the app name, so calls stay attributable.
+Future<Map<String, String>> _appHeaders() async {
+  final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+  try {
+    final info = await PackageInfo.fromPlatform();
+    final build = info.buildNumber;
+    final version = build.isEmpty || build == info.version ? info.version : '${info.version}+$build';
+    return {'X-App-Name': 'pos', 'X-App-Version': version, 'X-App-Platform': platform};
+  } catch (_) {
+    return {'X-App-Name': 'pos', 'X-App-Platform': platform};
+  }
 }

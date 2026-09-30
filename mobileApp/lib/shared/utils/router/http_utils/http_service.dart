@@ -63,8 +63,13 @@ class HttpService {
   /// to this branch.
   int? activeBranchId;
 
+  /// Identifies this build to the server on every call (`X-App-Name`,
+  /// `X-App-Version`, `X-App-Platform`), which logs them into `api_logs` so
+  /// support can tell which version a till is running. Filled once at boot.
+  Map<String, String> appHeaders = {};
+
   Options _opts() {
-    final headers = <String, dynamic>{};
+    final headers = <String, dynamic>{...appHeaders};
     if (config.tenant.isNotEmpty) {
       headers['X-Tenant-Subdomain'] = config.tenant;
     }
