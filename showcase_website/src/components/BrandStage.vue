@@ -1,12 +1,14 @@
 <script setup>
-import { nextTick } from 'vue'
+import { nextTick, reactive } from 'vue'
 
 import ErrorBox from '@/components/ErrorBox.vue'
 import { t } from '@/i18n'
 import { useCatalogStore } from '@/stores/catalog'
-import { brandMark } from '@/utils/catalog'
 
 const catalog = useCatalogStore()
+
+// Logos that fail to load (missing file, bad URL) fall back to the monogram.
+const brokenLogos = reactive(new Set())
 
 function countLabel(n) {
   const count = Number(n) || 0
@@ -54,9 +56,13 @@ async function pick(brand) {
           :aria-pressed="!catalog.brand"
           @click="pick(null)"
         >
-          <span class="brand__mark"><span>ALL</span></span>
-          <span class="brand__name">{{ t('allBrands') }}</span>
-          <span class="brand__count">{{ countLabel(catalog.brandsTotal) }}</span>
+          <span class="brand__well brand__well--all">
+            <span class="brand__mono">ALL</span>
+          </span>
+          <span class="brand__meta">
+            <span class="brand__name">{{ t('allBrands') }}</span>
+            <span class="brand__count">{{ countLabel(catalog.brandsTotal) }}</span>
+          </span>
         </button>
 
         <button
@@ -68,12 +74,20 @@ async function pick(brand) {
           :aria-pressed="catalog.brand === b.id"
           @click="pick(b)"
         >
-          <span class="brand__mark">
-            <img v-if="b.image_path" :src="b.image_path" :alt="b.name" loading="lazy" />
-            <span v-else>{{ brandMark(b.name) }}</span>
+          <span class="brand__well">
+            <img
+              v-if="b.image_path && !brokenLogos.has(b.id)"
+              :src="b.image_path"
+              alt=""
+              loading="lazy"
+              @error="brokenLogos.add(b.id)"
+            />
+            <span v-else class="brand__mono">{{ b.name }}</span>
           </span>
-          <span class="brand__name">{{ b.name }}</span>
-          <span class="brand__count">{{ countLabel(b.product_count) }}</span>
+          <span class="brand__meta">
+            <span class="brand__name">{{ b.name }}</span>
+            <span class="brand__count">{{ countLabel(b.product_count) }}</span>
+          </span>
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 
-import { branding, storeName } from '@/branding'
+import { storeLogo, storeName } from '@/branding'
 
 // A logo URL that 404s falls back to the inline mark instead of a broken image.
 const broken = ref(false)
@@ -14,8 +14,8 @@ defineProps({
 
 <template>
   <img
-    v-if="branding.logo && !broken"
-    :src="branding.logo"
+    v-if="!broken"
+    :src="variant === 'foot' ? storeLogo.full : storeLogo.mark"
     @error="broken = true"
     :alt="storeName"
     class="logo__img"

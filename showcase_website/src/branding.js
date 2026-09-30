@@ -4,9 +4,12 @@ import { fetchBranding } from '@/api/resources'
 
 export const storeName = import.meta.env.VITE_STORE_NAME || 'SIZE RUN'
 
+/** The store's own logo, shipped with the site: square mark for the header, full lock-up for the footer. */
+export const storeLogo = { mark: './logo-mark.png', full: './logo.png' }
+
 /**
  * Admin-configured branding (Settings → Storefront / Company Profile).
- * `logo` replaces the inline SIZE RUN mark when the tenant uploaded one.
+ * `logo` is the tenant upload; the bundled store logo takes precedence.
  */
 export const branding = reactive({
   logo: null,
@@ -43,17 +46,11 @@ export function applyPrimaryColor(hex) {
   root.setProperty('--blue', toHex(base))
   root.setProperty('--blue-600', toHex(shade(base, 0.14)))
   root.setProperty('--blue-900', toHex(shade(base, -0.5)))
-  tintFavicon(toHex(base))
+  tintThemeColor(toHex(base))
 }
 
-/** Re-ink the tab icon and browser chrome in the store's accent. */
-function tintFavicon(hex) {
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${hex}"/>` +
-    '<rect x="10" y="10" width="44" height="44" rx="8" fill="none" stroke="#fff" stroke-width="4"/>' +
-    '<path d="M32 43V21M32 21l-8 8M32 21l8 8" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-  const icon = document.getElementById('favicon')
-  if (icon) icon.href = `data:image/svg+xml,${encodeURIComponent(svg)}`
+/** Re-ink the browser chrome in the store's accent (the tab icon is the store logo). */
+function tintThemeColor(hex) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', hex)
 }
 
