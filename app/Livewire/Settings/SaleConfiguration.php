@@ -74,7 +74,7 @@ class SaleConfiguration extends Component
         $this->enable_logo_in_print = Configuration::where('key', 'enable_logo_in_print')->value('value');
         $this->enable_barcode_in_print = Configuration::where('key', 'enable_barcode_in_print')->value('value');
         $this->sale_type = Configuration::where('key', 'sale_type')->value('value');
-        $this->default_customer_enabled = Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes';
+        $this->default_customer_enabled = Configuration::where('key', 'default_customer_enabled')->value('value') ?: 'yes';
         $this->default_product_type = Configuration::where('key', 'default_product_type')->value('value') ?? 'service';
         $this->print_item_label = Configuration::where('key', 'print_item_label')->value('value') ?? 'product';
         $this->print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';

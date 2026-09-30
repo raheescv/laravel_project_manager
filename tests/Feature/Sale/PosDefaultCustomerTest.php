@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SaleController;
+use App\Models\Configuration;
 use Illuminate\Http\Request;
 use Tests\Support\PosWorld;
 
@@ -39,4 +40,13 @@ it('defaults payment to the current tenant\'s cash account', function (): void {
     expect($props['cashPaymentMethodId'])->toBe($this->world->accounts['cash'])
         ->and($props['cardPaymentMethodId'])->toBe($this->world->accounts['card'])
         ->and($props['saleData']['payment_method'])->toBe($this->world->accounts['cash']);
+});
+
+it('treats a blank default-customer setting as enabled', function (): void {
+    Configuration::updateOrCreate(['key' => 'default_customer_enabled'], ['value' => '']);
+
+    $props = posPageProps();
+
+    expect($props['defaultCustomerEnabled'])->toBeTrue()
+        ->and($props['saleData']['account_id'])->toBe($this->world->accounts['general_customer']);
 });

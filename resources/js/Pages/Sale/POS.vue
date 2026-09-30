@@ -755,7 +755,7 @@ export default {
 
         const addProductToCart = async (product) => {
             if (!form.employee_id) {
-                toast.error('Please select an employee first.')
+                toast.warning('Please select an employee first.')
                 // Open the employee dropdown
                 await nextTick()
                 // Small delay to ensure DOM is ready and ref is set

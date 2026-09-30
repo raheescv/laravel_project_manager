@@ -48,7 +48,7 @@ class SaleController extends Controller
         }
         $employees = $employees->pluck('name', 'id')->toArray();
 
-        $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?? 'yes') === 'yes';
+        $useDefaultCustomer = (Configuration::where('key', 'default_customer_enabled')->value('value') ?: 'yes') === 'yes';
         $generalCustomer = Account::where('slug', 'general_customer')->first(['id', 'name', 'mobile']);
         $defaultCustomer = $generalCustomer ? [
             'id' => $generalCustomer->id,

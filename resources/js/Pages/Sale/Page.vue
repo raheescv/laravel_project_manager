@@ -292,7 +292,7 @@ export default {
 
         const addItem = async (product) => {
             if (!selectedEmployee.value) {
-                toast.error('Please select an employee first')
+                toast.warning('Please select an employee first')
                 return
             }
 
