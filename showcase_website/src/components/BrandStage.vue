@@ -74,7 +74,10 @@ async function pick(brand) {
           :aria-pressed="catalog.brand === b.id"
           @click="pick(b)"
         >
-          <span class="brand__well">
+          <span
+            class="brand__well"
+            :class="{ 'brand__well--logo': b.image_path && !brokenLogos.has(b.id) }"
+          >
             <img
               v-if="b.image_path && !brokenLogos.has(b.id)"
               :src="b.image_path"
