@@ -1,14 +1,20 @@
 <?php
 
+use App\Events\NotificationCreatedEvent;
 use App\Models\Configuration;
+use App\Models\Permission;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\StorefrontCheckout;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Notifications\OnlineSaleNotification;
 use App\Support\Storefront\TapSettings;
 use App\Support\TenantCache;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\PosWorld;
 
@@ -415,4 +421,47 @@ it('dates an online sale today and keeps it out of the open day session', functi
     expect($sale->date)->toBe(today()->toDateString())
         ->and($sale->sale_day_session_id)->toBeNull()
         ->and($session->fresh()->status)->toBe('open');
+});
+
+it('notifies the shop once when an online order is paid', function (): void {
+    Event::fake([NotificationCreatedEvent::class]);
+    storefrontFakeTap('CAPTURED');
+
+    $this->world->user->update(['is_browser_notification_enabled' => true]);
+    $quietAdmin = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'is_admin' => 1, 'is_browser_notification_enabled' => false]);
+    $cashier = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'is_admin' => 0, 'is_browser_notification_enabled' => true]);
+    $onlineDesk = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'is_admin' => 0, 'is_browser_notification_enabled' => false]);
+    $onlineDesk->givePermissionTo(Permission::findOrCreate('sale.online payments', 'web'));
+    $inactiveAdmin = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'is_admin' => 1, 'is_active' => 0]);
+    $otherTenantAdmin = User::factory()->create(['tenant_id' => Tenant::factory()->create()->id, 'is_admin' => 1, 'is_browser_notification_enabled' => true]);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+    $this->postJson($this->world->url('/api/v1/storefront/checkout/tap-webhook'), ['id' => 'chg_TS_test_0001', 'status' => 'CAPTURED']);
+
+    $sale = Sale::withoutGlobalScopes()->sole();
+    $notifications = DB::table('notifications')->where('type', OnlineSaleNotification::class)->get();
+
+    expect($notifications->pluck('notifiable_id')->sort()->values()->all())->toBe([$this->world->user->id, $quietAdmin->id, $onlineDesk->id])
+        ->and($notifications->pluck('tenant_id')->unique()->all())->toBe([$this->world->tenant->id]);
+
+    $data = json_decode($notifications->first()->data, true);
+    expect($data['title'])->toBe('New Online Order')
+        ->and($data['message'])->toBe("Aisha Khan paid 500.00 for invoice #{$sale->invoice_no}.")
+        ->and($data['link'])->toBe(route('sale::view', $sale->id, false))
+        ->and($data['model_id'])->toBe($sale->id);
+
+    Event::assertDispatchedTimes(NotificationCreatedEvent::class, 1);
+    Event::assertDispatched(NotificationCreatedEvent::class, fn (NotificationCreatedEvent $event) => $event->userId === $this->world->user->id);
+});
+
+it('sends no notification when the payment does not go through', function (): void {
+    Event::fake([NotificationCreatedEvent::class]);
+    storefrontFakeTap('DECLINED');
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'failed');
+
+    expect(DB::table('notifications')->count())->toBe(0);
+    Event::assertNotDispatched(NotificationCreatedEvent::class);
 });

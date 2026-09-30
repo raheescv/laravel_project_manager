@@ -483,11 +483,17 @@
                         </div>
                         <div class="list-group list-group-borderless">
                             @foreach (auth()->user()->unreadNotifications()->limit(5)->get() as $item)
-                                <a href="{{ route('notification::index') }}" class="list-group-item list-group-item-action d-flex align-items-start mb-3 text-decoration-none">
+                                <a href="{{ $item['data']['link'] ?? route('notification::index') }}" class="list-group-item list-group-item-action d-flex align-items-start mb-3 text-decoration-none">
                                     @switch($item['type'])
                                         @case('App\Notifications\ImportErrorsNotification')
                                             <div class="flex-shrink-0 me-3">
                                                 <i class="fa fa-exclamation-triangle text-danger fs-2"></i>
+                                            </div>
+                                        @break
+
+                                        @case('App\Notifications\OnlineSaleNotification')
+                                            <div class="flex-shrink-0 me-3">
+                                                <i class="fa fa-shopping-cart text-primary fs-2"></i>
                                             </div>
                                         @break
 
@@ -503,7 +509,7 @@
                                                 <span class="badge bg-info rounded ms-auto">NEW</span>
                                             @endif
                                         </div>
-                                        <small class="text-body-secondary">{{ $item['data']['message'] }}</small>
+                                        <small class="text-body-secondary">{{ $item['data']['message'] ?? ($item['data']['content'] ?? '') }}</small>
                                     </div>
                                 </a>
                             @endforeach

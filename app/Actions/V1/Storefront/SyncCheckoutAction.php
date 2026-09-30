@@ -6,6 +6,7 @@ use App\Actions\Account\CreateAction as AccountCreateAction;
 use App\Actions\InventoryTransfer\CreateAction as InventoryTransferCreateAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Exceptions\StorefrontCheckoutException;
+use App\Jobs\OnlineSaleNotificationJob;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\Branch;
@@ -116,6 +117,12 @@ class SyncCheckoutAction
             'paid_at' => now(),
             'failure_reason' => null,
         ]);
+
+        OnlineSaleNotificationJob::dispatch(
+            (int) $checkout->tenant_id,
+            (int) $sale->id,
+            route('sale::view', $sale->id, false),
+        )->afterCommit();
     }
 
     /**
