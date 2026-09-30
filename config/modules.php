@@ -308,7 +308,7 @@ return [
                 'rent out payment term',
                 'rent out note',
                 'rent out document',
-                'rent out document',
+                'rent out checklist',
                 'rent out checklist item',
             ],
         ],
