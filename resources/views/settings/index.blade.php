@@ -1511,6 +1511,32 @@
             <script src="{{ asset('js/theme-settings.js') }}"></script>
             <script src="{{ asset('js/theme-settings-status.js') }}"></script>
             <script src="{{ asset('js/theme-settings-sync.js') }}"></script>
+            <script>
+                (function() {
+                    const tabs = document.querySelectorAll('.settings-tabs [data-bs-toggle="tab"]');
+                    const toSlug = (target) => target.replace(/^#tabs/, '').replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+                    const requested = new URLSearchParams(window.location.search).get('tab');
+                    if (requested) {
+                        const button = Array.from(tabs).find((tab) => toSlug(tab.dataset.bsTarget) === requested.toLowerCase());
+                        if (button) {
+                            bootstrap.Tab.getOrCreateInstance(button).show();
+                            button.scrollIntoView({
+                                block: 'nearest',
+                                inline: 'center'
+                            });
+                        }
+                    }
+
+                    tabs.forEach((tab) => {
+                        tab.addEventListener('shown.bs.tab', (event) => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('tab', toSlug(event.target.dataset.bsTarget));
+                            window.history.replaceState(window.history.state, '', url);
+                        });
+                    });
+                })();
+            </script>
         @endpush
     </div>
     <x-qz-print />

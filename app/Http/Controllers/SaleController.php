@@ -311,6 +311,7 @@ class SaleController extends Controller
             'cashPaymentMethodId' => $cashPaymentMethodId,
             'cardPaymentMethodId' => $cardPaymentMethodId,
             'defaultQuantity' => $defaultQuantity,
+            'roundOffEnabled' => saleRoundOffEnabled(),
             'saleItemRowMode' => $saleItemRowMode,
             'canEditItemPrice' => Auth::user()->can('sale.item price edit'),
             'canFeedback' => Auth::user()->can('sale.feedback'),

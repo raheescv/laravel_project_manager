@@ -21,6 +21,7 @@ import 'package:invo/shared/widgets/nav_hide.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
+import 'package:invo/shared/widgets/astra_range_picker.dart';
 
 part 'sales_returns_list_controls.dart';
 
@@ -177,28 +178,15 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   }
 
   Future<void> _pickCustomDate() async {
-    final p = context.astra;
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
+    final picked = await showAstraDateRangePicker(
+      context,
+      title: 'Returns range',
       firstDate: DateTime(now.year - 3),
       lastDate: DateTime(now.year, now.month, now.day),
       initialDateRange: _startDate != null && _endDate != null
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
-      helpText: 'Select returns range',
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: (p.isDark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
-            primary: p.primary,
-            onPrimary: Colors.white,
-            surface: p.cardSolid,
-            onSurface: p.ink,
-            secondary: p.accent,
-          ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) {
       setState(() {

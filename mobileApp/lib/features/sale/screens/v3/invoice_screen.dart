@@ -282,6 +282,7 @@ class InvoiceScreen extends StatelessWidget {
           _sumRow(p, 'Subtotal', Money.of(sale.grossAmount), p.textSecondary),
           if (sale.discount > 0) _sumRow(p, 'Discount', '− ${Money.of(sale.discount)}', p.goldText),
           if (sale.taxAmount > 0) _sumRow(p, 'Tax', Money.of(sale.taxAmount), p.textSecondary),
+          if (sale.roundOff != 0) _sumRow(p, 'Round Off', Money.of(sale.roundOff), p.textSecondary),
           if (sale.tip > 0) _sumRow(p, 'Tip', Money.of(sale.tip), p.goldText),
           Padding(padding: const EdgeInsets.only(top: 8), child: DottedDivider(color: p.hairline)),
           const SizedBox(height: 12),

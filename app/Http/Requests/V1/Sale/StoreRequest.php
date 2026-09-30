@@ -33,6 +33,9 @@ class StoreRequest extends FormRequest
             'discount' => ['nullable', 'numeric', 'min:0'],
             // Gratuity collected on the sale — stored as an independent extra amount.
             'tip' => ['nullable', 'numeric', 'min:0'],
+            // Rounding the device applied to the grand total (Settings → Sale
+            // Configuration → Round Off). Never more than half a unit either way.
+            'roundOff' => ['nullable', 'numeric', 'between:-0.5,0.5'],
             // The payment "mode": a method name (e.g. "Cash"), "credit" (no payment),
             // or "custom" (one or more methods supplied in `payments`).
             'paymentMethod' => ['required', 'string', 'max:50'],

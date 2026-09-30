@@ -19,15 +19,10 @@ extension _DaySessionViews on _DaySessionScreenState {
         ? (openedAt.isEmpty ? 'Session is open' : 'Open since ${Dates.humanDateTime(openedAt)}')
         : (closedAt.isEmpty ? 'No open day right now' : 'Last closed ${Dates.humanDateTime(closedAt)}');
 
-    final tablet = context.isTablet;
     return Container(
-      clipBehavior: tablet ? Clip.antiAlias : Clip.none,
       decoration: BoxDecoration(
         gradient: p.heroGradient,
-        borderRadius: tablet
-            ? BorderRadius.circular(22)
-            : const BorderRadius.vertical(bottom: Radius.circular(30)),
-        boxShadow: tablet ? context.astraTheme.floatShadow(p.primary) : null,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Stack(
         children: [
@@ -44,12 +39,9 @@ extension _DaySessionViews on _DaySessionScreenState {
             ),
           ),
           SafeArea(
-            // Inset card on tablet — it no longer meets the status bar, so it
-            // must not reserve the notch inset either.
-            top: !tablet,
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, tablet ? 16 : 6, 16, 18),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -272,45 +264,13 @@ extension _DaySessionViews on _DaySessionScreenState {
     String? trailingFloat,
   }) {
     final p = context.astra;
-    final Color dotColor;
-    final Widget dotInner;
-    switch (state) {
-      case _NodeState.done:
-        dotColor = AstraPalette.success;
-        dotInner = const Icon(Icons.check, size: 13, color: Colors.white);
-      case _NodeState.live:
-        dotColor = p.primary;
-        dotInner = Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-        );
-      case _NodeState.pending:
-        dotColor = p.textMuted;
-        dotInner = const SizedBox.shrink();
-    }
-    final filled = state != _NodeState.pending;
-
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
             children: [
-              Container(
-                width: 24,
-                height: 24,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: filled ? dotColor : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: dotColor, width: 2),
-                  boxShadow: filled
-                      ? [BoxShadow(color: dotColor.withValues(alpha: 0.18), blurRadius: 0, spreadRadius: 3)]
-                      : null,
-                ),
-                child: dotInner,
-              ),
+              _stepDot(state),
               if (!isLast)
                 Expanded(
                   child: Container(width: 2, color: p.hairline),
@@ -362,6 +322,44 @@ extension _DaySessionViews on _DaySessionScreenState {
           ),
         ],
       ),
+    );
+  }
+
+  /// A lifecycle dot — the phone timeline's and the tablet stepper's. [onTrack]
+  /// fills a pending dot with the card so the stepper's track stops at its edge.
+  Widget _stepDot(_NodeState state, {double size = 24, bool onTrack = false}) {
+    final p = context.astra;
+    final Color dotColor;
+    final Widget dotInner;
+    switch (state) {
+      case _NodeState.done:
+        dotColor = AstraPalette.success;
+        dotInner = Icon(Icons.check, size: size * 0.54, color: Colors.white);
+      case _NodeState.live:
+        dotColor = p.primary;
+        dotInner = Container(
+          width: size / 3,
+          height: size / 3,
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        );
+      case _NodeState.pending:
+        dotColor = p.textMuted;
+        dotInner = const SizedBox.shrink();
+    }
+    final filled = state != _NodeState.pending;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: filled ? dotColor : (onTrack ? p.cardSolid : Colors.transparent),
+        shape: BoxShape.circle,
+        border: Border.all(color: dotColor, width: 2),
+        boxShadow: filled
+            ? [BoxShadow(color: dotColor.withValues(alpha: 0.18), blurRadius: 0, spreadRadius: 3)]
+            : null,
+      ),
+      child: dotInner,
     );
   }
 

@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Hero Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0A62C8;
+    --primary-dark: #01377F;
+    --accent: #0BA8FA;
+    --canvas: #F3F7FD;
+    --ink: #0E1B2E;
+    --muted: #6B7A90;
+    --line: #E3EAF4;
+    --tint: #EAF2FD;
+    --success: #1FB57F;
+    --danger: #EF4B4B;
+    --page: #E6EBF2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; background: var(--page); color: var(--ink); padding: 32px 16px 64px; font-feature-settings: "tnum" 1; -webkit-font-smoothing: antialiased; }
+  header.page { max-width: 1240px; margin: 0 auto 26px; }
+  header.page h1 { font-size: 22px; font-weight: 800; letter-spacing: -.3px; }
+  header.page p { color: var(--muted); font-size: 14px; margin-top: 6px; max-width: 780px; line-height: 1.55; }
+  .toggle { margin-top: 14px; display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .toggle button { border: 0; background: none; font: 700 12px Inter; padding: 7px 14px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+  .toggle button.on { background: var(--ink); color: #fff; }
+
+  .opt { max-width: 1240px; margin: 0 auto 44px; }
+  .opt h2 { font-size: 17px; font-weight: 800; letter-spacing: -.2px; }
+  .opt h2 span { display: inline-block; background: var(--ink); color: #fff; font-size: 11px; border-radius: 6px; padding: 3px 8px; margin-right: 8px; vertical-align: 2px; }
+  .opt .why { font-size: 13px; color: var(--muted); margin: 6px 0 16px; line-height: 1.5; max-width: 820px; }
+  .devices { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+
+  .phone { width: 360px; max-width: 100%; height: 560px; border-radius: 40px; background: var(--canvas); overflow: hidden; border: 8px solid #0d1117; box-shadow: 0 30px 60px -30px rgba(4,26,61,.5); flex: none; }
+  .tablet { width: 820px; max-width: 100%; height: 440px; border-radius: 28px; background: var(--canvas); overflow: hidden; border: 10px solid #0d1117; display: flex; box-shadow: 0 30px 60px -30px rgba(4,26,61,.5); flex: none; }
+  .rail { width: 72px; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 14px; flex: none; }
+  .rail i { width: 36px; height: 36px; border-radius: 12px; background: #EEF3FA; display: block; }
+  .rail i:first-child { background: var(--primary); }
+  .tab-main { flex: 1; padding: 18px 20px; min-width: 0; }
+
+  .status { height: 28px; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 12px; font-weight: 700; color: #fff; }
+  .status.dark { color: var(--ink); }
+
+  .ibtn { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+  .ibtn svg { width: 17px; height: 17px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#FFE2A8,#E9A94A); color: #5A3A00; font-weight: 800; display: grid; place-items: center; flex: none; font-size: 14px; }
+  .who { flex: 1; min-width: 0; }
+  .who small { display: block; font-size: 11px; font-weight: 600; }
+  .who b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -.2px; margin-top: 1px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .chip svg { width: 13px; height: 13px; }
+  .k { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+  .money { font-weight: 800; letter-spacing: -.8px; line-height: 1; white-space: nowrap; }
+  .money .cur { font-size: .42em; font-weight: 700; letter-spacing: .3px; margin-right: 5px; vertical-align: .72em; opacity: .75; }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex: none; box-shadow: 0 0 0 3px rgba(31,181,127,.25); }
+  .closed .dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(239,75,75,.28); }
+  .t-day::after { content: "Day open"; }
+  .closed .t-day::after { content: "Day closed"; }
+  .t-short::after { content: "Open"; }
+  .closed .t-short::after { content: "Closed"; }
+  .t-when::after { content: "since 9:02 AM"; }
+  .closed .t-when::after { content: "tap to open"; }
+
+  /* quick actions (real) */
+  .qa { padding: 16px 16px 0; }
+  .qa .lbl { font-size: 10px; font-weight: 800; letter-spacing: 1.4px; color: var(--muted); margin: 0 0 10px 2px; }
+  .qa .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .tablet .qa { padding: 16px 0 0; }
+  .tablet .qa .grid { grid-template-columns: repeat(6, 1fr); }
+  .qt { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 12px 6px 10px; text-align: center; }
+  .qt i { width: 34px; height: 34px; border-radius: 11px; background: var(--tint); display: grid; place-items: center; margin: 0 auto 7px; }
+  .qt i svg { width: 17px; height: 17px; stroke: var(--primary); }
+  .qt span { font-size: 10.5px; font-weight: 700; color: var(--ink); }
+  .qt.gold i { background: #FFF3DA; }
+  .qt.gold i svg { stroke: #B7791F; }
+
+  /* ============ A. SLIM BAND ============ */
+  .A .band { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; position: relative; overflow: hidden; }
+  .A .band::after { content: ""; position: absolute; right: -50px; top: -60px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(rgba(11,168,250,.35), transparent 70%); }
+  .A .band > * { position: relative; z-index: 1; }
+  .A .phone .band { border-radius: 0 0 26px 26px; padding-bottom: 16px; }
+  .A .row1 { display: flex; align-items: center; gap: 10px; padding: 6px 16px 0; }
+  .A .ibtn { background: rgba(255,255,255,.14); }
+  .A .ibtn svg { stroke: #fff; }
+  .A .who small { color: rgba(255,255,255,.7); }
+  .A .avatar { box-shadow: 0 0 0 2px rgba(255,255,255,.6); }
+  .A .row2 { display: flex; align-items: flex-end; justify-content: space-between; padding: 18px 16px 0; }
+  .A .row2 .k { color: rgba(255,255,255,.65); }
+  .A .row2 .money { font-size: 32px; margin-top: 6px; }
+  .A .mini { display: flex; gap: 14px; text-align: right; }
+  .A .mini div + div { padding-left: 14px; border-left: 1px solid rgba(255,255,255,.2); }
+  .A .mini b { display: block; font-size: 15px; font-weight: 700; }
+  .A .mini span { font-size: 10.5px; color: rgba(255,255,255,.65); font-weight: 600; }
+  .A .row3 { display: flex; gap: 8px; padding: 14px 16px 0; }
+  .A .chip { background: rgba(255,255,255,.14); color: #fff; }
+  .A .chip svg { stroke: #fff; }
+  .A .chip .muted { color: rgba(255,255,255,.65); font-weight: 600; }
+  .closed .A .chip.day { background: rgba(239,75,75,.9); }
+  .closed .A .chip.day .muted { color: rgba(255,255,255,.85); }
+  /* tablet */
+  .A .tablet .band { border-radius: 22px; padding: 16px 18px; display: flex; align-items: center; gap: 22px; }
+  .A .tablet .row1, .A .tablet .row2, .A .tablet .row3 { padding: 0; }
+  .A .tablet .row1 { flex: 0 0 auto; }
+  .A .tablet .who { flex: none; }
+  .A .tablet .sep { width: 1px; align-self: stretch; background: rgba(255,255,255,.18); }
+  .A .tablet .row2 { flex: 1; align-items: center; gap: 22px; justify-content: flex-start; }
+  .A .tablet .row2 .money { font-size: 30px; }
+  .A .tablet .row3 { flex-direction: column; align-items: flex-end; gap: 6px; }
+
+  /* ============ B. WALLET CARD ============ */
+  .B .row1 { display: flex; align-items: center; gap: 10px; padding: 6px 16px 0; }
+  .B .ibtn { background: #fff; border: 1px solid var(--line); }
+  .B .ibtn svg { stroke: var(--ink); }
+  .B .who small { color: var(--muted); }
+  .B .avatar { box-shadow: 0 0 0 2px #fff, 0 3px 8px rgba(14,27,46,.15); }
+  .B .card { margin: 14px 16px 0; padding: 14px 16px 16px; border-radius: 22px; color: #fff; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 16px 30px -18px rgba(1,55,127,.8); }
+  .B .card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.10) 50%, transparent 60%); }
+  .B .card::after { content: ""; position: absolute; right: -40px; bottom: -70px; width: 180px; height: 180px; border-radius: 50%; border: 28px solid rgba(255,255,255,.06); }
+  .B .card > * { position: relative; z-index: 1; }
+  .B .top { display: flex; justify-content: space-between; align-items: center; }
+  .B .chip { height: 26px; padding: 0 10px; font-size: 11px; background: rgba(255,255,255,.15); color: #fff; }
+  .B .chip svg { stroke: #fff; }
+  .closed .B .chip.day { background: var(--danger); }
+  .B .card .k { color: rgba(255,255,255,.65); margin-top: 16px; }
+  .B .card .money { font-size: 32px; margin-top: 6px; }
+  .B .foot { display: flex; gap: 18px; margin-top: 14px; font-size: 12px; color: rgba(255,255,255,.7); font-weight: 600; }
+  .B .foot b { color: #fff; font-weight: 700; margin-right: 3px; }
+  /* tablet */
+  .B .tablet .row1 { padding: 0; }
+  .B .tablet .card { margin: 14px 0 0; padding: 18px 22px; display: grid; grid-template-columns: 1fr auto; align-items: end; row-gap: 0; }
+  .B .tablet .card .top { grid-column: 1 / -1; }
+  .B .tablet .card .money { font-size: 38px; }
+  .B .tablet .foot { margin: 0; gap: 0; }
+  .B .tablet .foot div { padding: 0 18px; border-left: 1px solid rgba(255,255,255,.2); text-align: right; }
+  .B .tablet .foot b { display: block; font-size: 18px; margin: 0 0 2px; }
+
+  /* ============ C. TILE ROW ============ */
+  .C .band { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding-bottom: 50px; }
+  .C .row1 { display: flex; align-items: center; gap: 10px; padding: 6px 16px 0; }
+  .C .ibtn { background: rgba(255,255,255,.14); }
+  .C .ibtn svg { stroke: #fff; }
+  .C .who small { color: rgba(255,255,255,.7); }
+  .C .who .line { display: flex; align-items: center; gap: 8px; }
+  .C .chip { height: 26px; padding: 0 9px; font-size: 11px; background: rgba(255,255,255,.14); color: #fff; }
+  .C .chip svg { stroke: #fff; }
+  .C .avatar { box-shadow: 0 0 0 2px rgba(255,255,255,.6); }
+  .C .tiles { display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 8px; margin: -38px 16px 0; }
+  .C .tl { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 10px 24px -16px rgba(1,55,127,.55); border: 1px solid var(--line); min-width: 0; }
+  .C .tl .k { color: var(--muted); font-size: 9.5px; }
+  .C .tl .v { font-size: 16px; font-weight: 800; margin-top: 6px; white-space: nowrap; }
+  .C .tl.rev { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .C .tl.rev .k { color: rgba(255,255,255,.6); }
+  .C .tl.rev .money { font-size: 20px; margin-top: 6px; }
+  .C .daybar { margin: 8px 16px 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; height: 42px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 12.5px; font-weight: 700; }
+  .C .daybar .muted { color: var(--muted); font-weight: 500; font-size: 11.5px; }
+  .C .daybar .go { margin-left: auto; color: var(--primary); font-size: 11.5px; font-weight: 800; }
+  .closed .C .daybar { background: #FDEEEE; border-color: #F7C9C9; }
+  .closed .C .daybar .go { color: var(--danger); }
+  /* tablet */
+  .C .tablet .band { border-radius: 22px; padding: 16px 18px 52px; }
+  .C .tablet .row1 { padding: 0; }
+  .C .tablet .tiles { grid-template-columns: 1.6fr 1fr 1fr 1.3fr; margin: -40px 14px 0; gap: 10px; }
+  .C .tablet .tl.rev .money { font-size: 24px; }
+  .C .tl.day { display: flex; flex-direction: column; justify-content: space-between; }
+  .C .tl.day .v { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .closed .C .tl.day { background: #FDEEEE; border-color: #F7C9C9; }
+
+  .notes { max-width: 1240px; margin: 10px auto 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; font-size: 13px; line-height: 1.6; color: #34445A; }
+  .notes b { color: var(--ink); }
+  @media (max-width: 420px) { .phone { border-width: 6px; border-radius: 32px; } }
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Mobile dashboard: hero, round 3 (compact)</h1>
+  <p>Shorter, tidier heroes. No chart. Every piece of the current hero stays (menu, greeting, name, branch, photo, today's revenue, bills, average bill, day open/closed). Real Quick Actions are shown underneath so you can judge how much room each leaves.</p>
+  <div class="toggle" id="toggle">
+    <button class="on" data-state="open">Day open</button>
+    <button data-state="closed">Day closed</button>
+  </div>
+</header>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="store" viewBox="0 0 24 24"><path d="M4 9l1.5-5h13L20 9M4 9h16v11H4zM9 20v-6h6v6" fill="none" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="right" viewBox="0 0 24 24"><path d="M10 7l5 5-5 5" fill="none" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="cart" viewBox="0 0 24 24"><path d="M3 4h2l2.5 11h10L20 8H7M10 20h.01M17 20h.01" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><path d="M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4M12 9a3 3 0 100 6 3 3 0 000-6z" fill="none" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="box" viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8" fill="none" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="chart" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7" fill="none" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<template id="qa4">
+  <div class="qa"><div class="lbl">QUICK ACTIONS</div><div class="grid">
+    <div class="qt gold"><i><svg><use href="#cart"/></svg></i><span>New Sale</span></div>
+    <div class="qt"><i><svg><use href="#receipt"/></svg></i><span>Sales</span></div>
+    <div class="qt"><i><svg><use href="#undo"/></svg></i><span>Returns</span></div>
+    <div class="qt"><i><svg><use href="#sun"/></svg></i><span>Day Session</span></div>
+    <div class="qt"><i><svg><use href="#box"/></svg></i><span>Stock Check</span></div>
+    <div class="qt"><i><svg><use href="#chart"/></svg></i><span>Reports</span></div>
+  </div></div>
+</template>
+
+<div id="stage">
+
+  <!-- ============ A ============ -->
+  <section class="opt A">
+    <h2><span>A</span>Slim Band</h2>
+    <p class="why">The blue band, but about 40% shorter. Revenue on the left with Bills and Avg right beside it on the same line. Day status and branch are two small chips underneath. On tablet everything sits in one single row.</p>
+    <div class="devices">
+      <div class="phone">
+        <div class="band">
+          <div class="status"><span>9:41</span><span>●●● 100%</span></div>
+          <div class="row1">
+            <div class="ibtn"><svg><use href="#menu"/></svg></div>
+            <div class="who"><small>Good afternoon</small><b>Ahmed</b></div>
+            <div class="avatar">A</div>
+          </div>
+          <div class="row2">
+            <div><div class="k">Today's revenue</div><div class="money"><span class="cur">QAR</span>12,480.50</div></div>
+            <div class="mini"><div><b>38</b><span>bills</span></div><div><b>328.43</b><span>avg</span></div></div>
+          </div>
+          <div class="row3">
+            <span class="chip day"><i class="dot"></i><span class="t-day"></span><span class="muted t-when"></span></span>
+            <span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span>
+          </div>
+        </div>
+        <div class="qa-slot"></div>
+      </div>
+
+      <div class="tablet">
+        <div class="rail"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="tab-main">
+          <div class="band">
+            <div class="row1">
+              <div class="ibtn"><svg><use href="#menu"/></svg></div>
+              <div class="who"><small>Good afternoon</small><b>Ahmed</b></div>
+            </div>
+            <div class="sep"></div>
+            <div class="row2">
+              <div><div class="k">Today's revenue</div><div class="money"><span class="cur">QAR</span>12,480.50</div></div>
+              <div class="mini"><div><b>38</b><span>bills</span></div><div><b>328.43</b><span>avg</span></div></div>
+            </div>
+            <div class="row3">
+              <span class="chip day"><i class="dot"></i><span class="t-day"></span><span class="muted t-when"></span></span>
+              <span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span>
+            </div>
+            <div class="avatar">A</div>
+          </div>
+          <div class="qa-slot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ B ============ -->
+  <section class="opt B">
+    <h2><span>B</span>Wallet Card</h2>
+    <p class="why">No full-width band. A clean greeting row on the page, then one compact blue card, like a card in Apple Wallet: branch and day status on top, revenue in the middle, bills and avg along the bottom. On tablet the card is wide and short, with the figures on the right.</p>
+    <div class="devices">
+      <div class="phone">
+        <div class="status dark"><span>9:41</span><span>●●● 100%</span></div>
+        <div class="row1">
+          <div class="ibtn"><svg><use href="#menu"/></svg></div>
+          <div class="who"><small>Good afternoon</small><b>Ahmed</b></div>
+          <div class="avatar">A</div>
+        </div>
+        <div class="card">
+          <div class="top">
+            <span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span>
+            <span class="chip day"><i class="dot"></i><span class="t-day"></span><svg><use href="#right"/></svg></span>
+          </div>
+          <div class="k">Today's revenue</div>
+          <div class="money"><span class="cur">QAR</span>12,480.50</div>
+          <div class="foot"><div><b>38</b>bills</div><div><b>328.43</b>avg bill</div></div>
+        </div>
+        <div class="qa-slot"></div>
+      </div>
+
+      <div class="tablet">
+        <div class="rail"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="tab-main">
+          <div class="row1">
+            <div class="ibtn"><svg><use href="#menu"/></svg></div>
+            <div class="who"><small>Good afternoon</small><b>Ahmed</b></div>
+            <div class="avatar">A</div>
+          </div>
+          <div class="card">
+            <div class="top">
+              <span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span>
+              <span class="chip day"><i class="dot"></i><span class="t-day"></span>&nbsp;<span class="t-when" style="opacity:.75;font-weight:600"></span><svg><use href="#right"/></svg></span>
+            </div>
+            <div><div class="k">Today's revenue</div><div class="money"><span class="cur">QAR</span>12,480.50</div></div>
+            <div class="foot"><div><b>38</b>bills</div><div><b>328.43</b>avg bill</div></div>
+          </div>
+          <div class="qa-slot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ C ============ -->
+  <section class="opt C">
+    <h2><span>C</span>Tile Row</h2>
+    <p class="why">A thin blue header with name and branch, and three neat tiles overlapping its edge: revenue (dark), bills, avg. Day status is one slim bar underneath. On tablet the day status becomes a fourth tile in the same row.</p>
+    <div class="devices">
+      <div class="phone">
+        <div class="band">
+          <div class="status"><span>9:41</span><span>●●● 100%</span></div>
+          <div class="row1">
+            <div class="ibtn"><svg><use href="#menu"/></svg></div>
+            <div class="who"><small>Good afternoon</small><div class="line"><b>Ahmed</b><span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span></div></div>
+            <div class="avatar">A</div>
+          </div>
+        </div>
+        <div class="tiles">
+          <div class="tl rev"><div class="k">Revenue today</div><div class="money"><span class="cur">QAR</span>12,480.50</div></div>
+          <div class="tl"><div class="k">Bills</div><div class="v">38</div></div>
+          <div class="tl"><div class="k">Avg bill</div><div class="v">328.43</div></div>
+        </div>
+        <div class="daybar"><i class="dot"></i><span class="t-day"></span><span class="muted t-when"></span><span class="go"><svg style="width:14px;height:14px;stroke:currentColor"><use href="#right"/></svg></span></div>
+        <div class="qa-slot"></div>
+      </div>
+
+      <div class="tablet">
+        <div class="rail"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="tab-main">
+          <div class="band">
+            <div class="row1">
+              <div class="ibtn"><svg><use href="#menu"/></svg></div>
+              <div class="who"><small>Good afternoon</small><div class="line"><b>Ahmed</b><span class="chip"><svg><use href="#store"/></svg>Main Branch<svg><use href="#down"/></svg></span></div></div>
+              <div class="avatar">A</div>
+            </div>
+          </div>
+          <div class="tiles">
+            <div class="tl rev"><div class="k">Revenue today</div><div class="money"><span class="cur">QAR</span>12,480.50</div></div>
+            <div class="tl"><div class="k">Bills</div><div class="v">38</div></div>
+            <div class="tl"><div class="k">Avg bill</div><div class="v">328.43</div></div>
+            <div class="tl day"><div class="k">Day</div><div class="v"><i class="dot"></i><span class="t-short"></span><small class="t-when" style="color:var(--muted);font-weight:500;font-size:11px"></small></div></div>
+          </div>
+          <div class="qa-slot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="notes">
+  <b>Same in all three.</b> Branch opens the switcher, photo opens your profile, day status opens Day Session (only for people allowed to). "Day closed" turns red. Colours follow whichever skin is chosen in Settings.
+</div>
+
+<script>
+  var tpl = document.getElementById('qa4').innerHTML;
+  document.querySelectorAll('.qa-slot').forEach(function (s) { s.innerHTML = tpl; });
+  document.querySelectorAll('.phone .qa .grid').forEach(function (g) { g.querySelectorAll('.qt:nth-child(n+5)').forEach(function (t) { t.remove(); }); });
+  document.getElementById('toggle').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    this.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    document.getElementById('stage').classList.toggle('closed', b.dataset.state === 'closed');
+  });
+</script>
+</body>
+</html>

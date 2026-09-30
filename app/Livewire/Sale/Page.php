@@ -502,7 +502,7 @@ class Page extends Component
     protected function updateSalesData($totals, $paidAmount)
     {
         $grand_total = $this->calculateGrandTotal($totals['total']);
-        $grand_total_after = round($grand_total);
+        $grand_total_after = saleRoundOffEnabled() ? round($grand_total) : $grand_total;
         $round_off = $grand_total_after - $grand_total;
         $grand_total += $round_off;
         $data = [

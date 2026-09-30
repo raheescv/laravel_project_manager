@@ -57,6 +57,9 @@ class SaleConfiguration extends Component
 
     public $enable_tip;
 
+    /** Round the grand total to the nearest whole number — see saleRoundOffEnabled(). */
+    public $round_off_enabled;
+
     /** Palette for the POS screen and its modals — see posColorPresets(). */
     public $pos_color_preset;
 
@@ -89,6 +92,7 @@ class SaleConfiguration extends Component
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
         $this->enable_customer_mobile_in_print = Configuration::where('key', 'enable_customer_mobile_in_print')->value('value') ?? 'yes';
         $this->enable_tip = Configuration::where('key', 'enable_tip')->value('value') ?? 'yes';
+        $this->round_off_enabled = Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes';
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
         $this->pos_grid_columns = Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto';
     }
@@ -120,6 +124,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_customer_mobile_in_print'], ['value' => $this->enable_customer_mobile_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_tip'], ['value' => $this->enable_tip]);
+        Configuration::updateOrCreate(['key' => 'round_off_enabled'], ['value' => $this->round_off_enabled === 'no' ? 'no' : 'yes']);
         Configuration::updateOrCreate(
             ['key' => 'pos_color_preset'],
             ['value' => array_key_exists($this->pos_color_preset, posColorPresets()) ? $this->pos_color_preset : 'theme']

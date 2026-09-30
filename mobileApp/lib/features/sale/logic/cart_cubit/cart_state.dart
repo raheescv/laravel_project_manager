@@ -22,6 +22,7 @@ class CartState extends Equatable {
     this.orderDiscount = 0,
     this.orderDiscountIsPercent = false,
     this.tipPercent = 0,
+    this.roundOffEnabled = true,
     this.payMode = PayMode.cash,
     this.customPayments = const [],
     this.sendToWhatsapp = false,
@@ -56,6 +57,10 @@ class CartState extends Equatable {
   final double orderDiscount;
   final bool orderDiscountIsPercent;
   final double tipPercent;
+
+  /// Settings → Sale Configuration → Round Off, cached from the web. Rounds the
+  /// grand total to the nearest whole number, like the web POS.
+  final bool roundOffEnabled;
 
   final PayMode payMode;
   final List<CustomPayment> customPayments;
@@ -114,10 +119,20 @@ class CartState extends Equatable {
   /// `SUM(sale_items.tax_amount)`.
   double get taxTotal => round2(lines.fold(0, (a, l) => a + l.taxAmount));
 
-  /// Mirrors the generated `grand_total`:
-  /// `(gross_amount - item_discount + tax_amount) - other_discount`.
-  double get netBeforeTip =>
+  /// `(gross_amount - item_discount + tax_amount) - other_discount`, before
+  /// rounding.
+  double get netBeforeRoundOff =>
       round2((subtotal - totalDiscount + taxTotal).clamp(0, double.infinity));
+
+  /// The sale's `round_off` column: what takes [netBeforeRoundOff] to the
+  /// nearest whole number, or 0 when rounding is switched off.
+  double get roundOff => roundOffEnabled
+      ? round2(netBeforeRoundOff.roundToDouble() - netBeforeRoundOff)
+      : 0;
+
+  /// Mirrors the generated `grand_total`:
+  /// `(gross_amount - item_discount + tax_amount) - other_discount + round_off`.
+  double get netBeforeTip => round2(netBeforeRoundOff + roundOff);
   double get tipAmount => round2(netBeforeTip * tipPercent / 100.0);
   double get total => round2(netBeforeTip + tipAmount);
 
@@ -142,6 +157,7 @@ class CartState extends Equatable {
     double? orderDiscount,
     bool? orderDiscountIsPercent,
     double? tipPercent,
+    bool? roundOffEnabled,
     PayMode? payMode,
     List<CustomPayment>? customPayments,
     bool? sendToWhatsapp,
@@ -169,6 +185,7 @@ class CartState extends Equatable {
         orderDiscountIsPercent:
             orderDiscountIsPercent ?? this.orderDiscountIsPercent,
         tipPercent: tipPercent ?? this.tipPercent,
+        roundOffEnabled: roundOffEnabled ?? this.roundOffEnabled,
         payMode: payMode ?? this.payMode,
         customPayments: customPayments ?? this.customPayments,
         sendToWhatsapp: sendToWhatsapp ?? this.sendToWhatsapp,
@@ -189,6 +206,7 @@ class CartState extends Equatable {
         orderDiscount,
         orderDiscountIsPercent,
         tipPercent,
+        roundOffEnabled,
         payMode,
         customPayments,
         sendToWhatsapp,

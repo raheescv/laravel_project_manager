@@ -8,6 +8,7 @@ import '../repository/lookup_repository.dart';
 typedef RemoteSaleSettings = ({
   double? defaultQuantity,
   bool? tipEnabled,
+  bool? roundOffEnabled,
   String? defaultProductType,
   bool? schoolEnabled,
   RemotePrintConfig? print,
@@ -33,6 +34,9 @@ Future<RemoteSaleSettings> pullAndCacheSaleSettings() async {
 
   final tip = settings.tipEnabled;
   if (tip != null && tip != storage.tipEnabled) await storage.setTipEnabled(tip);
+
+  final roundOff = settings.roundOffEnabled;
+  if (roundOff != null && roundOff != storage.roundOffEnabled) await storage.setRoundOffEnabled(roundOff);
 
   // Cached so the catalog can preselect the Product/Service filter.
   final type = settings.defaultProductType;

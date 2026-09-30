@@ -28,6 +28,7 @@ const _ar = {
   'net_value': 'القيمة الصافية',
   'discount': 'خصم',
   'tax': 'ضريبة',
+  'round_off': 'التقريب',
   'total': 'المجموع',
   'paid': 'المدفوع',
   'balance': 'الرصيد',
@@ -106,7 +107,8 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final netValue = sale.grossAmount;
   final discount = sale.discount;
   final tax = sale.taxAmount;
-  final grandTotal = netValue - discount + tax;
+  final roundOff = sale.roundOff;
+  final grandTotal = netValue - discount + tax + roundOff;
   final balance = grandTotal - sale.paid;
   final totalQty = sale.lines.fold<double>(0, (t, l) => t + l.quantity);
 
@@ -212,6 +214,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
             netValue: netValue,
             discount: discount,
             tax: tax,
+            roundOff: roundOff,
             grandTotal: grandTotal,
             paid: sale.paid,
             balance: balance,
@@ -378,6 +381,7 @@ pw.Widget _totalsTable({
   required double netValue,
   required double discount,
   required double tax,
+  double roundOff = 0,
   required double grandTotal,
   required double paid,
   required double balance,
@@ -389,6 +393,7 @@ pw.Widget _totalsTable({
     ['Net Value', Money.of(netValue), _ar['net_value'], false],
     if (showDiscount && discount != 0) ['Discount', '- ${Money.of(discount)}', _ar['discount'], false],
     if (tax != 0) ['Tax', Money.of(tax), _ar['tax'], false],
+    if (roundOff != 0) ['Round Off', Money.of(roundOff), _ar['round_off'], false],
     ['Total', Money.of(grandTotal), _ar['total'], true],
     ['Paid', Money.of(paid), _ar['paid'], false],
     if (balance.abs() >= 0.005) ['Balance', Money.of(balance), _ar['balance'], false],

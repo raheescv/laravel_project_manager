@@ -270,6 +270,7 @@ Widget cartSummaryCard(BuildContext context, CartCubit cart, {required VoidCallb
         // A zero tax line is a row that says nothing; the ones that do carry
         // tax still show it. Same rule the discount row already follows.
         if (cart.taxTotal > 0) sumRow('Tax', Money.of(cart.taxTotal), p.textSecondary),
+        if (cart.roundOff != 0) sumRow('Round Off', Money.of(cart.roundOff), p.textSecondary),
         Padding(padding: const EdgeInsets.symmetric(vertical: 9), child: Container(height: 1, color: p.hairline)),
         Row(
           children: [

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
@@ -172,50 +173,30 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   }
 
   // ---- HERO ----
+  /// "Slim Band": a short gradient band. Phone stacks three tight rows — who,
+  /// today's figures, then the day/branch chips; tablet lays the same pieces
+  /// out in one row so the band stays a strip, not a banner.
   Widget _hero(AdminCubit admin, ApiUser? user) {
-    final cfg = context.read<AuthCubit>().config;
     final p = context.astra;
-    final today = _byTitle(admin.dashboard?.today);
-    final sales = today["Today's Sales"];
-    final bills = today["Today's Bills"];
-    final salesVal = asNum(sales?.value);
-    final billsVal = asNum(bills?.value).toInt();
-    final avg = billsVal > 0 ? salesVal / billsVal : 0;
-
     final tablet = context.isTablet;
     return Container(
-      clipBehavior: tablet ? Clip.antiAlias : Clip.none,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: p.heroGradient,
-        borderRadius: tablet
-            ? BorderRadius.circular(22)
-            : const BorderRadius.vertical(bottom: Radius.circular(30)),
+        borderRadius: tablet ? BorderRadius.circular(22) : const BorderRadius.vertical(bottom: Radius.circular(26)),
         boxShadow: tablet ? context.astraTheme.floatShadow(p.primary) : null,
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -40,
-            top: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [p.accent.withValues(alpha: 0.22), Colors.transparent]),
-              ),
-            ),
-          ),
-          // Soft secondary glow — adds depth and reads well across every skin.
-          Positioned(
-            left: -55,
-            bottom: -70,
+            right: -50,
+            top: -60,
             child: Container(
               width: 180,
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [Colors.white.withValues(alpha: 0.10), Colors.transparent]),
+                gradient: RadialGradient(colors: [p.accent.withValues(alpha: 0.30), Colors.transparent]),
               ),
             ),
           ),
@@ -225,76 +206,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
             top: !tablet,
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(tablet ? 24 : 18, tablet ? 20 : 8, tablet ? 24 : 18, tablet ? 22 : 18),
-              child: tablet
-                  ? _heroTabletBody(admin, user)
-                  : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _drawerButton(),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${_greeting().toUpperCase()},',
-                                style: ui(size: 10, weight: FontWeight.w700, color: p.accent, letterSpacing: 2)),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(user?.name.split(' ').first ?? 'there',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: serif(size: 24, color: Colors.white)),
-                                ),
-                                const SizedBox(width: 8),
-                                const Flexible(child: _HeroBranchChip()),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _openProfile,
-                        child: ProfileAvatar(
-                          letter: user?.initial ?? 'A',
-                          imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
-                          headers: cfg.assetHeaders,
-                          size: 44,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Text("TODAY'S REVENUE",
-                      style: ui(size: 10, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 1.4)),
-                  const SizedBox(height: 4),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(sales == null ? '—' : Money.of(salesVal),
-                        style: serif(size: 38, color: Colors.white, height: 1)),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('$billsVal ${billsVal == 1 ? 'bill' : 'bills'} today · avg ${Money.of(avg)}',
-                      style: ui(size: 11.5, weight: FontWeight.w600, color: Colors.white70)),
-                  const SizedBox(height: 12),
-                  _dayStatusPill(user),
-                  if (admin.trendPoints.length >= 2) ...[
-                    const SizedBox(height: 12),
-                    AreaTrendChart(
-                      values: admin.trendPoints,
-                      height: 44,
-                      stroke: Colors.white,
-                      fill: Colors.white.withValues(alpha: 0.22),
-                      dot: p.accent,
-                    ),
-                  ],
-                ],
-              ),
+              padding: tablet ? const EdgeInsets.symmetric(horizontal: 18, vertical: 16) : const EdgeInsets.fromLTRB(16, 6, 16, 16),
+              child: tablet ? _heroTabletBody(admin, user) : _heroPhoneBody(admin, user),
             ),
           ),
         ],
@@ -302,101 +215,166 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     );
   }
 
-  /// Tablet hero: a two-column layout so the wide green band reads as designed
-  /// rather than a phone hero stretched across empty space — revenue headline on
-  /// the left, the day-status pill (and trend, if any) filling the right.
-  Widget _heroTabletBody(AdminCubit admin, ApiUser? user) {
-    final cfg = context.read<AuthCubit>().config;
-    final p = context.astra;
-    final today = _byTitle(admin.dashboard?.today);
-    final sales = today["Today's Sales"];
-    final bills = today["Today's Bills"];
-    final salesVal = asNum(sales?.value);
-    final billsVal = asNum(bills?.value).toInt();
-    final avg = billsVal > 0 ? salesVal / billsVal : 0;
+  Widget _heroPhoneBody(AdminCubit admin, ApiUser? user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             _drawerButton(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${_greeting().toUpperCase()},',
-                      style: ui(size: 10, weight: FontWeight.w700, color: p.accent, letterSpacing: 2)),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(user?.name.split(' ').first ?? 'there',
-                            maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 24, color: Colors.white)),
-                      ),
-                      const SizedBox(width: 12),
-                      const Flexible(child: _HeroBranchChip(large: true)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: _openProfile,
-              child: ProfileAvatar(
-                letter: user?.initial ?? 'A',
-                imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
-                headers: cfg.assetHeaders,
-                size: 46,
-              ),
-            ),
+            const SizedBox(width: 10),
+            Expanded(child: _heroGreeting(user)),
+            _heroAvatar(user),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 18),
+        _heroFigures(admin, revenueSize: 34),
+        const SizedBox(height: 14),
+        // Both chips stretch so the row spans the band edge to edge.
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("TODAY'S REVENUE",
-                      style: ui(size: 11, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 1.5)),
-                  const SizedBox(height: 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(sales == null ? '—' : Money.of(salesVal),
-                        style: serif(size: 50, color: Colors.white, height: 1)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('$billsVal ${billsVal == 1 ? 'bill' : 'bills'} today · avg ${Money.of(avg)}',
-                      style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white70)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 28),
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _dayStatusPill(user),
-                  if (admin.trendPoints.length >= 2) ...[
-                    const SizedBox(height: 12),
-                    AreaTrendChart(
-                      values: admin.trendPoints,
-                      height: 50,
-                      stroke: Colors.white,
-                      fill: Colors.white.withValues(alpha: 0.22),
-                      dot: p.accent,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            Expanded(flex: 3, child: _dayStatusChip(user)),
+            const SizedBox(width: 8),
+            const Expanded(flex: 2, child: _HeroBranchChip()),
           ],
+        ),
+      ],
+    );
+  }
+
+  /// Tablet: who · figures · chips · photo in a single row.
+  Widget _heroTabletBody(AdminCubit admin, ApiUser? user) {
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          _drawerButton(),
+          const SizedBox(width: 10),
+          ConstrainedBox(constraints: const BoxConstraints(maxWidth: 170), child: _heroGreeting(user)),
+          Container(
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            color: Colors.white.withValues(alpha: 0.18),
+          ),
+          Expanded(flex: 3, child: _heroFigures(admin, revenueSize: 30)),
+          const SizedBox(width: 16),
+          Flexible(
+            flex: 2,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _dayStatusChip(user),
+                const SizedBox(height: 8),
+                const _HeroBranchChip(),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          _heroAvatar(user),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroGreeting(ApiUser? user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(_greeting(), maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+        const SizedBox(height: 1),
+        Text(user?.name.split(' ').first ?? 'there', maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: ui(size: 17, weight: FontWeight.w700, color: Colors.white)),
+      ],
+    );
+  }
+
+  Widget _heroAvatar(ApiUser? user) {
+    final cfg = context.read<AuthCubit>().config;
+    return GestureDetector(
+      onTap: _openProfile,
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.6)),
+        child: ProfileAvatar(
+          letter: user?.initial ?? 'A',
+          imageUrl: (user?.hasPhoto ?? false) ? cfg.assetUrl(user!.photoUrl) : null,
+          headers: cfg.assetHeaders,
+          size: 36,
+        ),
+      ),
+    );
+  }
+
+  /// Today's revenue on the left; bills and average bill beside it, split by a
+  /// hairline, sharing the revenue's baseline.
+  Widget _heroFigures(AdminCubit admin, {required double revenueSize}) {
+    final today = _byTitle(admin.dashboard?.today);
+    final sales = today["Today's Sales"];
+    final salesVal = asNum(sales?.value);
+    final billsVal = asNum(today["Today's Bills"]?.value).toInt();
+    final avg = billsVal > 0 ? salesVal / billsVal : 0;
+    final muted = Colors.white.withValues(alpha: 0.65);
+
+    Widget mini(String value, String label) => Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(value, style: ui(size: 15, weight: FontWeight.w700, color: Colors.white)),
+            const SizedBox(height: 2),
+            Text(label, style: ui(size: 10.5, weight: FontWeight.w600, color: muted)),
+          ],
+        );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("TODAY'S REVENUE", style: ui(size: 10, weight: FontWeight.w700, color: muted, letterSpacing: 1.2)),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: sales == null
+                    ? Text('—', style: serif(size: revenueSize, color: Colors.white, height: 1))
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 3, right: 5),
+                            child: Text(Money.symbol.trim(),
+                                style: ui(size: revenueSize * 0.42, weight: FontWeight.w700, color: Colors.white70)),
+                          ),
+                          Text(Money.plain(salesVal), style: serif(size: revenueSize, color: Colors.white, height: 1)),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Scales down rather than overflowing where the band is narrow (a small
+        // tablet in portrait, beside the rail).
+        // Expanded (not Flexible) so the group is pinned to the band's right edge.
+        Expanded(
+          flex: 2,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.bottomRight,
+            child: Row(
+              children: [
+                mini('$billsVal', billsVal == 1 ? 'bill' : 'bills'),
+                Container(width: 1, height: 28, margin: const EdgeInsets.symmetric(horizontal: 12), color: Colors.white.withValues(alpha: 0.2)),
+                mini(Money.plain(avg), 'avg'),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -409,87 +387,74 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     return GestureDetector(
       onTap: () => context.findRootAncestorStateOfType<ScaffoldState>()?.openDrawer(),
       child: Container(
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+          borderRadius: BorderRadius.circular(11),
         ),
-        child: const Icon(Icons.menu_rounded, size: 20, color: Colors.white),
+        child: const Icon(Icons.menu_rounded, size: 19, color: Colors.white),
       ),
     );
   }
 
-  /// Tappable day open/closed chip on the hero → the Day Session screen.
-  /// When the day is closed it is highlighted (danger-tinted) to nudge the
-  /// user to open it; a second line shows the open time (when open) or the
-  /// last close time (when closed).
-  Widget _dayStatusPill(ApiUser? user) {
+  /// Tappable day open/closed chip on the hero → the Day Session screen. Closed
+  /// fills danger-red to nudge the user to open the day; the muted tail says
+  /// since when it has been open (or when it last closed).
+  Widget _dayStatusChip(ApiUser? user) {
     final open = user?.dayOpen ?? false;
-    final accent = open ? AstraPalette.success : AstraPalette.danger;
-
-    // Sub-label: opened-at while open, last-closed-at while closed.
-    final whenIso = open ? (user?.daySessionOpenedAt ?? '') : (user?.lastClosedSessionAt ?? '');
-    final when = Dates.humanDateTime(whenIso);
-    final whenLabel = open
-        ? (when.isEmpty ? 'Opened today' : 'Opened $when')
-        : (when.isEmpty ? 'Not opened yet today' : 'Last closed $when');
-
     final canManageDaySession = context.read<AuthCubit>().hasPermission(PermissionSlug.daySession);
 
+    final whenIso = open ? (user?.daySessionOpenedAt ?? '') : (user?.lastClosedSessionAt ?? '');
+    final when = _shortWhen(whenIso);
+    final tail = open
+        ? (when.isEmpty ? '' : 'since $when')
+        : (canManageDaySession ? 'tap to open' : (when.isEmpty ? '' : 'closed $when'));
+
     return GestureDetector(
-      onTap: canManageDaySession ? () => _openDaySession() : null,
+      onTap: canManageDaySession ? _openDaySession : null,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 11),
         decoration: BoxDecoration(
-          // Closed → bold danger tint that stands out; open → subtle glass.
-          color: open
-              ? Colors.white.withValues(alpha: 0.14)
-              : accent.withValues(alpha: 0.22),
-          borderRadius: BorderRadius.circular(13),
-          border: Border.all(
-            color: open ? Colors.white.withValues(alpha: 0.18) : accent.withValues(alpha: 0.85),
-            width: open ? 1 : 1.5,
-          ),
+          color: open ? Colors.white.withValues(alpha: 0.14) : AstraPalette.danger.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: accent, shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Both labels flex: in the tablet hero this pill sits in the
-                  // narrow right column, where the two fixed Texts overflowed.
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(open ? 'Day open' : 'Day closed',
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(open ? '· tap to close' : '· tap to open',
-                            maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(whenLabel,
-                      style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white70)),
-                ],
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: open ? AstraPalette.success : Colors.white,
+                shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right, size: 16, color: Colors.white70),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(open ? 'Day open' : 'Day closed', maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white)),
+            ),
+            if (tail.isNotEmpty) ...[
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(tail, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: ui(size: 11, weight: FontWeight.w600, color: Colors.white.withValues(alpha: open ? 0.65 : 0.85))),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  /// `6:02 PM` for today, `29 Sep · 6:02 PM` otherwise — short enough for a chip.
+  String _shortWhen(String iso) {
+    final d = DateTime.tryParse(iso)?.toLocal();
+    if (d == null) return '';
+    final now = DateTime.now();
+    final sameDay = d.year == now.year && d.month == now.month && d.day == now.day;
+    return sameDay ? Dates.time(d) : '${DateFormat('d MMM').format(d)} · ${Dates.time(d)}';
   }
 
   String _greeting() {
@@ -953,13 +918,11 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   }
 }
 
-/// The branch this session works as, beside the name in the hero — the stock
-/// on sale and where sales are booked. Opens the branch switcher when the user
-/// has more than one branch; otherwise it is a plain label.
+/// The branch this session works as, beside the day chip in the hero — the
+/// stock on sale and where sales are booked. Opens the branch switcher when the
+/// user has more than one branch; otherwise it is a plain label.
 class _HeroBranchChip extends StatelessWidget {
-  const _HeroBranchChip({this.large = false});
-
-  final bool large;
+  const _HeroBranchChip();
 
   @override
   Widget build(BuildContext context) {
@@ -968,33 +931,29 @@ class _HeroBranchChip extends StatelessWidget {
     if (selected == null) return const SizedBox.shrink();
     final switchable = branch.branches.length > 1;
     final chip = Container(
-      padding: EdgeInsets.symmetric(horizontal: large ? 11 : 9, vertical: large ? 6 : 5),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.13),
+        color: Colors.white.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.storefront_outlined, size: large ? 15 : 13, color: Colors.white),
-          SizedBox(width: large ? 6 : 5),
-          Flexible(
+          const Icon(Icons.storefront_outlined, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Expanded(
             child: Text(selected.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: ui(size: large ? 12.5 : 11, weight: FontWeight.w700, color: Colors.white)),
+                style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white)),
           ),
           if (switchable) ...[
             const SizedBox(width: 2),
-            Icon(Icons.expand_more, size: large ? 16 : 14, color: Colors.white70),
+            const Icon(Icons.expand_more, size: 15, color: Colors.white70),
           ],
         ],
       ),
     );
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: switchable ? GestureDetector(onTap: () => showBranchSheet(context), child: chip) : chip,
-    );
+    return switchable ? GestureDetector(onTap: () => showBranchSheet(context), child: chip) : chip;
   }
 }

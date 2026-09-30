@@ -18,6 +18,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
 import 'package:invo/shared/widgets/you_badge.dart';
+import 'package:invo/shared/widgets/astra_range_picker.dart';
 
 part 'reports_overview_sections.dart';
 
@@ -623,26 +624,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _pickCustom(AdminCubit admin) async {
-    final p = context.astra;
     final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
+    final picked = await showAstraDateRangePicker(
+      context,
+      title: 'Report range',
       firstDate: DateTime(now.year - 3),
       lastDate: DateTime(now.year, now.month, now.day),
       initialDateRange: DateTimeRange(start: admin.startDate, end: admin.endDate),
-      helpText: 'Select report range',
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: (p.isDark ? const ColorScheme.dark() : const ColorScheme.light()).copyWith(
-            primary: p.primary,
-            onPrimary: Colors.white,
-            surface: p.card,
-            onSurface: p.ink,
-            secondary: p.accent,
-          ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null) admin.setCustomRange(picked.start, picked.end);
   }

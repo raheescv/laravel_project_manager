@@ -140,6 +140,47 @@ void main() {
     });
   });
 
+  group('round off', () {
+    test('rounds the grand total to the nearest whole number by default', () {
+      cart.add(product(mrp: 600.10));
+      expect(cart.netBeforeRoundOff, 600.10);
+      expect(cart.roundOff, -0.10);
+      expect(cart.total, 600);
+      final payload = cart.toPayload();
+      expect(payload['roundOff'], -0.10);
+      expect(payload['totalPayment'], 600);
+    });
+
+    test('rounds half up', () {
+      cart.add(product(mrp: 99.5));
+      expect(cart.roundOff, 0.5);
+      expect(cart.total, 100);
+    });
+
+    test('a whole total has no round off', () {
+      cart.add(product(mrp: 45));
+      expect(cart.roundOff, 0);
+      expect(cart.toPayload()['roundOff'], 0);
+    });
+
+    test('switched off in Sale Configuration keeps the exact total', () async {
+      await d.storage.setRoundOffEnabled(false);
+      cart.clear();
+      cart.add(product(mrp: 600.10));
+      expect(cart.roundOff, 0);
+      expect(cart.total, 600.10);
+      expect(cart.toPayload()['totalPayment'], 600.10);
+    });
+
+    test('tip is worked out on the rounded grand total', () {
+      cart.add(product(mrp: 99.6));
+      cart.setTip(10);
+      expect(cart.netBeforeTip, 100);
+      expect(cart.tipAmount, 10);
+      expect(cart.total, 110);
+    });
+  });
+
   group('payment and balance', () {
     test('cash settles the ticket in full', () {
       cart.add(product(mrp: 80));

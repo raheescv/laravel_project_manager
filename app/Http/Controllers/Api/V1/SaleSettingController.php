@@ -39,6 +39,9 @@ class SaleSettingController extends Controller
             return $this->sendSuccess([
                 'default_quantity' => $defaultQuantity,
                 'tip_enabled' => $tipEnabled,
+                // Round the grand total to the nearest whole number (Settings → Sale
+                // Configuration → Round Off); the app sends the difference as `roundOff`.
+                'round_off_enabled' => saleRoundOffEnabled(),
                 'default_product_type' => $defaultProductType,
                 // School module: the till offers "Tap student card" only when this is true.
                 'school_enabled' => ModuleAccess::school(),

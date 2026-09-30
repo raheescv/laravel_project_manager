@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day Session Tablet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F4EFE7; --rail:#1F4A3F; --card:#FFFFFF; --ink:#18241F; --text2:#5D6A64; --muted:#98A29D;
+  --hair:#E8E2D8; --primary:#2F6F5E; --tint:#E6EFEB; --accent:#C9A24A; --gold:#B08A2E;
+  --hero1:#3B7F6B; --hero2:#285446; --warnTint:#FBF1DC; --warn:#9A6B12; --success:#3E9B62;
+  --danger1:#E0657A; --danger2:#C0405A; --field:rgba(0,0,0,.018);
+  --shadow:0 18px 40px -22px rgba(31,74,63,.45);
+}
+:root[data-theme="dark"]{
+  --canvas:#0E1513; --rail:#0A100E; --card:#161F1C; --ink:#E9EFEC; --text2:#A7B3AE; --muted:#6E7A75;
+  --hair:#26312D; --primary:#5FB39A; --tint:rgba(95,179,154,.13); --accent:#D8B45E; --gold:#D8B45E;
+  --hero1:#245446; --hero2:#163A30; --warnTint:rgba(216,180,94,.12); --warn:#D8B45E; --field:rgba(255,255,255,.04);
+  --shadow:0 18px 40px -22px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#d9d4cc;font-family:Inter,system-ui,sans-serif;color:var(--ink);padding:16px}
+:root[data-theme="dark"] body{background:#050807}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:400}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:14px}
+.bar button{font:700 12.5px Inter;border:1px solid #bbb;background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer}
+.bar button.on{background:#1F4A3F;color:#fff;border-color:#1F4A3F}
+.bar .sep{width:1px;height:22px;background:#aaa;margin:0 4px}
+.note{max-width:1194px;margin:0 auto 12px;font:600 13px/1.5 Inter;color:#444;text-align:center}
+:root[data-theme="dark"] .note{color:#aaa}
+
+/* ---- device ---- */
+.stage{display:flex;justify-content:center}
+.device{width:1194px;height:834px;border-radius:30px;overflow:hidden;background:var(--rail);display:flex;box-shadow:0 30px 80px -30px rgba(0,0,0,.5);transform-origin:top center}
+.rail{width:88px;flex:none;display:flex;flex-direction:column;align-items:center;padding:26px 0;gap:14px}
+.rail i{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.08);display:block}
+.rail i.on{background:rgba(255,255,255,.22)}
+.content{flex:1;margin:12px 12px 12px 0;background:var(--canvas);border-radius:24px;overflow:hidden;position:relative}
+
+/* ---- shared atoms ---- */
+.card{background:var(--card);border-radius:20px;border:1px solid var(--hair)}
+.label{font:800 10.5px Inter;letter-spacing:1.6px;text-transform:uppercase;color:var(--primary)}
+.k{font:800 9.5px Inter;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--tint);color:var(--primary);font:800 12.5px Inter;border-radius:12px;padding:9px 13px}
+.icon{width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-size:17px;flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);color:#fff;font:800 10px Inter;letter-spacing:.6px;border-radius:999px;padding:5px 10px}
+.pill b{width:7px;height:7px;border-radius:50%;background:var(--success)}
+.cta{height:60px;border-radius:18px;background:linear-gradient(135deg,var(--danger1),var(--danger2));color:#fff;font:800 16px Inter;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 16px 30px -14px var(--danger2)}
+.cta.open{background:linear-gradient(135deg,var(--hero1),var(--hero2));box-shadow:0 16px 30px -14px var(--hero2)}
+.sub{font:600 11.5px Inter;color:var(--muted);text-align:center;margin-top:8px}
+.btn{height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font:800 13.5px Inter;flex:1}
+.btn.t{background:var(--tint);color:var(--primary)}
+.btn.o{border:1px solid var(--hair);color:var(--ink)}
+.hint{font:600 11px Inter;color:var(--muted);margin-top:10px}
+.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;border-radius:22px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;right:-60px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,74,.25),transparent 70%)}
+.eyebrow{font:800 10px Inter;letter-spacing:2.2px;color:var(--accent)}
+.beacon{width:62px;height:62px;border-radius:20px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;font-size:28px;flex:none}
+.meta .k{color:rgba(255,255,255,.6)}
+.meta .v{font:800 14px Inter;margin-top:4px}
+.meta .v.g{font:400 18px Fraunces,serif;color:var(--accent)}
+.branch{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);border-radius:999px;padding:7px 13px;font:800 12px Inter;position:relative;z-index:1}
+.notice{background:var(--warnTint);border-radius:14px;padding:13px 15px;font:600 12px/1.5 Inter;display:flex;gap:10px}
+.notice span{color:var(--warn);font-weight:800}
+
+/* timeline (vertical) */
+.tl .n{display:flex;gap:14px}
+.tl .d{display:flex;flex-direction:column;align-items:center}
+.tl .dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;color:#fff;font-size:12px;flex:none}
+.tl .dot.done{background:var(--success);border-color:var(--success);box-shadow:0 0 0 4px rgba(62,155,98,.18)}
+.tl .dot.live{background:var(--primary);border-color:var(--primary);box-shadow:0 0 0 4px var(--tint)}
+.tl .dot.live::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.tl .line{width:2px;flex:1;background:var(--hair);min-height:14px}
+.tl .b{padding:2px 0 20px}
+.tl h4{font:800 15px Inter;display:flex;align-items:center;gap:8px}
+.tl p{font:600 12.5px/1.45 Inter;color:var(--text2);margin-top:4px}
+.badge{font:800 9px Inter;letter-spacing:.7px;background:var(--tint);color:var(--primary);border-radius:999px;padding:3px 8px}
+.float{display:inline-flex;gap:8px;align-items:baseline;background:var(--tint);border-radius:10px;padding:6px 11px;margin-top:8px;font:700 11.5px Inter;color:var(--text2)}
+.float b{font:400 14px Fraunces,serif;color:var(--gold)}
+
+/* dt cell */
+.dt{display:flex;align-items:center;gap:12px;border:1px solid var(--hair);background:var(--field);border-radius:16px;padding:13px 14px;flex:1}
+.dt .v{font:400 19px Fraunces,serif;margin-top:3px}
+
+/* ---- inline calendar (dir C) ---- */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .h{font:800 10px Inter;color:var(--muted);padding:6px 0}
+.cal .c{height:42px;border-radius:12px;display:grid;place-items:center;font:700 14px Inter;color:var(--ink)}
+.cal .c.x{color:var(--muted);opacity:.45}
+.cal .c.sel{background:var(--primary);color:#fff}
+.cal .c.today{box-shadow:inset 0 0 0 1.5px var(--primary)}
+.wheel{display:flex;gap:8px;justify-content:center}
+.wheel .col{flex:1;border:1px solid var(--hair);border-radius:16px;background:var(--field);text-align:center;padding:6px 0}
+.wheel .col div{font:600 15px Inter;color:var(--muted);padding:7px 0}
+.wheel .col div.on{font:400 26px Fraunces,serif;color:var(--ink);background:var(--tint);margin:0 6px;border-radius:10px}
+
+.dir{display:none;height:100%}
+.dir.on{display:flex}
+/* closed-state switches */
+[data-state="closed"] .if-open{display:none!important}
+[data-state="open"] .if-closed{display:none!important}
+/* B — full-width stepper */
+.stepper{display:grid;grid-template-columns:repeat(var(--cols),1fr);position:relative}
+.stepper .track{position:absolute;left:13px;right:13px;top:12px;height:3px;border-radius:3px;background:var(--hair)}
+.stepper .track i{display:block;height:100%;width:var(--fill);border-radius:3px;background:linear-gradient(90deg,var(--success),var(--primary))}
+.stepper .st{position:relative}
+.stepper .st:nth-child(3){text-align:center}.stepper .st:nth-child(3) .sd{margin:0 auto}.stepper .st:nth-child(3) .float{justify-content:center}
+.stepper .st:last-child{text-align:right}.stepper .st:last-child .sd{margin-left:auto}
+.stepper[style*="--cols:2"] .st:nth-child(3){text-align:right}.stepper[style*="--cols:2"] .st:nth-child(3) .sd{margin:0 0 0 auto}
+.sd{width:28px;height:28px;border-radius:50%;border:2px solid var(--muted);background:var(--card);display:grid;place-items:center;color:#fff;font-size:12px;position:relative}
+.sd.done{background:var(--success);border-color:var(--success);box-shadow:0 0 0 4px rgba(62,155,98,.18)}
+.sd.live{background:var(--primary);border-color:var(--primary);box-shadow:0 0 0 5px var(--tint)}
+.sd.live i{width:9px;height:9px;border-radius:50%;background:#fff}
+.stepper h4{font:800 15px Inter;margin-top:12px;display:inline-flex;gap:8px;align-items:center}
+.stepper p{font:600 12.5px/1.45 Inter;color:var(--text2);margin-top:3px}
+/* B — moment picker */
+.span{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--hair);padding-top:12px;margin-top:14px}
+.span>div+div{border-left:1px solid var(--hair);padding-left:14px}
+.span b{display:block;font:800 13px Inter;margin-top:4px}
+.nowtag{font:800 11px Inter;color:var(--success);background:rgba(62,155,98,.12);border-radius:999px;padding:5px 11px}
+.moment{display:grid;grid-template-columns:1.25fr 1fr;margin-top:14px;border:1px solid var(--hair);border-radius:18px;background:var(--field);overflow:hidden}
+.moment .half{padding:18px 20px;position:relative;cursor:pointer}
+.moment .half+.half{border-left:1px dashed var(--hair)}
+.moment .big{display:flex;align-items:center;gap:12px;margin-top:6px}
+.moment .big .serif{font-size:44px;line-height:1;color:var(--ink)}
+.moment .big b{display:block;font:800 14px Inter}
+.moment .big em{display:block;font:600 12px Inter;font-style:normal;color:var(--muted);margin-top:2px}
+.moment .edit{position:absolute;right:12px;top:12px;width:28px;height:28px;border-radius:9px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-size:13px}
+.qrow{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.qrow .k{width:44px}
+.q{height:42px;display:inline-flex;align-items:center;gap:6px;padding:0 15px;border-radius:13px;border:1px solid var(--hair);font:800 13px Inter;color:var(--ink);cursor:pointer}
+.q small{font:600 11.5px Inter;color:var(--muted)}
+.q.on{background:var(--primary);border-color:var(--primary);color:#fff}.q.on small{color:rgba(255,255,255,.75)}
+.q.ghost{border-style:dashed;color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button data-dir="a">A · Control Desk</button>
+  <button data-dir="b" class="on">B · Status Board</button>
+  <button data-dir="c">C · Inline Picker</button>
+  <span class="sep"></span>
+  <button data-state="open" class="on">Day open</button>
+  <button data-state="closed">Day closed</button>
+  <span class="sep"></span>
+  <button id="theme">Dark</button>
+</div>
+<p class="note" id="note"></p>
+
+<div class="stage"><div class="device" id="device">
+  <div class="rail"><i></i><i></i><i class="on"></i><i></i><i></i></div>
+  <div class="content" id="content" data-state="open">
+
+  <!-- ================= A · CONTROL DESK ================= -->
+  <div class="dir" id="dir-a" style="gap:18px;padding:20px">
+    <div style="flex:1.25;display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="hero" style="padding:22px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
+          <div><div class="eyebrow">BRANCH DAY SESSION</div><div class="serif" style="font-size:24px;margin-top:4px">Day Session</div></div>
+          <div class="branch">▣ DM</div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:20px;position:relative;z-index:1">
+          <div class="beacon"><span class="if-open">☀</span><span class="if-closed">☾</span></div>
+          <div>
+            <div style="display:flex;gap:10px;align-items:center"><span class="serif" style="font-size:32px"><span class="if-open">Day Open</span><span class="if-closed">Day Closed</span></span><span class="pill"><b class="if-open"></b><b class="if-closed" style="background:var(--danger1)"></b><span class="if-open">OPEN</span><span class="if-closed">CLOSED</span></span></div>
+            <div style="font:600 13px Inter;opacity:.82;margin-top:3px"><span class="if-open">Open since 30 Sep 2026 · 3:32 PM</span><span class="if-closed">Last closed 30 Sep 2026 · 9:25 PM</span></div>
+          </div>
+        </div>
+        <div class="meta" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.16);position:relative;z-index:1">
+          <div><div class="k">Opened by</div><div class="v">hasif</div></div>
+          <div class="if-open"><div class="k">Opening float</div><div class="v g">QAR 0.00</div></div>
+          <div class="if-closed"><div class="k">Closed by</div><div class="v">hasif</div></div>
+          <div><div class="k">Duration</div><div class="v">5h 53m</div></div>
+        </div>
+      </div>
+      <div class="card tl" style="padding:20px 22px 4px;flex:1">
+        <div class="label" style="margin-bottom:16px">Session lifecycle</div>
+        <div class="if-open">
+          <div class="n"><div class="d"><div class="dot done">✓</div><div class="line"></div></div><div class="b"><h4>Day opened</h4><p>30 Sep 2026 · 3:32 PM</p><div class="float">Opening float <b>QAR 0.00</b></div></div></div>
+          <div class="n"><div class="d"><div class="dot live"></div><div class="line"></div></div><div class="b"><h4>In session <span class="badge">LIVE</span></h4><p>Sales are recorded against this day. Close it when the branch is done.</p></div></div>
+          <div class="n"><div class="d"><div class="dot"></div></div><div class="b"><h4>Close day</h4><p>Pick the closing moment on the right, then confirm.</p></div></div>
+        </div>
+        <div class="if-closed">
+          <div class="n"><div class="d"><div class="dot done">✓</div><div class="line"></div></div><div class="b"><h4>Last day closed</h4><p>30 Sep 2026 · 9:25 PM</p></div></div>
+          <div class="n"><div class="d"><div class="dot"></div></div><div class="b"><h4>Open a new day</h4><p>Pick the opening moment on the right, then start the day.</p></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- right action panel -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;padding:22px;min-width:0">
+      <div class="label"><span class="if-open">Closing date &amp; time</span><span class="if-closed">Opening date &amp; time</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+        <div class="dt"><div class="icon">▦</div><div><div class="k">Date</div><div class="v">Wed, 30 Sep 2026</div></div></div>
+        <div class="dt"><div class="icon">◷</div><div><div class="k">Time</div><div class="v">9:25 PM</div></div></div>
+      </div>
+      <div style="margin-top:12px"><span class="chip">⚡ Set to now</span></div>
+      <div style="height:1px;background:var(--hair);margin:22px 0"></div>
+      <div class="label">Session report</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:14px">
+        <div class="icon" style="width:46px;height:46px">▤</div>
+        <div><div class="serif" style="font-size:18px">Sale Bill Report #916</div><div style="font:600 12px Inter;color:var(--text2);margin-top:2px">Figures so far</div></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px"><div class="btn t">⎙ Print thermal</div><div class="btn o">◉ Preview</div></div>
+      <div class="hint">ⓘ No printer paired — the preview opens to print</div>
+      <div style="flex:1"></div>
+      <div class="notice if-open"><span>ⓘ</span>Closing finalises sales for this session. You'll need to open a new day to keep selling.</div>
+      <div class="cta if-open" style="margin-top:14px">🔒 Close day · 30 Sep, 9:25 PM</div>
+      <div class="cta open if-closed" style="margin-top:14px">🔓 Open day · 30 Sep, 9:25 PM</div>
+      <div class="sub">You'll confirm before anything changes</div>
+    </div>
+  </div>
+
+  <!-- ================= B · STATUS BOARD ================= -->
+  <div class="dir on" id="dir-b" style="flex-direction:column;gap:14px;padding:20px 24px">
+    <div class="hero" style="padding:18px 24px;display:flex;align-items:center;gap:22px;flex:none">
+      <div class="beacon" style="position:relative;z-index:1"><span class="if-open">☀</span><span class="if-closed">☾</span></div>
+      <div style="flex:1;position:relative;z-index:1">
+        <div class="eyebrow">BRANCH DAY SESSION · DM</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:4px"><span class="serif" style="font-size:30px"><span class="if-open">Day Open</span><span class="if-closed">Day Closed</span></span><span class="pill"><b class="if-open"></b><b class="if-closed" style="background:var(--danger1)"></b><span class="if-open">OPEN</span><span class="if-closed">CLOSED</span></span></div>
+        <div style="font:600 13px Inter;opacity:.82;margin-top:2px"><span class="if-open">Open since 30 Sep 2026 · 3:32 PM</span><span class="if-closed">Last closed 30 Sep 2026 · 9:25 PM</span></div>
+      </div>
+      <div class="meta" style="display:flex;gap:34px;position:relative;z-index:1;padding-left:26px;border-left:1px solid rgba(255,255,255,.18)">
+        <div><div class="k">Opened by</div><div class="v">hasif</div></div>
+        <div class="if-open"><div class="k">Opening float</div><div class="v g">QAR 0.00</div></div>
+        <div class="if-closed"><div class="k">Closed by</div><div class="v">hasif</div></div>
+        <div><div class="k">Duration</div><div class="v">5h 53m</div></div>
+      </div>
+    </div>
+
+    <!-- full-width lifecycle stepper -->
+    <div class="card" style="padding:16px 26px 18px;flex:none">
+      <div class="label" style="margin-bottom:14px">Session lifecycle</div>
+      <div class="stepper if-open" style="--cols:3;--fill:50%">
+        <div class="track"><i></i></div>
+        <div class="st"><div class="sd done">✓</div><h4>Day opened</h4><p>30 Sep · 3:32 PM</p><div class="float" style="margin-top:6px">Float <b>QAR 0.00</b></div></div>
+        <div class="st"><div class="sd live"><i></i></div><h4>In session <span class="badge">LIVE</span></h4><p>Sales are recorded against this day.</p></div>
+        <div class="st"><div class="sd"></div><h4>Close day</h4><p>Pick the moment below, then confirm.</p></div>
+      </div>
+      <div class="stepper if-closed" style="--cols:2;--fill:0%">
+        <div class="track"><i></i></div>
+        <div class="st"><div class="sd done">✓</div><h4>Last day closed</h4><p>30 Sep · 9:25 PM by hasif</p></div>
+        <div class="st"><div class="sd"></div><h4>Open a new day</h4><p>Pick the moment below, then start the day.</p></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:14px;flex:1;min-height:0">
+      <!-- moment picker -->
+      <div class="card" style="padding:18px 22px;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="label"><span class="if-open">Closing date &amp; time</span><span class="if-closed">Opening date &amp; time</span></div>
+          <span class="nowtag">● Set to now</span>
+        </div>
+        <div class="moment">
+          <div class="half"><div class="k">Date</div><div class="big"><span class="serif">30</span><div><b>Wednesday</b><em>September 2026</em></div></div><span class="edit">✎</span></div>
+          <div class="half"><div class="k">Time</div><div class="big"><span class="serif">9:25</span><div><b>PM</b><em>Qatar time</em></div></div><span class="edit">✎</span></div>
+        </div>
+        <div class="qrow"><span class="k">Day</span>
+          <span class="q on">Today <small>Wed 30</small></span>
+          <span class="q if-closed">Yesterday <small>Tue 29</small></span>
+          <span class="q ghost">▦ Other date</span>
+        </div>
+        <div class="qrow"><span class="k">Time</span>
+          <span class="q on">⚡ Now</span><span class="q">−15 min</span><span class="q">−30 min</span><span class="q">−1 hr</span>
+          <span class="q ghost">◷ Custom</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="span">
+          <div><div class="k">Session length</div><b class="if-open">5h 53m</b><b class="if-closed">—</b></div>
+          <div><div class="k">Earliest</div><b class="if-open">30 Sep · 3:32 PM</b><b class="if-closed">31 Aug</b></div>
+          <div><div class="k">Latest</div><b>Now · 9:25 PM</b></div>
+        </div>
+      </div>
+      <!-- report -->
+      <div class="card" style="padding:18px 22px;display:flex;flex-direction:column">
+        <div class="label">Session report</div>
+        <div style="display:flex;gap:12px;align-items:center;margin-top:14px">
+          <div class="icon" style="width:46px;height:46px">▤</div>
+          <div><div class="serif" style="font-size:18px">Sale Bill Report #916</div><div style="font:600 12px Inter;color:var(--text2);margin-top:2px"><span class="if-open">Figures so far</span><span class="if-closed">Closed 9:25 PM by hasif</span></div></div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;flex-direction:column;gap:10px"><div class="btn t" style="flex:none">⎙ Print thermal</div><div class="btn o" style="flex:none">◉ Preview</div></div>
+        <div class="hint">ⓘ No printer paired — the preview opens to print</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:18px;flex:none">
+      <div class="notice if-open" style="flex:1"><span>ⓘ</span>Closing finalises sales for this session. You'll need to open a new day to keep selling.</div>
+      <div class="notice if-closed" style="flex:1;background:var(--tint)"><span style="color:var(--primary)">✦</span>Opening a day lets staff record sales against it.</div>
+      <div class="cta if-open" style="width:380px">🔒 Close day · 30 Sep, 9:25 PM</div>
+      <div class="cta open if-closed" style="width:380px">🔓 Open day · 30 Sep, 9:25 PM</div>
+    </div>
+  </div>
+  <!-- ================= C · INLINE PICKER ================= -->
+  <div class="dir" id="dir-c" style="gap:18px;padding:20px">
+    <div style="width:380px;flex:none;display:flex;flex-direction:column;gap:16px">
+      <div class="hero" style="padding:22px">
+        <div style="display:flex;justify-content:space-between;position:relative;z-index:1"><div class="eyebrow">BRANCH DAY SESSION</div><div class="branch" style="padding:4px 10px;font-size:11px">DM</div></div>
+        <div class="beacon" style="margin-top:18px;position:relative;z-index:1"><span class="if-open">☀</span><span class="if-closed">☾</span></div>
+        <div style="margin-top:14px;position:relative;z-index:1"><span class="serif" style="font-size:32px"><span class="if-open">Day Open</span><span class="if-closed">Day Closed</span></span></div>
+        <div style="font:600 13px Inter;opacity:.82;margin-top:2px;position:relative;z-index:1"><span class="if-open">Since 30 Sep 2026 · 3:32 PM</span><span class="if-closed">Last closed 30 Sep · 9:25 PM</span></div>
+        <div class="meta" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.16);position:relative;z-index:1">
+          <div><div class="k">Opened by</div><div class="v">hasif</div></div>
+          <div class="if-open"><div class="k">Opening float</div><div class="v g">QAR 0.00</div></div>
+        </div>
+      </div>
+      <div class="card tl" style="padding:18px 20px 2px">
+        <div class="label" style="margin-bottom:14px">Lifecycle</div>
+        <div class="if-open">
+          <div class="n"><div class="d"><div class="dot done">✓</div><div class="line"></div></div><div class="b" style="padding-bottom:14px"><h4>Day opened</h4><p>3:32 PM</p></div></div>
+          <div class="n"><div class="d"><div class="dot live"></div><div class="line"></div></div><div class="b" style="padding-bottom:14px"><h4>In session <span class="badge">LIVE</span></h4></div></div>
+          <div class="n"><div class="d"><div class="dot"></div></div><div class="b" style="padding-bottom:14px"><h4>Close day</h4></div></div>
+        </div>
+        <div class="if-closed">
+          <div class="n"><div class="d"><div class="dot done">✓</div><div class="line"></div></div><div class="b" style="padding-bottom:14px"><h4>Last day closed</h4><p>9:25 PM</p></div></div>
+          <div class="n"><div class="d"><div class="dot"></div></div><div class="b" style="padding-bottom:14px"><h4>Open a new day</h4></div></div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px 18px;display:flex;align-items:center;gap:12px">
+        <div class="icon">▤</div>
+        <div style="flex:1"><div style="font:800 13.5px Inter">Sale Bill #916</div><div style="font:600 11px Inter;color:var(--muted)">Figures so far</div></div>
+        <div class="chip" style="padding:8px 11px">⎙</div><div class="chip" style="padding:8px 11px;background:transparent;border:1px solid var(--hair);color:var(--ink)">◉</div>
+      </div>
+    </div>
+    <div class="card" style="flex:1;padding:22px 24px;display:flex;flex-direction:column;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="label"><span class="if-open">Close the day at</span><span class="if-closed">Open the day at</span></div><div class="serif" style="font-size:26px;margin-top:4px">Wed, 30 Sep · 9:25 PM</div></div>
+        <span class="chip">⚡ Now</span>
+      </div>
+      <div style="display:flex;gap:22px;margin-top:18px;flex:1;min-height:0">
+        <div style="flex:1.5">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b style="font:800 14px Inter">September 2026</b><span style="color:var(--muted);font-weight:800">‹ ›</span></div>
+          <div class="cal" id="cal"></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column">
+          <div class="k" style="margin-bottom:10px">Time</div>
+          <div class="wheel">
+            <div class="col"><div>7</div><div>8</div><div class="on">9</div><div>10</div><div>11</div></div>
+            <div class="col"><div>23</div><div>24</div><div class="on">25</div><div>26</div><div>27</div></div>
+            <div class="col"><div>&nbsp;</div><div>AM</div><div class="on">PM</div><div>&nbsp;</div><div>&nbsp;</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cta if-open" style="margin-top:16px">🔒 Close day · 30 Sep, 9:25 PM</div>
+      <div class="cta open if-closed" style="margin-top:16px">🔓 Open day · 30 Sep, 9:25 PM</div>
+      <div class="sub">You'll confirm before anything changes</div>
+    </div>
+  </div>
+
+  </div>
+</div></div>
+
+<script>
+const notes={
+  a:'A · Control Desk — two docked columns. Left: status hero + lifecycle (what is). Right: everything you do — pick the moment, the report, and the Close/Open button pinned to the panel foot. No floating dock, no scrolling on an 11" landscape.',
+  b:'B · Status Board (v2) — lifecycle stepper spans the full width with a progress track; the date & time card is now a big tappable readout (tap either half for the full picker) plus one-tap Day and Time chips. No future times, so no + chips.',
+  c:'C · Inline Picker — tablet-native: the calendar and time wheel live on the page (no dialogs). Status column on the left; a one-tap day + time selection and the CTA on the right. Report shrinks to a compact row.'
+};
+const content=document.getElementById('content');
+document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-dir]').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.dir').forEach(d=>d.classList.toggle('on',d.id==='dir-'+b.dataset.dir));
+  document.getElementById('note').textContent=notes[b.dataset.dir];
+});
+document.querySelectorAll('.bar [data-state]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.bar [data-state]').forEach(x=>x.classList.toggle('on',x===b));
+  content.dataset.state=b.dataset.state;
+});
+document.getElementById('theme').onclick=e=>{
+  const d=document.documentElement.dataset.theme==='dark';
+  document.documentElement.dataset.theme=d?'light':'dark';e.target.textContent=d?'Dark':'Light';
+};
+document.getElementById('note').textContent=notes.b;
+const cal=document.getElementById('cal');
+cal.innerHTML=['S','M','T','W','T','F','S'].map(d=>`<div class="h">${d}</div>`).join('')+
+  [30,31].map(d=>`<div class="c x">${d}</div>`).join('')+
+  Array.from({length:30},(_,i)=>i+1).map(d=>`<div class="c ${d===30?'sel today':''} ${d<30?'x':''}">${d}</div>`).join('')+
+  [1,2,3].map(d=>`<div class="c x">${d}</div>`).join('');
+function fit(){const dv=document.getElementById('device');const s=Math.min(1,(innerWidth-32)/1194);dv.style.transform=`scale(${s})`;dv.parentElement.style.height=(834*s)+'px';}
+addEventListener('resize',fit);fit();
+</script>
+</body>

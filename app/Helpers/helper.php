@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Branch;
+use App\Models\Configuration;
 use App\Models\Country;
 use App\Services\TenantService;
 use App\Support\TenantCache;
@@ -861,6 +862,17 @@ if (! function_exists('posGridColumns')) {
             '7' => '7 per row',
             '8' => '8 per row',
         ];
+    }
+}
+if (! function_exists('saleRoundOffEnabled')) {
+    /**
+     * Whether a sale's grand total is rounded to the nearest whole number, with
+     * the difference kept in `round_off` (Settings → Sale Configuration → Round
+     * Off). On unless the business has switched it off.
+     */
+    function saleRoundOffEnabled(): bool
+    {
+        return (Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes') === 'yes';
     }
 }
 if (! function_exists('packageFrequency')) {

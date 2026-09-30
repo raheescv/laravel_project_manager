@@ -194,7 +194,12 @@ class CustomPayment {
 /// `BlocSelector<CartCubit, CartState, T>` to rebuild on one field instead of
 /// the whole ticket — which the old tick-based base class made impossible.
 class CartCubit extends Cubit<CartState> {
-  CartCubit() : super(const CartState());
+  CartCubit() : super(CartState(roundOffEnabled: _roundOffSetting()));
+
+  /// The cached Round Off setting — on when nothing has been synced yet.
+  static bool _roundOffSetting() => serviceLocator.isRegistered<LocalStorageService>()
+      ? serviceLocator<LocalStorageService>().roundOffEnabled
+      : true;
 
   LocalStorageService get _storage => serviceLocator<LocalStorageService>();
 
@@ -222,6 +227,8 @@ class CartCubit extends Cubit<CartState> {
   double get orderDiscountAmount => state.orderDiscountAmount;
   double get totalDiscount => state.totalDiscount;
   double get taxTotal => state.taxTotal;
+  double get netBeforeRoundOff => state.netBeforeRoundOff;
+  double get roundOff => state.roundOff;
   double get netBeforeTip => state.netBeforeTip;
   double get tipAmount => state.tipAmount;
   double get total => state.total;
@@ -260,6 +267,7 @@ class CartCubit extends Cubit<CartState> {
       // device has vetoed must come off the ticket too, not just one the
       // business turned off.
       if (!tipEnabled) emit(state.copyWith(tipPercent: 0));
+      emit(state.copyWith(roundOffEnabled: _roundOffSetting()));
     } catch (_) {
       // Offline or server error — keep the cached values.
     }
@@ -447,7 +455,7 @@ class CartCubit extends Cubit<CartState> {
 
   void setSendToWhatsapp(bool value) => emit(state.copyWith(sendToWhatsapp: value));
 
-  void clear() => emit(const CartState());
+  void clear() => emit(CartState(roundOffEnabled: _roundOffSetting()));
 
   void seedFromSale(Sale sale) {
     final lines = sale.lines
@@ -487,6 +495,7 @@ class CartCubit extends Cubit<CartState> {
       // wipe it off the record, and the totals would still look settled because
       // the payment was reduced by the same amount.
       tipPercent: sale.grandTotal > 0 ? round2(sale.tip / sale.grandTotal * 100) : 0,
+      roundOffEnabled: _roundOffSetting(),
       payMode: payment.mode,
       customPayments: payment.rows,
     ));
@@ -660,6 +669,7 @@ class CartCubit extends Cubit<CartState> {
           'other_discount': state.orderDiscountAmount,
           'tax_amount': state.taxTotal,
           'tip': state.tipAmount,
+          'round_off': state.roundOff,
           'grand_total': state.total,
           'paid': state.paidAmount,
           'balance': state.balance,
@@ -712,6 +722,7 @@ class CartCubit extends Cubit<CartState> {
             .toList(),
         'discount': state.orderDiscountAmount,
         'tip': state.tipAmount,
+        'roundOff': state.roundOff,
         'paymentMethod': state.payMode.apiValue,
         'totalPayment': state.total,
         if (state.payMode == PayMode.custom)

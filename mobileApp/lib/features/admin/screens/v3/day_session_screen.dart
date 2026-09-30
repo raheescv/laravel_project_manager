@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/constants/global_variables.dart';
@@ -25,6 +26,7 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 
 part 'day_session_views.dart';
+part 'day_session_tablet.dart';
 
 /// Day Session — open / close the branch sale day for a chosen date & time.
 ///
@@ -57,6 +59,8 @@ class DaySessionScreen extends StatefulWidget {
 /// the cached user is only as fresh as the last sign-in or toggle on *this*
 /// device; on a shared till the day moves underneath both.
 class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
+  static const double _pickerMaxWidth = 360;
+
   StreamSubscription<int>? _branchSub;
   StreamSubscription<DaySessionState>? _daySub;
 
@@ -131,21 +135,25 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
         ? c.session!.branch
         : (branchCtrl.selected?.name ?? '');
 
-    // Day Session is form-shaped, so the preview keeps it a centred, width-capped
-    // card stack. On a tablet the hero joins that stack as an inset card instead
-    // of a full-bleed band stretched across the whole sheet.
-    final tablet = context.isTablet;
     // Sent here from New Sale, why they can't sell yet leads the page.
     final noticeFirst = widget.forSale && !c.isOpen;
+
+    // A tablet gets the "Status Board" (day_session_tablet.dart): the width is
+    // used, not a phone column centred in it.
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(bottom: false, child: _tabletBody(c, user, branchName, report, noticeFirst)),
+        ),
+      );
+    }
+
     final body = Stack(
       children: [
         ListView(
-          padding: EdgeInsets.fromLTRB(16, tablet ? 12 : 16, 16, 130),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 130),
           children: [
-            if (tablet) ...[
-              _hero(c, user, branchName),
-              const SizedBox(height: 14),
-            ],
             if (noticeFirst) ...[
               _saleGateCard(),
               const SizedBox(height: 14),
@@ -172,14 +180,12 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
-        child: tablet
-            ? SafeArea(bottom: false, child: MaxWidthBox(maxWidth: 620, child: body))
-            : Column(
-                children: [
-                  _hero(c, user, branchName),
-                  Expanded(child: MaxWidthBox(maxWidth: 620, child: body)),
-                ],
-              ),
+        child: Column(
+          children: [
+            _hero(c, user, branchName),
+            Expanded(child: MaxWidthBox(maxWidth: 620, child: body)),
+          ],
+        ),
       ),
     );
   }
@@ -389,24 +395,29 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
           builder: (dctx, setLocal) => Dialog(
             backgroundColor: p.cardSolid,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _pickerHeader(c.isOpen ? 'Closing date' : 'Opening date', Dates.weekday(temp)),
-                CalendarDatePicker(
-                  initialDate: temp,
-                  firstDate: first,
-                  lastDate: last,
-                  onDateChanged: (d) => setLocal(() => temp = d),
-                ),
-                _pickerActions(
-                  quickIcon: Icons.today_outlined,
-                  quickLabel: 'Today',
-                  onQuick: todayInRange ? () => setLocal(() => temp = today) : null,
-                  onCancel: () => Navigator.pop(dctx),
-                  onOk: () => Navigator.pop(dctx, temp),
-                ),
-              ],
+            // A calendar-sized card on a tablet — uncapped, the month grid
+            // stretches across the whole window. Phones are narrower anyway.
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _pickerMaxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _pickerHeader(c.isOpen ? 'Closing date' : 'Opening date', Dates.weekday(temp)),
+                  CalendarDatePicker(
+                    initialDate: temp,
+                    firstDate: first,
+                    lastDate: last,
+                    onDateChanged: (d) => setLocal(() => temp = d),
+                  ),
+                  _pickerActions(
+                    quickIcon: Icons.today_outlined,
+                    quickLabel: 'Today',
+                    onQuick: todayInRange ? () => setLocal(() => temp = today) : null,
+                    onCancel: () => Navigator.pop(dctx),
+                    onOk: () => Navigator.pop(dctx, temp),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -426,42 +437,45 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
           builder: (dctx, setLocal) => Dialog(
             backgroundColor: p.cardSolid,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _pickerHeader(c.isOpen ? 'Closing time' : 'Opening time', 'Scroll to set, or tap Now'),
-                SizedBox(
-                  height: 180,
-                  child: CupertinoTheme(
-                    data: CupertinoThemeData(
-                      brightness: p.isDark ? Brightness.dark : Brightness.light,
-                      textTheme: CupertinoTextThemeData(
-                        dateTimePickerTextStyle: ui(size: 19, weight: FontWeight.w700, color: p.ink),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: _pickerMaxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _pickerHeader(c.isOpen ? 'Closing time' : 'Opening time', 'Scroll to set, or tap Now'),
+                  SizedBox(
+                    height: 180,
+                    child: CupertinoTheme(
+                      data: CupertinoThemeData(
+                        brightness: p.isDark ? Brightness.dark : Brightness.light,
+                        textTheme: CupertinoTextThemeData(
+                          dateTimePickerTextStyle: ui(size: 19, weight: FontWeight.w700, color: p.ink),
+                        ),
+                      ),
+                      child: CupertinoDatePicker(
+                        // The key changes only when "Now" is tapped, so the wheel
+                        // jumps to the current time without rebuilding mid-scroll.
+                        key: ValueKey(temp.millisecondsSinceEpoch),
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime: temp,
+                        use24hFormat: false,
+                        onDateTimeChanged: (d) =>
+                            temp = DateTime(temp.year, temp.month, temp.day, d.hour, d.minute),
                       ),
                     ),
-                    child: CupertinoDatePicker(
-                      // The key changes only when "Now" is tapped, so the wheel
-                      // jumps to the current time without rebuilding mid-scroll.
-                      key: ValueKey(temp.millisecondsSinceEpoch),
-                      mode: CupertinoDatePickerMode.time,
-                      initialDateTime: temp,
-                      use24hFormat: false,
-                      onDateTimeChanged: (d) =>
-                          temp = DateTime(temp.year, temp.month, temp.day, d.hour, d.minute),
-                    ),
                   ),
-                ),
-                _pickerActions(
-                  quickIcon: Icons.access_time,
-                  quickLabel: 'Now',
-                  onQuick: () {
-                    final n = DateTime.now();
-                    setLocal(() => temp = DateTime(temp.year, temp.month, temp.day, n.hour, n.minute));
-                  },
-                  onCancel: () => Navigator.pop(dctx),
-                  onOk: () => Navigator.pop(dctx, TimeOfDay.fromDateTime(temp)),
-                ),
-              ],
+                  _pickerActions(
+                    quickIcon: Icons.access_time,
+                    quickLabel: 'Now',
+                    onQuick: () {
+                      final n = DateTime.now();
+                      setLocal(() => temp = DateTime(temp.year, temp.month, temp.day, n.hour, n.minute));
+                    },
+                    onCancel: () => Navigator.pop(dctx),
+                    onOk: () => Navigator.pop(dctx, TimeOfDay.fromDateTime(temp)),
+                  ),
+                ],
+              ),
             ),
           ),
         );

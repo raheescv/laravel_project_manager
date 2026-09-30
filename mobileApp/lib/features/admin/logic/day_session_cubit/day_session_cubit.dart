@@ -138,6 +138,12 @@ class DaySessionCubit extends Cubit<DaySessionState> {
 
   void setNow() => emit(state.copyWith(selected: _nowToMinute()));
 
+  /// Sets date and time together — a quick "−1 hr" can cross midnight, which
+  /// [setDate] + [setTime] would each read against the other's stale half.
+  void setMoment(DateTime at) => emit(state.copyWith(
+        selected: DateTime(at.year, at.month, at.day, at.hour, at.minute),
+      ));
+
   Future<DaySessionToggleResult?> toggle() async {
     final at = state.selected;
     emit(state.copyWith(busy: true, clearError: true));

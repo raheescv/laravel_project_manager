@@ -382,6 +382,10 @@ export default {
             type: Number,
             default: 0.001
         },
+        roundOffEnabled: {
+            type: Boolean,
+            default: true
+        },
         saleItemRowMode: {
             type: String,
             default: 'merge'
@@ -934,7 +938,8 @@ export default {
             // Calculate grand total with discount and round off
             const otherDiscount = Number(form.other_discount) || 0
             const grandTotal = parseFloat(form.total) - otherDiscount
-            const roundedTotal = Math.round(grandTotal)
+            // Settings → Sale Configuration → Round Off
+            const roundedTotal = props.roundOffEnabled ? Math.round(grandTotal) : Math.round(grandTotal * 100) / 100
 
             form.round_off = Math.round((roundedTotal - grandTotal) * 100) / 100
             form.grand_total = roundedTotal

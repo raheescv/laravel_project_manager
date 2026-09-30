@@ -694,6 +694,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           _row('Subtotal', Money.of(cart.subtotal), p.textSecondary),
           if (cart.totalDiscount > 0) _row('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),
           if (cart.taxTotal > 0) _row('Tax', Money.of(cart.taxTotal), p.textSecondary),
+          if (cart.roundOff != 0) _row('Round Off', Money.of(cart.roundOff), p.textSecondary),
           if (cart.tipAmount > 0) _row('Tip (${cart.tipPercent.toStringAsFixed(0)}%)', Money.of(cart.tipAmount), p.textSecondary),
           const SizedBox(height: 4),
           Row(

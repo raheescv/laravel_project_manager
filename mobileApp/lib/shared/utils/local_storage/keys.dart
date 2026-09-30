@@ -22,6 +22,8 @@ class LocalStorageKeys {
   static const String baseCurrency = 'astra.baseCurrency';
   static const String defaultQuantity = 'astra.defaultQuantity';
   static const String tipEnabled = 'astra.tipEnabled';
+  /// Whether the grand total is rounded to a whole number. From the web.
+  static const String roundOffEnabled = 'astra.roundOffEnabled';
   /// Whether the business runs the School module (student cards). From the web.
   static const String schoolEnabled = 'astra.schoolEnabled';
   /// Link Student Card catalog rendering preference — 'grid' or 'list'.

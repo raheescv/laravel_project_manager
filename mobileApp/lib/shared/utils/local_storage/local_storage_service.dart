@@ -171,6 +171,12 @@ class LocalStorageService {
   Future<void> setTipEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.tipEnabled, v);
 
+  // Whether the grand total is rounded to the nearest whole number (Settings →
+  // Sale Configuration → Round Off). On until the server says otherwise.
+  bool get roundOffEnabled => _prefs.getBool(LocalStorageKeys.roundOffEnabled) ?? true;
+  Future<void> setRoundOffEnabled(bool v) =>
+      _prefs.setBool(LocalStorageKeys.roundOffEnabled, v);
+
   // Whether the business runs the School module — student cards at the till
   // (Settings → Module Configuration on the web). Off until the server says so.
   bool get schoolEnabled => _prefs.getBool(LocalStorageKeys.schoolEnabled) ?? false;

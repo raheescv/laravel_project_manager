@@ -156,6 +156,13 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label class="form-label fw-medium" for="round_off_enabled">Round Off</label>
+                        {{ html()->select('round_off_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Round the grand total to the nearest whole number?')->attribute('wire:model', 'round_off_enabled') }}
+                        <small class="form-text text-muted">When enabled, the grand total is rounded to the nearest whole number and the difference is shown as &ldquo;Round Off&rdquo; (web POS and mobile app).</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label class="form-label fw-medium" for="pos_grid_columns">POS Products Per Row</label>
                         {{ html()->select('pos_grid_columns', posGridColumns())->value('')->class('form-select')->placeholder('How many product cards per row?')->attribute('wire:model', 'pos_grid_columns') }}
                         <small class="form-text text-muted">Number of product cards in each row of the POS catalogue. &ldquo;Auto&rdquo; fits as many as the screen allows. Phones always show 2 per row.</small>
