@@ -6,6 +6,8 @@ use App\Actions\Sale\UpdateAction;
 use App\Models\InventoryLog;
 use App\Models\Sale;
 use App\Models\SaleReturnItem;
+use App\Models\Scopes\AssignedBranchScope;
+use App\Models\StorefrontCheckout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -118,8 +120,27 @@ class View extends Component
         $this->dispatch('ToggleChangeSessionModal');
     }
 
+    /**
+     * The storefront checkout behind an online sale. The order may have been taken
+     * at a shop the viewer is not assigned to before moving to the online branch,
+     * so the branch scope is lifted; the tenant scope still applies.
+     */
+    protected function onlineCheckout(): ?StorefrontCheckout
+    {
+        if (! $this->sale || $this->sale->source !== 'storefront') {
+            return null;
+        }
+
+        return StorefrontCheckout::withoutGlobalScope(AssignedBranchScope::class)
+            ->with('branch:id,name')
+            ->where('sale_id', $this->sale->id)
+            ->first();
+    }
+
     public function render()
     {
-        return view('livewire.sale.view');
+        return view('livewire.sale.view', [
+            'checkout' => $this->onlineCheckout(),
+        ]);
     }
 }

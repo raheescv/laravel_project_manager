@@ -166,6 +166,127 @@
         </div>
     </div>
 
+    {{-- ── ONLINE ORDER: Tap transaction | delivery / pickup ────────────────── --}}
+    @if ($checkout)
+        @php
+            $tap = $checkout->paymentDetails();
+            $checkoutTone = match ($checkout->status) {
+                'paid' => 'b-ok',
+                'failed' => 'b-bad',
+                default => 'b-wn',
+            };
+            $methodIcon = match (strtolower((string) $tap['method'])) {
+                'visa' => 'fa-cc-visa',
+                'mastercard', 'master' => 'fa-cc-mastercard',
+                'amex', 'american_express' => 'fa-cc-amex',
+                'apple_pay', 'applepay' => 'fa-apple',
+                default => 'fa-credit-card',
+            };
+        @endphp
+        <div class="s-card s-online">
+            <div class="s-ch">
+                <i class="fa fa-globe hi"></i>
+                <h4>Online order</h4>
+                <span class="s-chip c-i">{{ $checkout->isDelivery() ? 'Delivery' : 'Pickup' }}</span>
+                <span class="cs mono">{{ $checkout->reference }}</span>
+            </div>
+            <div class="s-two">
+                <div>
+                    <div class="s-fl"><i class="fa fa-credit-card"></i> Payment transaction &middot; {{ ucfirst($checkout->gateway) }}</div>
+                    <div class="s-txn">
+                        <div class="s-pd"><i class="fa {{ $methodIcon }}"></i></div>
+                        <div style="flex:1;min-width:0">
+                            <div style="font-weight:750">
+                                {{ $tap['method'] ? str_replace('_', ' ', $tap['method']) : 'Online payment' }}
+                                @if ($tap['payment_type'])
+                                    <span class="s-chip c-a">{{ ucfirst(strtolower($tap['payment_type'])) }}</span>
+                                @endif
+                            </div>
+                            <div class="s-ps mono">{{ $tap['card_number'] ?: '—' }}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="mono" style="font-weight:800;color:var(--ok)">{{ $checkout->currency }} {{ number_format((float) $checkout->amount, 2) }}</div>
+                            <span class="s-badge {{ $checkoutTone }}">{{ $checkout->gateway_status ?: ucfirst($checkout->status) }}</span>
+                        </div>
+                    </div>
+                    <div class="s-dr">
+                        <span class="l"><i class="fa fa-hashtag"></i>Charge ID</span>
+                        <span class="v mono s-copy" title="Click to copy" onclick="navigator.clipboard?.writeText(this.textContent.trim())">{{ $checkout->gateway_charge_id ?: '—' }}</span>
+                    </div>
+                    @if ($tap['payment_reference'])
+                        <div class="s-dr"><span class="l"><i class="fa fa-file-text-o"></i>Payment ref</span><span class="v mono">{{ $tap['payment_reference'] }}</span></div>
+                    @endif
+                    @if ($tap['receipt_no'])
+                        <div class="s-dr"><span class="l"><i class="fa fa-ticket"></i>Receipt no</span><span class="v mono">{{ $tap['receipt_no'] }}</span></div>
+                    @endif
+                    @if ($tap['acquirer_reference'])
+                        <div class="s-dr"><span class="l"><i class="fa fa-university"></i>Bank ref</span><span class="v mono">{{ $tap['acquirer_reference'] }}</span></div>
+                    @endif
+                    @if ($tap['gateway_reference'])
+                        <div class="s-dr"><span class="l"><i class="fa fa-exchange"></i>Gateway ref</span><span class="v mono">{{ $tap['gateway_reference'] }}</span></div>
+                    @endif
+                    @if ($tap['response_message'])
+                        <div class="s-dr"><span class="l"><i class="fa fa-comment-o"></i>Response</span><span class="v">{{ $tap['response_message'] }} @if ($tap['response_code'])<span class="mono" style="color:var(--mut)">({{ $tap['response_code'] }})</span>@endif</span></div>
+                    @endif
+                    <div class="s-dr"><span class="l"><i class="fa fa-clock-o"></i>Paid at</span><span class="v">{{ $checkout->paid_at ? systemDateTime($checkout->paid_at) : '—' }}</span></div>
+                    <div class="s-dr"><span class="l"><i class="fa fa-envelope-o"></i>Customer email</span><span class="v">{{ $checkout->customer_email ?: '—' }}</span></div>
+                    @if ($checkout->failure_reason)
+                        <div class="s-dr"><span class="l"><i class="fa fa-exclamation-triangle"></i>Note</span><span class="v" style="color:var(--bad)">{{ $checkout->failure_reason }}</span></div>
+                    @endif
+                </div>
+                <div>
+                    @if ($checkout->isDelivery())
+                        <div class="s-fl">
+                            <i class="fa fa-truck"></i> Delivery address
+                            @if ($checkout->mapUrl())
+                                <a href="{{ $checkout->mapUrl() }}" target="_blank" rel="noopener" class="s-btn flat" style="margin-inline-start:auto">
+                                    <i class="fa fa-external-link"></i>Open map
+                                </a>
+                            @endif
+                        </div>
+                        <div class="s-dr"><span class="l"><i class="fa fa-user"></i>Recipient</span><span class="v">{{ $checkout->customer_name }}</span></div>
+                        <div class="s-dr">
+                            <span class="l"><i class="fa fa-phone"></i>Mobile</span>
+                            <span class="v"><a href="tel:{{ $checkout->customer_mobile }}">{{ $checkout->customer_mobile }}</a></span>
+                        </div>
+                        @if ($checkout->zone_number || $checkout->street_number || $checkout->building_number)
+                            <div class="s-plates">
+                                <div class="s-plate"><span>Zone</span><b class="mono">{{ $checkout->zone_number ?: '—' }}</b></div>
+                                <div class="s-plate"><span>Street</span><b class="mono">{{ $checkout->street_number ?: '—' }}</b></div>
+                                <div class="s-plate"><span>Building</span><b class="mono">{{ $checkout->building_number ?: '—' }}</b></div>
+                            </div>
+                        @endif
+                        @if ($checkout->city)
+                            <div class="s-dr"><span class="l"><i class="fa fa-building-o"></i>City</span><span class="v">{{ $checkout->city }}</span></div>
+                        @endif
+                        @if ($checkout->address)
+                            <div class="s-dr"><span class="l"><i class="fa fa-map-marker"></i>Address</span><span class="v">{{ $checkout->address }}</span></div>
+                        @endif
+                        @if ($checkout->hasMapPin())
+                            <div class="s-map" wire:ignore>
+                                <iframe src="{{ $checkout->mapEmbedUrl() }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Delivery location"></iframe>
+                            </div>
+                            <div class="s-map-foot">
+                                <span class="mono">{{ number_format($checkout->latitude, 6) }}, {{ number_format($checkout->longitude, 6) }}</span>
+                                <a href="{{ $checkout->directionsUrl() }}" target="_blank" rel="noopener" class="s-btn flat"><i class="fa fa-location-arrow"></i>Directions</a>
+                            </div>
+                        @else
+                            <div class="s-ps" style="padding:6px 0"><i class="fa fa-info-circle"></i> The customer typed this address, so there is no map pin.</div>
+                        @endif
+                    @else
+                        <div class="s-fl"><i class="fa fa-shopping-bag"></i> Store pickup</div>
+                        <div class="s-dr"><span class="l"><i class="fa fa-building-o"></i>Pickup from</span><span class="v">{{ $checkout->branch?->name ?: '—' }}</span></div>
+                        <div class="s-dr"><span class="l"><i class="fa fa-user"></i>Customer</span><span class="v">{{ $checkout->customer_name }}</span></div>
+                        <div class="s-dr">
+                            <span class="l"><i class="fa fa-phone"></i>Mobile</span>
+                            <span class="v"><a href="tel:{{ $checkout->customer_mobile }}">{{ $checkout->customer_mobile }}</a></span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- ── COMBO OFFER ITEMS ────────────────────────────────────────────────── --}}
     @if (count($sale->comboOffers) > 0)
         <div class="s-card">
@@ -426,7 +547,7 @@
     </div>
 
     {{-- ── NOTES ────────────────────────────────────────────────────────────── --}}
-    @if ($sale['address'])
+    @if ($sale['address'] && !$checkout)
         <div class="s-card">
             <div class="s-ch"><i class="fa fa-pencil-square-o hi"></i>
                 <h4>Notes &amp; information</h4>

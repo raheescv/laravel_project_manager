@@ -223,4 +223,18 @@
     .dvx .s-combo .ch .nm { font-weight: 750; color: var(--acc-d); }
     .dvx .s-combo .li { display: flex; justify-content: space-between; gap: 10px; padding: 5px 10px; border-top: 1px solid var(--ln-s); }
     .dvx .s-combo .li .sub { font-size: 10.5px; color: var(--mut); }
+
+    /* ── Online order (storefront checkout) ── */
+    .dvx .s-txn { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 4px; border: 1px solid var(--ln-s); border-radius: 10px; background: var(--sf-2); }
+    .dvx .s-txn .s-pd { background: var(--tint); color: var(--acc); font-size: 15px; width: 34px; height: 34px; }
+    .dvx .s-txn .s-badge { margin-top: 2px; }
+    .dvx .s-copy { cursor: copy; word-break: break-all; }
+    .dvx .s-plates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--ln-s); }
+    /* Qatar's blue address plates: fixed blue, readable in both themes. */
+    .dvx .s-plate { background: #1d4f9c; color: #fff; border-radius: 7px; padding: 4px 8px; text-align: center; border: 2px solid rgba(255, 255, 255, .85); box-shadow: 0 0 0 1px #1d4f9c; }
+    .dvx .s-plate span { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
+    .dvx .s-plate b { font-size: 15px; font-weight: 800; line-height: 1.2; }
+    .dvx .s-map { margin-top: 8px; border: 1px solid var(--ln); border-radius: 10px; overflow: hidden; height: 220px; background: var(--sf-3); }
+    .dvx .s-map iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .dvx .s-map-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 6px; font-size: 10.5px; color: var(--mut); }
 </style>

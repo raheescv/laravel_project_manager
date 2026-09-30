@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\NotificationCreatedEvent;
+use App\Livewire\Sale\View as SaleView;
 use App\Models\Configuration;
 use App\Models\Permission;
 use App\Models\Sale;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
@@ -464,4 +466,79 @@ it('sends no notification when the payment does not go through', function (): vo
 
     expect(DB::table('notifications')->count())->toBe(0);
     Event::assertNotDispatched(NotificationCreatedEvent::class);
+});
+
+it('shows the Tap transaction, delivery plates and map pin on the sale view', function (): void {
+    Http::fake(fn (Request $request) => Http::response(storefrontTapCharge($request->method() === 'POST' ? [] : [
+        'status' => 'CAPTURED',
+        'source' => ['payment_method' => 'VISA', 'payment_type' => 'DEBIT'],
+        'card' => ['first_six' => '450875', 'last_four' => '1019', 'brand' => 'VISA'],
+        'reference' => ['payment' => '3029251234', 'acquirer' => '529212345678', 'gateway' => '1234567'],
+        'receipt' => ['id' => '203029251234'],
+        'response' => ['code' => '000', 'message' => 'Captured'],
+    ])));
+    Configuration::where('key', TapSettings::KEY)->update(['value' => json_encode([
+        'enabled' => true,
+        'payment_account_id' => $this->tapAccountId,
+        'user_id' => $this->world->user->id,
+        'delivery_branch_id' => $this->world->branch->id,
+    ])]);
+    Cache::put('qnas:buildings:56:340', [['number' => '12', 'lat' => 25.2854473, 'lng' => 51.5310398]]);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world, [
+        'fulfilment' => 'delivery',
+        'branchId' => null,
+        'zoneNumber' => '56',
+        'streetNumber' => '340',
+        'buildingNumber' => '12',
+        'city' => 'Doha',
+    ]))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $checkout = StorefrontCheckout::withoutGlobalScopes()->sole();
+    expect($checkout->paymentDetails())->toMatchArray([
+        'method' => 'VISA',
+        'payment_type' => 'DEBIT',
+        'card_number' => '450875 •• 1019',
+        'payment_reference' => '3029251234',
+        'receipt_no' => '203029251234',
+    ]);
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('Online order')
+        ->assertSee('chg_TS_test_0001')
+        ->assertSee('450875 •• 1019')
+        ->assertSee('529212345678')
+        ->assertSeeInOrder(['Zone', '56', 'Street', '340', 'Building', '12'])
+        ->assertSee('https://maps.google.com/maps?q=25.2854473,51.5310398&amp;z=16&amp;output=embed', false)
+        ->assertSee('https://www.google.com/maps/dir/?api=1&amp;destination=25.2854473,51.5310398', false)
+        ->assertDontSee('Notes &amp; information', false);
+});
+
+it('shows the pickup shop instead of a map for a pickup order', function (): void {
+    storefrontFakeTap('CAPTURED');
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('Store pickup')
+        ->assertSee($this->world->branch->name)
+        ->assertDontSee('output=embed', false);
+});
+
+it('searches the typed address when the customer dropped no pin', function (): void {
+    $checkout = new StorefrontCheckout(['fulfilment' => 'delivery', 'address' => 'Zone 56, Street 340, Building 12, Doha']);
+
+    expect($checkout->hasMapPin())->toBeFalse()
+        ->and($checkout->mapEmbedUrl())->toBeNull()
+        ->and($checkout->directionsUrl())->toBeNull()
+        ->and($checkout->mapUrl())->toBe('https://www.google.com/maps/search/?api=1&query=Zone%2056%2C%20Street%20340%2C%20Building%2012%2C%20Doha')
+        ->and($checkout->paymentDetails()['card_number'])->toBeNull();
 });

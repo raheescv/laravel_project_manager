@@ -86,4 +86,64 @@ class StorefrontCheckout extends Model implements AuditableContracts
     {
         return $this->belongsTo(Sale::class);
     }
+
+    public function isDelivery(): bool
+    {
+        return $this->fulfilment === 'delivery';
+    }
+
+    public function hasMapPin(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
+    }
+
+    /**
+     * The transaction facts worth showing staff, read from the stored Tap charge.
+     * Every key is optional in Tap's payload, so a missing one comes back null.
+     *
+     * @return array{method: ?string, payment_type: ?string, card_number: ?string, payment_reference: ?string, acquirer_reference: ?string, gateway_reference: ?string, receipt_no: ?string, response_code: ?string, response_message: ?string}
+     */
+    public function paymentDetails(): array
+    {
+        $charge = $this->gateway_response ?? [];
+        $firstSix = data_get($charge, 'card.first_six');
+        $lastFour = data_get($charge, 'card.last_four');
+
+        return [
+            'method' => data_get($charge, 'source.payment_method') ?: data_get($charge, 'card.brand') ?: data_get($charge, 'card.scheme'),
+            'payment_type' => data_get($charge, 'source.payment_type'),
+            'card_number' => $lastFour ? ($firstSix ? $firstSix.' •• ' : '•••• ').$lastFour : null,
+            'payment_reference' => data_get($charge, 'reference.payment'),
+            'acquirer_reference' => data_get($charge, 'reference.acquirer'),
+            'gateway_reference' => data_get($charge, 'reference.gateway'),
+            'receipt_no' => data_get($charge, 'receipt.id'),
+            'response_code' => data_get($charge, 'response.code'),
+            'response_message' => data_get($charge, 'response.message'),
+        ];
+    }
+
+    /** Google Maps, keyless embed of the delivery pin. */
+    public function mapEmbedUrl(): ?string
+    {
+        return $this->hasMapPin()
+            ? "https://maps.google.com/maps?q={$this->latitude},{$this->longitude}&z=16&output=embed"
+            : null;
+    }
+
+    /** Opens the pin, or searches the typed address when the customer picked no pin. */
+    public function mapUrl(): ?string
+    {
+        if ($this->hasMapPin()) {
+            return "https://www.google.com/maps?q={$this->latitude},{$this->longitude}";
+        }
+
+        return $this->address ? 'https://www.google.com/maps/search/?api=1&query='.rawurlencode($this->address) : null;
+    }
+
+    public function directionsUrl(): ?string
+    {
+        return $this->hasMapPin()
+            ? "https://www.google.com/maps/dir/?api=1&destination={$this->latitude},{$this->longitude}"
+            : null;
+    }
 }
