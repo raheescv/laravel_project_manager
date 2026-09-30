@@ -81,6 +81,14 @@ class OnlinePayments extends Component
         $this->sortField = $field;
     }
 
+    /** A summary card filters the list; pressing the active card again shows everything. */
+    public function filterStatus(string $status): void
+    {
+        $status = in_array($status, self::statuses(), true) ? $status : '';
+        $this->status = $this->status === $status ? '' : $status;
+        $this->resetPage();
+    }
+
     public function resetFilters(): void
     {
         $this->reset(['search', 'status', 'fulfilment']);

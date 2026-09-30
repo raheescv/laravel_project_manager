@@ -99,3 +99,20 @@ it('asks Tap about a pending payment from its row', function (): void {
     expect($checkout->fresh()->status)->toBe(StorefrontCheckout::STATUS_FAILED)
         ->and($checkout->fresh()->failure_reason)->toBe('Declined');
 });
+
+it('filters by status from the summary cards and clears on a second press', function (): void {
+    onlinePayment($this->world, ['customer_name' => 'Paid Person']);
+    onlinePayment($this->world, ['status' => StorefrontCheckout::STATUS_REFUNDED, 'customer_name' => 'Refunded Person']);
+
+    $names = fn ($component) => $component->viewData('rows')->pluck('customer_name')->sort()->values()->all();
+
+    $component = Livewire::test(OnlinePayments::class)->call('filterStatus', 'refunded');
+    expect($component->get('status'))->toBe('refunded')
+        ->and($names($component))->toBe(['Refunded Person']);
+
+    $component->call('filterStatus', 'refunded');
+    expect($component->get('status'))->toBe('')
+        ->and($names($component))->toBe(['Paid Person', 'Refunded Person']);
+
+    expect(Livewire::test(OnlinePayments::class)->call('filterStatus', 'bogus')->get('status'))->toBe('');
+});

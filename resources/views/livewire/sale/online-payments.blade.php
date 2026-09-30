@@ -1,6 +1,13 @@
 <div>
     <x-report.studio />
 
+    <style>
+        .wrx .op-stat { font: inherit; text-align: start; width: 100%; cursor: pointer; }
+        .wrx .op-stat.is-on:not(.hero) { border-color: var(--wrx-ac); box-shadow: 0 0 0 2px var(--wrx-ac-soft); }
+        .wrx .op-stat.hero:not(.is-on) { opacity: .82; }
+        .wrx .op-stat:focus-visible { outline: 2px solid var(--wrx-ac); outline-offset: 2px; }
+    </style>
+
     @php
         $statuses = [
             '' => 'All statuses',
@@ -76,36 +83,25 @@
             <div class="main">
                 <div class="wrxsum">
                     <div class="wrxsum__row">
-                        <div class="stat hero">
+                        <button type="button" class="stat hero op-stat {{ $status === '' ? 'is-on' : '' }}" wire:click="filterStatus('')" title="Show all payments">
                             <span class="stat__ic"><i class="fa fa-money"></i></span>
                             <div class="k">Collected</div>
                             <div class="v">{{ currency($totals['collected']) }}</div>
-                        </div>
-                        <div class="stat">
-                            <span class="stat__ic"><i class="fa fa-check"></i></span>
-                            <div class="k">Paid orders</div>
-                            <div class="v">{{ number_format($totals['paid']) }}</div>
-                        </div>
-                        <div class="stat warn">
-                            <span class="stat__ic"><i class="fa fa-clock-o"></i></span>
-                            <div class="k">Pending</div>
-                            <div class="v">{{ number_format($totals['pending']) }}</div>
-                        </div>
-                        <div class="stat off">
-                            <span class="stat__ic"><i class="fa fa-times"></i></span>
-                            <div class="k">Failed</div>
-                            <div class="v">{{ number_format($totals['failed']) }}</div>
-                        </div>
-                        <div class="stat bad">
-                            <span class="stat__ic"><i class="fa fa-exclamation-triangle"></i></span>
-                            <div class="k">Needs review</div>
-                            <div class="v">{{ number_format($totals['review']) }}</div>
-                        </div>
-                        <div class="stat off">
-                            <span class="stat__ic"><i class="fa fa-undo"></i></span>
-                            <div class="k">Refunded</div>
-                            <div class="v">{{ number_format($totals['refunded']) }}</div>
-                        </div>
+                        </button>
+                        @foreach ([
+                            'paid' => ['', 'fa-check', 'Paid orders'],
+                            'pending' => ['warn', 'fa-clock-o', 'Pending'],
+                            'failed' => ['off', 'fa-times', 'Failed'],
+                            'review' => ['bad', 'fa-exclamation-triangle', 'Needs review'],
+                            'refunded' => ['off', 'fa-undo', 'Refunded'],
+                        ] as $key => [$tone, $icon, $label])
+                            <button type="button" class="stat op-stat {{ $tone }} {{ $status === $key ? 'is-on' : '' }}" wire:click="filterStatus('{{ $key }}')"
+                                aria-pressed="{{ $status === $key ? 'true' : 'false' }}" title="{{ $status === $key ? 'Show all payments' : 'Show only ' . strtolower($label) }}">
+                                <span class="stat__ic"><i class="fa {{ $icon }}"></i></span>
+                                <div class="k">{{ $label }}</div>
+                                <div class="v">{{ number_format($totals[$key]) }}</div>
+                            </button>
+                        @endforeach
                     </div>
                     <p class="wrxsum__note">
                         "Collected" is every charge Tap captured, including "Needs review" — money taken for an order that could not be recorded as a sale
