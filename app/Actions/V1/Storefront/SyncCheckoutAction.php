@@ -141,7 +141,7 @@ class SyncCheckoutAction
             throw new RuntimeException('The payment account set for online sales no longer exists.');
         }
 
-        $customer = $this->resolveCustomer($checkout->customer_name, $checkout->customer_mobile);
+        $customer = $this->resolveCustomer($checkout->customer_name, $checkout->customer_mobile, $checkout->customer_email);
         $amount = (float) $checkout->amount;
         $branchId = (int) ($settings->deliveryBranchId ?? $checkout->branch_id);
         $lines = $branchId === (int) $checkout->branch_id
@@ -263,15 +263,23 @@ class SyncCheckoutAction
      * The customer account for the sale — matched by name and mobile, the same
      * rule the mobile POS uses, so an online shopper and a walk-in with the same
      * details land on one account.
+     *
+     * The shopper's email is kept on a new account, and filled in on an existing
+     * one that has none; an email staff already recorded is never replaced.
      */
-    private function resolveCustomer(string $name, string $mobile): Account
+    private function resolveCustomer(string $name, string $mobile, ?string $email = null): Account
     {
         $name = trim($name);
         $mobile = trim($mobile);
+        $email = $this->storableEmail($email);
 
         $existing = Account::customer()->where('name', $name)->where('mobile', $mobile)->first();
 
         if ($existing) {
+            if ($email && blank($existing->email)) {
+                $existing->update(['email' => $email]);
+            }
+
             return $existing;
         }
 
@@ -280,6 +288,7 @@ class SyncCheckoutAction
             'account_category_id' => AccountCategory::firstOrCreate(['name' => 'Account Receivable'])->id,
             'name' => $name,
             'mobile' => $mobile,
+            'email' => $email,
             'model' => 'customer',
         ]);
 
@@ -288,5 +297,16 @@ class SyncCheckoutAction
         }
 
         return $response['data'];
+    }
+
+    /**
+     * A valid email that fits the account's column (50 chars), or null — a clipped
+     * address would be worse than none.
+     */
+    private function storableEmail(?string $email): ?string
+    {
+        $email = trim((string) $email);
+
+        return $email !== '' && mb_strlen($email) <= 50 && filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
     }
 }

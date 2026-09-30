@@ -2,6 +2,7 @@
 
 use App\Events\NotificationCreatedEvent;
 use App\Livewire\Sale\View as SaleView;
+use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Permission;
 use App\Models\Sale;
@@ -542,3 +543,35 @@ it('searches the typed address when the customer dropped no pin', function (): v
         ->and($checkout->mapUrl())->toBe('https://www.google.com/maps/search/?api=1&query=Zone%2056%2C%20Street%20340%2C%20Building%2012%2C%20Doha')
         ->and($checkout->paymentDetails()['card_number'])->toBeNull();
 });
+
+it('keeps the shopper email on the customer it creates', function (): void {
+    storefrontFakeTap('CAPTURED');
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $customer = Account::withoutGlobalScopes()->find(Sale::withoutGlobalScopes()->sole()->account_id);
+    expect($customer->name)->toBe('Aisha Khan')
+        ->and($customer->email)->toBe('aisha@example.com');
+});
+
+it('fills a missing email on a returning customer but never replaces one', function (?string $stored, string $expected): void {
+    storefrontFakeTap('CAPTURED');
+    $existing = Account::create([
+        'tenant_id' => $this->world->tenant->id,
+        'account_type' => 'asset',
+        'name' => 'Aisha Khan',
+        'mobile' => '55123456',
+        'email' => $stored,
+        'model' => 'customer',
+    ]);
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    expect(Sale::withoutGlobalScopes()->sole()->account_id)->toBe($existing->id)
+        ->and($existing->fresh()->email)->toBe($expected);
+})->with([
+    'no email yet' => [null, 'aisha@example.com'],
+    'staff recorded one' => ['aisha.office@example.com', 'aisha.office@example.com'],
+]);
