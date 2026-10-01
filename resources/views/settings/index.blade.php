@@ -699,6 +699,14 @@
                                 @endcan
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
+                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsLeadSettings" type="button"
+                                            role="tab" aria-selected="false" tabindex="-1">
+                                            <i class="demo-pli-list-view"></i><span>Lead Settings</span>
+                                        </button>
+                                    </li>
+                                @endcan
+                                @can('configuration.settings')
+                                    <li class="nav-item" role="presentation">
                                         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-data-storage"></i><span>Universal UOM</span>
@@ -873,6 +881,12 @@
                                 @can('rent out.view')
                                     <div id="tabsRentOutSettings" class="tab-pane" role="tabpanel">
                                         @livewire('settings.rent-out-configuration')
+                                    </div>
+                                @endcan
+                                @can('configuration.settings')
+                                    <div id="tabsLeadSettings" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.lead-assignee-designations')
+                                        @livewire('settings.lead-dropdown-options')
                                     </div>
                                 @endcan
                                 @if (\App\Support\ModuleAccess::school() && auth()->user()->can('student settings.edit'))

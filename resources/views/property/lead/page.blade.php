@@ -31,6 +31,7 @@
     
     @push('scripts')
         <x-select.propertyGroupSelect />
+        <x-select.propertyTypeSelect />
         <x-select.employeeSelect />
     @endpush
 </x-app-layout>

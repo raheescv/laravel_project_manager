@@ -59,7 +59,7 @@ beforeEach(function (): void {
 it('prints the customer mobile with its arabic label by default', function (string $style): void {
     Configuration::updateOrCreate(['key' => 'thermal_printer_style'], ['value' => $style]);
 
-    $html = (new SaleHelper)->saleInvoice($this->saleId);
+    $html = (new SaleHelper())->saleInvoice($this->saleId);
 
     expect($html)->toContain('33647110');
     if ($style === 'with_arabic') {
@@ -71,7 +71,7 @@ it('hides the customer mobile when the setting is off', function (string $style)
     Configuration::updateOrCreate(['key' => 'thermal_printer_style'], ['value' => $style]);
     Configuration::updateOrCreate(['key' => 'enable_customer_mobile_in_print'], ['value' => 'no']);
 
-    $html = (new SaleHelper)->saleInvoice($this->saleId);
+    $html = (new SaleHelper())->saleInvoice($this->saleId);
 
     expect($html)->not->toContain('33647110')
         ->and($html)->not->toContain('الجوال');

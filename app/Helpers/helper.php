@@ -1190,45 +1190,14 @@ if (! function_exists('https_asset')) {
 if (! function_exists('leadSources')) {
     function leadSources(): array
     {
-        return [
-            'Social Media' => 'Social Media',
-            'Facebook' => 'Facebook',
-            'Instagram' => 'Instagram',
-            'Snapchat' => 'Snapchat',
-            'YouTube' => 'YouTube',
-            'SMS' => 'SMS',
-            'E-mail Campaign' => 'E-mail Campaign',
-            'Outdoor Marketing' => 'Outdoor Marketing',
-            'Personal' => 'Personal',
-            'Walk-In' => 'Walk-In',
-            'Local Broker' => 'Local Broker',
-            'International Broker' => 'International Broker',
-            'Other' => 'Other',
-        ];
+        return \App\Support\LeadOptions::sources();
     }
 }
 
 if (! function_exists('leadStatuses')) {
     function leadStatuses(): array
     {
-        return [
-            'New Lead' => 'New Lead',
-            'Follow Up' => 'Follow Up',
-            'Interested' => 'Interested',
-            'Not Interested' => 'Not Interested',
-            'Low Budget' => 'Low Budget',
-            'Visit Scheduled' => 'Visit Scheduled',
-            'Closed Deal' => 'Closed Deal',
-            'Shopping For Info' => 'Shopping For Info',
-            'Call Back' => 'Call Back',
-            'Same Day Call Back' => 'Same Day Call Back',
-            'No Answer' => 'No Answer',
-            'Whatsapp Only' => 'Whatsapp Only',
-            'Dead Lead' => 'Dead Lead',
-            'Rejected' => 'Rejected',
-            'Drop' => 'Drop',
-            'Follow Up For Visit' => 'Follow Up For Visit',
-        ];
+        return \App\Support\LeadOptions::statuses();
     }
 }
 
@@ -1238,7 +1207,32 @@ if (! function_exists('leadTypes')) {
         return [
             'Sales' => 'Sales',
             'Rentout' => 'Rentout',
+            'Corporate' => 'Corporate',
         ];
+    }
+}
+
+if (! function_exists('leadRentalTypes')) {
+    function leadRentalTypes(): array
+    {
+        return [
+            'Daily' => 'Daily',
+            'Weekly' => 'Weekly',
+            'Monthly' => 'Monthly',
+            'Yearly' => 'Yearly',
+        ];
+    }
+}
+
+if (! function_exists('leadSubOptions')) {
+    /**
+     * Sub options configured under a lead source or status (Settings → Lead Settings).
+     *
+     * @param  string  $key  lead_sub_sources | lead_sub_statuses
+     */
+    function leadSubOptions(string $key, ?string $parent): array
+    {
+        return \App\Support\LeadOptions::subOptionsFor($key, $parent);
     }
 }
 

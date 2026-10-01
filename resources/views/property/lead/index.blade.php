@@ -34,4 +34,5 @@
             </div>
         </div>
     </div>
+    <x-property.lead-column-visibility-canvas />
 </x-app-layout>

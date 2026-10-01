@@ -1,421 +1,489 @@
-<div>
+@use('App\Support\LeadPipeline')
+@php
+    $type = $formData['type'] ?? 'Sales';
+    $isSaleType = in_array($type, ['Sales', 'Corporate'], true);
+    $statusNow = $formData['status'] ?? 'New Lead';
+    $statusTone = LeadPipeline::tone(LeadPipeline::canonical($statusNow));
+    $stageKey = LeadPipeline::stageOf(LeadPipeline::canonical($statusNow));
+    $stageName = $stageKey ? LeadPipeline::stages()[$stageKey]['name'] : 'Needs fixing';
+    $typeIcons = ['Sales' => 'fa-tag', 'Rentout' => 'fa-key', 'Corporate' => 'fa-building'];
+    $typeLabels = ['Rentout' => 'Rent out'];
+    $budgetMin = $formData['budget_min'] ?? null;
+    $budgetMax = $formData['budget_max'] ?? null;
+    $budgetText = match (true) {
+        filled($budgetMin) && filled($budgetMax) => currency($budgetMin).' – '.currency($budgetMax),
+        filled($budgetMin) => 'From '.currency($budgetMin),
+        filled($budgetMax) => 'Up to '.currency($budgetMax),
+        default => null,
+    };
+    $meetingAt = filled($formData['meeting_date'] ?? null)
+        ? \Carbon\Carbon::parse($formData['meeting_date'].' '.($formData['meeting_time'] ?: '00:00'))
+        : null;
+    $assigneeName = filled($formData['assigned_to'] ?? null) ? \App\Models\User::find($formData['assigned_to'])?->name : null;
+    $locationRequired = LeadPipeline::canonical($statusNow) === 'Visit Scheduled';
+    $field = fn (string $key) => 'ctl'.($errors->has("formData.$key") ? ' is-invalid' : '');
+@endphp
+<div class="lfx">
+    <x-property.lead-form.premium />
+
     <form wire:submit.prevent="save">
         <div class="row g-3">
-            {{-- Main Form Card --}}
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0 fw-semibold">
-                            <i class="fa fa-id-card-o text-primary me-2"></i>Lead Information
-                        </h5>
-                        <span class="badge {{ leadStatusBadgeClass($formData['status'] ?? 'New Lead') }} fs-6">
-                            {{ $formData['status'] ?? 'New Lead' }}
-                        </span>
+            <div class="col-xl-8">
+                <div class="lfx-card">
+                    {{-- Identity --}}
+                    <div class="hero">
+                        <div class="avatar" style="--hue: {{ LeadPipeline::hue($formData['name'] ?? '') }}">{{ LeadPipeline::initials($formData['name'] ?? '') ?: '?' }}</div>
+                        <div class="hero-main">
+                            <input type="text" wire:model.blur="formData.name" class="hero-name {{ $errors->has('formData.name') ? 'is-invalid' : '' }}" placeholder="Lead name" aria-label="Lead name">
+                            <div class="hero-meta">
+                                @if($lead_id)
+                                    <span><i class="fa fa-bookmark-o"></i>Lead #{{ $lead_id }}</span>
+                                @else
+                                    <span><i class="fa fa-magic"></i>New lead</span>
+                                @endif
+                                <span><i class="fa fa-flag-o"></i>{{ $stageName }} stage</span>
+                                @if($assigneeName)
+                                    <span><i class="fa fa-user"></i>{{ $assigneeName }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="seg" role="radiogroup" aria-label="Lead type">
+                            @foreach($types as $key => $label)
+                                <input type="radio" id="lead_type_{{ $key }}" value="{{ $key }}" wire:model.live="formData.type">
+                                <label for="lead_type_{{ $key }}"><i class="fa {{ $typeIcons[$key] ?? 'fa-circle-o' }}"></i>{{ $typeLabels[$key] ?? $label }}</label>
+                            @endforeach
+                        </div>
+                        <span class="pill tn tn-{{ $statusTone }}"><span class="dot"></span>{{ $statusNow }}</span>
                     </div>
-                    <div class="card-body">
-                        @if ($errors->any())
-                            <div class="alert alert-danger d-flex align-items-start mb-3" role="alert">
-                                <i class="fa fa-exclamation-triangle me-2 mt-1"></i>
-                                <ul class="mb-0 ps-3">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->text('formData.name')->id('name')->class('form-control' . ($errors->has('formData.name') ? ' is-invalid' : ''))->placeholder('Name')->attribute('wire:model', 'formData.name') }}
-                                    <label for="name">Name <span class="text-danger">*</span></label>
-                                    @error('formData.name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    @if ($errors->any())
+                        <div class="alert-x" role="alert">
+                            <i class="fa fa-exclamation-triangle mt-1"></i>
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    {{-- Contact --}}
+                    <div class="sec">
+                        <div class="sec-h">
+                            <span class="sec-ic"><i class="fa fa-user"></i></span>
+                            <div>
+                                <p class="sec-t">Contact</p>
+                                <p class="sec-s">Mobile or email is required</p>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4 fld">
+                                <label for="mobile">Mobile <span class="req" title="Mobile or email is required">*</span></label>
+                                <div class="adorn">
+                                    <i class="fa fa-phone"></i>
+                                    <input type="tel" inputmode="numeric" id="mobile" wire:model="formData.mobile" class="{{ $field('mobile') }}" placeholder="Digits only, e.g. 97455551234">
+                                </div>
+                                @error('formData.mobile') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4 fld">
+                                <label for="email">Email <span class="req" title="Mobile or email is required">*</span></label>
+                                <div class="adorn">
+                                    <i class="fa fa-envelope-o"></i>
+                                    <input type="email" id="email" wire:model="formData.email" class="{{ $field('email') }}" placeholder="name@example.com">
+                                </div>
+                                @error('formData.email') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-md-4 fld">
+                                <div wire:ignore>
+                                    <label for="lead_country_id">Nationality <span class="req">*</span></label>
+                                    <select id="lead_country_id" class="tomSelect" placeholder="Search nationality...">
+                                        <option value=""></option>
+                                        @foreach($countries as $id => $name)
+                                            <option value="{{ $id }}" @selected(($formData['country_id'] ?? null) == $id)>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @error('formData.country_id') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Company --}}
+                    <div class="sec">
+                        <div class="sec-h">
+                            <span class="sec-ic"><i class="fa fa-building-o"></i></span>
+                            <div>
+                                <p class="sec-t">Company</p>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4 fld">
+                                <label for="company_name">Company name</label>
+                                <input type="text" id="company_name" wire:model="formData.company_name" class="ctl" placeholder="Company">
+                            </div>
+                            <div class="col-md-4 fld">
+                                <label for="company_contact_person">Contact person</label>
+                                <div class="adorn">
+                                    <i class="fa fa-user"></i>
+                                    <input type="text" id="company_contact_person" wire:model="formData.company_contact_person" class="ctl" placeholder="Full name">
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->text('formData.mobile')->id('mobile')->class('form-control' . ($errors->has('formData.mobile') ? ' is-invalid' : ''))->placeholder('Mobile')->attribute('wire:model', 'formData.mobile') }}
-                                    <label for="mobile">Mobile</label>
-                                    @error('formData.mobile') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->email('formData.email')->id('email')->class('form-control' . ($errors->has('formData.email') ? ' is-invalid' : ''))->placeholder('Email')->attribute('wire:model', 'formData.email') }}
-                                    <label for="email">Email</label>
-                                    @error('formData.email') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6" wire:ignore>
-                                <label class="form-label small fw-semibold text-muted mb-1">Status</label>
-                                <select id="lead_status_select" class="tomSelect" placeholder="Select status...">
-                                    <option value=""></option>
-                                    @foreach($statuses as $key => $label)
-                                        <option value="{{ $key }}" @selected(($formData['status'] ?? '') === $key)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->text('formData.company_name')->id('company_name')->class('form-control')->placeholder('Company')->attribute('wire:model', 'formData.company_name') }}
-                                    <label for="company_name">Company Name</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->text('formData.company_contact_no')->id('company_contact_no')->class('form-control')->placeholder('Company Contact')->attribute('wire:model', 'formData.company_contact_no') }}
-                                    <label for="company_contact_no">Company Contact No</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6" wire:ignore>
-                                <label class="form-label small fw-semibold text-muted mb-1">Project / Group</label>
-                                <select id="lead_property_group_id" class="select-property_group_id-list" placeholder="Search project / group...">
-                                    <option value=""></option>
-                                    @if(! empty($formData['property_group_id']))
-                                        <option value="{{ $formData['property_group_id'] }}" selected>
-                                            {{ $groups[$formData['property_group_id']] ?? '' }}
-                                        </option>
-                                    @endif
-                                </select>
-                            </div>
-                            <div class="col-md-6" wire:ignore>
-                                <label class="form-label small fw-semibold text-muted mb-1">Nationality</label>
-                                <select id="lead_country_id" class="tomSelect" placeholder="Search nationality...">
-                                    <option value=""></option>
-                                    @foreach($countries as $id => $name)
-                                        <option value="{{ $id }}" @selected(($formData['country_id'] ?? null) == $id)>{{ $name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->select('formData.source', ['' => '— Select Source —'] + $sources)->id('source')->class('form-select' . ($errors->has('formData.source') ? ' is-invalid' : ''))->attribute('wire:model', 'formData.source') }}
-                                    <label for="source">Source <span class="text-danger">*</span></label>
-                                    @error('formData.source') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->select('formData.type', $types)->id('type')->class('form-select' . ($errors->has('formData.type') ? ' is-invalid' : ''))->attribute('wire:model', 'formData.type') }}
-                                    <label for="type">Type <span class="text-danger">*</span></label>
-                                    @error('formData.type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6" wire:ignore>
-                                <label class="form-label small fw-semibold text-muted mb-1">Assigned To</label>
-                                <select id="lead_assigned_to" class="select-employee_id-list" placeholder="Search salesman...">
-                                    <option value=""></option>
-                                    @if(! empty($formData['assigned_to']))
-                                        <option value="{{ $formData['assigned_to'] }}" selected>
-                                            {{ $users[$formData['assigned_to']] ?? (\App\Models\User::find($formData['assigned_to'])?->name ?? '') }}
-                                        </option>
-                                    @endif
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    {{ html()->date('formData.assign_date')->id('assign_date')->class('form-control')->placeholder('Assign Date')->attribute('wire:model', 'formData.assign_date') }}
-                                    <label for="assign_date">Assign Date</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ html()->date('formData.meeting_date')->id('meeting_date')->class('form-control')->placeholder('Meeting Date')->attribute('wire:model', 'formData.meeting_date') }}
-                                    <label for="meeting_date">Meeting Date</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ html()->time('formData.meeting_time')->id('meeting_time')->class('form-control')->placeholder('Meeting Time')->attribute('wire:model', 'formData.meeting_time') }}
-                                    <label for="meeting_time">Meeting Time</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    {{ html()->select('formData.location', ['' => '— Select Location —'] + $locations)->id('location')->class('form-select')->attribute('wire:model', 'formData.location') }}
-                                    <label for="location">Location</label>
+                            <div class="col-md-4 fld">
+                                <label for="company_contact_no">Contact no</label>
+                                <div class="adorn">
+                                    <i class="fa fa-phone"></i>
+                                    <input type="tel" id="company_contact_no" wire:model="formData.company_contact_no" class="ctl" placeholder="Office number">
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-white border-top py-3 d-flex flex-wrap gap-2 justify-content-between">
-                        <a href="{{ route('property::lead::list') }}" class="btn btn-light">
-                            <i class="fa fa-times me-1"></i> Cancel
-                        </a>
-                        <div class="d-flex gap-2">
-                            @can('property lead.edit')
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="fa fa-save me-1"></i> Save Lead
+
+                    {{-- Source & pipeline --}}
+                    <div class="sec">
+                        <div class="sec-h">
+                            <span class="sec-ic"><i class="fa fa-filter"></i></span>
+                            <div>
+                                <p class="sec-t">Source &amp; pipeline</p>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            @foreach([
+                                ['field' => 'source', 'label' => 'Source', 'options' => $sources, 'required' => true, 'sub' => 'sub_source', 'subLabel' => 'Sub source', 'subOptions' => $subSources, 'noun' => 'source'],
+                                ['field' => 'status', 'label' => 'Status', 'options' => $statuses, 'required' => false, 'sub' => 'sub_status', 'subLabel' => 'Sub status', 'subOptions' => $subStatuses, 'noun' => 'status'],
+                            ] as $pick)
+                                @php $parent = $formData[$pick['field']] ?? null; @endphp
+                                <div class="col-sm-6 col-lg-3 fld">
+                                    <label for="{{ $pick['field'] }}">{{ $pick['label'] }} @if($pick['required'])<span class="req">*</span>@endif</label>
+                                    <select id="{{ $pick['field'] }}" wire:model.live="formData.{{ $pick['field'] }}" class="{{ $field($pick['field']) }}">
+                                        <option value="">Select {{ $pick['noun'] }}</option>
+                                        @foreach($pick['options'] as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('formData.'.$pick['field']) <div class="err">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-sm-6 col-lg-3 fld">
+                                    <label for="{{ $pick['sub'] }}">{{ $pick['subLabel'] }}</label>
+                                    <select id="{{ $pick['sub'] }}" wire:model="formData.{{ $pick['sub'] }}" wire:key="{{ $pick['sub'] }}-{{ md5((string) $parent) }}" class="{{ $field($pick['sub']) }}" @disabled(! count($pick['subOptions']))>
+                                        @if(blank($parent))
+                                            <option value="">Pick a {{ $pick['noun'] }} first</option>
+                                        @elseif(! count($pick['subOptions']))
+                                            <option value="">None for {{ $parent }}</option>
+                                        @else
+                                            <option value="">Select {{ strtolower($pick['subLabel']) }}</option>
+                                            @foreach($pick['subOptions'] as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    @if(filled($parent) && ! count($pick['subOptions']))
+                                        @can('configuration.settings')
+                                            <div class="hint"><a href="{{ route('settings::index', ['tab' => 'lead-settings']) }}" class="text-decoration-none" target="_blank"><i class="fa fa-plus-circle me-1"></i>Add in Lead Settings</a></div>
+                                        @endcan
+                                    @endif
+                                    @error('formData.'.$pick['sub']) <div class="err">{{ $message }}</div> @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Property requirements --}}
+                    <div class="sec">
+                        <div class="sec-h">
+                            <span class="sec-ic"><i class="fa fa-home"></i></span>
+                            <div>
+                                <p class="sec-t">Property requirements</p>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-sm-6 col-lg-6 fld" wire:ignore>
+                                <label for="lead_property_group_id">Project / group</label>
+                                <select id="lead_property_group_id" class="select-property_group_id-list" placeholder="Search project / group...">
+                                    <option value=""></option>
+                                    @if(! empty($formData['property_group_id']))
+                                        <option value="{{ $formData['property_group_id'] }}" selected>{{ $groups[$formData['property_group_id']] ?? '' }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-lg-6 fld" wire:ignore>
+                                <label for="lead_property_type_id">Property type</label>
+                                <select id="lead_property_type_id" class="select-property_type_id-list" placeholder="Search property type...">
+                                    <option value=""></option>
+                                    @if(! empty($formData['property_type_id']))
+                                        <option value="{{ $formData['property_type_id'] }}" selected>{{ $propertyTypes[$formData['property_type_id']] ?? '' }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="col-md-6 fld">
+                                <span class="fld-l">Budget range</span>
+                                <div class="budget">
+                                    <div class="adorn">
+                                        <i class="fa fa-money"></i>
+                                        <input type="number" min="0" step="any" inputmode="decimal" wire:model.blur="formData.budget_min" class="{{ $field('budget_min') }}" placeholder="Min" aria-label="Budget min">
+                                    </div>
+                                    <span class="dash">–</span>
+                                    <div class="adorn">
+                                        <i class="fa fa-money"></i>
+                                        <input type="number" min="0" step="any" inputmode="decimal" wire:model.blur="formData.budget_max" class="{{ $field('budget_max') }}" placeholder="Max" aria-label="Budget max">
+                                    </div>
+                                </div>
+                                @error('formData.budget_min') <div class="err">{{ $message }}</div> @enderror
+                                @error('formData.budget_max') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                            @if($type === 'Rentout')
+                            <div class="col-md-6 fld">
+                                <span class="fld-l">Rental type</span>
+                                <div class="seg block" role="radiogroup" aria-label="Rental type">
+                                    <input type="radio" id="rental_type_any" value="" wire:model.live="formData.rental_type">
+                                    <label for="rental_type_any">Any</label>
+                                    @foreach($rentalTypes as $key => $label)
+                                        <input type="radio" id="rental_type_{{ $key }}" value="{{ $key }}" wire:model.live="formData.rental_type">
+                                        <label for="rental_type_{{ $key }}">{{ $label }}</label>
+                                    @endforeach
+                                </div>
+                                @error('formData.rental_type') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Assignment & meeting --}}
+                    <div class="sec">
+                        <div class="sec-h">
+                            <span class="sec-ic"><i class="fa fa-calendar"></i></span>
+                            <div>
+                                <p class="sec-t">Assignment &amp; meeting</p>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-sm-6 col-lg-3 fld" wire:ignore>
+                                <label for="lead_assigned_to">Assigned to</label>
+                                <select id="lead_assigned_to" class="select-employee_id-list" data-designations="{{ implode(',', \App\Support\LeadOptions::assigneeDesignationIds()) }}" placeholder="Search salesman...">
+                                    <option value=""></option>
+                                    @if(! empty($formData['assigned_to']))
+                                        <option value="{{ $formData['assigned_to'] }}" selected>{{ $assigneeName }}</option>
+                                    @endif
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-lg-3 fld">
+                                <label for="assign_date">Assign date</label>
+                                <input type="date" id="assign_date" wire:model="formData.assign_date" class="ctl">
+                            </div>
+                            <div class="col-md-6 col-lg-3 fld">
+                                <label for="meeting_date">Meeting date</label>
+                                <input type="date" id="meeting_date" wire:model.blur="formData.meeting_date" class="ctl">
+                            </div>
+                            <div class="col-md-6 col-lg-3 fld">
+                                <label for="meeting_time">Meeting time</label>
+                                <input type="time" id="meeting_time" wire:model.blur="formData.meeting_time" class="ctl">
+                            </div>
+                            <div class="col-lg-6 fld">
+                                <span class="fld-l">Location @if($locationRequired)<span class="req">*</span>@endif</span>
+                                <div class="seg block" role="radiogroup" aria-label="Meeting location">
+                                    @foreach($locations as $key => $label)
+                                        <input type="radio" id="location_{{ \Illuminate\Support\Str::slug($key) }}" value="{{ $key }}" wire:model.live="formData.location">
+                                        <label for="location_{{ \Illuminate\Support\Str::slug($key) }}">{{ $label }}</label>
+                                    @endforeach
+                                </div>
+                                @error('formData.location') <div class="err">{{ $message }}</div> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="foot">
+                        <a href="{{ route('property::lead::list') }}" class="btn-x"><i class="fa fa-times"></i> Cancel</a>
+                        <div class="d-flex flex-wrap gap-2">
+                            @can($lead_id ? 'property lead.edit' : 'property lead.create')
+                                <button type="submit" class="btn-x pri" wire:loading.attr="disabled" wire:target="save">
+                                    <i class="fa fa-check" wire:loading.remove wire:target="save"></i>
+                                    <i class="fa fa-spinner fa-spin" wire:loading wire:target="save"></i>
+                                    {{ $lead_id ? 'Save changes' : 'Create lead' }}
                                 </button>
                             @endcan
                             @if($lead_id)
                                 @can('property lead.booking transfer')
-                                    <button type="button" wire:click="transfer" class="btn btn-success px-4"
-                                        wire:confirm="Transfer this lead to a {{ ($formData['type'] ?? 'Sales') === 'Sales' ? 'Sale' : 'Rentout' }} booking?">
-                                        <i class="fa fa-exchange me-1"></i> Transfer to {{ ($formData['type'] ?? 'Sales') === 'Sales' ? 'Sale' : 'Rentout' }} Booking
+                                    <button type="button" wire:click="transfer" class="btn-x ok" wire:confirm="Transfer this lead to a {{ $isSaleType ? 'Sale' : 'Rentout' }} booking?">
+                                        <i class="fa fa-exchange"></i> Transfer to {{ $isSaleType ? 'Sale' : 'Rentout' }} booking
                                     </button>
                                 @endcan
                             @endif
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            {{-- Notes Sidebar --}}
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-3 sticky-lg-top" style="top: 80px;">
-                    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0 fw-semibold">
-                            <i class="fa fa-sticky-note-o text-primary me-2"></i>Notes &amp; Activity
-                        </h5>
-                        <span class="badge bg-primary-subtle text-primary">{{ count($notes) }}</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 mb-3">
-                            <div class="col-12">
-                                {{ html()->date('noteDate')->class('form-control form-control-sm')->attribute('wire:model', 'noteDate') }}
-                            </div>
-                            <div class="col-12">
-                                {{ html()->textarea('note')->rows(2)->class('form-control form-control-sm')->placeholder('Add a note... (press Enter to save)')->attribute('wire:model', 'note')->attribute('wire:keydown.enter.prevent', 'addNote') }}
-                            </div>
-                            <div class="col-12 d-grid">
-                                <button type="button" wire:click="addNote" class="btn btn-primary btn-sm">
-                                    <i class="fa fa-plus-circle me-1"></i> Add Note
-                                </button>
+            {{-- Side rail --}}
+            <div class="col-xl-4">
+                <div class="sticky-xl-top" style="top: 80px;">
+                    <div class="lfx-card">
+                        <div class="rail-h">
+                            <h6><i class="fa fa-bolt me-2 text-primary"></i>Snapshot</h6>
+                        </div>
+                        <div class="rail-b">
+                            <div class="snap">
+                                <div class="snap-i">
+                                    <div class="snap-k">Type</div>
+                                    <div class="snap-v"><i class="fa {{ $typeIcons[$type] ?? 'fa-circle-o' }} me-1 text-primary"></i>{{ $typeLabels[$type] ?? $type }}</div>
+                                </div>
+                                <div class="snap-i">
+                                    <div class="snap-k">Stage</div>
+                                    <div class="snap-v">{{ $stageName }}</div>
+                                </div>
+                                <div class="snap-i wide">
+                                    <div class="snap-k">Budget{{ $type === 'Rentout' && filled($formData['rental_type'] ?? null) ? ' · '.$formData['rental_type'] : '' }}</div>
+                                    <div class="snap-v {{ $budgetText ? '' : 'empty' }}">{{ $budgetText ?? 'Not captured' }}</div>
+                                </div>
+                                <div class="snap-i wide">
+                                    <div class="snap-k">Next meeting</div>
+                                    @if($meetingAt)
+                                        <div class="snap-v">{{ filled($formData['meeting_time'] ?? null) ? systemDateTime($meetingAt) : systemDate($meetingAt) }}</div>
+                                        <div class="small text-muted">{{ $meetingAt->diffForHumans() }}{{ filled($formData['location'] ?? null) ? ' · '.$formData['location'] : '' }}</div>
+                                    @else
+                                        <div class="snap-v empty">Not scheduled</div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <hr class="my-2">
-
-                        @if(count($notes))
-                            <ul class="list-unstyled mb-0 lead-notes-list">
-                                @foreach(array_reverse($notes, true) as $key => $item)
-                                    <li class="d-flex gap-2 py-2 border-bottom">
-                                        <div class="flex-shrink-0">
-                                            <span class="avatar-circle bg-primary-subtle text-primary">
-                                                <i class="fa fa-comment-o"></i>
-                                            </span>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start gap-2">
-                                                <div>
-                                                    <div class="fw-semibold small text-dark">{{ $item['note'] ?? '' }}</div>
-                                                    <div class="small text-muted">
-                                                        <i class="fa fa-clock-o me-1"></i>{{ $item['date'] ?? '' }}
-                                                        @if(! empty($item['user']))
-                                                            · <i class="fa fa-user me-1"></i>{{ $item['user'] }}
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                                @can('property lead.delete note')
-                                                    <button type="button" wire:click="removeNote({{ $key }})" class="btn btn-link btn-sm text-danger p-0">
-                                                        <i class="fa fa-trash"></i>
-                                                    </button>
-                                                @endcan
-                                            </div>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <div class="text-center text-muted py-4 small">
-                                <i class="fa fa-comments-o fa-2x d-block mb-2 opacity-25"></i>
-                                No notes added yet.
+                    <div class="lfx-card">
+                        <div class="rail-h">
+                            <h6><i class="fa fa-pencil-square-o me-2 text-primary"></i>Notes &amp; activity</h6>
+                            <span class="count">{{ count($notes) }}</span>
+                        </div>
+                        <div class="rail-b">
+                            <div class="note-in">
+                                <input type="date" wire:model="noteDate" class="ctl" aria-label="Note date">
+                                <button type="button" wire:click="addNote" class="btn-x pri justify-content-center" style="grid-column: auto"><i class="fa fa-plus"></i> Add note</button>
+                                <textarea rows="2" wire:model="note" wire:keydown.enter.prevent="addNote" class="ctl" placeholder="Add a note… (Enter to add)"></textarea>
                             </div>
-                        @endif
+
+                            @if(count($notes))
+                                <ul class="timeline">
+                                    @foreach(array_reverse($notes, true) as $key => $item)
+                                        <li>
+                                            <span class="tdot"><i class="fa fa-comment-o"></i></span>
+                                            <div class="tbody">
+                                                <div class="tnote">{{ $item['note'] ?? '' }}</div>
+                                                <div class="tmeta">
+                                                    @php
+                                                        // Older notes carry only a date; newer ones also record when they were added.
+                                                        $notedAt = ! empty($item['created_at']) ? \Carbon\Carbon::parse($item['created_at']) : (! empty($item['date']) ? \Carbon\Carbon::parse($item['date']) : null);
+                                                    @endphp
+                                                    @if($notedAt)
+                                                        <span title="{{ ! empty($item['created_at']) ? systemDateTime($notedAt) : systemDate($notedAt) }}">
+                                                            <i class="fa fa-clock-o me-1"></i>{{ ! empty($item['created_at']) ? $notedAt->diffForHumans() : ($notedAt->isToday() ? 'Today' : $notedAt->diffForHumans(['parts' => 1])) }}
+                                                            · {{ ! empty($item['created_at']) ? systemDateTime($notedAt) : systemDate($notedAt) }}
+                                                        </span>
+                                                    @endif
+                                                    @if(! empty($item['user']))
+                                                        <span><i class="fa fa-user me-1"></i>{{ $item['user'] }}</span>
+                                                    @endif
+                                                    @can('property lead.delete note')
+                                                        <button type="button" wire:click="removeNote({{ $key }})" class="tdel" aria-label="Delete note"><i class="fa fa-trash-o"></i></button>
+                                                    @endcan
+                                                </div>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <div class="empty-s"><i class="fa fa-comments-o"></i>No notes added yet.</div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        {{-- Audit Report (full width) --}}
-        @if($lead_id && count($audits))
-            @php
-                $auditHideColumns = ['id','tenant_id','branch_id','remarks','deleted_at','meeting_datetime','created_by','updated_by','created_at','updated_at'];
-                $displayAuditColumns = array_values(array_diff($auditColumns, $auditHideColumns));
-
-                $renderLeadAuditValue = function ($col, $val) {
-                    if ($val === null || $val === '') {
-                        return '<span class="text-muted">-</span>';
-                    }
-                    switch ($col) {
-                        case 'country_id':
-                            return e(optional(\App\Models\Country::find($val))->name ?? '-');
-                        case 'assigned_to':
-                            return e(optional(\App\Models\User::find($val))->name ?? '-');
-                        case 'property_group_id':
-                            return e(optional(\App\Models\PropertyGroup::find($val))->name ?? '-');
-                        case 'status':
-                            return '<span class="badge ' . e(leadStatusBadgeClass($val)) . '">' . e($val) . '</span>';
-                        case 'type':
-                            $cls = $val === 'Sales' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info';
-                            return '<span class="badge ' . $cls . '">' . e($val) . '</span>';
-                        default:
-                            return e($val);
-                    }
-                };
-            @endphp
-            <div class="card shadow-sm border-0 mb-3 lead-audit-card">
-                <div class="card-header lead-audit-header d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0 fw-semibold text-white">
-                        <i class="fa fa-history me-2"></i>Audit Report
-                        <span class="badge bg-white text-dark ms-2">{{ count($audits) }} {{ \Illuminate\Support\Str::plural('record', count($audits)) }}</span>
-                    </h5>
-                </div>
-                <div class="card-body p-2">
-                    <div class="audit-pivot-list">
-                        <div class="audit-pivot-scroll">
-                            <table class="table table-bordered table-sm align-middle mb-0 audit-pivot-table">
-                                <thead>
-                                    <tr>
-                                        <th class="audit-pivot-field-col audit-pivot-sticky">Field</th>
-                                        @foreach($audits as $key => $audit)
-                                            @php
-                                                $userName = $audit['user']['name'] ?? null;
-                                                $userInitial = $userName ? strtoupper(substr($userName, 0, 1)) : 'S';
-                                            @endphp
-                                            <th class="audit-pivot-change-col">
-                                                <div class="d-flex flex-column gap-1">
-                                                    <span class="audit-entry-index badge bg-light text-dark border align-self-start">#{{ $key + 1 }}</span>
-                                                    <span class="text-nowrap small fw-normal"><i class="fa fa-clock-o me-1 text-primary"></i>{{ \Carbon\Carbon::parse($audit['created_at'])->format('Y-m-d H:i:s') }}</span>
-                                                    <span class="text-nowrap small fw-normal">
-                                                        <span class="audit-user-avatar bg-primary-subtle text-primary me-1">{{ $userInitial }}</span>
-                                                        <span class="fw-semibold">{{ $userName ?: 'System' }}</span>
-                                                    </span>
-                                                </div>
-                                            </th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($displayAuditColumns as $col)
-                                        <tr>
-                                            <th class="audit-pivot-field-col audit-pivot-sticky text-muted">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
-                                            @foreach($audits as $audit)
-                                                @php
-                                                    $newVals = $audit['new_values'] ?? [];
-                                                    $oldVals = $audit['old_values'] ?? [];
-                                                    $hasOld = array_key_exists($col, $oldVals);
-                                                    $hasNew = array_key_exists($col, $newVals);
-                                                    $oldVal = $oldVals[$col] ?? null;
-                                                    $newVal = $newVals[$col] ?? null;
-                                                    $changed = $hasOld && $hasNew && $oldVal !== $newVal;
-                                                @endphp
-                                                <td class="audit-pivot-change-col">
-                                                    @if ($changed)
-                                                        <span class="text-danger text-decoration-line-through">{!! $renderLeadAuditValue($col, $oldVal) !!}</span>
-                                                        <i class="fa fa-arrow-right text-muted mx-1"></i>
-                                                        <span class="text-success fw-semibold">{!! $renderLeadAuditValue($col, $newVal) !!}</span>
-                                                    @elseif ($hasNew)
-                                                        <span class="text-success">{!! $renderLeadAuditValue($col, $newVal) !!}</span>
-                                                    @elseif ($hasOld)
-                                                        <span class="text-danger">{!! $renderLeadAuditValue($col, $oldVal) !!}</span>
-                                                    @else
-                                                        <span class="text-muted">-</span>
-                                                    @endif
-                                                </td>
-                                            @endforeach
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="{{ count($audits) + 1 }}" class="text-center text-muted small py-3">No field changes recorded.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
     </form>
 
-    @push('styles')
-        <style>
-            .avatar-circle {
-                width: 32px; height: 32px;
-                display: inline-flex; align-items: center; justify-content: center;
-                border-radius: 50%; font-size: 0.85rem;
-            }
-            .lead-notes-list li:last-child { border-bottom: 0 !important; }
+        {{-- Change history: one row per change, one column per field --}}
+        @if($auditTrail)
+            @php
+                $auditRows = $auditTrail['rows'];
+                $auditColumnsShown = $auditTrail['columns'];
+                $auditPreview = 15;
+                $eventChip = ['created' => ['Created', 'success', 'fa-plus'], 'updated' => ['Updated', 'primary', 'fa-pencil'], 'deleted' => ['Deleted', 'danger', 'fa-trash-o'], 'restored' => ['Restored', 'info', 'fa-undo']];
+            @endphp
+            <div class="lfx-card atx" x-data="{ all: false }">
+                <div class="rail-h">
+                    <h6><i class="fa fa-history me-2 text-primary"></i>Change history</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="small text-muted d-none d-sm-inline">Newest first</span>
+                        <span class="count">{{ count($auditRows) }}</span>
+                    </div>
+                </div>
 
-            /* === Audit Report (compact) === */
-            .lead-audit-card { overflow: hidden; }
-            .lead-audit-header {
-                background: linear-gradient(135deg, #38b2ac 0%, #319795 100%) !important;
-                border: 0;
-                padding: .5rem .85rem !important;
-            }
-            .lead-audit-header h5 { font-size: .9rem; }
-            .lead-audit-header .badge { font-size: .68rem; padding: .22em .48em; }
-
-            /* === Pivot audit table (shared with x-audit.table component) === */
-            .audit-pivot-list .audit-pivot-scroll {
-                overflow-x: auto;
-                overflow-y: visible;
-                position: relative;
-                max-width: 100%;
-            }
-            .audit-pivot-list .audit-pivot-table {
-                font-size: 0.82rem;
-                border-collapse: separate;
-                border-spacing: 0;
-                margin-bottom: 0;
-                width: auto;
-                min-width: 100%;
-            }
-            .audit-pivot-list .audit-pivot-table thead th {
-                background: #f4f6fa;
-                vertical-align: top;
-                font-weight: 600;
-                color: #2d3a4b;
-                padding: 0.5rem 0.6rem;
-                border-bottom: 2px solid #dee2e6;
-                white-space: nowrap;
-            }
-            .audit-pivot-list .audit-pivot-table tbody th {
-                background: #fafbfc;
-                font-weight: 600;
-                color: #6c757d;
-                padding: 0.4rem 0.6rem;
-                white-space: nowrap;
-                text-transform: capitalize;
-            }
-            .audit-pivot-list .audit-pivot-table tbody td {
-                padding: 0.4rem 0.6rem;
-                vertical-align: middle;
-                word-break: break-word;
-            }
-            .audit-pivot-list .audit-pivot-sticky {
-                position: sticky; left: 0; z-index: 2;
-                box-shadow: 1px 0 0 #dee2e6;
-            }
-            .audit-pivot-list thead .audit-pivot-sticky { z-index: 4; background: #f4f6fa !important; }
-            .audit-pivot-list tbody .audit-pivot-sticky { background: #fafbfc !important; }
-            .audit-pivot-list .audit-pivot-field-col { min-width: 160px; max-width: 220px; }
-            .audit-pivot-list .audit-pivot-change-col { min-width: 180px; }
-            .audit-pivot-list .audit-user-avatar {
-                width: 20px; height: 20px;
-                display: inline-flex; align-items: center; justify-content: center;
-                border-radius: 50%; font-weight: 600; font-size: 0.65rem;
-            }
-            .audit-pivot-list .audit-entry-index { font-size: 0.7rem; padding: 0.2em 0.5em; }
-            @media (max-width: 575.98px) {
-                .audit-pivot-list .audit-pivot-table { font-size: 0.76rem; }
-                .audit-pivot-list .audit-pivot-field-col { min-width: 130px; max-width: 160px; }
-                .audit-pivot-list .audit-pivot-change-col { min-width: 150px; }
-            }
-            /* TomSelect look inside lead form */
-            .lead-ts-status + .ts-wrapper .ts-control,
-            .lead-ts-country + .ts-wrapper .ts-control,
-            .select-employee_id-list + .ts-wrapper .ts-control,
-            .select-property_group_id-list + .ts-wrapper .ts-control {
-                min-height: 48px;
-                border-radius: .5rem;
-            }
-        </style>
-    @endpush
+                @if(count($auditRows))
+                    <div class="atx-scroll">
+                        <table class="atx-table">
+                            <thead>
+                                <tr>
+                                    <th class="atx-sticky">Changed</th>
+                                    @foreach($auditColumnsShown as $label)
+                                        <th>{{ $label }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($auditRows as $index => $row)
+                                    @php [$chipLabel, $chipTone, $chipIcon] = $eventChip[$row['event']] ?? [ucfirst($row['event']), 'secondary', 'fa-circle-o']; @endphp
+                                    <tr @if($index >= $auditPreview) x-show="all" x-cloak @endif>
+                                        <th class="atx-sticky" scope="row">
+                                            <div class="atx-who">
+                                                <span class="atx-av" style="--hue: {{ LeadPipeline::hue($row['user'] ?? 'System') }}">{{ $row['user'] ? LeadPipeline::initials($row['user']) : 'S' }}</span>
+                                                <div style="min-width: 0">
+                                                    <div class="atx-name">{{ $row['user'] ?? 'System' }}</div>
+                                                    @if($row['at'])
+                                                        <div class="atx-when" title="{{ systemDateTime($row['at']) }}">{{ $row['at']->diffForHumans() }} · {{ systemDateTime($row['at']) }}</div>
+                                                    @endif
+                                                </div>
+                                                <span class="atx-chip tn tn-{{ $chipTone }}"><i class="fa {{ $chipIcon }}"></i>{{ $chipLabel }}</span>
+                                            </div>
+                                        </th>
+                                        @foreach($auditColumnsShown as $field => $label)
+                                            @php $cell = $row['cells'][$field] ?? null; @endphp
+                                            <td class="{{ $cell ? 'is-changed' : '' }}">
+                                                @if(! $cell)
+                                                    <span class="atx-none">·</span>
+                                                @elseif($field === 'remarks')
+                                                    @foreach(array_filter(explode("\n", (string) $cell['new'])) as $note)
+                                                        <div class="atx-note"><i class="fa fa-plus"></i>{{ $note }}</div>
+                                                    @endforeach
+                                                    @foreach(array_filter(explode("\n", (string) $cell['old'])) as $note)
+                                                        <div class="atx-note is-removed"><i class="fa fa-minus"></i>{{ $note }}</div>
+                                                    @endforeach
+                                                @else
+                                                    @if($row['event'] !== 'created')
+                                                        <div class="atx-old">{{ $cell['old'] ?? 'empty' }}</div>
+                                                    @endif
+                                                    <div class="atx-new">
+                                                        @if($field === 'status' && $cell['new'])
+                                                            <span class="atx-dot tn tn-{{ LeadPipeline::tone(LeadPipeline::canonical($cell['new'])) }}"></span>
+                                                        @endif
+                                                        {{ $cell['new'] ?? 'cleared' }}
+                                                    </div>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @if(count($auditRows) > $auditPreview)
+                        <div class="atx-more">
+                            <button type="button" class="btn-x" x-on:click="all = ! all">
+                                <i class="fa" x-bind:class="all ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                                <span x-text="all ? 'Show latest {{ $auditPreview }}' : 'Show all {{ count($auditRows) }} changes'"></span>
+                            </button>
+                        </div>
+                    @endif
+                @else
+                    <div class="empty-s"><i class="fa fa-history"></i>No changes recorded yet. Edits from now on will show here, field by field.</div>
+                @endif
+            </div>
+        @endif
 
     @push('scripts')
         <script>
@@ -423,11 +491,11 @@
                 $('#lead_country_id').change(function(){
                     @this.set('formData.country_id', $(this).val());
                 });
-                $('#lead_status_select').change(function(){
-                    @this.set('formData.status', $(this).val());
-                });
                 $('#lead_property_group_id').change(function(){
                     @this.set('formData.property_group_id', $(this).val());
+                });
+                $('#lead_property_type_id').change(function(){
+                    @this.set('formData.property_type_id', $(this).val());
                 });
                 $('#lead_assigned_to').change(function(){
                     @this.set('formData.assigned_to', $(this).val());

@@ -6,6 +6,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -20,12 +21,19 @@ class PropertyLead extends Model implements AuditableContracts
         'mobile',
         'email',
         'company_name',
+        'company_contact_person',
         'company_contact_no',
         'source',
+        'sub_source',
         'type',
         'property_group_id',
+        'property_type_id',
+        'rental_type',
+        'budget_min',
+        'budget_max',
         'assigned_to',
         'assign_date',
+        'reassigned_at',
         'country_id',
         'nationality',
         'location',
@@ -34,6 +42,7 @@ class PropertyLead extends Model implements AuditableContracts
         // 'meeting_datetime',
         'remarks',
         'status',
+        'sub_status',
         'created_by',
         'updated_by',
     ];
@@ -41,9 +50,22 @@ class PropertyLead extends Model implements AuditableContracts
     protected $casts = [
         'remarks' => 'array',
         'assign_date' => 'date',
+        'reassigned_at' => 'datetime',
         'meeting_date' => 'date',
         'meeting_datetime' => 'datetime',
+        'budget_min' => 'decimal:2',
+        'budget_max' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        // A first assignment on create is not a reassignment; any later change of salesman is.
+        static::updating(function (self $lead): void {
+            if ($lead->isDirty('assigned_to') && filled($lead->getOriginal('assigned_to'))) {
+                $lead->reassigned_at = now();
+            }
+        });
+    }
 
     public static function rules($id = 0, array $data = []): array
     {
@@ -51,10 +73,16 @@ class PropertyLead extends Model implements AuditableContracts
             'name' => ['required', 'string', 'max:255'],
             'mobile' => ['nullable', 'string', 'regex:/^[0-9+\-\s]{6,20}$/'],
             'email' => ['nullable', 'email', 'max:255'],
-            'type' => ['required', 'in:Sales,Rentout'],
+            'type' => ['required', Rule::in(array_keys(leadTypes()))],
             'source' => ['required', 'string'],
+            'sub_source' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:30'],
+            'sub_status' => ['nullable', 'string', 'max:255'],
             'property_group_id' => ['nullable', 'exists:property_groups,id'],
+            'property_type_id' => ['nullable', 'exists:property_types,id'],
+            'rental_type' => ['nullable', Rule::in(array_keys(leadRentalTypes()))],
+            'budget_min' => ['nullable', 'numeric', 'min:0'],
+            'budget_max' => ['nullable', 'numeric', 'min:0', ...(is_numeric($data['budget_min'] ?? null) ? ['gte:budget_min'] : [])],
             'country_id' => ['nullable', 'exists:countries,id'],
         ];
     }
@@ -71,6 +99,11 @@ class PropertyLead extends Model implements AuditableContracts
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
+    }
+
+    public function propertyType(): BelongsTo
+    {
+        return $this->belongsTo(PropertyType::class, 'property_type_id');
     }
 
     public function country(): BelongsTo

@@ -348,6 +348,9 @@ class User extends Authenticatable implements AuditableContracts
             ->when($request['type'] ?? '', function ($query, $value) {
                 return $query->where('type', $value);
             })
+            ->when(array_filter(array_map('intval', explode(',', (string) ($request['designation_ids'] ?? '')))), function ($query, $designationIds) {
+                return $query->whereIn('designation_id', $designationIds);
+            })
             ->active()
             // ->limit(10)
             ->get(['name', 'email', 'mobile', 'id'])->toArray();

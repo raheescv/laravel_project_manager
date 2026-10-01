@@ -18,7 +18,7 @@
     x-on:keydown.enter.prevent="open({{ $lead->id }})">
     <div class="lc-top">
         <span class="lc-id">#{{ $lead->id }}</span>
-        <span class="ty {{ $lead->type === 'Rentout' ? 'ty-rent' : 'ty-sales' }}">{{ $lead->type === 'Rentout' ? 'Rent' : 'Sales' }}</span>
+        <span class="ty {{ match ($lead->type) { 'Rentout' => 'ty-rent', 'Corporate' => 'ty-corp', default => 'ty-sales' } }}">{{ match ($lead->type) { 'Rentout' => 'Rent', 'Corporate' => 'Corporate', default => 'Sales' } }}</span>
         @if ($idleDays !== null)
             <span class="stale" title="No update for {{ $idleDays }} days"><i class="fa fa-clock-o"></i>{{ $idleDays }}d idle</span>
         @endif

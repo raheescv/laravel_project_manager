@@ -5,6 +5,7 @@
 </style>
 <script type="text/javascript">
     $('.select-employee_id-list').each(function() {
+        const designations = this.dataset.designations || '';
         new TomSelect(this, {
             persist: false,
             valueField: 'id',
@@ -14,6 +15,7 @@
                 var url = "{{ route('users::list') }}";
                 url += '?query=' + encodeURIComponent(query);
                 url += '&type=employee';
+                if (designations) url += '&designation_ids=' + encodeURIComponent(designations);
                 fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');

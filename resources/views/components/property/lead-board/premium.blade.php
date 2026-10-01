@@ -190,6 +190,7 @@
         .lbx .ty { font-size: 9.5px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; padding: 1px 6px; border-radius: 5px; }
         .lbx .ty-sales { background: color-mix(in srgb, var(--acc) 12%, transparent); color: color-mix(in srgb, var(--acc) var(--ink-strength), var(--mix)); }
         .lbx .ty-rent { background: color-mix(in srgb, var(--bs-info) 14%, transparent); color: color-mix(in srgb, var(--bs-info) var(--ink-strength), var(--mix)); }
+        .lbx .ty-corp { background: color-mix(in srgb, var(--bs-warning) 16%, transparent); color: color-mix(in srgb, var(--bs-warning) var(--ink-strength), var(--mix)); }
         .lbx .stale { font-size: 10px; font-weight: 600; color: color-mix(in srgb, var(--bs-warning) var(--ink-strength), var(--mix)); display: inline-flex; gap: 3px; align-items: center; white-space: nowrap; }
         .lbx .lc-name { font-weight: 600; color: var(--ink); font-size: 13px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .lbx .lc-co { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }

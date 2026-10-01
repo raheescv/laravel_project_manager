@@ -19,7 +19,7 @@
                     <div class="pk-name">{{ $lead->name }}</div>
                     <div class="pk-sub">
                         <span>#{{ $lead->id }}</span>
-                        <span class="ty {{ $lead->type === 'Rentout' ? 'ty-rent' : 'ty-sales' }}">{{ $lead->type === 'Rentout' ? 'Rent out' : 'Sales' }}</span>
+                        <span class="ty {{ match ($lead->type) { 'Rentout' => 'ty-rent', 'Corporate' => 'ty-corp', default => 'ty-sales' } }}">{{ match ($lead->type) { 'Rentout' => 'Rent out', 'Corporate' => 'Corporate', default => 'Sales' } }}</span>
                         @if ($lead->company_name)
                             <span>{{ $lead->company_name }}</span>
                         @endif

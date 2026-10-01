@@ -37,6 +37,7 @@ return [
             'tailoring',
             'accounting',
             'hr_management',
+            'employee_commission',
             'reports_sales',
             'reports_accounting',
             'reports_hr',
@@ -69,6 +70,7 @@ return [
             'reports_hr',
             'accounting',
             'hr_management',
+            'employee_commission',
             'reports_inventory',
             'reports_purchase',
             'reports_accounting',
@@ -84,6 +86,7 @@ return [
             'school',
             'accounting',
             'hr_management',
+            'employee_commission',
             'reports_hr',
             'reports_inventory',
             'reports_purchase',
@@ -98,6 +101,7 @@ return [
             'support',
             'accounting',
             'hr_management',
+            'employee_commission',
             'reports_support',
             'reports_accounting',
         ],
@@ -247,9 +251,15 @@ return [
             'permissions' => [
                 'employee',
                 'employee attendance',
-                'employee commission',
                 'designation',
                 'department',
+            ],
+        ],
+
+        'employee_commission' => [
+            'label' => 'Employee Commission',
+            'permissions' => [
+                'employee commission',
             ],
         ],
 

@@ -32,6 +32,7 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
             'Company Name',
             'Company Contact No',
             'Source',
+            'Sub Source',
             'Type',
             'Project / Group',
             'Assigned To',
@@ -41,8 +42,10 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
             'Meeting Date',
             'Meeting Time',
             'Status',
+            'Sub Status',
             'Notes',
             'Created At',
+            'Reassigned At',
             'Updated At',
         ];
     }
@@ -62,6 +65,7 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
             $row->company_name,
             $row->company_contact_no,
             $row->source,
+            $row->sub_source,
             $row->type,
             $row->group?->name,
             $row->assignee?->name,
@@ -71,8 +75,10 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
             $row->meeting_date?->format('Y-m-d'),
             $row->meeting_time,
             $row->status,
+            $row->sub_status,
             $notesText,
             $row->created_at?->format('Y-m-d H:i:s'),
+            $row->reassigned_at?->format('Y-m-d H:i:s'),
             $row->updated_at?->format('Y-m-d H:i:s'),
         ];
     }

@@ -17,7 +17,7 @@ beforeEach(function (): void {
 });
 
 it('stores the exclusion when a branch is created with it on', function (): void {
-    $response = (new CreateAction)->execute([
+    $response = (new CreateAction())->execute([
         'name' => 'Central Warehouse',
         'code' => 'WH',
         'location' => 'Industrial Area',
@@ -29,7 +29,7 @@ it('stores the exclusion when a branch is created with it on', function (): void
 });
 
 it('defaults a new branch to being listed', function (): void {
-    $response = (new CreateAction)->execute([
+    $response = (new CreateAction())->execute([
         'name' => 'Galleria Mall',
         'code' => 'GM',
     ]);
@@ -45,7 +45,7 @@ it('toggles the exclusion back off on update', function (): void {
         'exclude_from_showcase' => true,
     ]);
 
-    $response = (new UpdateAction)->execute([
+    $response = (new UpdateAction())->execute([
         'name' => 'Doha Mall',
         'code' => 'DM',
         'exclude_from_showcase' => false,

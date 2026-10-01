@@ -12,21 +12,20 @@
         <div class="card-body py-3">
             <div class="row g-3">
                 <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">From Date</label>
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Date</label>
+                    <select wire:model.live="dateField" class="form-select form-select-sm shadow-sm" aria-label="Date to filter on">
+                        <option value="created">Created</option>
+                        <option value="reassigned">Reassigned</option>
+                        <option value="updated">Updated</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">{{ ['created' => 'Captured', 'reassigned' => 'Reassigned', 'updated' => 'Updated'][$dateField] ?? 'Captured' }} from</label>
                     <input type="date" wire:model.live="fromDate" class="form-control form-control-sm shadow-sm">
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">To Date</label>
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">To</label>
                     <input type="date" wire:model.live="toDate" class="form-control form-control-sm shadow-sm">
-                </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Status</label>
-                    <select id="leadFilterStatus" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterStatus" aria-label="Status">
-                        <option value="">All Statuses</option>
-                        @foreach($statuses as $key => $label)
-                            <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
                 </div>
                 <div class="col-md-3 col-sm-6">
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Type</label>
@@ -38,11 +37,47 @@
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Assigned To</label>
+                    <select id="leadFilterAssigned" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterAssignedTo" aria-label="Assigned To">
+                        <option value="">All Salesman</option>
+                        @foreach($users as $id => $name)
+                            <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6" wire:ignore>
                     <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Source</label>
                     <select id="leadFilterSource" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterSource" aria-label="Source">
                         <option value="">All Sources</option>
                         @foreach($sources as $key => $label)
                             <option value="{{ $key }}" @selected((string) $filterSource === (string) $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Sub Source</label>
+                    <select wire:model.live="filterSubSource" wire:key="filterSubSource-{{ md5((string) $filterSource) }}" class="form-select form-select-sm shadow-sm" aria-label="Sub Source" @disabled(! count($subSources))>
+                        <option value="">{{ count($subSources) ? 'All Sub Sources' : 'None recorded' }}</option>
+                        @foreach($subSources as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6" wire:ignore>
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Status</label>
+                    <select id="leadFilterStatus" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterStatus" aria-label="Status">
+                        <option value="">All Statuses</option>
+                        @foreach($statuses as $key => $label)
+                            <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Sub Status</label>
+                    <select wire:model.live="filterSubStatus" wire:key="filterSubStatus-{{ md5((string) $filterStatus) }}" class="form-select form-select-sm shadow-sm" aria-label="Sub Status" @disabled(! count($subStatuses))>
+                        <option value="">{{ count($subStatuses) ? 'All Sub Statuses' : 'None recorded' }}</option>
+                        @foreach($subStatuses as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -56,11 +91,11 @@
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Assigned To</label>
-                    <select id="leadFilterAssigned" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterAssignedTo" aria-label="Assigned To">
-                        <option value="">All Salesman</option>
-                        @foreach($users as $id => $name)
-                            <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Nationality</label>
+                    <select id="leadFilterCountry" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterCountryId" aria-label="Nationality">
+                        <option value="">All Nationalities</option>
+                        @foreach($countries as $id => $name)
+                            <option value="{{ $id }}" @selected((string) $filterCountryId === (string) $id)>{{ $name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -175,6 +210,9 @@
                     <a href="{{ route('property::lead::calendar') }}" class="btn btn-light btn-sm shadow-sm">
                         <i class="fa fa-calendar me-1"></i> Calendar
                     </a>
+                    <button type="button" class="btn btn-sm btn-outline-primary shadow-sm" data-bs-toggle="offcanvas" data-bs-target="#leadColumnVisibility" aria-controls="leadColumnVisibility">
+                        <i class="fa fa-columns me-1"></i> Columns
+                    </button>
                 </div>
                 <div class="col-md-6">
                     <div class="row g-2 align-items-center">
@@ -215,14 +253,13 @@
                                 </div>
                             </th>
                             <th class="fw-semibold"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /></th>
-                            <th class="fw-semibold">Mobile</th>
-                            <th class="fw-semibold">Email</th>
-                            <th class="fw-semibold">Project / Group</th>
-                            <th class="fw-semibold">Source</th>
-                            <th class="fw-semibold text-center">Type</th>
-                            <th class="fw-semibold text-center">Status</th>
-                            <th class="fw-semibold">Assigned To</th>
-                            <th class="fw-semibold"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="updated_at" label="Updated" /></th>
+                            @foreach($columns as $column => $label)
+                                @if(in_array($column, ['created_at', 'reassigned_at', 'updated_at'], true))
+                                    <th class="fw-semibold"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" :field="$column" :label="$label" /></th>
+                                @else
+                                    <th class="fw-semibold {{ in_array($column, ['type', 'status'], true) ? 'text-center' : '' }}">{{ $label }}</th>
+                                @endif
+                            @endforeach
                             <th class="fw-semibold text-center">Actions</th>
                         </tr>
                     </thead>
@@ -237,50 +274,105 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('property::lead::edit', $item->id) }}" class="text-decoration-none fw-semibold text-dark">
-                                        <i class="fa fa-user-circle text-primary opacity-75 me-1"></i>{{ $item->name }}
+                                        <i class="fa fa-user text-primary opacity-75 me-1"></i>{{ $item->name }}
                                     </a>
                                     @if($item->company_name)
                                         <div class="small text-muted"><i class="fa fa-building me-1"></i>{{ $item->company_name }}</div>
                                     @endif
                                 </td>
-                                <td>
-                                    @if($item->mobile)
-                                        <i class="fa fa-phone text-success me-1 small"></i>{{ $item->mobile }}
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($item->email)
-                                        <i class="fa fa-envelope text-info me-1 small"></i>{{ $item->email }}
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark border">{{ $item->group->name ?? '-' }}</span>
-                                </td>
-                                <td><span class="small">{{ $item->source ?? '-' }}</span></td>
-                                <td class="text-center">
-                                    @if($item->type === 'Sales')
-                                        <span class="badge bg-primary-subtle text-primary">{{ $item->type }}</span>
-                                    @else
-                                        <span class="badge bg-info-subtle text-info">{{ $item->type }}</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge {{ leadStatusBadgeClass($item->status) }}">{{ $item->status ?? 'New Lead' }}</span>
-                                </td>
-                                <td>
-                                    @if($item->assignee)
-                                        <i class="fa fa-user text-muted me-1 small"></i>{{ $item->assignee->name }}
-                                    @else
-                                        <span class="text-muted small">Unassigned</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <small class="text-muted">{{ $item->updated_at?->diffForHumans() }}</small>
-                                </td>
+                                @foreach($columns as $column => $label)
+                                    @switch($column)
+                                        @case('mobile')
+                                            <td>
+                                                @if($item->mobile)
+                                                    <i class="fa fa-phone text-success me-1 small"></i>{{ $item->mobile }}
+                                                @else
+                                                    <span class="text-muted small">-</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('email')
+                                            <td>
+                                                @if($item->email)
+                                                    <i class="fa fa-envelope text-info me-1 small"></i>{{ $item->email }}
+                                                @else
+                                                    <span class="text-muted small">-</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('property_group')
+                                            <td><span class="badge bg-light text-dark border">{{ $item->group->name ?? '-' }}</span></td>
+                                            @break
+                                        @case('property_type')
+                                            <td><span class="small">{{ $item->propertyType->name ?? '-' }}</span></td>
+                                            @break
+                                        @case('budget')
+                                            <td class="text-nowrap small">
+                                                @if(filled($item->budget_min) || filled($item->budget_max))
+                                                    {{ filled($item->budget_min) ? currency($item->budget_min) : '…' }} – {{ filled($item->budget_max) ? currency($item->budget_max) : '…' }}
+                                                    @if($item->rental_type)<div class="text-muted">{{ $item->rental_type }}</div>@endif
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('source')
+                                            <td><span class="small">{{ $item->source ?? '-' }}</span></td>
+                                            @break
+                                        @case('sub_source')
+                                            <td><span class="small">{{ $item->sub_source ?: '-' }}</span></td>
+                                            @break
+                                        @case('type')
+                                            <td class="text-center">
+                                                <span class="badge {{ match ($item->type) { 'Sales' => 'bg-primary-subtle text-primary', 'Corporate' => 'bg-warning-subtle text-warning', default => 'bg-info-subtle text-info' } }}">{{ $item->type === 'Rentout' ? 'Rent out' : $item->type }}</span>
+                                            </td>
+                                            @break
+                                        @case('status')
+                                            <td class="text-center"><span class="badge {{ leadStatusBadgeClass($item->status) }}">{{ $item->status ?? 'New Lead' }}</span></td>
+                                            @break
+                                        @case('sub_status')
+                                            <td><span class="small">{{ $item->sub_status ?: '-' }}</span></td>
+                                            @break
+                                        @case('assigned_to')
+                                            <td>
+                                                @if($item->assignee)
+                                                    <i class="fa fa-user text-muted me-1 small"></i>{{ $item->assignee->name }}
+                                                @else
+                                                    <span class="text-muted small">Unassigned</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('nationality')
+                                            <td><span class="small">{{ $item->country->name ?? ($item->nationality ?: '-') }}</span></td>
+                                            @break
+                                        @case('meeting')
+                                            <td class="text-nowrap">
+                                                @if($item->meeting_date)
+                                                    <div class="small fw-semibold text-dark">{{ systemDate($item->meeting_date) }}</div>
+                                                    <div class="small text-muted">{{ $item->meeting_time ? systemTime($item->meeting_time) : $item->meeting_date->diffForHumans() }}</div>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                        @case('location')
+                                            <td><span class="small">{{ $item->location ?: '-' }}</span></td>
+                                            @break
+                                        @case('created_at')
+                                        @case('reassigned_at')
+                                        @case('updated_at')
+                                            @php $at = $item->{$column}; @endphp
+                                            <td class="text-nowrap">
+                                                @if($at)
+                                                    <div class="small fw-semibold text-dark" title="{{ systemDateTime($at) }}">{{ systemDate($at) }}</div>
+                                                    <div class="small text-muted">{{ $at->diffForHumans() }}</div>
+                                                @else
+                                                    <span class="text-muted">—</span>
+                                                @endif
+                                            </td>
+                                            @break
+                                    @endswitch
+                                @endforeach
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
                                         @can('property lead.view')
@@ -293,7 +385,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center py-5 text-muted">
+                                <td colspan="{{ count($columns) + 3 }}" class="text-center py-5 text-muted">
                                     <i class="fa fa-users fa-3x mb-3 d-block opacity-25"></i>
                                     No leads found matching your filters.
                                 </td>

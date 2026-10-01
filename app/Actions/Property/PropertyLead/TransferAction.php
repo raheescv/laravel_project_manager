@@ -29,6 +29,9 @@ class TransferAction
                 throw new \Exception('Lead name is required.', 1);
             }
 
+            // accounts sent Corporate leads to the lease (sale) booking too.
+            $isSale = in_array($lead->type, ['Sales', 'Corporate'], true);
+
             // 1) Find or create the customer account (include soft-deleted to avoid unique constraint violation)
             $existing = Account::withTrashed()
                 ->where('account_type', 'asset')
@@ -42,7 +45,7 @@ class TransferAction
                 $account = $existing;
             } else {
                 $customerType = CustomerType::query()
-                    ->where('name', $lead->type === 'Sales' ? 'Sale' : 'Rent')
+                    ->where('name', $isSale ? 'Sale' : 'Rent')
                     ->first()
                     ?? CustomerType::query()->first();
 
@@ -80,7 +83,7 @@ class TransferAction
 
             session(['lead_booking_data' => $payload]);
 
-            $redirect = $lead->type === 'Sales'
+            $redirect = $isSale
                 ? route('property::sale::booking.create')
                 : route('property::rent::booking.create');
 

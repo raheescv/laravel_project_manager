@@ -7,14 +7,18 @@ use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Models\Permission;
 use App\Models\Product;
+use App\Models\Role;
 use App\Models\User;
+use App\Support\LeadOptions;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 
 class MigratePropertyDataCommand extends Command
 {
@@ -158,6 +162,7 @@ class MigratePropertyDataCommand extends Command
         try {
             Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'active_module'], ['value' => 'Property Management Module']);
             $this->rolesAndPermissions();
+            $this->migrateDesignations();
             $this->migrateUsers();
             $this->assignUserRoles();
             $this->migrateAccountHeads();
@@ -190,6 +195,9 @@ class MigratePropertyDataCommand extends Command
             $this->migrateTenantDetails();
 
             $this->migratePropertyLeads();
+            $this->backfillLeadReassignedAt();
+            $this->migratePropertyLeadAudits();
+            $this->migrateLeadDropdownOptions();
             $this->migratePropertyAssets();
             $this->migrateSupplyRequests();
             $this->migrateSupplyRequestItems();
@@ -418,8 +426,48 @@ class MigratePropertyDataCommand extends Command
         return $this->paymentModeMap[$modeId] ?? 'cash';
     }
 
+    /** @var array<int, int> old designations.id => target designations.id */
+    private array $designationMap = [];
+
+    /**
+     * Migrate the old designations (live ones plus any still referenced by an employee),
+     * matched by name per tenant so re-runs reuse the existing row.
+     */
+    private function migrateDesignations(): void
+    {
+        $old = DB::connection('mysql2');
+        $referencedIds = $old->table('employees')->whereNotNull('designation_id')->distinct()->pluck('designation_id');
+        $designations = $old->table('designations')
+            ->where(fn ($query) => $query->whereNull('deleted_at')->orWhereIn('id', $referencedIds))
+            ->orderBy('id')
+            ->get();
+
+        $this->migrateTable('designations', $designations, 'designations', fn ($row) => [
+            'id' => $row->id,
+            'name' => ucfirst(trim($row->name)),
+        ], writer: function (array $data): void {
+            $now = now();
+            $this->designationMap[$data['id']] = DB::table('designations')
+                ->where('tenant_id', $this->tenantId)
+                ->where('name', $data['name'])
+                ->value('id') ?? DB::table('designations')->insertGetId([
+                    'tenant_id' => $this->tenantId,
+                    'name' => $data['name'],
+                    'order_no' => 1,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+        });
+    }
+
+    private function designationId(mixed $oldDesignationId): ?int
+    {
+        return blank($oldDesignationId) ? null : ($this->designationMap[$oldDesignationId] ?? null);
+    }
+
     private function migrateUsers(): void
     {
+        $employeeDesignations = DB::connection('mysql2')->table('employees')->pluck('designation_id', 'id');
         $users = DB::connection('mysql2')->table('users')->get();
         $this->migrateTable('users', $users, 'users', fn ($row) => [
             'id' => $row->id,
@@ -431,7 +479,7 @@ class MigratePropertyDataCommand extends Command
             'mobile' => $row->mobile ?? null,
             'is_admin' => $row->is_admin ?? 0,
             'default_branch_id' => $row->default_branch_id ?? null,
-            'designation_id' => $row->designation_id ?? null,
+            'designation_id' => $this->designationId($employeeDesignations[$row->employee_id ?? null] ?? null),
             'order_no' => $row->order_no ?? 1,
             'email_verified_at' => $row->email_verified_at ?? null,
             'password' => $row->password,
@@ -462,7 +510,7 @@ class MigratePropertyDataCommand extends Command
             'mobile' => $row->mobile ?? null,
             'is_admin' => 0,
             'default_branch_id' => $row->branch_id ?? null,
-            'designation_id' => $row->designation_id ?? null,
+            'designation_id' => $this->designationId($row->designation_id ?? null),
             'order_no' => $row->order_no ?? 1,
             'password' => $row->password ?? bcrypt('password'),
             'pin' => $row->pin ?? null,
@@ -1535,11 +1583,23 @@ class MigratePropertyDataCommand extends Command
                 'mobile' => $row->mobile ?? null,
                 'email' => $row->email ?? null,
                 'company_name' => $row->company_name ?? null,
+                'company_contact_person' => $row->company_contact_person ?? null,
                 'company_contact_no' => $row->company_contact_no ?? null,
                 'source' => $row->source ?? null,
-                'type' => $row->type ?? 'Sales',
+                'sub_source' => $row->sub_source ?? null,
+                // accounts transferred a Leasing lead to a rental booking: that is Rentout here.
+                'type' => match ($row->type ?? null) {
+                    'Leasing' => 'Rentout',
+                    'Corporate' => 'Corporate',
+                    default => 'Sales',
+                },
                 'property_group_id' => $row->property_group_id ?? null,
-                'assigned_to' => $row->assigned_to ?? null,
+                'property_type_id' => $row->property_type_id ?? null,
+                'rental_type' => $row->rental_type ?? null,
+                'budget_min' => $row->budget_min ?? null,
+                'budget_max' => $row->budget_max ?? null,
+                // accounts stored the salesman as an employees.id; employees land in users under new ids.
+                'assigned_to' => $assignedTo = $this->employeeUserId($row->assigned_to ?? null),
                 'assign_date' => $this->normalizeDate($row->assign_date ?? null),
                 'country_id' => $row->country_id ?? null,
                 'nationality' => $this->normalizeNationality($row->nationality ?? null),
@@ -1548,13 +1608,215 @@ class MigratePropertyDataCommand extends Command
                 'meeting_time' => $meetingTime,
                 'remarks' => $remarks,
                 'status' => $row->status ?? 'New Lead',
-                'created_by' => $row->assigned_to ?? null,
-                'updated_by' => $row->assigned_to ?? null,
+                'sub_status' => $row->sub_status ?? null,
+                'created_by' => $assignedTo,
+                'updated_by' => $assignedTo,
                 'deleted_at' => $row->deleted_at ?? null,
                 'created_at' => $row->created_at ?? now(),
                 'updated_at' => $row->updated_at ?? now(),
             ];
         });
+    }
+
+    /** @var array<string, int>|null users.id keyed by 'emp_<accounts employees.id>' */
+    private ?array $employeeUserMap = null;
+
+    /** @return array<string, int> */
+    private function employeeUserMap(): array
+    {
+        return $this->employeeUserMap ??= DB::table('users')
+            ->where('second_reference_no', 'like', 'emp\\_%')
+            ->pluck('id', 'second_reference_no')
+            ->all();
+    }
+
+    /** The users.id an accounts employee was migrated to, or null when there is none. */
+    private function employeeUserId(mixed $employeeId): ?int
+    {
+        if (blank($employeeId)) {
+            return null;
+        }
+
+        $userId = $this->employeeUserMap()['emp_'.$employeeId] ?? null;
+        if ($userId === null) {
+            $this->warn("Lead salesman employee #{$employeeId} has no migrated user - left unassigned.");
+        }
+
+        return $userId;
+    }
+
+    /**
+     * accounts' Dropdown Values for leads (sources, statuses, their sub lists
+     * and the status order) into Settings → Lead Settings. accounts spelled the
+     * statuses key "lead_statues". Values are trimmed and snapped to the
+     * built-in spelling when they differ only by case, so "Dead lead" keeps
+     * its place on the lead board.
+     */
+    private function migrateLeadDropdownOptions(): void
+    {
+        if (! $this->tableExists('configurations')) {
+            return;
+        }
+
+        $old = DB::connection('mysql2')->table('configurations')
+            ->whereIn('keys', ['lead_sources', 'lead_statues', 'lead_statues_order', 'lead_sub_sources', 'lead_sub_statues'])
+            ->pluck('values', 'keys')
+            ->map(fn ($json) => json_decode((string) $json, true))
+            ->filter(fn ($decoded) => is_array($decoded));
+
+        $snap = function (string $value, array $known): string {
+            $value = trim($value);
+            foreach ($known as $candidate) {
+                if (mb_strtolower($candidate) === mb_strtolower($value)) {
+                    return $candidate;
+                }
+            }
+
+            return $value;
+        };
+        $list = function (array $values, array $known) use ($snap): array {
+            $clean = array_values(array_unique(array_filter(array_map(fn ($v) => $snap((string) $v, $known), $values), 'filled')));
+
+            return $clean ? array_combine($clean, $clean) : [];
+        };
+        $nested = function (array $map, array $known) use ($snap): array {
+            $out = [];
+            foreach ($map as $parent => $subs) {
+                $subs = array_values(array_unique(array_filter(array_map(fn ($v) => trim((string) $v), (array) $subs), 'filled')));
+                if ($subs) {
+                    $out[$snap((string) $parent, $known)] = $subs;
+                }
+            }
+
+            return $out;
+        };
+
+        $sources = LeadOptions::DEFAULT_SOURCES;
+        $statuses = LeadOptions::DEFAULT_STATUSES;
+        $target = array_filter([
+            LeadOptions::SOURCES => isset($old['lead_sources']) ? $list($old['lead_sources'], $sources) : null,
+            LeadOptions::STATUSES => isset($old['lead_statues']) ? $list($old['lead_statues'], $statuses) : null,
+            LeadOptions::STATUS_ORDER => isset($old['lead_statues_order'])
+                ? collect($old['lead_statues_order'])->filter(fn ($n) => is_numeric($n))->mapWithKeys(fn ($n, $status) => [$snap((string) $status, $statuses) => (int) $n])->all()
+                : null,
+            LeadOptions::SUB_SOURCES => isset($old['lead_sub_sources']) ? $nested($old['lead_sub_sources'], $sources) : null,
+            LeadOptions::SUB_STATUSES => isset($old['lead_sub_statues']) ? $nested($old['lead_sub_statues'], $statuses) : null,
+        ], fn ($value) => $value !== null);
+
+        $this->info('Lead dropdown lists copied: '.(implode(', ', array_keys($target)) ?: 'none'));
+        if ($this->dryRun) {
+            return;
+        }
+
+        foreach ($target as $key => $value) {
+            DB::table('configurations')->updateOrInsert(
+                ['tenant_id' => $this->tenantId, 'key' => $key],
+                ['value' => json_encode($value), 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
+    }
+
+    /**
+     * Brings the lead history across so the lead page's activity timeline
+     * starts from the lead's real creation. Values are rewritten the same way
+     * the leads themselves were (salesman employee ids, Leasing type), and
+     * every copied row is tagged so a rerun replaces rather than duplicates.
+     */
+    private function migratePropertyLeadAudits(): void
+    {
+        if (! $this->tableExists('audits')) {
+            return;
+        }
+
+        $auditable = 'App\\Models\\PropertyLead';
+        $tag = 'accounts-migration';
+
+        if (! $this->dryRun) {
+            DB::table('audits')->where('auditable_type', $auditable)->where('tags', $tag)->delete();
+        }
+
+        $employeeUsers = $this->employeeUserMap();
+        $rewrite = function (?string $json) use ($employeeUsers): ?string {
+            $values = json_decode((string) $json, true);
+            if (! is_array($values)) {
+                return $json;
+            }
+            if (array_key_exists('assigned_to', $values)) {
+                $values['assigned_to'] = blank($values['assigned_to']) ? null : $employeeUsers['emp_'.$values['assigned_to']] ?? null;
+            }
+            if (($values['type'] ?? null) === 'Leasing') {
+                $values['type'] = 'Rentout';
+            }
+
+            return json_encode($values);
+        };
+
+        $copied = 0;
+        DB::connection('mysql2')->table('audits')
+            ->where('auditable_type', $auditable)
+            ->orderBy('id')
+            ->chunkById(2000, function ($audits) use ($rewrite, $auditable, $tag, &$copied): void {
+                $rows = $audits->map(fn ($audit) => [
+                    'user_type' => $audit->user_type,
+                    'user_id' => $audit->user_id,
+                    'event' => $audit->event,
+                    'auditable_type' => $auditable,
+                    'auditable_id' => $audit->auditable_id,
+                    'old_values' => $rewrite($audit->old_values),
+                    'new_values' => $rewrite($audit->new_values),
+                    'url' => $audit->url,
+                    'ip_address' => $audit->ip_address,
+                    'user_agent' => $audit->user_agent,
+                    'tags' => $tag,
+                    'created_at' => $audit->created_at,
+                    'updated_at' => $audit->updated_at,
+                ])->all();
+
+                if (! $this->dryRun) {
+                    DB::table('audits')->insert($rows);
+                }
+                $copied += count($rows);
+            });
+
+        $this->info("Lead audits copied: {$copied}");
+    }
+
+    /**
+     * accounts never stored when a lead changed salesman, but its audit log did.
+     * The latest audit that moved assigned_to from one salesman to another sets
+     * reassigned_at; a first assignment (empty to someone) does not count.
+     */
+    private function backfillLeadReassignedAt(): void
+    {
+        if (! $this->tableExists('audits')) {
+            return;
+        }
+
+        $latest = [];
+        DB::connection('mysql2')->table('audits')
+            ->where('auditable_type', 'App\\Models\\PropertyLead')
+            ->where('event', 'updated')
+            ->where('new_values', 'like', '%"assigned_to"%')
+            ->orderBy('id')
+            ->select(['id', 'auditable_id', 'old_values', 'new_values', 'created_at'])
+            ->chunkById(2000, function ($audits) use (&$latest): void {
+                foreach ($audits as $audit) {
+                    $old = json_decode((string) $audit->old_values, true) ?: [];
+                    $new = json_decode((string) $audit->new_values, true) ?: [];
+                    if (filled($old['assigned_to'] ?? null) && filled($new['assigned_to'] ?? null) && (string) $old['assigned_to'] !== (string) $new['assigned_to']) {
+                        $latest[$audit->auditable_id] = $audit->created_at;
+                    }
+                }
+            });
+
+        $this->info('Lead reassignments found in accounts audits: '.count($latest));
+        if ($this->dryRun) {
+            return;
+        }
+
+        foreach ($latest as $leadId => $at) {
+            DB::table('property_leads')->where('id', $leadId)->update(['reassigned_at' => $at]);
+        }
     }
 
     private function migratePropertyAssets(): void

@@ -232,7 +232,7 @@
 
                 const pickers = [
                     { id: 'lbxProject', property: 'filterPropertyGroupId', url: "{{ route('property::group::list') }}" },
-                    { id: 'lbxAssigned', property: 'filterAssignedTo', url: "{{ route('users::list') }}?type=employee", extra: { id: 'none', name: 'Unassigned' } },
+                    { id: 'lbxAssigned', property: 'filterAssignedTo', url: "{{ route('users::list') }}?type=employee&designation_ids={{ implode(',', \App\Support\LeadOptions::assigneeDesignationIds()) }}", extra: { id: 'none', name: 'Unassigned' } },
                     { id: 'lbxSource', property: 'filterSource' },
                 ];
 

@@ -3,7 +3,7 @@
 namespace App\Livewire\Property\PropertyLead;
 
 use App\Models\PropertyLead;
-use App\Models\User;
+use App\Support\LeadOptions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Livewire\Component;
@@ -80,7 +80,7 @@ class Calendar extends Component
                 'Follow Up For Visit' => 'Follow Up For Visit',
             ],
             'types' => leadTypes(),
-            'salesUsers' => User::orderBy('name')->pluck('name', 'id')->toArray(),
+            'salesUsers' => LeadOptions::assignees(),
             'leadsThisMonth' => $leadsThisMonth,
             'todaysTasks' => $todaysTasks,
         ]);

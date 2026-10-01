@@ -21,6 +21,8 @@ final class ModuleAccess
 {
     public const SCHOOL = 'school';
 
+    public const EMPLOYEE_COMMISSION = 'employee_commission';
+
     /** Modules that are off unless the active system includes them. */
     public const OPT_IN = [self::SCHOOL];
 
