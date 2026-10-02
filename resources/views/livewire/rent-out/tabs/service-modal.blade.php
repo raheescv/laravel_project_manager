@@ -41,7 +41,7 @@
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-tag me-1 text-muted"></i> Category <span class="text-danger">*</span>
                 </label>
-                <select class="select-account_id-list" wire:model="form.category" id='service_category_id'>
+                <select class="select-account_id-list" data-query="rent_out_service=1" wire:model="form.category" id='service_category_id'>
                     <option value="">Please Select Any</option>
                 </select>
             </div>

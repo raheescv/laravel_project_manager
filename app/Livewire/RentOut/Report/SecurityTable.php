@@ -76,11 +76,11 @@ class SecurityTable extends Component
 
         $totalAmount = (clone $baseQuery)->sum('amount');
         $overdueAmount = (clone $baseQuery)
-            ->where('status', SecurityStatus::Pending)
-            ->where('due_date', '<', now())
+            ->where(fn ($q) => $q->where('status', SecurityStatus::Overdue)
+                ->orWhere(fn ($q) => $q->where('status', SecurityStatus::Submitted)->where('due_date', '<', now())))
             ->sum('amount');
         $paidAmount = (clone $baseQuery)
-            ->whereIn('status', [SecurityStatus::Collected, SecurityStatus::Returned])
+            ->whereIn('status', SecurityStatus::collectedValues())
             ->sum('amount');
 
         return [

@@ -27,6 +27,12 @@ class RentOut extends Model implements AuditableContracts
      */
     public const MANDATORY_DOCUMENTS_CONFIG_KEY = 'rent_out_mandatory_document_types';
 
+    /**
+     * Configuration key holding the account ids (comma-separated) offered as
+     * the Category on the rent-out Services tab. Empty means no restriction.
+     */
+    public const SERVICE_CATEGORIES_CONFIG_KEY = 'rent_out_service_categories';
+
     protected $fillable = [
         'tenant_id',
         'branch_id',
@@ -289,6 +295,16 @@ class RentOut extends Model implements AuditableContracts
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * The account ids mapped as service heads in Rent Out settings.
+     */
+    public static function serviceCategoryIds(): array
+    {
+        return self::parseDocumentTypeIds(
+            Configuration::where('key', self::SERVICE_CATEGORIES_CONFIG_KEY)->value('value')
+        );
     }
 
     /**

@@ -2,6 +2,7 @@
     function initAccountSelectList(el, onChange) {
         var url = "{{ route('account::list') }}";
         var account_type = el.getAttribute('account_type') || null;
+        var extra_query = el.getAttribute('data-query') || '';
         return new TomSelect(el, {
             persist: false,
             plugins: ['remove_button'],
@@ -12,6 +13,9 @@
                 var fetchUrl = url + '?query=' + encodeURIComponent(query);
                 if (account_type) {
                     fetchUrl += '&account_type=' + account_type;
+                }
+                if (extra_query) {
+                    fetchUrl += '&' + extra_query;
                 }
                 fetch(fetchUrl)
                     .then(r => r.json()).then(j => callback(j.items)).catch(() => callback());

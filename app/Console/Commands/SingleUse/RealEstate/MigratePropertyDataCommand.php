@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Permission;
 use App\Models\Product;
+use App\Models\RentOut;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\LeadOptions;
@@ -68,11 +69,15 @@ class MigratePropertyDataCommand extends Command
     ];
 
     private array $securityStatusMap = [
-        'Submitted' => 'pending',
-        'Collected' => 'collected',
+        'Deposited' => 'deposited',
+        'Submitted' => 'submitted',
         'Returned' => 'returned',
-        'Adjusted' => 'adjusted',
-        'Pending' => 'pending',
+        'Paid' => 'paid',
+        'Overdue' => 'overdue',
+        'Paid & Released' => 'paid_released',
+        'Collected' => 'paid',
+        'Adjusted' => 'paid',
+        'Pending' => 'submitted',
     ];
 
     private array $assetSupplyStatusMap = [
@@ -135,6 +140,8 @@ class MigratePropertyDataCommand extends Command
 
     private ?array $groupByBuilding = null;      // source property_buildings.id => property_group_id
 
+    private array $serviceHeadByName = [];       // source service category name => target income accounts.id
+
     private ?array $propertyMetaById = null;     // target properties.id => {group,building,type}
 
     private ?array $productByRef = null;         // target products(type=product).second_reference_no => id
@@ -166,6 +173,7 @@ class MigratePropertyDataCommand extends Command
             $this->migrateUsers();
             $this->assignUserRoles();
             $this->migrateAccountHeads();
+            $this->migrateServiceHeads();
             $this->migrateCustomers();
             $this->migrateVendors();
 
@@ -699,6 +707,80 @@ class MigratePropertyDataCommand extends Command
         ));
     }
 
+    /**
+     * The old Services tab offered a fixed name list (`rentout_services`) and stored
+     * the chosen name on the journal. The new tab offers income accounts and stores
+     * the account id, crediting that account. So each name becomes an income head,
+     * and the heads are mapped as the Services tab categories in Rent Out settings.
+     */
+    private function migrateServiceHeads(): void
+    {
+        $names = collect();
+        if ($this->tableExists('rentout_services')) {
+            $names = DB::connection('mysql2')->table('rentout_services')->orderBy('name')->pluck('name');
+        }
+
+        if ($names->isEmpty()) {
+            $this->warn('No service categories to migrate.');
+
+            return;
+        }
+
+        $categoryId = DB::table('account_categories')->where('name', 'Operating Income')->value('id');
+
+        $this->info("Migrating {$names->count()} service heads...");
+        foreach ($names as $name) {
+            $existing = Account::withoutGlobalScopes()
+                ->where('tenant_id', $this->tenantId)
+                ->where('account_type', 'income')
+                ->where('name', $name)
+                ->value('id');
+
+            if ($this->dryRun) {
+                $existing && $this->serviceHeadByName[strtolower($name)] = (int) $existing;
+
+                continue;
+            }
+
+            $account = Account::withoutGlobalScopes()->updateOrCreate(
+                ['tenant_id' => $this->tenantId, 'account_type' => 'income', 'name' => $name],
+                ['slug' => Str::slug($name), 'account_category_id' => $categoryId]
+            );
+            $this->serviceHeadByName[strtolower($name)] = $account->id;
+        }
+
+        if ($this->dryRun) {
+            return;
+        }
+
+        // Keep anything already mapped by hand; add the migrated heads.
+        $config = Configuration::withoutGlobalScopes()
+            ->where('tenant_id', $this->tenantId)
+            ->where('key', RentOut::SERVICE_CATEGORIES_CONFIG_KEY)
+            ->value('value');
+        $ids = collect(explode(',', (string) $config))
+            ->map(fn ($id) => (int) $id)
+            ->merge(array_values($this->serviceHeadByName))
+            ->filter()
+            ->unique()
+            ->implode(',');
+
+        Configuration::withoutGlobalScopes()->updateOrCreate(
+            ['tenant_id' => $this->tenantId, 'key' => RentOut::SERVICE_CATEGORIES_CONFIG_KEY],
+            ['value' => $ids]
+        );
+
+        $this->info('Mapped '.count($this->serviceHeadByName).' service heads in Rent Out settings.');
+    }
+
+    /**
+     * The income head a migrated service charge belongs to, by its old category name.
+     */
+    private function serviceHeadId(?string $category): ?int
+    {
+        return $category ? ($this->serviceHeadByName[strtolower(trim($category))] ?? null) : null;
+    }
+
     private function migrateCustomers(): void
     {
         $customers = DB::connection('mysql2')
@@ -1012,7 +1094,10 @@ class MigratePropertyDataCommand extends Command
                     $counterAccountId = $this->accountId($mode['counter']) ?: $rentOut->account_id;
                 } else {
                     $accountId = $rentOut->account_id;
-                    $counterAccountId = $this->accountId($row->credit) ?: $rentOut->account_id;
+                    // A service charge credits its income head, as the new Services tab does.
+                    $counterAccountId = ($isServiceCharge ? $this->serviceHeadId($row->category) : null)
+                        ?: $this->accountId($row->credit)
+                        ?: $rentOut->account_id;
                 }
 
                 $isMoneyIn = $mode !== null && $mode['direction'] === 'in';
@@ -1040,7 +1125,8 @@ class MigratePropertyDataCommand extends Command
                     'journal_id' => $row->id,
                     'journal_entry_id' => null,
                     'group' => $row->payment_type ?: 'Payment',
-                    'category' => $row->category ?: null,
+                    // The Services tab resolves the category as an income account id.
+                    'category' => ($isServiceCharge ? $this->serviceHeadId($row->category) : null) ?: ($row->category ?: null),
                     'payment_type' => $row->payment_type ?: 'Payment',
                     'remark' => $row->remark ?? null,
                     'reason' => $row->reason ?? null,
@@ -1284,7 +1370,7 @@ class MigratePropertyDataCommand extends Command
             'rent_out_id' => $row->rentout_id,
             'amount' => $row->security_amount ?? 0,
             'payment_mode' => $this->resolvePaymentMode($row->security_payment_mode_id ?? null),
-            'status' => $this->securityStatusMap[$row->status ?? 'Pending'] ?? 'pending',
+            'status' => $this->securityStatusMap[$row->status ?? 'Submitted'] ?? 'submitted',
             'type' => strtolower($row->type ?? 'deposit') === 'guarantee' ? 'guarantee' : 'deposit',
             'due_date' => $row->due_date ?? null,
             'remarks' => null,

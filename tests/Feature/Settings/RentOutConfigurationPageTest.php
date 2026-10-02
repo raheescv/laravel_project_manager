@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Settings\RentOutConfiguration;
+use App\Models\Account;
 use App\Models\Configuration;
+use App\Models\RentOut;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -21,11 +23,43 @@ it('lists every section with its status in the nav', function (): void {
     Configuration::updateOrCreate(['key' => 'rental_reservation_logo'], ['value' => 'rent_out_logos/rental.png']);
 
     Livewire::test(RentOutConfiguration::class)
-        ->assertSeeInOrder(['Mandatory Documents', 'Checklist Notes', 'Print Layout', 'Agreement Logos', 'Annex Pages', 'LPO Header'])
+        ->assertSeeInOrder(['Mandatory Documents', 'Service Heads', 'Checklist Notes', 'Print Layout', 'Agreement Logos', 'Annex Pages', 'LPO Header'])
         ->assertSee('1 of 5 set')
         ->assertSee('Logos shown')
         ->assertSee('All sections saved')
         ->assertSeeHtml('rent_out_logos/rental.png');
+});
+
+it('maps service heads that limit the rent-out service category dropdown', function (): void {
+    $tenantId = $this->world->user->tenant_id;
+    $maintenance = Account::create(['tenant_id' => $tenantId, 'name' => 'Maintenance Fees', 'account_type' => 'income']);
+    Account::create(['tenant_id' => $tenantId, 'name' => 'Parking Fees', 'account_type' => 'income']);
+    Account::create(['tenant_id' => $tenantId, 'name' => 'Abdalla Almallah', 'account_type' => 'asset', 'model' => 'customer']);
+
+    Livewire::test(RentOutConfiguration::class)
+        ->assertSee('Not mapped')
+        ->assertSee('Maintenance Fees')
+        ->assertDontSeeHtml('>Abdalla Almallah<')
+        ->set('service_categories', [(string) $maintenance->id])
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee('1 mapped');
+
+    expect(RentOut::serviceCategoryIds())->toBe([$maintenance->id]);
+
+    $names = collect((new Account())->getDropDownList(['rent_out_service' => 1])['items'])->pluck('name');
+    expect($names->all())->toBe(['Maintenance Fees']);
+
+    $unfiltered = collect((new Account())->getDropDownList(['query' => 'Fees'])['items'])->pluck('name');
+    expect($unfiltered)->toContain('Parking Fees');
+});
+
+it('offers every account while no service heads are mapped', function (): void {
+    Account::create(['tenant_id' => $this->world->user->tenant_id, 'name' => 'Parking Fees', 'account_type' => 'income']);
+
+    $names = collect((new Account())->getDropDownList(['rent_out_service' => 1, 'query' => 'Parking'])['items'])->pluck('name');
+
+    expect($names)->toContain('Parking Fees');
 });
 
 it('previews a newly picked logo before it is saved', function (): void {

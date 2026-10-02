@@ -89,7 +89,7 @@
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
-            @if (in_array($form['status'], ['collected', 'returned', 'adjusted'], true))
+            @if (in_array($form['status'], $collectedStatuses, true))
                 <div class="col-md-6">
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-check-o me-1 text-muted"></i> Collected Date <span
                             class="text-danger">*</span></label>
@@ -100,7 +100,7 @@
                     @enderror
                 </div>
             @endif
-            @if ($form['status'] === 'returned')
+            @if (in_array($form['status'], $refundedStatuses, true))
                 <div class="col-md-6">
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-times-o me-1 text-muted"></i> Returned Date <span
                             class="text-danger">*</span></label>

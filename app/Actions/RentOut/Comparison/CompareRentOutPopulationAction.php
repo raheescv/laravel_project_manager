@@ -648,11 +648,12 @@ class CompareRentOutPopulationAction
     private function normaliseSecurityStatus(mixed $value): ?string
     {
         return match ($this->normaliseValue($value)) {
-            'submitted', 'pending' => 'pending',
-            'collected' => 'collected',
+            'deposited' => 'deposited',
             'returned' => 'returned',
-            'adjusted' => 'adjusted',
-            default => 'pending',
+            'paid', 'collected', 'adjusted' => 'paid',
+            'overdue' => 'overdue',
+            'paid & released' => 'paid_released',
+            default => 'submitted',
         };
     }
 

@@ -176,7 +176,9 @@ class Account extends Model implements AuditableContracts
         $self = $self->when($request['model'] ?? '', function ($query, $value) {
             return $query->where('model', $value);
         });
-        $self = $self->limit(10);
+        $serviceCategoryIds = ($request['rent_out_service'] ?? '') ? RentOut::serviceCategoryIds() : [];
+        $self = $self->when($serviceCategoryIds, fn ($query, $ids) => $query->whereIn('id', $ids));
+        $self = $self->limit($serviceCategoryIds ? max(count($serviceCategoryIds), 10) : 10);
         $self = $self->get(['name', 'mobile', 'email', 'id'])->toArray();
         $return['items'] = $self;
 

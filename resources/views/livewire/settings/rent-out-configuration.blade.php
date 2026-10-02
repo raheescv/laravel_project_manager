@@ -11,6 +11,7 @@
     $logosSet = $logoSlots->filter(fn ($slot) => $slot['existing'])->count();
     $logosTotal = $logoSlots->count();
     $mandatoryCount = count($mandatory_document_types);
+    $serviceHeadCount = count($service_categories);
     $agreementImageCount = count($existing_rent_out_agreement_images);
     $bondPaperOn = $reservation_bond_paper_mode === 'yes';
 
@@ -22,6 +23,14 @@
             'ok' => $mandatoryCount > 0,
             'sub' => 'Document types selected here become the default required checklist on every new rent-out / lease booking. Each booking can still fine-tune its own list from the Documents tab.',
             'fields' => ['mandatory_document_types'],
+        ],
+        'services' => [
+            'icon' => 'fa-cogs',
+            'title' => 'Service Heads',
+            'status' => $serviceHeadCount ? $serviceHeadCount . ' mapped' : 'Not mapped',
+            'ok' => $serviceHeadCount > 0,
+            'sub' => 'Income accounts offered as the Category when adding a service on a rent-out. Only the heads mapped here appear in that dropdown, and the service charge is credited to the head picked.',
+            'fields' => ['service_categories'],
         ],
         'checklist' => [
             'icon' => 'fa-list-alt',
@@ -131,6 +140,33 @@
                     @endif
                 </section>
 
+                {{-- ============ SERVICE HEADS ============ --}}
+                <section x-show="tab === 'services'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['services']])
+
+                    @if ($serviceHeadOptions->isEmpty())
+                        <div class="alert alert-warning d-flex align-items-start gap-2 small mb-0">
+                            <i class="fa fa-exclamation-triangle mt-1"></i>
+                            <div>
+                                No income accounts yet.
+                                <a href="{{ route('account::index') }}" class="alert-link">Add income accounts</a>
+                                for your services first, then map them here.
+                            </div>
+                        </div>
+                    @else
+                        <div class="card shadow-none border rounded-3 p-3">
+                            <div wire:ignore>
+                                <label class="form-label fw-semibold small" for="service_categories">Service categories on the Services tab</label>
+                                {{ html()->select('service_categories', $serviceHeadOptions)->value($service_categories)->id('service_categories')->multiple()->placeholder('Search income accounts…')->attribute('wire:model', 'service_categories') }}
+                            </div>
+                            <div class="form-text mb-0">
+                                <i class="fa fa-info-circle me-1"></i>Leave empty to keep offering every account.
+                                <a href="{{ route('account::index') }}" class="link-primary">Manage accounts</a>
+                            </div>
+                        </div>
+                    @endif
+                </section>
+
                 {{-- ============ CHECKLIST NOTES ============ --}}
                 <section x-show="tab === 'checklist'" x-cloak>
                     @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['checklist']])
@@ -186,15 +222,21 @@
 
                     <div class="row g-4">
                         <div class="col-12 col-md-8">
-                            <div class="form-check form-switch card shadow-none border rounded-3 p-3 ps-5 mb-3">
-                                <input type="checkbox" class="form-check-input" role="switch" id="reservation_bond_paper_mode"
-                                    :checked="$wire.reservation_bond_paper_mode === 'yes'"
-                                    x-on:change="$wire.reservation_bond_paper_mode = $event.target.checked ? 'yes' : 'no'">
-                                <label class="form-check-label" for="reservation_bond_paper_mode">
-                                    <span class="d-block fw-semibold">Bond paper mode</span>
-                                    <span class="d-block small text-body-secondary">Hide logos &amp; footer image during PDF generation, keep their space blank.</span>
-                                </label>
-                            </div>
+                            <label class="d-flex align-items-center justify-content-between gap-3 border rounded-3 px-3 py-2 mb-3" for="reservation_bond_paper_mode"
+                                role="button">
+                                <span class="d-flex align-items-center gap-2 min-w-0">
+                                    <span class="d-inline-flex rounded-2 bg-primary-subtle text-primary p-2 lh-1"><i class="fa fa-fw fa-file-o"></i></span>
+                                    <span class="min-w-0">
+                                        <span class="d-block fw-semibold small">Bond paper mode</span>
+                                        <span class="d-block small text-body-secondary">Hide logos &amp; footer image during PDF generation, keep their space blank.</span>
+                                    </span>
+                                </span>
+                                <span class="form-check form-switch m-0 flex-shrink-0">
+                                    <input type="checkbox" class="form-check-input m-0" role="switch" id="reservation_bond_paper_mode"
+                                        :checked="$wire.reservation_bond_paper_mode === 'yes'"
+                                        x-on:change="$wire.reservation_bond_paper_mode = $event.target.checked ? 'yes' : 'no'">
+                                </span>
+                            </label>
 
                             <div class="row g-3">
                                 <div class="col-12 col-sm-6">
@@ -406,6 +448,15 @@
             $('#mandatory_document_types').on('change', function() {
                 @this.set('mandatory_document_types', $(this).val() || []);
             });
+
+            const serviceCategories = document.getElementById('service_categories');
+            if (serviceCategories && !serviceCategories.tomselect) {
+                new TomSelect(serviceCategories, {
+                    plugins: ['remove_button'],
+                    persist: false,
+                    onChange: (value) => @this.set('service_categories', value || []),
+                });
+            }
         });
     </script>
 @endpush

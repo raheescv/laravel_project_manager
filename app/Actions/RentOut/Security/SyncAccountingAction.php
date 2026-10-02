@@ -18,9 +18,9 @@ class SyncAccountingAction
      * deposit so it matches its current status. Idempotent — safe to call on
      * every create/update; it wipes prior entries and recreates what is needed.
      *
-     *  - Collected / Adjusted : collection receipt (Dr Payment Method, Cr Security Deposit)
-     *  - Returned             : collection receipt + refund payout (Dr Security Deposit, Cr Payment Method)
-     *  - Pending              : no ledger movement
+     *  - Deposited / Paid            : collection receipt (Dr Payment Method, Cr Security Deposit)
+     *  - Returned / Paid & Released  : collection receipt + refund payout (Dr Security Deposit, Cr Payment Method)
+     *  - Submitted / Overdue         : no ledger movement (cheque only held, or nothing received)
      */
     public function execute(RentOutSecurity $security, ?int $userId = null): array
     {
@@ -38,13 +38,9 @@ class SyncAccountingAction
 
                 $hasCashLeg = $security->account_id && (float) $security->amount > 0;
 
-                $needsCollection = $hasCashLeg && in_array($status, [
-                    SecurityStatus::Collected,
-                    SecurityStatus::Returned,
-                    SecurityStatus::Adjusted,
-                ], true);
+                $needsCollection = $hasCashLeg && $status?->isCollected();
 
-                $needsRefund = $hasCashLeg && $status === SecurityStatus::Returned;
+                $needsRefund = $hasCashLeg && $status?->isRefunded();
 
                 if ($needsCollection) {
                     $response = RentOutTransactionHelper::storeSecurityCollection($security, $userId);

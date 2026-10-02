@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Settings;
 
+use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\DocumentType;
 use App\Models\RentOut;
@@ -56,6 +57,9 @@ class RentOutConfiguration extends Component
     // Mandatory documents (default required checklist for new rent-out / lease bookings)
     public array $mandatory_document_types = [];
 
+    // Account heads offered as the Category on the rent-out Services tab
+    public array $service_categories = [];
+
     // Handover checklist print headings + declarations, per agreement type / phase
     public array $checklist_notes = [];
 
@@ -104,6 +108,8 @@ class RentOutConfiguration extends Component
             ->values()
             ->toArray();
 
+        $this->service_categories = RentOut::serviceCategoryIds();
+
         // Load checklist print headings / declarations
         $this->checklist_notes = RentOutChecklistNotes::all();
     }
@@ -149,6 +155,11 @@ class RentOutConfiguration extends Component
         Configuration::updateOrCreate(
             ['key' => RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY],
             ['value' => $mandatory]
+        );
+
+        Configuration::updateOrCreate(
+            ['key' => RentOut::SERVICE_CATEGORIES_CONFIG_KEY],
+            ['value' => collect($this->service_categories)->map(fn ($id) => (int) $id)->filter()->unique()->implode(',')]
         );
 
         // Save checklist print headings / declarations (blanks fall back to defaults)
@@ -206,6 +217,10 @@ class RentOutConfiguration extends Component
     {
         return view('livewire.settings.rent-out-configuration', [
             'documentTypes' => DocumentType::orderBy('name')->pluck('name', 'id'),
+            'serviceHeadOptions' => Account::query()
+                ->where(fn ($query) => $query->where('account_type', 'income')->orWhereIn('id', $this->service_categories))
+                ->orderBy('name')
+                ->pluck('name', 'id'),
             'checklistTokens' => RentOutChecklistNotes::tokenHelp(),
             'checklistDefaults' => RentOutChecklistNotes::defaults(),
         ]);

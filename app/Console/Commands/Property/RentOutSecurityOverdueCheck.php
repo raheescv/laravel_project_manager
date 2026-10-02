@@ -19,7 +19,7 @@ class RentOutSecurityOverdueCheck extends Command
         $this->info('Checking for overdue security deposits...');
 
         $overdueSecurities = RentOutSecurity::withoutGlobalScopes()
-            ->where('status', SecurityStatus::Pending)
+            ->whereIn('status', SecurityStatus::awaiting())
             ->whereNotNull('due_date')
             ->where('due_date', '<', Carbon::today())
             ->with(['rentOut.customer', 'rentOut.property'])

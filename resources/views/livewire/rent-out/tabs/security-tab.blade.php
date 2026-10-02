@@ -30,7 +30,7 @@
             </thead>
             <tbody>
                 @forelse($rentOut->securities as $index => $security)
-                    <tr class="{{ $security->status?->value === 'collected' ? 'table-success' : ($security->status?->value === 'returned' ? 'table-info' : '') }}">
+                    <tr class="{{ match (true) { $security->status?->isRefunded() => 'table-info', $security->status?->isCollected() => 'table-success', $security->status === \App\Enums\RentOut\SecurityStatus::Overdue => 'table-danger', default => '' } }}">
                         <td>{{ $index + 1 }}</td>
                         <td class="text-end fw-medium">{{ number_format($security->amount, 2) }}</td>
                         <td>{{ $security->account?->name ?? $security->payment_mode?->label() }}</td>

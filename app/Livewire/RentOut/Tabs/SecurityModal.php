@@ -79,13 +79,13 @@ class SecurityModal extends Component
             $messages['form.cheque_no.required'] = 'Cheque number is required for cheque payments.';
         }
 
-        // Collection date is needed once the deposit is collected/returned/adjusted;
-        // return date only once it is returned.
-        if (in_array($this->form['status'], ['collected', 'returned', 'adjusted'], true)) {
+        // Collection date is needed once the deposit money is received;
+        // return date only once it is handed back.
+        if (in_array($this->form['status'], SecurityStatus::collectedValues(), true)) {
             $rules['form.collected_date'] = 'required|date';
             $messages['form.collected_date.required'] = 'Collected date is required for this status.';
         }
-        if ($this->form['status'] === 'returned') {
+        if (in_array($this->form['status'], SecurityStatus::refundedValues(), true)) {
             $rules['form.returned_date'] = 'required|date';
             $messages['form.returned_date.required'] = 'Returned date is required when the deposit is returned.';
         }
@@ -151,6 +151,8 @@ class SecurityModal extends Component
             'chequeAccountIds' => $this->chequeAccountIds(),
             'securityTypes' => SecurityType::cases(),
             'securityStatuses' => SecurityStatus::cases(),
+            'collectedStatuses' => SecurityStatus::collectedValues(),
+            'refundedStatuses' => SecurityStatus::refundedValues(),
         ]);
     }
 }
