@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings Page · Premium Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  /* ---------- host stand-ins (Nifty + Bootstrap tokens) ---------- */
+  :root{
+    --bs-primary:#2b4380;
+    --bs-success:#1f9d63; --bs-warning:#e8a317; --bs-danger:#d64545; --bs-info:#2a9fd6;
+    --ink:#0f1522; --body:#333b49; --muted:#6b7588; --faint:#9aa3b2;
+    --page:#edf1f6; --surface:#fff; --surface-2:#f7f9fc; --line:#e3e8ef; --line-soft:#eef1f5; --mix:#fff;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px -14px rgba(16,24,40,.18);
+  }
+  [data-bs-theme="dark"]{
+    color-scheme:dark;
+    --ink:#eef1f6; --body:#c4ccd8; --muted:#8b95a5; --faint:#5f6a7a;
+    --page:#1b2027; --surface:#262c33; --surface-2:#20262c; --line:#353d47; --line-soft:#2e353e; --mix:#000;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--page);font-family:Poppins,system-ui,sans-serif;color:var(--body);font-size:13px;line-height:1.45;overflow-x:hidden}
+  button,input,select,textarea{font-family:inherit;font-size:inherit}
+
+  .demo{position:sticky;top:0;z-index:90;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:9px 16px;background:#0f1522;color:#cfd6e2;font-size:12px}
+  .demo b{color:#fff}
+  .demo .grp{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .demo .lbl{opacity:.55;text-transform:uppercase;letter-spacing:1.2px;font-size:9.5px;margin-inline-end:3px}
+  .demo .opt{border:1px solid rgba(255,255,255,.14);background:transparent;color:#cfd6e2;padding:4px 10px;border-radius:8px;cursor:pointer}
+  .demo .opt.on{background:#fff;color:#0f1522;border-color:#fff;font-weight:600}
+  .demo .sw{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;padding:0}
+  .demo .sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+  .demo .vnote{flex-basis:100%;opacity:.72;font-size:11.5px}
+
+  /* fake app chrome */
+  .app{display:grid;grid-template-columns:58px minmax(0,1fr);min-height:calc(100vh - 40px)}
+  .rail{background:var(--surface);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:14px}
+  .rail span{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+  .rail span.on{background:color-mix(in srgb,var(--bs-primary) 14%,transparent);color:var(--bs-primary)}
+  .main{min-width:0}
+  .topbar{height:50px;background:var(--bs-primary);display:flex;align-items:center;padding:0 16px;color:#fff;gap:10px;font-size:12px}
+  .topbar .pill{background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px}
+  .wrap{padding:18px;max-width:1440px;margin:0 auto}
+  @media(max-width:640px){.app{grid-template-columns:1fr}.rail{display:none}.wrap{padding:12px}}
+
+  /* =================================================================
+     .stx — Settings premium system (scoped; accent = theme colour)
+     ================================================================= */
+  .stx{--acc:var(--bs-primary);--acc-soft:color-mix(in srgb,var(--acc) 11%,transparent);--acc-ink:color-mix(in srgb,var(--acc) 82%,var(--ink));
+       --grad:linear-gradient(135deg,color-mix(in srgb,var(--acc) 80%,#fff),var(--acc) 45%,color-mix(in srgb,var(--acc) 70%,#000));
+       --glow:0 10px 22px -12px color-mix(in srgb,var(--acc) 80%,transparent);--r:16px;min-width:0}
+  [data-bs-theme="dark"] .stx{--acc-ink:color-mix(in srgb,var(--acc) 50%,#fff);--acc-soft:color-mix(in srgb,var(--acc) 22%,transparent)}
+  .stx .dir{display:none}
+  .stx[data-dir="a"] .dir.a,.stx[data-dir="b"] .dir.b,.stx[data-dir="c"] .dir.c{display:block}
+  .stx .ink{color:var(--ink)} .stx .muted{color:var(--muted)}
+  .stx h1,.stx h2,.stx h3,.stx h4{margin:0;color:var(--ink)}
+
+  /* atoms */
+  .stx .ic{width:34px;height:34px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;font-size:14px}
+  .stx .ic.soft{background:var(--acc-soft);color:var(--acc-ink)}
+  .stx .ic.solid{background:var(--grad);color:#fff;box-shadow:var(--glow)}
+  .stx .chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+  .stx .chip.ok{color:var(--bs-success);background:color-mix(in srgb,var(--bs-success) 14%,transparent)}
+  .stx .chip.warn{color:color-mix(in srgb,var(--bs-warning) 80%,var(--ink));background:color-mix(in srgb,var(--bs-warning) 18%,transparent)}
+  .stx .chip.acc{color:var(--acc-ink);background:var(--acc-soft)}
+  .stx .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .stx .dot.ok{background:var(--bs-success)} .stx .dot.warn{background:var(--bs-warning)}
+  .stx .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+  .stx .btn-p{background:var(--grad);border-color:transparent;color:#fff;box-shadow:var(--glow)}
+  .stx .ctl{width:100%;height:38px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:0 12px;outline:0}
+  .stx .ctl:focus{border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-soft)}
+  .stx .lbl{display:block;font-weight:600;font-size:12px;color:var(--ink);margin-bottom:5px}
+  .stx .hint{font-size:11.5px;color:var(--muted);margin-top:5px}
+  .stx .tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:40px;border:1px solid var(--line);border-radius:10px;padding:5px 8px;background:var(--surface)}
+  .stx .tag{background:var(--acc-soft);color:var(--acc-ink);font-weight:600;font-size:11.5px;border-radius:7px;padding:3px 8px;display:inline-flex;gap:6px;align-items:center}
+  .stx .tags input{border:0;outline:0;background:none;flex:1;min-width:120px;color:var(--ink)}
+  .stx .tile{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+  .stx .tile-art{height:92px;display:grid;place-items:center;position:relative;background:linear-gradient(160deg,var(--acc-soft),transparent)}
+  .stx .tile-art.set{background:repeating-conic-gradient(var(--surface-2) 0 25%,var(--surface) 0 50%) 0 0/14px 14px}
+  .stx .tile-art .chip{position:absolute;top:8px;inset-inline-start:8px}
+  .stx .tile-art .up{width:40px;height:40px;border-radius:50%;background:var(--surface);color:var(--acc);display:grid;place-items:center;box-shadow:0 6px 16px -8px rgba(0,0,0,.35)}
+  .stx .tile-b{display:flex;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line-soft)}
+  .stx .tile-b b{display:block;color:var(--ink);font-size:12.5px} .stx .tile-b small{color:var(--muted)}
+  .stx .tile-b .act{margin-inline-start:auto;width:30px;height:30px;border-radius:50%;border:0;background:var(--acc-soft);color:var(--acc-ink);display:grid;place-items:center;cursor:pointer}
+  .stx .logo{display:flex;gap:8px;align-items:center;font-weight:700;color:var(--acc)} .stx .logo b{width:26px;height:26px;border-radius:7px;background:var(--acc);color:#fff;display:grid;place-items:center;font-size:12px}
+  .stx .grid3{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+  .stx .gtitle{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 10px}
+  .stx .gtitle::after{content:"";flex:1;height:1px;background:var(--line)}
+  .stx .switch{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  .stx .tr{width:38px;height:22px;border-radius:20px;background:var(--line);position:relative;flex:0 0 auto}
+  .stx .tr::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+
+  /* shared rent-out section nav (inner) */
+  .stx .secnav{display:flex;flex-direction:column;gap:3px}
+  .stx .sec{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;border:0;background:none;text-align:start;cursor:pointer;color:var(--body);width:100%}
+  .stx .sec .ic{width:30px;height:30px;font-size:12.5px}
+  .stx .sec b{display:block;font-size:12.5px;color:var(--ink)} .stx .sec small{display:block;font-size:11px;color:var(--muted)}
+  .stx .sec .dot{margin-inline-start:auto}
+  .stx .sec:hover{background:var(--surface-2)}
+  .stx .sec.on{background:var(--acc-soft)} .stx .sec.on b{color:var(--acc-ink)}
+  .stx .sec.on .ic{background:var(--grad);color:#fff;box-shadow:var(--glow)}
+
+  /* ================= A · Aurora Console ================= */
+  .stx .a-hero{position:relative;overflow:hidden;border-radius:var(--r);padding:22px 24px 64px;color:#fff;background:var(--grad);box-shadow:var(--glow)}
+  .stx .a-hero::before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;inset-inline-end:-80px;top:-160px;background:rgba(255,255,255,.12)}
+  .stx .a-hero::after{content:"";position:absolute;width:200px;height:200px;border-radius:50%;inset-inline-end:180px;bottom:-140px;background:rgba(255,255,255,.08)}
+  .stx .a-hero h1{color:#fff;font-size:24px;font-weight:700} .stx .a-hero p{margin:4px 0 0;opacity:.82}
+  .stx .a-hero .crumb{font-size:12px;opacity:.75;margin-bottom:6px}
+  .stx .a-hero .search{position:relative;z-index:1;margin-top:16px;max-width:420px}
+  .stx .a-hero .search input{width:100%;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.14);color:#fff;padding:0 14px 0 38px;outline:0}
+  .stx .a-hero .search input::placeholder{color:rgba(255,255,255,.7)}
+  .stx .a-hero .search i{position:absolute;inset-inline-start:14px;top:13px;opacity:.8}
+  .stx .a-body{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;margin-top:-44px;position:relative;padding:0 14px}
+  .stx .a-cats{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;align-self:start;position:sticky;top:56px}
+  .stx .a-cats h6{margin:12px 8px 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .stx .a-cats h6:first-child{margin-top:4px}
+  .stx .a-cat{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;color:var(--body);cursor:pointer;font-weight:500}
+  .stx .a-cat i{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-size:12.5px}
+  .stx .a-cat:hover{background:var(--surface-2)}
+  .stx .a-cat.on{background:var(--acc-soft);color:var(--acc-ink);font-weight:600}
+  .stx .a-cat.on i{background:var(--grad);color:#fff;box-shadow:var(--glow)}
+  .stx .a-panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  .stx .a-panel-h{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft)}
+  .stx .a-panel-h h2{font-size:16px} .stx .a-panel-h p{margin:2px 0 0;color:var(--muted);font-size:12px}
+  .stx .a-inner{display:grid;grid-template-columns:220px minmax(0,1fr)}
+  .stx .a-inner .secnav{padding:12px;border-inline-end:1px solid var(--line-soft)}
+  .stx .a-inner .content{padding:18px 20px;min-width:0}
+  .stx .a-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 20px;border-top:1px solid var(--line-soft);background:var(--surface-2)}
+  @media(max-width:980px){.stx .a-body{grid-template-columns:1fr;margin-top:-44px}.stx .a-cats{position:static;display:flex;overflow-x:auto;gap:4px}.stx .a-cats h6{display:none}.stx .a-cat{white-space:nowrap}
+    .stx .a-inner{grid-template-columns:1fr}.stx .a-inner .secnav{flex-direction:row;overflow-x:auto;border-inline-end:0;border-bottom:1px solid var(--line-soft)}.stx .a-inner .sec{width:auto;white-space:nowrap}.stx .a-inner .sec small{display:none}}
+
+  /* ================= B · Studio Split ================= */
+  .stx .b-shell{display:grid;grid-template-columns:270px minmax(0,1fr);background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;min-height:640px}
+  .stx .b-side{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 7%,var(--surface)),var(--surface) 40%);border-inline-end:1px solid var(--line-soft);padding:18px 12px}
+  .stx .b-brand{display:flex;gap:10px;align-items:center;padding:0 6px 14px}
+  .stx .b-brand h1{font-size:17px;font-weight:700} .stx .b-brand small{color:var(--muted)}
+  .stx .b-search{position:relative;margin:0 4px 12px} .stx .b-search input{width:100%;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 12px 0 34px;color:var(--ink);outline:0}
+  .stx .b-search i{position:absolute;inset-inline-start:12px;top:11px;color:var(--faint)}
+  .stx .b-group{margin:4px 0 10px} .stx .b-group h6{margin:8px 10px 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .stx .b-cat{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:10px;cursor:pointer;color:var(--body);font-weight:500}
+  .stx .b-cat i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px}
+  .stx .b-cat:hover{background:var(--surface-2)}
+  .stx .b-cat.on{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 16px -10px rgba(0,0,0,.25);color:var(--ink);font-weight:600}
+  .stx .b-cat .arrow{margin-inline-start:auto;color:var(--faint);font-size:10px}
+  .stx .b-main{min-width:0;display:flex;flex-direction:column}
+  .stx .b-head{padding:22px 26px 0}
+  .stx .b-head .crumb{font-size:12px;color:var(--muted);margin-bottom:4px}
+  .stx .b-head h2{font-size:21px;font-weight:700} .stx .b-head p{margin:4px 0 0;color:var(--muted)}
+  .stx .b-seg{display:flex;gap:4px;overflow-x:auto;padding:16px 26px 0;border-bottom:1px solid var(--line-soft)}
+  .stx .b-seg button{border:0;background:none;padding:9px 12px 11px;color:var(--muted);font-weight:600;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;display:inline-flex;gap:7px;align-items:center}
+  .stx .b-seg button.on{color:var(--acc-ink);border-bottom-color:var(--acc)}
+  .stx .b-content{padding:20px 26px;flex:1;min-width:0}
+  .stx .b-group-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px}
+  .stx .b-row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid var(--line-soft)}
+  .stx .b-row:last-child{border-bottom:0}
+  .stx .b-row .t{flex:1;min-width:0} .stx .b-row .t b{color:var(--ink);display:block} .stx .b-row .t small{color:var(--muted)}
+  .stx .b-row .v{flex:0 0 auto;max-width:55%}
+  .stx .b-foot{position:sticky;bottom:0;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:12px 26px;border-top:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(8px)}
+  @media(max-width:900px){.stx .b-shell{grid-template-columns:1fr}.stx .b-side{border-inline-end:0;border-bottom:1px solid var(--line-soft);display:flex;overflow-x:auto;gap:6px;padding:10px}.stx .b-brand,.stx .b-search,.stx .b-group h6{display:none}.stx .b-group{display:flex;gap:4px;margin:0}.stx .b-cat{white-space:nowrap}.stx .b-cat .arrow{display:none}
+    .stx .b-row{flex-wrap:wrap}.stx .b-row .v{max-width:100%;flex-basis:100%}.stx .b-head,.stx .b-content{padding-inline:14px}.stx .b-seg{padding-inline:14px}}
+
+  /* ================= C · Command Tiles ================= */
+  .stx .c-top{display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between;margin-bottom:14px}
+  .stx .c-top h1{font-size:22px;font-weight:700} .stx .c-top p{margin:2px 0 0;color:var(--muted)}
+  .stx .c-search{position:relative;width:min(100%,320px)} .stx .c-search input{width:100%;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:0 12px 0 36px;color:var(--ink);outline:0;box-shadow:var(--shadow)}
+  .stx .c-search i{position:absolute;inset-inline-start:13px;top:13px;color:var(--faint)}
+  .stx .c-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 12px;scrollbar-width:thin}
+  .stx .c-card{flex:0 0 150px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;transition:.15s}
+  .stx .c-card i{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-ink);margin-bottom:8px}
+  .stx .c-card b{display:block;color:var(--ink);font-size:12.5px} .stx .c-card small{color:var(--muted);font-size:11px}
+  .stx .c-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .stx .c-card.on{background:var(--grad);border-color:transparent;box-shadow:var(--glow)} .stx .c-card.on b,.stx .c-card.on small{color:#fff} .stx .c-card.on i{background:rgba(255,255,255,.2);color:#fff}
+  .stx .c-panel{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+  .stx .c-panel-h{position:relative;padding:20px 22px;background:linear-gradient(120deg,var(--acc-soft),transparent 70%);border-bottom:1px solid var(--line-soft);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .stx .c-panel-h h2{font-size:18px} .stx .c-panel-h p{margin:2px 0 0;color:var(--muted)}
+  .stx .c-progress{margin-inline-start:auto;min-width:180px} .stx .c-bar{height:6px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:6px} .stx .c-bar span{display:block;height:100%;width:50%;background:var(--grad)}
+  .stx .c-pills{display:flex;gap:6px;overflow-x:auto;padding:12px 22px;border-bottom:1px solid var(--line-soft)}
+  .stx .c-pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;display:inline-flex;gap:7px;align-items:center}
+  .stx .c-pill.on{background:var(--acc-soft);border-color:transparent;color:var(--acc-ink)}
+  .stx .c-content{padding:20px 22px}
+  .stx .c-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 22px;border-top:1px solid var(--line-soft)}
+  @media(max-width:640px){.stx .c-progress{margin-inline-start:0;width:100%}.stx .c-content,.stx .c-panel-h,.stx .c-pills,.stx .c-foot{padding-inline:14px}}
+</style>
+</head>
+<body>
+<div class="demo">
+  <b>Settings page</b>
+  <div class="grp"><span class="lbl">Direction</span>
+    <button class="opt on" data-dir="a">A · Aurora Console</button>
+    <button class="opt" data-dir="b">B · Studio Split</button>
+    <button class="opt" data-dir="c">C · Command Tiles</button>
+  </div>
+  <div class="grp"><span class="lbl">Theme</span><button class="opt on" data-theme="light">Light</button><button class="opt" data-theme="dark">Dark</button></div>
+  <div class="grp"><span class="lbl">Dir</span><button class="opt on" data-ltr="ltr">LTR</button><button class="opt" data-ltr="rtl">RTL</button></div>
+  <div class="grp"><span class="lbl">Accent</span>
+    <button class="sw on" style="background:#2b4380" data-acc="#2b4380"></button>
+    <button class="sw" style="background:#0f9d8a" data-acc="#0f9d8a"></button>
+    <button class="sw" style="background:#b4572e" data-acc="#b4572e"></button>
+    <button class="sw" style="background:#7048e8" data-acc="#7048e8"></button>
+  </div>
+  <div class="vnote" id="vnote"></div>
+</div>
+
+<div class="app">
+  <aside class="rail"><span class="on"><i class="fa fa-th-large"></i></span><span><i class="fa fa-shopping-cart"></i></span><span><i class="fa fa-key"></i></span><span><i class="fa fa-bar-chart"></i></span><span><i class="fa fa-cog"></i></span></aside>
+  <div class="main">
+    <div class="topbar"><i class="fa fa-bars"></i><span class="pill"><i class="fa fa-code-fork"></i> Branch: Main</span></div>
+    <div class="wrap">
+      <div class="stx" id="stx" data-dir="a">
+
+        <!-- ===================== A ===================== -->
+        <div class="dir a">
+          <div class="a-hero">
+            <div class="crumb">Home &rsaquo; Settings</div>
+            <h1>Settings</h1>
+            <p>Manage configuration, company profile, and integrations from one place.</p>
+            <div class="search"><i class="fa fa-search"></i><input placeholder="Search settings…"></div>
+          </div>
+          <div class="a-body">
+            <nav class="a-cats" id="aCats"></nav>
+            <div class="a-panel">
+              <div class="a-panel-h"><span class="ic solid"><i class="fa fa-key"></i></span><div><h2>Rent Out Settings</h2><p>Bookings, agreement print layout and PDF branding.</p></div><span class="chip acc" style="margin-inline-start:auto">3 / 6 ready</span></div>
+              <div class="a-inner"><div class="secnav" id="aSec"></div><div class="content" id="aBody"></div></div>
+              <div class="a-foot"><span class="muted"><i class="fa fa-check-circle" style="color:var(--bs-success)"></i> All sections saved</span><button class="btn btn-p"><i class="fa fa-check"></i>Save changes</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== B ===================== -->
+        <div class="dir b">
+          <div class="b-shell">
+            <aside class="b-side">
+              <div class="b-brand"><span class="ic solid"><i class="fa fa-cog"></i></span><div><h1>Settings</h1><small>Workspace control center</small></div></div>
+              <div class="b-search"><i class="fa fa-search"></i><input placeholder="Search"></div>
+              <div id="bCats"></div>
+            </aside>
+            <div class="b-main">
+              <div class="b-head"><div class="crumb">Settings &rsaquo; Property</div><h2>Rent Out Settings</h2><p>Bookings, agreement print layout and PDF branding.</p></div>
+              <div class="b-seg" id="bSeg"></div>
+              <div class="b-content" id="bBody"></div>
+              <div class="b-foot"><span class="muted" style="margin-inline-end:auto"><i class="fa fa-check-circle" style="color:var(--bs-success)"></i> All sections saved</span><button class="btn">Discard</button><button class="btn btn-p"><i class="fa fa-check"></i>Save changes</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== C ===================== -->
+        <div class="dir c">
+          <div class="c-top"><div><h1>Settings</h1><p>Manage configuration, company profile, and integrations from one place.</p></div><div class="c-search"><i class="fa fa-search"></i><input placeholder="Jump to a setting…"></div></div>
+          <div class="c-strip" id="cStrip"></div>
+          <div class="c-panel">
+            <div class="c-panel-h"><span class="ic solid"><i class="fa fa-key"></i></span><div><h2>Rent Out Settings</h2><p>Bookings, agreement print layout and PDF branding.</p></div>
+              <div class="c-progress"><div style="display:flex;justify-content:space-between" class="muted"><span>Setup progress</span><b class="ink">3/6</b></div><div class="c-bar"><span></span></div></div></div>
+            <div class="c-pills" id="cPills"></div>
+            <div class="c-content" id="cBody"></div>
+            <div class="c-foot"><span class="muted"><i class="fa fa-check-circle" style="color:var(--bs-success)"></i> All sections saved</span><button class="btn btn-p"><i class="fa fa-check"></i>Save changes</button></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  ['General',[['fa-building-o','Company Profile','#2b6cb0'],['fa-sliders','Configuration','#6b46c1'],['fa-money','Currencies','#2f855a'],['fa-th-large','Module Configuration','#b7791f'],['fa-paint-brush','Theme','#d53f8c']]],
+  ['Sales & Stock',[['fa-cube','Product Settings','#dd6b20'],['fa-shopping-cart','Sale Settings','#38a169'],['fa-print','Printers','#4a5568'],['fa-truck','Purchase Settings','#3182ce'],['fa-arrows-h','Universal UOM','#805ad5'],['fa-sort-numeric-asc','Unique No Counters','#319795']]],
+  ['Property',[['fa-key','Rent Out Settings','#2b4380'],['fa-users','Lead Settings','#c05621']]],
+  ['Calendar',[['fa-calendar','Working Day','#2c7a7b'],['fa-calendar-o','Holiday Calendar','#e53e3e']]],
+  ['Integrations',[['fa-bars','Navigation Order','#718096'],['fa-paper-plane','Telegram','#3182ce'],['fa-bell','Notifications','#d69e2e'],['fa-comments','WhatsApp','#38a169']]],
+];
+const ACTIVE='Rent Out Settings';
+
+const tile=(name,meta,set)=>`<div class="tile"><div class="tile-art ${set?'set':''}">${set?'<div class="logo"><b>Q</b>QLOUD</div>':'<span class="up"><i class="fa fa-cloud-upload"></i></span>'}<span class="chip ${set?'ok':'warn'}">${set?'<i class="fa fa-check"></i> Set':'Not set'}</span></div><div class="tile-b"><div><b>${name}</b><small>${meta}</small></div><button class="act"><i class="fa fa-upload"></i></button></div></div>`;
+const SEC = {
+  docs:{icon:'fa-check-square-o',title:'Mandatory Documents',status:'3 required',ok:true,body:`<label class="lbl">Required on every booking</label><div class="tags"><span class="tag">Passport <i class="fa fa-times"></i></span><span class="tag">QID <i class="fa fa-times"></i></span><span class="tag">Salary Certificate <i class="fa fa-times"></i></span><input placeholder="Search document types…"></div><div class="hint"><i class="fa fa-info-circle"></i> Bookings missing these show as incomplete on their Documents tab.</div>`},
+  checklist:{icon:'fa-list-alt',title:'Checklist Notes',status:'Rental · Lease',ok:true,body:`<label class="lbl">Heading</label><input class="ctl" value="To be accomplished during Move-In"><label class="lbl" style="margin-top:12px">Declaration</label><div style="border:1px solid var(--line);border-radius:12px;overflow:hidden"><div style="display:flex;gap:12px;padding:8px 12px;border-bottom:1px solid var(--line-soft);color:var(--muted)"><b>B</b><i>I</i><u>U</u><span>•</span><span>RTL</span><span style="margin-inline-start:auto" class="chip acc">{tenant_name}</span></div><div style="padding:12px;min-height:80px;color:var(--ink)">I, {tenant_name}, hereby confirm that the above mentioned furniture, kitchen appliances &amp; accessories were physically checked and received by me in good condition.</div></div>`},
+  print:{icon:'fa-print',title:'Print Layout',status:'Logos shown',ok:true,body:`<div class="switch"><span class="tr"></span><div><b class="ink">Bond paper mode</b><div class="hint" style="margin:2px 0 0">Hide logos &amp; footer image, keep their space blank.</div></div></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px"><div><label class="lbl">Header height</label><input class="ctl" value="80 px"></div><div><label class="lbl">Footer height</label><input class="ctl" value="30 px"></div></div>`},
+  logos:{icon:'fa-picture-o',title:'Agreement Logos',status:'1 of 5 set',ok:false,body:`<div class="gtitle" style="margin-top:0">Reservation forms</div><div class="grid3">${tile('Rental Reservation','Reservation PDF',true)}${tile('Sale Reservation','Reservation PDF',false)}</div><div class="gtitle">Residential lease</div><div class="grid3">${tile('Rental Residential','Lease PDF',false)}${tile('Sale Residential','Lease PDF',false)}${tile('Agreement Footer','Bottom band',false)}</div>`},
+  images:{icon:'fa-files-o',title:'Annex Pages',status:'None',ok:true,body:`<div style="border:2px dashed color-mix(in srgb,var(--acc) 35%,var(--line));border-radius:14px;padding:26px;text-align:center;background:var(--acc-soft)"><span class="up" style="display:inline-grid;width:44px;height:44px;border-radius:50%;background:var(--surface);color:var(--acc);place-items:center"><i class="fa fa-cloud-upload"></i></span><div class="ink" style="font-weight:600;margin-top:6px">Upload annex pages</div><div class="hint">Max 2 MB each · replaces all pages</div></div>`},
+  lpo:{icon:'fa-file-image-o',title:'LPO Header',status:'Not set',ok:false,body:`<div style="max-width:360px">${tile('LPO Header','Full-width PDF header',false)}</div>`},
+};
+const K=Object.keys(SEC);
+
+/* A */
+aCats.innerHTML=GROUPS.map(([g,items])=>`<h6>${g}</h6>`+items.map(([i,n])=>`<div class="a-cat ${n===ACTIVE?'on':''}"><i class="fa ${i}"></i>${n}</div>`).join('')).join('');
+aSec.innerHTML=K.map(k=>`<button class="sec" data-k="${k}"><span class="ic soft"><i class="fa ${SEC[k].icon}"></i></span><span><b>${SEC[k].title}</b><small>${SEC[k].status}</small></span><span class="dot ${SEC[k].ok?'ok':'warn'}"></span></button>`).join('');
+const showA=k=>{aBody.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><h3 style="font-size:15px">${SEC[k].title}</h3><span class="chip ${SEC[k].ok?'ok':'warn'}">${SEC[k].status}</span></div>`+SEC[k].body;aSec.querySelectorAll('.sec').forEach(b=>b.classList.toggle('on',b.dataset.k===k));};
+aSec.onclick=e=>{const b=e.target.closest('.sec');if(b)showA(b.dataset.k)};showA('logos');
+
+/* B */
+bCats.innerHTML=GROUPS.map(([g,items])=>`<div class="b-group"><h6>${g}</h6>`+items.map(([i,n,c])=>`<div class="b-cat ${n===ACTIVE?'on':''}"><i class="fa ${i}" style="background:${c}"></i>${n}<span class="fa fa-chevron-right arrow"></span></div>`).join('')+`</div>`).join('');
+bSeg.innerHTML=K.map(k=>`<button data-k="${k}"><i class="fa ${SEC[k].icon}"></i>${SEC[k].title}${SEC[k].ok?'':' <span class="dot warn"></span>'}</button>`).join('');
+const showB=k=>{
+  let body=SEC[k].body;
+  if(k==='print'){body=`<div class="b-group-card"><div class="b-row"><div class="t"><b>Bond paper mode</b><small>Hide logos &amp; footer image, keep their space blank</small></div><div class="v"><span class="tr" style="display:inline-block"></span></div></div><div class="b-row"><div class="t"><b>Header reserved height</b><small>Blank space for the header area</small></div><div class="v"><input class="ctl" style="width:140px" value="80 px"></div></div><div class="b-row"><div class="t"><b>Footer reserved height</b><small>Blank space for footer / signature</small></div><div class="v"><input class="ctl" style="width:140px" value="30 px"></div></div></div>`;}
+  if(k==='docs'){body=`<div class="b-group-card"><div class="b-row" style="flex-wrap:wrap"><div class="t"><b>Required on every booking</b><small>Default checklist on every new rent-out / lease booking</small></div><div class="v" style="flex-basis:100%;max-width:100%">${'<div class="tags"><span class="tag">Passport <i class="fa fa-times"></i></span><span class="tag">QID <i class="fa fa-times"></i></span><span class="tag">Salary Certificate <i class="fa fa-times"></i></span><input placeholder="Search document types…"></div>'}</div></div></div>`;}
+  bBody.innerHTML=body;bSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));};
+bSeg.onclick=e=>{const b=e.target.closest('button');if(b)showB(b.dataset.k)};showB('print');
+
+/* C */
+cStrip.innerHTML=GROUPS.flatMap(([g,items])=>items.map(([i,n])=>`<div class="c-card ${n===ACTIVE?'on':''}"><i class="fa ${i}"></i><b>${n}</b><small>${g}</small></div>`)).join('');
+cPills.innerHTML=K.map(k=>`<button class="c-pill" data-k="${k}"><span class="dot ${SEC[k].ok?'ok':'warn'}"></span>${SEC[k].title}</button>`).join('');
+const showC=k=>{cBody.innerHTML=SEC[k].body;cPills.querySelectorAll('.c-pill').forEach(b=>b.classList.toggle('on',b.dataset.k===k));};
+cPills.onclick=e=>{const b=e.target.closest('.c-pill');if(b)showC(b.dataset.k)};showC('logos');
+
+/* harness */
+const NOTES={
+  a:'A · Aurora Console — theme-gradient hero with settings search; floating white category card (grouped: General / Sales & Stock / Property / Calendar / Integrations) overlapping the hero; each tab is one elevated panel with its own section list and footer.',
+  b:'B · Studio Split — one big app-like surface (macOS / iOS Settings feel): left sidebar with search and colourful icon tiles per category, right side has title, underline tabs, and "label left · control right" setting rows.',
+  c:'C · Command Tiles — no sidebar: categories become a scrollable strip of tiles under a search box; the selected tab opens as a full-width panel with a progress meter and pill tabs. Most room for content.',
+};
+const stx=document.getElementById('stx');
+const setDir=d=>{stx.dataset.dir=d;vnote.textContent=NOTES[d];document.querySelectorAll('.opt[data-dir]').forEach(b=>b.classList.toggle('on',b.dataset.dir===d));};
+document.querySelectorAll('.opt[data-dir]').forEach(b=>b.onclick=()=>setDir(b.dataset.dir));
+document.querySelectorAll('.opt[data-theme]').forEach(b=>b.onclick=()=>{document.documentElement.dataset.bsTheme=b.dataset.theme;document.querySelectorAll('.opt[data-theme]').forEach(x=>x.classList.toggle('on',x===b));});
+document.querySelectorAll('.opt[data-ltr]').forEach(b=>b.onclick=()=>{document.documentElement.dir=b.dataset.ltr;document.querySelectorAll('.opt[data-ltr]').forEach(x=>x.classList.toggle('on',x===b));});
+document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{document.documentElement.style.setProperty('--bs-primary',b.dataset.acc);document.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===b));});
+setDir('a');
+</script>
+</body>
+</html>

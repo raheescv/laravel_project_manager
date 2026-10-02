@@ -19,6 +19,10 @@ class CompanyProfile extends Component
 
     public $email;
 
+    public $company_address;
+
+    public $company_website;
+
     /** Public Google review link — used by the storefront's "rate us" prompt. */
     public $google_review_url;
 
@@ -33,6 +37,8 @@ class CompanyProfile extends Component
         $this->uploaded_logo = Configuration::where('key', 'logo')->value('value');
         $this->mobile = Configuration::where('key', 'mobile')->value('value');
         $this->email = Configuration::where('key', 'email')->value('value');
+        $this->company_address = Configuration::where('key', 'company_address')->value('value');
+        $this->company_website = Configuration::where('key', 'company_website')->value('value');
         $this->google_review_url = Configuration::where('key', 'google_review_url')->value('value');
         $this->company_name = Configuration::where('key', 'company_name')->value('value');
         $this->company_description = Configuration::where('key', 'company_description')->value('value');
@@ -44,6 +50,8 @@ class CompanyProfile extends Component
         $rules = [
             'logo.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
             'email' => 'nullable|email|max:255',
+            'company_address' => 'nullable|string|max:500',
+            'company_website' => 'nullable|string|max:255',
             // Google Maps place/review links carry long `data=!4m...` payloads, so the
             // only real ceiling is the configurations.value TEXT column.
             'google_review_url' => 'nullable|url|max:5000',
@@ -72,6 +80,8 @@ class CompanyProfile extends Component
             }
             Configuration::updateOrCreate(['key' => 'mobile'], ['value' => $this->mobile]);
             Configuration::updateOrCreate(['key' => 'email'], ['value' => $this->email]);
+            Configuration::updateOrCreate(['key' => 'company_address'], ['value' => $this->company_address]);
+            Configuration::updateOrCreate(['key' => 'company_website'], ['value' => $this->company_website]);
             Configuration::updateOrCreate(['key' => 'google_review_url'], ['value' => trim((string) $this->google_review_url)]);
             Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
             Configuration::updateOrCreate(['key' => 'gst_no'], ['value' => $this->gst_no]);

@@ -398,8 +398,9 @@ class PrintController extends Controller
         return [
             'companyName' => Configuration::where('key', 'company_name')->value('value') ?? config('app.name'),
             'companyAddress' => Configuration::where('key', 'company_address')->value('value') ?? '',
-            'companyPhone' => Configuration::where('key', 'company_phone')->value('value') ?? '',
-            'companyEmail' => Configuration::where('key', 'company_email')->value('value') ?? '',
+            'companyPhone' => Configuration::where('key', 'company_phone')->value('value') ?: (Configuration::where('key', 'mobile')->value('value') ?? ''),
+            'companyEmail' => Configuration::where('key', 'company_email')->value('value') ?: (Configuration::where('key', 'email')->value('value') ?? ''),
+            'companyWebsite' => Configuration::where('key', 'company_website')->value('value') ?? '',
             'companyLogo' => $this->getCompanyLogoPath(),
         ];
     }

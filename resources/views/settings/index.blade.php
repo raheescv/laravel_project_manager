@@ -1,209 +1,483 @@
 <x-app-layout :collapsed-nav="true">
 
-    <div class="settings-page">
+    <style>
+        /* ============================================================
+           .stx — Settings "Studio Split" (scoped; accent = theme colour)
+           ============================================================ */
+        .stx {
+            --stx-acc: var(--bs-primary);
+            --stx-acc-soft: color-mix(in srgb, var(--stx-acc) 11%, transparent);
+            --stx-acc-ink: color-mix(in srgb, var(--stx-acc) 85%, var(--bs-emphasis-color));
+            --stx-grad: linear-gradient(135deg, color-mix(in srgb, var(--stx-acc) 80%, #fff), var(--stx-acc) 45%, color-mix(in srgb, var(--stx-acc) 70%, #000));
+            --stx-glow: 0 10px 22px -12px color-mix(in srgb, var(--stx-acc) 80%, transparent);
+            --stx-surface: var(--bs-component-bg, var(--bs-body-bg));
+            --stx-surface-2: color-mix(in srgb, var(--stx-acc) 3%, var(--stx-surface));
+            --stx-line: var(--bs-border-color);
+            --stx-line-soft: color-mix(in srgb, var(--bs-border-color) 60%, transparent);
+            --stx-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 14px 34px -18px rgba(16, 24, 40, .22);
+            min-width: 0;
+        }
+
+        [data-bs-theme="dark"] .stx {
+            --stx-acc-ink: color-mix(in srgb, var(--stx-acc) 50%, #fff);
+            --stx-acc-soft: color-mix(in srgb, var(--stx-acc) 24%, transparent);
+            --stx-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 34px -16px rgba(0, 0, 0, .6);
+        }
+
+        .stx .content__wrap {
+            padding-block: 1rem;
+        }
+
+        .stx-shell {
+            display: grid;
+            grid-template-columns: 272px minmax(0, 1fr);
+            min-height: calc(100vh - 8rem);
+            border-radius: 20px;
+            background: var(--stx-surface);
+            box-shadow: var(--stx-shadow);
+            overflow: clip;
+        }
+
+        /* ---- Sidebar ---- */
+        .stx-side {
+            position: sticky;
+            top: 4.5rem;
+            align-self: start;
+            max-height: calc(100vh - 5rem);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding: 1.1rem .75rem 1.25rem;
+            border-inline-end: 1px solid var(--stx-line-soft);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--stx-acc) 7%, var(--stx-surface)), var(--stx-surface) 320px);
+        }
+
+        .stx-brand {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: 0 .4rem .9rem;
+        }
+
+        .stx-brand-ic {
+            width: 40px;
+            height: 40px;
+            flex: 0 0 auto;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+            color: #fff;
+            background: var(--stx-grad);
+            box-shadow: var(--stx-glow);
+        }
+
+        .stx-brand h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--bs-emphasis-color);
+        }
+
+        .stx-brand small {
+            color: var(--bs-secondary-color);
+            font-size: .74rem;
+        }
+
+        .stx-search {
+            position: relative;
+            display: block;
+            margin: 0 .25rem .9rem;
+        }
+
+        .stx-search i {
+            position: absolute;
+            inset-inline-start: .8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--bs-tertiary-color);
+            font-size: .8rem;
+        }
+
+        .stx-search input {
+            width: 100%;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--stx-line);
+            background: var(--stx-surface);
+            color: var(--bs-emphasis-color);
+            padding: 0 .75rem 0 2.1rem;
+            font-size: .82rem;
+            outline: 0;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        [dir="rtl"] .stx-search input {
+            padding: 0 2.1rem 0 .75rem;
+        }
+
+        .stx-search input:focus {
+            border-color: var(--stx-acc);
+            box-shadow: 0 0 0 4px var(--stx-acc-soft);
+        }
+
+        .stx-group+.stx-group {
+            margin-top: .65rem;
+        }
+
+        .stx-group h6 {
+            margin: .3rem .65rem .3rem;
+            font-size: .64rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--bs-tertiary-color);
+        }
+
+        .stx-cat {
+            all: unset;
+            box-sizing: border-box;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            width: 100%;
+            padding: .4rem .5rem;
+            border-radius: 11px;
+            color: var(--bs-body-color);
+            font-size: .84rem;
+            font-weight: 500;
+            transition: background-color .15s ease, box-shadow .15s ease;
+        }
+
+        .stx-cat:hover {
+            background: var(--stx-acc-soft);
+        }
+
+        .stx-cat:focus-visible {
+            outline: 2px solid var(--stx-acc);
+            outline-offset: 1px;
+        }
+
+        .stx-cat.active {
+            background: var(--stx-surface);
+            color: var(--bs-emphasis-color);
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 8px 18px -12px rgba(0, 0, 0, .3), inset 0 0 0 1px var(--stx-line-soft);
+        }
+
+        .stx-cat-ic {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 auto;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: .85rem;
+            background: var(--tile, var(--stx-acc));
+            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .12);
+        }
+
+        .stx-cat-ic i::before {
+            margin: 0 !important;
+        }
+
+        .stx-cat-t {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stx-cat-arrow {
+            color: var(--bs-tertiary-color);
+            font-size: .8rem;
+            opacity: 0;
+            transition: opacity .15s ease;
+        }
+
+        [dir="rtl"] .stx-cat-arrow {
+            transform: scaleX(-1);
+        }
+
+        .stx-cat:hover .stx-cat-arrow,
+        .stx-cat.active .stx-cat-arrow {
+            opacity: 1;
+        }
+
+        .stx .tone-blue { --tile: #2f6fd6; }
+        .stx .tone-indigo { --tile: var(--stx-acc); }
+        .stx .tone-violet { --tile: #7c4fd6; }
+        .stx .tone-green { --tile: #2f9e62; }
+        .stx .tone-teal { --tile: #1f9a96; }
+        .stx .tone-amber { --tile: #d4931c; }
+        .stx .tone-orange { --tile: #e0672a; }
+        .stx .tone-pink { --tile: #d4478a; }
+        .stx .tone-red { --tile: #d94848; }
+        .stx .tone-slate { --tile: #5b6779; }
+
+        .stx-empty {
+            margin: .75rem .65rem 0;
+            font-size: .78rem;
+            color: var(--bs-secondary-color);
+        }
+
+        /* ---- Main ---- */
+        .stx-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stx-head {
+            padding: 1.35rem 1.75rem 1rem;
+            border-bottom: 1px solid var(--stx-line-soft);
+        }
+
+        .stx-head .breadcrumb {
+            margin-bottom: .3rem;
+            font-size: .76rem;
+        }
+
+        .stx-head .breadcrumb,
+        .stx-head .breadcrumb a,
+        .stx-head .breadcrumb-item.active,
+        .stx-head .breadcrumb-item+.breadcrumb-item::before {
+            color: var(--bs-secondary-color);
+        }
+
+        .stx-head .breadcrumb a:hover {
+            color: var(--stx-acc-ink);
+        }
+
+        .stx-head h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -.01em;
+            color: var(--bs-emphasis-color);
+        }
+
+        .stx-head p {
+            margin: .25rem 0 0;
+            font-size: .84rem;
+            color: var(--bs-secondary-color);
+        }
+
+        .stx-body {
+            padding: 1.35rem 1.75rem 1.75rem;
+            min-width: 0;
+            flex: 1;
+        }
+
+        /* Every tab's own cards become flat, bordered "group" cards inside the surface. */
+        .stx-body .card {
+            border: 1px solid var(--stx-line);
+            border-radius: 14px;
+            box-shadow: none;
+            background: var(--stx-surface);
+        }
+
+        .stx-body .card-header {
+            background: var(--stx-surface-2);
+            border-bottom: 1px solid var(--stx-line-soft);
+            padding: .9rem 1.1rem;
+        }
+
+        .stx-body .card-footer {
+            background: var(--stx-surface-2);
+            border-top: 1px solid var(--stx-line-soft);
+        }
+
+        .stx-body .card-title {
+            color: var(--bs-emphasis-color);
+        }
+
+        .stx-body .form-control:focus,
+        .stx-body .form-select:focus {
+            border-color: var(--stx-acc);
+            box-shadow: 0 0 0 4px var(--stx-acc-soft);
+        }
+
+        .stx-body .tab-pane,
+        .stx-body .tab-content {
+            min-width: 0;
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 991.98px) {
+            .stx-shell {
+                grid-template-columns: minmax(0, 1fr);
+                min-height: 0;
+            }
+
+            .stx-side {
+                position: static;
+                max-height: none;
+                padding: .65rem;
+                border-inline-end: 0;
+                border-bottom: 1px solid var(--stx-line-soft);
+            }
+
+            .stx-brand {
+                padding-bottom: .65rem;
+            }
+
+            .stx-search {
+                margin-bottom: .55rem;
+            }
+
+            .stx-cats {
+                display: flex;
+                gap: .35rem;
+                overflow-x: auto;
+                scrollbar-width: thin;
+                padding-bottom: .2rem;
+            }
+
+            .stx-group {
+                display: contents;
+            }
+
+            .stx-group h6,
+            .stx-cat-arrow {
+                display: none;
+            }
+
+            .stx-cat {
+                width: auto;
+                flex: 0 0 auto;
+                padding: .35rem .65rem .35rem .4rem;
+                border: 1px solid var(--stx-line-soft);
+            }
+
+            .stx-cat-ic {
+                width: 24px;
+                height: 24px;
+                font-size: .75rem;
+            }
+
+            .stx-head {
+                padding: 1rem 1rem .85rem;
+            }
+
+            .stx-body {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .stx .content__wrap {
+                padding-inline: .5rem;
+            }
+
+            .stx-shell {
+                border-radius: 14px;
+            }
+
+            .stx-head h2 {
+                font-size: 1.15rem;
+            }
+        }
+    </style>
+
+    @php
+        $user = auth()->user();
+        $canSettings = $user->can('configuration.settings');
+        $settingsGroups = [
+            'General' => [
+                ['target' => 'CompanyProfile', 'label' => 'Company Profile', 'icon' => 'demo-pli-male', 'tone' => 'blue', 'desc' => 'Company name, logo, address and contact details.', 'show' => $canSettings],
+                ['target' => 'Configuration', 'label' => 'Configuration', 'icon' => 'demo-pli-data-settings', 'tone' => 'violet', 'desc' => 'Global preferences that apply across every module.', 'show' => $canSettings],
+                ['target' => 'Currencies', 'label' => 'Currencies', 'icon' => 'fa fa-money', 'tone' => 'green', 'desc' => 'Base currency, symbols and exchange rates.', 'show' => $canSettings],
+                ['target' => 'ModuleConfiguration', 'label' => 'Module Configuration', 'icon' => 'fa fa-cubes', 'tone' => 'amber', 'desc' => 'Switch application modules on or off.', 'show' => (bool) $user->is_super_admin],
+                ['target' => 'UniqueNoCounters', 'label' => 'Unique No Counters', 'icon' => 'fa fa-list-ol', 'tone' => 'teal', 'desc' => 'Document numbering sequences and prefixes.', 'show' => (bool) $user->is_super_admin],
+                ['target' => 'Theme', 'label' => 'Theme', 'icon' => 'demo-psi-gear', 'tone' => 'pink', 'desc' => 'Workspace appearance, colours and layout.', 'show' => $canSettings],
+                ['target' => 'Storefront', 'label' => 'Storefront', 'icon' => 'fa fa-paint-brush', 'tone' => 'pink', 'desc' => 'Public storefront branding.', 'show' => false],
+            ],
+            'Sales & Stock' => [
+                ['target' => 'ProductSettings', 'label' => 'Product Settings', 'icon' => 'fa fa-cube', 'tone' => 'orange', 'desc' => 'Product defaults, barcodes and catalogue options.', 'show' => $user->can('product.view')],
+                ['target' => 'SaleSettings', 'label' => 'Sale Settings', 'icon' => 'demo-pli-receipt-4', 'tone' => 'green', 'desc' => 'POS behaviour, receipts and sale defaults.', 'show' => $user->can('sale.view')],
+                ['target' => 'Printers', 'label' => 'Printers', 'icon' => 'demo-pli-printer', 'tone' => 'slate', 'desc' => 'Receipt and label printers for this workspace.', 'show' => $user->canAny(['sale.create', 'student.view', 'tailoring order.view', 'issue.view'])],
+                ['target' => 'PurchaseSettings', 'label' => 'Purchase Settings', 'icon' => 'demo-pli-credit-card-2', 'tone' => 'blue', 'desc' => 'Purchase and LPO defaults.', 'show' => $user->can('purchase.view')],
+                ['target' => 'UniversalUom', 'label' => 'Universal UOM', 'icon' => 'demo-pli-data-storage', 'tone' => 'violet', 'desc' => 'Units of measure shared by every product.', 'show' => $canSettings],
+                ['target' => 'TailoringSettings', 'label' => 'Tailoring Settings', 'icon' => 'demo-pli-repair', 'tone' => 'amber', 'desc' => 'Tailoring order options.', 'show' => $user->can('tailoring order.view')],
+            ],
+            'Property' => [
+                ['target' => 'RentOutSettings', 'label' => 'Rent Out Settings', 'icon' => 'demo-pli-home', 'tone' => 'indigo', 'desc' => 'Bookings, agreement print layout and PDF branding.', 'show' => $user->can('rent out.view')],
+                ['target' => 'LeadSettings', 'label' => 'Lead Settings', 'icon' => 'demo-pli-list-view', 'tone' => 'orange', 'desc' => 'Lead sources, statuses and assignee designations.', 'show' => $canSettings],
+            ],
+            'School' => [
+                ['target' => 'StudentCards', 'label' => 'Student Cards', 'icon' => 'fa fa-graduation-cap', 'tone' => 'teal', 'desc' => 'Student card and wallet settings.', 'show' => $user->can('student settings.edit')],
+                ['target' => 'OnlinePayments', 'label' => 'Online Payments', 'icon' => 'fa fa-credit-card', 'tone' => 'green', 'desc' => 'Online payment gateways and keys.', 'show' => $user->can('student settings.edit')],
+            ],
+            'Calendar' => [
+                ['target' => 'WorkingDay', 'label' => 'Working Day', 'icon' => 'demo-pli-calendar-4', 'tone' => 'teal', 'desc' => 'Opening hours and working days per branch.', 'show' => true],
+                ['target' => 'Holiday', 'label' => 'Holiday Calendar', 'icon' => 'fa fa-calendar-o', 'tone' => 'red', 'desc' => 'Public holidays and closures.', 'show' => true],
+            ],
+            'System' => [
+                ['target' => 'NavigationOrder', 'label' => 'Navigation Order', 'icon' => 'fa fa-bars', 'tone' => 'slate', 'desc' => 'Order of the items in the main menu.', 'show' => $canSettings],
+                ['target' => 'NotificationPreferences', 'label' => 'Notifications', 'icon' => 'demo-pli-bell', 'tone' => 'amber', 'desc' => 'Which alerts are sent and to whom.', 'show' => $canSettings],
+                ['target' => 'Telegram', 'label' => 'Telegram', 'icon' => 'demo-pli-speech-bubble-5', 'tone' => 'blue', 'desc' => 'Telegram bot notifications.', 'show' => $canSettings],
+                ['target' => 'Whatsapp', 'label' => 'Whatsapp', 'icon' => 'demo-pli-speech-bubble-4', 'tone' => 'green', 'desc' => 'WhatsApp messaging integration.', 'show' => $user->can('whatsapp.integration')],
+            ],
+        ];
+        $settingsGroups = array_filter(array_map(fn ($items) => array_values(array_filter($items, fn ($item) => $item['show'])), $settingsGroups));
+        $defaultTab = 'CompanyProfile';
+        $defaultItem = collect($settingsGroups)->flatten(1)->firstWhere('target', $defaultTab);
+        $defaultGroup = collect($settingsGroups)->search(fn ($items) => collect($items)->contains('target', $defaultTab)) ?: 'Settings';
+    @endphp
+
+    <div class="settings-page stx">
         <div class="content__boxed">
             <div class="content__wrap">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary fs-3 p-3 lh-1">
-                        <i class="demo-psi-gear"></i>
-                    </span>
-                    <div>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb small mb-1">
-                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Settings</li>
-                            </ol>
-                        </nav>
-                        <h1 class="h3 fw-bold mb-0">Settings</h1>
-                        <p class="text-body-secondary small mb-0">Manage configuration, company profile, and integrations from one place.</p>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="row g-0">
-                        <div class="col-12 col-md-4 col-lg-3 border-end p-2">
-                            <h6 class="text-uppercase text-body-secondary small fw-bold px-2 pt-2 mb-2 d-none d-md-block">Categories</h6>
-                            <ul class="nav nav-pills flex-nowrap flex-md-column overflow-x-auto gap-1 settings-tabs" role="tablist">
-                                {{-- <li class="nav-item" role="presentation">
-                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsMyPermissions" type="button" role="tab"
-                                        aria-selected="false" tabindex="-1">
-                                        <i class="fa fa-key"></i><span>My Permissions</span>
-                                    </button>
-                                </li> --}}
-                                @can('configuration.settings')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-data-settings"></i><span>Configuration</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-money"></i><span>Currencies</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('product.view')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsProductSettings" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-cube"></i><span>Product Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('sale.view')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-receipt-4"></i><span>Sale Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @canany(['sale.create', 'student.view', 'tailoring order.view', 'issue.view'])
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsPrinters" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-printer"></i><span>Printers</span>
-                                        </button>
-                                    </li>
-                                @endcanany
-                                @can('purchase.view')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-credit-card-2"></i><span>Purchase Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('tailoring order.view')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-repair"></i><span>Tailoring Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('rent out.view')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-home"></i><span>Rent Out Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('configuration.settings')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsLeadSettings" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-list-view"></i><span>Lead Settings</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @can('configuration.settings')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-data-storage"></i><span>Universal UOM</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @if (auth()->user()->is_super_admin)
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-list-ol"></i><span>Unique No Counters</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-cubes"></i><span>Module Configuration</span>
-                                        </button>
-                                    </li>
-                                @endif
-                                @can('configuration.settings')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabsCompanyProfile" type="button"
-                                            role="tab" aria-selected="true" tabindex="0">
-                                            <i class="demo-pli-male"></i><span>Company Profile</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-psi-gear"></i><span>Theme</span>
-                                        </button>
-                                    </li>
-                                    @if(false)
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsStorefront" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-paint-brush"></i><span>Storefront</span>
-                                        </button>
-                                    </li>
-                                    @endif
-                                @endcan
-                                @if (auth()->user()->can('student settings.edit'))
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsStudentCards" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-graduation-cap"></i><span>Student Cards</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsOnlinePayments" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-credit-card"></i><span>Online Payments</span>
-                                        </button>
-                                    </li>
-                                @endif
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
-                                        aria-selected="false" tabindex="-1">
-                                        <i class="demo-pli-calendar-4"></i><span>Working Day</span>
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsHoliday" type="button" role="tab"
-                                        aria-selected="false" tabindex="-1">
-                                        <i class="fa fa-calendar-o"></i><span>Holiday Calendar</span>
-                                    </button>
-                                </li>
-                                @can('configuration.settings')
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-bars"></i><span>Navigation Order</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-speech-bubble-5"></i><span>Telegram</span>
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button"
-                                            role="tab" aria-selected="false" tabindex="-1">
-                                            <i class="demo-pli-bell"></i><span>Notifications</span>
-                                        </button>
-                                    </li>
-                                @endcan
-                                @if (true)
-                                    @can('whatsapp.integration')
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button"
-                                                role="tab" aria-selected="false" tabindex="-1">
-                                                <i class="demo-pli-speech-bubble-4"></i><span>Whatsapp</span>
-                                            </button>
-                                        </li>
-                                    @endcan
-                                @endif
-                            </ul>
+                <div class="stx-shell">
+                    <aside class="stx-side">
+                        <div class="stx-brand">
+                            <span class="stx-brand-ic"><i class="demo-psi-gear"></i></span>
+                            <div>
+                                <h1>Settings</h1>
+                                <small>Workspace control center</small>
+                            </div>
                         </div>
-                        <div class="col-12 col-md-8 col-lg-9">
-                            <div class="tab-content p-2 p-md-3">
+                        <label class="stx-search">
+                            <i class="fa fa-search"></i>
+                            <input type="search" placeholder="Search settings" aria-label="Search settings" data-settings-search>
+                        </label>
+                        <div class="stx-cats settings-tabs" role="tablist" aria-label="Settings categories">
+                            @foreach ($settingsGroups as $groupName => $items)
+                                <div class="stx-group" data-settings-group>
+                                    <h6>{{ $groupName }}</h6>
+                                    @foreach ($items as $item)
+                                        @php $isDefault = $item['target'] === $defaultTab; @endphp
+                                        <button class="stx-cat {{ $isDefault ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#tabs{{ $item['target'] }}"
+                                            type="button" role="tab" aria-selected="{{ $isDefault ? 'true' : 'false' }}" tabindex="{{ $isDefault ? '0' : '-1' }}"
+                                            data-settings-title="{{ $item['label'] }}" data-settings-group-name="{{ $groupName }}" data-settings-desc="{{ $item['desc'] }}">
+                                            <span class="stx-cat-ic tone-{{ $item['tone'] }}"><i class="{{ $item['icon'] }}"></i></span>
+                                            <span class="stx-cat-t">{{ $item['label'] }}</span>
+                                            <i class="fa fa-angle-right stx-cat-arrow"></i>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                            <p class="stx-empty" data-settings-empty hidden>No settings match your search.</p>
+                        </div>
+                    </aside>
+
+                    <div class="stx-main">
+                        <header class="stx-head">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                                    <li class="breadcrumb-item">Settings</li>
+                                    <li class="breadcrumb-item active" aria-current="page" data-settings-crumb>{{ $defaultGroup }}</li>
+                                </ol>
+                            </nav>
+                            <h2 data-settings-heading>{{ $defaultItem['label'] ?? 'Settings' }}</h2>
+                            <p data-settings-subtitle>{{ $defaultItem['desc'] ?? 'Manage configuration, company profile, and integrations from one place.' }}</p>
+                        </header>
+                        <div class="stx-body">
+                            <div class="tab-content">
                                 <div id="tabsMyPermissions" class="tab-pane" role="tabpanel">
                                     @php
                                         $myPermissions = auth()->user()->getAllPermissions()->pluck('name')->sort()->values();
@@ -890,12 +1164,42 @@
                         }
                     }
 
+                    const heading = document.querySelector('[data-settings-heading]');
+                    const crumb = document.querySelector('[data-settings-crumb]');
+                    const desc = document.querySelector('[data-settings-subtitle]');
+                    const syncHeader = (tab) => {
+                        if (!tab || !tab.dataset.settingsTitle) return;
+                        heading.textContent = tab.dataset.settingsTitle;
+                        crumb.textContent = tab.dataset.settingsGroupName;
+                        desc.textContent = tab.dataset.settingsDesc;
+                    };
+                    syncHeader(document.querySelector('.settings-tabs .active[data-bs-toggle="tab"]'));
+
                     tabs.forEach((tab) => {
                         tab.addEventListener('shown.bs.tab', (event) => {
                             const url = new URL(window.location.href);
                             url.searchParams.set('tab', toSlug(event.target.dataset.bsTarget));
                             window.history.replaceState(window.history.state, '', url);
+                            syncHeader(event.target);
                         });
+                    });
+
+                    const search = document.querySelector('[data-settings-search]');
+                    const empty = document.querySelector('[data-settings-empty]');
+                    search?.addEventListener('input', () => {
+                        const term = search.value.trim().toLowerCase();
+                        let shown = 0;
+                        document.querySelectorAll('[data-settings-group]').forEach((group) => {
+                            let groupShown = 0;
+                            group.querySelectorAll('[data-bs-toggle="tab"]').forEach((tab) => {
+                                const match = !term || (tab.dataset.settingsTitle + ' ' + tab.dataset.settingsGroupName + ' ' + tab.dataset.settingsDesc).toLowerCase().includes(term);
+                                tab.hidden = !match;
+                                groupShown += match ? 1 : 0;
+                            });
+                            group.hidden = groupShown === 0;
+                            shown += groupShown;
+                        });
+                        empty.hidden = shown > 0;
                     });
                 })();
             </script>

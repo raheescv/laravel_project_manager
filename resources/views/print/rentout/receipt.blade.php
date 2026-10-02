@@ -24,13 +24,18 @@
         }
 
         /* ── Header ── */
-        .b-head { width: 100%; border-collapse: collapse; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
-        .b-head td { vertical-align: middle; padding: 0; }
-        .b-eyebrow { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
-        .b-head .co-name { font-size: 17px; font-weight: 700; letter-spacing: .5px; color: var(--ink); margin: 0 0 3px; }
-        .b-head .co-meta { font-size: 9.5px; color: var(--ink-soft); line-height: 1.7; }
-        .b-head .logo-cell { text-align: right; width: 200px; vertical-align: top; }
-        .b-head .logo-cell img { max-width: 190px; max-height: 90px; }
+        .b-head { width: 100%; border-collapse: collapse; border-bottom: 2px solid var(--line); }
+        .b-head td { vertical-align: middle; padding: 0 0 10px; }
+        .b-head .co-name { font-size: 20px; font-weight: 600; color: #2c3e50; margin: 0 0 6px; letter-spacing: .5px; }
+        .b-head .co-meta { font-size: 11px; color: var(--ink-soft); line-height: 1.8; }
+        .b-head .co-meta a { color: #0087C3; text-decoration: none; }
+        .b-head .logo-cell { width: 200px; text-align: right; }
+        .b-head .logo-box {
+            display: inline-block; width: 200px; min-height: 80px; padding: 5px; box-sizing: border-box; text-align: center;
+            background: linear-gradient(135deg, rgba(0, 135, 195, 0.03) 0%, rgba(0, 174, 239, 0.03) 100%);
+            border: 1px solid rgba(0, 135, 195, 0.1); border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .b-head .logo-box img { display: block; max-width: 180px; max-height: 80px; margin: 5px auto; }
 
         /* ── Title ── */
         .b-title { text-align: center; margin: 18px 0 6px; }
@@ -82,23 +87,17 @@
     <table class="b-head">
         <tr>
             <td>
-                <div class="b-eyebrow">
-                    @if ($rentOut->agreement_type === 'sale')
-                        Sale Income
-                    @else
-                        Rental Income
-                    @endif
-                </div>
                 <div class="co-name">{{ $companyName }}</div>
                 <div class="co-meta">
+                    @if ($companyPhone)<strong>Phone:</strong> {{ $companyPhone }}<br>@endif
                     @if ($companyAddress){{ $companyAddress }}<br>@endif
-                    @if ($companyPhone)Tel: {{ $companyPhone }}@endif
-                    @if ($companyEmail) &bull; {{ $companyEmail }}@endif
+                    @if ($companyEmail)<a href="mailto:{{ $companyEmail }}">{{ $companyEmail }}</a><br>@endif
+                    @if ($companyWebsite){{ $companyWebsite }}@endif
                 </div>
             </td>
             <td class="logo-cell">
                 @if ($companyLogo)
-                    <img src="{{ $companyLogo }}" alt="Logo">
+                    <div class="logo-box"><img src="{{ $companyLogo }}" alt="Company Logo"></div>
                 @endif
             </td>
         </tr>

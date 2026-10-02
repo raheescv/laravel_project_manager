@@ -26,6 +26,18 @@
                         <div class="text-danger small mt-1">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-medium small mb-1" for="company_address">
+                        <i class="fa fa-map-marker me-1"></i>Address
+                    </label>
+                    {{ html()->input('company_address')->value('')->class('form-control form-control-sm')->placeholder('e.g. Suhaim Bin Hamad Street, Doha, Qatar')->attribute('wire:model', 'company_address') }}
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-medium small mb-1" for="company_website">
+                        <i class="fa fa-globe me-1"></i>Website
+                    </label>
+                    {{ html()->input('company_website')->value('')->class('form-control form-control-sm')->placeholder('www.example.com')->attribute('wire:model', 'company_website') }}
+                </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label fw-medium small mb-1" for="gst">
                         <i class="fa fa-receipt me-1"></i>GST Number

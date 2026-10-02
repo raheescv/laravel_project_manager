@@ -53,7 +53,9 @@ it('flags the section whose upload failed validation', function (): void {
 
 it('opens the settings page with the main navigation collapsed', function (): void {
     expect(view('settings.index')->render())
-        ->toContain('class="root mn--min tm--expanded-hd"');
+        ->toContain('class="root mn--min tm--expanded-hd"')
+        ->toContain('data-settings-search')
+        ->toContain('data-bs-target="#tabsWorkingDay"');
 });
 
 it('keeps the main navigation expanded on other pages', function (): void {
