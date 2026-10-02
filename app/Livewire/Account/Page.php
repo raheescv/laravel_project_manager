@@ -59,6 +59,7 @@ class Page extends Component
                 'name' => $name,
                 'opening_debit' => 0,
                 'opening_credit' => 0,
+                'is_cheque' => false,
             ];
         } else {
             $account = Account::with('accountCategory:id,name')->find($this->table_id);
@@ -92,6 +93,7 @@ class Page extends Component
     {
         // TODO(C7): review save authz — inline quick-add via accountSelect TomSelect (Account-Page-Create-Component) is embedded in many unrelated forms (POS, vouchers, reports); gating with account.create would break legitimate quick-create. Edit path (table_id) is reachable from the standalone account screen.
         $this->validate();
+        $this->accounts['is_cheque'] = ($this->accounts['account_type'] ?? null) === 'asset' && ! empty($this->accounts['is_cheque']);
         try {
             if (! $this->table_id) {
                 $response = (new CreateAction())->execute($this->accounts);

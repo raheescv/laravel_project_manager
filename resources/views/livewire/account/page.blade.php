@@ -7,7 +7,7 @@
         'equity' => ['icon' => 'fa-university', 'accent' => '#8b5cf6', 'hint' => 'Owner capital'],
     ];
 @endphp
-<div class="acctx" x-data="{ selectedType: @js($accounts['account_type'] ?? '') }">
+<div class="acctx" x-data="{ selectedType: $wire.entangle('accounts.account_type') }">
     <div class="acctx-header">
         <div class="acctx-header-left">
             <span class="acctx-header-icon"><i class="fa fa-book"></i></span>
@@ -138,15 +138,22 @@
             </div>
 
             {{-- Cheque Account — only relevant for Asset accounts --}}
-            <label class="acctx-toggle" for="account_is_cheque" x-show="selectedType === 'asset'" x-cloak>
-                <div class="acctx-toggle-switch">
-                    <input class="form-check-input" type="checkbox" role="switch"
-                        id="account_is_cheque" wire:model="accounts.is_cheque">
-                </div>
-                <div class="acctx-toggle-body">
-                    <span class="acctx-toggle-title"><i class="fa fa-money"></i> Cheque Account</span>
-                    <span class="acctx-toggle-hint">When this account is used as a payment method, cheque details (bank name &amp; cheque no) will be requested.</span>
-                </div>
+            <label class="acctx-cheque" for="account_is_cheque" x-show="selectedType === 'asset'" x-cloak>
+                <input class="acctx-cheque-input" type="checkbox" role="switch" id="account_is_cheque" wire:model="accounts.is_cheque">
+                <span class="acctx-cheque-icon"><i class="fa fa-pencil-square-o"></i></span>
+                <span class="acctx-cheque-body">
+                    <span class="acctx-cheque-title">
+                        Cheque Account
+                        <span class="acctx-cheque-badge acctx-cheque-badge--on"><i class="fa fa-check"></i> Enabled</span>
+                        <span class="acctx-cheque-badge acctx-cheque-badge--off">Off</span>
+                    </span>
+                    <span class="acctx-cheque-hint">Used as a payment method, this account asks for cheque details.</span>
+                    <span class="acctx-cheque-chips">
+                        <span class="acctx-cheque-chip"><i class="fa fa-university"></i> Bank name</span>
+                        <span class="acctx-cheque-chip"><i class="fa fa-barcode"></i> Cheque no</span>
+                    </span>
+                </span>
+                <span class="acctx-cheque-switch" aria-hidden="true"><span class="acctx-cheque-knob"></span></span>
             </label>
 
             {{-- Description --}}
@@ -356,19 +363,60 @@
             .acctx-note { margin: 0.55rem 0 0; font-size: 0.7rem; color: var(--acctx-muted); }
             .acctx-note i { margin-right: 0.25rem; }
 
-            /* Cheque toggle */
-            .acctx-toggle {
-                display: flex; align-items: center; gap: 0.65rem; cursor: pointer;
-                border: 1px solid var(--acctx-border); border-radius: var(--acctx-radius);
-                background: var(--acctx-field-bg); padding: 0.6rem 0.8rem; margin: 0;
-                transition: border-color .15s ease, background .15s ease;
+            /* Cheque toggle — premium switch card */
+            .acctx-cheque {
+                --chq: #10b981;
+                position: relative; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0;
+                padding: 0.7rem 0.85rem; border-radius: var(--acctx-radius);
+                border: 1.5px solid var(--acctx-border); background: var(--acctx-surface);
+                transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .15s ease;
             }
-            .acctx-toggle:has(input:checked) { border-color: var(--bs-primary); background: color-mix(in srgb, var(--bs-primary) 7%, var(--acctx-surface)); }
-            .acctx-toggle-switch .form-check-input { width: 2.4em; height: 1.25em; margin: 0; cursor: pointer; }
-            .acctx-toggle-body { display: flex; flex-direction: column; gap: 1px; }
-            .acctx-toggle-title { font-weight: 600; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem; }
-            .acctx-toggle-title i { color: var(--bs-primary); }
-            .acctx-toggle-hint { font-size: 0.7rem; color: var(--acctx-muted); }
+            .acctx-cheque:hover { border-color: color-mix(in srgb, var(--chq) 55%, var(--acctx-border)); transform: translateY(-1px); }
+            .acctx-cheque-input { position: absolute; opacity: 0; pointer-events: none; }
+            .acctx-cheque-icon {
+                width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px;
+                display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem;
+                color: var(--chq); background: color-mix(in srgb, var(--chq) 13%, transparent);
+                transition: all .18s ease;
+            }
+            .acctx-cheque-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+            .acctx-cheque-title { font-weight: 700; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 0.45rem; }
+            .acctx-cheque-badge {
+                font-size: 0.6rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+                padding: 2px 7px; border-radius: 999px; line-height: 1.3;
+            }
+            .acctx-cheque-badge--off { color: var(--acctx-muted); background: var(--acctx-field-bg); border: 1px solid var(--acctx-border); }
+            .acctx-cheque-badge--on { display: none; color: #fff; background: var(--chq); }
+            .acctx-cheque-hint { font-size: 0.7rem; color: var(--acctx-muted); }
+            .acctx-cheque-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+            .acctx-cheque-chip {
+                display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.66rem; font-weight: 600;
+                padding: 2px 8px; border-radius: 999px; color: var(--acctx-muted);
+                border: 1px dashed var(--acctx-border); background: var(--acctx-field-bg); transition: all .18s ease;
+            }
+            .acctx-cheque-switch {
+                position: relative; flex: 0 0 44px; width: 44px; height: 24px; border-radius: 999px;
+                background: color-mix(in srgb, var(--acctx-muted) 30%, transparent); transition: background .2s ease;
+            }
+            .acctx-cheque-knob {
+                position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+                background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s cubic-bezier(.4,1.4,.6,1);
+            }
+            .acctx-cheque:has(.acctx-cheque-input:checked) {
+                border-color: var(--chq);
+                background: color-mix(in srgb, var(--chq) 7%, var(--acctx-surface));
+                box-shadow: 0 6px 16px color-mix(in srgb, var(--chq) 20%, transparent);
+            }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-icon { color: #fff; background: var(--chq); }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-badge--on { display: inline-flex; align-items: center; gap: 3px; }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-badge--off { display: none; }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-chip {
+                color: var(--chq); border-style: solid; border-color: color-mix(in srgb, var(--chq) 40%, transparent);
+                background: color-mix(in srgb, var(--chq) 10%, transparent);
+            }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-switch { background: var(--chq); }
+            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-knob { transform: translateX(20px); }
+            .acctx-cheque:has(.acctx-cheque-input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chq) 30%, transparent); }
 
             /* Alert */
             .acctx-alert {
