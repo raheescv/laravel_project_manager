@@ -144,6 +144,7 @@
         }
         table.items tbody tr:nth-child(even) td { background: var(--accent-tint-2); }
         table.items tbody td .item-name { font-weight: 700; color: var(--ink); }
+        table.items tbody td .item-desc { margin-top: 2px; font-size: 9.5px; color: #666; line-height: 1.35; white-space: pre-line; }
         table.items tbody td.amount { font-weight: 700; }
         table.items tbody td.empty { color: #aaa; font-style: italic; text-align: center; }
         .item-index {
@@ -292,7 +293,12 @@
                 @forelse($order->items as $i => $item)
                     <tr>
                         <td class="ctr"><span class="item-index">{{ $i + 1 }}</span></td>
-                        <td><div class="item-name">{{ $item->product?->name ?? '-' }}</div></td>
+                        <td>
+                            <div class="item-name">{{ $item->product?->name ?? '-' }}</div>
+                            @if(filled($item->product?->description))
+                                <div class="item-desc">{{ $item->product->description }}</div>
+                            @endif
+                        </td>
                         <td class="ctr">{{ $item->product?->unit?->name ?? '-' }}</td>
                         <td class="num">{{ number_format($item->quantity, 0) }}</td>
                         <td class="num">{{ number_format($item->rate, 2) }}</td>

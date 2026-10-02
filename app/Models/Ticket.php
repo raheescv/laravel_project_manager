@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Ticket extends Model
 {
     use BelongsToTenant;
+    use HasFactory;
 
     public const STATUS_OPEN = 'open';
 
@@ -20,11 +22,15 @@ class Ticket extends Model
 
     public const STATUS_CLOSED = 'closed';
 
+    /** Filter value for tickets that have no group. */
+    public const NO_GROUP = '__none';
+
     protected $fillable = [
         'tenant_id',
         'title',
         'description',
         'status',
+        'group',
         'created_by',
         'updated_by',
     ];
@@ -48,8 +54,9 @@ class Ticket extends Model
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
+            'description' => ['nullable', 'string'],
             'status' => ['required', 'in:'.implode(',', array_keys(self::statuses()))],
+            'group' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -63,8 +70,20 @@ class Ticket extends Model
                 });
             })
             ->when(! empty($filter['status']), fn (Builder $q): Builder => $q->where('status', $filter['status']))
+            ->when(($filter['group'] ?? '') === self::NO_GROUP, fn (Builder $q): Builder => $q->whereNull('group'))
+            ->when(! in_array($filter['group'] ?? '', ['', self::NO_GROUP], true), fn (Builder $q): Builder => $q->where('group', $filter['group']))
             ->when(! empty($filter['from_date']), fn (Builder $q): Builder => $q->whereDate('created_at', '>=', $filter['from_date']))
             ->when(! empty($filter['to_date']), fn (Builder $q): Builder => $q->whereDate('created_at', '<=', $filter['to_date']));
+    }
+
+    /**
+     * Distinct group names in use, for the filter strip and the field's suggestions.
+     *
+     * @return list<string>
+     */
+    public static function groupNames(): array
+    {
+        return self::query()->whereNotNull('group')->distinct()->orderBy('group')->pluck('group')->all();
     }
 
     public function creator(): BelongsTo

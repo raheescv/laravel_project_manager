@@ -135,7 +135,7 @@
                 <div class="col-lg-5">
                     <div class="d-flex flex-wrap gap-2 justify-content-lg-end mb-3">
                         @if ($property->floor_plan)
-                            <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#PropertyFloorPlanModal">
+                            <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#PropertyFloorPlanModal">
                                 <i class="fa fa-picture-o"></i> Floor Plan
                             </button>
                         @endif

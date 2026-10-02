@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Tickets · Premium — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  /* ---------- host page stand-ins (Nifty + Bootstrap vars) ---------- */
+  :root{
+    --bs-primary:#3b5bdb;
+    --bs-info:#2a9fd6; --bs-success:#1f9d63; --bs-warning:#d99a17; --bs-danger:#d64545; --bs-secondary:#6b7686;
+    --bs-emphasis-color:#0f1522; --bs-body-color:#333b49; --bs-secondary-color:#697488; --bs-tertiary-color:#98a1b0;
+    --bs-body-bg:#fff; --bs-border-color:#e3e7ee; --page:#eef1f6;
+  }
+  [data-bs-theme="dark"]{
+    color-scheme:dark;
+    --bs-emphasis-color:#eef1f6; --bs-body-color:#c4ccd8; --bs-secondary-color:#8b95a5; --bs-tertiary-color:#5f6a7a;
+    --bs-secondary:#8a94a3; --bs-body-bg:#232a33; --bs-border-color:#343d49; --page:#1b2027;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{ background:var(--page); font-family:Poppins,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--bs-body-color); font-size:13px; transition:background .2s; }
+  button,input,select,textarea{ font-family:inherit; font-size:inherit; color:inherit; }
+
+  /* ---------- preview-only control bar ---------- */
+  .demo{ position:sticky; top:0; z-index:90; display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:9px 16px; background:#0f1522; color:#cfd6e2; font-size:12px; }
+  .demo b{ color:#fff; font-weight:600; }
+  .demo .grp{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .demo .lbl{ opacity:.55; text-transform:uppercase; letter-spacing:1.2px; font-size:9.5px; margin-inline-end:3px; }
+  .demo .opt{ border:1px solid rgba(255,255,255,.14); background:transparent; color:#cfd6e2; padding:4px 10px; border-radius:8px; font-size:11.5px; cursor:pointer; }
+  .demo .opt.on{ background:#fff; color:#0f1522; border-color:#fff; font-weight:600; }
+  .demo .sw{ width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,.18); cursor:pointer; padding:0; }
+  .demo .sw.on{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+  .demo .vnote{ margin-inline-start:auto; opacity:.7; font-size:11.5px; }
+
+  /* ---------- Nifty page header band ---------- */
+  .band{ background:linear-gradient(160deg, color-mix(in srgb,var(--bs-primary),#fff 4%), color-mix(in srgb,var(--bs-primary),#000 20%)); color:#fff; padding:20px 16px 110px; }
+  [data-bs-theme="dark"] .band{ background:linear-gradient(160deg, color-mix(in srgb,var(--bs-primary),#000 38%), color-mix(in srgb,var(--bs-primary),#000 58%)); }
+  .band-in,.wrap{ max-width:1560px; margin:0 auto; }
+  .crumb{ font-size:12px; opacity:.8; }
+  .band h1{ margin:8px 0 0; font-size:24px; font-weight:600; }
+  .band p{ margin:4px 0 0; opacity:.82; }
+  .wrap{ margin-top:-92px; padding:0 16px 40px; }
+
+  /* =====================================================================
+     Shared ticket tokens (.tkx) — accent from --bs-primary, light + dark
+     ===================================================================== */
+  .tkx{
+    --acc:var(--bs-primary);
+    --acc-soft:color-mix(in srgb,var(--acc) 9%,transparent);
+    --acc-line:color-mix(in srgb,var(--acc) 28%,transparent);
+    --surf:var(--bs-body-bg); --surf-2:color-mix(in srgb,var(--bs-body-bg),var(--page) 55%);
+    --line:var(--bs-border-color); --ink:var(--bs-emphasis-color); --mute:var(--bs-secondary-color);
+    --st-open:#2a9fd6; --st-in_progress:#d99a17; --st-resolved:#1f9d63; --st-closed:#7b8494;
+    --r:14px;
+  }
+  .tkx .card{ background:var(--surf); border:1px solid var(--line); border-radius:var(--r); box-shadow:0 1px 2px rgba(15,21,34,.04),0 12px 32px -18px rgba(15,21,34,.25); }
+  .tkx .btn{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--surf); padding:7px 12px; border-radius:9px; cursor:pointer; font-weight:500; color:var(--ink); white-space:nowrap; }
+  .tkx .btn:hover{ border-color:var(--acc-line); }
+  .tkx .btn-p{ background:var(--acc); border-color:var(--acc); color:#fff; box-shadow:0 6px 16px -8px var(--acc); }
+  .tkx .btn-p:hover{ background:color-mix(in srgb,var(--acc),#000 10%); }
+  .tkx .inp{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surf); border-radius:9px; padding:0 10px; height:34px; color:var(--mute); }
+  .tkx .inp input,.tkx .inp select{ border:0; outline:0; background:transparent; height:100%; color:var(--ink); min-width:0; flex:1; }
+  .tkx .inp:focus-within{ border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-soft); }
+  .tkx .gtag{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; background:color-mix(in srgb,var(--g) 12%,transparent); color:color-mix(in srgb,var(--g),var(--ink) 25%); }
+  [data-bs-theme="dark"] .tkx .gtag{ color:color-mix(in srgb,var(--g),#fff 35%); }
+  .tkx .gtag::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--g); }
+  .tkx .dot{ width:8px; height:8px; border-radius:50%; background:var(--c); flex:none; }
+  .tkx .av{ width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:9.5px; font-weight:600; color:#fff; background:var(--acc); }
+  .tkx .meta{ display:flex; align-items:center; gap:10px; color:var(--mute); font-size:11.5px; }
+  .tkx .meta i{ margin-inline-end:3px; }
+  .tkx .tcard{ background:var(--surf); border:1px solid var(--line); border-radius:12px; cursor:grab; transition:transform .15s, box-shadow .15s, border-color .15s; overflow:hidden; }
+  .tkx .tcard:hover{ transform:translateY(-2px); border-color:var(--acc-line); box-shadow:0 12px 24px -14px color-mix(in srgb,var(--acc) 55%,transparent); }
+  .tkx .tcard .ttl{ font-weight:600; color:var(--ink); line-height:1.35; margin:6px 0 4px; }
+  .tkx .tcard .dsc{ color:var(--mute); font-size:12px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .tkx .tcard img{ display:block; width:100%; height:96px; object-fit:cover; }
+  .tkx .tcard .bd{ padding:11px 12px; }
+  .tkx .tcard .ft{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+  .tkx .num{ font-size:11px; color:var(--mute); font-weight:500; }
+  .tkx .add{ width:100%; justify-content:center; border-style:dashed; background:transparent; color:var(--mute); }
+  .tkx .add:hover{ color:var(--acc); background:var(--acc-soft); }
+  .tkx .empty{ text-align:center; color:var(--mute); padding:22px 8px; border:1px dashed var(--line); border-radius:12px; font-size:12px; }
+  .tkx .hide{ display:none !important; }
+
+  /* =====================================================================
+     A · Facet Rail — left rail (Status / Group / Date) + kanban
+     ===================================================================== */
+  .dirA .layout{ display:grid; grid-template-columns:250px 1fr; gap:16px; align-items:start; }
+  .dirA .rail{ padding:16px; position:sticky; top:52px; }
+  .dirA .rail h6{ margin:16px 0 8px; font-size:10.5px; text-transform:uppercase; letter-spacing:1.1px; color:var(--mute); font-weight:600; display:flex; justify-content:space-between; }
+  .dirA .rail h6:first-of-type{ margin-top:14px; }
+  .dirA .facet{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 9px; border:0; background:transparent; border-radius:9px; cursor:pointer; color:var(--ink); text-align:start; }
+  .dirA .facet:hover{ background:var(--surf-2); }
+  .dirA .facet.on{ background:var(--acc-soft); color:var(--acc); font-weight:600; box-shadow:inset 3px 0 0 var(--acc); }
+  .dirA .facet .ct{ margin-inline-start:auto; font-size:11px; color:var(--mute); background:var(--surf-2); padding:1px 8px; border-radius:20px; }
+  .dirA .facet.on .ct{ background:var(--acc); color:#fff; }
+  .dirA .dates{ display:grid; gap:6px; }
+  .dirA .main{ min-width:0; }
+  .dirA .head{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px; margin-bottom:14px; }
+  .dirA .head .inp{ flex:1; min-width:200px; }
+  .dirA .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .dirA .chip{ display:inline-flex; gap:6px; align-items:center; font-size:11.5px; padding:3px 6px 3px 10px; border-radius:20px; background:var(--acc-soft); color:var(--acc); font-weight:500; }
+  .dirA .chip i{ cursor:pointer; padding:2px 4px; opacity:.7; }
+  .dirA .board{ display:grid; grid-template-columns:repeat(4,minmax(240px,1fr)); gap:14px; overflow-x:auto; padding-bottom:4px; }
+  .dirA .col{ background:var(--surf-2); border:1px solid var(--line); border-radius:var(--r); display:flex; flex-direction:column; min-height:440px; }
+  .dirA .col-h{ display:flex; align-items:center; gap:8px; padding:12px 14px 10px; font-weight:600; color:var(--ink); border-top:3px solid var(--c); border-radius:var(--r) var(--r) 0 0; }
+  .dirA .col-h .ct{ margin-inline-start:auto; font-size:11px; background:var(--surf); border:1px solid var(--line); border-radius:20px; padding:1px 9px; color:var(--mute); }
+  .dirA .col-b{ padding:4px 10px 10px; display:grid; gap:9px; align-content:start; flex:1; }
+  .dirA .col-f{ padding:0 10px 10px; }
+
+  /* =====================================================================
+     B · Swimlanes — filter bar + "Group by" toggles group rows × status
+     ===================================================================== */
+  .dirB .bar{ padding:14px; margin-bottom:14px; }
+  .dirB .bar-top{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .dirB .bar-top h5{ margin:0; font-size:16px; color:var(--ink); font-weight:600; display:flex; align-items:center; gap:10px; }
+  .dirB .bar-top h5 i{ width:32px; height:32px; display:grid; place-items:center; border-radius:10px; background:var(--acc-soft); color:var(--acc); font-size:14px; }
+  .dirB .filters{ display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr auto; gap:8px; }
+  .dirB .filters label{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--mute); margin:0 0 4px 2px; font-weight:600; }
+  .dirB .seg{ display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--surf-2); padding:2px; }
+  .dirB .seg button{ border:0; background:transparent; padding:5px 12px; border-radius:7px; cursor:pointer; color:var(--mute); font-weight:500; }
+  .dirB .seg button.on{ background:var(--surf); color:var(--acc); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  .dirB .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+  .dirB .stat{ padding:12px 14px; display:flex; align-items:center; gap:12px; border-inline-start:4px solid var(--c); }
+  .dirB .stat .v{ font-size:20px; font-weight:600; color:var(--ink); line-height:1; }
+  .dirB .stat .l{ color:var(--mute); font-size:11.5px; margin-top:3px; }
+  .dirB .stat .ic{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:var(--c); background:color-mix(in srgb,var(--c) 13%,transparent); margin-inline-start:auto; }
+  .dirB .grid-h{ display:grid; grid-template-columns:repeat(4,minmax(220px,1fr)); gap:12px; padding:0 12px 8px; }
+  .dirB .grid-h div{ display:flex; align-items:center; gap:8px; font-weight:600; color:var(--ink); font-size:12px; text-transform:uppercase; letter-spacing:.6px; }
+  .dirB .lane{ margin-bottom:12px; overflow:hidden; }
+  .dirB .lane-h{ display:flex; align-items:center; gap:10px; padding:10px 14px; background:color-mix(in srgb,var(--g) 7%,var(--surf)); border-bottom:1px solid var(--line); cursor:pointer; }
+  .dirB .lane-h b{ color:var(--ink); font-weight:600; }
+  .dirB .lane-h .ct{ font-size:11px; color:var(--mute); }
+  .dirB .lane-h .bar-mini{ margin-inline-start:auto; display:flex; width:160px; height:6px; border-radius:6px; overflow:hidden; background:var(--surf-2); }
+  .dirB .lane-h .bar-mini span{ background:var(--c); }
+  .dirB .lane-b{ display:grid; grid-template-columns:repeat(4,minmax(220px,1fr)); gap:12px; padding:12px; overflow-x:auto; }
+  .dirB .lane-b .cell{ display:grid; gap:8px; align-content:start; min-height:60px; border-radius:10px; }
+  .dirB .lane.closed .lane-b{ display:none; }
+  .dirB .lane.closed .lane-h .fa-chevron-down{ transform:rotate(-90deg); }
+  .dirB .lane .tcard img{ display:none; }
+
+  /* =====================================================================
+     C · Command Deck — one sticky toolbar, group pill strip, dense cards
+     ===================================================================== */
+  .dirC .deck{ padding:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; position:sticky; top:44px; z-index:5; }
+  .dirC .deck .inp{ flex:1; min-width:220px; }
+  .dirC .deck .inp.sm{ flex:0 0 auto; min-width:0; }
+  .dirC .deck .sep{ width:1px; height:24px; background:var(--line); }
+  .dirC .pills{ display:flex; gap:6px; overflow-x:auto; padding:2px 2px 10px; margin-bottom:6px; scrollbar-width:thin; }
+  .dirC .pill{ flex:none; display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:var(--surf); cursor:pointer; color:var(--ink); font-weight:500; }
+  .dirC .pill .ct{ font-size:10.5px; color:var(--mute); }
+  .dirC .pill.on{ background:var(--ink); color:var(--surf); border-color:var(--ink); }
+  .dirC .pill.on .ct{ color:inherit; opacity:.7; }
+  .dirC .board{ display:grid; grid-template-columns:repeat(4,minmax(250px,1fr)); gap:12px; overflow-x:auto; }
+  .dirC .col{ display:flex; flex-direction:column; min-height:440px; }
+  .dirC .col-h{ padding:12px 14px; display:flex; align-items:center; gap:10px; background:var(--surf); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; position:relative; overflow:hidden; }
+  .dirC .col-h::after{ content:""; position:absolute; inset:auto 0 0 0; height:3px; background:linear-gradient(90deg,var(--c) var(--p),var(--surf-2) var(--p)); }
+  .dirC .col-h .ic{ width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:color-mix(in srgb,var(--c) 14%,transparent); color:var(--c); }
+  .dirC .col-h b{ color:var(--ink); font-weight:600; }
+  .dirC .col-h .ct{ margin-inline-start:auto; font-size:18px; font-weight:600; color:var(--ink); }
+  .dirC .col-h .plus{ border:0; background:var(--surf-2); width:26px; height:26px; border-radius:8px; cursor:pointer; color:var(--mute); }
+  .dirC .col-b{ display:grid; gap:8px; align-content:start; flex:1; padding:2px; border-radius:12px; }
+  .dirC .tcard{ border-inline-start:3px solid var(--g); }
+  .dirC .tcard img{ display:none; }
+  .dirC .tcard .thumbs{ display:flex; gap:4px; margin-top:8px; }
+  .dirC .tcard .thumbs img{ display:block; width:42px; height:30px; border-radius:6px; }
+  .tkx .tcard .thumbs{ display:none; }
+  .dirC .tcard .thumbs{ display:flex; }
+
+  /* ---------- Ticket detail (shared, re-skinned per direction) ---------- */
+  .tkx .ovl{ position:fixed; inset:0; z-index:100; background:rgba(10,14,22,.55); backdrop-filter:blur(3px); display:none; align-items:flex-start; justify-content:center; padding:4vh 16px; overflow:auto; }
+  .tkx .ovl.show{ display:flex; }
+  .tkx .mdl{ width:min(1180px,100%); background:var(--surf); border-radius:18px; border:1px solid var(--line); overflow:hidden; box-shadow:0 30px 80px -20px rgba(0,0,0,.45); }
+  .tkx .mdl-h{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,var(--acc-soft),transparent); }
+  .tkx .mdl-h .id{ font-weight:600; color:var(--mute); }
+  .tkx .mdl-h .x{ margin-inline-start:auto; border:0; background:var(--surf-2); width:32px; height:32px; border-radius:9px; cursor:pointer; color:var(--mute); }
+  .tkx .stpick{ display:inline-flex; gap:4px; background:var(--surf-2); padding:3px; border-radius:10px; border:1px solid var(--line); }
+  .tkx .stpick button{ border:0; background:transparent; padding:5px 11px; border-radius:7px; cursor:pointer; color:var(--mute); display:inline-flex; gap:6px; align-items:center; font-weight:500; }
+  .tkx .stpick button.on{ background:var(--surf); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.15); }
+  .tkx .mdl-b{ display:grid; grid-template-columns:1.45fr 1fr; }
+  .tkx .mdl-main{ padding:20px 22px; border-inline-end:1px solid var(--line); }
+  .tkx .mdl-side{ padding:20px 22px; background:var(--surf-2); }
+  .tkx .mdl h2{ margin:0 0 10px; font-size:20px; color:var(--ink); font-weight:600; }
+  .tkx .props{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0 18px; }
+  .tkx .prop{ border:1px solid var(--line); border-radius:11px; padding:9px 11px; }
+  .tkx .prop small{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--mute); margin-bottom:3px; font-weight:600; }
+  .tkx .prop b{ color:var(--ink); font-weight:500; display:flex; align-items:center; gap:6px; }
+  .tkx .sec{ font-size:10.5px; text-transform:uppercase; letter-spacing:1.1px; color:var(--mute); font-weight:600; margin:18px 0 8px; display:flex; align-items:center; gap:8px; }
+  .tkx .sec::after{ content:""; flex:1; height:1px; background:var(--line); }
+  .tkx .desc{ color:var(--bs-body-color); line-height:1.65; }
+  .tkx .files{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .tkx .file{ border:1px solid var(--line); border-radius:11px; overflow:hidden; background:var(--surf); }
+  .tkx .file img,.tkx .file .ph{ width:100%; height:84px; object-fit:cover; display:grid; place-items:center; background:var(--surf-2); color:var(--mute); font-size:22px; }
+  .tkx .file div.n{ padding:7px 9px; font-size:11.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tkx .drop{ border:1.5px dashed var(--acc-line); border-radius:11px; padding:16px; text-align:center; color:var(--mute); background:var(--acc-soft); margin-top:10px; }
+  .tkx .compose{ background:var(--surf); border:1px solid var(--line); border-radius:12px; padding:10px; }
+  .tkx .compose textarea{ width:100%; border:0; outline:0; resize:vertical; min-height:56px; background:transparent; }
+  .tkx .compose .r{ display:flex; justify-content:flex-end; }
+  .tkx .tl{ margin-top:14px; display:grid; gap:12px; position:relative; }
+  .tkx .tl-i{ display:grid; grid-template-columns:28px 1fr; gap:10px; }
+  .tkx .tl-i .av{ width:28px; height:28px; font-size:10.5px; }
+  .tkx .bub{ background:var(--surf); border:1px solid var(--line); border-radius:4px 12px 12px 12px; padding:9px 12px; }
+  .tkx .bub .who{ display:flex; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--mute); margin-bottom:3px; }
+  .tkx .bub .who b{ color:var(--ink); font-weight:600; }
+  .tkx .bub .acts{ margin-top:5px; font-size:11px; display:flex; gap:10px; }
+  .tkx .bub .acts a{ color:var(--mute); text-decoration:none; cursor:pointer; }
+  .tkx .bub .acts a.del:hover{ color:var(--bs-danger); }
+  .tkx .ev{ font-size:11.5px; color:var(--mute); display:flex; gap:8px; align-items:center; padding-inline-start:9px; }
+  .tkx .ev i{ width:12px; text-align:center; }
+  .tkx .mdl-f{ display:flex; justify-content:space-between; gap:8px; padding:12px 20px; border-top:1px solid var(--line); }
+
+  @media (max-width: 991px){
+    .dirA .layout{ grid-template-columns:1fr; }
+    .dirA .rail{ position:static; }
+    .dirB .filters{ grid-template-columns:1fr 1fr; }
+    .dirB .stats{ grid-template-columns:1fr 1fr; }
+    .tkx .mdl-b{ grid-template-columns:1fr; }
+    .tkx .mdl-main{ border-inline-end:0; border-bottom:1px solid var(--line); }
+  }
+  @media (max-width: 575px){
+    .tkx .props{ grid-template-columns:1fr 1fr; }
+    .dirB .bar-top .seg{ width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <b><i class="fa fa-ticket"></i> Support Tickets</b>
+  <div class="grp"><span class="lbl">Direction</span>
+    <button class="opt on" data-dir="dirA">A · Facet Rail</button>
+    <button class="opt" data-dir="dirB">B · Swimlanes</button>
+    <button class="opt" data-dir="dirC">C · Command Deck</button>
+  </div>
+  <div class="grp"><span class="lbl">Theme</span>
+    <button class="opt on" data-theme="light"><i class="fa fa-sun-o"></i> Light</button>
+    <button class="opt" data-theme="dark"><i class="fa fa-moon-o"></i> Dark</button>
+  </div>
+  <div class="grp"><span class="lbl">Accent</span>
+    <button class="sw on" style="background:#3b5bdb" data-acc="#3b5bdb"></button>
+    <button class="sw" style="background:#0f9d8f" data-acc="#0f9d8f"></button>
+    <button class="sw" style="background:#7048e8" data-acc="#7048e8"></button>
+    <button class="sw" style="background:#c2410c" data-acc="#c2410c"></button>
+  </div>
+  <span class="vnote">Click any card to open the ticket detail · filters are live</span>
+</div>
+
+<div class="band"><div class="band-in">
+  <div class="crumb">Home / Tickets</div>
+  <h1>Support Tickets</h1>
+  <p>Manage tickets with status board, groups, filters, file uploads and comments</p>
+</div></div>
+
+<div class="wrap tkx dirA" id="app">
+
+  <!-- ========== A · Facet Rail ========== -->
+  <section data-show="dirA">
+    <div class="layout">
+      <aside class="card rail">
+        <button class="btn btn-p" style="width:100%;justify-content:center"><i class="fa fa-plus"></i> New ticket</button>
+        <h6>Status</h6><div data-facet="status"></div>
+        <h6>Group <a style="color:var(--acc);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500"><i class="fa fa-cog"></i> Manage</a></h6><div data-facet="group"></div>
+        <h6>Created</h6>
+        <div class="dates">
+          <label class="inp"><i class="fa fa-calendar"></i><input type="date" value="2026-10-01"></label>
+          <label class="inp"><i class="fa fa-calendar"></i><input type="date" value="2026-10-02"></label>
+        </div>
+      </aside>
+      <div class="main">
+        <div class="card head">
+          <label class="inp"><i class="fa fa-search"></i><input data-search placeholder="Search title or description…"></label>
+          <div class="chips" data-chips></div>
+          <button class="btn" data-reset><i class="fa fa-refresh"></i> Reset</button>
+        </div>
+        <div class="board" data-board="A"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== B · Swimlanes ========== -->
+  <section data-show="dirB">
+    <div class="card bar">
+      <div class="bar-top">
+        <h5><i class="fa fa-ticket"></i> Tickets Board</h5>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span style="color:var(--mute);font-size:11.5px">Lanes</span>
+          <div class="seg"><button data-lanes="none">None</button><button class="on" data-lanes="group">By group</button></div>
+          <button class="btn btn-p"><i class="fa fa-plus"></i> New ticket</button>
+        </div>
+      </div>
+      <div class="filters">
+        <div><label>Search</label><label class="inp"><i class="fa fa-search"></i><input data-search placeholder="Title or description…"></label></div>
+        <div><label>Group</label><label class="inp"><i class="fa fa-folder-o"></i><select data-sel="group"></select></label></div>
+        <div><label>Status</label><label class="inp"><i class="fa fa-circle-o"></i><select data-sel="status"></select></label></div>
+        <div><label>From</label><label class="inp"><input type="date" value="2026-10-01"></label></div>
+        <div><label>To</label><label class="inp"><input type="date" value="2026-10-02"></label></div>
+        <div><label>&nbsp;</label><button class="btn" data-reset style="height:34px"><i class="fa fa-refresh"></i></button></div>
+      </div>
+    </div>
+    <div class="stats" data-stats></div>
+    <div data-board="B"></div>
+  </section>
+
+  <!-- ========== C · Command Deck ========== -->
+  <section data-show="dirC">
+    <div class="card deck">
+      <label class="inp"><i class="fa fa-search"></i><input data-search placeholder="Search tickets…  ( / )"></label>
+      <label class="inp sm"><i class="fa fa-circle-o"></i><select data-sel="status"></select></label>
+      <label class="inp sm"><i class="fa fa-calendar"></i><input type="date" value="2026-10-01" style="width:118px"></label>
+      <label class="inp sm"><i class="fa fa-long-arrow-right"></i><input type="date" value="2026-10-02" style="width:118px"></label>
+      <button class="btn" data-reset><i class="fa fa-refresh"></i></button>
+      <span class="sep"></span>
+      <button class="btn btn-p"><i class="fa fa-plus"></i> New ticket</button>
+    </div>
+    <div class="pills" data-pills></div>
+    <div class="board" data-board="C"></div>
+  </section>
+
+  <!-- ========== Ticket detail ========== -->
+  <div class="ovl" data-ovl>
+    <div class="mdl">
+      <div class="mdl-h">
+        <span class="id" data-m="id"></span>
+        <div class="stpick" data-m="st"></div>
+        <button class="btn"><i class="fa fa-pencil"></i> Edit</button>
+        <button class="x" data-close><i class="fa fa-times"></i></button>
+      </div>
+      <div class="mdl-b">
+        <div class="mdl-main">
+          <h2 data-m="title"></h2>
+          <div class="props">
+            <div class="prop"><small>Group</small><b data-m="group"></b></div>
+            <div class="prop"><small>Reported by</small><b data-m="by"></b></div>
+            <div class="prop"><small>Created</small><b data-m="date"></b></div>
+          </div>
+          <div class="sec">Description</div>
+          <div class="desc" data-m="desc"></div>
+          <div class="sec">Attachments</div>
+          <div class="files">
+            <div class="file"><img src="https://picsum.photos/seed/tk1/300/170" alt=""><div class="n">screenshot-pos.png</div></div>
+            <div class="file"><div class="ph"><i class="fa fa-file-pdf-o"></i></div><div class="n">invoice-1042.pdf</div></div>
+            <div class="file"><div class="ph"><i class="fa fa-file-video-o"></i></div><div class="n">repro-steps.mp4</div></div>
+          </div>
+          <div class="drop"><i class="fa fa-cloud-upload"></i> Drop files or <b style="color:var(--acc)">browse</b> · images, video, PDF, Office up to 50 MB</div>
+        </div>
+        <div class="mdl-side">
+          <div class="sec" style="margin-top:0">Comments &amp; activity</div>
+          <div class="compose">
+            <textarea placeholder="Write a comment…"></textarea>
+            <div class="r"><button class="btn btn-p"><i class="fa fa-paper-plane"></i> Comment</button></div>
+          </div>
+          <div class="tl">
+            <div class="tl-i"><span class="av" style="background:#0f9d8f">SK</span><div class="bub"><div class="who"><b>Sara K.</b><span>2h ago</span></div>Reproduced on the Al Sadd branch — only when the printer is offline.<div class="acts"><a>Edit</a><a class="del">Delete</a></div></div></div>
+            <div class="ev"><i class="fa fa-exchange"></i> Status changed Open → In Progress · 3h ago</div>
+            <div class="tl-i"><span class="av">RV</span><div class="bub"><div class="who"><b>Rahees V.</b><span>5h ago</span></div>Attached the screenshot and invoice PDF.<div class="acts"><a>Edit</a><a class="del">Delete</a></div></div></div>
+            <div class="ev"><i class="fa fa-plus-circle"></i> Ticket created · 6h ago</div>
+          </div>
+        </div>
+      </div>
+      <div class="mdl-f"><button class="btn" style="color:var(--bs-danger)"><i class="fa fa-trash-o"></i> Delete</button><button class="btn" data-close>Close</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUSES = { open:['Open','fa-inbox'], in_progress:['In Progress','fa-spinner'], resolved:['Resolved','fa-check-circle'], closed:['Closed','fa-archive'] };
+const GROUPS = { 'Sales & POS':'#3b82f6', 'Inventory':'#10b981', 'Accounts':'#f59e0b', 'Rent Out':'#8b5cf6', 'Mobile App':'#ec4899', 'General':'#64748b' };
+const PEOPLE = [['RV','Rahees V.','#3b5bdb'],['SK','Sara K.','#0f9d8f'],['AM','Ahmed M.','#c2410c'],['JN','Joel N.','#7048e8']];
+const T = [
+  [1042,'Receipt not printing after sale','Thermal printer stays idle when charging a cash sale on the Al Sadd counter; manual reprint works.','open','Sales & POS',0,3,2,'tk1'],
+  [1041,'Stock check variance on bulk items','Counted qty for 5L oils is doubled after reconcile when scanning the same barcode twice.','open','Inventory',1,1,0,null],
+  [1040,'VAT rounding on credit notes','Credit note total is off by 0.01 compared with the original invoice for multi-line returns.','open','Accounts',2,0,1,null],
+  [1039,'Lease renewal email shows old rent','The renewal reminder pulls the previous term amount instead of the new agreement value.','in_progress','Rent Out',3,4,1,'tk4'],
+  [1038,'Day session close stuck on mobile','Close day spins forever when there is a pending offline sale in the queue.','in_progress','Mobile App',1,6,3,null],
+  [1037,'Add discount column to sales export','Finance wants line discount and header discount as separate columns in the Excel export.','in_progress','Sales & POS',0,2,0,null],
+  [1036,'Vendor statement balance mismatch','Running balance resets on page 2 of the vendor statement PDF.','resolved','Accounts',2,5,2,'tk7'],
+  [1035,'Barcode label font too light','Jewellery tags print faded at 203 dpi with the default font weight.','resolved','Inventory',3,1,1,null],
+  [1034,'Tenant portal login timeout','Parents get logged out after 5 minutes on iOS Safari.','closed','General',1,3,0,null],
+  [1033,'Security deposit refund journal','Refund posted to the wrong liability account for two agreements in September.','closed','Rent Out',0,2,1,null],
+];
+const tickets = T.map(r=>({id:r[0],title:r[1],desc:r[2],status:r[3],group:r[4],by:PEOPLE[r[5]],comments:r[6],files:r[7],img:r[8]}));
+const state = { search:'', status:'', group:'', lanes:'group' };
+const $ = (s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const app = $('#app');
+
+const match = (t, except) =>
+  (except==='status' || !state.status || t.status===state.status) &&
+  (except==='group' || !state.group || t.group===state.group) &&
+  (!state.search || (t.title+' '+t.desc).toLowerCase().includes(state.search.toLowerCase()));
+const visible = () => tickets.filter(t=>match(t));
+const gtag = g => `<span class="gtag" style="--g:${GROUPS[g]}">${g}</span>`;
+const card = t => `
+  <div class="tcard" draggable="true" style="--g:${GROUPS[t.group]}" data-open="${t.id}">
+    ${t.img?`<img src="https://picsum.photos/seed/${t.img}/400/200" alt="">`:''}
+    <div class="bd">
+      <div style="display:flex;justify-content:space-between;align-items:center">${gtag(t.group)}<span class="num">#${t.id}</span></div>
+      <div class="ttl">${t.title}</div>
+      <div class="dsc">${t.desc}</div>
+      ${t.img?`<div class="thumbs"><img src="https://picsum.photos/seed/${t.img}/90/60" alt=""></div>`:''}
+      <div class="ft"><div class="meta"><span><i class="fa fa-comments-o"></i>${t.comments}</span><span><i class="fa fa-paperclip"></i>${t.files}</span></div>
+      <span class="av" style="background:${t.by[2]}" title="${t.by[1]}">${t.by[0]}</span></div>
+    </div>
+  </div>`;
+const stColor = k => `var(--st-${k})`;
+
+function render(){
+  const list = visible();
+  // A — facets with live counts (a facet's count ignores its own dimension)
+  $('[data-facet="status"]').innerHTML = facet('status', {'':['All tickets','']} , STATUSES, k=>stColor(k));
+  $('[data-facet="group"]').innerHTML = facet('group', {'':['All groups','']}, Object.fromEntries(Object.keys(GROUPS).map(g=>[g,[g]])), g=>GROUPS[g]);
+  $('[data-chips]').innerHTML = [state.status&&['status',STATUSES[state.status][0]], state.group&&['group',state.group]].filter(Boolean)
+    .map(([k,v])=>`<span class="chip">${v}<i class="fa fa-times" data-clear="${k}"></i></span>`).join('');
+  $('[data-board="A"]').innerHTML = Object.entries(STATUSES).map(([k,[l,ic]])=>{
+    const items = list.filter(t=>t.status===k);
+    return `<div class="col" style="--c:${stColor(k)}"><div class="col-h"><span class="dot"></span>${l}<span class="ct">${items.length}</span></div>
+      <div class="col-b">${items.map(card).join('')||'<div class="empty">No tickets</div>'}</div>
+      <div class="col-f"><button class="btn add"><i class="fa fa-plus"></i> Add a card</button></div></div>`;
+  }).join('');
+
+  // B — selects, stats, lanes
+  fillSelect('group', 'All groups', Object.keys(GROUPS));
+  fillSelect('status', 'All statuses', Object.keys(STATUSES), k=>STATUSES[k][0]);
+  $('[data-stats]').innerHTML = Object.entries(STATUSES).map(([k,[l,ic]])=>
+    `<div class="card stat" style="--c:${stColor(k)}"><div><div class="v">${list.filter(t=>t.status===k).length}</div><div class="l">${l}</div></div><span class="ic"><i class="fa ${ic}"></i></span></div>`).join('');
+  const lanes = state.lanes==='group' ? Object.keys(GROUPS).filter(g=>list.some(t=>t.group===g)) : ['__all'];
+  $('[data-board="B"]').innerHTML = `<div class="grid-h">${Object.entries(STATUSES).map(([k,[l]])=>`<div style="--c:${stColor(k)}"><span class="dot"></span>${l}</div>`).join('')}</div>` +
+    (lanes.length ? lanes.map(g=>{
+      const items = g==='__all'?list:list.filter(t=>t.group===g);
+      const bar = Object.keys(STATUSES).map(k=>`<span style="--c:${stColor(k)};width:${items.filter(t=>t.status===k).length/items.length*100}%"></span>`).join('');
+      return `<div class="card lane" style="--g:${GROUPS[g]||'var(--acc)'}">
+        ${g==='__all'?'':`<div class="lane-h" data-lane><i class="fa fa-chevron-down" style="color:var(--mute);transition:transform .2s"></i><span class="dot" style="--c:${GROUPS[g]}"></span><b>${g}</b><span class="ct">${items.length} ticket${items.length>1?'s':''}</span><div class="bar-mini">${bar}</div></div>`}
+        <div class="lane-b">${Object.keys(STATUSES).map(k=>`<div class="cell">${items.filter(t=>t.status===k).map(card).join('')}</div>`).join('')}</div></div>`;
+    }).join('') : '<div class="card empty">No tickets match these filters</div>');
+
+  // C — pills + board with progress stripe
+  const pc = g => tickets.filter(t=>match(t,'group') && (!g||t.group===g)).length;
+  $('[data-pills]').innerHTML = `<button class="pill ${!state.group?'on':''}" data-pick-group="">All groups <span class="ct">${pc('')}</span></button>` +
+    Object.keys(GROUPS).map(g=>`<button class="pill ${state.group===g?'on':''}" data-pick-group="${g}"><span class="dot" style="--c:${GROUPS[g]}"></span>${g} <span class="ct">${pc(g)}</span></button>`).join('');
+  $('[data-board="C"]').innerHTML = Object.entries(STATUSES).map(([k,[l,ic]])=>{
+    const items = list.filter(t=>t.status===k);
+    return `<div class="col" style="--c:${stColor(k)};--p:${list.length?items.length/list.length*100:0}%"><div class="col-h"><span class="ic"><i class="fa ${ic}"></i></span><b>${l}</b><span class="ct">${items.length}</span><button class="plus"><i class="fa fa-plus"></i></button></div>
+      <div class="col-b">${items.map(card).join('')||'<div class="empty">Drop a ticket here</div>'}</div></div>`;
+  }).join('');
+}
+function facet(dim, allRow, map, color){
+  const base = tickets.filter(t=>match(t,dim));
+  const rows = {...allRow, ...map};
+  return Object.entries(rows).map(([k,v])=>{
+    const n = k ? base.filter(t=>t[dim]===k).length : base.length;
+    return `<button class="facet ${state[dim]===k?'on':''}" data-pick-${dim}="${k}">${k?`<span class="dot" style="--c:${color(k)}"></span>`:'<i class="fa fa-th-large" style="width:8px"></i>'}${v[0]}<span class="ct">${n}</span></button>`;
+  }).join('');
+}
+function fillSelect(dim, all, keys, label=k=>k){
+  $$(`[data-sel="${dim}"]`).forEach(s=>{ s.innerHTML = `<option value="">${all}</option>`+keys.map(k=>`<option value="${k}" ${state[dim]===k?'selected':''}>${label(k)}</option>`).join(''); });
+}
+function openTicket(id){
+  const t = tickets.find(x=>x.id==id);
+  $('[data-m="id"]').textContent = '#'+t.id;
+  $('[data-m="title"]').textContent = t.title;
+  $('[data-m="desc"]').textContent = t.desc;
+  $('[data-m="group"]').innerHTML = gtag(t.group);
+  $('[data-m="by"]').innerHTML = `<span class="av" style="background:${t.by[2]}">${t.by[0]}</span>${t.by[1]}`;
+  $('[data-m="date"]').textContent = '02 Oct 2026';
+  $('[data-m="st"]').innerHTML = Object.entries(STATUSES).map(([k,[l]])=>`<button class="${t.status===k?'on':''}"><span class="dot" style="--c:${stColor(k)}"></span>${l}</button>`).join('');
+  $('[data-ovl]').classList.add('show');
+}
+
+document.addEventListener('click', e=>{
+  const el = e.target.closest('[data-pick-status],[data-pick-group],[data-clear],[data-reset],[data-open],[data-close],[data-lanes],[data-lane],[data-dir],[data-theme],[data-acc]');
+  if(!el) return;
+  const d = el.dataset;
+  if('pickStatus' in d) state.status = d.pickStatus;
+  if('pickGroup' in d) state.group = d.pickGroup;
+  if(d.clear) state[d.clear] = '';
+  if('reset' in d){ Object.assign(state,{search:'',status:'',group:''}); $$('[data-search]').forEach(i=>i.value=''); }
+  if(d.open) return openTicket(d.open);
+  if('close' in d) return $('[data-ovl]').classList.remove('show');
+  if(d.lanes){ state.lanes=d.lanes; $$('[data-lanes]').forEach(b=>b.classList.toggle('on',b===el)); }
+  if('lane' in d) return el.parentElement.classList.toggle('closed');
+  if(d.dir){ app.classList.remove('dirA','dirB','dirC'); app.classList.add(d.dir); $$('[data-dir]').forEach(b=>b.classList.toggle('on',b===el)); }
+  if(d.theme){ document.documentElement.dataset.bsTheme=d.theme; $$('[data-theme]').forEach(b=>b.classList.toggle('on',b===el)); }
+  if(d.acc){ document.documentElement.style.setProperty('--bs-primary',d.acc); $$('[data-acc]').forEach(b=>b.classList.toggle('on',b===el)); }
+  render(); syncSections();
+});
+document.addEventListener('input', e=>{
+  if(e.target.matches('[data-search]')){ state.search=e.target.value; $$('[data-search]').forEach(i=>{ if(i!==e.target) i.value=state.search; }); render(); }
+  if(e.target.matches('[data-sel]')){ state[e.target.dataset.sel]=e.target.value; render(); }
+});
+$('[data-ovl]').addEventListener('click', e=>{ if(e.target.matches('[data-ovl]')) e.target.classList.remove('show'); });
+function syncSections(){ $$('[data-show]').forEach(s=>s.classList.toggle('hide', !app.classList.contains(s.dataset.show))); }
+render(); syncSections();
+</script>
+</body>
+</html>

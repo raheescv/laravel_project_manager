@@ -23,6 +23,16 @@ class TicketComment extends Model
         'updated_by' => 'integer',
     ];
 
+    /**
+     * @return array<string, array<int, string>>
+     */
+    public static function rules(int $id = 0): array
+    {
+        return [
+            'comment' => ['required', 'string', 'max:3000'],
+        ];
+    }
+
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
