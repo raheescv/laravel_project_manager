@@ -7,8 +7,10 @@ use App\Actions\RentOut\ConfirmBookingAction;
 use App\Actions\RentOut\CreateAction;
 use App\Actions\RentOut\UpdateAction;
 use App\Enums\RentOut\RentOutStatus;
+use App\Models\Account;
 use App\Models\Property;
 use App\Models\RentOut;
+use App\Models\User;
 use App\Support\RentOutConfig;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -47,6 +49,33 @@ class Page extends Component
     public function getConfigProperty(): RentOutConfig
     {
         return RentOutConfig::make($this->agreementType);
+    }
+
+    /**
+     * Live snapshot for the editor's hero and summary rail.
+     *
+     * @return array{property_number: ?string, building_name: ?string, group_name: ?string, property_status: ?string, customer_name: ?string, salesman_name: ?string, total: float, down_payment: float, balance: float, per_term: float}
+     */
+    public function getSummaryProperty(): array
+    {
+        $property = filled($this->rent_outs['property_id'] ?? null)
+            ? Property::with(['building.group'])->find($this->rent_outs['property_id'])
+            : null;
+        $total = (float) ($this->rent_outs['total'] ?? 0);
+        $downPayment = $this->config->isLease ? (float) ($this->rent_outs['down_payment'] ?? 0) : 0.0;
+
+        return [
+            'property_number' => $property?->number,
+            'building_name' => $property?->building?->name,
+            'group_name' => $property?->building?->group?->name,
+            'property_status' => $property?->status?->label(),
+            'customer_name' => filled($this->rent_outs['account_id'] ?? null) ? Account::find($this->rent_outs['account_id'])?->name : null,
+            'salesman_name' => filled($this->rent_outs['salesman_id'] ?? null) ? User::find($this->rent_outs['salesman_id'])?->name : null,
+            'total' => $total,
+            'down_payment' => $downPayment,
+            'balance' => max(0, $total - $downPayment),
+            'per_term' => (float) ($this->rent_outs['rent'] ?? 0),
+        ];
     }
 
     public function loadData()

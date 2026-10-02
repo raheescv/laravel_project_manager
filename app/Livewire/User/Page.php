@@ -179,12 +179,11 @@ class Page extends Component
      *
      * Create/UpdateAction strip `is_admin` so it can never ride in on
      * mass-assigned form input; it is written here instead, as its own
-     * deliberate step. Only an existing admin may change it, and nobody may
-     * revoke it from their own account — that would lock them out.
+     * deliberate step. Only an existing admin may change it.
      */
     private function applyAdminFlag(User $user): void
     {
-        if (! $this->canManageAdminFlag() || $user->id === auth()->id()) {
+        if (! $this->canManageAdminFlag()) {
             return;
         }
         $isAdmin = (bool) $this->isAdmin;

@@ -30,7 +30,9 @@ class ProductConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type ?? '']);
         Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix ?? '']);
         Configuration::updateOrCreate(['key' => 'sync_barcode_to_code'], ['value' => $this->sync_barcode_to_code ?? 'no']);
-        Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'no']);
+        if (auth()->user()->can('sale.create')) {
+            Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'no']);
+        }
         TenantCache::forget('barcode_prefix');
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }

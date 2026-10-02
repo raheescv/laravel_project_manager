@@ -1,649 +1,44 @@
-<x-app-layout>
-    <style>
-        .settings-page {
-            --settings-radius: 14px;
-            --settings-radius-sm: 10px;
-            --settings-accent-soft: rgba(var(--bs-primary-rgb), 0.08);
-            --settings-accent-border: rgba(var(--bs-primary-rgb), 0.2);
-            --settings-shadow: 0 6px 24px -10px rgba(var(--bs-emphasis-color-rgb), 0.18);
-            --settings-shadow-sm: 0 2px 8px -2px rgba(var(--bs-emphasis-color-rgb), 0.1);
-            --s-brand: var(--bs-primary);
-            --s-brand-rgb: var(--bs-primary-rgb);
-            --s-brand-400: color-mix(in srgb, var(--bs-primary), #fff 22%);
-            --s-brand-700: color-mix(in srgb, var(--bs-primary), #000 28%);
-            --s-hero-1: color-mix(in srgb, var(--bs-primary), #000 40%);
-            --s-hero-2: color-mix(in srgb, var(--bs-primary), #000 4%);
-            --s-hero-3: color-mix(in srgb, var(--bs-primary), #fff 8%);
-            min-width: 0;
-        }
-
-        [data-bs-theme="dark"] .settings-page {
-            --s-hero-1: color-mix(in srgb, var(--bs-primary), #000 60%);
-            --s-hero-2: color-mix(in srgb, var(--bs-primary), #000 44%);
-            --s-hero-3: color-mix(in srgb, var(--bs-primary), #000 26%);
-        }
-
-        .settings-page .content__wrap {
-            padding-block: 1rem;
-        }
-
-        /* === HERO HEADER === */
-        .settings-hero {
-            position: relative;
-            isolation: isolate;
-            border-radius: var(--settings-radius);
-            padding: 1.25rem 1.45rem;
-            color: var(--bs-body-color);
-            overflow: hidden;
-            margin-bottom: 1rem;
-            border: 1px solid color-mix(in srgb, var(--s-brand), transparent 78%);
-            background:
-                radial-gradient(80% 140% at 100% 0%, color-mix(in srgb, var(--s-brand), transparent 80%), transparent 60%),
-                linear-gradient(135deg, color-mix(in srgb, var(--s-brand), transparent 86%), color-mix(in srgb, var(--s-brand), transparent 96%));
-            backdrop-filter: blur(8px);
-            box-shadow: 0 12px 34px -18px rgba(var(--s-brand-rgb), 0.40);
-        }
-
-        .settings-hero::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-            opacity: 0.6;
-            background-image: radial-gradient(circle at 1px 1px, rgba(var(--s-brand-rgb), 0.06) 1px, transparent 0);
-            background-size: 22px 22px;
-            -webkit-mask-image: linear-gradient(180deg, #000, transparent 80%);
-            mask-image: linear-gradient(180deg, #000, transparent 80%);
-        }
-
-        .settings-hero-glow {
-            position: absolute;
-            z-index: -1;
-            border-radius: 50%;
-            filter: blur(36px);
-            pointer-events: none;
-        }
-
-        .settings-hero-glow.a {
-            width: 240px;
-            height: 240px;
-            top: -110px;
-            right: 6%;
-            background: color-mix(in srgb, var(--s-brand), transparent 45%);
-            opacity: 0.35;
-        }
-
-        .settings-hero-glow.b {
-            width: 180px;
-            height: 180px;
-            bottom: -100px;
-            left: -20px;
-            background: var(--s-brand-400);
-            opacity: 0.4;
-        }
-
-        .settings-hero-inner {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .settings-hero-ic {
-            width: 54px;
-            height: 54px;
-            flex: 0 0 auto;
-            border-radius: 15px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            color: var(--s-brand);
-            background: color-mix(in srgb, var(--s-brand), transparent 84%);
-            border: 1px solid color-mix(in srgb, var(--s-brand), transparent 70%);
-            backdrop-filter: blur(6px);
-        }
-
-        .settings-eyebrow {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--s-brand);
-            margin-bottom: 0.1rem;
-        }
-
-        .settings-hero .breadcrumb {
-            margin-bottom: 0.35rem;
-            font-size: 0.78rem;
-        }
-
-        .settings-hero .breadcrumb,
-        .settings-hero .breadcrumb a,
-        .settings-hero .breadcrumb-item.active,
-        .settings-hero .breadcrumb-item+.breadcrumb-item::before {
-            color: var(--bs-secondary-color) !important;
-        }
-
-        .settings-hero .breadcrumb a:hover {
-            color: var(--s-brand) !important;
-        }
-
-        .settings-hero h1 {
-            font-size: clamp(1.25rem, 2vw + 0.5rem, 1.6rem);
-            font-weight: 700;
-            margin: 0;
-            letter-spacing: -0.01em;
-            color: inherit;
-        }
-
-        .settings-hero p {
-            margin: 0.15rem 0 0;
-            font-size: 0.85rem;
-            color: var(--bs-secondary-color);
-            max-width: 56ch;
-        }
-
-        /* === SHELL === */
-        .settings-shell {
-            border: 1px solid var(--bs-border-color);
-            border-radius: var(--settings-radius);
-            overflow: visible;
-            box-shadow: var(--settings-shadow-sm);
-            background: var(--bs-body-bg);
-        }
-
-        .settings-shell>.row {
-            align-items: flex-start;
-        }
-
-        .settings-shell,
-        .settings-shell .card-body,
-        .settings-shell .tab-content,
-        .settings-shell .tab-pane {
-            min-width: 0;
-        }
-
-        /* === TABS COLUMN (sidebar) === */
-        .settings-tabs-column {
-            min-width: 0;
-            background: var(--bs-tertiary-bg);
-            padding: 0.75rem !important;
-        }
-
-        .settings-tabs-heading {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--bs-secondary-color);
-            padding: 0.35rem 0.5rem 0.5rem;
-            margin: 0;
-        }
-
-        .settings-tabs {
-            min-width: 0;
-            gap: 2px;
-        }
-
-        .settings-tabs .nav-item {
-            margin: 0;
-        }
-
-        .settings-tabs .nav-link {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            min-width: 0;
-            gap: 0.55rem;
-            white-space: normal;
-            padding: 0.45rem 0.65rem;
-            border-radius: var(--settings-radius-sm);
-            color: var(--bs-body-color);
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: transparent;
-            border: 0;
-            transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .settings-tabs .nav-link>i {
-            flex: 0 0 auto;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.9rem;
-            height: 1.9rem;
-            border-radius: 9px;
-            font-size: 0.95rem;
-            line-height: 1;
-            background: var(--bs-tertiary-bg);
-            color: var(--bs-secondary-color);
-            box-shadow: inset 0 0 0 1px rgba(var(--bs-emphasis-color-rgb), 0.05);
-            transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .settings-tabs .nav-link>i::before {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            border: 0 !important;
-            box-shadow: none !important;
-            line-height: 1;
-        }
-
-        .settings-tabs .nav-link:hover {
-            background: var(--settings-accent-soft);
-            color: var(--s-brand);
-        }
-
-        .settings-tabs .nav-link:hover>i {
-            background: rgba(var(--s-brand-rgb), 0.14);
-            color: var(--s-brand) !important;
-            box-shadow: none;
-        }
-
-        .settings-tabs .nav-link.active {
-            background: color-mix(in srgb, var(--s-brand), transparent 86%);
-            color: var(--s-brand);
-            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--s-brand), transparent 70%);
-        }
-
-        .settings-tabs .nav-link.active>i {
-            background: color-mix(in srgb, var(--s-brand), transparent 78%);
-            color: var(--s-brand) !important;
-            box-shadow: none;
-        }
-
-        .settings-tabs .nav-link.active:hover {
-            color: var(--s-brand);
-        }
-
-        /* === CONTENT COLUMN === */
-        .settings-content-column {
-            min-width: 0;
-        }
-
-        .settings-content {
-            padding: 1rem !important;
-        }
-
-        .settings-content-column .card,
-        .settings-content-column .card-body,
-        .settings-content-column form,
-        .settings-content-column .row,
-        .settings-content-column [class*="col-"] {
-            min-width: 0;
-        }
-
-        .settings-content-column .card {
-            border-radius: var(--settings-radius-sm);
-            border-color: var(--bs-border-color);
-            box-shadow: var(--settings-shadow-sm);
-            overflow: hidden;
-        }
-
-        .settings-content-column .card-header {
-            padding: 0.9rem 1.1rem;
-            background: linear-gradient(110deg, rgba(var(--s-brand-rgb), 0.045), transparent 60%);
-            border-bottom: 1px solid var(--bs-border-color);
-        }
-
-        .settings-content-column .card-body {
-            padding: 1rem;
-        }
-
-        .settings-content-column .card-footer {
-            padding: 0.75rem 1rem;
-            background: var(--bs-tertiary-bg);
-            border-top: 1px solid var(--bs-border-color);
-        }
-
-        /* === PREMIUM FORM CONTROLS (settings-wide) === */
-        .settings-content-column .form-control:focus,
-        .settings-content-column .form-select:focus,
-        .settings-content-column .ts-wrapper.focus .ts-control {
-            border-color: var(--s-brand-400);
-            box-shadow: 0 0 0 0.2rem rgba(var(--s-brand-rgb), 0.16);
-        }
-
-        .settings-content-column .form-switch .form-check-input:checked {
-            background-color: var(--s-brand);
-            border-color: var(--s-brand);
-        }
-
-        /* === PREMIUM PRIMARY BUTTONS (settings-wide) === */
-        .settings-content-column .btn-primary {
-            border: none;
-            background: var(--s-brand);
-            box-shadow: 0 6px 16px -8px rgba(var(--s-brand-rgb), 0.5);
-        }
-
-        .settings-content-column .btn-primary:hover,
-        .settings-content-column .btn-primary:focus {
-            background: var(--s-brand-700);
-            box-shadow: 0 8px 18px -8px rgba(var(--s-brand-rgb), 0.6);
-        }
-
-        .settings-content-column input,
-        .settings-content-column select,
-        .settings-content-column textarea,
-        .settings-content-column .form-control,
-        .settings-content-column .form-select,
-        .settings-content-column .ts-wrapper {
-            max-width: 100%;
-        }
-
-        .settings-content-column pre {
-            max-width: 100%;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-        }
-
-        /* === THEME TAB CARDS === */
-        .theme-action-card {
-            border: 1px solid var(--bs-border-color);
-            border-radius: var(--settings-radius-sm);
-            padding: 1rem;
-            height: 100%;
-            transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-            background: var(--bs-body-bg);
-        }
-
-        .theme-action-card:hover {
-            border-color: var(--settings-accent-border);
-            transform: translateY(-3px);
-            box-shadow: 0 14px 30px -14px rgba(var(--s-brand-rgb), 0.45);
-        }
-
-        .theme-action-card .icon-pill {
-            width: 2.25rem;
-            height: 2.25rem;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            margin-bottom: 0.6rem;
-        }
-
-        .theme-action-card .icon-pill.primary {
-            background: rgba(var(--bs-primary-rgb), 0.12);
-            color: var(--bs-primary);
-        }
-
-        .theme-action-card .icon-pill.success {
-            background: rgba(var(--bs-success-rgb), 0.12);
-            color: var(--bs-success);
-        }
-
-        .theme-action-card .icon-pill.danger {
-            background: rgba(var(--bs-danger-rgb), 0.12);
-            color: var(--bs-danger);
-        }
-
-        .theme-action-card h6 {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .theme-action-card p {
-            font-size: 0.8rem;
-            color: var(--bs-secondary-color);
-            margin-bottom: 0.75rem;
-        }
-
-        .theme-status-card {
-            background: linear-gradient(135deg, var(--settings-accent-soft), transparent);
-            border: 1px solid var(--settings-accent-border);
-            border-radius: var(--settings-radius-sm);
-            padding: 1rem;
-            height: 100%;
-        }
-
-        .theme-status-card h6 {
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .theme-status-card .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px dashed var(--bs-border-color);
-            font-size: 0.85rem;
-        }
-
-        .theme-status-card .status-row:last-child {
-            border-bottom: 0;
-        }
-
-        .theme-status-card .status-row strong {
-            font-weight: 500;
-            color: var(--bs-secondary-color);
-        }
-
-        /* === SETTINGS OFFCANVAS (theme panel) === */
-        .settings-page ._dm-settings-container {
-            max-width: 100vw;
-        }
-
-        .settings-page ._dm-settings-container__content,
-        .settings-page ._dm-settings-container__content [class*="col-"] {
-            min-width: 0;
-        }
-
-        .settings-page ._dm-colorShcemesMode img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        /* === MOBILE === */
-        @media (max-width: 767.98px) {
-            .settings-page .content__wrap {
-                padding-inline: 0.5rem;
-                padding-block: 0.65rem;
-            }
-
-            .settings-hero {
-                padding: 0.85rem 0.95rem;
-                border-radius: 12px;
-            }
-
-            .settings-hero-inner {
-                gap: 0.75rem;
-            }
-
-            .settings-hero-ic {
-                width: 42px;
-                height: 42px;
-                font-size: 1.25rem;
-                border-radius: 12px;
-            }
-
-            .settings-hero h1 {
-                font-size: 1.15rem;
-            }
-
-            .settings-hero p {
-                font-size: 0.78rem;
-            }
-
-            .settings-shell {
-                border-radius: 12px;
-                overflow: hidden;
-            }
-
-            .settings-tabs-column {
-                border-right: 0 !important;
-                border-bottom: 1px solid var(--bs-border-color);
-                padding: 0.5rem !important;
-                position: sticky;
-                top: 0;
-                z-index: 5;
-                background: var(--bs-tertiary-bg);
-            }
-
-            .settings-tabs-heading {
-                display: none;
-            }
-
-            .settings-tabs {
-                flex-wrap: nowrap !important;
-                overflow-x: auto;
-                overflow-y: hidden;
-                padding-bottom: 0.15rem;
-                scroll-snap-type: x proximity;
-                -webkit-overflow-scrolling: touch;
-                gap: 0.35rem;
-                scrollbar-width: none;
-            }
-
-            .settings-tabs::-webkit-scrollbar {
-                display: none;
-            }
-
-            .settings-tabs .nav-item {
-                flex: 0 0 auto;
-                scroll-snap-align: start;
-            }
-
-            .settings-tabs .nav-link {
-                width: auto;
-                min-height: 2.2rem;
-                padding: 0.4rem 0.65rem;
-                white-space: nowrap;
-                font-size: 0.8rem;
-                gap: 0.4rem;
-            }
-
-            .settings-tabs .nav-link i {
-                width: 1.65rem;
-                height: 1.65rem;
-                font-size: 0.85rem;
-            }
-
-            .settings-content {
-                padding: 0.75rem !important;
-            }
-
-            .settings-content-column .card-header,
-            .settings-content-column .card-footer {
-                align-items: stretch !important;
-                gap: 0.5rem;
-            }
-
-            .settings-content-column .card-footer {
-                flex-direction: column;
-            }
-
-            .settings-content-column .card-footer .btn,
-            .settings-content-column .btn {
-                max-width: 100%;
-            }
-
-            .settings-content-column .card-footer .btn {
-                width: 100%;
-            }
-
-            .settings-content .d-flex.gap-2,
-            .settings-content .d-flex.flex-wrap {
-                min-width: 0;
-            }
-
-            .settings-content .d-flex.gap-2>.btn {
-                flex: 1 1 10rem;
-            }
-
-            .settings-page ._dm-settings-container {
-                width: min(100vw, 28rem) !important;
-                border-radius: 0 !important;
-            }
-
-            .settings-page ._dm-settings-container__content>[class*="col-"] {
-                padding: 1rem !important;
-            }
-
-            .settings-page ._dm-settings-container .d-flex.mb-4.pb-4 {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .settings-page ._dm-settings-container .vr {
-                display: none;
-            }
-
-            .settings-page #dm_colorModeContainer .row>[class*="col-"] {
-                margin-bottom: 0.75rem;
-            }
-
-            .settings-page ._dm-settings-container .pt-3 .d-flex.gap-3 {
-                flex-direction: column;
-            }
-
-            .settings-page ._dm-settings-container .alert {
-                overflow-wrap: anywhere;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .settings-tabs-column {
-                position: sticky;
-                top: 5rem;
-                align-self: flex-start;
-                max-height: calc(100vh - 6rem);
-                overflow-y: auto;
-                scrollbar-width: thin;
-            }
-        }
-    </style>
+<x-app-layout :collapsed-nav="true">
 
     <div class="settings-page">
         <div class="content__boxed">
             <div class="content__wrap">
-                <div class="settings-hero">
-                    <span class="settings-hero-glow a"></span>
-                    <span class="settings-hero-glow b"></span>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Settings</li>
-                        </ol>
-                    </nav>
-                    <div class="settings-hero-inner">
-                        <span class="settings-hero-ic"><i class="demo-psi-gear"></i></span>
-                        <div>
-                            <div class="settings-eyebrow">Workspace &middot; Control Center</div>
-                            <h1>Settings</h1>
-                            <p>Manage configuration, company profile, and integrations from one place.</p>
-                        </div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary fs-3 p-3 lh-1">
+                        <i class="demo-psi-gear"></i>
+                    </span>
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb small mb-1">
+                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Settings</li>
+                            </ol>
+                        </nav>
+                        <h1 class="h3 fw-bold mb-0">Settings</h1>
+                        <p class="text-body-secondary small mb-0">Manage configuration, company profile, and integrations from one place.</p>
                     </div>
                 </div>
 
-                <div class="settings-shell">
+                <div class="card">
                     <div class="row g-0">
-                        <div class="col-12 col-md-4 col-lg-3 border-end settings-tabs-column">
-                            <h6 class="settings-tabs-heading d-none d-md-block">Categories</h6>
-                            <ul class="nav flex-row flex-md-column nav-pills settings-tabs" role="tablist">
+                        <div class="col-12 col-md-4 col-lg-3 border-end p-2">
+                            <h6 class="text-uppercase text-body-secondary small fw-bold px-2 pt-2 mb-2 d-none d-md-block">Categories</h6>
+                            <ul class="nav nav-pills flex-nowrap flex-md-column overflow-x-auto gap-1 settings-tabs" role="tablist">
                                 {{-- <li class="nav-item" role="presentation">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsMyPermissions" type="button" role="tab"
+                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsMyPermissions" type="button" role="tab"
                                         aria-selected="false" tabindex="-1">
                                         <i class="fa fa-key"></i><span>My Permissions</span>
                                     </button>
                                 </li> --}}
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsConfiguration" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-data-settings"></i><span>Configuration</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsCurrencies" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="fa fa-money"></i><span>Currencies</span>
                                         </button>
@@ -651,7 +46,7 @@
                                 @endcan
                                 @can('product.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsProductSettings" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsProductSettings" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="fa fa-cube"></i><span>Product Settings</span>
                                         </button>
@@ -659,15 +54,15 @@
                                 @endcan
                                 @can('sale.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsSaleSettings" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-receipt-4"></i><span>Sale Settings</span>
                                         </button>
                                     </li>
                                 @endcan
-                                @canany(['sale.view', 'configuration.barcode'])
+                                @canany(['sale.create', 'student.view', 'tailoring order.view', 'issue.view'])
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPrinters" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsPrinters" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-printer"></i><span>Printers</span>
                                         </button>
@@ -675,7 +70,7 @@
                                 @endcanany
                                 @can('purchase.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsPurchaseSettings" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-credit-card-2"></i><span>Purchase Settings</span>
                                         </button>
@@ -683,7 +78,7 @@
                                 @endcan
                                 @can('tailoring order.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTailoringSettings" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-repair"></i><span>Tailoring Settings</span>
                                         </button>
@@ -691,7 +86,7 @@
                                 @endcan
                                 @can('rent out.view')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsRentOutSettings" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-home"></i><span>Rent Out Settings</span>
                                         </button>
@@ -699,7 +94,7 @@
                                 @endcan
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsLeadSettings" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsLeadSettings" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-list-view"></i><span>Lead Settings</span>
                                         </button>
@@ -707,7 +102,7 @@
                                 @endcan
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsUniversalUom" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-data-storage"></i><span>Universal UOM</span>
                                         </button>
@@ -715,13 +110,13 @@
                                 @endcan
                                 @if (auth()->user()->is_super_admin)
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsUniqueNoCounters" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-list-ol"></i><span>Unique No Counters</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsModuleConfiguration" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-cubes"></i><span>Module Configuration</span>
                                         </button>
@@ -735,59 +130,61 @@
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTheme" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-psi-gear"></i><span>Theme</span>
                                         </button>
                                     </li>
+                                    @if(false)
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsStorefront" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsStorefront" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="fa fa-paint-brush"></i><span>Storefront</span>
                                         </button>
                                     </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsOnlinePayments" type="button" role="tab"
-                                            aria-selected="false" tabindex="-1">
-                                            <i class="fa fa-credit-card"></i><span>Online Payments</span>
-                                        </button>
-                                    </li>
+                                    @endif
                                 @endcan
-                                @if (\App\Support\ModuleAccess::school() && auth()->user()->can('student settings.edit'))
+                                @if (auth()->user()->can('student settings.edit'))
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsStudentCards" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsStudentCards" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="fa fa-graduation-cap"></i><span>Student Cards</span>
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsOnlinePayments" type="button" role="tab"
+                                            aria-selected="false" tabindex="-1">
+                                            <i class="fa fa-credit-card"></i><span>Online Payments</span>
+                                        </button>
+                                    </li>
                                 @endif
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
+                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsWorkingDay" type="button" role="tab"
                                         aria-selected="false" tabindex="-1">
                                         <i class="demo-pli-calendar-4"></i><span>Working Day</span>
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsHoliday" type="button" role="tab"
+                                    <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsHoliday" type="button" role="tab"
                                         aria-selected="false" tabindex="-1">
                                         <i class="fa fa-calendar-o"></i><span>Holiday Calendar</span>
                                     </button>
                                 </li>
                                 @can('configuration.settings')
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsNavigationOrder" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="fa fa-bars"></i><span>Navigation Order</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsTelegram" type="button" role="tab"
                                             aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-speech-bubble-5"></i><span>Telegram</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button"
+                                        <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsNotificationPreferences" type="button"
                                             role="tab" aria-selected="false" tabindex="-1">
                                             <i class="demo-pli-bell"></i><span>Notifications</span>
                                         </button>
@@ -796,7 +193,7 @@
                                 @if (true)
                                     @can('whatsapp.integration')
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button"
+                                            <button class="nav-link d-flex align-items-center gap-2 text-nowrap text-start w-100" data-bs-toggle="tab" data-bs-target="#tabsWhatsapp" type="button"
                                                 role="tab" aria-selected="false" tabindex="-1">
                                                 <i class="demo-pli-speech-bubble-4"></i><span>Whatsapp</span>
                                             </button>
@@ -805,8 +202,8 @@
                                 @endif
                             </ul>
                         </div>
-                        <div class="col-12 col-md-8 col-lg-9 settings-content-column">
-                            <div class="tab-content settings-content">
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <div class="tab-content p-2 p-md-3">
                                 <div id="tabsMyPermissions" class="tab-pane" role="tabpanel">
                                     @php
                                         $myPermissions = auth()->user()->getAllPermissions()->pluck('name')->sort()->values();
@@ -863,7 +260,7 @@
                                         @livewire('settings.sale-configuration')
                                     </div>
                                 @endcan
-                                @canany(['sale.view', 'configuration.barcode'])
+                                @canany(['sale.create', 'student.view', 'tailoring order.view', 'issue.view'])
                                     <div id="tabsPrinters" class="tab-pane" role="tabpanel">
                                         @include('settings.printers')
                                     </div>
@@ -937,10 +334,10 @@
                                                 </p>
                                                 <div class="row g-3">
                                                     <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="theme-action-card">
-                                                            <div class="icon-pill primary"><i class="demo-psi-gear"></i></div>
-                                                            <h6>Layout Preferences</h6>
-                                                            <p>Choose your preferred layout style, transitions and positioning.</p>
+                                                        <div class="border rounded-3 p-3 h-100">
+                                                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary fs-5 p-2 lh-1 mb-2"><i class="demo-psi-gear"></i></div>
+                                                            <h6 class="fw-semibold mb-1">Layout Preferences</h6>
+                                                            <p class="small text-body-secondary mb-3">Choose your preferred layout style, transitions and positioning.</p>
                                                             <button class="btn btn-primary btn-sm w-100" id="openSettingsOffcanvas" type="button"
                                                                 data-bs-toggle="offcanvas" data-bs-target="#_dm-settingsContainer">
                                                                 <i class="demo-psi-gear me-1"></i> Open Settings Panel
@@ -948,38 +345,38 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="theme-action-card">
-                                                            <div class="icon-pill success"><i class="demo-psi-refresh"></i></div>
-                                                            <h6>Sync with Server</h6>
-                                                            <p>Synchronize theme settings between your browser and the server.</p>
+                                                        <div class="border rounded-3 p-3 h-100">
+                                                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success fs-5 p-2 lh-1 mb-2"><i class="demo-psi-refresh"></i></div>
+                                                            <h6 class="fw-semibold mb-1">Sync with Server</h6>
+                                                            <p class="small text-body-secondary mb-3">Synchronize theme settings between your browser and the server.</p>
                                                             <button class="btn btn-outline-success btn-sm w-100" id="syncThemeSettings">
                                                                 <i class="demo-psi-refresh me-1"></i> Sync Settings
                                                             </button>
                                                         </div>
                                                     </div>
                                                     <div class="col-12 col-md-6 col-xl-4">
-                                                        <div class="theme-action-card">
-                                                            <div class="icon-pill danger"><i class="demo-psi-back"></i></div>
-                                                            <h6>Reset to Defaults</h6>
-                                                            <p>Reset all theme settings to their default values.</p>
+                                                        <div class="border rounded-3 p-3 h-100">
+                                                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger fs-5 p-2 lh-1 mb-2"><i class="demo-psi-back"></i></div>
+                                                            <h6 class="fw-semibold mb-1">Reset to Defaults</h6>
+                                                            <p class="small text-body-secondary mb-3">Reset all theme settings to their default values.</p>
                                                             <button class="btn btn-outline-danger btn-sm w-100" id="resetThemeSettings">
                                                                 <i class="demo-psi-back me-1"></i> Reset Settings
                                                             </button>
                                                         </div>
                                                     </div>
                                                     <div class="col-12">
-                                                        <div class="theme-status-card">
-                                                            <h6><i class="demo-psi-information"></i>Theme Settings Status</h6>
+                                                        <div class="border border-primary-subtle bg-primary-subtle rounded-3 p-3">
+                                                            <h6 class="fw-bold d-flex align-items-center gap-2 mb-2"><i class="demo-psi-information"></i>Theme Settings Status</h6>
                                                             <div id="themeSettingsStatus">
-                                                                <div class="status-row">
+                                                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom small">
                                                                     <strong>Storage</strong>
                                                                     <span id="storageStatus" class="text-body">Checking...</span>
                                                                 </div>
-                                                                <div class="status-row">
+                                                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom small">
                                                                     <strong>Last Updated</strong>
                                                                     <span id="lastUpdated" class="text-body">Checking...</span>
                                                                 </div>
-                                                                <div class="status-row">
+                                                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom small">
                                                                     <strong>Sync Status</strong>
                                                                     <span id="syncStatus" class="text-body">Checking...</span>
                                                                 </div>
@@ -1232,78 +629,29 @@
                         <!-- OPTION : Sidebar Style (premium skin) -->
                         <h6 class="mt-4 mb-2 py-1">Sidebar Style</h6>
                         <p class="text-muted small mb-2">Premium look for the left navigation. Applies instantly.</p>
-                        <div class="dm-sidebar-style-grid">
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn active" data-nav-skin="standard"
-                                title="Standard — clean flat, single blue accent">
-                                <span class="dm-skin-swatch dm-skin-swatch--standard"></span>
-                                <span class="dm-skin-name">Standard</span>
-                            </button>
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="mono"
-                                title="Editorial Mono — minimal, hairline restraint">
-                                <span class="dm-skin-swatch dm-skin-swatch--mono"></span>
-                                <span class="dm-skin-name">Mono</span>
-                            </button>
-                            <button type="button" class="_dm-sidebarStyle dm-skin-btn" data-nav-skin="atelier"
-                                title="Warm Atelier — champagne-brass luxury">
-                                <span class="dm-skin-swatch dm-skin-swatch--atelier"></span>
-                                <span class="dm-skin-name">Atelier</span>
-                            </button>
+                        <div class="row row-cols-3 g-2">
+                            <div class="col">
+                                <button type="button" class="_dm-sidebarStyle btn btn-outline-primary w-100 d-flex flex-column align-items-center gap-1 p-2 active"
+                                    data-nav-skin="standard" title="Standard — clean flat, single blue accent">
+                                    <span class="d-block w-100 rounded border p-3 bg-primary"></span>
+                                    <span class="small fw-semibold">Standard</span>
+                                </button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="_dm-sidebarStyle btn btn-outline-primary w-100 d-flex flex-column align-items-center gap-1 p-2"
+                                    data-nav-skin="mono" title="Editorial Mono — minimal, hairline restraint">
+                                    <span class="d-block w-100 rounded border p-3 bg-dark"></span>
+                                    <span class="small fw-semibold">Mono</span>
+                                </button>
+                            </div>
+                            <div class="col">
+                                <button type="button" class="_dm-sidebarStyle btn btn-outline-primary w-100 d-flex flex-column align-items-center gap-1 p-2"
+                                    data-nav-skin="atelier" title="Warm Atelier — champagne-brass luxury">
+                                    <span class="d-block w-100 rounded border p-3 bg-warning"></span>
+                                    <span class="small fw-semibold">Atelier</span>
+                                </button>
+                            </div>
                         </div>
-                        <style>
-                            .dm-sidebar-style-grid {
-                                display: grid;
-                                grid-template-columns: repeat(3, 1fr);
-                                gap: .5rem;
-                            }
-
-                            .dm-skin-btn {
-                                display: flex;
-                                flex-direction: column;
-                                align-items: center;
-                                gap: .4rem;
-                                padding: .5rem .35rem;
-                                border: 1.5px solid var(--bs-border-color, #e2e5ef);
-                                border-radius: 12px;
-                                background: var(--bs-body-bg, #fff);
-                                cursor: pointer;
-                                transition: border-color .18s, box-shadow .18s, transform .18s;
-                            }
-
-                            .dm-skin-btn:hover {
-                                transform: translateY(-1px);
-                                border-color: var(--bs-primary);
-                            }
-
-                            .dm-skin-btn.active {
-                                border-color: var(--bs-primary);
-                                box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
-                            }
-
-                            .dm-skin-swatch {
-                                width: 100%;
-                                height: 34px;
-                                border-radius: 8px;
-                                border: 1px solid rgba(0, 0, 0, .06);
-                            }
-
-                            .dm-skin-swatch--standard {
-                                background: linear-gradient(135deg, #2563eb 0 55%, #ffffff 55% 100%);
-                            }
-
-                            .dm-skin-swatch--mono {
-                                background: linear-gradient(135deg, #111114 0 50%, #f4f4f6 50% 100%);
-                            }
-
-                            .dm-skin-swatch--atelier {
-                                background: linear-gradient(135deg, #d2ab5e, #a87d36 60%, #2b2419);
-                            }
-
-                            .dm-skin-name {
-                                font-size: .72rem;
-                                font-weight: 600;
-                                color: var(--bs-body-color);
-                            }
-                        </style>
 
                     </div>
                     <div class="col-lg-6 p-4">

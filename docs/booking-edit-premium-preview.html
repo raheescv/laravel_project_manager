@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking Edit · Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  /* ---------- host page stand-ins (Nifty + Bootstrap vars) ---------- */
+  :root{
+    --bs-primary:#3b5bdb; --bs-primary-rgb:59,91,219;
+    --bs-info:#2a9fd6; --bs-success:#1f9d63; --bs-warning:#d99a17; --bs-danger:#d64545; --bs-secondary:#6b7686;
+    --bs-emphasis-color:#0f1522; --bs-body-color:#333b49; --bs-secondary-color:#697488; --bs-tertiary-color:#98a1b0;
+    --bs-body-bg:#fff; --bs-tertiary-bg:#f6f8fb; --bs-secondary-bg:#eceff4; --bs-border-color:#e1e6ee;
+    --page:#eef1f6;
+  }
+  [data-bs-theme="dark"]{
+    color-scheme:dark;
+    --bs-emphasis-color:#eef1f6; --bs-body-color:#c4ccd8; --bs-secondary-color:#8b95a5; --bs-tertiary-color:#5f6a7a;
+    --bs-body-bg:#252b32; --bs-tertiary-bg:#1f252b; --bs-secondary-bg:#313941; --bs-border-color:#37404a;
+    --page:#1a1f25;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; }
+  body{ background:var(--page); font-family:Poppins,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--bs-body-color); overflow-x:hidden; font-size:13px; }
+  button,input,select,textarea{ font-family:inherit; }
+
+  .demo{ position:sticky; top:0; z-index:70; display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:9px 16px; background:#0f1522; color:#cfd6e2; font-size:12px; }
+  .demo b{ color:#fff; font-weight:600; }
+  .demo .grp{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .demo .lbl{ opacity:.55; text-transform:uppercase; letter-spacing:1.2px; font-size:9.5px; margin-inline-end:3px; }
+  .demo .opt{ border:1px solid rgba(255,255,255,.14); background:transparent; color:#cfd6e2; padding:4px 10px; border-radius:8px; font-size:11.5px; cursor:pointer; }
+  .demo .opt.on{ background:#fff; color:#0f1522; border-color:#fff; font-weight:600; }
+  .demo .sw{ width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,.18); cursor:pointer; padding:0; }
+  .demo .sw.on{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25); }
+  .demo .vnote{ flex-basis:100%; opacity:.72; font-size:11.5px; }
+
+  .wrap{ max-width:1320px; margin:0 auto; padding:16px 16px 90px; }
+  .crumb{ font-size:11.5px; color:var(--bs-secondary-color); margin-bottom:10px; }
+  .crumb a{ color:var(--bs-primary); text-decoration:none; }
+
+  /* =====================================================================
+     .bkx — Booking editor (scoped; accent = settings theme colour)
+     ===================================================================== */
+  .bkx{
+    --acc:var(--bs-primary);
+    --ink:var(--bs-emphasis-color); --ink-2:var(--bs-body-color); --muted:var(--bs-secondary-color); --faint:var(--bs-tertiary-color);
+    --surface:var(--bs-body-bg); --surface-2:var(--bs-tertiary-bg); --surface-3:var(--bs-secondary-bg);
+    --line:var(--bs-border-color); --line-soft:color-mix(in srgb,var(--bs-border-color) 60%,transparent);
+    --soft:color-mix(in srgb,var(--acc) 11%,transparent);
+    --r:14px; --r-sm:10px;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 12px 30px -16px rgba(16,24,40,.18);
+    min-width:0; color:var(--ink-2); line-height:1.45;
+  }
+  [data-bs-theme="dark"] .bkx{ --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 30px -14px rgba(0,0,0,.6); }
+  .bkx .dir{ display:none; }
+  .bkx[data-dir="a"] .dir.a,.bkx[data-dir="b"] .dir.b{ display:block; }
+  .bkx[data-mode="sale"] .only-rent,.bkx[data-mode="rent"] .only-sale{ display:none !important; }
+
+  /* ---- atoms ---- */
+  .bkx .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); }
+  .bkx .lbl{ display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; font-weight:600; color:var(--muted); margin-bottom:4px; letter-spacing:.01em; }
+  .bkx .lbl .req{ color:var(--bs-danger); margin-inline-start:2px; }
+  .bkx .ctl{ width:100%; height:34px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:9px; padding:0 10px; font-size:12.5px; outline:0; transition:border-color .15s,box-shadow .15s; }
+  .bkx textarea.ctl{ height:auto; padding:8px 10px; resize:vertical; }
+  .bkx select.ctl{ appearance:none; background-image:linear-gradient(45deg,transparent 50%,var(--faint) 50%),linear-gradient(135deg,var(--faint) 50%,transparent 50%); background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px; background-size:5px 5px; background-repeat:no-repeat; padding-inline-end:26px; }
+  .bkx .ctl:focus{ border-color:var(--acc); box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent); }
+  .bkx .ctl.ts{ display:flex; align-items:center; gap:7px; cursor:pointer; }
+  .bkx .ctl.ts .v{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bkx .ctl.ts .x{ color:var(--faint); font-size:11px; }
+  .bkx .ctl.ts.ph .v{ color:var(--faint); }
+  .bkx .pre{ position:relative; } .bkx .pre .ctl{ padding-inline-start:44px; }
+  .bkx .pre > span{ position:absolute; inset-inline-start:1px; top:1px; bottom:1px; width:38px; display:grid; place-items:center; font-size:10.5px; font-weight:600; color:var(--muted); background:var(--surface-2); border-inline-end:1px solid var(--line); border-radius:8px 0 0 8px; }
+  .bkx .eyebrow{ font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--acc); }
+  .bkx .chip{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:20px; white-space:nowrap; }
+  .bkx .chip.booked{ color:var(--bs-warning); background:color-mix(in srgb,var(--bs-warning) 15%,transparent); }
+  .bkx .chip.booked i{ font-size:7px; }
+  .bkx .chip.mute{ color:var(--muted); background:var(--surface-3); }
+  .bkx .chip.acc{ color:var(--acc); background:var(--soft); }
+  .bkx .btn{ display:inline-flex; align-items:center; justify-content:center; gap:7px; height:34px; padding:0 14px; border-radius:9px; font-size:12.5px; font-weight:600; border:1px solid transparent; cursor:pointer; white-space:nowrap; text-decoration:none; }
+  .bkx .btn.pri{ background:var(--acc); color:#fff; }
+  .bkx .btn.pri:hover{ filter:brightness(1.07); }
+  .bkx .btn.ok{ background:var(--bs-success); color:#fff; }
+  .bkx .btn.ghost{ background:var(--surface); color:var(--ink-2); border-color:var(--line); }
+  .bkx .btn.ghost:hover{ background:var(--surface-2); }
+  .bkx .btn.dng{ background:transparent; color:var(--bs-danger); border-color:color-mix(in srgb,var(--bs-danger) 35%,transparent); }
+  .bkx .btn.dng:hover{ background:color-mix(in srgb,var(--bs-danger) 8%,transparent); }
+  .bkx .btn.link{ height:auto; padding:0; background:none; color:var(--acc); font-size:11px; font-weight:600; }
+  .bkx .g{ display:grid; gap:10px 12px; }
+  .bkx .c2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .bkx .c3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .bkx .c4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .bkx .span2{ grid-column:span 2; } .bkx .span3{ grid-column:span 3; } .bkx .spanall{ grid-column:1/-1; }
+  .bkx .tgl{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:500; color:var(--muted); cursor:pointer; }
+  .bkx .tgl input{ display:none; }
+  .bkx .tgl .k{ width:26px; height:15px; border-radius:20px; background:var(--surface-3); position:relative; transition:.15s; }
+  .bkx .tgl .k::after{ content:""; position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:.15s; }
+  .bkx .tgl input:checked + .k{ background:var(--acc); } .bkx .tgl input:checked + .k::after{ left:13px; }
+  .bkx .seg{ display:inline-flex; padding:2px; border-radius:9px; background:var(--surface-2); border:1px solid var(--line); }
+  .bkx .seg button{ border:0; background:none; padding:4px 11px; border-radius:7px; font-size:11.5px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .bkx .seg button.on{ background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(16,24,40,.12); }
+  .bkx .pills{ display:flex; flex-wrap:wrap; gap:6px; }
+  .bkx .pill{ display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 11px; border-radius:8px; border:1px solid var(--line); background:var(--surface); color:var(--ink-2); font-size:12px; font-weight:500; cursor:pointer; }
+  .bkx .pill.on{ border-color:var(--acc); background:var(--soft); color:var(--acc); font-weight:600; }
+  .bkx .pill i{ font-size:11px; }
+  .bkx .amen .pill.off{ color:var(--faint); text-decoration:line-through; }
+  .bkx [dir="rtl"]{ font-family:"Segoe UI",Tahoma,Arial,sans-serif; }
+
+  /* ---- Hero (shared by both directions) ---- */
+  .bkx .hero{ display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:12px; background:linear-gradient(120deg,color-mix(in srgb,var(--acc) 10%,var(--surface)) 0%,var(--surface) 60%); }
+  .bkx .hero .ic{ width:42px; height:42px; flex:0 0 42px; border-radius:12px; display:grid; place-items:center; font-size:17px; color:#fff; background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 65%,#000)); box-shadow:0 6px 16px -6px color-mix(in srgb,var(--acc) 70%,transparent); }
+  .bkx .hero h1{ margin:0; font-size:16px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .bkx .hero h1 .no{ font-weight:500; color:var(--faint); }
+  .bkx .hero .sub{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:3px; font-size:11.5px; color:var(--muted); }
+  .bkx .hero .sub i{ color:var(--faint); margin-inline-end:4px; }
+  .bkx .hero .acts{ margin-inline-start:auto; display:flex; gap:7px; }
+
+  /* =================== Direction A — Summary Rail =================== */
+  .bkx .a-grid{ display:grid; grid-template-columns:minmax(0,1fr) 312px; gap:12px; align-items:start; }
+  .bkx .sec{ padding:0; margin-bottom:12px; }
+  .bkx .sec > header{ display:flex; align-items:center; gap:9px; padding:11px 14px; border-bottom:1px solid var(--line-soft); }
+  .bkx .sec > header .n{ width:22px; height:22px; border-radius:7px; display:grid; place-items:center; font-size:10.5px; font-weight:700; color:var(--acc); background:var(--soft); }
+  .bkx .sec > header h3{ margin:0; font-size:13px; font-weight:600; color:var(--ink); }
+  .bkx .sec > header .aside{ margin-inline-start:auto; display:flex; align-items:center; gap:8px; }
+  .bkx .sec > .bd{ padding:12px 14px 14px; }
+  .bkx .sub-h{ display:flex; align-items:center; gap:8px; margin:14px 0 8px; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+  .bkx .sub-h::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+  .bkx .sub-h:first-child{ margin-top:0; }
+  .bkx .dur{ height:34px; display:flex; align-items:center; gap:6px; padding:0 10px; border-radius:9px; background:var(--surface-2); border:1px dashed var(--line); font-size:12px; color:var(--muted); }
+  .bkx .dur b{ color:var(--ink); font-weight:600; }
+  .bkx .collapse-row{ display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; }
+  .bkx .collapse-row .meta{ font-size:11px; color:var(--muted); }
+  .bkx .collapse-row .chev{ margin-inline-start:auto; color:var(--faint); transition:transform .2s; }
+  .bkx .sec.closed > .bd{ display:none; } .bkx .sec.closed .chev{ transform:rotate(-90deg); }
+  .bkx .sec.closed > header{ border-bottom:0; }
+
+  .bkx .rail{ position:sticky; top:58px; display:flex; flex-direction:column; gap:12px; }
+  .bkx .unit{ padding:14px; }
+  .bkx .unit .top{ display:flex; gap:11px; align-items:center; }
+  .bkx .unit .badge{ width:46px; height:46px; border-radius:12px; display:grid; place-items:center; background:var(--soft); color:var(--acc); font-weight:700; font-size:13px; flex:0 0 46px; }
+  .bkx .unit .t{ font-weight:600; color:var(--ink); font-size:13px; line-height:1.25; }
+  .bkx .unit .s{ font-size:11px; color:var(--muted); }
+  .bkx .kv{ display:flex; justify-content:space-between; gap:10px; padding:6px 0; font-size:12px; border-top:1px dashed var(--line-soft); }
+  .bkx .kv:first-of-type{ border-top:0; }
+  .bkx .kv span{ color:var(--muted); } .bkx .kv b{ color:var(--ink); font-weight:600; text-align:end; }
+  .bkx .money{ padding:14px; }
+  .bkx .money .big{ font-size:24px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.1; }
+  .bkx .money .big small{ font-size:11px; font-weight:600; color:var(--muted); margin-inline-start:3px; }
+  .bkx .bar{ height:6px; border-radius:6px; background:var(--surface-3); overflow:hidden; display:flex; margin:10px 0 4px; }
+  .bkx .bar i{ display:block; height:100%; }
+  .bkx .legend{ display:flex; gap:12px; font-size:10.5px; color:var(--muted); }
+  .bkx .legend i{ display:inline-block; width:7px; height:7px; border-radius:2px; margin-inline-end:4px; }
+  .bkx .actbox{ padding:12px; display:grid; gap:7px; }
+  .bkx .actbox .row{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  .bkx .actbox .btn{ width:100%; }
+  .bkx .actbox .note{ font-size:10.5px; color:var(--faint); text-align:center; }
+
+  /* =================== Direction B — Ledger Sheet =================== */
+  .bkx .sheet{ overflow:hidden; }
+  .bkx .strip{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); border-bottom:1px solid var(--line); background:var(--surface-2); }
+  .bkx .strip > div{ padding:10px 14px; border-inline-end:1px solid var(--line-soft); min-width:0; }
+  .bkx .strip > div:last-child{ border-inline-end:0; }
+  .bkx .strip span{ display:block; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  .bkx .strip b{ display:block; font-size:14px; color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bkx .strip b.acc{ color:var(--acc); }
+  .bkx .row-sec{ display:grid; grid-template-columns:200px minmax(0,1fr); border-bottom:1px solid var(--line-soft); }
+  .bkx .row-sec:last-child{ border-bottom:0; }
+  .bkx .row-sec > .h{ padding:14px 16px; background:color-mix(in srgb,var(--surface-2) 55%,transparent); border-inline-end:1px solid var(--line-soft); }
+  .bkx .row-sec > .h b{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink); font-weight:600; }
+  .bkx .row-sec > .h b i{ color:var(--acc); width:14px; text-align:center; }
+  .bkx .row-sec > .h p{ margin:4px 0 0; font-size:11px; color:var(--muted); line-height:1.4; }
+  .bkx .row-sec > .f{ padding:12px 16px 14px; min-width:0; }
+  .bkx .dock{ position:sticky; bottom:12px; z-index:20; margin-top:12px; display:flex; align-items:center; gap:10px; padding:9px 10px 9px 16px; border-radius:14px; background:color-mix(in srgb,var(--surface) 88%,transparent); backdrop-filter:blur(10px); border:1px solid var(--line); box-shadow:0 12px 34px -12px rgba(16,24,40,.35); }
+  .bkx .dock .sum{ display:flex; gap:18px; font-size:11.5px; color:var(--muted); min-width:0; overflow:hidden; }
+  .bkx .dock .sum b{ color:var(--ink); }
+  .bkx .dock .acts{ margin-inline-start:auto; display:flex; gap:7px; }
+
+  /* ---- responsive ---- */
+  @media (max-width:1100px){ .bkx .a-grid{ grid-template-columns:1fr; } .bkx .rail{ position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .bkx .rail .actbox{ grid-column:1/-1; } }
+  @media (max-width:860px){
+    .bkx .c4{ grid-template-columns:repeat(2,minmax(0,1fr)); } .bkx .c3{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .bkx .span3{ grid-column:1/-1; }
+    .bkx .row-sec{ grid-template-columns:1fr; } .bkx .row-sec > .h{ border-inline-end:0; border-bottom:1px solid var(--line-soft); padding:10px 14px; } .bkx .row-sec > .h p{ display:none; }
+    .bkx .strip{ grid-template-columns:repeat(2,minmax(0,1fr)); } .bkx .strip > div{ border-bottom:1px solid var(--line-soft); }
+    .bkx .hero .acts{ display:none; }
+    .bkx .dock .sum{ display:none; }
+  }
+  @media (max-width:560px){
+    .bkx .c4,.bkx .c3,.bkx .c2{ grid-template-columns:1fr; } .bkx .span2{ grid-column:auto; }
+    .bkx .rail{ grid-template-columns:1fr; }
+    .bkx .dock{ padding:8px; } .bkx .dock .acts{ width:100%; } .bkx .dock .acts .btn{ flex:1; padding:0 8px; }
+    .bkx .dock .acts .btn .t{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo">
+  <div class="grp"><span class="lbl">Direction</span>
+    <button class="opt on" data-set="dir" data-val="a">A · Summary Rail</button>
+    <button class="opt" data-set="dir" data-val="b">B · Ledger Sheet</button>
+  </div>
+  <div class="grp"><span class="lbl">Booking</span>
+    <button class="opt on" data-set="mode" data-val="sale">Sale</button>
+    <button class="opt" data-set="mode" data-val="rent">Rental</button>
+  </div>
+  <div class="grp"><span class="lbl">Theme</span>
+    <button class="opt on" data-set="theme" data-val="light">Light</button>
+    <button class="opt" data-set="theme" data-val="dark">Dark</button>
+  </div>
+  <div class="grp"><span class="lbl">Accent</span>
+    <button class="sw on" style="background:#3b5bdb" data-acc="#3b5bdb"></button>
+    <button class="sw" style="background:#0f9b8e" data-acc="#0f9b8e"></button>
+    <button class="sw" style="background:#7c4dff" data-acc="#7c4dff"></button>
+    <button class="sw" style="background:#c2410c" data-acc="#c2410c"></button>
+  </div>
+  <div class="vnote" id="vnote"></div>
+</div>
+
+<div class="wrap">
+  <div class="crumb"><a href="#">Home</a> / <a href="#">Sale Booking</a> / Edit</div>
+
+  <div class="bkx" data-dir="a" data-mode="sale" id="bkx">
+
+    <!-- ===== Hero ===== -->
+    <div class="card hero">
+      <div class="ic"><i class="fa fa-bookmark"></i></div>
+      <div style="min-width:0">
+        <h1><span class="only-sale">Sale Booking</span><span class="only-rent">Rental Booking</span> <span class="no">#1930</span>
+          <span class="chip booked"><i class="fa fa-circle"></i> Booked</span>
+        </h1>
+        <div class="sub">
+          <span><i class="fa fa-key"></i>Unit 0001 · Bin Al Sheikh Skyline Towers</span>
+          <span><i class="fa fa-user"></i>New Lead - 25523</span>
+          <span><i class="fa fa-calendar"></i>02 Oct 2026 → 01 Oct 2027</span>
+        </div>
+      </div>
+      <div class="acts dir-a-only">
+        <a class="btn ghost" href="#"><i class="fa fa-eye"></i> View</a>
+      </div>
+    </div>
+
+    <!-- ======================= Direction A ======================= -->
+    <div class="dir a">
+      <div class="a-grid">
+        <div style="min-width:0">
+
+          <section class="card sec">
+            <header><span class="n">1</span><h3>Property &amp; Customer</h3>
+              <div class="aside"><label class="tgl"><input type="checkbox" checked><span class="k"></span>Vacant only</label></div>
+            </header>
+            <div class="bd">
+              <div class="g c4">
+                <div class="span2"><div class="lbl"><span>Property / Unit<span class="req">*</span></span></div><div class="ctl ts"><i class="fa fa-key" style="color:var(--faint)"></i><span class="v">0001 — Bin Al Sheikh Skyline Towers</span><i class="fa fa-times x"></i></div></div>
+                <div class="span2"><div class="lbl"><span>Customer<span class="req">*</span></span><button class="btn link"><i class="fa fa-pencil"></i> Edit</button></div><div class="ctl ts"><i class="fa fa-user" style="color:var(--faint)"></i><span class="v">New Lead - 25523</span><i class="fa fa-times x"></i></div></div>
+                <div><div class="lbl">Group / Project</div><div class="ctl ts"><span class="v">Bin Al Sheikh Skyline…</span></div></div>
+                <div><div class="lbl">Building</div><div class="ctl ts"><span class="v">Bin Al Sheikh Skyline…</span></div></div>
+                <div><div class="lbl">Type</div><div class="ctl ts ph"><span class="v">Any type</span></div></div>
+                <div><div class="lbl">Salesman</div><div class="ctl ts ph"><span class="v">Select employee</span></div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sec">
+            <header><span class="n">2</span><h3><span class="only-sale">Sale Details</span><span class="only-rent">Rent Details</span></h3>
+              <div class="aside"><span class="chip acc js-dur">12 months · 365 days</span></div>
+            </header>
+            <div class="bd">
+              <div class="g c4">
+                <div><div class="lbl"><span>Start date<span class="req">*</span></span></div><input class="ctl js-start" type="date" value="2026-10-02"></div>
+                <div><div class="lbl"><span>End date<span class="req">*</span></span></div><input class="ctl js-end" type="date" value="2027-10-01"></div>
+                <div><div class="lbl"><span class="only-sale">Unit sale price</span><span class="only-rent">Rent</span></div><div class="pre"><span>QAR</span><input class="ctl js-price" type="number" value="1250000"></div></div>
+                <div><div class="lbl">No. of terms</div><input class="ctl js-terms" type="number" value="12"></div>
+                <div class="spanall"><div class="lbl">Payment frequency</div>
+                  <div class="pills js-freq">
+                    <button class="pill on">Monthly</button><button class="pill">Quarterly</button><button class="pill">Half Yearly</button><button class="pill">Yearly</button><button class="pill">One Time</button>
+                  </div>
+                </div>
+                <div class="only-rent"><div class="lbl">Booking type</div>
+                  <select class="ctl"><option>Long Term</option><option>Short Term</option><option>Commercial</option></select>
+                </div>
+                <div class="only-rent span3"><div class="lbl">Included amenities <span style="font-weight:400;color:var(--faint)">tap to toggle</span></div>
+                  <div class="pills amen">
+                    <button class="pill on"><i class="fa fa-bolt"></i> Elec &amp; Water</button>
+                    <button class="pill on"><i class="fa fa-asterisk"></i> AC</button>
+                    <button class="pill off"><i class="fa fa-wifi"></i> WiFi</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sec only-sale">
+            <header><span class="n">3</span><h3>Down Payment &amp; Collection</h3></header>
+            <div class="bd">
+              <div class="sub-h">Down payment</div>
+              <div class="g c4">
+                <div><div class="lbl">Amount</div><div class="pre"><span>QAR</span><input class="ctl js-down" type="number" value="250000"></div></div>
+                <div><div class="lbl">Payment method</div><div class="ctl ts"><span class="v">Bank Transfer</span><i class="fa fa-angle-down x"></i></div></div>
+                <div class="span2"><div class="lbl">Remarks</div><input class="ctl" placeholder="Reference, cheque no., notes…"></div>
+              </div>
+              <div class="sub-h">Monthly collection</div>
+              <div class="g c4">
+                <div><div class="lbl">Starts on day</div><div class="pre"><span>Day</span><input class="ctl" type="number" value="1" min="1" max="28"></div></div>
+                <div class="span3"><div class="lbl"><span>Payment mode<span class="req">*</span></span></div>
+                  <div class="pills js-mode"><button class="pill on" data-m="cash"><i class="fa fa-money"></i> Cash</button><button class="pill" data-m="cheque"><i class="fa fa-file-text-o"></i> Cheque</button><button class="pill" data-m="bank"><i class="fa fa-university"></i> Bank Transfer</button></div>
+                </div>
+                <div class="span2 js-bank" hidden><div class="lbl">Bank name</div><input class="ctl" placeholder="e.g. QNB"></div>
+                <div class="span2 js-bank" hidden><div class="lbl">Cheque starting no.</div><input class="ctl" placeholder="000101"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sec only-rent">
+            <header><span class="n">3</span><h3>Monthly Collection</h3></header>
+            <div class="bd">
+              <div class="g c4">
+                <div><div class="lbl">Starts on day</div><div class="pre"><span>Day</span><input class="ctl" type="number" value="1"></div></div>
+                <div class="span3"><div class="lbl"><span>Payment mode<span class="req">*</span></span></div>
+                  <div class="pills"><button class="pill on"><i class="fa fa-money"></i> Cash</button><button class="pill"><i class="fa fa-file-text-o"></i> Cheque</button><button class="pill"><i class="fa fa-university"></i> Bank Transfer</button></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sec closed js-collapse">
+            <header class="collapse-row"><span class="n">4</span><h3 style="margin:0;font-size:13px;color:var(--ink)">Remarks &amp; Terms</h3>
+              <span class="meta">Cancellation · Payment · Extended — EN / AR</span><i class="fa fa-angle-down chev"></i></header>
+            <div class="bd">
+              <div class="lbl">Remark</div>
+              <textarea class="ctl" rows="2" placeholder="Internal notes about this booking…"></textarea>
+              <div class="sub-h" style="margin-top:14px">Policies &amp; terms
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin:-4px 0 8px"><div class="seg js-lang"><button class="on" data-l="en">English</button><button data-l="ar">العربية</button></div></div>
+              <div class="g js-en">
+                <div><div class="lbl">Cancellation policy</div><input class="ctl" placeholder="Enter cancellation policy…"></div>
+                <div><div class="lbl">Payment terms</div><input class="ctl" placeholder="Enter payment terms…"></div>
+                <div><div class="lbl">Payment terms — extended</div><input class="ctl" placeholder="Enter extended payment terms…"></div>
+              </div>
+              <div class="g js-ar" dir="rtl" hidden>
+                <div><div class="lbl">سياسة الإلغاء</div><input class="ctl" dir="rtl" placeholder="...أدخل قاعدة الإلغاء"></div>
+                <div><div class="lbl">شروط الدفع</div><input class="ctl" dir="rtl" placeholder="...أدخل شروط الدفع"></div>
+                <div><div class="lbl">شروط الدفع الممتدة</div><input class="ctl" dir="rtl" placeholder="...أدخل شروط الدفع الممتدة"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Rail -->
+        <aside class="rail">
+          <div class="card unit">
+            <div class="top"><div class="badge">0001</div><div><div class="t">Bin Al Sheikh Skyline Towers</div><div class="s">Skyline Towers · Vacant</div></div></div>
+            <div style="margin-top:10px">
+              <div class="kv"><span>Customer</span><b>New Lead - 25523</b></div>
+              <div class="kv"><span>Period</span><b class="js-dur-b">12 mo · 365 d</b></div>
+              <div class="kv"><span>Salesman</span><b style="color:var(--faint);font-weight:500">—</b></div>
+            </div>
+          </div>
+          <div class="card money">
+            <div class="eyebrow"><span class="only-sale">Sale value</span><span class="only-rent">Contract total</span></div>
+            <div class="big js-total">1,250,000.00<small>QAR</small></div>
+            <div class="only-sale">
+              <div class="bar"><i class="js-bar-down" style="width:20%;background:var(--bs-success)"></i><i style="flex:1;background:color-mix(in srgb,var(--acc) 55%,transparent)"></i></div>
+              <div class="legend"><span><i style="background:var(--bs-success)"></i>Down 20%</span><span><i style="background:var(--acc)"></i>Installments</span></div>
+            </div>
+            <div style="margin-top:10px">
+              <div class="kv only-sale"><span>Down payment</span><b class="js-down-b">250,000.00</b></div>
+              <div class="kv only-sale"><span>Balance</span><b class="js-bal">1,000,000.00</b></div>
+              <div class="kv"><span>Per term <span class="js-freq-l">(Monthly)</span></span><b class="js-per">83,333.33</b></div>
+              <div class="kv"><span>Terms</span><b class="js-terms-b">12</b></div>
+            </div>
+          </div>
+          <div class="card actbox">
+            <button class="btn ok"><i class="fa fa-check"></i> Save changes</button>
+            <div class="row">
+              <button class="btn pri"><i class="fa fa-check-circle"></i> Confirm</button>
+              <button class="btn dng"><i class="fa fa-times-circle"></i> Cancel</button>
+            </div>
+            <a class="btn ghost" href="#"><i class="fa fa-arrow-left"></i> Back to list</a>
+            <div class="note">Confirm turns this booking into a Sale Agreement</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ======================= Direction B ======================= -->
+    <div class="dir b">
+      <div class="card sheet">
+        <div class="strip">
+          <div><span>Unit</span><b>0001</b></div>
+          <div><span>Customer</span><b>New Lead - 25523</b></div>
+          <div><span>Period</span><b class="js-dur-b">12 mo · 365 d</b></div>
+          <div><span class="only-sale">Sale value</span><span class="only-rent">Contract total</span><b class="acc js-total-s">QAR 1,250,000</b></div>
+          <div><span>Per term</span><b class="js-per-s">QAR 83,333</b></div>
+        </div>
+
+        <div class="row-sec">
+          <div class="h"><b><i class="fa fa-building"></i> Property</b><p>Pick the unit — group, building and type fill in automatically.</p></div>
+          <div class="f"><div class="g c4">
+            <div class="span2"><div class="lbl"><span>Property / Unit<span class="req">*</span></span><label class="tgl"><input type="checkbox" checked><span class="k"></span>Vacant only</label></div><div class="ctl ts"><i class="fa fa-key" style="color:var(--faint)"></i><span class="v">0001 — Bin Al Sheikh Skyline Towers</span><i class="fa fa-times x"></i></div></div>
+            <div><div class="lbl">Group / Project</div><div class="ctl ts"><span class="v">Bin Al Sheikh Skyline…</span></div></div>
+            <div><div class="lbl">Building</div><div class="ctl ts"><span class="v">Bin Al Sheikh Skyline…</span></div></div>
+          </div></div>
+        </div>
+
+        <div class="row-sec">
+          <div class="h"><b><i class="fa fa-user"></i> Parties</b><p>Who is buying, and who handles the deal.</p></div>
+          <div class="f"><div class="g c4">
+            <div class="span2"><div class="lbl"><span>Customer<span class="req">*</span></span><button class="btn link"><i class="fa fa-pencil"></i> Edit</button></div><div class="ctl ts"><i class="fa fa-user" style="color:var(--faint)"></i><span class="v">New Lead - 25523</span></div></div>
+            <div><div class="lbl">Salesman</div><div class="ctl ts ph"><span class="v">Select employee</span></div></div>
+            <div><div class="lbl">Type</div><div class="ctl ts ph"><span class="v">Any type</span></div></div>
+          </div></div>
+        </div>
+
+        <div class="row-sec">
+          <div class="h"><b><i class="fa fa-money"></i> <span class="only-sale">Sale terms</span><span class="only-rent">Rent terms</span></b><p>Period, price and how it is split into terms.</p></div>
+          <div class="f"><div class="g c4">
+            <div><div class="lbl"><span>Start date<span class="req">*</span></span></div><input class="ctl js-start" type="date" value="2026-10-02"></div>
+            <div><div class="lbl"><span>End date<span class="req">*</span></span></div><input class="ctl js-end" type="date" value="2027-10-01"></div>
+            <div><div class="lbl"><span class="only-sale">Unit sale price</span><span class="only-rent">Rent</span></div><div class="pre"><span>QAR</span><input class="ctl js-price" type="number" value="1250000"></div></div>
+            <div><div class="lbl">No. of terms</div><input class="ctl js-terms" type="number" value="12"></div>
+            <div class="spanall"><div class="lbl">Payment frequency</div>
+              <div class="pills js-freq"><button class="pill on">Monthly</button><button class="pill">Quarterly</button><button class="pill">Half Yearly</button><button class="pill">Yearly</button><button class="pill">One Time</button></div>
+            </div>
+            <div class="only-rent"><div class="lbl">Booking type</div><select class="ctl"><option>Long Term</option><option>Short Term</option><option>Commercial</option></select></div>
+            <div class="only-rent span3"><div class="lbl">Included amenities</div>
+              <div class="pills amen"><button class="pill on"><i class="fa fa-bolt"></i> Elec &amp; Water</button><button class="pill on"><i class="fa fa-asterisk"></i> AC</button><button class="pill off"><i class="fa fa-wifi"></i> WiFi</button></div>
+            </div>
+          </div></div>
+        </div>
+
+        <div class="row-sec only-sale">
+          <div class="h"><b><i class="fa fa-credit-card"></i> Down payment</b><p>Paid upfront, before installments start.</p></div>
+          <div class="f"><div class="g c4">
+            <div><div class="lbl">Amount</div><div class="pre"><span>QAR</span><input class="ctl js-down" type="number" value="250000"></div></div>
+            <div><div class="lbl">Payment method</div><div class="ctl ts"><span class="v">Bank Transfer</span><i class="fa fa-angle-down x"></i></div></div>
+            <div class="span2"><div class="lbl">Remarks</div><input class="ctl" placeholder="Reference, cheque no., notes…"></div>
+          </div></div>
+        </div>
+
+        <div class="row-sec">
+          <div class="h"><b><i class="fa fa-calendar"></i> Collection</b><p>Monthly collection day and payment mode.</p></div>
+          <div class="f"><div class="g c4">
+            <div><div class="lbl">Starts on day</div><div class="pre"><span>Day</span><input class="ctl" type="number" value="1"></div></div>
+            <div class="span3"><div class="lbl"><span>Payment mode<span class="req">*</span></span></div>
+              <div class="pills js-mode"><button class="pill on" data-m="cash"><i class="fa fa-money"></i> Cash</button><button class="pill" data-m="cheque"><i class="fa fa-file-text-o"></i> Cheque</button><button class="pill" data-m="bank"><i class="fa fa-university"></i> Bank Transfer</button></div>
+            </div>
+            <div class="span2 js-bank" hidden><div class="lbl">Bank name</div><input class="ctl" placeholder="e.g. QNB"></div>
+            <div class="span2 js-bank" hidden><div class="lbl">Cheque starting no.</div><input class="ctl" placeholder="000101"></div>
+          </div></div>
+        </div>
+
+        <div class="row-sec">
+          <div class="h"><b><i class="fa fa-file-text"></i> Remarks &amp; terms</b><p>Printed on the booking form. Switch language to edit the Arabic copy.</p>
+            <div class="seg js-lang" style="margin-top:8px"><button class="on" data-l="en">EN</button><button data-l="ar">AR</button></div></div>
+          <div class="f">
+            <div class="g c2">
+              <div class="spanall"><div class="lbl">Remark</div><input class="ctl" placeholder="Internal notes about this booking…"></div>
+            </div>
+            <div class="g c3 js-en" style="margin-top:10px">
+              <div><div class="lbl">Cancellation policy</div><input class="ctl" placeholder="Cancellation policy…"></div>
+              <div><div class="lbl">Payment terms</div><input class="ctl" placeholder="Payment terms…"></div>
+              <div><div class="lbl">Payment terms — extended</div><input class="ctl" placeholder="Extended terms…"></div>
+            </div>
+            <div class="g c3 js-ar" dir="rtl" hidden style="margin-top:10px">
+              <div><div class="lbl">سياسة الإلغاء</div><input class="ctl" dir="rtl" placeholder="...قاعدة الإلغاء"></div>
+              <div><div class="lbl">شروط الدفع</div><input class="ctl" dir="rtl" placeholder="...شروط الدفع"></div>
+              <div><div class="lbl">شروط الدفع الممتدة</div><input class="ctl" dir="rtl" placeholder="...الشروط الممتدة"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dock">
+        <a class="btn ghost" href="#"><i class="fa fa-arrow-left"></i><span class="t"> Back</span></a>
+        <div class="sum"><span>Total <b class="js-total-s">QAR 1,250,000</b></span><span class="only-sale">Down <b class="js-down-s">250,000</b></span><span>Per term <b class="js-per-s">83,333</b></span></div>
+        <div class="acts">
+          <button class="btn dng"><i class="fa fa-times-circle"></i><span class="t"> Cancel booking</span></button>
+          <button class="btn pri"><i class="fa fa-check-circle"></i><span class="t"> Confirm</span></button>
+          <button class="btn ok"><i class="fa fa-check"></i><span class="t"> Save</span></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, bkx=document.getElementById('bkx'), vnote=document.getElementById('vnote');
+  var notes={
+    a:'<b>A · Summary Rail</b> — four compact numbered cards on the left; a sticky rail on the right keeps the unit, the money split and every action in view while you scroll. Terms (6 EN/AR fields) collapse into one EN | AR switch.',
+    b:'<b>B · Ledger Sheet</b> — one continuous sheet: key figures strip on top, label column on the left, fields on the right. A frosted action dock stays pinned to the bottom of the screen.'
+  };
+  function set(k,v){
+    document.querySelectorAll('.demo [data-set="'+k+'"]').forEach(function(b){ b.classList.toggle('on',b.dataset.val===v); });
+    if(k==='dir'){ bkx.dataset.dir=v; vnote.innerHTML=notes[v]; }
+    if(k==='mode'){ bkx.dataset.mode=v; document.querySelectorAll('.crumb').forEach(function(c){ c.innerHTML='<a href="#">Home</a> / <a href="#">'+(v==='sale'?'Sale':'Rental')+' Booking</a> / Edit'; }); calc(); }
+    if(k==='theme'){ root.setAttribute('data-bs-theme',v); }
+  }
+  document.querySelectorAll('.demo [data-set]').forEach(function(b){ b.onclick=function(){ set(b.dataset.set,b.dataset.val); }; });
+  document.querySelectorAll('.demo .sw').forEach(function(s){ s.onclick=function(){ document.querySelectorAll('.demo .sw').forEach(function(x){x.classList.remove('on');}); s.classList.add('on'); root.style.setProperty('--bs-primary',s.dataset.acc); }; });
+  set('dir','a');
+
+  /* pills: single-select groups, amenities toggle */
+  document.querySelectorAll('.bkx .pills').forEach(function(g){
+    g.addEventListener('click',function(e){
+      var p=e.target.closest('.pill'); if(!p) return; e.preventDefault();
+      if(g.classList.contains('amen')){ p.classList.toggle('on'); p.classList.toggle('off'); return; }
+      g.querySelectorAll('.pill').forEach(function(x){x.classList.remove('on');}); p.classList.add('on');
+      if(g.classList.contains('js-mode')){ var show=p.dataset.m!=='cash'; g.closest('.g').querySelectorAll('.js-bank').forEach(function(b){ b.hidden=!show; }); }
+      if(g.classList.contains('js-freq')){ freq=p.textContent.trim(); calc(); }
+    });
+  });
+  document.querySelectorAll('.js-lang').forEach(function(seg){
+    seg.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return; e.preventDefault();
+      seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+      var scope=seg.closest('.sec,.row-sec');
+      scope.querySelector('.js-en').hidden=b.dataset.l!=='en'; scope.querySelector('.js-ar').hidden=b.dataset.l!=='ar';
+    });
+  });
+  document.querySelectorAll('.js-collapse > header').forEach(function(h){ h.onclick=function(){ h.parentNode.classList.toggle('closed'); }; });
+
+  /* live figures */
+  var freq='Monthly';
+  function val(sel){ var v=0; document.querySelectorAll('.bkx .dir:not([style*="none"]) '+sel).forEach(function(i){ if(i.offsetParent) v=parseFloat(i.value)||0; }); return v; }
+  function fmt(n,d){ return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+  function calc(){
+    var startEl=[].find.call(document.querySelectorAll('.js-start'),function(i){return i.offsetParent;})||document.querySelector('.js-start');
+    var endEl=[].find.call(document.querySelectorAll('.js-end'),function(i){return i.offsetParent;})||document.querySelector('.js-end');
+    var s=new Date(startEl.value), e=new Date(endEl.value), days=Math.max(0,Math.round((e-s)/864e5)+1);
+    var months=Math.round(days/30.42);
+    var price=val('.js-price')||1250000, terms=val('.js-terms')||12, down=bkx.dataset.mode==='sale'?(val('.js-down')||0):0;
+    var total=bkx.dataset.mode==='sale'?price:price*terms, bal=Math.max(0,total-down), per=terms?bal/terms:0;
+    var dur=months+' months · '+days+' days';
+    document.querySelectorAll('.js-dur').forEach(function(x){x.textContent=dur;});
+    document.querySelectorAll('.js-dur-b').forEach(function(x){x.textContent=months+' mo · '+days+' d';});
+    document.querySelectorAll('.js-total').forEach(function(x){x.innerHTML=fmt(total,2)+'<small>QAR</small>';});
+    document.querySelectorAll('.js-total-s').forEach(function(x){x.textContent='QAR '+fmt(total,0);});
+    document.querySelectorAll('.js-down-b').forEach(function(x){x.textContent=fmt(down,2);});
+    document.querySelectorAll('.js-down-s').forEach(function(x){x.textContent=fmt(down,0);});
+    document.querySelectorAll('.js-bal').forEach(function(x){x.textContent=fmt(bal,2);});
+    document.querySelectorAll('.js-per').forEach(function(x){x.textContent=fmt(per,2);});
+    document.querySelectorAll('.js-per-s').forEach(function(x){x.textContent='QAR '+fmt(per,0);});
+    document.querySelectorAll('.js-terms-b').forEach(function(x){x.textContent=terms;});
+    document.querySelectorAll('.js-freq-l').forEach(function(x){x.textContent='('+freq+')';});
+    var pct=total?Math.min(100,Math.round(down/total*100)):0;
+    document.querySelectorAll('.js-bar-down').forEach(function(x){x.style.width=pct+'%';});
+    document.querySelectorAll('.legend span:first-child').forEach(function(x){x.innerHTML='<i style="background:var(--bs-success)"></i>Down '+pct+'%';});
+  }
+  document.querySelectorAll('.bkx input').forEach(function(i){ i.addEventListener('input',calc); });
+  calc();
+})();
+</script>
+</body>
+</html>

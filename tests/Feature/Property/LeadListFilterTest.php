@@ -118,7 +118,7 @@ it('shows and hides lead list columns from the column visibility panel', functio
     $table = \Livewire\Livewire::test(\App\Livewire\Property\PropertyLead\Table::class)
         ->assertSee('column@example.com')
         ->assertViewHas('columns', fn (array $columns) => isset($columns['email']) && ! isset($columns['sub_status']))
-        ->assertDontSeeHtml('<span class="small">Waiting on HR</span>');
+        ->assertDontSeeHtml('<div class="sub mt-1">Waiting on HR</div>');
 
     \Livewire\Livewire::test(\App\Livewire\Property\PropertyLead\ColumnVisibility::class)
         ->call('toggleColumn', 'email')
@@ -128,11 +128,58 @@ it('shows and hides lead list columns from the column visibility panel', functio
     $table->call('$refresh')
         ->assertDontSee('column@example.com')
         ->assertViewHas('columns', fn (array $columns) => ! isset($columns['email']) && $columns['sub_status'] === 'Sub Status')
-        ->assertSeeHtml('<span class="small">Waiting on HR</span>');
+        ->assertSeeHtml('<div class="sub mt-1">Waiting on HR</div>');
 
     \Livewire\Livewire::test(\App\Livewire\Property\PropertyLead\ColumnVisibility::class)->call('resetToDefaults');
 
     expect(\App\Livewire\Property\PropertyLead\ColumnVisibility::current())
         ->email->toBeTrue()
         ->sub_status->toBeFalse();
+});
+
+it('filters by pipeline stage, matching drifted stored statuses, and counts each stage', function (): void {
+    $make = fn (string $name, string $status) => \App\Models\PropertyLead::create([
+        'tenant_id' => $this->world->tenant->id,
+        'branch_id' => $this->world->branch->id,
+        'name' => $name,
+        'type' => 'Sales',
+        'source' => 'Walk-In',
+        'status' => $status,
+    ]);
+    $make('Fresh one', 'New Lead');
+    $make('Drifted loser', 'Low Budget ');
+    $make('Proper loser', 'Not Interested');
+
+    Livewire::test(Table::class)
+        ->assertViewHas('stageCounts', fn (array $counts) => $counts['total'] === 3 && $counts['stages']['new'] === 1 && $counts['stages']['lost'] === 2)
+        ->call('pickStage', 'lost')
+        ->assertSet('filterStage', 'lost')
+        ->assertSee('Drifted loser')
+        ->assertSee('Proper loser')
+        ->assertDontSee('Fresh one')
+        ->assertViewHas('activeFilters', fn (array $chips) => $chips['filterStage']['value'] === 'Lost')
+        ->assertViewHas('stageCounts', fn (array $counts) => $counts['total'] === 3)
+        ->call('pickStage', 'lost')
+        ->assertSet('filterStage', '')
+        ->assertSee('Fresh one');
+});
+
+it('shows the floating bulk bar only while leads are selected', function (): void {
+    $lead = \App\Models\PropertyLead::create([
+        'tenant_id' => $this->world->tenant->id,
+        'branch_id' => $this->world->branch->id,
+        'name' => 'Pick me',
+        'type' => 'Sales',
+        'source' => 'Walk-In',
+        'status' => 'New Lead',
+    ]);
+
+    Livewire::test(Table::class)
+        ->assertDontSeeHtml('class="fbulk"')
+        ->set('selected', [(string) $lead->id])
+        ->assertSeeHtml('class="fbulk"')
+        ->assertSee('lead selected')
+        ->call('clearSelection')
+        ->assertSet('selected', [])
+        ->assertDontSeeHtml('class="fbulk"');
 });

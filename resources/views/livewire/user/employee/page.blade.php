@@ -1075,20 +1075,15 @@
                     @endif
 
                     @if ($this->canManageAdminFlag())
-                        @php($isSelf = isset($users['id']) && $users['id'] == auth()->id())
                         <label class="empx-switch-row">
                             <span class="empx-switch-copy">
                                 <span class="empx-switch-title"><i class="fa fa-star"></i> Administrator</span>
                                 <span class="empx-switch-sub">
-                                    @if ($isSelf)
-                                        You cannot change your own administrator access.
-                                    @else
-                                        Full access across the app, and the mobile app is unrestricted to their own records.
-                                    @endif
+                                    Full access across the app, and the mobile app is unrestricted to their own records.
                                 </span>
                             </span>
                             <span class="empx-switch">
-                                <input type="checkbox" wire:model="isAdmin" @disabled($isSelf)>
+                                <input type="checkbox" wire:model="isAdmin">
                                 <span class="empx-switch-track"></span>
                             </span>
                         </label>

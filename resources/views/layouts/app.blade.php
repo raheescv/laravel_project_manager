@@ -167,7 +167,7 @@
 </head>
 
 <body class="out-quart">
-    <div id="root" class="root mn--max tm--expanded-hd">
+    <div id="root" class="root {{ ($collapsedNav ?? false) ? 'mn--min' : 'mn--max' }} tm--expanded-hd">
         <section id="content" class="content">
             @include('layouts.impersonation-banner')
             {{ $slot }}

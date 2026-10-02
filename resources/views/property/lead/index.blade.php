@@ -11,9 +11,9 @@
             <div class="d-md-flex align-items-md-center justify-content-md-between">
                 <div>
                     <h1 class="page-title mb-0 mt-2">
-                        <i class="fa fa-users text-white me-2"></i>Leads Management
+                        <i class="fa fa-users text-white me-2"></i>Leads
                     </h1>
-                    <br>
+                    <p class="lead mb-0">Every enquiry, its stage and who owns it.</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
                     @include('property.lead.partials.view-switch', ['active' => 'list'])
@@ -29,9 +29,7 @@
 
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('property.property-lead.table')
-            </div>
+            @livewire('property.property-lead.table')
         </div>
     </div>
     <x-property.lead-column-visibility-canvas />

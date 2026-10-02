@@ -35,6 +35,10 @@ class GetAction
         $list = $list->when($data['to_date'] ?? '', fn ($q, $v) => $q->whereDate($dateColumn, '<=', $v));
         $list = $list->when($data['property_group_id'] ?? '', fn ($q, $v) => $q->where('property_group_id', $v));
         $list = $list->when($data['status'] ?? '', fn ($q, $v) => $q->where('status', $v));
+        // Exact stored values (drifted spellings included) behind a pipeline stage.
+        if (isset($data['statuses']) && is_array($data['statuses'])) {
+            $list = $list->whereIn('status', $data['statuses'] ?: ['']);
+        }
         $list = $list->when($data['search'] ?? '', function ($q, $v): void {
             $q->where(function ($qq) use ($v): void {
                 $qq->where('name', 'like', "%{$v}%")

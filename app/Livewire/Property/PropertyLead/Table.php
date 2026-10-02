@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\PropertyGroup;
 use App\Models\PropertyLead;
 use App\Support\LeadOptions;
+use App\Support\LeadPipeline;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -31,6 +32,9 @@ class Table extends Component
     public $sortDirection = 'desc';
 
     // Filters
+    /** Pipeline stage key (new, contacting, …) picked from the stage strip. */
+    public $filterStage = '';
+
     public $filterStatus = '';
 
     public $filterSource = '';
@@ -104,6 +108,10 @@ class Table extends Component
         if ($key === 'filterStatus') {
             $this->filterSubStatus = '';
         }
+        if ($key === 'filterStage') {
+            $this->filterStatus = '';
+            $this->filterSubStatus = '';
+        }
         if (! in_array($key, ['selectAll']) && ! preg_match('/^selected\..*/', $key)) {
             $this->resetPage();
         }
@@ -116,6 +124,29 @@ class Table extends Component
         } else {
             $this->selected = [];
         }
+    }
+
+    public function pickStage(string $stage): void
+    {
+        $this->filterStage = $this->filterStage === $stage || ! array_key_exists($stage, LeadPipeline::stages()) ? '' : $stage;
+        $this->filterStatus = '';
+        $this->filterSubStatus = '';
+        $this->resetPage();
+    }
+
+    public function pickMatrixCell(string $status, $groupId): void
+    {
+        $this->filterStage = '';
+        $this->filterStatus = $status;
+        $this->filterSubStatus = '';
+        $this->filterPropertyGroupId = (string) $groupId;
+        $this->resetPage();
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+        $this->selectAll = false;
     }
 
     public function sortBy($field): void
@@ -134,7 +165,7 @@ class Table extends Component
     public function clearFilters(): void
     {
         $this->reset([
-            'filterStatus', 'filterSource', 'filterSubSource', 'filterSubStatus', 'filterType', 'filterAssignedTo',
+            'filterStage', 'filterStatus', 'filterSource', 'filterSubSource', 'filterSubStatus', 'filterType', 'filterAssignedTo',
             'filterPropertyGroupId', 'filterLocation', 'filterCountryId', 'search', 'dateField',
         ]);
         $this->fromDate = now()->subMonth()->format('Y-m-d');
@@ -145,21 +176,7 @@ class Table extends Component
     public function export()
     {
         abort_unless(auth()->user()?->can('property lead.download'), 403);
-        $payload = [
-            'status' => $this->filterStatus,
-            'source' => $this->filterSource,
-            'sub_source' => $this->filterSubSource,
-            'sub_status' => $this->filterSubStatus,
-            'type' => $this->filterType,
-            'assigned_to' => $this->filterAssignedTo,
-            'property_group_id' => $this->filterPropertyGroupId,
-            'location' => $this->filterLocation,
-            'country_id' => $this->filterCountryId,
-            'date_field' => $this->dateField,
-            'from_date' => $this->fromDate,
-            'to_date' => $this->toDate,
-            'search' => $this->search,
-        ];
+        $payload = $this->filterPayload();
 
         $count = $this->buildQuery()->count();
         if ($count === 0) {
@@ -173,7 +190,14 @@ class Table extends Component
         return Excel::download(new PropertyLeadExport($payload), $filename);
     }
 
-    protected function buildQuery()
+    /**
+     * The list filters as GetAction reads them. A stage becomes the exact stored
+     * statuses behind it, so drifted spellings ("Low Budget ") still match.
+     *
+     * @param  list<string>  $except  filter keys to leave out
+     * @return array<string, mixed>
+     */
+    protected function filterPayload(array $except = []): array
     {
         $payload = [
             'status' => $this->filterStatus,
@@ -191,7 +215,86 @@ class Table extends Component
             'search' => $this->search,
         ];
 
-        return (new GetAction())->execute($payload)['list'];
+        if (filled($this->filterStage) && ! in_array('stage', $except, true)) {
+            $payload['statuses'] = $this->storedStatusesByStage()[$this->filterStage] ?? [];
+        }
+
+        return array_diff_key($payload, array_flip($except));
+    }
+
+    protected function buildQuery()
+    {
+        return (new GetAction())->execute($this->filterPayload())['list'];
+    }
+
+    /** @return array<string, list<string>> stored status values behind each stage */
+    protected function storedStatusesByStage(): array
+    {
+        $byStage = array_fill_keys(array_keys(LeadPipeline::stages()), []);
+        $stored = PropertyLead::query()->toBase()->distinct()->pluck('status');
+        foreach ($stored as $status) {
+            $stage = LeadPipeline::stageOf(LeadPipeline::canonical($status));
+            if ($stage) {
+                $byStage[$stage][] = $status;
+            }
+        }
+
+        return $byStage;
+    }
+
+    /**
+     * Leads per pipeline stage under every filter except stage and status, so the
+     * strip shows where the current slice sits.
+     *
+     * @return array{stages: array<string, int>, total: int}
+     */
+    protected function stageCounts(): array
+    {
+        $rows = (new GetAction())->execute($this->filterPayload(['status', 'sub_status', 'stage']))['list']
+            ->toBase()
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->get();
+
+        $stages = array_fill_keys(array_keys(LeadPipeline::stages()), 0);
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += (int) $row->total;
+            $stage = LeadPipeline::stageOf(LeadPipeline::canonical($row->status));
+            if ($stage) {
+                $stages[$stage] += (int) $row->total;
+            }
+        }
+
+        return ['stages' => $stages, 'total' => $total];
+    }
+
+    /**
+     * Removable chips for each active filter, keyed by the property that clears it.
+     *
+     * @return array<string, array{label: string, value: string}>
+     */
+    protected function activeFilters(array $users, array $groups, array $countries): array
+    {
+        $stages = LeadPipeline::stages();
+        $chips = [
+            'filterStage' => ['Stage', $stages[$this->filterStage]['name'] ?? null],
+            'filterStatus' => ['Status', $this->filterStatus],
+            'filterSubStatus' => ['Sub status', $this->filterSubStatus],
+            'filterType' => ['Type', leadTypes()[$this->filterType] ?? $this->filterType],
+            'filterAssignedTo' => ['Assigned', $users[$this->filterAssignedTo] ?? null],
+            'filterSource' => ['Source', $this->filterSource],
+            'filterSubSource' => ['Sub source', $this->filterSubSource],
+            'filterPropertyGroupId' => ['Project', $groups[$this->filterPropertyGroupId] ?? null],
+            'filterCountryId' => ['Nationality', $countries[$this->filterCountryId] ?? null],
+            'filterLocation' => ['Location', $this->filterLocation],
+            'search' => ['Search', $this->search],
+        ];
+
+        return collect($chips)
+            ->filter(fn (array $chip) => filled($chip[1]))
+            ->map(fn (array $chip) => ['label' => $chip[0], 'value' => (string) $chip[1]])
+            ->all();
     }
 
     /**
@@ -223,28 +326,39 @@ class Table extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->limit);
 
-        // Status summary by group
-        $statusSummary = PropertyLead::query()
+        // Project × status counts, keyed by group then real (canonical) status.
+        $statusSummary = [];
+        PropertyLead::query()
             ->when(session('branch_id'), fn ($q) => $q->where('branch_id', session('branch_id')))
             ->select('property_group_id', 'status', DB::raw('count(*) as total'))
             ->groupBy('property_group_id', 'status')
             ->get()
-            ->groupBy('property_group_id');
+            ->each(function ($row) use (&$statusSummary): void {
+                $status = LeadPipeline::canonical($row->status);
+                $statusSummary[$row->property_group_id][$status] = ($statusSummary[$row->property_group_id][$status] ?? 0) + (int) $row->total;
+            });
+
+        $groups = PropertyGroup::orderBy('name')->pluck('name', 'id')->toArray();
+        $users = LeadOptions::assignees();
+        $countries = Country::whereIn('id', PropertyLead::query()->whereNotNull('country_id')->distinct()->select('country_id'))
+            ->orderBy('name')->pluck('name', 'id')->toArray();
 
         return view('livewire.property.property-lead.table', [
             'list' => $list,
             'statuses' => leadStatuses(),
+            'stages' => LeadPipeline::stages(),
+            'stageCounts' => $this->stageCounts(),
+            'activeFilters' => $this->activeFilters($users, $groups, $countries),
             'sources' => leadSources(),
             'types' => leadTypes(),
             'locations' => propertyLeadLocations(),
-            'groups' => PropertyGroup::orderBy('name')->pluck('name', 'id')->toArray(),
-            'users' => LeadOptions::assignees(),
+            'groups' => $groups,
+            'users' => $users,
             'statusSummary' => $statusSummary,
             'columns' => collect(ColumnVisibility::current())->filter()->map(fn ($visible, $column) => ColumnVisibility::definitions()[$column]['label'])->all(),
             'subSources' => $this->subOptions(LeadOptions::SUB_SOURCES, 'source', 'sub_source', $this->filterSource),
             'subStatuses' => $this->subOptions(LeadOptions::SUB_STATUSES, 'status', 'sub_status', $this->filterStatus),
-            'countries' => Country::whereIn('id', PropertyLead::query()->whereNotNull('country_id')->distinct()->select('country_id'))
-                ->orderBy('name')->pluck('name', 'id')->toArray(),
+            'countries' => $countries,
         ]);
     }
 }

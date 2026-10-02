@@ -1,9 +1,53 @@
 <div>
-    <form wire:submit="save">
+    @php
+        $status = \App\Enums\RentOut\RentOutStatus::tryFrom($rent_outs['status'] ?? '');
+        $isBooking = $type === 'Booking';
+        $isCancelled = ($rent_outs['status'] ?? '') === 'cancelled';
+        $canDecideBooking = isset($rent_outs['id']) && $isBooking && ($rent_outs['status'] ?? '') === 'booked' && !($rent_outs['submitted_by'] ?? null);
+        $recordLabel = $isBooking ? $config->bookingLabel : $config->singularLabel;
+        $summary = $this->summary;
+        $collectionMode = $rent_outs['collection_payment_mode'] ?? '';
+        $hasTerms = collect(['remark', 'cancellation_policy_en', 'cancellation_policy_ar', 'payment_terms_en', 'payment_terms_ar', 'payment_terms_extended_en', 'payment_terms_extended_ar'])->contains(fn ($key) => filled($rent_outs[$key] ?? null));
+        $currencyCode = base_currency()['code'] ?? null;
+        $downShare = $summary['total'] > 0 ? min(100, round($summary['down_payment'] / $summary['total'] * 100)) : 0;
+    @endphp
+    <x-rent-out.form.premium />
+
+    <form wire:submit="save" class="bkx">
+        {{-- Hero --}}
+        <div class="bk-card bk-hero">
+            <div class="ic"><i class="fa {{ $isBooking ? 'fa-bookmark' : 'fa-file-text' }}"></i></div>
+            <div style="min-width:0">
+                <h1>
+                    {{ $table_id ? 'Edit' : 'New' }} {{ $recordLabel }}
+                    @if ($table_id)
+                        <span class="no">#{{ $table_id }}</span>
+                    @endif
+                    @if ($status)
+                        <span class="bk-chip tone-{{ $status->color() }}"><i class="fa fa-circle"></i> {{ $status->label() }}</span>
+                    @endif
+                </h1>
+                <div class="sub">
+                    <span><i class="fa fa-key"></i>{{ $summary['property_number'] ? 'Unit ' . $summary['property_number'] . ($summary['building_name'] ? ' · ' . $summary['building_name'] : '') : 'No unit selected' }}</span>
+                    <span><i class="fa fa-user"></i>{{ $summary['customer_name'] ?? 'No customer selected' }}</span>
+                    @if (($rent_outs['start_date'] ?? '') && ($rent_outs['end_date'] ?? ''))
+                        <span><i class="fa fa-calendar"></i>{{ systemDate($rent_outs['start_date']) }} → {{ systemDate($rent_outs['end_date']) }}</span>
+                    @endif
+                </div>
+            </div>
+            @if ($table_id)
+                @can($isBooking ? $config->bookingViewPermission : $config->viewPermission)
+                    <div class="acts">
+                        <a class="bk-btn ghost" href="{{ route($isBooking ? $config->bookingViewRoute : $config->viewRoute, $table_id) }}"><i class="fa fa-eye"></i> View</a>
+                    </div>
+                @endcan
+            @endif
+        </div>
+
         @if ($errors->any())
-            <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
-                <i class="demo-pli-danger-2 fs-4 me-2"></i>
-                <ul class="mb-0 ps-3">
+            <div class="bk-errors" role="alert">
+                <i class="fa fa-exclamation-circle" style="margin-top:2px"></i>
+                <ul>
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -11,395 +55,292 @@
             </div>
         @endif
 
-        {{-- Section 1: Property & Customer Details --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex align-items-center">
-                    <i class="fa fa-building fs-5 me-2 text-primary"></i>
-                    <h5 class="mb-0 fw-bold">Property & Customer Details</h5>
-                </div>
-            </div>
-            <div class="card-body py-4">
-                <div class="row g-3">
-                    <div class="col-md-3" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="fa fa-map-marker text-primary me-1"></i>
-                            Group/Project</label>
-                        {{ html()->select('property_group_id', $preFilledDropDowns['group'] ?? [])->value($rent_outs['property_group_id'] ?? '')->class('select-property_group_id')->id('property_group_id')->placeholder('Select Group') }}
-                    </div>
-                    <div class="col-md-3" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="fa fa-building text-success me-1"></i>
-                            Building</label>
-                        {{ html()->select('property_building_id', $preFilledDropDowns['building'] ?? [])->value($rent_outs['property_building_id'] ?? '')->class('select-property_building_id')->id('property_building_id')->placeholder('Select Building')->attribute('data-group-select', '#property_group_id') }}
-                    </div>
-                    <div class="col-md-2" wire:ignore>
-                        <label class="form-label fw-semibold small"><i class="fa fa-home text-info me-1"></i>
-                            Type</label>
-                        {{ html()->select('property_type_id', $preFilledDropDowns['type'] ?? [])->value($rent_outs['property_type_id'] ?? '')->class('select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label fw-semibold small mb-0">
-                                <i class="fa fa-key text-warning me-1"></i>
-                                Property No/Unit *
-                            </label>
-                            <label class="form-check-label small text-muted d-flex align-items-center gap-1">
-                                <input type="checkbox" class="form-check-input form-check-input-sm"
-                                    wire:model.live="vacant_only" id="vacant_only">
-                                Vacant Only
+        <div class="bk-grid">
+            <div style="min-width:0">
+
+                {{-- 1 · Property & Customer --}}
+                <section class="bk-card bk-sec">
+                    <header>
+                        <span class="n">1</span>
+                        <h3>Property &amp; Customer</h3>
+                        <div class="aside">
+                            <label class="bk-tgl" for="vacant_only">
+                                <input type="checkbox" wire:model.live="vacant_only" id="vacant_only"><span class="k"></span>Vacant only
                             </label>
                         </div>
-                        <div wire:ignore>
-                            {{ html()->select('property_id', $preFilledDropDowns['property'] ?? [])->value($rent_outs['property_id'] ?? '')->class('select-property_id')->id('property_id')->required(true)->placeholder('Search Here')->attribute('data-building-select', '#property_building_id')->attribute('data-group-select', '#property_group_id')->attribute('data-type-select', '#property_type_id') }}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label fw-semibold small mb-0"><i class="fa fa-user text-danger me-1"></i>
-                                Customer *</label>
-                            <div class="d-flex gap-2">
-                                @if (isset($rent_outs['account_id']) && $rent_outs['account_id'])
-                                    <a href="#" class="btn btn-sm btn-outline-primary py-0 px-2 edit_customer"
-                                        title="Edit Customer">
-                                        <i class="fa fa-pencil"></i> Edit
-                                    </a>
-                                @endif
+                    </header>
+                    <div class="bd">
+                        <div class="bk-g">
+                            <div class="span2 bk-fld">
+                                <div class="bk-lbl"><span>Property / Unit<span class="req">*</span></span></div>
+                                <div wire:ignore>
+                                    {{ html()->select('property_id', $preFilledDropDowns['property'] ?? [])->value($rent_outs['property_id'] ?? '')->class('select-property_id')->id('property_id')->required(true)->placeholder('Search Here')->attribute('data-building-select', '#property_building_id')->attribute('data-group-select', '#property_group_id')->attribute('data-type-select', '#property_type_id') }}
+                                </div>
+                            </div>
+                            <div class="span2 bk-fld">
+                                <div class="bk-lbl">
+                                    <span>Customer<span class="req">*</span></span>
+                                    @if ($rent_outs['account_id'] ?? null)
+                                        <a href="#" class="bk-btn link edit_customer" title="Edit Customer"><i class="fa fa-pencil"></i> Edit</a>
+                                    @endif
+                                </div>
+                                <div wire:ignore>
+                                    {{ html()->select('account_id', $preFilledDropDowns['account'] ?? [])->value($rent_outs['account_id'] ?? '')->class('select-customer_id')->id('account_id')->placeholder('Search Customer Name') }}
+                                </div>
+                            </div>
+                            <div class="bk-fld" wire:ignore>
+                                <div class="bk-lbl">Group / Project</div>
+                                {{ html()->select('property_group_id', $preFilledDropDowns['group'] ?? [])->value($rent_outs['property_group_id'] ?? '')->class('select-property_group_id')->id('property_group_id')->placeholder('Select Group') }}
+                            </div>
+                            <div class="bk-fld" wire:ignore>
+                                <div class="bk-lbl">Building</div>
+                                {{ html()->select('property_building_id', $preFilledDropDowns['building'] ?? [])->value($rent_outs['property_building_id'] ?? '')->class('select-property_building_id')->id('property_building_id')->placeholder('Select Building')->attribute('data-group-select', '#property_group_id') }}
+                            </div>
+                            <div class="bk-fld" wire:ignore>
+                                <div class="bk-lbl">Type</div>
+                                {{ html()->select('property_type_id', $preFilledDropDowns['type'] ?? [])->value($rent_outs['property_type_id'] ?? '')->class('select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
+                            </div>
+                            <div class="bk-fld" wire:ignore>
+                                <div class="bk-lbl">Salesman</div>
+                                {{ html()->select('salesman_id', $preFilledDropDowns['salesman'] ?? [])->value($rent_outs['salesman_id'] ?? '')->class('select-employee_id-list')->id('salesman_id')->placeholder('Select Employee') }}
                             </div>
                         </div>
-                        <div wire:ignore>
-                            {{ html()->select('account_id', $preFilledDropDowns['account'] ?? [])->value($rent_outs['account_id'] ?? '')->class('select-customer_id')->id('account_id')->placeholder('Search Customer Name') }}
-                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </section>
 
-        {{-- Section 2: Details (Rent/Sale) --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex align-items-center">
-                    <i class="fa fa-money fs-5 me-2 {{ $config->isRental ? 'text-warning' : 'text-success' }}"></i>
-                    <h5 class="mb-0 fw-bold">{{ $config->detailsLabel }}</h5>
-                </div>
-            </div>
-            <div class="card-body py-4">
-                {{-- Period --}}
-                <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-                    <i class="fa fa-calendar text-primary me-2"></i>
-                    <h6 class="mb-0 fw-semibold text-muted">{{ $config->periodLabel }}</h6>
-                </div>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-calendar-o text-primary me-1"></i>
-                            Start Date *</label>
-                        <input type="date" class="form-control" wire:model.live="rent_outs.start_date">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small">
-                            <i class="fa fa-calendar text-danger me-1"></i> End Date *</label>
-                        <input type="date" class="form-control" wire:model.live="rent_outs.end_date">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i class="fa fa-clock-o text-info me-1"></i>
-                            Duration</label>
-                        <div class="bg-light rounded-3 p-3 d-flex align-items-center gap-3">
-                            @if ($days > 30)
-                                <div class="d-flex align-items-center">
-                                    <span class="text-muted small me-2">Month(s):</span>
-                                    <span class="badge bg-primary px-3 py-2 fs-6">{{ $months }}</span>
+                {{-- 2 · Rent / Sale details --}}
+                <section class="bk-card bk-sec">
+                    <header>
+                        <span class="n">2</span>
+                        <h3>{{ $config->detailsLabel }}</h3>
+                        <div class="aside">
+                            <span class="bk-chip">
+                                @if ($days > 30)
+                                    {{ $months }} {{ Str::plural('month', $months) }} ·
+                                @endif
+                                {{ $days }} {{ Str::plural('day', $days) }}
+                            </span>
+                        </div>
+                    </header>
+                    <div class="bd">
+                        <div class="bk-g">
+                            <div>
+                                <div class="bk-lbl"><span>Start date<span class="req">*</span></span></div>
+                                <input type="date" class="ctl" wire:model.live="rent_outs.start_date">
+                            </div>
+                            <div>
+                                <div class="bk-lbl"><span>End date<span class="req">*</span></span></div>
+                                <input type="date" class="ctl" wire:model.live="rent_outs.end_date">
+                            </div>
+                            <div>
+                                <div class="bk-lbl">{{ $config->unitPriceLabel }}</div>
+                                <div class="{{ $currencyCode ? 'bk-pre' : '' }}">@if ($currencyCode)<span>{{ $currencyCode }}</span>@endif<input type="number" class="ctl" wire:model.lazy="rent_outs.rent" step="0.01"></div>
+                            </div>
+                            <div>
+                                <div class="bk-lbl">No. of terms</div>
+                                <input type="number" class="ctl" wire:model.lazy="rent_outs.no_of_terms">
+                            </div>
+                            <div class="spanall">
+                                <div class="bk-lbl">Payment frequency</div>
+                                <div class="bk-pills">
+                                    @foreach (['Monthly', 'Quarterly', 'Half Yearly', 'Yearly', 'One Time'] as $frequency)
+                                        <button type="button" class="bk-pill {{ ($rent_outs['payment_frequency'] ?? '') === $frequency ? 'on' : '' }}"
+                                            wire:click="$set('rent_outs.payment_frequency', '{{ $frequency }}')">{{ $frequency }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @if ($config->isRental)
+                                <div>
+                                    <div class="bk-lbl"><span>Booking type<span class="req">*</span></span></div>
+                                    <select class="ctl" wire:model="rent_outs.booking_type">
+                                        <option value="Long Term">Long Term</option>
+                                        <option value="Short Term">Short Term</option>
+                                        <option value="Commercial">Commercial</option>
+                                    </select>
+                                </div>
+                                <div class="span3">
+                                    <div class="bk-lbl"><span>Included amenities <span class="bk-note">tap to toggle</span></span></div>
+                                    <div class="bk-pills">
+                                        @foreach (['include_electricity_water' => ['fa-bolt', 'Elec & Water'], 'include_ac' => ['fa-asterisk', 'AC'], 'include_wifi' => ['fa-wifi', 'WiFi']] as $amenityKey => [$amenityIcon, $amenityLabel])
+                                            @php($isIncluded = ($rent_outs[$amenityKey] ?? 'Included') === 'Included')
+                                            <button type="button" class="bk-pill {{ $isIncluded ? 'on' : 'off' }}"
+                                                title="{{ $amenityLabel }}: {{ $isIncluded ? 'Included' : 'Excluded' }}"
+                                                wire:click="$set('rent_outs.{{ $amenityKey }}', '{{ $isIncluded ? 'Excluded' : 'Included' }}')">
+                                                <i class="fa {{ $amenityIcon }}"></i> {{ $amenityLabel }}
+                                            </button>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @endif
-                            <div class="d-flex align-items-center">
-                                <span class="text-muted small me-2">Day(s):</span>
-                                <span class="badge bg-info px-3 py-2 fs-6">{{ $days }}</span>
-                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                {{-- Payment Information --}}
-                <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-                    <i class="fa fa-money text-success me-2"></i>
-                    <h6 class="mb-0 fw-semibold text-muted">Payment Information</h6>
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-list-ol text-info me-1"></i> No of
-                            Terms</label>
-                        <input type="number" class="form-control" wire:model.lazy="rent_outs.no_of_terms">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-repeat text-primary me-1"></i>
-                            Payment Frequency</label>
-                        <select class="form-select" wire:model="rent_outs.payment_frequency">
-                            <option value="Monthly">Monthly</option>
-                            <option value="Quarterly">Quarterly</option>
-                            <option value="Half Yearly">Half Yearly</option>
-                            <option value="Yearly">Yearly</option>
-                            <option value="One Time">One Time</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-money text-warning me-1"></i>
-                            {{ $config->unitPriceLabel }}</label>
-                        <input type="number" class="form-control" wire:model.lazy="rent_outs.rent" step="0.01">
-                    </div>
-                    @if ($config->isRental)
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-calculator text-success me-1"></i>
-                                Total Amount</label>
-                            <div
-                                class="bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 p-3 text-center">
-                                <span
-                                    class="fs-4 fw-bold text-success">{{ number_format($rent_outs['total'] ?? 0, 2) }}</span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Section 3: Additional Details --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex align-items-center">
-                    <i class="fa fa-sliders fs-5 me-2 text-info"></i>
-                    <h5 class="mb-0 fw-bold">Additional Details</h5>
-                </div>
-            </div>
-            <div class="card-body py-4">
-                <div class="row g-3">
-                    <div class="col-md-{{ $config->isRental ? '3' : '4' }}" wire:ignore>
-                        <label class="form-label fw-semibold small">
-                            <i class="fa fa-user text-primary me-1"></i>
-                            Salesman
-                        </label>
-                        {{ html()->select('salesman_id', $preFilledDropDowns['salesman'] ?? [])->value($rent_outs['salesman_id'] ?? '')->class('select-employee_id-list')->id('salesman_id')->placeholder('Select Employee') }}
-                    </div>
-                    @if ($config->isRental)
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-bookmark text-warning me-1"></i>
-                                Booking Type *</label>
-                            <select class="form-select" wire:model="rent_outs.booking_type">
-                                <option value="Long Term">Long Term</option>
-                                <option value="Short Term">Short Term</option>
-                                <option value="Commercial">Commercial</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-check-circle text-success me-1"></i> Included Amenities</label>
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-sm">
-                                        <span
-                                            class="input-group-text bg-warning bg-opacity-10 border-warning border-opacity-25"><i
-                                                class="fa fa-bolt text-warning"></i></span>
-                                        <select class="form-select" wire:model="rent_outs.include_electricity_water">
-                                            <option value="Included">Elec & Water: Incl.</option>
-                                            <option value="Excluded">Elec & Water: Excl.</option>
-                                        </select>
-                                    </div>
+                {{-- 3 · Down payment & collection --}}
+                <section class="bk-card bk-sec">
+                    <header>
+                        <span class="n">3</span>
+                        <h3>{{ $config->isLease ? 'Down Payment & Collection' : 'Monthly Collection' }}</h3>
+                    </header>
+                    <div class="bd">
+                        @if ($config->isLease)
+                            <div class="bk-sub">Down payment</div>
+                            <div class="bk-g">
+                                <div>
+                                    <div class="bk-lbl">Amount</div>
+                                    <div class="{{ $currencyCode ? 'bk-pre' : '' }}">@if ($currencyCode)<span>{{ $currencyCode }}</span>@endif<input type="number" class="ctl" wire:model.blur="rent_outs.down_payment" step="0.01"></div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-sm">
-                                        <span
-                                            class="input-group-text bg-info bg-opacity-10 border-info border-opacity-25"><i
-                                                class="fa fa-asterisk text-info"></i></span>
-                                        <select class="form-select" wire:model="rent_outs.include_ac">
-                                            <option value="Included">AC: Included</option>
-                                            <option value="Excluded">AC: Excluded</option>
-                                        </select>
-                                    </div>
+                                <div class="bk-fld" wire:ignore>
+                                    <div class="bk-lbl">Payment method</div>
+                                    <select id="down_payment_payment_method_id" class="select-payment_method_id-list">
+                                        <option value="">Select...</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="input-group input-group-sm">
-                                        <span
-                                            class="input-group-text bg-success bg-opacity-10 border-success border-opacity-25"><i
-                                                class="fa fa-wifi text-success"></i></span>
-                                        <select class="form-select" wire:model="rent_outs.include_wifi">
-                                            <option value="Included">WiFi: Included</option>
-                                            <option value="Excluded">WiFi: Excluded</option>
-                                        </select>
-                                    </div>
+                                <div class="span2">
+                                    <div class="bk-lbl">Remarks</div>
+                                    <input type="text" class="ctl" wire:model="rent_outs.down_payment_remarks" placeholder="Reference, cheque no., notes…">
                                 </div>
                             </div>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="row g-3 mt-3">
-                    <div class="col-md-12">
-                        <label class="form-label fw-semibold small"><i class="fa fa-comment text-muted me-1"></i>
-                            Remark</label>
-                        <textarea class="form-control" wire:model="rent_outs.remark" rows="3"
-                            placeholder="Add any additional notes or remarks here..."></textarea>
-                    </div>
-                </div>
-
-                {{-- Policies & Terms --}}
-                <div class="d-flex align-items-center mt-4 mb-3 pb-2 border-bottom">
-                    <i class="fa fa-file-text text-primary me-2"></i>
-                    <h6 class="mb-0 fw-semibold text-muted">Policies & Terms</h6>
-                </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i class="fa fa-file-text text-primary me-1"></i>
-                            Cancellation Policy (English)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.cancellation_policy_en"
-                            placeholder="Enter cancellation policy in English...">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i class="fa fa-file-text text-success me-1"></i>
-                            Cancellation Policy (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.cancellation_policy_ar"
-                            dir="rtl" placeholder="...أدخل قاعدة الإلغاء باللغة العربية">
-                    </div>
-                </div>
-                <div class="row g-3 mt-1">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i
-                                class="fa fa-credit-card text-primary me-1"></i> Payment Terms (English)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_en"
-                            placeholder="Enter payment terms in English...">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i
-                                class="fa fa-credit-card text-success me-1"></i> Payment Terms (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_ar"
-                            dir="rtl" placeholder="...أدخل شروط الدفع باللغة العربية">
-                    </div>
-                </div>
-                <div class="row g-3 mt-1">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i
-                                class="fa fa-credit-card text-warning me-1"></i> Payment Terms Extended
-                            (English)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_extended_en"
-                            placeholder="Enter extended payment terms in English...">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold small"><i class="fa fa-credit-card text-info me-1"></i>
-                            Payment Terms Extended (Arabic)</label>
-                        <input type="text" class="form-control" wire:model="rent_outs.payment_terms_extended_ar"
-                            dir="rtl" placeholder="...أدخل شروط الدفع الممتدة باللغة العربية">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Section 4: Down Payment (Sale/Lease only) --}}
-        @if ($config->isLease)
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex align-items-center">
-                        <i class="fa fa-money fs-5 me-2 text-success"></i>
-                        <h5 class="mb-0 fw-bold">Down Payment</h5>
-                    </div>
-                </div>
-                <div class="card-body py-4">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i class="fa fa-money text-success me-1"></i>
-                                Amount</label>
-                            <input type="number" class="form-control" wire:model="rent_outs.down_payment"
-                                step="0.01">
-                        </div>
-                        <div class="col-md-3" wire:ignore>
-                            <label class="form-label fw-semibold small">
-                                <i class="fa fa-credit-card text-primary me-1"></i> Payment Method</label>
-                            <select id="down_payment_payment_method_id" class="select-payment_method_id-list">
-                                <option value="">Select...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small"><i class="fa fa-comment text-muted me-1"></i>
-                                Remarks</label>
-                            <input type="text" class="form-control" wire:model="rent_outs.down_payment_remarks"
-                                placeholder="Add payment details or notes here...">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        {{-- Section 5: Monthly Collection --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom">
-                <div class="d-flex align-items-center">
-                    <i class="fa fa-calendar fs-5 me-2 text-primary"></i>
-                    <h5 class="mb-0 fw-bold">Monthly Collection</h5>
-                </div>
-            </div>
-            <div class="card-body py-4">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small"><i class="fa fa-calendar text-warning me-1"></i>
-                            Collection Starting Day</label>
-                        <input type="number" class="form-control" wire:model="rent_outs.collection_starting_day"
-                            min="1" max="28">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold small">
-                            <i class="fa fa-money text-success me-1"></i>
-                            Payment Mode *</label>
-                        {{ html()->select('collection_payment_mode', paymentModeOptions())->value($rent_outs['collection_payment_mode'] ?? '')->class('form-select')->attribute('wire:model.live', 'rent_outs.collection_payment_mode')->required(true)->placeholder('Select...') }}
-                    </div>
-                    @if (($rent_outs['collection_payment_mode'] ?? '') && $rent_outs['collection_payment_mode'] !== 'cash')
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i
-                                    class="fa fa-university text-primary me-1"></i> Bank Name</label>
-                            <input type="text" class="form-control" wire:model="rent_outs.collection_bank_name"
-                                placeholder="Enter bank name">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small"><i class="fa fa-file-text text-info me-1"></i>
-                                Cheque Starting No</label>
-                            <input type="text" class="form-control" wire:model="rent_outs.collection_cheque_no"
-                                placeholder="Enter cheque number">
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- Form Actions --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <a href="{{ $type === 'Booking' ? route($config->bookingRoute) : route($config->indexRoute) }}"
-                        class="btn btn-light d-inline-flex align-items-center gap-2">
-                        <i class="fa fa-arrow-left"></i>
-                        <span>Back to List</span>
-                    </a>
-                    <div class="d-flex gap-2">
-                        @if (isset($rent_outs['id']) &&
-                                $type === 'Booking' &&
-                                ($rent_outs['status'] ?? '') === 'booked' &&
-                                !($rent_outs['submitted_by'] ?? null))
-                            <button type="button" wire:click="confirm"
-                                class="btn btn-primary d-inline-flex align-items-center gap-2">
-                                <i class="fa fa-check-circle"></i>
-                                <span>Confirm</span>
-                            </button>
-                            <button type="button" wire:click="cancel"
-                                wire:confirm="Are you sure you want to cancel this booking?"
-                                class="btn btn-danger d-inline-flex align-items-center gap-2">
-                                <i class="fa fa-times-circle"></i>
-                                <span>Cancel Booking</span>
-                            </button>
+                            <div class="bk-sub">Monthly collection</div>
                         @endif
-                        @if (!isset($rent_outs['status']) || ($rent_outs['status'] ?? '') !== 'cancelled')
-                            <button type="submit"
-                                class="btn btn-success d-inline-flex align-items-center gap-2 px-4">
-                                <i class="fa fa-check"></i>
-                                <span>Save</span>
-                            </button>
-                        @endif
+                        <div class="bk-g">
+                            <div>
+                                <div class="bk-lbl">Starts on day</div>
+                                <div class="bk-pre"><span>Day</span><input type="number" class="ctl" wire:model="rent_outs.collection_starting_day" min="1" max="28"></div>
+                            </div>
+                            <div class="span3">
+                                <div class="bk-lbl"><span>Payment mode<span class="req">*</span></span></div>
+                                <div class="bk-pills">
+                                    @foreach (paymentModeOptions() as $modeValue => $modeLabel)
+                                        <button type="button" class="bk-pill {{ $collectionMode === $modeValue ? 'on' : '' }}"
+                                            wire:click="$set('rent_outs.collection_payment_mode', '{{ $modeValue }}')">
+                                            <i class="fa {{ ['cash' => 'fa-money', 'cheque' => 'fa-file-text-o', 'pos' => 'fa-credit-card', 'bank_transfer' => 'fa-university'][$modeValue] ?? 'fa-circle-o' }}"></i> {{ $modeLabel }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @if ($collectionMode && $collectionMode !== 'cash')
+                                <div class="span2">
+                                    <div class="bk-lbl">Bank name</div>
+                                    <input type="text" class="ctl" wire:model="rent_outs.collection_bank_name" placeholder="Enter bank name">
+                                </div>
+                                <div class="span2">
+                                    <div class="bk-lbl">Cheque starting no.</div>
+                                    <input type="text" class="ctl" wire:model="rent_outs.collection_cheque_no" placeholder="Enter cheque number">
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                </div>
+                </section>
+
+                {{-- 4 · Remarks & terms --}}
+                <section class="bk-card bk-sec is-collapsible" x-data="{ open: @js($hasTerms), lang: 'en' }" :class="{ 'closed': !open }">
+                    <header @click="open = !open">
+                        <span class="n">4</span>
+                        <h3>Remarks &amp; Terms</h3>
+                        <span class="meta">Cancellation · Payment · Extended — EN / AR</span>
+                        <i class="fa fa-angle-down chev"></i>
+                    </header>
+                    <div class="bd" x-show="open" x-cloak>
+                        <div class="bk-lbl">Remark</div>
+                        <textarea class="ctl" wire:model="rent_outs.remark" rows="2" placeholder="Add any additional notes or remarks here..."></textarea>
+
+                        <div class="bk-sub" style="margin-top:14px">Policies &amp; terms</div>
+                        <div style="display:flex;justify-content:flex-end;margin:-4px 0 8px">
+                            <div class="bk-seg">
+                                <button type="button" :class="{ 'on': lang === 'en' }" @click="lang = 'en'">English</button>
+                                <button type="button" :class="{ 'on': lang === 'ar' }" @click="lang = 'ar'">العربية</button>
+                            </div>
+                        </div>
+                        <div class="bk-g c3" x-show="lang === 'en'">
+                            <div>
+                                <div class="bk-lbl">Cancellation policy</div>
+                                <input type="text" class="ctl" wire:model="rent_outs.cancellation_policy_en" placeholder="Enter cancellation policy in English...">
+                            </div>
+                            <div>
+                                <div class="bk-lbl">Payment terms</div>
+                                <input type="text" class="ctl" wire:model="rent_outs.payment_terms_en" placeholder="Enter payment terms in English...">
+                            </div>
+                            <div>
+                                <div class="bk-lbl">Payment terms — extended</div>
+                                <input type="text" class="ctl" wire:model="rent_outs.payment_terms_extended_en" placeholder="Enter extended payment terms in English...">
+                            </div>
+                        </div>
+                        <div class="bk-g c3" dir="rtl" x-show="lang === 'ar'" x-cloak>
+                            <div>
+                                <div class="bk-lbl">سياسة الإلغاء</div>
+                                <input type="text" class="ctl" dir="rtl" wire:model="rent_outs.cancellation_policy_ar" placeholder="...أدخل قاعدة الإلغاء باللغة العربية">
+                            </div>
+                            <div>
+                                <div class="bk-lbl">شروط الدفع</div>
+                                <input type="text" class="ctl" dir="rtl" wire:model="rent_outs.payment_terms_ar" placeholder="...أدخل شروط الدفع باللغة العربية">
+                            </div>
+                            <div>
+                                <div class="bk-lbl">شروط الدفع الممتدة</div>
+                                <input type="text" class="ctl" dir="rtl" wire:model="rent_outs.payment_terms_extended_ar" placeholder="...أدخل شروط الدفع الممتدة باللغة العربية">
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
+
+            {{-- Summary rail --}}
+            <aside class="bk-rail">
+                <div class="bk-card bk-unit">
+                    <div class="top">
+                        <div class="badge-no {{ $summary['property_number'] ? '' : 'empty' }}">
+                            @if ($summary['property_number'])
+                                {{ $summary['property_number'] }}
+                            @else
+                                <i class="fa fa-key"></i>
+                            @endif
+                        </div>
+                        <div style="min-width:0">
+                            <div class="t">{{ $summary['building_name'] ?? 'Select a unit' }}</div>
+                            <div class="s">{{ collect([$summary['group_name'], $summary['property_status']])->filter()->implode(' · ') ?: 'Property details appear here' }}</div>
+                        </div>
+                    </div>
+                    <div class="bk-kv"><span>Customer</span><b class="{{ $summary['customer_name'] ? '' : 'none' }}">{{ $summary['customer_name'] ?? '—' }}</b></div>
+                    <div class="bk-kv"><span>Period</span><b>{{ $days > 30 ? $months . ' mo · ' : '' }}{{ $days }} d</b></div>
+                    <div class="bk-kv"><span>Salesman</span><b class="{{ $summary['salesman_name'] ? '' : 'none' }}">{{ $summary['salesman_name'] ?? '—' }}</b></div>
+                </div>
+
+                <div class="bk-card bk-money">
+                    <div class="bk-eyebrow">Contract total</div>
+                    <div class="big">{{ currency($summary['total']) }}<small>{{ $currencyCode }}</small></div>
+                    @if ($config->isLease)
+                        <div class="bk-bar"><i style="width: {{ $downShare }}%"></i></div>
+                        <div class="bk-legend">
+                            <span><i style="background:var(--bs-success)"></i>Down {{ $downShare }}%</span>
+                            <span><i style="background:var(--acc)"></i>{{ Str::plural(Str::title($config->defaultTermLabel)) }}</span>
+                        </div>
+                        <div class="bk-kv"><span>Down payment</span><b>{{ currency($summary['down_payment']) }}</b></div>
+                        <div class="bk-kv"><span>Balance</span><b>{{ currency($summary['balance']) }}</b></div>
+                    @endif
+                    <div class="bk-kv"><span>{{ $config->unitPriceLabel }} · {{ $rent_outs['payment_frequency'] ?? '' }}</span><b>{{ currency($summary['per_term']) }}</b></div>
+                    <div class="bk-kv"><span>Terms</span><b>{{ (int) ($rent_outs['no_of_terms'] ?? 0) }}</b></div>
+                </div>
+
+                <div class="bk-card bk-actions">
+                    @if (!$isCancelled)
+                        <button type="submit" class="bk-btn ok" wire:loading.attr="disabled" wire:target="save">
+                            <i class="fa fa-check" wire:loading.remove wire:target="save"></i>
+                            <i class="fa fa-spinner fa-spin" wire:loading wire:target="save"></i>
+                            {{ $table_id ? 'Save changes' : 'Save' }}
+                        </button>
+                    @endif
+                    @if ($canDecideBooking)
+                        <div class="row2">
+                            <button type="button" wire:click="confirm" class="bk-btn pri"><i class="fa fa-check-circle"></i> Confirm</button>
+                            <button type="button" wire:click="cancel" wire:confirm="Are you sure you want to cancel this booking?" class="bk-btn dng"><i class="fa fa-times-circle"></i> Cancel</button>
+                        </div>
+                    @endif
+                    <a href="{{ $isBooking ? route($config->bookingRoute) : route($config->indexRoute) }}" class="bk-btn ghost"><i class="fa fa-arrow-left"></i> Back to list</a>
+                    @if ($canDecideBooking)
+                        <div class="note">Confirm turns this booking into a {{ $config->singularLabel }}</div>
+                    @endif
+                </div>
+            </aside>
         </div>
     </form>
 

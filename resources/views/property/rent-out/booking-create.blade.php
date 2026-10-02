@@ -11,10 +11,6 @@
                         {{ $config->bookingLabel }}</li>
                 </ol>
             </nav>
-            <h1 class="page-title mb-0 mt-2">{{ $id ? 'Edit' : 'New' }} {{ $config->bookingLabel }}</h1>
-            <p class="lead">
-                {{ $id ? 'Update ' . strtolower($config->bookingLabel) . ' details' : 'Create a new ' . strtolower($config->bookingLabel) }}
-            </p>
         </div>
     </div>
     <div class="content__boxed">

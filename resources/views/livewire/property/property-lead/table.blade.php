@@ -1,108 +1,206 @@
-<div>
-    {{-- Filters Card --}}
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-header bg-white py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <h5 class="mb-0 fw-semibold text-dark">
-                <i class="fa fa-filter text-primary me-2"></i>Filter Options
-            </h5>
-            <button type="button" wire:click="clearFilters" class="btn btn-sm btn-light shadow-sm">
-                <i class="fa fa-times me-1"></i> Clear filters
+@use('App\Support\LeadPipeline')
+@php
+    $stageTone = function (?string $status) use ($stages): string {
+        $stage = LeadPipeline::stageOf(LeadPipeline::canonical($status));
+
+        return $stage ? $stages[$stage]['tone'] : 'danger';
+    };
+    $initials = fn (?string $name): string => collect(preg_split('/\s+/', trim((string) $name)))
+        ->reject(fn ($word) => $word === '' || preg_match('/^al-?$/i', $word))
+        ->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))
+        ->take(2)->implode('');
+    $typeTones = ['Sales' => 'primary', 'Rentout' => 'info', 'Corporate' => 'warning'];
+    $activeStage = $filterStage ?: (filled($filterStatus) ? LeadPipeline::stageOf(LeadPipeline::canonical($filterStatus)) : null);
+    $dateLabels = ['created' => 'Created', 'reassigned' => 'Reassigned', 'updated' => 'Updated'];
+@endphp
+<div class="llx">
+    <x-property.lead-list.premium />
+
+    {{-- Pipeline stage strip: each stage filters the list; counts follow every filter but stage/status. --}}
+    <div class="llx-card strip" style="--stages: {{ count($stages) }}">
+        @foreach($stages as $key => $stage)
+            @php $count = $stageCounts['stages'][$key] ?? 0; @endphp
+            <button type="button" wire:click="pickStage('{{ $key }}')" class="stg tn t-{{ $stage['tone'] }} {{ $activeStage === $key ? 'on' : '' }}" aria-pressed="{{ $activeStage === $key ? 'true' : 'false' }}">
+                <div class="h"><i class="fa {{ $stage['icon'] }}"></i>{{ $stage['name'] }}</div>
+                <div class="v">{{ number_format($count) }}<small>{{ $stageCounts['total'] ? round($count / $stageCounts['total'] * 100) : 0 }}%</small></div>
             </button>
+        @endforeach
+        <div class="stg tot">
+            <div class="h"><i class="fa fa-users"></i>All leads</div>
+            <div class="v" title="{{ $dateLabels[$dateField] ?? 'Created' }} {{ $fromDate ? systemDate($fromDate) : '…' }} – {{ $toDate ? systemDate($toDate) : '…' }}">{{ number_format($stageCounts['total']) }}<small>in range</small></div>
+            <div class="mixbar">
+                @foreach($stages as $key => $stage)
+                    @if($stageCounts['stages'][$key] ?? 0)
+                        <span class="tn t-{{ $stage['tone'] }}" style="flex: {{ $stageCounts['stages'][$key] }}" title="{{ $stage['name'] }}: {{ $stageCounts['stages'][$key] }}"></span>
+                    @endif
+                @endforeach
+            </div>
         </div>
-        <div class="card-body py-3">
-            <div class="row g-3">
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Date</label>
-                    <select wire:model.live="dateField" class="form-select form-select-sm shadow-sm" aria-label="Date to filter on">
-                        <option value="created">Created</option>
-                        <option value="reassigned">Reassigned</option>
-                        <option value="updated">Updated</option>
-                    </select>
+    </div>
+
+    {{-- Project × status summary, collapsed by default --}}
+    @if($groups && $statuses)
+        <div class="llx-card">
+            <details class="mxd" wire:ignore.self>
+                <summary><i class="fa fa-th"></i> Project × status <span class="hint">· click a count to filter</span><i class="fa fa-chevron-down"></i></summary>
+                <div class="mx-wrap">
+                    <table class="mx">
+                        <thead>
+                            <tr class="sg">
+                                <th class="pj blank"></th>
+                                @foreach($stages as $stage)
+                                    @if(count($stage['statuses']))
+                                        <th class="tn t-{{ $stage['tone'] }}" colspan="{{ count($stage['statuses']) }}"><i class="fa {{ $stage['icon'] }}"></i> {{ $stage['name'] }}</th>
+                                    @endif
+                                @endforeach
+                                <th class="blank"></th>
+                            </tr>
+                            <tr>
+                                <th class="pj">Project / group</th>
+                                @foreach($stages as $stage)
+                                    @foreach($stage['statuses'] as $status)
+                                        <th title="{{ $status }}">{{ \Illuminate\Support\Str::limit($status, 12) }}</th>
+                                    @endforeach
+                                @endforeach
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($groups as $groupId => $groupName)
+                                @php $row = $statusSummary[$groupId] ?? []; @endphp
+                                <tr>
+                                    <th class="pj" title="{{ $groupName }}">{{ \Illuminate\Support\Str::limit($groupName, 34) }}</th>
+                                    @foreach($stages as $stage)
+                                        @foreach($stage['statuses'] as $status)
+                                            @php $count = $row[$status] ?? 0; @endphp
+                                            <td>
+                                                @if($count > 0)
+                                                    <a href="#" wire:click.prevent="pickMatrixCell(@js($status), {{ $groupId }})" class="c tn t-{{ $stage['tone'] }}" style="background: color-mix(in srgb, var(--tn) {{ (int) round(8 + min($count / 20, 1) * 30) }}%, transparent)">{{ $count }}</a>
+                                                @else
+                                                    <span class="c z">·</span>
+                                                @endif
+                                            </td>
+                                        @endforeach
+                                    @endforeach
+                                    <td class="tt">{{ array_sum($row) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">{{ ['created' => 'Captured', 'reassigned' => 'Reassigned', 'updated' => 'Updated'][$dateField] ?? 'Captured' }} from</label>
-                    <input type="date" wire:model.live="fromDate" class="form-control form-control-sm shadow-sm">
+            </details>
+        </div>
+    @endif
+
+    {{-- List --}}
+    <div class="llx-card">
+        <div class="fbar">
+            <div class="search">
+                <i class="fa fa-search"></i>
+                <input type="text" wire:model.live.debounce.400ms="search" class="ctl" placeholder="Search name, mobile, email, company…" aria-label="Search leads" autofocus x-init="$nextTick(() => $el.focus())">
+            </div>
+            <button type="button" class="btn-l" data-bs-toggle="offcanvas" data-bs-target="#leadColumnVisibility" aria-controls="leadColumnVisibility" title="Columns">
+                <i class="fa fa-columns"></i>
+            </button>
+            @can('property lead.download')
+                <button type="button" class="btn-l ok" wire:click="export" wire:loading.attr="disabled" wire:target="export" title="Export to Excel">
+                    <i class="fa fa-file-excel-o" wire:loading.remove wire:target="export"></i>
+                    <i class="fa fa-spinner fa-spin" wire:loading wire:target="export"></i>
+                    <span class="hide-sm">Export</span>
+                </button>
+            @endcan
+        </div>
+
+        <div class="fgrid">
+            <div class="row g-2">
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="dgrp">
+                        <select wire:model.live="dateField" class="ctl" aria-label="Date to filter on">
+                            @foreach($dateLabels as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <input type="date" wire:model.live="fromDate" class="ctl" aria-label="From date">
+                        <input type="date" wire:model.live="toDate" class="ctl" aria-label="To date">
+                    </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">To</label>
-                    <input type="date" wire:model.live="toDate" class="form-control form-control-sm shadow-sm">
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Type</label>
-                    <select wire:model.live="filterType" class="form-select form-select-sm shadow-sm">
-                        <option value="">All Types</option>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select wire:model.live="filterType" class="ctl" aria-label="Type">
+                        <option value="">All types</option>
                         @foreach($types as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Assigned To</label>
-                    <select id="leadFilterAssigned" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterAssignedTo" aria-label="Assigned To">
-                        <option value="">All Salesman</option>
-                        @foreach($users as $id => $name)
-                            <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-6 col-md-3 col-xl-3">
+                    <div class="fts" wire:ignore>
+                        <select id="leadFilterAssigned" class="lead-filter-ts" data-property="filterAssignedTo" aria-label="Assigned To">
+                            <option value="">Any assignee</option>
+                            @foreach($users as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $filterAssignedTo === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Source</label>
-                    <select id="leadFilterSource" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterSource" aria-label="Source">
-                        <option value="">All Sources</option>
-                        @foreach($sources as $key => $label)
-                            <option value="{{ $key }}" @selected((string) $filterSource === (string) $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="fts" wire:ignore>
+                        <select id="leadFilterGroup" class="lead-filter-ts" data-property="filterPropertyGroupId" aria-label="Project / Group">
+                            <option value="">Any project / group</option>
+                            @foreach($groups as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $filterPropertyGroupId === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Sub Source</label>
-                    <select wire:model.live="filterSubSource" wire:key="filterSubSource-{{ md5((string) $filterSource) }}" class="form-select form-select-sm shadow-sm" aria-label="Sub Source" @disabled(! count($subSources))>
-                        <option value="">{{ count($subSources) ? 'All Sub Sources' : 'None recorded' }}</option>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="fts" wire:ignore>
+                        <select id="leadFilterSource" class="lead-filter-ts" data-property="filterSource" aria-label="Source">
+                            <option value="">Any source</option>
+                            @foreach($sources as $key => $label)
+                                <option value="{{ $key }}" @selected((string) $filterSource === (string) $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select wire:model.live="filterSubSource" wire:key="filterSubSource-{{ md5((string) $filterSource) }}" class="ctl" aria-label="Sub Source" @disabled(! count($subSources))>
+                        <option value="">{{ count($subSources) ? 'Any sub source' : 'No sub sources' }}</option>
                         @foreach($subSources as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Status</label>
-                    <select id="leadFilterStatus" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterStatus" aria-label="Status">
-                        <option value="">All Statuses</option>
-                        @foreach($statuses as $key => $label)
-                            <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="fts" wire:ignore>
+                        <select id="leadFilterStatus" class="lead-filter-ts" data-property="filterStatus" aria-label="Status">
+                            <option value="">Any status</option>
+                            @foreach($statuses as $key => $label)
+                                <option value="{{ $key }}" @selected((string) $filterStatus === (string) $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Sub Status</label>
-                    <select wire:model.live="filterSubStatus" wire:key="filterSubStatus-{{ md5((string) $filterStatus) }}" class="form-select form-select-sm shadow-sm" aria-label="Sub Status" @disabled(! count($subStatuses))>
-                        <option value="">{{ count($subStatuses) ? 'All Sub Statuses' : 'None recorded' }}</option>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select wire:model.live="filterSubStatus" wire:key="filterSubStatus-{{ md5((string) $filterStatus) }}" class="ctl" aria-label="Sub Status" @disabled(! count($subStatuses))>
+                        <option value="">{{ count($subStatuses) ? 'Any sub status' : 'No sub statuses' }}</option>
                         @foreach($subStatuses as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Project / Group</label>
-                    <select id="leadFilterGroup" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterPropertyGroupId" aria-label="Project / Group">
-                        <option value="">All Projects</option>
-                        @foreach($groups as $id => $name)
-                            <option value="{{ $id }}" @selected((string) $filterPropertyGroupId === (string) $id)>{{ $name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="fts" wire:ignore>
+                        <select id="leadFilterCountry" class="lead-filter-ts" data-property="filterCountryId" aria-label="Nationality">
+                            <option value="">Any nationality</option>
+                            @foreach($countries as $id => $name)
+                                <option value="{{ $id }}" @selected((string) $filterCountryId === (string) $id)>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3 col-sm-6" wire:ignore>
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Nationality</label>
-                    <select id="leadFilterCountry" class="lead-filter-ts form-select form-select-sm shadow-sm" data-property="filterCountryId" aria-label="Nationality">
-                        <option value="">All Nationalities</option>
-                        @foreach($countries as $id => $name)
-                            <option value="{{ $id }}" @selected((string) $filterCountryId === (string) $id)>{{ $name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <label class="form-label small fw-semibold text-muted text-uppercase mb-1">Location</label>
-                    <select wire:model.live="filterLocation" class="form-select form-select-sm shadow-sm">
-                        <option value="">All Locations</option>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select wire:model.live="filterLocation" class="ctl" aria-label="Location">
+                        <option value="">Any location</option>
                         @foreach($locations as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
@@ -110,413 +208,199 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- Status Summary --}}
-    @if($groups && $statuses)
-        <div class="card shadow-sm border-0 mb-3 lead-status-summary">
-            <div class="card-header bg-white py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <h5 class="mb-0 fw-semibold text-dark">
-                    <i class="fa fa-bar-chart text-primary me-2"></i>Lead Status Summary
-                </h5>
-                <span class="small text-muted d-none d-md-inline">
-                    <i class="fa fa-info-circle me-1"></i>Scroll horizontally to view all statuses
+        <div class="chips">
+            @foreach($activeFilters as $property => $chip)
+                <span class="chip">{{ $chip['label'] }} <b title="{{ $chip['value'] }}">{{ $chip['value'] }}</b>
+                    <button type="button" wire:click="$set('{{ $property }}', '')" aria-label="Remove {{ $chip['label'] }} filter"><i class="fa fa-times"></i></button>
                 </span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0 lead-status-summary-table">
-                        <thead>
-                            <tr>
-                                <th class="ps-3 fw-semibold text-uppercase small text-muted sticky-col">Project / Group</th>
-                                @foreach($statuses as $key => $label)
-                                    <th class="text-center fw-semibold">
-                                        <div class="status-head {{ leadStatusBadgeClass($key) }}" title="{{ $label }}">
-                                            {{ $label }}
+            @endforeach
+            @if($activeFilters)
+                <button type="button" class="clr" wire:click="clearFilters">Clear all</button>
+            @endif
+            <span class="count">
+                @if($list->total())
+                    Showing <b>{{ $list->firstItem() }}–{{ $list->lastItem() }}</b> of {{ number_format($list->total()) }}
+                @else
+                    No matches
+                @endif
+            </span>
+        </div>
+
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th class="ck"><input type="checkbox" wire:model.live="selectAll" class="cb" id="selectAllCheckbox" aria-label="Select all"></th>
+                        <th>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Lead" />
+                            <span class="fnt mx-1">·</span>
+                            <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="#" />
+                        </th>
+                        @foreach($columns as $column => $label)
+                            @continue($column === 'mobile' || ($column === 'sub_status' && isset($columns['status'])) || ($column === 'sub_source' && isset($columns['source'])))
+                            @if(in_array($column, ['created_at', 'reassigned_at', 'updated_at'], true))
+                                <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" :field="$column" :label="$label" /></th>
+                            @else
+                                <th>{{ $label }}</th>
+                            @endif
+                        @endforeach
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($list as $item)
+                        @php $tone = $stageTone($item->status); @endphp
+                        <tr wire:key="lead-row-{{ $item->id }}" @class(['sel' => in_array((string) $item->id, array_map('strval', $selected), true)])>
+                            <td class="ck"><input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" class="cb" id="ck{{ $item->id }}" aria-label="Select lead {{ $item->id }}"></td>
+                            <td>
+                                <div class="who">
+                                    <span class="av tn t-{{ $tone }}">{{ $initials($item->name) }}</span>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('property::lead::edit', $item->id) }}" class="nm">{{ $item->name }}</a><span class="lid">#{{ $item->id }}</span>
+                                        <div class="sub">
+                                            @if($item->company_name)<i class="fa fa-building-o"></i> {{ $item->company_name }}@endif
+                                            @if($item->company_name && isset($columns['mobile']) && $item->mobile) · @endif
+                                            @if(isset($columns['mobile']) && $item->mobile)<i class="fa fa-phone"></i> {{ $item->mobile }}@endif
                                         </div>
-                                    </th>
-                                @endforeach
-                                <th class="text-center fw-semibold text-uppercase small text-muted pe-3">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($groups as $groupId => $groupName)
-                                @php
-                                    $row = $statusSummary[$groupId] ?? collect();
-                                    $rowTotal = $row->sum('total');
-                                @endphp
-                                <tr>
-                                    <th class="ps-3 sticky-col">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="group-dot"></span>
-                                            <span class="fw-semibold text-dark text-truncate" style="max-width: 220px;" title="{{ $groupName }}">{{ $groupName }}</span>
-                                        </div>
-                                    </th>
-                                    @foreach($statuses as $key => $label)
-                                        @php $count = optional($row->firstWhere('status', $key))->total ?? 0; @endphp
-                                        <td class="text-center">
-                                            @if($count > 0)
-                                                <a href="#" wire:click.prevent="$set('filterStatus','{{ $key }}'); $set('filterPropertyGroupId','{{ $groupId }}')"
-                                                    class="text-decoration-none">
-                                                    <span class="badge status-count {{ leadStatusBadgeClass($key) }}">{{ $count }}</span>
-                                                </a>
+                                    </div>
+                                </div>
+                            </td>
+                            @foreach($columns as $column => $label)
+                                @switch($column)
+                                    @case('email')
+                                        <td class="nw">{!! $item->email ? e($item->email) : '<span class="fnt">—</span>' !!}</td>
+                                        @break
+                                    @case('property_group')
+                                        <td class="nw">{!! $item->group ? e($item->group->name) : '<span class="fnt">—</span>' !!}</td>
+                                        @break
+                                    @case('property_type')
+                                        <td class="nw">{!! $item->propertyType ? e($item->propertyType->name) : '<span class="fnt">—</span>' !!}</td>
+                                        @break
+                                    @case('budget')
+                                        <td class="nw num">
+                                            @if(filled($item->budget_min) || filled($item->budget_max))
+                                                {{ filled($item->budget_min) ? currency($item->budget_min) : '…' }} – {{ filled($item->budget_max) ? currency($item->budget_max) : '…' }}
+                                                @if($item->rental_type)<div class="sub">{{ $item->rental_type }}</div>@endif
                                             @else
-                                                <span class="text-muted small">—</span>
+                                                <span class="fnt">—</span>
                                             @endif
                                         </td>
-                                    @endforeach
-                                    <td class="text-center pe-3">
-                                        <span class="badge bg-dark-subtle text-dark fw-bold">{{ $rowTotal }}</span>
-                                    </td>
-                                </tr>
+                                        @break
+                                    @case('source')
+                                        <td class="nw">
+                                            {{ $item->source ?: '—' }}
+                                            @if(isset($columns['sub_source']) && $item->sub_source)<div class="sub">{{ $item->sub_source }}</div>@endif
+                                        </td>
+                                        @break
+                                    @case('sub_source')
+                                        @if(! isset($columns['source']))
+                                            <td class="nw"><span class="sub">{{ $item->sub_source ?: '—' }}</span></td>
+                                        @endif
+                                        @break
+                                    @case('type')
+                                        <td><span class="pill tn t-{{ $typeTones[$item->type] ?? 'secondary' }}">{{ leadTypes()[$item->type] ?? $item->type }}</span></td>
+                                        @break
+                                    @case('status')
+                                        <td>
+                                            <span class="pill tn t-{{ $tone }}"><span class="d"></span>{{ $item->status ?: 'New Lead' }}</span>
+                                            @if(isset($columns['sub_status']) && $item->sub_status)<div class="sub mt-1">{{ $item->sub_status }}</div>@endif
+                                        </td>
+                                        @break
+                                    @case('sub_status')
+                                        @if(! isset($columns['status']))
+                                            <td><span class="sub">{{ $item->sub_status ?: '—' }}</span></td>
+                                        @endif
+                                        @break
+                                    @case('assigned_to')
+                                        <td>
+                                            @if($item->assignee)
+                                                <span class="owner"><span class="av sm tn t-secondary">{{ $initials($item->assignee->name) }}</span>{{ $item->assignee->name }}</span>
+                                            @else
+                                                <span class="fnt nw"><i class="fa fa-user-times"></i> Unassigned</span>
+                                            @endif
+                                        </td>
+                                        @break
+                                    @case('nationality')
+                                        <td class="nw">{{ $item->country->name ?? ($item->nationality ?: '—') }}</td>
+                                        @break
+                                    @case('meeting')
+                                        <td class="nw">
+                                            @if($item->meeting_date)
+                                                <div @class(['today' => $item->meeting_date->isToday()])><i class="fa fa-clock-o"></i> {{ $item->meeting_date->isToday() ? 'Today' : systemDate($item->meeting_date) }}</div>
+                                                <div class="sub">{{ $item->meeting_time ? systemTime($item->meeting_time) : $item->meeting_date->diffForHumans() }}</div>
+                                            @else
+                                                <span class="fnt">—</span>
+                                            @endif
+                                        </td>
+                                        @break
+                                    @case('location')
+                                        <td class="nw">{{ $item->location ?: '—' }}</td>
+                                        @break
+                                    @case('created_at')
+                                    @case('reassigned_at')
+                                    @case('updated_at')
+                                        @php $at = $item->{$column}; @endphp
+                                        <td class="nw">
+                                            @if($at)
+                                                <div title="{{ systemDateTime($at) }}">{{ systemDate($at) }}</div>
+                                                <div class="sub">{{ $at->diffForHumans() }}</div>
+                                            @else
+                                                <span class="fnt">—</span>
+                                            @endif
+                                        </td>
+                                        @break
+                                @endswitch
                             @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Main Table Card --}}
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-light py-3">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center">
-                    @can('property lead.create')
-                        <a href="{{ route('property::lead::create') }}" class="btn btn-primary d-flex align-items-center shadow-sm">
-                            <i class="fa fa-plus-circle me-2"></i> New Lead
-                        </a>
-                    @endcan
-                    @can('property lead.delete')
-                        <button class="btn btn-danger btn-sm d-flex align-items-center" wire:click="delete()"
-                            wire:confirm="Are you sure you want to delete the selected leads?">
-                            <i class="fa fa-trash me-md-1 fs-5"></i>
-                            <span class="d-none d-md-inline">Delete</span>
-                        </button>
-                    @endcan
-                    @can('property lead.download')
-                        <button type="button" class="btn btn-success btn-sm d-flex align-items-center shadow-sm"
-                            wire:click="export" wire:loading.attr="disabled" wire:target="export">
-                            <span wire:loading.remove wire:target="export">
-                                <i class="fa fa-file-excel-o me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Export</span>
-                            </span>
-                            <span wire:loading wire:target="export">
-                                <i class="fa fa-spinner fa-spin me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Exporting...</span>
-                            </span>
-                        </button>
-                    @endcan
-                    <a href="{{ route('property::lead::calendar') }}" class="btn btn-light btn-sm shadow-sm">
-                        <i class="fa fa-calendar me-1"></i> Calendar
-                    </a>
-                    <button type="button" class="btn btn-sm btn-outline-primary shadow-sm" data-bs-toggle="offcanvas" data-bs-target="#leadColumnVisibility" aria-controls="leadColumnVisibility">
-                        <i class="fa fa-columns me-1"></i> Columns
-                    </button>
-                </div>
-                <div class="col-md-6">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-auto">
-                            <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
-                        </div>
-                        <div class="col-auto">
-                            <select wire:model.live="limit" class="form-select form-select-sm border-secondary-subtle shadow-sm">
-                                <option value="15">15</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="250">250</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-secondary-subtle">
-                                    <i class="fa fa-search"></i>
-                                </span>
-                                <input type="text" wire:model.live.debounce.400ms="search" placeholder="Search by name, mobile, email, company..." class="form-control form-control-sm border-secondary-subtle shadow-sm">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle border-bottom mb-0 table-sm">
-                    <thead class="bg-light text-muted">
-                        <tr class="text-capitalize small">
-                            <th class="fw-semibold py-2 ps-3">
-                                <div class="form-check ms-1">
-                                    <input type="checkbox" wire:model.live="selectAll" class="form-check-input shadow-sm" id="selectAllCheckbox">
-                                    <label class="form-check-label" for="selectAllCheckbox">
-                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
-                                    </label>
-                                </div>
-                            </th>
-                            <th class="fw-semibold"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /></th>
-                            @foreach($columns as $column => $label)
-                                @if(in_array($column, ['created_at', 'reassigned_at', 'updated_at'], true))
-                                    <th class="fw-semibold"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" :field="$column" :label="$label" /></th>
-                                @else
-                                    <th class="fw-semibold {{ in_array($column, ['type', 'status'], true) ? 'text-center' : '' }}">{{ $label }}</th>
-                                @endif
-                            @endforeach
-                            <th class="fw-semibold text-center">Actions</th>
+                            <td class="text-end">
+                                <a href="{{ route('property::lead::edit', $item->id) }}" class="go" title="Open lead"><i class="fa fa-angle-right fs-5"></i></a>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($list as $item)
-                            <tr>
-                                <td class="ps-3">
-                                    <div class="form-check ms-1">
-                                        <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" class="form-check-input shadow-sm" id="ck{{ $item->id }}">
-                                        <label class="form-check-label" for="ck{{ $item->id }}">{{ $item->id }}</label>
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="{{ route('property::lead::edit', $item->id) }}" class="text-decoration-none fw-semibold text-dark">
-                                        <i class="fa fa-user text-primary opacity-75 me-1"></i>{{ $item->name }}
-                                    </a>
-                                    @if($item->company_name)
-                                        <div class="small text-muted"><i class="fa fa-building me-1"></i>{{ $item->company_name }}</div>
-                                    @endif
-                                </td>
-                                @foreach($columns as $column => $label)
-                                    @switch($column)
-                                        @case('mobile')
-                                            <td>
-                                                @if($item->mobile)
-                                                    <i class="fa fa-phone text-success me-1 small"></i>{{ $item->mobile }}
-                                                @else
-                                                    <span class="text-muted small">-</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                        @case('email')
-                                            <td>
-                                                @if($item->email)
-                                                    <i class="fa fa-envelope text-info me-1 small"></i>{{ $item->email }}
-                                                @else
-                                                    <span class="text-muted small">-</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                        @case('property_group')
-                                            <td><span class="badge bg-light text-dark border">{{ $item->group->name ?? '-' }}</span></td>
-                                            @break
-                                        @case('property_type')
-                                            <td><span class="small">{{ $item->propertyType->name ?? '-' }}</span></td>
-                                            @break
-                                        @case('budget')
-                                            <td class="text-nowrap small">
-                                                @if(filled($item->budget_min) || filled($item->budget_max))
-                                                    {{ filled($item->budget_min) ? currency($item->budget_min) : '…' }} – {{ filled($item->budget_max) ? currency($item->budget_max) : '…' }}
-                                                    @if($item->rental_type)<div class="text-muted">{{ $item->rental_type }}</div>@endif
-                                                @else
-                                                    <span class="text-muted">-</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                        @case('source')
-                                            <td><span class="small">{{ $item->source ?? '-' }}</span></td>
-                                            @break
-                                        @case('sub_source')
-                                            <td><span class="small">{{ $item->sub_source ?: '-' }}</span></td>
-                                            @break
-                                        @case('type')
-                                            <td class="text-center">
-                                                <span class="badge {{ match ($item->type) { 'Sales' => 'bg-primary-subtle text-primary', 'Corporate' => 'bg-warning-subtle text-warning', default => 'bg-info-subtle text-info' } }}">{{ $item->type === 'Rentout' ? 'Rent out' : $item->type }}</span>
-                                            </td>
-                                            @break
-                                        @case('status')
-                                            <td class="text-center"><span class="badge {{ leadStatusBadgeClass($item->status) }}">{{ $item->status ?? 'New Lead' }}</span></td>
-                                            @break
-                                        @case('sub_status')
-                                            <td><span class="small">{{ $item->sub_status ?: '-' }}</span></td>
-                                            @break
-                                        @case('assigned_to')
-                                            <td>
-                                                @if($item->assignee)
-                                                    <i class="fa fa-user text-muted me-1 small"></i>{{ $item->assignee->name }}
-                                                @else
-                                                    <span class="text-muted small">Unassigned</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                        @case('nationality')
-                                            <td><span class="small">{{ $item->country->name ?? ($item->nationality ?: '-') }}</span></td>
-                                            @break
-                                        @case('meeting')
-                                            <td class="text-nowrap">
-                                                @if($item->meeting_date)
-                                                    <div class="small fw-semibold text-dark">{{ systemDate($item->meeting_date) }}</div>
-                                                    <div class="small text-muted">{{ $item->meeting_time ? systemTime($item->meeting_time) : $item->meeting_date->diffForHumans() }}</div>
-                                                @else
-                                                    <span class="text-muted">—</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                        @case('location')
-                                            <td><span class="small">{{ $item->location ?: '-' }}</span></td>
-                                            @break
-                                        @case('created_at')
-                                        @case('reassigned_at')
-                                        @case('updated_at')
-                                            @php $at = $item->{$column}; @endphp
-                                            <td class="text-nowrap">
-                                                @if($at)
-                                                    <div class="small fw-semibold text-dark" title="{{ systemDateTime($at) }}">{{ systemDate($at) }}</div>
-                                                    <div class="small text-muted">{{ $at->diffForHumans() }}</div>
-                                                @else
-                                                    <span class="text-muted">—</span>
-                                                @endif
-                                            </td>
-                                            @break
-                                    @endswitch
-                                @endforeach
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        @can('property lead.view')
-                                            <a href="{{ route('property::lead::edit', $item->id) }}" class="btn btn-light btn-sm" data-bs-toggle="tooltip" title="Open lead">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ count($columns) + 3 }}" class="text-center py-5 text-muted">
-                                    <i class="fa fa-users fa-3x mb-3 d-block opacity-25"></i>
-                                    No leads found matching your filters.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-3 border-top">
-                {{ $list->links() }}
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="{{ count($columns) + 3 }}" class="empty">
+                                <i class="fa fa-users"></i>
+                                No leads match these filters.
+                                @if($activeFilters)
+                                    <div class="mt-2"><button type="button" class="btn-l" wire:click="clearFilters"><i class="fa fa-times"></i> Clear filters</button></div>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pager">
+            <span class="rows">Rows
+                <select wire:model.live="limit" class="ctl" aria-label="Rows per page">
+                    <option value="15">15</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="250">250</option>
+                </select>
+            </span>
+            {{ $list->links() }}
         </div>
     </div>
 
-    @push('styles')
-        <style>
-            /* === Lead Status Summary === */
-            .lead-status-summary-table {
-                font-size: .78rem;
-                border-collapse: separate;
-                border-spacing: 0;
-            }
-            .lead-status-summary-table thead th {
-                background: #f8f9fb;
-                border-bottom: 1px solid #e9ecef;
-                border-top: 1px solid #e9ecef;
-                padding: .65rem .5rem;
-                white-space: nowrap;
-                vertical-align: middle;
-            }
-            .lead-status-summary-table tbody th,
-            .lead-status-summary-table tbody td {
-                padding: .6rem .5rem;
-                border-bottom: 1px solid #f1f3f5;
-                vertical-align: middle;
-            }
-            .lead-status-summary-table tbody tr:last-child th,
-            .lead-status-summary-table tbody tr:last-child td {
-                border-bottom: 0;
-            }
-            .lead-status-summary-table tbody tr:hover {
-                background: #fafbff;
-            }
-            /* Sticky first column on small screens so row label stays visible */
-            .lead-status-summary-table .sticky-col {
-                position: sticky;
-                left: 0;
-                background: #fff;
-                z-index: 2;
-                min-width: 200px;
-                box-shadow: 2px 0 4px -2px rgba(0,0,0,.04);
-            }
-            .lead-status-summary-table thead .sticky-col {
-                background: #f8f9fb;
-                z-index: 3;
-            }
-            /* Status pill header */
-            .lead-status-summary-table .status-head {
-                display: inline-block;
-                padding: .3rem .6rem;
-                border-radius: 999px;
-                font-size: .68rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: .3px;
-                white-space: nowrap;
-            }
-            /* Clickable count badge */
-            .lead-status-summary-table .status-count {
-                min-width: 34px;
-                padding: .35rem .55rem;
-                font-weight: 700;
-                font-size: .72rem;
-                border-radius: 6px;
-                transition: transform .15s ease;
-                display: inline-block;
-            }
-            .lead-status-summary-table .status-count:hover {
-                transform: scale(1.08);
-            }
-            .lead-status-summary-table .group-dot {
-                width: 8px; height: 8px; border-radius: 50%;
-                background: var(--bs-primary);
-                display: inline-block;
-                flex-shrink: 0;
-            }
-            @media (max-width: 768px) {
-                .lead-status-summary-table .sticky-col { min-width: 150px; }
-                .lead-status-summary-table .status-head { font-size: .62rem; padding: .25rem .5rem; }
-            }
-            /* === TomSelect filters ===
-               The wrapper carries form-select form-select-sm (TomSelect copies the
-               select's classes onto it), so the theme paints it exactly like the
-               native selects beside it; the inner control is made transparent. */
-            .ts-wrapper.lead-filter-ts { display: flex; align-items: center; overflow: visible; }
-            .ts-wrapper.lead-filter-ts .ts-control,
-            .ts-wrapper.lead-filter-ts.input-active .ts-control {
-                padding: 0;
-                min-height: 0;
-                border: 0;
-                border-radius: 0;
-                background: transparent;
-                box-shadow: none;
-                color: inherit;
-                font-size: inherit;
-                line-height: inherit;
-                flex-wrap: nowrap;
-                overflow: hidden;
-            }
-            .ts-wrapper.lead-filter-ts .ts-control > input { padding: 0; margin: 0; min-height: 0; font-size: inherit; line-height: inherit; color: inherit; }
-            .ts-wrapper.lead-filter-ts .ts-control > .item { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .ts-wrapper.lead-filter-ts.single .ts-control::after { display: none; }
-            .ts-wrapper.lead-filter-ts.focus { border-color: rgba(var(--bs-primary-rgb), .5); box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15); }
-            /* The list inherits the field's own colours, so it matches in light and dark. */
-            .ts-wrapper.lead-filter-ts .ts-dropdown {
-                width: 100%;
-                margin-top: .25rem;
-                font-size: inherit;
-                color: inherit;
-                background-color: inherit;
-                border: var(--bs-border-width) solid;
-                border-color: inherit;
-                border-radius: var(--bs-border-radius);
-                box-shadow: var(--bs-box-shadow);
-            }
-            .ts-wrapper.lead-filter-ts .ts-dropdown .ts-dropdown-content { max-height: 280px; }
-            .ts-wrapper.lead-filter-ts .ts-dropdown .option { padding: .45rem .95rem; }
-            .ts-wrapper.lead-filter-ts .ts-dropdown .active { color: inherit; background-color: var(--bs-tertiary-bg); }
-            .ts-wrapper.lead-filter-ts .ts-dropdown .selected { font-weight: 600; }
-        </style>
-    @endpush
+    {{-- Floating bulk bar: appears while leads are ticked --}}
+    @if(count($selected))
+        <div class="fbulk" role="toolbar" aria-label="Selected leads">
+            <span class="n">{{ count($selected) }}</span>
+            <span class="lbl">{{ \Illuminate\Support\Str::plural('lead', count($selected)) }} selected</span>
+            <span class="sep"></span>
+            <button type="button" wire:click="clearSelection"><i class="fa fa-times"></i> Clear</button>
+            @can('property lead.delete')
+                <button type="button" class="del" wire:click="delete" wire:loading.attr="disabled" wire:target="delete"
+                    wire:confirm="Delete the {{ count($selected) }} selected {{ \Illuminate\Support\Str::plural('lead', count($selected)) }}?">
+                    <i class="fa fa-trash" wire:loading.remove wire:target="delete"></i>
+                    <i class="fa fa-spinner fa-spin" wire:loading wire:target="delete"></i>
+                    Delete
+                </button>
+            @endcan
+        </div>
+    @endif
 
     @push('scripts')
         <script>
