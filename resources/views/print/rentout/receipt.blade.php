@@ -160,7 +160,7 @@
             <tr>
                 <td class="f-label">Category</td>
                 <td class="f-colon">:</td>
-                <td class="f-value">{{ $payment->category }}</td>
+                <td class="f-value">{{ $payment->category_label }}</td>
             </tr>
             @endif
             @if ($payment->credit > 0 || $payment->debit > 0)

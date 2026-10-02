@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -88,6 +90,27 @@ class RentOutTransaction extends Model implements AuditableContracts
         }
 
         return $modelClass::find($this->model_id);
+    }
+
+    /**
+     * Human-readable category for printed documents: charge rows store the
+     * income account id, everything else stores a slug like "management_fee".
+     */
+    protected function categoryLabel(): Attribute
+    {
+        return Attribute::get(function (): string {
+            $category = (string) $this->category;
+
+            if ($category === '') {
+                return '';
+            }
+
+            if (is_numeric($category)) {
+                return Account::query()->whereKey((int) $category)->value('name') ?? $category;
+            }
+
+            return Str::headline($category);
+        });
     }
 
     public function scopeReceipts($query)

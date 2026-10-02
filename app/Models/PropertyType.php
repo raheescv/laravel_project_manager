@@ -38,6 +38,12 @@ class PropertyType extends Model implements AuditableContracts
                 $q->where('name', 'like', "%{$value}%");
             });
         });
+        $self = $self->when($request['property_group_id'] ?? '', function ($query, $value) {
+            return $query->whereHas('properties', fn ($q) => $q->where('property_group_id', $value));
+        });
+        $self = $self->when($request['property_building_id'] ?? $request['building_id'] ?? '', function ($query, $value) {
+            return $query->whereHas('properties', fn ($q) => $q->where('property_building_id', $value));
+        });
         $self = $self->limit(10);
         $self = $self->get(['name', 'id'])->toArray();
         $return['items'] = $self;

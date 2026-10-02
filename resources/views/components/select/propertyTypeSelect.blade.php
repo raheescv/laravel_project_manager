@@ -1,4 +1,15 @@
 <script type="text/javascript">
+    function propertyTypeParams(input, query) {
+        var params = 'query=' + encodeURIComponent(query);
+        var scopes = { 'group-select': 'property_group_id', 'building-select': 'property_building_id' };
+        Object.keys(scopes).forEach(function(attr) {
+            var selector = $(input).data(attr);
+            var el = selector ? document.querySelector(selector) : null;
+            var value = el ? (el.tomselect ? el.tomselect.getValue() : el.value) : '';
+            if (value) params += '&' + scopes[attr] + '=' + encodeURIComponent(value);
+        });
+        return params;
+    }
     $('.select-property_type_id-list').each(function() {
         if (this.tomselect) {
             return;
@@ -11,7 +22,7 @@
             searchField: ['name', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('property::type::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query))
+                fetch(url + '?' + propertyTypeParams(this.input, query))
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');
                         return response.json();
@@ -46,7 +57,7 @@
             searchField: ['name', 'id'],
             load: function(query, callback) {
                 var url = "{{ route('property::type::list') }}";
-                fetch(url + '?query=' + encodeURIComponent(query)).then(response => response.json()).then(json => {
+                fetch(url + '?' + propertyTypeParams(this.input, query)).then(response => response.json()).then(json => {
                     callback(json.items);
                 }).catch(() => {
                     callback();

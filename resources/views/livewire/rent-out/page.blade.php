@@ -98,7 +98,7 @@
                             </div>
                             <div class="bk-fld" wire:ignore>
                                 <div class="bk-lbl">Type</div>
-                                {{ html()->select('property_type_id', $preFilledDropDowns['type'] ?? [])->value($rent_outs['property_type_id'] ?? '')->class('select-property_type_id')->id('property_type_id')->placeholder('Select Type') }}
+                                {{ html()->select('property_type_id', $preFilledDropDowns['type'] ?? [])->value($rent_outs['property_type_id'] ?? '')->class('select-property_type_id')->id('property_type_id')->placeholder('Select Type')->attribute('data-group-select', '#property_group_id')->attribute('data-building-select', '#property_building_id') }}
                             </div>
                             <div class="bk-fld" wire:ignore>
                                 <div class="bk-lbl">Salesman</div>
@@ -365,18 +365,35 @@
                     }
                 }
 
-                // ── Cascade: Group → Building → Property, Type → Property ──
+                var isPrefilling = false;
+
+                function openNext(id) {
+                    var el = document.getElementById(id);
+                    if (isPrefilling || !el || !el.tomselect) return;
+                    setTimeout(function() {
+                        el.tomselect.focus();
+                        el.tomselect.open();
+                    }, 0);
+                }
+
+                // ── Cascade: Group → Building → Type → Property ──
                 $('#property_group_id').on('change', function() {
                     @this.set('rent_outs.property_group_id', $(this).val());
                     clearAndReload('property_building_id');
+                    clearAndReload('property_type_id');
                     clearAndReload('property_id');
                     @this.set('rent_outs.property_building_id', '');
+                    @this.set('rent_outs.property_type_id', '');
                     @this.set('rent_outs.property_id', '');
+                    if ($(this).val()) openNext('property_building_id');
                 });
                 $('#property_building_id').on('change', function() {
                     @this.set('rent_outs.property_building_id', $(this).val());
+                    clearAndReload('property_type_id');
                     clearAndReload('property_id');
+                    @this.set('rent_outs.property_type_id', '');
                     @this.set('rent_outs.property_id', '');
+                    if ($(this).val()) openNext('property_type_id');
                 });
                 $('#property_type_id').on('change', function() {
                     @this.set('rent_outs.property_type_id', $(this).val());
@@ -450,6 +467,7 @@
                 // Auto-populate selects on edit
                 Livewire.on('RentOutSelectValues', (params) => {
                     var data = params[0];
+                    isPrefilling = true;
                     if (data.property_group_id) {
                         var groupTs = document.querySelector('#property_group_id').tomselect;
                         if (groupTs && data.group_name) {
@@ -520,6 +538,7 @@
                             dpTs.addItem(data.down_payment_payment_method_id);
                         }
                     }
+                    isPrefilling = false;
                 });
 
                 // Auto-fill group/building/type when property is selected
