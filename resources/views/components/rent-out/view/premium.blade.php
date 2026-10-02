@@ -209,11 +209,13 @@
         .rvx .rvx-mgmt-tabbar > div{ gap:7px !important; }
 
         /* Tab pills — bordered + elevated so inactive tabs clearly read as buttons */
-        .rvx .mgmt-tab-btn{ background:var(--surface); border:1px solid var(--border); color:var(--text-2); padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:600; line-height:1; display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-sm); transition:transform .12s ease, background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
-        .rvx .mgmt-tab-btn i{ opacity:.7; }
-        .rvx .mgmt-tab-btn:hover{ border-color:var(--brand-400); color:var(--brand-700); background:rgba(var(--brand-rgb),.07); transform:translateY(-1px); }
+        .rvx .mgmt-tab-btn{ background:var(--surface); border:1px solid var(--border-strong); color:var(--text); padding:6px 12px; border-radius:8px; font-size:11.5px; font-weight:600; line-height:1; display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-sm); transition:transform .12s ease, background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+        .rvx .mgmt-tab-btn i{ color:var(--brand-600); }
+        [data-bs-theme="dark"] .rvx .mgmt-tab-btn i{ color:var(--brand-400); }
+        .rvx .mgmt-tab-btn:hover{ border-color:var(--brand-400); color:var(--brand-700); background:rgba(var(--brand-rgb),.09); transform:translateY(-1px); }
+        [data-bs-theme="dark"] .rvx .mgmt-tab-btn:hover{ color:#fff; background:rgba(var(--brand-rgb),.22); }
         .rvx .mgmt-tab-btn.active{ background:var(--brand) !important; border-color:var(--brand); color:#fff !important; box-shadow:0 7px 16px -7px rgba(var(--brand-rgb),.6); transform:translateY(-1px); }
-        .rvx .mgmt-tab-btn.active i{ opacity:1; }
+        .rvx .mgmt-tab-btn.active i{ color:#fff; }
 
         /* Tab content */
         .rvx .rvx-mgmt-content{ padding:15px !important; }

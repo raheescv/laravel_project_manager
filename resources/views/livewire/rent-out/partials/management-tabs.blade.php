@@ -29,9 +29,11 @@
     $tabSlugs = collect($tabs)->pluck('key', 'slug');
 @endphp
 <style>
-    .mgmt-tab-btn { font-size: .72rem; border-radius: .375rem; transition: all .15s ease; }
-    .mgmt-tab-btn.active { background-color: var(--bs-primary); color: #fff !important; box-shadow: 0 2px 6px rgba(var(--bs-primary-rgb), .25); }
-    .mgmt-tab-btn:not(.active):hover { background-color: var(--bs-primary-bg-subtle); color: var(--bs-primary-emphasis) !important; }
+    .mgmt-tab-btn { font-size: .72rem; border-radius: .375rem; transition: all .15s ease; background-color: var(--bs-body-bg); border: 1px solid var(--bs-border-color); color: var(--bs-emphasis-color); }
+    .mgmt-tab-btn i { color: var(--bs-primary); }
+    .mgmt-tab-btn.active { background-color: var(--bs-primary); border-color: var(--bs-primary); color: #fff !important; box-shadow: 0 2px 6px rgba(var(--bs-primary-rgb), .25); }
+    .mgmt-tab-btn.active i { color: #fff; }
+    .mgmt-tab-btn:not(.active):hover { background-color: var(--bs-primary-bg-subtle); border-color: var(--bs-primary-border-subtle); color: var(--bs-primary-text-emphasis) !important; }
 </style>
 <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden rvx-mgmt-card" x-data="{
         activeTab: 'PaymentTab',
@@ -59,8 +61,8 @@
             <div class="d-flex flex-wrap gap-1 px-2 py-2" role="tablist">
 
                 @foreach ($tabs as $tab)
-                    <button class="btn btn-sm border-0 fw-medium px-2 py-1 mgmt-tab-btn"
-                        :class="activeTab === '{{ $tab['key'] }}' ? 'active' : 'text-secondary'"
+                    <button class="btn btn-sm fw-medium px-2 py-1 mgmt-tab-btn"
+                        :class="{ 'active': activeTab === '{{ $tab['key'] }}' }"
                         @click="activeTab = '{{ $tab['key'] }}'"
                         type="button">
                         <i class="fa {{ $tab['icon'] }} me-1"></i>{{ $tab['label'] }}
