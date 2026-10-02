@@ -112,31 +112,33 @@
 @endphp
 
 
-<div x-data="{ tab: 'docs' }">
+<div class="rtx" x-data="{ tab: 'docs' }">
+    @include('livewire.settings.partials.rent-out-styles')
+
     <form wire:submit="save">
         <div class="card shadow-none border rounded-4">
             {{-- ============ SECTION TABS ============ --}}
-            <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 border-bottom px-3 pt-2">
-                <div class="nav nav-underline flex-nowrap overflow-x-auto gap-3" role="tablist" aria-label="Rent out settings sections">
+            <div class="rtx-head">
+                <div class="rtx-rail" role="tablist" aria-label="Rent out settings sections">
                     @foreach ($sections as $key => $section)
-                        @php $dotTone = $section['hasError'] ? 'danger' : ($section['ok'] ? 'success' : 'warning'); @endphp
-                        <button type="button" class="nav-link d-flex align-items-center gap-2 text-nowrap px-1 py-2" role="tab"
-                            :class="tab === '{{ $key }}' ? 'active' : 'text-body-secondary'" :aria-selected="tab === '{{ $key }}'" x-on:click="tab = '{{ $key }}'">
-                            <i class="fa fa-fw {{ $section['icon'] }}"></i>
-                            <span class="small fw-semibold">{{ $section['title'] }}</span>
-                            @if (! $section['ok'] || $section['hasError'])
-                                <span class="rounded-circle p-1 bg-{{ $dotTone }}"></span>
+                        <button type="button" class="rtx-tab" role="tab" :class="{ 'active': tab === '{{ $key }}' }" :aria-selected="tab === '{{ $key }}'"
+                            x-on:click="tab = '{{ $key }}'">
+                            <span class="rtx-tab-ic"><i class="fa fa-fw {{ $section['icon'] }}"></i></span>
+                            <span>{{ $section['title'] }}</span>
+                            @if ($section['hasError'])
+                                <span class="rtx-dot is-danger" title="Needs attention"></span>
+                            @elseif (! $section['ok'])
+                                <span class="rtx-dot is-warning" title="{{ $section['status'] }}"></span>
                             @endif
                         </button>
                     @endforeach
                 </div>
-                <div class="d-none d-md-flex align-items-center gap-2 pb-2 small text-body-secondary">
-                    <span>Setup</span>
-                    <div class="progress" style="width: 90px; height: 6px" role="progressbar" aria-label="Setup progress" aria-valuenow="{{ $sectionsPercent }}"
-                        aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar" style="width: {{ $sectionsPercent }}%"></div>
-                    </div>
-                    <span class="fw-semibold text-body">{{ $sectionsDone }}/{{ $sectionsTotal }}</span>
+                <div class="rtx-progress" role="progressbar" aria-label="Setup progress" aria-valuenow="{{ $sectionsPercent }}" aria-valuemin="0" aria-valuemax="100">
+                    <span class="rtx-ring" style="--p: {{ $sectionsPercent }}"><b>{{ $sectionsPercent }}%</b></span>
+                    <span>
+                        <strong>Setup {{ $sectionsDone }} / {{ $sectionsTotal }}</strong>
+                        sections configured
+                    </span>
                 </div>
             </div>
 
@@ -211,12 +213,14 @@
                             @php $declModel = "checklist_notes.{$typeKey}.declaration"; @endphp
                             <div class="card shadow-none border rounded-3" x-data="{ txt: @js($checklist_notes[$typeKey]['declaration'] ?? '') }"
                                 x-on:rich-text-input="if ($event.detail.model === @js($declModel)) txt = $event.detail.value">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
-                                    <span class="d-flex align-items-center gap-2 fw-semibold small">
-                                        <span class="d-inline-flex rounded-2 bg-primary-subtle text-primary p-2 lh-1"><i class="fa fa-fw {{ $group['icon'] }}"></i></span>
-                                        {{ $group['label'] }}
-                                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis">{{ $group['phase'] }}</span>
-                                    </span>
+                                <div class="rtx-group-head">
+                                    <span class="rtx-group-ic"><i class="fa fa-fw {{ $group['icon'] }}"></i></span>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="rtx-group-title">
+                                            {{ $group['label'] }}
+                                            <span class="rtx-pill is-primary">{{ $group['phase'] }}</span>
+                                        </div>
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" wire:click="resetChecklistNote('{{ $typeKey }}')">
                                         <i class="fa fa-undo me-1"></i>Reset
                                     </button>
@@ -290,12 +294,12 @@
                     <div class="vstack gap-3">
                         @foreach ($wordingGroups as $group)
                             <div class="card shadow-none border rounded-3">
-                                <div class="px-3 py-2 border-bottom">
-                                    <span class="d-flex align-items-center gap-2 fw-semibold small">
-                                        <span class="d-inline-flex rounded-2 bg-primary-subtle text-primary p-2 lh-1"><i class="fa fa-fw {{ $group['icon'] }}"></i></span>
-                                        {{ $group['title'] }}
-                                    </span>
-                                    <div class="small text-body-secondary mt-1">{{ $group['hint'] }}</div>
+                                <div class="rtx-group-head">
+                                    <span class="rtx-group-ic"><i class="fa fa-fw {{ $group['icon'] }}"></i></span>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <div class="rtx-group-title">{{ $group['title'] }}</div>
+                                        <div class="rtx-group-sub">{{ $group['hint'] }}</div>
+                                    </div>
                                 </div>
                                 <div class="p-3">
                                     <div class="row g-3">
@@ -423,7 +427,7 @@
                             <label class="d-flex align-items-center justify-content-between gap-3 border rounded-3 px-3 py-2 mb-3" for="reservation_bond_paper_mode"
                                 role="button">
                                 <span class="d-flex align-items-center gap-2 min-w-0">
-                                    <span class="d-inline-flex rounded-2 bg-primary-subtle text-primary p-2 lh-1"><i class="fa fa-fw fa-file-o"></i></span>
+                                    <span class="rtx-group-ic"><i class="fa fa-fw fa-file-o"></i></span>
                                     <span class="min-w-0">
                                         <span class="d-block fw-semibold small">Bond paper mode</span>
                                         <span class="d-block small text-body-secondary">Hide logos &amp; footer image during PDF generation, keep their space blank.</span>

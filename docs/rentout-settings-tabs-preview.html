@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rent Out Settings Tabs</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Poppins, sans-serif; background: #edf1f6; color: #373c43; padding: 24px 16px; }
+    body.dark { background: #1a1d24; color: #c9ced6; }
+    .bar { max-width: 1200px; margin: 0 auto 18px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .bar button { border: 1px solid #c9d1dc; background: #fff; border-radius: 8px; padding: 6px 12px; font: 500 13px Poppins; cursor: pointer; }
+    .bar button.on { background: #25476a; color: #fff; border-color: #25476a; }
+    body.dark .bar button { background: #262a33; color: #c9ced6; border-color: #3a404b; }
+    body.dark .bar button.on { background: #5b8fd6; color: #fff; }
+    .bar .note { font-size: 13px; opacity: .7; margin-inline-start: 8px; }
+
+    /* ---- host: mimics .stx tokens ---- */
+    .host {
+        --bs-primary: #25476a; --bs-component-bg: #fff; --bs-border-color: #dee2e6;
+        --bs-emphasis-color: #000; --bs-secondary-color: rgba(55,60,67,.75); --bs-tertiary-color: rgba(55,60,67,.5);
+        --rtx-acc: var(--bs-primary);
+        --rtx-acc-soft: color-mix(in srgb, var(--rtx-acc) 11%, transparent);
+        --rtx-acc-ink: color-mix(in srgb, var(--rtx-acc) 85%, var(--bs-emphasis-color));
+        --rtx-grad: linear-gradient(135deg, color-mix(in srgb, var(--rtx-acc) 80%, #fff), var(--rtx-acc) 45%, color-mix(in srgb, var(--rtx-acc) 70%, #000));
+        --rtx-glow: 0 10px 22px -12px color-mix(in srgb, var(--rtx-acc) 80%, transparent);
+        --rtx-surface: var(--bs-component-bg);
+        --rtx-track: color-mix(in srgb, var(--rtx-acc) 5%, color-mix(in srgb, var(--bs-emphasis-color) 4%, var(--rtx-surface)));
+        --rtx-line: var(--bs-border-color);
+        --rtx-line-soft: color-mix(in srgb, var(--bs-border-color) 60%, transparent);
+        --ok: #2f9e62; --warn: #e0912a; --err: #d94848;
+        max-width: 1200px; margin: 0 auto; background: var(--rtx-surface); border: 1px solid var(--rtx-line); border-radius: 18px; overflow: hidden;
+    }
+    body.dark .host {
+        --bs-primary: #5b8fd6; --bs-component-bg: #232731; --bs-border-color: #353b47;
+        --bs-emphasis-color: #fff; --bs-secondary-color: rgba(201,206,214,.75); --bs-tertiary-color: rgba(201,206,214,.5);
+        --rtx-acc-ink: color-mix(in srgb, var(--rtx-acc) 50%, #fff);
+        --rtx-acc-soft: color-mix(in srgb, var(--rtx-acc) 24%, transparent);
+    }
+    .host-body { padding: 24px; color: var(--bs-secondary-color); font-size: 13px; min-height: 120px; }
+    .host-body h5 { margin: 0 0 4px; color: var(--bs-emphasis-color); font-size: 16px; }
+
+    .head { padding: 14px 16px 0; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .rail { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .rail::-webkit-scrollbar { display: none; }
+    .tab { border: 0; background: none; font: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--bs-secondary-color); }
+    .tab:focus-visible { outline: 2px solid var(--rtx-acc); outline-offset: 2px; }
+    .ic { width: 28px; height: 28px; border-radius: 9px; display: inline-grid; place-items: center; font-size: 13px; flex: none; transition: .18s; }
+    .t { font-size: 13px; font-weight: 600; line-height: 1.2; }
+    .s { display: block; font-size: 11px; font-weight: 500; color: var(--bs-tertiary-color); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 20%, transparent); }
+    .dot.err { background: var(--err); box-shadow: 0 0 0 3px color-mix(in srgb, var(--err) 20%, transparent); }
+
+    /* progress */
+    .prog { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--bs-secondary-color); padding-bottom: 10px; }
+    .ring { --p: 70; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+        background: conic-gradient(var(--rtx-acc) calc(var(--p) * 1%), var(--rtx-line-soft) 0); }
+    .ring b { width: 30px; height: 30px; border-radius: 50%; background: var(--rtx-surface); display: grid; place-items: center; font-size: 10px; color: var(--bs-emphasis-color); }
+    .prog strong { display: block; color: var(--bs-emphasis-color); font-size: 12px; }
+
+    /* ================= A · Segmented Track ================= */
+    .dir-a .head { padding: 16px; border-bottom: 1px solid var(--rtx-line-soft); align-items: center; }
+    .dir-a .rail { gap: 4px; padding: 5px; border-radius: 14px; background: var(--rtx-track); border: 1px solid var(--rtx-line-soft); }
+    .dir-a .tab { padding: 7px 12px 7px 7px; border-radius: 10px; transition: .18s; }
+    .dir-a .ic { background: transparent; color: var(--bs-tertiary-color); width: 26px; height: 26px; }
+    .dir-a .tab:hover { color: var(--bs-emphasis-color); background: color-mix(in srgb, var(--rtx-surface) 60%, transparent); }
+    .dir-a .tab.active { background: var(--rtx-surface); color: var(--bs-emphasis-color); box-shadow: 0 1px 2px rgba(16,24,40,.08), 0 6px 16px -8px rgba(16,24,40,.25); }
+    .dir-a .tab.active .ic { background: var(--rtx-grad); color: #fff; box-shadow: var(--rtx-glow); }
+    .dir-a .prog { padding: 0; }
+
+    /* ================= B · Status Cards ================= */
+    .dir-b .head { padding: 16px; border-bottom: 1px solid var(--rtx-line-soft); background: linear-gradient(180deg, color-mix(in srgb, var(--rtx-acc) 5%, var(--rtx-surface)), var(--rtx-surface)); }
+    .dir-b .rail { gap: 8px; padding-bottom: 2px; }
+    .dir-b .tab { position: relative; padding: 9px 14px 9px 9px; border-radius: 12px; border: 1px solid var(--rtx-line-soft); background: var(--rtx-surface); text-align: start; transition: .18s; }
+    .dir-b .ic { background: var(--rtx-acc-soft); color: var(--rtx-acc-ink); width: 32px; height: 32px; }
+    .dir-b .tab:hover { border-color: color-mix(in srgb, var(--rtx-acc) 40%, var(--rtx-line)); transform: translateY(-1px); }
+    .dir-b .tab.active { border-color: var(--rtx-acc); box-shadow: 0 0 0 3px var(--rtx-acc-soft), var(--rtx-glow); }
+    .dir-b .tab.active .ic { background: var(--rtx-grad); color: #fff; }
+    .dir-b .tab.active .t { color: var(--bs-emphasis-color); }
+    .dir-b .dot { position: absolute; top: 7px; inset-inline-end: 7px; }
+    .dir-b .head { flex-direction: column; align-items: stretch; }
+    .dir-b .prog { order: -1; padding: 0; justify-content: space-between; }
+    .dir-b .prog .line { flex: 1; height: 5px; border-radius: 9px; background: var(--rtx-line-soft); overflow: hidden; }
+    .dir-b .prog .line i { display: block; height: 100%; width: 70%; background: var(--rtx-grad); border-radius: inherit; }
+
+    /* ================= C · Ink Underline ================= */
+    .dir-c .head { border-bottom: 1px solid var(--rtx-line-soft); padding-top: 10px; }
+    .dir-c .rail { gap: 2px; }
+    .dir-c .tab { position: relative; padding: 12px 12px 14px; }
+    .dir-c .ic { background: color-mix(in srgb, var(--bs-emphasis-color) 5%, transparent); color: var(--bs-tertiary-color); }
+    .dir-c .tab::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--rtx-grad); transform: scaleX(0); transition: transform .22s; }
+    .dir-c .tab:hover { color: var(--bs-emphasis-color); }
+    .dir-c .tab:hover .ic { color: var(--rtx-acc-ink); background: var(--rtx-acc-soft); }
+    .dir-c .tab.active { color: var(--bs-emphasis-color); }
+    .dir-c .tab.active .ic { background: var(--rtx-grad); color: #fff; box-shadow: var(--rtx-glow); }
+    .dir-c .tab.active::after { transform: scaleX(1); }
+
+    .host:not(.dir-b) .s { display: none; }
+    .host:not(.dir-b) .line { display: none; }
+    .host.dir-b .ring { display: none; }
+</style>
+</head>
+<body>
+<div class="bar">
+    <button data-dir="a" class="on">A · Segmented Track</button>
+    <button data-dir="b">B · Status Cards</button>
+    <button data-dir="c">C · Ink Underline</button>
+    <button id="theme" style="margin-inline-start:auto"><i class="fa fa-adjust"></i> Light / Dark</button>
+</div>
+
+<div class="host dir-a" id="host">
+    <div class="head">
+        <div class="rail" id="rail"></div>
+        <div class="prog">
+            <div class="ring"><b>70%</b></div>
+            <div><strong>Setup 7 / 10</strong>sections configured</div>
+            <div class="line"><i></i></div>
+        </div>
+    </div>
+    <div class="host-body">
+        <h5 id="pane-title">Checklist Notes</h5>
+        Heading and declaration printed above the signature block of the Unit Handover &amp; Snagging checklist.
+    </div>
+</div>
+
+<script>
+    const sections = [
+        ['fa-check-square-o', 'Mandatory Documents', 'None required', 'warn'],
+        ['fa-cogs', 'Service Heads', '4 mapped', ''],
+        ['fa-list-alt', 'Checklist Notes', 'Rental · Lease', ''],
+        ['fa-file-text-o', 'Agreement Text', 'Titles · Clauses', ''],
+        ['fa-building-o', 'Lessor Details', '3 of 6 set', ''],
+        ['fa-paint-brush', 'Agreement Colors', 'Default blue', ''],
+        ['fa-print', 'Print Layout', 'Logos shown', ''],
+        ['fa-picture-o', 'Agreement Logos', '3 of 5 set', 'warn'],
+        ['fa-files-o', 'Annex Pages', 'None', ''],
+        ['fa-file-image-o', 'LPO Header', 'Not set', 'err'],
+    ];
+    const rail = document.getElementById('rail');
+    sections.forEach(([icon, title, status, dot], i) => {
+        const b = document.createElement('button');
+        b.className = 'tab' + (i === 2 ? ' active' : '');
+        b.innerHTML = `<span class="ic"><i class="fa fa-fw ${icon}"></i></span><span><span class="t">${title}</span><span class="s">${status}</span></span>${dot ? `<span class="dot ${dot}"></span>` : ''}`;
+        b.onclick = () => { rail.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); b.classList.add('active'); document.getElementById('pane-title').textContent = title; };
+        rail.appendChild(b);
+    });
+    document.querySelectorAll('[data-dir]').forEach(btn => btn.onclick = () => {
+        document.querySelectorAll('[data-dir]').forEach(x => x.classList.remove('on')); btn.classList.add('on');
+        document.getElementById('host').className = 'host dir-' + btn.dataset.dir;
+    });
+    document.getElementById('theme').onclick = () => document.body.classList.toggle('dark');
+</script>
+</body>
+</html>

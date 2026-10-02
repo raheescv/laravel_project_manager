@@ -30,6 +30,15 @@ it('lists every section with its status in the nav', function (): void {
         ->assertSeeHtml('rent_out_logos/rental.png');
 });
 
+it('renders the segmented tab track, setup ring and section headers', function (): void {
+    Livewire::test(RentOutConfiguration::class)
+        ->assertSeeHtml('class="rtx-rail"')
+        ->assertSeeHtml('class="rtx-ring"')
+        ->assertSeeHtml('class="rtx-hero"')
+        ->assertSeeHtml('class="rtx-group-head"')
+        ->assertSee('sections configured');
+});
+
 it('maps service heads that limit the rent-out service category dropdown', function (): void {
     $tenantId = $this->world->user->tenant_id;
     $maintenance = Account::create(['tenant_id' => $tenantId, 'name' => 'Maintenance Fees', 'account_type' => 'income']);

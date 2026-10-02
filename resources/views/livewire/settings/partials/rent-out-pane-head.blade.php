@@ -1,16 +1,17 @@
-<div class="card shadow-none border border-primary-subtle rounded-4 flex-row align-items-start gap-3 p-3 mb-4">
-    <span class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary text-white shadow-sm fs-5 p-2 lh-1">
-        <i class="fa fa-fw {{ $section['icon'] }}"></i>
-    </span>
-    <div class="flex-grow-1">
+@php $tone = $section['hasError'] ? 'danger' : ($section['ok'] ? 'success' : 'warning'); @endphp
+<div class="rtx-hero">
+    <span class="rtx-hero-ic"><i class="fa fa-fw {{ $section['icon'] }}"></i></span>
+    <div class="flex-grow-1 min-w-0">
         <div class="d-flex flex-wrap align-items-center gap-2">
-            <h6 class="fw-bold mb-0">{{ $section['title'] }}</h6>
-            @if ($section['hasError'])
-                <span class="badge rounded-pill text-bg-danger"><i class="fa fa-exclamation-circle me-1"></i>Needs attention</span>
-            @else
-                <span class="badge rounded-pill {{ $section['ok'] ? 'text-bg-success' : 'text-bg-warning' }}">{{ $section['status'] }}</span>
-            @endif
+            <h5 class="rtx-hero-title">{{ $section['title'] }}</h5>
+            <span class="rtx-pill is-{{ $tone }}">
+                @if ($section['hasError'])
+                    <i class="fa fa-exclamation-circle"></i>Needs attention
+                @else
+                    <i class="fa {{ $section['ok'] ? 'fa-check-circle' : 'fa-clock-o' }}"></i>{{ $section['status'] }}
+                @endif
+            </span>
         </div>
-        <p class="small text-body-secondary mb-0 mt-1">{{ $section['sub'] }}</p>
+        <p class="rtx-hero-sub">{{ $section['sub'] }}</p>
     </div>
 </div>
