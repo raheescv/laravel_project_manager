@@ -65,7 +65,7 @@
                     <div class="sb">{{ $employee->mobile ?: 'No mobile on file' }}</div>
                 </div>
             @else
-                <span class="apx-avatar"><i class="fa fa-user-o"></i></span>
+                <span class="apx-avatar"><i class="fa fa-user"></i></span>
                 <div>
                     <div class="nm">No employee assigned</div>
                     <div class="sb">Who will carry out this appointment?</div>

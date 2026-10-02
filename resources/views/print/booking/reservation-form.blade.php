@@ -1,5 +1,7 @@
 @php
-    $companyLogo = \App\Models\Configuration::where('key', 'company_logo')->value('value');
+    $reservationLogoKey = $rentOut->agreement_type === \App\Enums\RentOut\AgreementType::Lease ? 'lease_reservation_logo' : 'rental_reservation_logo';
+    $companyLogo = \App\Models\Configuration::where('key', $reservationLogoKey)->value('value')
+        ?: \App\Models\Configuration::where('key', 'company_logo')->value('value');
     $companyLogoUrl = null;
     if ($companyLogo) {
         $companyLogoPath = storage_path('app/public/' . $companyLogo);
