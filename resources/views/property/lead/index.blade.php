@@ -13,7 +13,7 @@
                     <h1 class="page-title mb-0 mt-2">
                         <i class="fa fa-users text-white me-2"></i>Leads Management
                     </h1>
-                    <p class="lead mb-0">Track, qualify and convert your property leads.</p>
+                    <br>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
                     @include('property.lead.partials.view-switch', ['active' => 'list'])
