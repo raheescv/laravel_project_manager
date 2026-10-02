@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Receipt - #{{ $payment->voucher_no ?? $payment->id }}</title>
+    <title>{{ $payment->model === 'RentOutSecurity' ? 'Security Deposit Receipt' : 'Receipt' }} - #{{ $payment->voucher_no ?? $payment->id }}</title>
     <style>
         :root {
             --accent:      #0E8A4F;
@@ -81,6 +81,7 @@
     @php
         $receiptAmount = $payment->credit > 0 ? $payment->credit : $payment->debit;
         $voucherNo     = $payment->voucher_no ?? $payment->id;
+        $receiptTitle  = $payment->model === 'RentOutSecurity' ? 'Security Deposit Receipt Voucher' : 'Receipt Voucher';
     @endphp
 
     {{-- ── Header ── --}}
@@ -105,7 +106,7 @@
 
     {{-- ── Title ── --}}
     <div class="b-title">
-        <div class="t">Receipt Voucher</div>
+        <div class="t">{{ $receiptTitle }}</div>
         <div class="rule"></div>
     </div>
 
