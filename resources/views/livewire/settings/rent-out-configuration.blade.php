@@ -14,6 +14,10 @@
     $serviceHeadCount = count($service_categories);
     $agreementImageCount = count($existing_rent_out_agreement_images);
     $bondPaperOn = $reservation_bond_paper_mode === 'yes';
+    $lessorSet = collect($lessorFields)->keys()->filter(fn ($key) => filled($print_settings[$key] ?? null))->count();
+    $agreementPrimary = $print_settings[\App\Support\RentOutPrintSettings::PRIMARY_COLOR_KEY] ?? '';
+    $agreementSecondary = $print_settings[\App\Support\RentOutPrintSettings::SECONDARY_COLOR_KEY] ?? '';
+    $customColors = filled($agreementPrimary) || filled($agreementSecondary);
 
     $sections = [
         'docs' => [
@@ -39,6 +43,30 @@
             'ok' => true,
             'sub' => 'Heading and declaration printed above the signature block of the Unit Handover & Snagging checklist — the Move-In block on a rental, the Handover block on a lease / sale.',
             'fields' => ['checklist_notes.*'],
+        ],
+        'wording' => [
+            'icon' => 'fa-file-text-o',
+            'title' => 'Agreement Text',
+            'status' => 'Titles · Clauses',
+            'ok' => true,
+            'sub' => 'Company name, titles, project names and contract clauses printed on the reservation form and tenancy agreement PDFs. Leave a field blank to print the default shown in grey.',
+            'fields' => ['print_settings.company_name_english', 'print_settings.tenancy_agreement_title_english'],
+        ],
+        'lessor' => [
+            'icon' => 'fa-building-o',
+            'title' => 'Lessor Details',
+            'status' => $lessorSet . ' of ' . count($lessorFields) . ' set',
+            'ok' => $lessorSet > 0,
+            'sub' => 'The landlord company printed as the First Party - Lessor on the tenancy agreement PDF.',
+            'fields' => ['print_settings.lessor_email'],
+        ],
+        'colors' => [
+            'icon' => 'fa-paint-brush',
+            'title' => 'Agreement Colors',
+            'status' => $customColors ? 'Custom' : 'Default blue',
+            'ok' => true,
+            'sub' => 'Replaces the blue used for section headers, table headers and shaded rows on the reservation form and tenancy agreement PDFs.',
+            'fields' => ['print_settings.' . \App\Support\RentOutPrintSettings::PRIMARY_COLOR_KEY, 'print_settings.' . \App\Support\RentOutPrintSettings::SECONDARY_COLOR_KEY],
         ],
         'print' => [
             'icon' => 'fa-print',
@@ -213,6 +241,176 @@
                     <div class="form-text">
                         <i class="fa fa-info-circle me-1"></i>Clear a field to fall back to the built-in default text.
                         Use <strong>RTL</strong> on a paragraph for Arabic clauses, and <strong>HTML</strong> to edit the markup directly.
+                    </div>
+                </section>
+
+                {{-- ============ AGREEMENT TEXT ============ --}}
+                <section x-show="tab === 'wording'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['wording']])
+
+                    @php
+                        $wordingGroups = [
+                            [
+                                'title' => 'Company details',
+                                'icon' => 'fa-building',
+                                'hint' => 'Printed in the reservation form authorisation box and as the agency name. English falls back to the company profile name.',
+                                'rows' => [['company_name_english', 'company_name_arabic', 'Company name', false]],
+                            ],
+                            [
+                                'title' => 'Tenancy agreement header',
+                                'icon' => 'fa-header',
+                                'hint' => "Title and project name at the top of the rental tenancy agreement. The project name prints only when the property's building has no Group / Project.",
+                                'rows' => [
+                                    ['tenancy_agreement_title_english', 'tenancy_agreement_title_arabic', 'Agreement title', false],
+                                    ['extended_tenancy_agreement_title_english', 'extended_tenancy_agreement_title_arabic', 'Extended agreement title', false],
+                                    ['tenancy_project_name_english', 'tenancy_project_name_arabic', 'Project / tower name', false],
+                                ],
+                            ],
+                            [
+                                'title' => 'Tenancy agreement contract clauses',
+                                'icon' => 'fa-gavel',
+                                'hint' => 'Printed below the contract details. Use {date} where the contract start date should appear.',
+                                'rows' => [
+                                    ['tenancy_contract_made_on_english', 'tenancy_contract_made_on_arabic', 'Contract made on clause', true],
+                                    ['tenancy_contract_terms_english', 'tenancy_contract_terms_arabic', 'Terms & conditions clause', true],
+                                ],
+                            ],
+                            [
+                                'title' => 'Reservation form header',
+                                'icon' => 'fa-bookmark-o',
+                                'hint' => "Title and project name at the top of the reservation form. The project name prints only when the property's building has no Group / Project.",
+                                'rows' => [
+                                    ['reservation_form_title_english', 'reservation_form_title_arabic', 'Reservation form title', false],
+                                    ['reservation_project_name_english', 'reservation_project_name_arabic', 'Project / complex name', false],
+                                ],
+                            ],
+                        ];
+                    @endphp
+
+                    <div class="vstack gap-3">
+                        @foreach ($wordingGroups as $group)
+                            <div class="card shadow-none border rounded-3">
+                                <div class="px-3 py-2 border-bottom">
+                                    <span class="d-flex align-items-center gap-2 fw-semibold small">
+                                        <span class="d-inline-flex rounded-2 bg-primary-subtle text-primary p-2 lh-1"><i class="fa fa-fw {{ $group['icon'] }}"></i></span>
+                                        {{ $group['title'] }}
+                                    </span>
+                                    <div class="small text-body-secondary mt-1">{{ $group['hint'] }}</div>
+                                </div>
+                                <div class="p-3">
+                                    <div class="row g-3">
+                                        @foreach ($group['rows'] as [$englishKey, $arabicKey, $label, $multiline])
+                                            @foreach ([$englishKey => 'English', $arabicKey => 'Arabic'] as $key => $language)
+                                                <div class="col-12 col-md-6">
+                                                    <label class="form-label fw-semibold small" for="print_{{ $key }}">{{ $label }} ({{ $language }})</label>
+                                                    @if ($multiline)
+                                                        <textarea id="print_{{ $key }}" rows="3" class="form-control form-control-sm" wire:model="print_settings.{{ $key }}"
+                                                            placeholder="{{ $printTextDefaults[$key] }}" @if ($language === 'Arabic') dir="rtl" @endif></textarea>
+                                                    @else
+                                                        <input type="text" id="print_{{ $key }}" class="form-control form-control-sm" wire:model="print_settings.{{ $key }}"
+                                                            placeholder="{{ $printTextDefaults[$key] }}" @if ($language === 'Arabic') dir="rtl" @endif>
+                                                    @endif
+                                                    @error("print_settings.{$key}")
+                                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            @endforeach
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+
+                {{-- ============ LESSOR DETAILS ============ --}}
+                <section x-show="tab === 'lessor'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['lessor']])
+
+                    <div class="card shadow-none border rounded-3 p-3">
+                        <div class="row g-3">
+                            @foreach ($lessorFields as $key => $label)
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold small" for="print_{{ $key }}">{{ $label }}</label>
+                                    <input type="{{ $key === 'lessor_email' ? 'email' : 'text' }}" id="print_{{ $key }}" class="form-control form-control-sm"
+                                        wire:model="print_settings.{{ $key }}" @if (str_ends_with($key, '_ar') || str_ends_with($key, '_arabic')) dir="rtl" @endif>
+                                    @error("print_settings.{$key}")
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+
+                {{-- ============ AGREEMENT COLORS ============ --}}
+                <section x-show="tab === 'colors'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['colors']])
+
+                    @php
+                        $primaryKey = \App\Support\RentOutPrintSettings::PRIMARY_COLOR_KEY;
+                        $secondaryKey = \App\Support\RentOutPrintSettings::SECONDARY_COLOR_KEY;
+                        $primaryDefault = \App\Support\RentOutPrintSettings::DEFAULT_PRIMARY_COLOR;
+                        $secondaryDefault = \App\Support\RentOutPrintSettings::DEFAULT_SECONDARY_COLOR;
+                    @endphp
+
+                    <div class="row g-4" x-data="{
+                        primary: () => /^#[0-9A-Fa-f]{6}$/.test($wire.print_settings['{{ $primaryKey }}'] || '') ? $wire.print_settings['{{ $primaryKey }}'] : '{{ $primaryDefault }}',
+                        secondary: () => /^#[0-9A-Fa-f]{6}$/.test($wire.print_settings['{{ $secondaryKey }}'] || '') ? $wire.print_settings['{{ $secondaryKey }}'] : '{{ $secondaryDefault }}',
+                        ink(hex) {
+                            const lum = (0.299 * parseInt(hex.substr(1, 2), 16) + 0.587 * parseInt(hex.substr(3, 2), 16) + 0.114 * parseInt(hex.substr(5, 2), 16)) / 255;
+                            return lum > 0.6 ? '#333333' : '#ffffff';
+                        },
+                    }">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label fw-semibold small">Presets</label>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                @foreach ($colorPresets as $index => $preset)
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-2"
+                                        wire:click="applyColorPreset({{ $index }})">
+                                        <span class="rounded-circle border" style="width: 14px; height: 14px; background: {{ $preset['primary'] }}"></span>
+                                        {{ $preset['name'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <div class="row g-3">
+                                @foreach ([$primaryKey => ['Primary color', $primaryDefault, 'Section headers, table headers and the document title band.'], $secondaryKey => ['Row shade color', $secondaryDefault, 'Alternate row background in the tenancy agreement.']] as $key => [$label, $default, $hint])
+                                    <div class="col-12 col-sm-6">
+                                        <label class="form-label fw-semibold small" for="print_{{ $key }}">{{ $label }}</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text p-1">
+                                                <input type="color" class="form-control form-control-color border-0 p-0" style="width: 28px; height: 24px"
+                                                    :value="{{ $key === $primaryKey ? 'primary()' : 'secondary()' }}"
+                                                    x-on:input="$wire.set('print_settings.{{ $key }}', $event.target.value, false)" title="Pick {{ strtolower($label) }}">
+                                            </span>
+                                            <input type="text" id="print_{{ $key }}" class="form-control" wire:model.live.debounce.400ms="print_settings.{{ $key }}"
+                                                maxlength="7" placeholder="{{ $default }}" autocomplete="off">
+                                        </div>
+                                        @error("print_settings.{$key}")
+                                            <div class="text-danger small mt-1">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">{{ $hint }}</div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <button type="button" class="btn btn-link btn-sm px-0 mt-2"
+                                x-on:click="$wire.set('print_settings.{{ $primaryKey }}', ''); $wire.set('print_settings.{{ $secondaryKey }}', '')">
+                                <i class="fa fa-undo me-1"></i>Reset to default blue
+                            </button>
+                        </div>
+
+                        <div class="col-12 col-md-4">
+                            <div class="bg-body-tertiary rounded-4 p-3">
+                                <div class="text-uppercase text-body-secondary small fw-bold text-center mb-2">Preview</div>
+                                <div class="bg-white border rounded-3 overflow-hidden small">
+                                    <div class="fw-bold px-2 py-1" :style="`background: ${primary()}; color: ${ink(primary())}`">Section Header</div>
+                                    <div class="px-2 py-1 bg-white text-dark">Row one</div>
+                                    <div class="px-2 py-1 text-dark" :style="`background: ${secondary()}`">Row two</div>
+                                    <div class="px-2 py-1 bg-white text-dark">Row three</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

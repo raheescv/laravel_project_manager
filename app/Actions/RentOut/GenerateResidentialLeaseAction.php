@@ -3,8 +3,8 @@
 namespace App\Actions\RentOut;
 
 use App\Enums\RentOut\AgreementType;
-use App\Models\Configuration;
 use App\Models\RentOut;
+use App\Support\RentOutPrintSettings;
 use App\Traits\UsesBrowsershot;
 
 class GenerateResidentialLeaseAction
@@ -47,14 +47,17 @@ class GenerateResidentialLeaseAction
         $premisesDetails = $this->buildPremisesDetails($rentOut);
         $contractDetails = $this->buildContractDetails($rentOut, $type);
 
-        $rentOutExtend = $rentOut->extends()->latest()->first();
-        $title = 'RESIDENTIAL LEASE';
-        if ($rentOutExtend) {
-            $title = 'EXTENDED RESIDENTIAL LEASE';
-        }
+        $titlePrefix = $rentOut->extends()->exists() ? 'extended_tenancy_agreement_title' : 'tenancy_agreement_title';
+        $title = RentOutPrintSettings::text("{$titlePrefix}_english");
+        $titleArabic = RentOutPrintSettings::text("{$titlePrefix}_arabic");
+
+        // The building's group names the project; the configured name only fills in when there is none.
+        $projectNameEnglish = $rentOut->group?->name ?: RentOutPrintSettings::text('tenancy_project_name_english');
+        $projectNameArabic = $rentOut->group?->arabic_name ?: RentOutPrintSettings::text('tenancy_project_name_arabic');
 
         return view('print.booking.rental-residential-lease', compact(
-            'rentOut', 'lessorData', 'lesseeData', 'premisesDetails', 'contractDetails', 'title', 'type'
+            'rentOut', 'lessorData', 'lesseeData', 'premisesDetails', 'contractDetails', 'title', 'titleArabic',
+            'projectNameEnglish', 'projectNameArabic', 'type'
         ))->render();
     }
 
@@ -77,7 +80,7 @@ class GenerateResidentialLeaseAction
 
     private function buildLessorData(RentOut $rentOut): array
     {
-        $cfg = fn ($key, $default = '') => Configuration::where('key', $key)->value('value') ?? $default;
+        $lessor = fn (string $key): string => RentOutPrintSettings::lessor($key);
 
         return [
             [
@@ -85,36 +88,36 @@ class GenerateResidentialLeaseAction
                 'arabic' => ['title' => 'رقم المرجع', 'value' => $rentOut->agreement_no],
             ],
             [
-                'english' => ['title' => 'Name', 'value' => $cfg('lessor_name_en')],
-                'arabic' => ['title' => 'اسم', 'value' => $cfg('lessor_name_ar')],
+                'english' => ['title' => 'Name', 'value' => $lessor('lessor_name_en')],
+                'arabic' => ['title' => 'اسم', 'value' => $lessor('lessor_name_ar')],
             ],
             [
-                'english' => ['title' => 'P.O Box', 'value' => $cfg('lessor_po_box')],
-                'arabic' => ['title' => 'صندوق البريد', 'value' => $cfg('lessor_po_box')],
+                'english' => ['title' => 'P.O Box', 'value' => $lessor('lessor_po_box_english')],
+                'arabic' => ['title' => 'صندوق البريد', 'value' => $lessor('lessor_po_box_arabic')],
             ],
             [
-                'english' => ['title' => 'CR No', 'value' => $cfg('lessor_cr_no')],
-                'arabic' => ['title' => 'رقم السجل التجاري', 'value' => $cfg('lessor_cr_no')],
+                'english' => ['title' => 'CR No', 'value' => $lessor('lessor_cr_no_english')],
+                'arabic' => ['title' => 'رقم السجل التجاري', 'value' => $lessor('lessor_cr_no_arabic')],
             ],
             [
-                'english' => ['title' => 'Authorized By', 'value' => $cfg('lessor_authorized_by')],
-                'arabic' => ['title' => 'مفوض من قبل', 'value' => $cfg('lessor_authorized_by')],
+                'english' => ['title' => 'Authorized By', 'value' => $lessor('lessor_authorized_by_english')],
+                'arabic' => ['title' => 'مفوض من قبل', 'value' => $lessor('lessor_authorized_by_arabic')],
             ],
             [
-                'english' => ['title' => 'QID No', 'value' => $cfg('lessor_qid_no')],
-                'arabic' => ['title' => 'رقم البطاقة الشخصية', 'value' => $cfg('lessor_qid_no')],
+                'english' => ['title' => 'QID No', 'value' => $lessor('lessor_qid_no')],
+                'arabic' => ['title' => 'رقم البطاقة الشخصية', 'value' => $lessor('lessor_qid_no')],
             ],
             [
-                'english' => ['title' => 'Nationality', 'value' => $cfg('lessor_nationality')],
-                'arabic' => ['title' => 'الجنسية', 'value' => $cfg('lessor_nationality')],
+                'english' => ['title' => 'Nationality', 'value' => $lessor('lessor_nationality')],
+                'arabic' => ['title' => 'الجنسية', 'value' => $lessor('lessor_nationality')],
             ],
             [
-                'english' => ['title' => 'Email', 'value' => $cfg('lessor_email')],
-                'arabic' => ['title' => 'الالكتروني', 'value' => $cfg('lessor_email')],
+                'english' => ['title' => 'Email', 'value' => $lessor('lessor_email')],
+                'arabic' => ['title' => 'الالكتروني', 'value' => $lessor('lessor_email')],
             ],
             [
-                'english' => ['title' => 'Tel/Fax/Call Centre', 'value' => $cfg('lessor_tel_fax')],
-                'arabic' => ['title' => 'هاتف / فاكس / مركز الاتصال', 'value' => $cfg('lessor_tel_fax')],
+                'english' => ['title' => 'Tel/Fax/Call Centre', 'value' => $lessor('lessor_tel_fax')],
+                'arabic' => ['title' => 'هاتف / فاكس / مركز الاتصال', 'value' => $lessor('lessor_tel_fax')],
             ],
         ];
     }

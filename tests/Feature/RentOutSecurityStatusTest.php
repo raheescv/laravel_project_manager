@@ -117,3 +117,40 @@ it('requires the returned date once a deposit is paid & released', function (): 
         ->assertHasErrors(['form.returned_date' => 'required'])
         ->assertHasNoErrors(['form.collected_date']);
 });
+
+it('saves a submitted security cheque without a due date or payment method', function (): void {
+    auth()->user()->givePermissionTo(Permission::findOrCreate('rent out security.create', 'web'));
+
+    Livewire::test(SecurityModal::class)
+        ->call('openModal', [
+            'rent_out_id' => $this->rentOutId,
+            'amount' => 1000,
+            'account_id' => '',
+            'type' => 'deposit',
+            'status' => SecurityStatus::Submitted->value,
+            'due_date' => '',
+        ])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $security = DB::table('rent_out_securities')->where('rent_out_id', $this->rentOutId)->first();
+    expect($security->due_date)->toBeNull()
+        ->and($security->account_id)->toBeNull()
+        ->and($security->payment_mode)->toBeNull();
+});
+
+it('requires the payment method once the deposit is collected', function (): void {
+    auth()->user()->givePermissionTo(Permission::findOrCreate('rent out security.create', 'web'));
+
+    Livewire::test(SecurityModal::class)
+        ->call('openModal', [
+            'rent_out_id' => $this->rentOutId,
+            'amount' => 1000,
+            'account_id' => '',
+            'type' => 'deposit',
+            'status' => SecurityStatus::Paid->value,
+            'collected_date' => '2026-10-01',
+        ])
+        ->call('save')
+        ->assertHasErrors(['form.account_id' => 'required']);
+});

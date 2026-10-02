@@ -56,10 +56,10 @@ class SecurityModal extends Component
         abort_unless(auth()->user()?->can($this->editingId ? 'rent out security.edit' : 'rent out security.create'), 403);
         $rules = [
             'form.amount' => 'required|numeric|min:0.01',
-            'form.account_id' => 'required',
+            'form.account_id' => 'nullable',
             'form.type' => 'required',
             'form.status' => 'required',
-            'form.due_date' => 'required|date',
+            'form.due_date' => 'nullable|date',
         ];
 
         $messages = [
@@ -68,7 +68,6 @@ class SecurityModal extends Component
             'form.account_id.required' => 'Payment method is required.',
             'form.type.required' => 'Type is required.',
             'form.status.required' => 'Status is required.',
-            'form.due_date.required' => 'Due date is required.',
         ];
 
         $isCheque = $this->isChequeSelected();
@@ -79,9 +78,11 @@ class SecurityModal extends Component
             $messages['form.cheque_no.required'] = 'Cheque number is required for cheque payments.';
         }
 
-        // Collection date is needed once the deposit money is received;
-        // return date only once it is handed back.
-        if (in_array($this->form['status'], SecurityStatus::collectedValues(), true)) {
+        // Payment method and collection date are needed once the deposit money
+        // is received (that is what posts the ledger); return date only once
+        // it is handed back.
+        if ($this->requiresPayment()) {
+            $rules['form.account_id'] = 'required';
             $rules['form.collected_date'] = 'required|date';
             $messages['form.collected_date.required'] = 'Collected date is required for this status.';
         }
@@ -95,16 +96,19 @@ class SecurityModal extends Component
         $data = [
             'rent_out_id' => $this->rentOutId,
             'amount' => $this->form['amount'],
-            'account_id' => $this->form['account_id'],
+            'account_id' => $this->form['account_id'] ?: null,
             'bank_name' => $isCheque ? ($this->form['bank_name'] ?? '') : null,
             'cheque_no' => $isCheque ? ($this->form['cheque_no'] ?? '') : null,
             'type' => $this->form['type'],
             'status' => $this->form['status'],
-            'due_date' => $this->form['due_date'],
+            'due_date' => $this->form['due_date'] ?: null,
             'collected_date' => $this->form['collected_date'] ?: null,
             'returned_date' => $this->form['returned_date'] ?: null,
             'remarks' => $this->form['remarks'] ?? '',
         ];
+        if (! $data['account_id']) {
+            $data['payment_mode'] = null;
+        }
 
         try {
             DB::beginTransaction();
@@ -137,6 +141,15 @@ class SecurityModal extends Component
             ->pluck('id')
             ->map(fn ($id) => (string) $id)
             ->toArray();
+    }
+
+    /**
+     * Whether the selected status records the deposit money as received, so a
+     * payment method is needed to post the ledger.
+     */
+    public function requiresPayment(): bool
+    {
+        return in_array($this->form['status'], SecurityStatus::collectedValues(), true);
     }
 
     public function isChequeSelected(): bool

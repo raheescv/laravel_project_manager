@@ -21,6 +21,8 @@
     $agreementImages = $agreementImagesJson ? json_decode($agreementImagesJson, true) : [];
     $agreementImages = is_array($agreementImages) ? $agreementImages : [];
 
+    $agreementColors = \App\Support\RentOutPrintSettings::colors();
+
     $bondPaperMode = \App\Models\Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
     $logoHeight = (int) (\App\Models\Configuration::where('key', 'reservation_logo_height')->value('value') ?: 80);
     $footerHeight = (int) (\App\Models\Configuration::where('key', 'reservation_footer_height')->value('value') ?: 50);
@@ -43,10 +45,10 @@
 
         .data-table th {
             font-size: 10px;
-            background: #1b7bbc;
+            background: {{ $agreementColors['primary'] }};
             text-align: right;
             border: 0;
-            color: #fff;
+            color: {{ $agreementColors['primaryInk'] }};
             padding: 2px 2px;
             z-index: 1;
         }
@@ -63,7 +65,7 @@
         }
 
         .data-table tr:nth-child(even) td {
-            background: #d9f0fb;
+            background: {{ $agreementColors['secondary'] }};
         }
 
         .page-break {
@@ -125,6 +127,11 @@
                             <td style="text-align: left; direction: ltr;">
                                 <b>{{ $title }}</b>
                             </td>
+                            @if ($titleArabic)
+                                <td style="text-align: right; direction: rtl;">
+                                    <b>{{ $titleArabic }}</b>
+                                </td>
+                            @endif
                         </tr>
                     </table>
                 </td>
@@ -134,10 +141,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="text-align: left; direction: ltr;">
-                                <b>{{ $rentOut->group?->name }}</b>
+                                <b>{{ $projectNameEnglish }}</b>
                             </td>
                             <td style="text-align: right; direction: rtl;">
-                                <b>{{ $rentOut->group?->arabic_name }}</b>
+                                <b>{{ $projectNameArabic }}</b>
                             </td>
                         </tr>
                     </table>
@@ -222,7 +229,7 @@
                     <b>PREMISES DETAILS</b>
                 </th>
                 <th style="text-align: right; direction: rtl;">
-                    <b>{{ 'لمستأجر الطرف الثاني' }}</b>
+                    <b>{{ 'تفاصيل العقار' }}</b>
                 </th>
             </tr>
         </table>
@@ -291,14 +298,13 @@
                         @php
                             $startDate = $type === 'normal' ? $rentOut->start_date : $rentOut->extends()->latest()->first()?->start_date;
                         @endphp
-                        <li>This Contract is made on <b>{{ systemDate($startDate) }}</b> by and between the First Party - Lessor and the Second Party - Lessee (details as above).</li>
+                        <li>{!! \App\Support\RentOutPrintSettings::clauseHtml('tenancy_contract_made_on_english', systemDate($startDate)) !!}</li>
                         <li style="margin-right: 0; text-align: right; direction: rtl;">
-                            ({{ 'التفاصيل على النحو الوارد أعلاه' }}). {{ 'بين الطرف الأول - المؤجر والطرف الثاني - المستأجر' }}
-                            {{ $startDate }}{{ 'تم إبرام هذا العقد على' }}
+                            {{ \App\Support\RentOutPrintSettings::clause('tenancy_contract_made_on_arabic', systemDate($startDate)) }}
                         </li>
-                        <li>Both the parties agree to conclude this contract according to the terms and conditions attached in page numbers 2 to 8.</li>
+                        <li>{{ \App\Support\RentOutPrintSettings::text('tenancy_contract_terms_english') }}</li>
                         <li style="margin-right: 0; text-align: right; direction: rtl;">
-                            {{ 'يتفق الطرفان على إبرام هذا العقد وفقاً للشروط والأحكام المرفقة في الصفحات من 2 إلى 8.' }}
+                            {{ \App\Support\RentOutPrintSettings::text('tenancy_contract_terms_arabic') }}
                         </li>
                     </ul>
                 </td>

@@ -7,6 +7,7 @@ use App\Models\Configuration;
 use App\Models\DocumentType;
 use App\Models\RentOut;
 use App\Support\RentOutChecklistNotes;
+use App\Support\RentOutPrintSettings;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -63,6 +64,9 @@ class RentOutConfiguration extends Component
     // Handover checklist print headings + declarations, per agreement type / phase
     public array $checklist_notes = [];
 
+    // Agreement wording, lessor details and colours, keyed by configuration key
+    public array $print_settings = [];
+
     private array $configKeys = [
         'reservation_bond_paper_mode',
         'reservation_logo_height',
@@ -112,6 +116,19 @@ class RentOutConfiguration extends Component
 
         // Load checklist print headings / declarations
         $this->checklist_notes = RentOutChecklistNotes::all();
+
+        $this->print_settings = RentOutPrintSettings::stored();
+    }
+
+    public function applyColorPreset(int $index): void
+    {
+        $preset = RentOutPrintSettings::colorPresets()[$index] ?? null;
+        if (! $preset) {
+            return;
+        }
+
+        $this->print_settings[RentOutPrintSettings::PRIMARY_COLOR_KEY] = $preset['primary'];
+        $this->print_settings[RentOutPrintSettings::SECONDARY_COLOR_KEY] = $preset['secondary'];
     }
 
     /** Restore one agreement type's heading + declaration to the shipped default. */
@@ -139,6 +156,13 @@ class RentOutConfiguration extends Component
             'rent_out_agreement_footer_file' => 'nullable|image|max:2048',
             'rent_out_agreement_images_files.*' => 'nullable|image|max:2048',
             'lpo_header_image_file' => 'nullable|image|max:2048',
+            'print_settings.'.RentOutPrintSettings::PRIMARY_COLOR_KEY => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'print_settings.'.RentOutPrintSettings::SECONDARY_COLOR_KEY => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'print_settings.lessor_email' => 'nullable|email|max:255',
+            'print_settings.*' => 'nullable|string|max:2000',
+        ], [
+            'print_settings.*.regex' => 'Enter a colour as #RRGGBB, e.g. #1b7bbc.',
+            'print_settings.lessor_email.email' => 'Enter a valid lessor email address.',
         ]);
 
         // Save text config keys
@@ -161,6 +185,10 @@ class RentOutConfiguration extends Component
             ['key' => RentOut::SERVICE_CATEGORIES_CONFIG_KEY],
             ['value' => collect($this->service_categories)->map(fn ($id) => (int) $id)->filter()->unique()->implode(',')]
         );
+
+        foreach (RentOutPrintSettings::keys() as $key) {
+            Configuration::updateOrCreate(['key' => $key], ['value' => trim((string) ($this->print_settings[$key] ?? ''))]);
+        }
 
         // Save checklist print headings / declarations (blanks fall back to defaults)
         RentOutChecklistNotes::save($this->checklist_notes);
@@ -223,6 +251,9 @@ class RentOutConfiguration extends Component
                 ->pluck('name', 'id'),
             'checklistTokens' => RentOutChecklistNotes::tokenHelp(),
             'checklistDefaults' => RentOutChecklistNotes::defaults(),
+            'printTextDefaults' => RentOutPrintSettings::textDefaults(),
+            'lessorFields' => RentOutPrintSettings::lessorKeys(),
+            'colorPresets' => RentOutPrintSettings::colorPresets(),
         ]);
     }
 }

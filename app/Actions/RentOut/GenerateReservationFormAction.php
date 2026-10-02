@@ -3,8 +3,8 @@
 namespace App\Actions\RentOut;
 
 use App\Enums\RentOut\AgreementType;
-use App\Models\Configuration;
 use App\Models\RentOut;
+use App\Support\RentOutPrintSettings;
 use App\Traits\UsesBrowsershot;
 
 class GenerateReservationFormAction
@@ -144,12 +144,12 @@ class GenerateReservationFormAction
 
     private function buildAgentDetails(RentOut $rentOut): array
     {
-        $companyName = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
+        $companyName = RentOutPrintSettings::companyName();
 
         return [
             [
                 'english' => ['title' => 'AGENCY NAME', 'value' => $companyName],
-                'arabic' => ['title' => 'اسم الوكالة', 'value' => $companyName],
+                'arabic' => ['title' => 'اسم الوكالة', 'value' => RentOutPrintSettings::companyName('arabic') ?: $companyName],
             ],
             [
                 'english' => ['title' => 'Sales Person Name', 'value' => $rentOut->salesman?->name],

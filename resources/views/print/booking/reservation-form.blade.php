@@ -19,6 +19,15 @@
         }
     }
 
+    $reservationTitleEnglish = \App\Support\RentOutPrintSettings::text('reservation_form_title_english');
+    $reservationTitleArabic = \App\Support\RentOutPrintSettings::text('reservation_form_title_arabic');
+    // The building's group names the project; the configured name only fills in when there is none.
+    $reservationProjectNameEnglish = $rentOut->group?->name ?: \App\Support\RentOutPrintSettings::text('reservation_project_name_english');
+    $reservationProjectNameArabic = $rentOut->group?->arabic_name ?: \App\Support\RentOutPrintSettings::text('reservation_project_name_arabic');
+    $companyNameEnglish = \App\Support\RentOutPrintSettings::text('company_name_english') ?: 'Management';
+    $companyNameArabic = \App\Support\RentOutPrintSettings::text('company_name_arabic') ?: 'الإدارة';
+    $agreementColors = \App\Support\RentOutPrintSettings::colors();
+
     $bondPaperMode = \App\Models\Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
     $logoHeight = (int) (\App\Models\Configuration::where('key', 'reservation_logo_height')->value('value') ?: 80);
     $footerHeight = (int) (\App\Models\Configuration::where('key', 'reservation_footer_height')->value('value') ?: 50);
@@ -56,8 +65,8 @@
         }
 
         .section-header {
-            background: #1b7bbc;
-            color: white;
+            background: {{ $agreementColors['primary'] }};
+            color: {{ $agreementColors['primaryInk'] }};
             padding: 0px 0px;
             font-weight: bold;
             font-size: 10px;
@@ -118,8 +127,8 @@
         }
 
         .document-title {
-            background: #1b7bbc;
-            color: white;
+            background: {{ $agreementColors['primary'] }};
+            color: {{ $agreementColors['primaryInk'] }};
             padding: 2px;
             margin: 2px 0;
             border-radius: 3px;
@@ -167,10 +176,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="text-align: left; direction: ltr;">
-                                <b>Reservation Form For An Apartment</b>
+                                <b>{{ $reservationTitleEnglish }}</b>
                             </td>
                             <td style="text-align: right; direction: rtl;">
-                                <b>{{ 'نموذج تأكيد وحجز شقة' }}</b>
+                                <b>{{ $reservationTitleArabic }}</b>
                             </td>
                         </tr>
                     </table>
@@ -181,10 +190,10 @@
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="text-align: left; direction: ltr;">
-                                <b>{{ $rentOut->group?->name }}</b>
+                                <b>{{ $reservationProjectNameEnglish }}</b>
                             </td>
                             <td style="text-align: right; direction: rtl;">
-                                <b>{{ $rentOut->group?->arabic_name }}</b>
+                                <b>{{ $reservationProjectNameArabic }}</b>
                             </td>
                         </tr>
                     </table>
@@ -395,10 +404,10 @@
                     <td width="50%" style="border: 1px solid #ddd; padding: 8px;">
                         <div style="margin-bottom: 1px;">
                             <div style="margin-bottom: 0px;">
-                                <b>Management</b>
+                                <b>{{ $companyNameEnglish }}</b>
                             </div>
                             <div style="margin-bottom: 0px; text-align: right;">
-                                <b>{{ 'الإدارة' }}</b>
+                                <b>{{ $companyNameArabic }}</b>
                             </div>
                             <div style="border-bottom: 1px solid #999; height: 25px;"></div>
                             <div style="margin-top: 5px;">

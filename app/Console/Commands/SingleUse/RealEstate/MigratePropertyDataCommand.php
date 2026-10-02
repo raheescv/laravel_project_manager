@@ -13,6 +13,7 @@ use App\Models\RentOut;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\LeadOptions;
+use App\Support\RentOutPrintSettings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -206,6 +207,7 @@ class MigratePropertyDataCommand extends Command
             $this->backfillLeadReassignedAt();
             $this->migratePropertyLeadAudits();
             $this->migrateLeadDropdownOptions();
+            $this->migrateRentOutPrintSettings();
             $this->migratePropertyAssets();
             $this->migrateSupplyRequests();
             $this->migrateSupplyRequestItems();
@@ -1798,6 +1800,52 @@ class MigratePropertyDataCommand extends Command
             DB::table('configurations')->updateOrInsert(
                 ['tenant_id' => $this->tenantId, 'key' => $key],
                 ['value' => json_encode($value), 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
+    }
+
+    /**
+     * accounts' Settings → General Configuration wording, lessor details and
+     * agreement colours into Settings → Rent Out Settings. The keys are the same
+     * in both apps. Where accounts printed its own built-in default for a blank
+     * key and this app's default differs, that printed value is copied so the
+     * PDFs read exactly as they did in accounts.
+     */
+    private function migrateRentOutPrintSettings(): void
+    {
+        if (! $this->tableExists('configurations')) {
+            return;
+        }
+
+        $accountsPrintedDefaults = [
+            'tenancy_agreement_title_english' => 'TENANCY AGREEMENT',
+            'extended_tenancy_agreement_title_english' => 'EXTENDED TENANCY AGREEMENT',
+            'tenancy_project_name_english' => 'Bin Al Sheikh Towers - Doha',
+            'reservation_form_title_english' => 'Reservation Form For An Office',
+            'reservation_form_title_arabic' => 'نموذج تأكيد وحجز مكتب',
+            'reservation_project_name_english' => 'Bin Al Sheikh Abu Humour Complex',
+            'reservation_project_name_arabic' => 'مجمع بن الشيخ أبو الفكاهة',
+        ];
+
+        $old = DB::connection('mysql2')->table('configurations')
+            ->whereIn('keys', RentOutPrintSettings::keys())
+            ->pluck('values', 'keys')
+            ->map(fn ($value) => trim((string) $value));
+
+        $target = collect(RentOutPrintSettings::keys())
+            ->mapWithKeys(fn (string $key) => [$key => filled($old[$key] ?? null) ? $old[$key] : ($accountsPrintedDefaults[$key] ?? '')])
+            ->filter(fn (string $value, string $key) => $value !== ''
+                && (! in_array($key, [RentOutPrintSettings::PRIMARY_COLOR_KEY, RentOutPrintSettings::SECONDARY_COLOR_KEY], true) || RentOutPrintSettings::isHexColor($value)));
+
+        $this->info("Rent out print settings copied: {$target->count()}");
+        if ($this->dryRun) {
+            return;
+        }
+
+        foreach ($target as $key => $value) {
+            DB::table('configurations')->updateOrInsert(
+                ['tenant_id' => $this->tenantId, 'key' => $key],
+                ['value' => $value, 'updated_at' => now(), 'created_at' => now()]
             );
         }
     }

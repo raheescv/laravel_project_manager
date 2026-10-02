@@ -22,8 +22,11 @@
                 @enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold small mb-1"><i class="fa fa-credit-card me-1 text-muted"></i> Payment Method <span
-                        class="text-danger">*</span></label>
+                <label class="form-label fw-semibold small mb-1"><i class="fa fa-credit-card me-1 text-muted"></i> Payment Method
+                    @if (in_array($form['status'], $collectedStatuses, true))
+                        <span class="text-danger">*</span>
+                    @endif
+                </label>
                 <select class="form-select form-select-sm" wire:model.live="form.account_id">
                     <option value="">Select</option>
                     @foreach ($paymentMethods as $id => $name)
@@ -81,8 +84,7 @@
                 @enderror
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar me-1 text-muted"></i> Due Date <span
-                        class="text-danger">*</span></label>
+                <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar me-1 text-muted"></i> Due Date</label>
                 <input type="date" class="form-control form-control-sm"
                     wire:model="form.due_date">
                 @error('form.due_date')

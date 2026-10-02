@@ -109,23 +109,23 @@
 
                         <!-- First Party -->
                         @php
-                            $cfg = fn ($key, $default = '') => Configuration::where('key', $key)->value('value') ?? $default;
+                            $cfg = fn (string $key): string => \App\Support\RentOutPrintSettings::lessor($key);
                         @endphp
                         <div class="section">
                             <div class="row">
                                 <div class="cell cell-en">
                                     <div class="section-title">THE FIRST PARTY (SELLER)</div>
                                     <p class="bold normal-text">{{ $cfg('lessor_name_en') }}</p>
-                                    <p class="small-text">P.O. Box: <span class="underline">{{ $cfg('lessor_po_box') }}</span>, Doha, Qatar &nbsp;|&nbsp; CR No. <span class="underline">{{ $cfg('lessor_cr_no') }}</span></p>
-                                    <p class="small-text">AUTHORIZED BY {{ $cfg('lessor_authorized_by') }}</p>
+                                    <p class="small-text">P.O. Box: <span class="underline">{{ $cfg('lessor_po_box_english') }}</span>, Doha, Qatar &nbsp;|&nbsp; CR No. <span class="underline">{{ $cfg('lessor_cr_no_english') }}</span></p>
+                                    <p class="small-text">AUTHORIZED BY {{ $cfg('lessor_authorized_by_english') }}</p>
                                     <p class="small-text">QID No. {{ $cfg('lessor_qid_no') }} &nbsp;|&nbsp; NATIONALITY: {{ $cfg('lessor_nationality') }}</p>
                                     <p class="small-text">Email: {{ $cfg('lessor_email') }} &nbsp;|&nbsp; Tel: {{ $cfg('lessor_tel_fax') }}</p>
                                 </div>
                                 <div class="cell cell-ar" lang="ar">
                                     <div class="section-title">الطرف الأول (البائع)</div>
                                     <p class="bold normal-text">{{ $cfg('lessor_name_ar') }}</p>
-                                    <p class="small-text">ص.ب: <span class="underline">{{ $cfg('lessor_po_box') }}</span>، الدوحة، قطر &nbsp;|&nbsp; س.ت: <span class="underline">{{ $cfg('lessor_cr_no') }}</span></p>
-                                    <p class="small-text">يمثلها السيد/ {{ $cfg('lessor_authorized_by') }}</p>
+                                    <p class="small-text">ص.ب: <span class="underline">{{ $cfg('lessor_po_box_arabic') }}</span>، الدوحة، قطر &nbsp;|&nbsp; س.ت: <span class="underline">{{ $cfg('lessor_cr_no_arabic') }}</span></p>
+                                    <p class="small-text">يمثلها السيد/ {{ $cfg('lessor_authorized_by_arabic') }}</p>
                                     <p class="small-text">بطاقة شخصية رقم: {{ $cfg('lessor_qid_no') }} &nbsp;|&nbsp; الجنسية: {{ $cfg('lessor_nationality') }}</p>
                                     <p class="small-text">البريد الإلكتروني: {{ $cfg('lessor_email') }} &nbsp;|&nbsp; هاتف: {{ $cfg('lessor_tel_fax') }}</p>
                                 </div>
