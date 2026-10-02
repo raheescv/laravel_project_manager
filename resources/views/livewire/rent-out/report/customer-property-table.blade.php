@@ -91,7 +91,7 @@
                         <div class="col-md-6 p-4">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <h5 class="mb-0">
-                                    <a href="{{ route('property::rent::view', $rentOut->id) }}" class="text-primary text-decoration-none">
+                                    <a href="{{ $rentOut->viewUrl() }}" class="text-primary text-decoration-none">
                                         Owner Unit /{{ $rentOut->customer?->name }} {{ $rentOut->property?->number }}-{{ $rentOut->building?->name }}
                                     </a>
                                 </h5>

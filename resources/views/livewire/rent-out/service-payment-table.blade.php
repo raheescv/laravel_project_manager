@@ -403,7 +403,7 @@
                                 @endif
                                 @if($this->isColumnVisible('customer'))
                                     <td>
-                                        <a href="{{ route($item->rentOut?->agreement_type === \App\Enums\RentOut\AgreementType::Lease ? 'property::sale::view' : 'property::rent::view', $item->rent_out_id) }}" class="text-decoration-none">
+                                        <a href="{{ $item->rentOut?->viewUrl() }}" class="text-decoration-none">
                                             <i class="fa fa-user me-1 text-muted opacity-75"></i>
                                             {{ $item->rentOut?->customer?->name ?? '-' }}
                                         </a>

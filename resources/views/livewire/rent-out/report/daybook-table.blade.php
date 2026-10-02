@@ -521,7 +521,7 @@
                                 @if ($this->isColumnVisible('customer'))
                                     <td>
                                         @if ($item->rentOut)
-                                            <a href="{{ route('property::rent::view', $item->rent_out_id) }}"
+                                            <a href="{{ $item->rentOut->viewUrl() }}"
                                                 class="text-decoration-none text-body fw-medium">
                                                 <i class="fa fa-user me-1 text-muted opacity-75"></i>
                                                 {{ $item->rentOut?->customer?->name ?? '—' }}

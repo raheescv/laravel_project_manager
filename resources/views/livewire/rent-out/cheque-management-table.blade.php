@@ -277,7 +277,7 @@
                                 @endif
                                 @if ($this->isColumnVisible('property'))
                                     <td>
-                                        <a href="{{ route('property::rent::view', $item->rent_out_id) }}"
+                                        <a href="{{ $item->rentOut?->viewUrl() }}"
                                             class="text-decoration-none">
                                             <i class="fa fa-home me-1 text-muted opacity-75"></i>
                                             {{ $item->rentOut?->property?->number }}

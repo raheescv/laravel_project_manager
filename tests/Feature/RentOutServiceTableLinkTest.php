@@ -1,7 +1,10 @@
 <?php
 
 use App\Helpers\RentOutTransactionHelper;
+use App\Livewire\RentOut\Report\CustomerPropertyTable;
+use App\Livewire\RentOut\Report\DaybookTable;
 use App\Livewire\RentOut\ServicePaymentTable;
+use App\Models\RentOut;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -99,4 +102,32 @@ it('keeps the per-row balance column on the rent services list', function () {
     Livewire::test(ServicePaymentTable::class, ['agreementType' => 'rental'])
         ->assertSeeHtml("toggleColumn('balance')")
         ->assertSeeHtml('<th class="fw-semibold text-end pe-3">Balance</th>');
+});
+
+it('resolves an agreement view url from its agreement_type', function (string $agreementType, string $routeName) {
+    $rentOutId = rstlRentOut($this->tenantId, $agreementType);
+
+    expect(RentOut::find($rentOutId)->viewUrl())->toBe(route($routeName, $rentOutId));
+})->with([
+    'lease' => ['lease', 'property::sale::view'],
+    'rental' => ['rental', 'property::rent::view'],
+]);
+
+it('links sale daybook rows to the sale view', function () {
+    $rentOutId = rstlRentOut($this->tenantId, 'lease');
+
+    Livewire::test(DaybookTable::class, ['agreementType' => 'lease'])
+        ->set('dateFrom', now()->startOfYear()->toDateString())
+        ->set('dateTo', now()->endOfYear()->toDateString())
+        ->assertSee(route('property::sale::view', $rentOutId), false)
+        ->assertDontSee(route('property::rent::view', $rentOutId), false);
+});
+
+it('links sale customer-property cards to the sale view', function () {
+    $rentOutId = rstlRentOut($this->tenantId, 'lease');
+
+    Livewire::test(CustomerPropertyTable::class, ['agreementType' => 'lease'])
+        ->call('fetch')
+        ->assertSee(route('property::sale::view', $rentOutId), false)
+        ->assertDontSee(route('property::rent::view', $rentOutId), false);
 });

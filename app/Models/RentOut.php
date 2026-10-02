@@ -422,6 +422,16 @@ class RentOut extends Model implements AuditableContracts
         return "BAS/S/{$yearCode} - {$id}";
     }
 
+    /**
+     * The agreement's view page under its own module (Rent or Sale).
+     */
+    public function viewUrl(): string
+    {
+        $route = $this->agreement_type === AgreementType::Lease ? 'property::sale::view' : 'property::rent::view';
+
+        return route($route, $this->id);
+    }
+
     public function checklistSignatureFor($phase, $role): ?RentOutChecklistSignature
     {
         $phase = $phase instanceof \App\Enums\RentOut\ChecklistPhase ? $phase->value : $phase;
