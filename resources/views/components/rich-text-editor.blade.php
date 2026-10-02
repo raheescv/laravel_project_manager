@@ -130,7 +130,7 @@
     @push('styles')
         <style>
             /* ── Reusable rich-text editor (x-rich-text-editor) ─────────────── */
-            .rte-shell { border: 1px solid var(--bs-border-color); border-radius: .5rem; background: var(--bs-body-bg); overflow: hidden; }
+            .rte-shell { border: 1px solid var(--bs-border-color); border-radius: .5rem; background: var(--bs-component-bg, var(--bs-body-bg)); overflow: hidden; }
             .rte-shell.is-focused { border-color: var(--bs-primary); box-shadow: 0 0 0 .18rem rgba(var(--bs-primary-rgb), .15); }
             .rte-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .35rem; padding: .3rem .4rem;
                        border-bottom: 1px solid var(--bs-border-color); background: var(--bs-tertiary-bg); }
@@ -143,10 +143,10 @@
             .rte-btn:hover { background: rgba(var(--bs-primary-rgb), .12); color: var(--bs-primary); }
             .rte-btn.is-on { background: rgba(var(--bs-primary-rgb), .16); color: var(--bs-primary); }
             .rte-btn-txt { width: auto; padding: 0 .45rem; font-size: .68rem; font-weight: 600; letter-spacing: .02em; }
-            .rte-select { border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); color: var(--bs-body-color);
+            .rte-select { border: 1px solid var(--bs-border-color); background: var(--bs-component-bg, var(--bs-body-bg)); color: var(--bs-body-color);
                           border-radius: .3rem; font-size: .72rem; height: 26px; padding: 0 .3rem; max-width: 120px; }
             .rte-tokens { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem; padding: .3rem .45rem;
-                          border-bottom: 1px solid var(--bs-border-color); background: var(--bs-body-bg); }
+                          border-bottom: 1px solid var(--bs-border-color); background: var(--bs-component-bg, var(--bs-body-bg)); }
             .rte-tokens-t { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
                             color: var(--bs-secondary-color); margin-right: .15rem; }
             .rte-token { border: 1px solid var(--bs-border-color); background: var(--bs-tertiary-bg); color: var(--bs-body-color);
@@ -167,7 +167,7 @@
             .rte-canvas [dir="rtl"] { text-align: right; }
             .rte-source { width: 100%; border: 0; outline: 0; resize: vertical; padding: .6rem .75rem; max-height: 60vh;
                           font-family: var(--bs-font-monospace); font-size: .74rem; line-height: 1.6;
-                          background: var(--bs-body-bg); color: var(--bs-body-color); }
+                          background: var(--bs-component-bg, var(--bs-body-bg)); color: var(--bs-body-color); }
         </style>
     @endpush
 

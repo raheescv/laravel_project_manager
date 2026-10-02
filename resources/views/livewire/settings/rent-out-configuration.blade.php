@@ -77,7 +77,7 @@
 
 <div x-data="{ tab: 'docs' }">
     <form wire:submit="save">
-        <div class="border rounded-4 bg-body">
+        <div class="card shadow-none border rounded-4">
             <div class="row g-0">
                 {{-- ============ SECTION NAV ============ --}}
                 <div class="col-12 col-lg-4 col-xl-3 border-end border-bottom">
@@ -139,7 +139,7 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="border rounded-3 p-3">
+                                <div class="card shadow-none border rounded-3 p-3">
                                     <div wire:ignore>
                                         <label class="form-label fw-semibold small" for="mandatory_document_types">Required on every booking</label>
                                         {{ html()->select('mandatory_document_types', $documentTypes)->value($mandatory_document_types)->class('select-document_type_id-list')->id('mandatory_document_types')->multiple()->placeholder('Search document types…')->attribute('wire:model', 'mandatory_document_types') }}
@@ -166,7 +166,7 @@
                             <div class="vstack gap-3">
                                 @foreach ($checklistGroups as $typeKey => $group)
                                     @php $declModel = "checklist_notes.{$typeKey}.declaration"; @endphp
-                                    <div class="border rounded-3" x-data="{ txt: @js($checklist_notes[$typeKey]['declaration'] ?? '') }"
+                                    <div class="card shadow-none border rounded-3" x-data="{ txt: @js($checklist_notes[$typeKey]['declaration'] ?? '') }"
                                         x-on:rich-text-input="if ($event.detail.model === @js($declModel)) txt = $event.detail.value">
                                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
                                             <span class="d-flex align-items-center gap-2 fw-semibold small">
@@ -207,7 +207,7 @@
 
                             <div class="row g-4">
                                 <div class="col-12 col-md-8">
-                                    <div class="form-check form-switch border rounded-3 p-3 ps-5 mb-3">
+                                    <div class="form-check form-switch card shadow-none border rounded-3 p-3 ps-5 mb-3">
                                         <input type="checkbox" class="form-check-input" role="switch" id="reservation_bond_paper_mode"
                                             :checked="$wire.reservation_bond_paper_mode === 'yes'"
                                             x-on:change="$wire.reservation_bond_paper_mode = $event.target.checked ? 'yes' : 'no'">
@@ -376,7 +376,7 @@
             </div>
 
             {{-- ============ SAVE BAR ============ --}}
-            <div class="sticky-bottom z-1 bg-body border-top rounded-bottom-4 px-3 py-2 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="card flex-row shadow-none border-0 border-top rounded-0 rounded-bottom-4 sticky-bottom z-1 px-3 py-2 flex-wrap align-items-center justify-content-between gap-2">
                 <div class="small">
                     <span wire:dirty class="text-warning-emphasis">
                         <i class="fa fa-circle text-warning me-1"></i>Unsaved changes &middot; one save applies every section

@@ -4,7 +4,7 @@
     $isSet = $upload || $slot['existing'];
     $uploadShape = $isSet ? 'rounded-start-pill' : 'rounded-pill';
 @endphp
-<div class="border rounded-4 bg-body h-100 d-flex flex-column @error($model) border-danger @enderror">
+<div class="card shadow-none border rounded-4 h-100 @error($model) border-danger @enderror">
     <label class="ratio ratio-21x9 rounded-top-4 border-bottom mb-0 {{ $isSet ? 'bg-white' : 'bg-primary-subtle' }}" role="button" for="{{ $inputId }}">
         <span class="d-flex flex-column align-items-center justify-content-center gap-2 p-3">
             @if ($hasPreview)
@@ -24,7 +24,7 @@
             @else
                 <span class="badge rounded-pill text-bg-warning shadow-sm position-absolute top-0 start-0 m-2">Not set</span>
             @endif
-            <span class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 align-items-center justify-content-center text-primary fs-4"
+            <span class="position-absolute top-0 start-0 w-100 h-100 bg-white bg-opacity-75 align-items-center justify-content-center text-primary fs-4"
                 wire:loading.flex wire:target="{{ $model }}"><i class="fa fa-spinner fa-spin"></i></span>
         </span>
     </label>

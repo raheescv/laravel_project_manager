@@ -65,3 +65,15 @@ it('wires the payment tab column menu to the persisted preference', function ():
         ->toContain('$wire.resetColumns()')
         ->toContain('@change="setColumn(key, $event.target.checked)"');
 });
+
+it('offers a receipt for credit rows and a voucher for debit rows in the payment menu', function (): void {
+    $view = file_get_contents(dirname(__DIR__, 3).'/resources/views/livewire/rent-out/tabs/payment-tab.blade.php');
+
+    $receiptPosition = strpos($view, "route('print::rentout::payment-receipt'");
+    $voucherPosition = strpos($view, "route('print::rentout::payment-voucher'");
+    $creditGuardPosition = strpos($view, '@if ($payment->credit > 0)');
+
+    expect($creditGuardPosition)->not->toBeFalse()
+        ->and($creditGuardPosition)->toBeLessThan($receiptPosition)
+        ->and(substr($view, $receiptPosition, $voucherPosition - $receiptPosition))->toContain('@else');
+});

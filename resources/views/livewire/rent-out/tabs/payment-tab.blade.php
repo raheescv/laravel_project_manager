@@ -483,16 +483,19 @@
                                         </a>
                                     @endif
                                     <div class="pmx-sep"></div>
-                                    <a class="pmx-item" @click="open = false"
-                                        href="{{ route('print::rentout::payment-receipt', $payment->id) }}"
-                                        target="_blank">
-                                        <span class="pmx-item__ic"><i class="fa fa-print"></i></span> Print Receipt
-                                    </a>
-                                    <a class="pmx-item" @click="open = false"
-                                        href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
-                                        target="_blank">
-                                        <span class="pmx-item__ic"><i class="fa fa-file-text-o"></i></span> Print Voucher
-                                    </a>
+                                    @if ($payment->credit > 0)
+                                        <a class="pmx-item" @click="open = false"
+                                            href="{{ route('print::rentout::payment-receipt', $payment->id) }}"
+                                            target="_blank">
+                                            <span class="pmx-item__ic"><i class="fa fa-print"></i></span> Print Receipt
+                                        </a>
+                                    @else
+                                        <a class="pmx-item" @click="open = false"
+                                            href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
+                                            target="_blank">
+                                            <span class="pmx-item__ic"><i class="fa fa-file-text-o"></i></span> Print Voucher
+                                        </a>
+                                    @endif
                                     <div class="pmx-sep"></div>
                                     <a class="pmx-item" @click="open = false"
                                         href="{{ route('audit::index', ['model' => 'RentOutTransaction', 'id' => $payment->id]) }}"
