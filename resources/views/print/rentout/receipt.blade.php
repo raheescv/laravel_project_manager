@@ -93,6 +93,7 @@
                     @if ($companyAddress){{ $companyAddress }}<br>@endif
                     @if ($companyPhone)Tel: {{ $companyPhone }}@endif
                     @if ($companyEmail) &bull; {{ $companyEmail }}@endif
+                    @if (! empty($companyWebsite))<br>{{ $companyWebsite }}@endif
                 </div>
             </td>
             <td class="logo-cell">

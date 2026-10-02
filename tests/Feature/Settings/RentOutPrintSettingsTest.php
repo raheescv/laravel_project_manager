@@ -3,7 +3,10 @@
 use App\Enums\RentOut\AgreementType;
 use App\Livewire\Settings\RentOutConfiguration;
 use App\Models\Configuration;
+use App\Models\Property;
+use App\Models\PropertyType;
 use App\Models\RentOut;
+use App\Models\RentOutTransaction;
 use App\Support\RentOutPrintSettings;
 use Livewire\Livewire;
 use Tests\Support\PosWorld;
@@ -136,3 +139,58 @@ it('falls back to the company profile name for the agency name', function (): vo
 
     expect(RentOutPrintSettings::companyName())->toBe('Bin Al Sheikh');
 });
+
+it('flags the Agreement Text tab when a clause fails validation', function (): void {
+    Livewire::test(RentOutConfiguration::class)
+        ->set('print_settings.tenancy_contract_terms_arabic', str_repeat('ب', 2001))
+        ->call('save')
+        ->assertHasErrors(['print_settings.tenancy_contract_terms_arabic' => 'max'])
+        ->assertSee('Needs attention');
+});
+
+it('prints the configured seller details verbatim on the sale agreement', function (): void {
+    Configuration::updateOrCreate(['key' => 'lessor_po_box_english'], ['value' => '13321, Doha , State of Qatar']);
+    Configuration::updateOrCreate(['key' => 'lessor_po_box_arabic'], ['value' => '13321  الدوحة  دولة قطر']);
+    Configuration::updateOrCreate(['key' => 'lessor_authorized_by_arabic'], ['value' => 'السيد حسن محسن']);
+
+    $property = new Property(['number' => '709']);
+    $property->setRelation('type', new PropertyType(['name' => 'Apartment']));
+    $rentOut = new RentOut(['agreement_type' => AgreementType::Lease, 'rent' => 1000, 'start_date' => '2026-03-01', 'end_date' => '2027-03-01']);
+    $rentOut->id = 2203;
+    $rentOut->setRelation('property', $property);
+    $rentOut->setRelation('paymentTerms', collect());
+
+    $html = view('print.booking.sale-residential-lease', [
+        'rentOut' => $rentOut,
+        'numberToWord' => ['english' => 'one thousand', 'arabic' => 'one thousand'],
+    ])->render();
+
+    expect($html)->toContain('<span class="underline">13321, Doha , State of Qatar</span> &nbsp;|')
+        ->toContain('<span class="underline">13321  الدوحة  دولة قطر</span> &nbsp;|')
+        ->toContain('يمثلها: السيد حسن محسن')
+        ->not->toContain('State of Qatar</span>, Doha, Qatar')
+        ->not->toContain('السيد/ السيد');
+});
+
+it('prints the company website on the rent-out receipt and voucher headers', function (string $view): void {
+    $rentOut = new RentOut(['agreement_no' => 'AG-1']);
+    $rentOut->setRelation('customer', null);
+    $rentOut->setRelation('property', null);
+    $rentOut->setRelation('building', null);
+    $payment = new RentOutTransaction(['credit' => 1000, 'debit' => 0]);
+    $payment->id = 76329;
+    $payment->setRelation('account', null);
+
+    $html = view($view, [
+        'payment' => $payment,
+        'rentOut' => $rentOut,
+        'companyName' => 'Bin Al Sheikh Holding',
+        'companyPhone' => '+974 4001 1911',
+        'companyAddress' => 'Suhaim Bin Hamad Street, Doha, Qatar',
+        'companyEmail' => 'Reception@binalsheikh.com',
+        'companyWebsite' => 'www.binalsheikh.com',
+        'companyLogo' => null,
+    ])->render();
+
+    expect($html)->toContain('Reception@binalsheikh.com')->toContain('<br>www.binalsheikh.com');
+})->with(['print.rentout.receipt', 'print.rentout.voucher']);

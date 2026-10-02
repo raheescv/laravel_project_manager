@@ -14,17 +14,20 @@ use App\Models\Role;
 use App\Models\User;
 use App\Support\LeadOptions;
 use App\Support\RentOutPrintSettings;
+use App\Support\TenantCache;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
 class MigratePropertyDataCommand extends Command
 {
-    protected $signature = 'migrate:property-data {--tenant= : Tenant ID to assign} {--dry-run : Run without inserting data}';
+    protected $signature = 'migrate:property-data {--tenant= : Tenant ID to assign} {--dry-run : Run without inserting data} {--accounts-public= : Path to the accounts app public/ directory, to copy its agreement logos and annex pages}';
 
     protected $description = 'Migrate property, maintenance, asset, and supply data from accounts (mysql2) to project manager, preserving primary keys';
 
@@ -208,6 +211,8 @@ class MigratePropertyDataCommand extends Command
             $this->migratePropertyLeadAudits();
             $this->migrateLeadDropdownOptions();
             $this->migrateRentOutPrintSettings();
+            $this->migrateCompanyProfile();
+            $this->migrateRentOutBranding();
             $this->migratePropertyAssets();
             $this->migrateSupplyRequests();
             $this->migrateSupplyRequestItems();
@@ -1848,6 +1853,211 @@ class MigratePropertyDataCommand extends Command
                 ['value' => $value, 'updated_at' => now(), 'created_at' => now()]
             );
         }
+    }
+
+    /**
+     * accounts' company profile into Settings → Company Profile, which heads the
+     * printed receipts and vouchers. Contact details, address and website follow
+     * accounts; the company name is only filled when this tenant has none, as it
+     * also names the workspace. The logo is the profile image accounts prints on
+     * its receipts, stored inline in the profiles table.
+     */
+    private function migrateCompanyProfile(): void
+    {
+        if (! $this->tableExists('profiles')) {
+            return;
+        }
+
+        $profile = DB::connection('mysql2')->table('profiles')->orderBy('id')->first();
+        if (! $profile) {
+            $this->warn('No accounts company profile to migrate.');
+
+            return;
+        }
+
+        $address = collect([$profile->address_line_1 ?? null, $profile->address_line_2 ?? null])
+            ->map(fn ($line) => trim((string) $line))
+            ->filter()
+            ->implode(', ');
+
+        $values = array_filter([
+            'mobile' => trim((string) ($profile->mobile ?? '')),
+            'email' => trim((string) ($profile->email ?? '')),
+            'company_address' => $address,
+            'company_website' => trim((string) ($profile->address_line_3 ?? '')),
+        ], 'filled');
+
+        $companyName = trim((string) ($profile->company ?? ''));
+        $currentName = trim((string) DB::table('configurations')->where('tenant_id', $this->tenantId)->where('key', 'company_name')->value('value'));
+        if ($companyName !== '' && $currentName === '') {
+            $values['company_name'] = $companyName;
+        } elseif ($companyName !== '' && $currentName !== $companyName) {
+            $this->warn("Company name kept as \"{$currentName}\" (accounts: \"{$companyName}\"). Change it in Settings → Company Profile if needed.");
+        }
+
+        $logo = ($profile->image_binary ?? null) ?: ($profile->logo_binary ?? null);
+        $logoBytes = $logo ? base64_decode((string) $logo, true) : false;
+        $logoExtension = $logoBytes ? $this->imageExtension($logoBytes) : null;
+
+        $this->info('Company profile copied: '.implode(', ', array_keys($values)).($logoExtension ? ', logo' : ''));
+        if ($this->dryRun) {
+            return;
+        }
+
+        if ($logoExtension) {
+            $path = "company_image/accounts-company-logo.{$logoExtension}";
+            Storage::disk('public')->put($path, $logoBytes);
+            $values['logo'] = '/storage/'.$path;
+        }
+
+        foreach ($values as $key => $value) {
+            $this->putConfiguration($key, $value);
+            // No tenant is resolved in the console, so clear the migrated tenant's cache entry directly.
+            Cache::forget(TenantCache::key($key, $this->tenantId));
+        }
+    }
+
+    /**
+     * The rest of accounts' rent-out print setup: bond paper mode, the default
+     * mandatory documents, the agreement logos and the annex pages.
+     *
+     * accounts keeps its uploads under public/ and falls back to images bundled
+     * in public/image/ when nothing was uploaded, so each logo is copied from
+     * whichever file accounts actually prints. accounts' "lease residential"
+     * logo heads both its rental and its sale tenancy agreements, so it fills
+     * both of this app's residential logo slots; when it was never uploaded the
+     * two agreements fell back to different bundled images, and so do the slots.
+     */
+    private function migrateRentOutBranding(): void
+    {
+        if (! $this->tableExists('configurations')) {
+            return;
+        }
+
+        $old = DB::connection('mysql2')->table('configurations')
+            ->whereIn('keys', [
+                'reservation_bond_paper_mode', 'reservation_logo_height', 'reservation_footer_height', 'mandatory_document_types',
+                'rental_reservation_form_logo', 'lease_reservation_form_logo', 'rentout_agreement_logo_footer', 'lease_residential_logo',
+                'rentout_agreement_images',
+            ])
+            ->pluck('values', 'keys')
+            ->map(fn ($value) => trim((string) $value));
+
+        $values = array_filter([
+            'reservation_bond_paper_mode' => in_array($old['reservation_bond_paper_mode'] ?? '', ['yes', 'no'], true) ? $old['reservation_bond_paper_mode'] : '',
+            'reservation_logo_height' => is_numeric($old['reservation_logo_height'] ?? null) ? (string) (int) $old['reservation_logo_height'] : '',
+            'reservation_footer_height' => is_numeric($old['reservation_footer_height'] ?? null) ? (string) (int) $old['reservation_footer_height'] : '',
+        ], 'filled');
+
+        if (isset($old['mandatory_document_types'])) {
+            // Document types keep their accounts ids, so only ids that made it across are kept.
+            $ids = collect(explode(',', $old['mandatory_document_types']))->map(fn ($id) => (int) $id)->filter()->unique();
+            $known = DB::table('document_types')->where('tenant_id', $this->tenantId)->whereIn('id', $ids)->pluck('id');
+            $values[RentOut::MANDATORY_DOCUMENTS_CONFIG_KEY] = $ids->intersect($known)->implode(',');
+        }
+
+        $this->info('Rent out print setup copied: '.implode(', ', array_keys($values)));
+        if (! $this->dryRun) {
+            foreach ($values as $key => $value) {
+                $this->putConfiguration($key, $value);
+            }
+        }
+
+        $publicPath = $this->accountsPublicPath();
+        if (! $publicPath) {
+            $this->warn('accounts public/ directory not found - agreement logos and annex pages were NOT copied. Re-run with --accounts-public=/path/to/accounts/public.');
+
+            return;
+        }
+
+        $logos = [
+            'rental_reservation_logo' => [$old['rental_reservation_form_logo'] ?? null, 'image/logo.png'],
+            'lease_reservation_logo' => [$old['lease_reservation_form_logo'] ?? null, 'image/lease-booking-logo.png'],
+            'rent_out_agreement_logo_footer' => [$old['rentout_agreement_logo_footer'] ?? null, 'image/bas-footer.png'],
+            'residential_lease_logo' => [$old['lease_residential_logo'] ?? null, 'image/logo-agreement.png'],
+            'lease_residential_logo' => [$old['lease_residential_logo'] ?? null, 'image/lease_logo.png'],
+        ];
+
+        $copied = [];
+        foreach ($logos as $key => [$configured, $fallback]) {
+            $source = collect([$configured, $fallback])
+                ->filter()
+                ->map(fn (string $relative) => $publicPath.'/'.ltrim($relative, '/'))
+                ->first(fn (string $file) => is_file($file));
+
+            if (! $source) {
+                $this->warn("No accounts image found for {$key}.");
+
+                continue;
+            }
+
+            $copied[$key] = $this->copyAccountsImage($source, "rent_out_logos/accounts-{$key}");
+        }
+
+        $annexPages = json_decode($old['rentout_agreement_images'] ?? '', true);
+        if (is_array($annexPages)) {
+            $pages = [];
+            foreach (array_values(array_filter($annexPages, 'is_string')) as $index => $relative) {
+                $source = $publicPath.'/'.ltrim($relative, '/');
+                if (! is_file($source)) {
+                    $this->warn("Annex page missing in accounts: {$relative}");
+
+                    continue;
+                }
+                $pages[] = $this->copyAccountsImage($source, 'rent_out_logos/accounts-annex-'.($index + 1));
+            }
+            $copied['rent_out_agreement_images'] = json_encode($pages);
+        }
+
+        $this->info('Agreement logos and annex pages copied: '.(implode(', ', array_keys($copied)) ?: 'none'));
+        if ($this->dryRun) {
+            return;
+        }
+
+        foreach ($copied as $key => $value) {
+            $this->putConfiguration($key, $value);
+        }
+    }
+
+    /** accounts' public/ directory: the --accounts-public option, else a sibling accounts checkout. */
+    private function accountsPublicPath(): ?string
+    {
+        $path = $this->option('accounts-public') ?: base_path('../accounts/public');
+        $real = realpath((string) $path);
+
+        return $real && is_dir($real) ? $real : null;
+    }
+
+    /** Copy an accounts image onto the public disk and return its stored path (the file name only on a dry run). */
+    private function copyAccountsImage(string $source, string $target): string
+    {
+        $path = $target.'.'.strtolower(pathinfo($source, PATHINFO_EXTENSION) ?: 'png');
+        if (! $this->dryRun) {
+            Storage::disk('public')->put($path, file_get_contents($source));
+        }
+
+        return $path;
+    }
+
+    private function imageExtension(string $bytes): ?string
+    {
+        $info = @getimagesizefromstring($bytes);
+
+        return match ($info[2] ?? null) {
+            IMAGETYPE_PNG => 'png',
+            IMAGETYPE_JPEG => 'jpg',
+            IMAGETYPE_GIF => 'gif',
+            IMAGETYPE_WEBP => 'webp',
+            default => str_contains(substr($bytes, 0, 256), '<svg') ? 'svg' : null,
+        };
+    }
+
+    private function putConfiguration(string $key, string $value): void
+    {
+        DB::table('configurations')->updateOrInsert(
+            ['tenant_id' => $this->tenantId, 'key' => $key],
+            ['value' => $value, 'updated_at' => now(), 'created_at' => now()]
+        );
     }
 
     /**

@@ -50,7 +50,7 @@
             'status' => 'Titles · Clauses',
             'ok' => true,
             'sub' => 'Company name, titles, project names and contract clauses printed on the reservation form and tenancy agreement PDFs. Leave a field blank to print the default shown in grey.',
-            'fields' => ['print_settings.company_name_english', 'print_settings.tenancy_agreement_title_english'],
+            'fields' => collect($printTextDefaults)->keys()->map(fn ($key) => 'print_settings.' . $key)->all(),
         ],
         'lessor' => [
             'icon' => 'fa-building-o',
@@ -58,7 +58,7 @@
             'status' => $lessorSet . ' of ' . count($lessorFields) . ' set',
             'ok' => $lessorSet > 0,
             'sub' => 'The landlord company printed as the First Party - Lessor on the tenancy agreement PDF.',
-            'fields' => ['print_settings.lessor_email'],
+            'fields' => collect($lessorFields)->keys()->map(fn ($key) => 'print_settings.' . $key)->all(),
         ],
         'colors' => [
             'icon' => 'fa-paint-brush',
@@ -332,7 +332,7 @@
                             @foreach ($lessorFields as $key => $label)
                                 <div class="col-12 col-md-6">
                                     <label class="form-label fw-semibold small" for="print_{{ $key }}">{{ $label }}</label>
-                                    <input type="{{ $key === 'lessor_email' ? 'email' : 'text' }}" id="print_{{ $key }}" class="form-control form-control-sm"
+                                    <input type="text" @if ($key === 'lessor_email') inputmode="email" @endif id="print_{{ $key }}" class="form-control form-control-sm"
                                         wire:model="print_settings.{{ $key }}" @if (str_ends_with($key, '_ar') || str_ends_with($key, '_arabic')) dir="rtl" @endif>
                                     @error("print_settings.{$key}")
                                         <div class="text-danger small mt-1">{{ $message }}</div>
