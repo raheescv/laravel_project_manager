@@ -1,65 +1,14 @@
-
-
-
-<!-- 1. edit bill -->
-<!-- 2. paid amount and balance -->
-3. day close
-4. opening cash
-<!-- 5. POS full screen -->
-6. speed
-7. day summary and print
-<!-- 8. cancel bill error -->
-9. Sale Edit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Customer Statement PDF -->
-
-<!-- Purchase Note In Purchase page before submit -->
-
-<!-- Commission Report Product Wise For the employee with Target -->
-
-
-<!-- sale return item employee connection -->
-<!-- Bank Re conciliation Report -->
-
-globion.astraqatara.com
-
-
-
-
-
-
-
-
-
-zahara
-service reminder - next service days
-feedback in customer view page
-
+No.	Main Segment	Detail of Problem / Required Fix	Status	Priority	Remarks / Action Taken		
+2.2	Booking - Management Fees	Payment Vouchers: Two vouchers are currently being generated for Management Fee payments — Receipt Voucher (RV) and Payment Voucher (PV). In the old system, only one RV was generated. This needs to be corrected.	Pending		Partial: print menu fixed, but chargeAndPay still creates charge + receipt rows (PV still printable).
+2.3	Booking - Management	Management Section UI: Sections such as Payments, Payment Term, Cheque, Service, etc. have very light colours and are difficult to identify. The colour/theme should be made slightly darker for better visibility.	Pending		
+2.5	Booking - RentOut Configuration	Settings → RentOut Configuration: Header and Footer configuration is not working. Also, the terminology is still showing RentOut and Lease; it needs to be changed to RentOut and Sales.	Pending		Partial: header/footer works; "Lease" wording still in settings page + AgreementType label.
+2.6	Booking - Unit	Log Maintenance: Need clarification/documentation on what Log Maintenance inside the Unit section is intended for and how it should work. It needs to be checked against the old system.	Pending		
+3.2	Sales - Payments	Payment Mode: Bank Transfer option needs to be added as a payment mode.	Pending		Partial: enum has Bank Transfer; payment modals only show it if a payment-method account is set up.
+3.3	Sales - Security Cheques	Cheque Due Date: There must be an option to record cheques without a due date, because many security cheques are received without a date.	Pending		Not done: column nullable but SecurityModal still requires due_date.
+3.4	Sales - Services	Service Category: Additional/required Service Categories need to be added. Currently, only the existing categories are showing.	Pending		Partial: income accounts can be ticked as service categories in Rent Out settings; no dedicated screen.
+3.7	Sales	Additional Point: Details to be provided.	Pending		
+4.1	Receipt	Receipt Voucher Naming: All RVs should have the relevant transaction name instead of the generic “Receipt Voucher.” For example, “Management Fees RV”, “Security Deposit Receipt Voucher”, etc., same as the old system.	Pending		Partial: Service Invoice + Security Deposit titles done; Management Fee/Rent/Utility still generic.
+4.2	Invoice	Invoice Generation: Invoice is not being generated in the new system. Invoice generation needs to work the same as the old system.	Pending		Partial: only service charges print as Invoice; no rent/general invoice.
+5.1	Notes	Note Assignment: When creating a Note, there should be an option to select whom the Note is being written/assigned to.	Pending		
+6.1	Appointment	Select Employee: Need to check how employees are currently appearing in the Select Employee option and configure it correctly.	Pending		Partial: lists all active branch employees; no designation filter like Leads.
+6.2	Appointment - Calendar	Calendar Date Range: Need an option to define a specific date range, for example 16-10-2026 to 31-10-2026, so guests/users can select appointments only within that configured date range.	Pending		
