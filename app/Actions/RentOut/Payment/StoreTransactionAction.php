@@ -68,16 +68,26 @@ class StoreTransactionAction
         }
 
         // Entry 2: Credit — payment received. The charge leg already recognised
-        // the income, so this leg only settles the receivable it created:
-        // Dr Payment Method, Cr Customer. Countering to income here instead
-        // would recognise the same revenue twice.
-        $receiveData = array_merge($data, [
+        // the income, so this leg only settles the receivable it created.
+        return $this->settle($rentOutId, $data);
+    }
+
+    /**
+     * Collect payment against a receivable that already exists (credit entry
+     * only). Used for Pay Existing, where the charge was billed earlier.
+     *
+     * Journal: Dr Payment Method, Cr Customer. Countering to income here would
+     * recognise revenue the original charge already booked.
+     */
+    public function settle(int $rentOutId, array $data): array
+    {
+        $rentOut = RentOut::findOrFail($rentOutId);
+
+        return $this->receive($rentOutId, array_merge($data, [
             'group' => ($data['group'] ?? 'Service').' Payment',
             'counter_account_id' => $rentOut->account_id,
             'journal_source' => $rentOut->agreement_type?->sourceSlug() ?? 'rent_out',
-        ]);
-
-        return $this->receive($rentOutId, $receiveData);
+        ]));
     }
 
     /**

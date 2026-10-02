@@ -1,8 +1,18 @@
+@php
+    $isServiceInvoice = in_array($payment->source, ['Service', 'ServiceCharge'], true) && $payment->debit > 0 && ! ($payment->credit > 0);
+    $voucherAmount    = $payment->credit > 0 ? $payment->credit : $payment->debit;
+    $voucherNo        = $payment->voucher_no ?? $payment->id;
+    $voucherTitle     = match (true) {
+        $isServiceInvoice                     => trim(trim((string) $payment->category_label) . ' Invoice'),
+        $payment->model === 'RentOutSecurity' => 'Security Deposit Payment Voucher',
+        default                               => 'Payment Voucher',
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Payment Voucher - #{{ $payment->voucher_no ?? $payment->id }}</title>
+    <title>{{ $voucherTitle }} - #{{ $voucherNo }}</title>
     <style>
         :root {
             --accent:      #0E8A4F;
@@ -73,11 +83,6 @@
     </style>
 </head>
 <body>
-    @php
-        $voucherAmount = $payment->credit > 0 ? $payment->credit : $payment->debit;
-        $voucherNo     = $payment->voucher_no ?? $payment->id;
-    @endphp
-
     {{-- ── Header ── --}}
     <table class="b-head">
         <tr>
@@ -100,19 +105,19 @@
 
     {{-- ── Title ── --}}
     <div class="b-title">
-        <div class="t">Payment Voucher</div>
+        <div class="t">{{ $voucherTitle }}</div>
         <div class="rule"></div>
     </div>
 
     {{-- ── Voucher No. & Date ── --}}
     <table class="b-meta">
-        <tr><td class="k">Voucher No.</td><td class="v">{{ $voucherNo }}</td></tr>
+        <tr><td class="k">{{ $isServiceInvoice ? 'Invoice No.' : 'Voucher No.' }}</td><td class="v">{{ $voucherNo }}</td></tr>
         <tr><td class="k">Date</td><td class="v">{{ $payment->date?->format('d-m-Y') }}</td></tr>
     </table>
 
     {{-- ── Amount ── --}}
     <div class="b-amount">
-        <div class="lbl">Amount Paid</div>
+        <div class="lbl">{{ $isServiceInvoice ? 'Amount Due' : 'Amount Paid' }}</div>
         <div class="fig"><span class="cur">QR</span> {{ currency($voucherAmount) }}</div>
     </div>
 
@@ -124,7 +129,7 @@
         <tbody>
             @if ($rentOut->customer)
             <tr>
-                <td class="f-label">Paid To</td>
+                <td class="f-label">{{ $isServiceInvoice ? 'Billed To' : 'Paid To' }}</td>
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $rentOut->customer->name }}</td>
             </tr>
@@ -191,7 +196,7 @@
     </table>
 
     {{-- ── Footer ── --}}
-    <div class="footer">Computer generated voucher &bull; {{ now()->format('d/m/Y h:i A') }}</div>
+    <div class="footer">Computer generated {{ $isServiceInvoice ? 'invoice' : 'voucher' }} &bull; {{ now()->format('d/m/Y h:i A') }}</div>
 
 </body>
 </html>

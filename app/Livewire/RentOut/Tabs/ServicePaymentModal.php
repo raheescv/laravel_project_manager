@@ -92,7 +92,7 @@ class ServicePaymentModal extends Component
         try {
             DB::beginTransaction();
 
-            $response = RentOutTransactionHelper::storeServicePayNow($this->rentOutId, $this->form);
+            $response = RentOutTransactionHelper::storeServicePayExisting($this->rentOutId, $this->form);
 
             if (! $response['success']) {
                 throw new \Exception($response['message']);

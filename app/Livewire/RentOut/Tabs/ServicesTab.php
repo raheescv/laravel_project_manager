@@ -78,7 +78,13 @@ class ServicesTab extends Component
 
     public function printReceipt($paymentId)
     {
-        $url = route('print::rentout::payment-receipt', $paymentId);
+        $payment = RentOutTransaction::query()
+            ->where('rent_out_id', $this->rentOutId)
+            ->findOrFail($paymentId, ['id', 'credit']);
+
+        $url = $payment->credit > 0
+            ? route('print::rentout::payment-receipt', $payment->id)
+            : route('print::rentout::payment-voucher', $payment->id);
         $this->dispatch('open-receipt-tab', url: $url);
     }
 

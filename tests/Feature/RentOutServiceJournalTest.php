@@ -124,6 +124,40 @@ it('settles the receivable on a pay-now service instead of booking the income tw
     expect((float) $incomeCredited)->toBe(250.0);
 });
 
+it('pays an existing service charge without billing the customer again', function () {
+    $this->helper->storeServicePayLater($this->rentOutId, $this->form);
+
+    $response = $this->helper->storeServicePayExisting($this->rentOutId, $this->form);
+
+    expect($response['success'])->toBeTrue();
+
+    $rows = DB::table('rent_out_transactions')->where('rent_out_id', $this->rentOutId)->orderBy('id')->get();
+    expect($rows)->toHaveCount(2)
+        ->and((float) $rows[1]->credit)->toBe(250.0)
+        ->and((float) $rows[1]->debit)->toBe(0.0)
+        ->and((int) $rows[1]->account_id)->toBe($this->cardId);
+
+    // The receipt only settles the receivable: Dr Card, Cr Customer.
+    [$receiptDebit, $receiptCredit] = rsjEntries($rows[1]->id);
+    expect((int) $receiptDebit->account_id)->toBe($this->cardId)
+        ->and((int) $receiptCredit->account_id)->toBe($this->customerId);
+
+    // Income was booked once, by the original charge.
+    $incomeCredited = JournalEntry::withoutGlobalScopes()
+        ->whereIn('journal_id', $rows->pluck('journal_id'))
+        ->where('account_id', $this->categoryId)
+        ->sum('credit');
+    expect((float) $incomeCredited)->toBe(250.0);
+
+    // The category's outstanding balance is cleared.
+    $balance = DB::table('rent_out_transactions')
+        ->where('rent_out_id', $this->rentOutId)
+        ->where('category', (string) $this->categoryId)
+        ->selectRaw('sum(credit) - sum(debit) as balance')
+        ->value('balance');
+    expect((float) $balance)->toBe(0.0);
+});
+
 it('moves the entries when the category on a charge is changed', function () {
     $charge = $this->helper->storeServicePayLater($this->rentOutId, $this->form)['data'];
 

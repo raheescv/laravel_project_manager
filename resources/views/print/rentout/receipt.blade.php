@@ -1,8 +1,18 @@
+@php
+    $isServiceInvoice = in_array($payment->source, ['Service', 'ServiceCharge'], true) && $payment->debit > 0 && ! ($payment->credit > 0);
+    $receiptAmount    = $payment->credit > 0 ? $payment->credit : $payment->debit;
+    $voucherNo        = $payment->voucher_no ?? $payment->id;
+    $receiptTitle     = match (true) {
+        $isServiceInvoice                     => trim(trim((string) $payment->category_label) . ' Invoice'),
+        $payment->model === 'RentOutSecurity' => 'Security Deposit Receipt Voucher',
+        default                               => 'Receipt Voucher',
+    };
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>{{ $payment->model === 'RentOutSecurity' ? 'Security Deposit Receipt' : 'Receipt' }} - #{{ $payment->voucher_no ?? $payment->id }}</title>
+    <title>{{ $receiptTitle }} - #{{ $payment->voucher_no ?? $payment->id }}</title>
     <style>
         :root {
             --accent:      #0E8A4F;
@@ -24,18 +34,13 @@
         }
 
         /* ── Header ── */
-        .b-head { width: 100%; border-collapse: collapse; border-bottom: 2px solid var(--line); }
-        .b-head td { vertical-align: middle; padding: 0 0 10px; }
-        .b-head .co-name { font-size: 20px; font-weight: 600; color: #2c3e50; margin: 0 0 6px; letter-spacing: .5px; }
-        .b-head .co-meta { font-size: 11px; color: var(--ink-soft); line-height: 1.8; }
-        .b-head .co-meta a { color: #0087C3; text-decoration: none; }
-        .b-head .logo-cell { width: 200px; text-align: right; }
-        .b-head .logo-box {
-            display: inline-block; width: 200px; min-height: 80px; padding: 5px; box-sizing: border-box; text-align: center;
-            background: linear-gradient(135deg, rgba(0, 135, 195, 0.03) 0%, rgba(0, 174, 239, 0.03) 100%);
-            border: 1px solid rgba(0, 135, 195, 0.1); border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        .b-head .logo-box img { display: block; max-width: 180px; max-height: 80px; margin: 5px auto; }
+        .b-head { width: 100%; border-collapse: collapse; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+        .b-head td { vertical-align: middle; padding: 0; }
+        .b-eyebrow { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 3px; }
+        .b-head .co-name { font-size: 17px; font-weight: 700; letter-spacing: .5px; color: var(--ink); margin: 0 0 3px; }
+        .b-head .co-meta { font-size: 9.5px; color: var(--ink-soft); line-height: 1.7; }
+        .b-head .logo-cell { text-align: right; width: 200px; vertical-align: top; }
+        .b-head .logo-cell img { max-width: 190px; max-height: 90px; }
 
         /* ── Title ── */
         .b-title { text-align: center; margin: 18px 0 6px; }
@@ -78,27 +83,21 @@
     </style>
 </head>
 <body>
-    @php
-        $receiptAmount = $payment->credit > 0 ? $payment->credit : $payment->debit;
-        $voucherNo     = $payment->voucher_no ?? $payment->id;
-        $receiptTitle  = $payment->model === 'RentOutSecurity' ? 'Security Deposit Receipt Voucher' : 'Receipt Voucher';
-    @endphp
-
     {{-- ── Header ── --}}
     <table class="b-head">
         <tr>
             <td>
+                <div class="b-eyebrow">Accounts Receivable</div>
                 <div class="co-name">{{ $companyName }}</div>
                 <div class="co-meta">
-                    @if ($companyPhone)<strong>Phone:</strong> {{ $companyPhone }}<br>@endif
                     @if ($companyAddress){{ $companyAddress }}<br>@endif
-                    @if ($companyEmail)<a href="mailto:{{ $companyEmail }}">{{ $companyEmail }}</a><br>@endif
-                    @if ($companyWebsite){{ $companyWebsite }}@endif
+                    @if ($companyPhone)Tel: {{ $companyPhone }}@endif
+                    @if ($companyEmail) &bull; {{ $companyEmail }}@endif
                 </div>
             </td>
             <td class="logo-cell">
                 @if ($companyLogo)
-                    <div class="logo-box"><img src="{{ $companyLogo }}" alt="Company Logo"></div>
+                    <img src="{{ $companyLogo }}" alt="Logo">
                 @endif
             </td>
         </tr>
@@ -112,13 +111,13 @@
 
     {{-- ── Receipt No. & Date ── --}}
     <table class="b-meta">
-        <tr><td class="k">Receipt No.</td><td class="v">{{ $voucherNo }}</td></tr>
+        <tr><td class="k">{{ $isServiceInvoice ? 'Invoice No.' : 'Receipt No.' }}</td><td class="v">{{ $voucherNo }}</td></tr>
         <tr><td class="k">Date</td><td class="v">{{ $payment->date?->format('d-m-Y') }}</td></tr>
     </table>
 
     {{-- ── Amount ── --}}
     <div class="b-amount">
-        <div class="lbl">Amount Received</div>
+        <div class="lbl">{{ $isServiceInvoice ? 'Amount Due' : 'Amount Received' }}</div>
         <div class="fig"><span class="cur">QR</span> {{ currency($receiptAmount) }}</div>
     </div>
 
@@ -130,7 +129,7 @@
         <tbody>
             @if ($rentOut->customer)
             <tr>
-                <td class="f-label">Received From</td>
+                <td class="f-label">{{ $isServiceInvoice ? 'Billed To' : 'Received From' }}</td>
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $rentOut->customer->name }}</td>
             </tr>
@@ -197,7 +196,7 @@
     </table>
 
     {{-- ── Footer ── --}}
-    <div class="footer">Computer generated receipt &bull; {{ now()->format('d/m/Y h:i A') }}</div>
+    <div class="footer">Computer generated {{ $isServiceInvoice ? 'invoice' : 'receipt' }} &bull; {{ now()->format('d/m/Y h:i A') }}</div>
 
 </body>
 </html>

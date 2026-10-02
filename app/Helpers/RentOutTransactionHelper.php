@@ -118,6 +118,11 @@ class RentOutTransactionHelper
         return $this->chargeAndPay($rentOutId, $this->serviceData($data));
     }
 
+    public function storeServicePayExisting(int $rentOutId, array $data): array
+    {
+        return $this->action()->settle($rentOutId, $this->serviceData($data));
+    }
+
     protected function serviceData(array $data): array
     {
         return [

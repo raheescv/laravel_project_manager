@@ -1,13 +1,50 @@
 {{-- Management Sections --}}
 @php
     $defaultLabel = $isRental ? 'rent payment' : 'installment';
+
+    $tabs = [
+        ['key' => 'PaymentTab', 'slug' => 'payment', 'icon' => 'fa-credit-card', 'label' => 'Payment'],
+        ['key' => 'PaymentTermTab', 'slug' => 'terms', 'icon' => 'fa-calendar', 'label' => 'Terms'],
+    ];
+    if ($isRental) {
+        $tabs[] = ['key' => 'UtilitiesTab', 'slug' => 'utilities', 'icon' => 'fa-bolt', 'label' => 'Utilities'];
+    }
+    $tabs = array_merge($tabs, [
+        ['key' => 'ServicesTab', 'slug' => 'services', 'icon' => 'fa-cogs', 'label' => 'Services'],
+        ['key' => 'ChequeTab', 'slug' => 'cheques', 'icon' => 'fa-check-square-o', 'label' => 'Cheques'],
+        ['key' => 'SecurityTab', 'slug' => 'security', 'icon' => 'fa-shield', 'label' => 'Security'],
+        ['key' => 'ExtendTab', 'slug' => 'extend', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
+    ]);
+    if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked) {
+        $tabs[] = ['key' => 'AgreementPointsTab', 'slug' => 'agreement-points', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'];
+    }
+    $tabs = array_merge($tabs, [
+        ['key' => 'NotesTab', 'slug' => 'notes', 'icon' => 'fa-file-text-o', 'label' => 'Notes'],
+        ['key' => 'TransactionTab', 'slug' => 'transactions', 'icon' => 'fa-exchange', 'label' => 'Transactions'],
+        ['key' => 'MaintenanceTab', 'slug' => 'maintenance', 'icon' => 'fa-wrench', 'label' => 'Maintenance'],
+        ['key' => 'AppointmentTab', 'slug' => 'appointments', 'icon' => 'fa-calendar-check-o', 'label' => 'Appointments'],
+        ['key' => 'DocumentsTab', 'slug' => 'documents', 'icon' => 'fa-file-o', 'label' => 'Documents'],
+        ['key' => 'ChecklistTab', 'slug' => 'checklist', 'icon' => 'fa-list-alt', 'label' => 'Checklist'],
+    ]);
+    $tabSlugs = collect($tabs)->pluck('key', 'slug');
 @endphp
 <style>
     .mgmt-tab-btn { font-size: .72rem; border-radius: .375rem; transition: all .15s ease; }
     .mgmt-tab-btn.active { background-color: var(--bs-primary); color: #fff !important; box-shadow: 0 2px 6px rgba(var(--bs-primary-rgb), .25); }
     .mgmt-tab-btn:not(.active):hover { background-color: var(--bs-primary-bg-subtle); color: var(--bs-primary-emphasis) !important; }
 </style>
-<div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden rvx-mgmt-card" x-data="{ activeTab: 'PaymentTab' }">
+<div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden rvx-mgmt-card" x-data="{
+        activeTab: 'PaymentTab',
+        tabSlugs: @js($tabSlugs),
+        init() {
+            this.activeTab = this.tabSlugs[new URLSearchParams(window.location.search).get('tab')] ?? this.activeTab;
+            this.$watch('activeTab', (key) => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', Object.keys(this.tabSlugs).find((slug) => this.tabSlugs[slug] === key));
+                window.history.replaceState(window.history.state, '', url);
+            });
+        },
+    }">
     <div class="card-header border-bottom bg-body py-2 px-2 rvx-mgmt-head">
         <div class="d-flex align-items-center gap-2">
             <div class="bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center rvx-mgmt-head-ic" style="width:26px;height:26px;">
@@ -20,32 +57,6 @@
         {{-- Tab Navigation --}}
         <div class="border-bottom bg-body-tertiary rvx-mgmt-tabbar">
             <div class="d-flex flex-wrap gap-1 px-2 py-2" role="tablist">
-                @php
-                    $tabs = [
-                        ['key' => 'PaymentTab', 'icon' => 'fa-credit-card', 'label' => 'Payment'],
-                        ['key' => 'PaymentTermTab', 'icon' => 'fa-calendar', 'label' => 'Terms'],
-                    ];
-                    if ($isRental) {
-                        $tabs[] = ['key' => 'UtilitiesTab', 'icon' => 'fa-bolt', 'label' => 'Utilities'];
-                    }
-                    $tabs = array_merge($tabs, [
-                        ['key' => 'ServicesTab', 'icon' => 'fa-cogs', 'label' => 'Services'],
-                        ['key' => 'ChequeTab', 'icon' => 'fa-check-square-o', 'label' => 'Cheques'],
-                        ['key' => 'SecurityTab', 'icon' => 'fa-shield', 'label' => 'Security'],
-                        ['key' => 'ExtendTab', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
-                    ]);
-                    if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked) {
-                        $tabs[] = ['key' => 'AgreementPointsTab', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'];
-                    }
-                    $tabs = array_merge($tabs, [
-                        ['key' => 'NotesTab', 'icon' => 'fa-file-text-o', 'label' => 'Notes'],
-                        ['key' => 'TransactionTab', 'icon' => 'fa-exchange', 'label' => 'Transactions'],
-                        ['key' => 'MaintenanceTab', 'icon' => 'fa-wrench', 'label' => 'Maintenance'],
-                        ['key' => 'AppointmentTab', 'icon' => 'fa-calendar-check-o', 'label' => 'Appointments'],
-                        ['key' => 'DocumentsTab', 'icon' => 'fa-file-o', 'label' => 'Documents'],
-                        ['key' => 'ChecklistTab', 'icon' => 'fa-list-alt', 'label' => 'Checklist'],
-                    ]);
-                @endphp
 
                 @foreach ($tabs as $tab)
                     <button class="btn btn-sm border-0 fw-medium px-2 py-1 mgmt-tab-btn"
