@@ -26,7 +26,11 @@
 <div class="lfx">
     <x-property.lead-form.premium />
 
-    <form wire:submit.prevent="save">
+    <form wire:submit.prevent="save"
+        x-data="{ edited: false }"
+        x-on:input="if (! $event.target.closest('[data-dirty-ignore]')) edited = true"
+        x-on:change="if (! $event.target.closest('[data-dirty-ignore]')) edited = true"
+        x-on:lead-saved.window="edited = false">
         <div class="row g-3">
             <div class="col-xl-8">
                 <div class="lfx-card">
@@ -302,7 +306,7 @@
                             @endcan
                             @if($lead_id)
                                 @can('property lead.booking transfer')
-                                    <button type="button" wire:click="transfer" class="btn-x ok" wire:confirm="Transfer this lead to a {{ $isSaleType ? 'Sale' : 'Rentout' }} booking?">
+                                    <button type="button" wire:click="transfer" class="btn-x ok" @disabled($hasUnsavedChanges) x-bind:disabled="edited || $wire.hasUnsavedChanges" x-bind:title="(edited || $wire.hasUnsavedChanges) ? 'Save your changes before transferring' : ''" wire:confirm="Transfer this lead to a {{ $isSaleType ? 'Sale' : 'Rentout' }} booking?">
                                         <i class="fa fa-exchange"></i> Transfer to {{ $isSaleType ? 'Sale' : 'Rentout' }} booking
                                     </button>
                                 @endcan
@@ -352,7 +356,7 @@
                             <span class="count">{{ count($notes) }}</span>
                         </div>
                         <div class="rail-b">
-                            <div class="note-in">
+                            <div class="note-in" data-dirty-ignore>
                                 <input type="date" wire:model="noteDate" class="ctl" aria-label="Note date">
                                 <button type="button" wire:click="addNote" class="btn-x pri justify-content-center" style="grid-column: auto"><i class="fa fa-plus"></i> Add note</button>
                                 <textarea rows="2" wire:model="note" wire:keydown.enter.prevent="addNote" class="ctl" placeholder="Add a note… (Enter to add)"></textarea>

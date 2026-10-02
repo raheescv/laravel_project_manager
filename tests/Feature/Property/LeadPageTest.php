@@ -223,3 +223,33 @@ it('starts a new lead with Qatar as the nationality', function (): void {
 
     Livewire::test(Page::class)->assertSet('formData.country_id', $qatar->id);
 });
+
+it('blocks the booking transfer while the form has unsaved changes', function (): void {
+    $permission = config('permission.models.permission');
+    $this->world->user->givePermissionTo($permission::firstOrCreate(['name' => 'property lead.booking transfer', 'guard_name' => 'web']));
+    $lead = leadPageLead(['mobile' => '97455551234', 'country_id' => leadPageCountryId()]);
+
+    $component = Livewire::test(Page::class, ['lead_id' => $lead->id])
+        ->assertSet('hasUnsavedChanges', false)
+        ->set('formData.country_id', (string) leadPageCountryId())
+        ->assertSet('hasUnsavedChanges', false)
+        ->set('formData.name', 'Renamed lead')
+        ->assertSet('hasUnsavedChanges', true)
+        ->call('transfer')
+        ->assertDispatched('error', fn (string $event, array $params): bool => $params[0]['message'] === 'Save your changes before transferring this lead.');
+
+    $component->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('lead-saved')
+        ->assertSet('hasUnsavedChanges', false);
+});
+
+it('treats an added note as an unsaved change', function (): void {
+    $lead = leadPageLead(['mobile' => '97455551234', 'country_id' => leadPageCountryId()]);
+
+    Livewire::test(Page::class, ['lead_id' => $lead->id])
+        ->set('note', 'Called back')
+        ->assertSet('hasUnsavedChanges', false)
+        ->call('addNote')
+        ->assertSet('hasUnsavedChanges', true);
+});

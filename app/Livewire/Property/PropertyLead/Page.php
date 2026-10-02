@@ -11,6 +11,7 @@ use App\Support\LeadAuditTrail;
 use App\Support\LeadPipeline;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Page extends Component
@@ -29,6 +30,13 @@ class Page extends Component
     public $groups = [];
 
     public $propertyTypes = [];
+
+    /** Fingerprint of the form as last loaded/saved, so unsaved edits can be detected. */
+    #[Locked]
+    public $savedFingerprint;
+
+    /** Whether the form differs from what is saved; read by the view to gate Transfer. */
+    public $hasUnsavedChanges = false;
 
     public function mount($lead_id = null): void
     {
@@ -90,6 +98,32 @@ class Page extends Component
             ];
             $this->notes = [];
         }
+
+        $this->savedFingerprint = $this->fingerprint();
+        $this->hasUnsavedChanges = false;
+    }
+
+    public function dehydrate(): void
+    {
+        $this->hasUnsavedChanges = $this->isDirty();
+    }
+
+    public function isDirty(): bool
+    {
+        return $this->fingerprint() !== $this->savedFingerprint;
+    }
+
+    /**
+     * Scalars are compared as strings: TomSelects send ids back as "12" while the model loads 12.
+     */
+    protected function fingerprint(): string
+    {
+        $state = ['formData' => $this->formData, 'notes' => $this->notes];
+        array_walk_recursive($state, function (&$value): void {
+            $value = is_bool($value) ? (string) (int) $value : (string) ($value ?? '');
+        });
+
+        return md5(json_encode($state));
     }
 
     public function updatedFormData($value, $key): void
@@ -196,6 +230,7 @@ class Page extends Component
             DB::commit();
 
             $this->dispatch('success', ['message' => $response['message']]);
+            $this->dispatch('lead-saved');
 
             if (! $this->lead_id) {
                 return redirect()->route('property::lead::edit', $response['data']['id']);
@@ -214,6 +249,9 @@ class Page extends Component
         try {
             if (! $this->lead_id) {
                 throw new \Exception('Please save the lead before transferring.', 1);
+            }
+            if ($this->isDirty()) {
+                throw new \Exception('Save your changes before transferring this lead.', 1);
             }
             $response = (new TransferAction())->execute($this->lead_id);
             if (! $response['success']) {

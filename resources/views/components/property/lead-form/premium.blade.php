@@ -112,6 +112,7 @@
         .lfx .btn-x.pri:hover { filter: brightness(1.06); }
         .lfx .btn-x.ok { background: var(--bs-success); border-color: var(--bs-success); color: #fff; }
         .lfx .btn-x[disabled] { opacity: .6; cursor: progress; }
+        .lfx .btn-x.ok[disabled] { cursor: not-allowed; }
 
         /* ---- side rail ---- */
         .lfx .rail-h { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line-soft); }
