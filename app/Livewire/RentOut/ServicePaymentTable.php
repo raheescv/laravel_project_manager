@@ -50,7 +50,7 @@ class ServicePaymentTable extends Component
 
     public function getDefaultColumns(): array
     {
-        return ['date', 'customer', 'group', 'building', 'property', 'ownership', 'category', 'source', 'remark', 'charge', 'paid', 'balance'];
+        return ['date', 'customer', 'group', 'building', 'property', 'ownership', 'category', 'source', 'remark', 'charge', 'paid'];
     }
 
     protected function getSelectableIds(): array
