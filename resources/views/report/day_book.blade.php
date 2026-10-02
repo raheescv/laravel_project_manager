@@ -21,6 +21,7 @@
             </div>
         </div>
     </div>
+    <x-report.day-book-column-visibility-canvas />
     @push('scripts')
         <x-select.accountSelect />
         <x-select.branchSelect />

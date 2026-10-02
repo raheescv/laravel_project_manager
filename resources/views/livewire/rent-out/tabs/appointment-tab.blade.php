@@ -175,7 +175,7 @@
                                 <div class="dy">{{ $appointment->scheduled_at->format('d') }}</div>
                             </div>
                         @else
-                            <div class="apx-dt wait"><i class="fa fa-hourglass-half"></i></div>
+                            <div class="apx-dt wait"><i class="fa fa-calendar-o"></i></div>
                         @endif
                         <div class="flex-grow-1">
                             <div class="tt">

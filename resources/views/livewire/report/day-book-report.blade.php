@@ -8,6 +8,9 @@
                             <i class="demo-pli-file-excel me-1"></i> Export
                         </button>
                     @endcan
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#dayBookColumnVisibility" aria-controls="dayBookColumnVisibility" title="Columns">
+                        <i class="fa fa-columns me-1"></i> Columns
+                    </button>
                 </div>
             </div>
             <div class="col-md-8">
@@ -88,14 +91,30 @@
                                 <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.id" label="#" />
                             </div>
                         </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.date" label="date" /> </th>
-                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="account name" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.description" label="description" /> </th>
-                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.reference_number" label="reference no" /> </th>
-                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.remarks" label="remarks" /> </th>
-                        <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.journal_remarks" label="journal remarks" /> </th>
-                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.debit" label="debit" /> </th>
-                        <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.credit" label="credit" /> </th>
+                        @if ($visibleColumns['date'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.date" label="date" /> </th>
+                        @endif
+                        @if ($visibleColumns['account_name'])
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="accounts.name" label="account name" /> </th>
+                        @endif
+                        @if ($visibleColumns['description'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.description" label="description" /> </th>
+                        @endif
+                        @if ($visibleColumns['reference_number'])
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.reference_number" label="reference no" /> </th>
+                        @endif
+                        @if ($visibleColumns['remarks'])
+                            <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.remarks" label="remarks" /> </th>
+                        @endif
+                        @if ($visibleColumns['journal_remarks'])
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.journal_remarks" label="journal remarks" /> </th>
+                        @endif
+                        @if ($visibleColumns['debit'])
+                            <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.debit" label="debit" /> </th>
+                        @endif
+                        @if ($visibleColumns['credit'])
+                            <th class="text-nowrap text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="journal_entries.credit" label="credit" /> </th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -109,72 +128,94 @@
                                     <span class="text-muted">#{{ $item->id }}</span>
                                 </div>
                             </td>
-                            <td class="text-nowrap">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
-                                    <span>{{ systemDate($item->date) }}</span>
-                                </div>
-                            </td>
-                            <td class="text-nowrap">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="demo-psi-building fs-5 text-warning"></i>
-                                    <a href="{{ route('account::view', $item->account_id) }}?from_date={{ $from_date }}&to_date={{ $to_date }}" class="text-decoration-none fw-semibold">
-                                        {{ $item->account_name }}
-                                    </a>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    @if ($item->model)
-                                        <span class="badge bg-info bg-opacity-10 text-info">{{ $item->model }}</span>
-                                    @endif
-                                    @if ($item->journal_model)
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->journal_model }}</span>
-                                    @endif
-                                    @php
-                                        [$documentRoute, $documentId] = match ($item->model) {
-                                            'Sale' => ['sale::view', $item->model_id],
-                                            'SalePayment' => ['sale::view', $item->journal?->model_id],
-                                            'SaleReturn' => ['sale_return::view', $item->model_id],
-                                            'SaleReturnPayment' => ['sale_return::view', $item->journal?->model_id],
-                                            default => [null, null],
-                                        };
-                                    @endphp
-                                    @if ($documentRoute && $documentId)
-                                        <a target="_blank" href="{{ route($documentRoute, $documentId) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
-                                    @else
-                                        <span>{{ $item->description }}</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="text-nowrap">
-                                <span class="text-muted">{{ $item->reference_number ?? '_' }}</span>
-                            </td>
-                            <td>
-                                <span class="text-muted">{{ $item->remarks ?? '_' }}</span>
-                            </td>
-                            <td>
-                                <span class="text-muted">{{ $item->journal_remarks ?? '_' }}</span>
-                            </td>
-                            <td>
-                                <div class="text-end fw-medium">{{ $item->debit != 0 ? currency($item->debit) : '_' }}</div>
-                            </td>
-                            <td>
-                                <div class="text-end fw-medium">{{ $item->credit != 0 ? currency($item->credit) : '_' }}</div>
-                            </td>
+                            @if ($visibleColumns['date'])
+                                <td class="text-nowrap">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="demo-psi-calendar-4 fs-5 text-primary"></i>
+                                        <span>{{ systemDate($item->date) }}</span>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['account_name'])
+                                <td class="text-nowrap">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="demo-psi-building fs-5 text-warning"></i>
+                                        <a href="{{ route('account::view', $item->account_id) }}?from_date={{ $from_date }}&to_date={{ $to_date }}" class="text-decoration-none fw-semibold">
+                                            {{ $item->account_name }}
+                                        </a>
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['description'])
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if ($item->model)
+                                            <span class="badge bg-info bg-opacity-10 text-info">{{ $item->model }}</span>
+                                        @endif
+                                        @if ($item->journal_model)
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ $item->journal_model }}</span>
+                                        @endif
+                                        @php
+                                            [$documentRoute, $documentId] = match ($item->model) {
+                                                'Sale' => ['sale::view', $item->model_id],
+                                                'SalePayment' => ['sale::view', $item->journal?->model_id],
+                                                'SaleReturn' => ['sale_return::view', $item->model_id],
+                                                'SaleReturnPayment' => ['sale_return::view', $item->journal?->model_id],
+                                                default => [null, null],
+                                            };
+                                        @endphp
+                                        @if ($documentRoute && $documentId)
+                                            <a target="_blank" href="{{ route($documentRoute, $documentId) }}" class="text-primary text-decoration-none">{{ $item->description }}</a>
+                                        @else
+                                            <span>{{ $item->description }}</span>
+                                        @endif
+                                    </div>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['reference_number'])
+                                <td class="text-nowrap">
+                                    <span class="text-muted">{{ $item->reference_number ?? '_' }}</span>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['remarks'])
+                                <td>
+                                    <span class="text-muted">{{ $item->remarks ?? '_' }}</span>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['journal_remarks'])
+                                <td>
+                                    <span class="text-muted">{{ $item->journal_remarks ?? '_' }}</span>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['debit'])
+                                <td>
+                                    <div class="text-end fw-medium">{{ $item->debit != 0 ? currency($item->debit) : '_' }}</div>
+                                </td>
+                            @endif
+                            @if ($visibleColumns['credit'])
+                                <td>
+                                    <div class="text-end fw-medium">{{ $item->credit != 0 ? currency($item->credit) : '_' }}</div>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot class="table-group-divider">
                     <tr class="bg-light">
-                        <th colspan="7" class="ps-3"><strong>TOTALS</strong></th>
-                        <th>
-                            <div class="text-end fw-bold">{{ currency($total['debit']) }}</div>
-                        </th>
-                        <th>
-                            <div class="text-end fw-bold">{{ currency($total['credit']) }}</div>
-                        </th>
-                        </th>
+                        @php
+                            $labelSpan = 1 + count(array_filter(\Illuminate\Support\Arr::except($visibleColumns, ['debit', 'credit'])));
+                        @endphp
+                        <th colspan="{{ $labelSpan }}" class="ps-3"><strong>TOTALS</strong></th>
+                        @if ($visibleColumns['debit'])
+                            <th>
+                                <div class="text-end fw-bold">{{ currency($total['debit']) }}</div>
+                            </th>
+                        @endif
+                        @if ($visibleColumns['credit'])
+                            <th>
+                                <div class="text-end fw-bold">{{ currency($total['credit']) }}</div>
+                            </th>
+                        @endif
                     </tr>
                 </tfoot>
             </table>

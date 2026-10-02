@@ -36,6 +36,10 @@ class DayBookReport extends Component
 
     protected $paginationTheme = 'bootstrap';
 
+    protected $listeners = [
+        'DayBook-Refresh-Component' => '$refresh',
+    ];
+
     public function mount()
     {
         $this->from_date = date('Y-m-d');
@@ -152,6 +156,7 @@ class DayBookReport extends Component
 
         return view('livewire.report.day-book-report', [
             'total' => $total,
+            'visibleColumns' => DayBookColumnVisibility::current(),
             'data' => $query->select($columns)
                 ->orderBy($this->sortField, $this->sortDirection)
                 ->paginate($this->limit),
