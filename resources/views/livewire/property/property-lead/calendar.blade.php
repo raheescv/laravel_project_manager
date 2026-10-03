@@ -96,6 +96,8 @@
             .lead-event-follow-up-visit { background-color: #dc3545 !important; border-color: #dc3545 !important; color: #fff !important; }
             .lead-event-default { background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; }
             .fc .fc-event { padding: 3px 6px; font-weight: 500; border-radius: 4px; }
+            #lead-calendar .fc-pickDate-button { position: relative; }
+            #lead-calendar .fc-pickDate-button .lead-date-jump { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
         </style>
     @endpush
 
@@ -105,12 +107,22 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const el = document.getElementById('lead-calendar');
                 if (!el) return;
+                let dateInput = null;
+                const toIsoDate = function (date) {
+                    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+                };
                 const calendar = new FullCalendar.Calendar(el, {
                     initialView: 'dayGridMonth',
                     headerToolbar: {
-                        left: 'prev,next today',
+                        left: 'prev,next today pickDate',
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+                    },
+                    customButtons: {
+                        pickDate: { text: 'Go to date', hint: 'Go to date' },
+                    },
+                    datesSet: function () {
+                        if (dateInput) dateInput.value = toIsoDate(calendar.getDate());
                     },
                     height: 'auto',
                     dayMaxEvents: 3,
@@ -136,6 +148,22 @@
                     },
                 });
                 calendar.render();
+
+                const pickButton = el.querySelector('.fc-pickDate-button');
+                if (pickButton) {
+                    pickButton.innerHTML = '<i class="fa fa-calendar me-1"></i>Go to date<input type="date" class="lead-date-jump" aria-label="Go to date">';
+                    dateInput = pickButton.querySelector('.lead-date-jump');
+                    dateInput.value = toIsoDate(calendar.getDate());
+                    dateInput.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (typeof dateInput.showPicker === 'function') {
+                            try { dateInput.showPicker(); } catch (err) {}
+                        }
+                    });
+                    dateInput.addEventListener('change', function () {
+                        if (dateInput.value) calendar.gotoDate(dateInput.value);
+                    });
+                }
 
                 ['filter_employee_id', 'filter_status', 'filter_type'].forEach(function (id) {
                     document.getElementById(id).addEventListener('change', function () { calendar.refetchEvents(); });

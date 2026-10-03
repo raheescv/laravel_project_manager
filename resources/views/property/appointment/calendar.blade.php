@@ -38,6 +38,8 @@
             border:1px solid var(--border-strong); background:var(--surface); color:var(--text-2);
         }
         .apx .apxc-nav button:hover{ background:var(--surface-2); color:var(--text); }
+        .apx .apxc-jump{ position:relative; }
+        .apx .apxc-jump input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
         .apx .apxc-title{ font-size:14px; font-weight:800; letter-spacing:-.025em; white-space:nowrap; }
         /* employee picker — a searchable TomSelect rather than a chip per
            employee, because the chip row stops working the moment the team
@@ -160,6 +162,10 @@
             </span>
             <span class="apxc-title" id="pvTitle">&nbsp;</span>
             <button type="button" class="apx-btn apx-btn-ghost" data-act="today">Today</button>
+            <span class="apx-btn apx-btn-ghost apxc-jump" title="Go to date">
+                <i class="fa fa-calendar"></i> Go to date
+                <input type="date" id="pvDateJump" aria-label="Go to date">
+            </span>
 
             <span class="apxc-right">
                 {{-- Salesmen who already hold appointments are rendered up front so
@@ -281,6 +287,8 @@
             eventDisplay: 'block',
             datesSet: function (info) {
                 document.getElementById('pvTitle').textContent = info.view.title;
+                const current = calendar.getDate();
+                document.getElementById('pvDateJump').value = [current.getFullYear(), String(current.getMonth() + 1).padStart(2, '0'), String(current.getDate()).padStart(2, '0')].join('-');
                 closePop();
             },
             events: function (info, success, failure) {
@@ -409,6 +417,17 @@
                 if (this.dataset.act === 'next') calendar.next();
                 if (this.dataset.act === 'today') calendar.today();
             });
+        });
+
+        const dateJump = document.getElementById('pvDateJump');
+        dateJump.addEventListener('click', function () {
+            if (typeof dateJump.showPicker === 'function') {
+                try { dateJump.showPicker(); } catch (err) {}
+            }
+        });
+        dateJump.addEventListener('change', function () {
+            closePop();
+            if (dateJump.value) calendar.gotoDate(dateJump.value);
         });
 
         const views = document.getElementById('pvViews');

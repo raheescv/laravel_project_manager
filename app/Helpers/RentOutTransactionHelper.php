@@ -136,17 +136,20 @@ class RentOutTransactionHelper
 
     protected function serviceData(array $data): array
     {
+        $incomeAccountId = is_numeric($data['category'] ?? null) ? (int) $data['category'] : null;
+
         return [
             'date' => $data['date'],
             'amount' => $data['amount'],
             'account_id' => $data['account_id'] ?? '',
             // The category select is an account picker, so the chosen category
             // is the income account the charge leg must credit.
-            'income_account_id' => is_numeric($data['category'] ?? null) ? (int) $data['category'] : null,
+            'income_account_id' => $incomeAccountId,
             'source' => 'Service',
             'model' => 'RentOutService',
             'paid_date' => $data['date'],
-            'reason' => $data['category'] ?: 'Service',
+            // The category is an account id; the reason reads as its name.
+            'reason' => ($incomeAccountId ? Account::whereKey($incomeAccountId)->value('name') : null) ?: 'Service',
             'group' => 'Service',
             'category' => $data['category'],
             'payment_type' => 'Services',
