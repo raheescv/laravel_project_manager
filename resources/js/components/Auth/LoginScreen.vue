@@ -127,7 +127,10 @@ body { margin: 0; background: var(--lgx-bg); }
 .lgx-mark.lgx-mark--logo { width: auto; height: 100px; min-width: 100px; max-width: 260px; padding: 12px 16px; border-radius: 20px; background: #fff;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), 0 0 0 7px rgba(255, 255, 255, .1), 0 0 48px 6px rgba(11, 168, 250, .45), 0 18px 40px -14px rgba(0, 0, 0, .5);
     animation: lgx-glow 4s ease-in-out infinite; }
-.lgx-mark.lgx-mark--logo img { width: auto; height: 100%; max-width: 228px; padding: 0; background: none; }
+.lgx-mark.lgx-mark--logo { display: flex; align-items: center; justify-content: center; }
+.lgx-mark.lgx-mark--logo img { display: block; width: auto; height: 76px; max-width: 228px; object-fit: contain; padding: 0; background: none; }
+.lgx-brand--mobile .lgx-mark--logo img { height: 50px; max-width: 180px; }
+.lgx-mark--lg.lgx-mark--logo img { height: 68px; max-width: 220px; }
 @keyframes lgx-glow { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), 0 0 0 10px rgba(255, 255, 255, .06), 0 0 64px 10px rgba(11, 168, 250, .55), 0 18px 40px -14px rgba(0, 0, 0, .5); } }
 .lgx-brand--logo { gap: 20px; font-size: 26px; letter-spacing: -.01em; }
 .lgx-brand--mobile .lgx-mark--logo { height: 68px; min-width: 68px; border-radius: 16px; padding: 9px 13px;
