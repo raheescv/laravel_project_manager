@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\PropertyAppointment\SlotService;
 use App\Traits\BelongsToTenant;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,8 @@ class PropertyAppointment extends Model implements AuditableContracts
         'status',
         'token',
         'token_expires_at',
+        'available_from',
+        'available_until',
         'link_sent_at',
         'link_opened_at',
         'link_opened_count',
@@ -53,6 +56,8 @@ class PropertyAppointment extends Model implements AuditableContracts
         'scheduled_at' => 'datetime',
         'ends_at' => 'datetime',
         'token_expires_at' => 'datetime',
+        'available_from' => 'date',
+        'available_until' => 'date',
         'link_sent_at' => 'datetime',
         'link_opened_at' => 'datetime',
         'booked_at' => 'datetime',
@@ -82,6 +87,8 @@ class PropertyAppointment extends Model implements AuditableContracts
             'employee_id' => 'required|exists:users,id',
             'status' => 'required|in:awaiting,scheduled,completed,cancelled,no_show',
             'scheduled_at' => 'nullable|date',
+            'available_from' => 'nullable|date',
+            'available_until' => 'nullable|date|after_or_equal:available_from',
         ], $merge);
     }
 
@@ -126,6 +133,19 @@ class PropertyAppointment extends Model implements AuditableContracts
         return $this->ends_at
             ? $this->ends_at->copy()
             : $this->scheduled_at->copy()->addMinutes(SlotService::slotLengthMinutes());
+    }
+
+    /**
+     * The first and last day the customer may book, as start/end of day.
+     *
+     * The start never reaches into the past, and either end left blank falls
+     * back to the configured rolling window.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public function bookingRange(): array
+    {
+        return SlotService::bookingRange($this->available_from, $this->available_until);
     }
 
     public function scopeHoldingSlot(Builder $query): Builder

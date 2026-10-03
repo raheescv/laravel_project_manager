@@ -44,6 +44,22 @@ class SlotService
         return (int) config('property_appointment.appointment_window_days', self::APPOINTMENT_WINDOW_DAYS);
     }
 
+    /**
+     * The bookable days as [start of first day, end of last day].
+     *
+     * Either end may be left blank: the start defaults to today and the end to
+     * the configured rolling window. A start in the past is pulled up to today.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    public static function bookingRange(?Carbon $from = null, ?Carbon $until = null): array
+    {
+        $start = $from && $from->copy()->startOfDay()->isFuture() ? $from->copy() : now();
+        $end = $until ? $until->copy() : now()->addDays(self::appointmentWindowDays());
+
+        return [$start->startOfDay(), $end->endOfDay()];
+    }
+
     /** How much notice a slot needs before it can be taken. */
     public static function minimumNoticeHours(): int
     {
@@ -248,9 +264,10 @@ class SlotService
      * a friendly pre-check: the database still owns the final word on two
      * customers reaching for the same start.
      *
+     * @param  array{0: Carbon, 1: Carbon}|null  $range  The appointment's own bookable days; null keeps the rolling window.
      * @return array{ok: bool, reason: ?string, taken: bool}
      */
-    public function windowProblem(int $employeeId, Carbon $start, Carbon $end, ?int $ignoreAppointmentId = null): array
+    public function windowProblem(int $employeeId, Carbon $start, Carbon $end, ?int $ignoreAppointmentId = null, ?array $range = null): array
     {
         $fail = fn (string $reason, bool $taken = false) => ['ok' => false, 'reason' => $reason, 'taken' => $taken];
 
@@ -266,8 +283,14 @@ class SlotService
             return $fail('We need at least '.self::minimumNoticeHours().' hours\' notice. Please choose a later time.');
         }
 
-        if ($start->gt(now()->addDays(self::appointmentWindowDays())->endOfDay())) {
-            return $fail('That date is too far ahead. Please choose a time within the next '.self::appointmentWindowDays().' days.');
+        [$rangeStart, $rangeEnd] = $range ?? self::bookingRange();
+
+        if ($start->lt($rangeStart)) {
+            return $fail('Appointments open on '.$rangeStart->format('d M Y').'. Please choose a later date.');
+        }
+
+        if ($start->gt($rangeEnd)) {
+            return $fail('That date is too far ahead. Please choose a date up to '.$rangeEnd->format('d M Y').'.');
         }
 
         if ($holiday = $this->holidayOn($start)) {

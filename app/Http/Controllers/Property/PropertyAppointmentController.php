@@ -272,9 +272,10 @@ class PropertyAppointmentController extends Controller
         // The page offers two ways to the same window — tap a suggested time, or
         // type your own — so it needs both the grid AND the edges the grid was
         // cut from, plus what is already taken out of each day.
-        $slots = $bookable ? $slotService->availableSlots($appointment->employee_id, null, null, $appointment->id) : [];
-        $windows = $bookable ? $slotService->openWindows($appointment->employee_id) : [];
-        $busy = $bookable ? $slotService->busyStretches($appointment->employee_id, null, null, $appointment->id) : [];
+        [$rangeStart, $rangeEnd] = $appointment->bookingRange();
+        $slots = $bookable ? $slotService->availableSlots($appointment->employee_id, $rangeStart, $rangeEnd, $appointment->id) : [];
+        $windows = $bookable ? $slotService->openWindows($appointment->employee_id, $rangeStart, $rangeEnd) : [];
+        $busy = $bookable ? $slotService->busyStretches($appointment->employee_id, $rangeStart, $rangeEnd, $appointment->id) : [];
 
         $duration = SlotService::slotLengthMinutes();
         $property = $appointment->rentOut?->property;
@@ -305,13 +306,15 @@ class PropertyAppointmentController extends Controller
             // Closed dates, so a greyed-out day on the customer's calendar can
             // say WHY rather than looking like a bug.
             'holidays' => $bookable
-                ? Holiday::datesBetween(now(), now()->addDays(SlotService::appointmentWindowDays()))
+                ? Holiday::datesBetween($rangeStart, $rangeEnd)
                 : [],
             'notice_hours' => SlotService::minimumNoticeHours(),
             // 12 or 24, so the typed fields label times the way the tenant's
             // own format string does without shipping the format to the client.
             'clock' => str_contains((string) config('property_appointment.time_format', 'h:i A'), 'H') ? 24 : 12,
-            'window_days' => SlotService::appointmentWindowDays(),
+            'window_days' => (int) $rangeStart->diffInDays($rangeEnd) + 1,
+            'available_from' => $rangeStart->toDateString(),
+            'available_until' => $rangeEnd->toDateString(),
             'server_now' => now()->format('Y-m-d H:i:s'),
             'now_label' => now()->format('l, d M').' · '.appointmentTime(now()),
             'expires_at' => $appointment->token_expires_at?->format('d M Y'),

@@ -38,6 +38,9 @@
         $appointment = $this->appointment;
         $employee = $this->employee;
         $customer = $appointment?->customer ?? $rentOut?->account;
+        $slots = $employee ? $this->slots : [];
+        $activeDay = $selectedDate && isset($slots[$selectedDate]) ? $selectedDate : array_key_first($slots);
+        $calendar = $employee ? $this->calendar : null;
     @endphp
 
     {{-- The employee is chosen HERE, on the appointment, not inherited from the
@@ -115,54 +118,126 @@
             </div>
         </div>
     @elseif (! $appointment)
-        <div class="apx-rec">
-            <div class="apx-rec-h">
+        @php
+            $stats = $this->rangeStats;
+            $presetLength = $availableFrom === now()->format('Y-m-d') && $availableUntil
+                ? (int) \Carbon\Carbon::parse($availableFrom)->diffInDays(\Carbon\Carbon::parse($availableUntil))
+                : null;
+        @endphp
+        {{-- One card, two jobs: send the customer a link, or book a time for
+             them. Both share the same date range, and the calendar shows
+             exactly what that range offers. --}}
+        <div class="apx-bk">
+            <div class="apx-bk-h">
                 <span class="apx-ico" style="width:34px;height:34px;border-radius:11px;font-size:14px">
-                    <i class="fa fa-paper-plane-o"></i>
+                    <i class="fa fa-calendar-o"></i>
                 </span>
-                <div class="flex-grow-1">
-                    <div class="tt">No appointment link sent yet</div>
-                    <div class="ss">
-                        Send {{ $rentOut->account?->name ?? 'the customer' }} a secure link and they choose from
-                        {{ $employee->name }}'s availability &mdash; or the company week from Settings &rarr; Working Day
-                        when they have none of their own.
-                    </div>
+                <div>
+                    <div class="tt">Arrange the appointment</div>
+                    <div class="ss">No appointment link sent yet &middot; {{ $rentOut->account?->name ?? 'the customer' }} with {{ $employee->name }}</div>
                 </div>
-            </div>
-            <div class="apx-facts">
-                <div class="f">
-                    <div class="k">Link valid until</div>
-                    <div class="v">
-                        <input type="date" class="form-control form-control-sm" wire:model="linkValidUntil"
-                            style="max-width:180px">
-                    </div>
-                </div>
-                <div class="f">
-                    <div class="k">Email template</div>
-                    <div class="v">
-                        <i class="fa fa-envelope-o" style="color:var(--brand)"></i> Appointment Invitation
-                        @can('email template.view')
-                            <a href="{{ route('settings::email_template::index') }}" class="apx-hint"
-                                style="margin-inline-start:4px">Manage</a>
-                        @endcan
-                    </div>
-                </div>
-            </div>
-            @canany(['property appointment.send link', 'property appointment.create'])
-            <div class="apx-bar">
-                @can('property appointment.send link')
-                    <button type="button" class="apx-btn apx-btn-primary apx-btn-xs" wire:click="sendLink"
-                        wire:loading.attr="disabled">
-                        <i class="fa fa-paper-plane"></i> Send appointment link
-                    </button>
-                @endcan
                 @can('property appointment.create')
-                    <button type="button" class="apx-btn apx-btn-ghost apx-btn-xs" wire:click="$toggle('showSlotPicker')">
-                        <i class="fa fa-calendar-o"></i> Book on their behalf
-                    </button>
+                    <div class="apx-seg">
+                        <button type="button" class="{{ $mode === 'send' ? 'on' : '' }}" wire:click="setMode('send')">
+                            <i class="fa fa-paper-plane-o"></i> Send a link
+                        </button>
+                        <button type="button" class="{{ $mode === 'book' ? 'on' : '' }}" wire:click="setMode('book')">
+                            <i class="fa fa-calendar"></i> Book for them
+                        </button>
+                    </div>
                 @endcan
             </div>
-            @endcanany
+
+            @if ($mode === 'book')
+                <div class="apx-bk-split book">
+                    <div class="apx-bk-cal">
+                        <div class="apx-rangepill">
+                            <i class="fa fa-calendar-o"></i>
+                            <span>
+                                <b>{{ \Carbon\Carbon::parse($availableFrom)->format('d M') }}</b> &rarr;
+                                <b>{{ \Carbon\Carbon::parse($availableUntil)->format('d M') }}</b> &middot; {{ $stats['open'] }} open days
+                            </span>
+                            <a wire:click="setMode('send')">Change</a>
+                        </div>
+                        @include('livewire.rent-out.tabs.appointment.calendar', ['calendar' => $calendar, 'pickable' => true, 'activeDay' => $activeDay])
+                    </div>
+                    @include('livewire.rent-out.tabs.appointment.day', ['slots' => $slots, 'activeDay' => $activeDay, 'employee' => $employee, 'selectedSlot' => $selectedSlot])
+                </div>
+            @else
+                <div class="apx-bk-split">
+                    <div>
+                        <div class="apx-step">
+                            <span class="n">1</span>
+                            <div>
+                                <div class="lb"><b>Bookable dates</b><small>Type them, use a preset, or click two days on the calendar</small></div>
+                                <div class="apx-range">
+                                    <label>
+                                        <span>From</span>
+                                        <input type="date" wire:model.live="availableFrom" min="{{ now()->format('Y-m-d') }}">
+                                    </label>
+                                    <span class="arrow"><i class="fa fa-long-arrow-right"></i></span>
+                                    <label>
+                                        <span>Until</span>
+                                        <input type="date" wire:model.live="availableUntil" min="{{ $availableFrom }}">
+                                    </label>
+                                    <span class="len">{{ $stats['days'] }} {{ \Illuminate\Support\Str::plural('day', $stats['days']) }}</span>
+                                </div>
+                                <div class="apx-presets">
+                                    @foreach (['1 week' => 7, '2 weeks' => 14, '30 days' => 30, '60 days' => 60] as $presetLabel => $presetDays)
+                                        <button type="button" class="apx-preset {{ $presetLength === $presetDays ? 'on' : '' }}"
+                                            wire:click="applyPreset({{ $presetDays }})">{{ $presetLabel }}</button>
+                                    @endforeach
+                                </div>
+                                <div class="apx-rstats">
+                                    <span><i class="fa fa-check-circle" style="color:var(--success)"></i><b>{{ $stats['open'] }}</b> open days</span>
+                                    <span><i class="fa fa-clock-o" style="color:var(--brand-ink)"></i><b>{{ $stats['free'] }}</b> free times</span>
+                                    <span><i class="fa fa-ban" style="color:var(--text-3)"></i><b>{{ $stats['closed'] }}</b> closed</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="apx-step">
+                            <span class="n">2</span>
+                            <div>
+                                <div class="lb"><b>Link expires</b><small>After this the link stops working</small></div>
+                                <input type="date" class="form-control form-control-sm" wire:model="linkValidUntil">
+                            </div>
+                        </div>
+                        <div class="apx-step">
+                            <span class="n">3</span>
+                            <div>
+                                <div class="lb"><b>Email</b><small>Sent to the customer's email address</small></div>
+                                <div style="font-weight:650">
+                                    <i class="fa fa-envelope-o" style="color:var(--brand-ink)"></i> Appointment Invitation
+                                    @can('email template.view')
+                                        <a href="{{ route('settings::email_template::index') }}" class="apx-hint"
+                                            style="margin-inline-start:4px">Manage</a>
+                                    @endcan
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="apx-bk-cal">
+                        <div class="apx-sect">What the customer sees</div>
+                        @include('livewire.rent-out.tabs.appointment.calendar', ['calendar' => $calendar, 'pickable' => false, 'activeDay' => null, 'rangePick' => true, 'rangeAnchor' => $rangeAnchor])
+                    </div>
+                </div>
+                <div class="apx-bk-foot">
+                    <div class="sum">
+                        @if ($stats['open'])
+                            The customer can pick from <b>{{ $stats['open'] }} open days</b> ({{ $stats['free'] }} times),
+                            <b>{{ \Carbon\Carbon::parse($availableFrom)->format('d M') }}</b> to <b>{{ \Carbon\Carbon::parse($availableUntil)->format('d M') }}</b>.
+                        @else
+                            <span style="color:var(--warning)"><i class="fa fa-exclamation-circle"></i> Nothing is open between these dates.</span>
+                        @endif
+                    </div>
+                    @can('property appointment.send link')
+                        <button type="button" class="apx-btn apx-btn-primary" wire:click="sendLink" wire:loading.attr="disabled"
+                            wire:target="sendLink">
+                            <i class="fa fa-paper-plane"></i> Send appointment link
+                        </button>
+                    @endcan
+                </div>
+            @endif
         </div>
     @else
         <div class="row g-3">
@@ -277,6 +352,21 @@
                             </button>
                         </div>
 
+                        {{-- The customer's link reads this range from the record, so a
+                             change is saved as soon as it is made. --}}
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="apx-sect mb-1">Bookable from</div>
+                                <input type="date" class="form-control form-control-sm" wire:model.live="availableFrom"
+                                    min="{{ now()->format('Y-m-d') }}" @cannot('property appointment.edit') disabled @endcannot>
+                            </div>
+                            <div class="col-6">
+                                <div class="apx-sect mb-1">Bookable until</div>
+                                <input type="date" class="form-control form-control-sm" wire:model.live="availableUntil"
+                                    min="{{ $availableFrom }}" @cannot('property appointment.edit') disabled @endcannot>
+                            </div>
+                        </div>
+
                         <div class="apx-timeline tight">
                             @if ($appointment->booked_at)
                                 <div class="apx-tl ok">
@@ -325,65 +415,23 @@
         </div>
     @endif
 
-    {{-- Staff-side slot picker (book on the customer's behalf / reschedule) --}}
-    @if ($showSlotPicker && $employee)
-        @php $slots = $this->slots; @endphp
-        <div class="apx-panel mt-3">
-            <div class="apx-panel-h">
+    {{-- Reschedule / book a slot on an existing appointment --}}
+    @if ($appointment && $showSlotPicker && $employee)
+        <div class="apx-bk mt-3">
+            <div class="apx-bk-h">
                 <span class="apx-ico"><i class="fa fa-clock-o"></i></span>
-                <div class="flex-grow-1">
-                    <h4>Choose a slot</h4>
-                    <div class="sub">{{ $employee->name }}'s availability &middot; {{ config('app.timezone') }}</div>
+                <div>
+                    <div class="tt" style="font-size:13px">{{ $appointment->scheduled_at ? 'Reschedule' : 'Book a slot' }}</div>
+                    <div class="ss">{{ $employee->name }}'s availability &middot; {{ config('app.timezone') }}</div>
                 </div>
-                <button type="button" class="apx-btn apx-btn-ghost apx-btn-xs" wire:click="$toggle('showSlotPicker')">
-                    <i class="fa fa-times"></i>
-                </button>
+                <button type="button" class="apx-btn apx-btn-ghost apx-btn-xs" style="margin-inline-start:auto"
+                    wire:click="$toggle('showSlotPicker')" title="Close"><i class="fa fa-times"></i></button>
             </div>
-            <div class="apx-panel-b">
-                @if (empty($slots))
-                    <div class="apx-alert alert-info">
-                        <i class="fa fa-info-circle lead"></i>
-                        <div>
-                            <div class="t">No slots available</div>
-                            <div class="s">
-                                {{ $employee->name }} has no bookable hours in the next
-                                {{ \App\Services\PropertyAppointment\SlotService::appointmentWindowDays() }} days.
-                                Check the company hours in Settings → Working Day, or set this employee's own
-                                weekly availability on their employee page.
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="d-flex gap-2 flex-wrap mb-3" style="overflow-x:auto">
-                        @foreach (array_slice(array_keys($slots), 0, 14) as $day)
-                            <button type="button"
-                                class="apx-daybtn {{ ($selectedDate ?: array_key_first($slots)) === $day ? 'sel' : '' }}"
-                                wire:click="$set('selectedDate', '{{ $day }}')">
-                                <div class="dw">{{ \Carbon\Carbon::parse($day)->format('D') }}</div>
-                                <div class="dd">{{ \Carbon\Carbon::parse($day)->format('d') }}</div>
-                                <div class="dc">{{ count($slots[$day]) }} open</div>
-                            </button>
-                        @endforeach
-                    </div>
-
-                    @php $activeDay = $selectedDate ?: array_key_first($slots); @endphp
-                    <div class="apx-slots">
-                        @foreach ($slots[$activeDay] ?? [] as $slot)
-                            <button type="button"
-                                class="apx-slot {{ $selectedSlot === $slot['value'] ? 'sel' : '' }}"
-                                wire:click="$set('selectedSlot', '{{ $slot['value'] }}')">
-                                {{ $slot['label'] }}
-                            </button>
-                        @endforeach
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="apx-btn apx-btn-primary" wire:click="bookSlot"
-                            @disabled(blank($selectedSlot))>
-                            <i class="fa fa-check-circle"></i> Confirm appointment
-                        </button>
-                    </div>
-                @endif
+            <div class="apx-bk-split book">
+                <div class="apx-bk-cal">
+                    @include('livewire.rent-out.tabs.appointment.calendar', ['calendar' => $calendar, 'pickable' => true, 'activeDay' => $activeDay])
+                </div>
+                @include('livewire.rent-out.tabs.appointment.day', ['slots' => $slots, 'activeDay' => $activeDay, 'employee' => $employee, 'selectedSlot' => $selectedSlot, 'onCancel' => "\$toggle('showSlotPicker')"])
             </div>
         </div>
     @endif

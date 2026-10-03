@@ -1464,3 +1464,231 @@ it('renders the public page shell with the picker mounted', function () {
     // "saw it and did not book".
     expect($seed['appointment']->fresh()->link_opened_count)->toBe(1);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Booking range
+|--------------------------------------------------------------------------
+|
+| Staff choose the first and last day the customer may book, per appointment,
+| instead of the fixed rolling window.
+|
+*/
+
+/** An appointment bookable only from $fromDays to $untilDays ahead. */
+function vsRangeSeed(int $fromDays, int $untilDays): array
+{
+    $seed = vsSeed();
+    $seed['appointment'] = (new CreateAction())->execute([
+        'rent_out_id' => $seed['rentOut']->id,
+        'employee_id' => $seed['employee']->id,
+        'available_from' => now()->addDays($fromDays)->toDateString(),
+        'available_until' => now()->addDays($untilDays)->toDateString(),
+    ], $seed['employee']->id)['data'];
+
+    return $seed;
+}
+
+it('offers the customer only the days inside the appointment\'s booking range', function () {
+    $seed = vsRangeSeed(3, 5);
+
+    $payload = $this->getJson(route('property_appointment::public.data', $seed['appointment']->token))->assertOk()->json();
+
+    $dates = collect($payload['days'])->pluck('date');
+
+    expect($dates)->not->toBeEmpty()
+        ->and($dates->min())->toBe(now()->addDays(3)->toDateString())
+        ->and($dates->max())->toBe(now()->addDays(5)->toDateString())
+        ->and(array_keys($payload['windows']))->each->toBeGreaterThanOrEqual(now()->addDays(3)->toDateString())
+        ->and($payload['available_until'])->toBe(now()->addDays(5)->toDateString());
+});
+
+it('refuses a booking before the range opens or after it closes', function () {
+    $seed = vsRangeSeed(3, 5);
+
+    $before = now()->addDays(2)->toDateString().' 10:00:00';
+    $after = now()->addDays(6)->toDateString().' 10:00:00';
+    $inside = now()->addDays(4)->toDateString().' 10:00:00';
+
+    expect((new BookAction())->execute($seed['appointment']->id, $before)['success'])->toBeFalse()
+        ->and((new BookAction())->execute($seed['appointment']->id, $after)['message'])->toContain('too far ahead')
+        ->and((new BookAction())->execute($seed['appointment']->id, $inside)['success'])->toBeTrue();
+});
+
+it('lets the customer book beyond thirty days when the range allows it', function () {
+    $seed = vsRangeSeed(40, 45);
+
+    $response = (new BookAction())->execute($seed['appointment']->id, now()->addDays(42)->toDateString().' 10:00:00');
+
+    expect($response['success'])->toBeTrue();
+});
+
+it('rejects a range that ends before it starts', function () {
+    $seed = vsSeed();
+
+    $response = (new CreateAction())->execute([
+        'rent_out_id' => $seed['rentOut']->id,
+        'employee_id' => $seed['employee']->id,
+        'available_from' => now()->addDays(5)->toDateString(),
+        'available_until' => now()->addDays(2)->toDateString(),
+    ], $seed['employee']->id);
+
+    expect($response['success'])->toBeFalse();
+});
+
+it('keeps the rolling window for an appointment with no range', function () {
+    $seed = vsWindowSeed();
+
+    [$from, $to] = $seed['appointment']->bookingRange();
+
+    expect($from->toDateString())->toBe(now()->toDateString())
+        ->and($to->toDateString())->toBe(now()->addDays(SlotService::appointmentWindowDays())->toDateString());
+});
+
+it('limits the staff slot grid to the chosen range and saves it on the appointment', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.send link');
+    vsGrant($seed['employee'], 'property appointment.edit');
+    Mail::fake();
+    (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
+
+    $from = now()->addDays(10)->toDateString();
+    $until = now()->addDays(12)->toDateString();
+
+    $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->set('availableFrom', $from)
+        ->set('availableUntil', $until);
+
+    expect(array_keys($component->instance()->slots))->toBe([
+        $from, now()->addDays(11)->toDateString(), $until,
+    ]);
+
+    $component->call('sendLink');
+
+    $appointment = PropertyAppointment::where('rent_out_id', $seed['rentOut']->id)->firstOrFail();
+    expect($appointment->available_from->toDateString())->toBe($from)
+        ->and($appointment->available_until->toDateString())->toBe($until);
+
+    $later = now()->addDays(20)->toDateString();
+    $component->set('availableUntil', $later);
+
+    expect($appointment->fresh()->available_until->toDateString())->toBe($later);
+});
+
+it('sets the booking range from a preset and previews it on the calendar', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->call('applyPreset', 7)
+        ->assertSet('availableFrom', now()->format('Y-m-d'))
+        ->assertSet('availableUntil', now()->addDays(7)->format('Y-m-d'))
+        ->assertSee('What the customer sees')
+        ->assertSee('8 days');
+
+    $stats = $component->instance()->rangeStats;
+    $shaded = collect($component->instance()->calendar['cells'])->where('in', true)->count();
+
+    expect($stats['days'])->toBe(8)
+        ->and($stats['open'] + $stats['closed'])->toBe(8)
+        ->and($shaded)->toBe(min(8, now()->daysInMonth - now()->day + 1));
+});
+
+it('books for the customer from the calendar in book mode', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.create');
+
+    $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->call('setMode', 'book')
+        ->assertSee('Confirm appointment')
+        ->assertSee('Pick a time to confirm the appointment');
+
+    $slots = $component->instance()->slots;
+    $day = array_keys($slots)[1];
+    $slot = $slots[$day][0]['value'];
+
+    $component->call('selectDay', $day)
+        ->set('selectedSlot', $slot)
+        ->call('bookSlot')
+        ->assertSet('mode', 'send');
+
+    $appointment = PropertyAppointment::where('rent_out_id', $seed['rentOut']->id)->firstOrFail();
+
+    expect($appointment->status)->toBe('scheduled')
+        ->and($appointment->scheduled_at->format('Y-m-d H:i:s'))->toBe($slot);
+});
+
+it('pages the calendar month but not past the booking range', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    $component = Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->call('applyPreset', 60);
+
+    expect($component->instance()->calendar['canBack'])->toBeFalse()
+        ->and($component->instance()->calendar['canForward'])->toBeTrue();
+
+    $component->call('shiftMonth', 1)->assertSet('calendarMonth', now()->addMonthNoOverflow()->format('Y-m'));
+});
+
+it('opens the calendar picker on an appointment that already exists', function () {
+    $seed = vsWindowSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.create');
+
+    Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('showSlotPicker', true)
+        ->assertSee('Book a slot')
+        ->assertSee('Confirm appointment')
+        ->assertDontSee('What the customer sees');
+});
+
+it('chooses the booking range with two clicks on the calendar, in either order', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    $early = now()->addDays(3)->format('Y-m-d');
+    $late = now()->addDays(9)->format('Y-m-d');
+
+    Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->call('pickRangeDay', $late)
+        ->assertSet('rangeAnchor', $late)
+        ->assertSee('now click the other end')
+        ->call('pickRangeDay', $early)
+        ->assertSet('availableFrom', $early)
+        ->assertSet('availableUntil', $late)
+        ->assertSet('rangeAnchor', null)
+        ->assertSee('7 days');
+});
+
+it('ignores a past day clicked on the range calendar', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->set('employee_id', $seed['employee']->id)
+        ->call('pickRangeDay', now()->subDay()->format('Y-m-d'))
+        ->assertSet('rangeAnchor', null);
+});
+
+it('saves a range picked on the calendar straight onto an existing appointment', function () {
+    $seed = vsWindowSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.edit');
+
+    Livewire::test(AppointmentTab::class, ['rentOutId' => $seed['rentOut']->id])
+        ->call('pickRangeDay', now()->addDays(2)->format('Y-m-d'))
+        ->call('pickRangeDay', now()->addDays(40)->format('Y-m-d'));
+
+    $appointment = $seed['appointment']->fresh();
+
+    expect($appointment->available_from->format('Y-m-d'))->toBe(now()->addDays(2)->format('Y-m-d'))
+        ->and($appointment->available_until->format('Y-m-d'))->toBe(now()->addDays(40)->format('Y-m-d'));
+});
