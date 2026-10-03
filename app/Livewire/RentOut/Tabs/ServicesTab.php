@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\RentOutTransaction;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -97,23 +98,53 @@ class ServicesTab extends Component
             return;
         }
 
-        $payments = RentOutTransaction::whereIn('id', $this->selectedPayments)
-            ->where('rent_out_id', $this->rentOutId)
-            ->get();
-
-        // Delete associated journals AND their entries (entries drive balances).
-        $journalIds = $payments->pluck('journal_id')->filter()->unique()->values()->toArray();
-        if ($journalIds) {
-            JournalEntry::whereIn('journal_id', $journalIds)->delete();
-            Journal::whereIn('id', $journalIds)->delete();
-        }
-
-        $payments->each->delete();
+        $this->deleteServiceTransactions($this->selectedPayments);
 
         $this->selectedPayments = [];
         $this->selectAll = false;
         $this->dispatch('rent-out-updated');
         $this->dispatch('success', message: 'Selected service payments deleted.');
+    }
+
+    public function deletePayment(int $id): void
+    {
+        abort_unless(auth()->user()?->can('rent out service.delete'), 403);
+
+        if (! $this->deleteServiceTransactions([$id])) {
+            $this->dispatch('error', message: 'Payment not found.');
+
+            return;
+        }
+
+        $this->selectedPayments = array_values(array_diff($this->selectedPayments, [(string) $id]));
+        $this->dispatch('rent-out-updated');
+        $this->dispatch('success', message: 'Service payment deleted.');
+    }
+
+    /**
+     * Delete this agreement's service rows together with their journals and
+     * journal entries (entries drive balances).
+     *
+     * @param  array<int, int|string>  $ids
+     */
+    protected function deleteServiceTransactions(array $ids): int
+    {
+        $payments = RentOutTransaction::whereIn('id', $ids)
+            ->where('rent_out_id', $this->rentOutId)
+            ->whereIn('source', ['Service', 'ServiceCharge'])
+            ->get();
+
+        DB::transaction(function () use ($payments): void {
+            $journalIds = $payments->pluck('journal_id')->filter()->unique()->values()->toArray();
+            if ($journalIds) {
+                JournalEntry::whereIn('journal_id', $journalIds)->delete();
+                Journal::whereIn('id', $journalIds)->delete();
+            }
+
+            $payments->each->delete();
+        });
+
+        return $payments->count();
     }
 
     public function render()

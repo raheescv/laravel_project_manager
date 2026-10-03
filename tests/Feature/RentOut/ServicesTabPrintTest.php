@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantService;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 /**
  * Services tab prints a receipt for a credit (payment) row and a payment
@@ -53,6 +54,7 @@ it('prints a receipt for credit rows and a payment voucher for debit rows', func
     $charge = $row(0, 1000);
 
     $this->actingAs($user);
+    $user->givePermissionTo(Permission::findOrCreate('rent out service.delete', 'web'));
 
     Livewire::test(ServicesTab::class, ['rentOutId' => $rentOut->id])
         ->call('printReceipt', $payment->id)
@@ -60,5 +62,13 @@ it('prints a receipt for credit rows and a payment voucher for debit rows', func
         ->call('printReceipt', $charge->id)
         ->assertDispatched('open-receipt-tab', url: route('print::rentout::payment-voucher', $charge->id))
         ->assertSee('Print Receipt')
-        ->assertSee('Print Voucher');
+        ->assertSee('Print Voucher')
+        ->call('deletePayment', $payment->id)
+        ->assertSeeHtml('<td class="text-end fw-bold">1,000.00</td>')
+        ->call('deletePayment', $charge->id)
+        ->assertDispatched('success', message: 'Service payment deleted.')
+        ->assertDispatched('rent-out-updated');
+
+    expect(RentOutTransaction::find($charge->id))->toBeNull()
+        ->and(RentOutTransaction::find($payment->id))->toBeNull();
 });

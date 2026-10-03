@@ -47,7 +47,7 @@
                     </thead>
                     <tbody>
                         @foreach($categorySummary as $row)
-                            @php $balance = $row->credit - $row->debit; @endphp
+                            @php $balance = $row->debit - $row->credit; @endphp
                             @if($balance != 0)
                                 <tr class="small">
                                     <td>{{ $categoryNames[$row->category] ?? $row->category }}</td>
