@@ -64,6 +64,14 @@ class RentOutTransaction extends Model implements AuditableContracts
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /**
+     * The income account a charge is booked to - category holds its id.
+     */
+    public function categoryAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'category');
+    }
+
     public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);

@@ -407,7 +407,7 @@
                                     <td class="text-muted">{{ $item->bank_name ?? '—' }}</td>
                                 @endif
                                 @if ($this->isColumnVisible('category'))
-                                    <td class="text-muted small">{{ $item->category ?? $item->group ?? '—' }}</td>
+                                    <td class="text-muted small">{{ $item->categoryAccount?->name ?? $item->group ?? '—' }}</td>
                                 @endif
                                 @if ($this->isColumnVisible('amount'))
                                     <td class="text-end fw-semibold text-success">

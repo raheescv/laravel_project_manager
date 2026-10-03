@@ -832,7 +832,34 @@ class MigratePropertyDataCommand extends Command
      */
     private function serviceHeadId(?string $category): ?int
     {
-        return $category ? ($this->serviceHeadByName[strtolower(trim($category))] ?? null) : null;
+        $key = strtolower(trim((string) $category));
+        if ($key === '') {
+            return null;
+        }
+
+        // Heads created by an earlier run (or by hand) still resolve when this
+        // step runs without migrateServiceHeads() having filled the map. Only
+        // the service categories mapped in Rent Out settings count - the same
+        // list the Services tab offers - so a stray income account that happens
+        // to share the name is never picked.
+        if (! isset($this->serviceHeadByName[$key])) {
+            $configured = Configuration::withoutGlobalScopes()
+                ->where('tenant_id', $this->tenantId)
+                ->where('key', RentOut::SERVICE_CATEGORIES_CONFIG_KEY)
+                ->value('value');
+
+            $id = Account::withoutGlobalScopes()
+                ->where('tenant_id', $this->tenantId)
+                ->whereIn('id', array_filter(array_map('intval', explode(',', (string) $configured))))
+                ->whereRaw('LOWER(TRIM(name)) = ?', [$key])
+                ->value('id');
+
+            if ($id) {
+                $this->serviceHeadByName[$key] = (int) $id;
+            }
+        }
+
+        return $this->serviceHeadByName[$key] ?? null;
     }
 
     private function migrateCustomers(): void
@@ -1109,6 +1136,7 @@ class MigratePropertyDataCommand extends Command
         $rentOuts = DB::table('rent_outs')->get(['id', 'account_id', 'branch_id', 'agreement_type'])->keyBy('id');
 
         $unmappedHeads = [];
+        $unmappedServiceCategories = [];
         $journals = [];
         $entries = [];
 
@@ -1116,7 +1144,7 @@ class MigratePropertyDataCommand extends Command
             'rent out transactions',
             $records,
             'rent_out_transactions',
-            function ($row) use ($termDueDates, $utilityDates, $oldCheques, $rentOuts, &$unmappedHeads, &$journals, &$entries): ?array {
+            function ($row) use ($termDueDates, $utilityDates, $oldCheques, $rentOuts, &$unmappedHeads, &$unmappedServiceCategories, &$journals, &$entries): ?array {
                 $rentOut = $rentOuts[$row->rentout_id] ?? null;
                 if (! $rentOut) {
                     return null;
@@ -1136,6 +1164,12 @@ class MigratePropertyDataCommand extends Command
                     return null;
                 }
 
+                $serviceHeadId = $isServiceCharge ? $this->serviceHeadId($row->category) : null;
+                if ($isServiceCharge && ! $serviceHeadId) {
+                    $key = trim((string) $row->category) ?: '(blank)';
+                    $unmappedServiceCategories[$key] = ($unmappedServiceCategories[$key] ?? 0) + 1;
+                }
+
                 if ($mode !== null) {
                     $accountId = $this->accountId($mode['head']);
                     if (! $accountId) {
@@ -1149,7 +1183,7 @@ class MigratePropertyDataCommand extends Command
                 } else {
                     $accountId = $rentOut->account_id;
                     // A service charge credits its income head, as the new Services tab does.
-                    $counterAccountId = ($isServiceCharge ? $this->serviceHeadId($row->category) : null)
+                    $counterAccountId = $serviceHeadId
                         ?: $this->accountId($row->credit)
                         ?: $rentOut->account_id;
                 }
@@ -1178,9 +1212,15 @@ class MigratePropertyDataCommand extends Command
                     'model_id' => null,
                     'journal_id' => $row->id,
                     'journal_entry_id' => null,
-                    'group' => $row->payment_type ?: 'Payment',
-                    // The Services tab resolves the category as an income account id.
-                    'category' => ($isServiceCharge ? $this->serviceHeadId($row->category) : null) ?: ($row->category ?: null),
+                    // A generic payment keeps its old label (e.g. "Down Payment") here,
+                    // since category no longer holds names.
+                    'group' => ($row->payment_type ?: 'Payment') === 'Payment' && $row->category && ! $isServiceCharge
+                        ? $row->category
+                        : ($row->payment_type ?: 'Payment'),
+                    // category is an income account id now, never the old name -
+                    // the Services tab, its summary and the charge journal all
+                    // resolve it as one.
+                    'category' => $serviceHeadId,
                     'payment_type' => $row->payment_type ?: 'Payment',
                     'remark' => $row->remark ?? null,
                     'reason' => $row->reason ?? null,
@@ -1227,6 +1267,14 @@ class MigratePropertyDataCommand extends Command
             $this->error('Unmapped payment heads - these movements were NOT migrated:');
             foreach ($unmappedHeads as $head => $count) {
                 $this->error("  account_heads.id {$head}: {$count} journal(s)");
+            }
+        }
+
+        if ($unmappedServiceCategories) {
+            $this->newLine();
+            $this->warn('Service charges with no income head - migrated with an empty category:');
+            foreach ($unmappedServiceCategories as $name => $count) {
+                $this->warn("  {$name}: {$count} journal(s)");
             }
         }
     }

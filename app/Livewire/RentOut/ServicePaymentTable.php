@@ -5,6 +5,7 @@ namespace App\Livewire\RentOut;
 use App\Exports\RentOut\ServiceExport;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
 use App\Models\Account;
+use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -215,12 +216,9 @@ class ServicePaymentTable extends Component
             ->tap(fn ($q) => $this->applyAgreementType($q))
             ->whereNotNull('category')
             ->distinct()
-            ->pluck('category')
-            ->filter()
-            ->values()
-            ->toArray();
+            ->pluck('category');
 
-        $categories = Account::whereIn('id', $categoryIds)->orderBy('name')->pluck('name', 'id');
+        $categories = RentOut::serviceCategoryOptions($categoryIds);
 
         return view('livewire.rent-out.service-payment-table', [
             'data' => $this->buildQuery()->paginate($this->limit),

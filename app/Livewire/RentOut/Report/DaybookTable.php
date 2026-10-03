@@ -4,7 +4,7 @@ namespace App\Livewire\RentOut\Report;
 
 use App\Exports\RentOut\ServiceDaybookExport;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
-use App\Models\Account;
+use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -180,12 +180,9 @@ class DaybookTable extends Component
         $categoryIds = RentOutTransaction::query()
             ->whereNotNull('category')
             ->distinct()
-            ->pluck('category')
-            ->filter()
-            ->values()
-            ->toArray();
+            ->pluck('category');
 
-        $categories = Account::whereIn('id', $categoryIds)->orderBy('name')->pluck('name', 'id');
+        $categories = RentOut::serviceCategoryOptions($categoryIds);
 
         $sources = RentOutTransaction::query()
             ->whereNotNull('source')

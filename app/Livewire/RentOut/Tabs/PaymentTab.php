@@ -178,7 +178,7 @@ class PaymentTab extends Component
 
     protected function getFilteredPayments()
     {
-        $query = RentOutTransaction::with('account')
+        $query = RentOutTransaction::with(['account', 'categoryAccount'])
             ->where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0);
 
@@ -217,9 +217,12 @@ class PaymentTab extends Component
             ->where('credit', '>', 0)
             ->distinct()->pluck('source')->filter()->sort()->values();
 
-        $categories = RentOutTransaction::where('rent_out_id', $this->rentOutId)
+        // category is an account id: offer the Rent Out service categories by name.
+        $categories = RentOut::serviceCategoryOptions(RentOutTransaction::where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0)
-            ->distinct()->pluck('category')->filter()->sort()->values();
+            ->whereNotNull('category')
+            ->distinct()
+            ->pluck('category'));
 
         $paymentModes = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)

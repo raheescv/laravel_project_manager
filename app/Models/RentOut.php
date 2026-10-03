@@ -308,6 +308,25 @@ class RentOut extends Model implements AuditableContracts
     }
 
     /**
+     * Category filter options, id => name: the service categories mapped in
+     * Rent Out settings, plus any ids already stored on transactions (a head
+     * later unmapped still has history to show and filter).
+     *
+     * @param  iterable<int|string>  $usedIds
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    public static function serviceCategoryOptions(iterable $usedIds = []): \Illuminate\Support\Collection
+    {
+        $ids = collect(self::serviceCategoryIds())
+            ->merge($usedIds)
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique();
+
+        return Account::whereIn('id', $ids)->orderBy('name')->pluck('name', 'id');
+    }
+
+    /**
      * The tenant-wide default mandatory document type ids configured in settings.
      */
     public static function defaultMandatoryDocumentTypeIds(): array

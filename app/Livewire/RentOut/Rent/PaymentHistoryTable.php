@@ -68,6 +68,7 @@ class PaymentHistoryTable extends Component
                 'rentOut.building',
                 'rentOut.group',
                 'rentOut.salesman',
+                'categoryAccount',
             ])
             ->whereHas('rentOut', fn ($q) => $q->where('agreement_type', $agreementTypeEnum))
             ->where('credit', '>', 0) // Only receipts (money received from customers)

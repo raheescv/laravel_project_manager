@@ -331,8 +331,8 @@
             </label>
             <select class="form-select form-select-sm" wire:model.live="filterCategory">
                 <option value="">All Categories</option>
-                @foreach ($categories as $cat)
-                    <option value="{{ $cat }}">{{ $cat }}</option>
+                @foreach ($categories as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
                 @endforeach
             </select>
         </div>
@@ -434,7 +434,7 @@
                         <td data-label="Group" x-show="columns.group"
                             class="small text-nowrap {{ $payment->group ? '' : 'is-empty' }}">{{ $payment->group ?? '' }}</td>
                         <td data-label="Category" x-show="columns.category"
-                            class="small text-nowrap {{ $payment->category ? '' : 'is-empty' }}">{{ $payment->category ?? '' }}</td>
+                            class="small text-nowrap {{ $payment->categoryAccount ? '' : 'is-empty' }}">{{ $payment->categoryAccount?->name ?? '' }}</td>
                         <td data-label="Reason" x-show="columns.reason"
                             class="small text-nowrap {{ $payment->reason ? '' : 'is-empty' }}">{{ $payment->reason ?? '' }}</td>
                         <td data-label="Payment Mode" x-show="columns.account_id"

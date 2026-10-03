@@ -81,7 +81,9 @@ class TransferTransactionAction
                         'model_id' => $toTermId,
                         'due_date' => $term?->due_date?->format('Y-m-d'),
                         'group' => $toRentOut->agreement_type?->config()->paymentGroupLabel ?? 'Rent Payment',
-                        'category' => $term?->label ?? $payment->category,
+                        // category is an income account id; a term receipt has none,
+                        // and the term label is text, not an account.
+                        'category' => null,
                     ];
                 } else {
                     // Unapplied credit on the target — not tied to a specific term.
