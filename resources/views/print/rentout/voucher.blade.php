@@ -147,11 +147,13 @@
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $rentOut->agreement_no ?: '—' }}</td>
             </tr>
+            @unless ($isServiceInvoice)
             <tr>
                 <td class="f-label">Payment Mode</td>
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $payment->account?->name ?: '—' }}</td>
             </tr>
+            @endunless
             <tr>
                 <td class="f-label">Source</td>
                 <td class="f-colon">:</td>
