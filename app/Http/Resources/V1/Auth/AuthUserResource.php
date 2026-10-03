@@ -31,6 +31,7 @@ class AuthUserResource extends JsonResource
             'name' => $this->name,
             'code' => $this->code,
             'email' => $this->email,
+            'username' => $this->username,
             'mobile' => $this->mobile,
             // Root-relative storage path (e.g. /storage/users/…). The mobile client
             // prepends its own reachable base URL — url()/asset() would bake in the

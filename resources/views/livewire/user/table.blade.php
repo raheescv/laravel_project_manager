@@ -35,6 +35,11 @@
 
             {{-- ── HERO ─────────────────────────────────────────────────── --}}
             <div class="usrx-hero">
+                <div class="aurora" aria-hidden="true">
+                    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+                    <span class="spark"></span><span class="spark"></span><span class="spark"></span>
+                    <span class="spark"></span><span class="spark"></span><span class="spark"></span>
+                </div>
                 <div class="mesh"></div>
                 <div class="glow"></div>
                 <div class="usrx-hero-inner">

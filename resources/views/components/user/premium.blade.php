@@ -156,6 +156,58 @@
             }
             .usrx-hero .btn-hero.ghost:hover { color: #fff; }
 
+            /* ── LIVE HERO BACKGROUND ─────────────────────────────────────────
+               Aurora blobs drift, the mesh pans and sparks rise. Pure CSS,
+               behind the content, and switched off for reduced-motion users. */
+            .usrx-hero .aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+            .usrx-hero .aurora .blob {
+                position: absolute; border-radius: 50%; filter: blur(38px); opacity: .55;
+                mix-blend-mode: screen; will-change: transform;
+            }
+            .usrx-hero .aurora .b1 {
+                width: 260px; height: 260px; top: -110px; inset-inline-start: 8%;
+                background: color-mix(in srgb, var(--acc), #fff 35%);
+                animation: usrx-drift-a 16s ease-in-out infinite alternate;
+            }
+            .usrx-hero .aurora .b2 {
+                width: 220px; height: 220px; bottom: -120px; inset-inline-start: 42%;
+                background: color-mix(in srgb, var(--acc), #7df9ff 45%);
+                animation: usrx-drift-b 19s ease-in-out infinite alternate;
+            }
+            .usrx-hero .aurora .b3 {
+                width: 200px; height: 200px; top: -70px; inset-inline-end: 6%;
+                background: color-mix(in srgb, var(--acc), #ff8ad8 40%);
+                animation: usrx-drift-c 22s ease-in-out infinite alternate;
+            }
+            .usrx-hero .aurora .spark {
+                position: absolute; bottom: -8px; width: 4px; height: 4px; border-radius: 50%;
+                background: rgba(255, 255, 255, .85); box-shadow: 0 0 8px rgba(255, 255, 255, .9);
+                opacity: 0; animation: usrx-rise 9s linear infinite;
+            }
+            .usrx-hero .aurora .spark:nth-child(4) { inset-inline-start: 12%; animation-delay: 0s; }
+            .usrx-hero .aurora .spark:nth-child(5) { inset-inline-start: 27%; animation-delay: 2.4s; width: 3px; height: 3px; }
+            .usrx-hero .aurora .spark:nth-child(6) { inset-inline-start: 46%; animation-delay: 4.8s; }
+            .usrx-hero .aurora .spark:nth-child(7) { inset-inline-start: 63%; animation-delay: 1.2s; width: 3px; height: 3px; }
+            .usrx-hero .aurora .spark:nth-child(8) { inset-inline-start: 79%; animation-delay: 6.2s; }
+            .usrx-hero .aurora .spark:nth-child(9) { inset-inline-start: 91%; animation-delay: 3.6s; width: 2px; height: 2px; }
+            .usrx-hero .mesh { animation: usrx-pan 24s linear infinite; }
+            .usrx-hero .glow { animation: usrx-pulse 7s ease-in-out infinite; }
+
+            @keyframes usrx-drift-a { to { transform: translate(140px, 60px) scale(1.25); } }
+            @keyframes usrx-drift-b { to { transform: translate(-160px, -50px) scale(1.15); } }
+            @keyframes usrx-drift-c { to { transform: translate(-120px, 70px) scale(.85); } }
+            @keyframes usrx-pan { to { background-position: 34px 34px, 34px 34px; } }
+            @keyframes usrx-pulse { 50% { transform: scale(1.18); opacity: .7; } }
+            @keyframes usrx-rise {
+                0% { transform: translateY(0); opacity: 0; }
+                15% { opacity: .9; }
+                100% { transform: translateY(-150px); opacity: 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .usrx-hero .aurora .blob, .usrx-hero .mesh, .usrx-hero .glow { animation: none; }
+                .usrx-hero .aurora .spark { display: none; }
+            }
+
             /* ── LAYOUT: facet rail + roster ──────────────────────────────── */
             .usrx .u-layout {
                 display: grid;
@@ -464,6 +516,34 @@
                 white-space: nowrap; text-decoration: none; transition: .15s;
             }
             .usrx .btn-x:hover { border-color: var(--acc); color: var(--acc-d); }
+            /* ── SELECTION + BULK BAR (employee roster) ───────────────────── */
+            .usrx .ck, .usrx .ck-all { display: inline-flex; align-items: center; margin: 0; flex: 0 0 auto; cursor: pointer; }
+            .usrx .ck .form-check-input, .usrx .ck-all .form-check-input { margin: 0; width: 16px; height: 16px; cursor: pointer; }
+            .usrx .urow.is-sel { background: var(--acc-tint); }
+            .usrx .urow.is-sel::before { background: var(--acc); }
+            .usrx .ucard.is-sel { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-tint); }
+            .usrx .ucard .cap .ck { position: absolute; top: 10px; inset-inline-start: 11px; }
+            .usrx .ucard .cap .ck .form-check-input { border-color: rgba(255, 255, 255, .7); }
+            .usrx .bulk {
+                display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+                padding: 9px 15px; border-bottom: 1px solid var(--line-soft); background: var(--acc-tint);
+            }
+            .usrx .bulk .n { font-size: 12px; font-weight: 700; color: var(--acc-d); }
+            .usrx .bulk .acts { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+            .usrx .bulk .btn-x { padding: 6px 11px; }
+            .usrx .btn-x.danger:hover { border-color: var(--bad); color: var(--bad); }
+            .usrx .code {
+                display: inline-block; margin-inline-start: 6px; padding: 1px 7px; border-radius: 6px;
+                font-size: 10px; font-weight: 750; letter-spacing: .3px; text-transform: none;
+                color: var(--muted); background: var(--surface-2); border: 1px solid var(--line);
+                font-family: var(--bs-font-monospace); vertical-align: middle;
+            }
+            .usrx .urow .meta .more { font-size: 10px; font-weight: 800; color: var(--muted); margin-inline-start: 3px; }
+            .usrx .urow .meta.ord { min-width: 48px; }
+            .usrx .urow .go + .go { margin-inline-start: -6px; }
+            @media (max-width: 575.98px) {
+                .usrx .urow { flex-wrap: wrap; }
+            }
         </style>
     @endpush
 @endonce

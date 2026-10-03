@@ -90,7 +90,7 @@ class Table extends Component
 
     public function render()
     {
-        $data = Role::forCurrentTenant()->orderBy($this->sortField, $this->sortDirection)
+        $data = Role::forCurrentTenant()->withCount('users')->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%");
             })

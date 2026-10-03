@@ -11,33 +11,36 @@
         <form method="POST" action="{{ route('login') }}" id="loginForm" autocomplete="on" novalidate>
             @csrf
 
-            {{-- Email --}}
-            <div class="lux-field" data-field="email">
-                <label class="lux-label" for="email">
-                    <span class="lux-label-text">Email Address</span>
+            {{-- Email or username --}}
+            <div class="lux-field" data-field="login">
+                <label class="lux-label" for="login">
+                    <span class="lux-label-text">Email or Username</span>
                     <span class="lux-required">Required</span>
                 </label>
                 <div class="lux-input-wrap">
                     <span class="lux-input-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                            <polyline points="22,6 12,13 2,6"/>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
                         </svg>
                     </span>
                     <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value="{{ old('email', env('DEFAULT_USERNAME')) }}"
-                        placeholder="name@example.com"
+                        id="login"
+                        name="login"
+                        type="text"
+                        value="{{ old('login', env('DEFAULT_USERNAME')) }}"
+                        placeholder="name@example.com or username"
                         required
                         autofocus
+                        autocapitalize="none"
+                        autocorrect="off"
+                        spellcheck="false"
                         autocomplete="username"
                         class="lux-input"
                     />
                     <span class="lux-focus-line" aria-hidden="true"></span>
                 </div>
-                @error('email')
+                @error('login')
                     <p class="lux-error">{{ $message }}</p>
                 @enderror
             </div>

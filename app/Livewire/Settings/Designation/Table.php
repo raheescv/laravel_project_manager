@@ -87,7 +87,7 @@ class Table extends Component
 
     public function render()
     {
-        $data = Designation::orderBy($this->sortField, $this->sortDirection)
+        $data = Designation::withCount('employees')->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%");
             })

@@ -20,6 +20,19 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * The sign-in field is "login" (email OR username). Older callers that still
+     * post "email" are mapped onto it.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (blank($this->input('login')) && filled($this->input('email'))) {
+            $this->merge(['login' => $this->input('email')]);
+        }
+
+        $this->merge(['login' => trim((string) $this->input('login'))]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -27,7 +40,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,15 +54,37 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::attempt($this->credentials(), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'login' => trans('auth.failed'),
             ]);
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Which users column the typed value is matched against: anything with an
+     * "@" is an email, everything else a username.
+     */
+    public function loginField(): string
+    {
+        return str_contains((string) $this->input('login'), '@') ? 'email' : 'username';
+    }
+
+    /**
+     * @return array{email?: string, username?: string, password: string}
+     */
+    public function credentials(): array
+    {
+        $login = (string) $this->input('login');
+
+        return [
+            $this->loginField() => $this->loginField() === 'username' ? Str::lower($login) : $login,
+            'password' => (string) $this->input('password'),
+        ];
     }
 
     /**
@@ -68,7 +103,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -80,6 +115,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('login')).'|'.$this->ip());
     }
 }

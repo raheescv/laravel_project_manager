@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign-in Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<style>
+:root{
+  --brand:#0A62C8; --brand-dark:#01377F; --brand-accent:#0BA8FA;
+  --bg:#F5F7FB; --surface:#FFFFFF; --ink:#0B1220; --ink-2:#4B5568; --ink-3:#8A94A6;
+  --line:#E4E8F0; --field:#F7F9FC; --danger:#D93A3A; --danger-bg:#FDF0F0; --ok:#12A150;
+  --ring:rgba(10,98,200,.18); --shadow:0 1px 2px rgba(11,18,32,.04),0 12px 40px -12px rgba(11,18,32,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A0E16; --surface:#111724; --ink:#EEF2F8; --ink-2:#AAB4C5; --ink-3:#6B7689;
+    --line:#222B3B; --field:#0D131E; --danger:#FF6B6B; --danger-bg:rgba(255,107,107,.08);
+    --ring:rgba(11,168,250,.25); --shadow:0 1px 2px rgba(0,0,0,.3),0 20px 50px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A0E16; --surface:#111724; --ink:#EEF2F8; --ink-2:#AAB4C5; --ink-3:#6B7689;
+  --line:#222B3B; --field:#0D131E; --danger:#FF6B6B; --danger-bg:rgba(255,107,107,.08);
+  --ring:rgba(11,168,250,.25); --shadow:0 1px 2px rgba(0,0,0,.3),0 20px 50px -20px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+[v-cloak]{display:none}
+
+/* ---------- preview switcher ---------- */
+.switcher{position:fixed;z-index:50;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:4px;padding:5px;
+  background:rgba(17,23,36,.88);backdrop-filter:blur(12px);border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.switcher button{border:0;background:transparent;color:#AAB4C5;font:600 12.5px Inter;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.switcher button.on{background:#fff;color:#0B1220}
+.switcher .sep{width:1px;background:#2A3344;margin:6px 2px}
+.hint{position:fixed;z-index:50;top:14px;right:14px;font:500 11.5px Inter;color:var(--ink-3);background:var(--surface);border:1px solid var(--line);
+  padding:7px 11px;border-radius:9px;max-width:260px;line-height:1.5}
+.hint code{font-family:ui-monospace,monospace;color:var(--ink);font-size:11px}
+
+/* ---------- shared form ---------- */
+.f-field{margin-bottom:16px}
+.f-label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:7px}
+.f-label a{font-weight:500;color:var(--brand);text-decoration:none;font-size:12.5px}
+.f-wrap{position:relative}
+.f-wrap .fa{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-size:15px;width:16px;text-align:center;transition:color .15s}
+.f-input{width:100%;height:48px;padding:0 44px 0 42px;font:500 15px Inter;color:var(--ink);background:var(--field);border:1.5px solid var(--line);
+  border-radius:12px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.f-input::placeholder{color:var(--ink-3);font-weight:400}
+.f-input:focus{border-color:var(--brand);background:var(--surface);box-shadow:0 0 0 4px var(--ring)}
+.f-wrap:focus-within .fa:first-child{color:var(--brand)}
+.f-input.bad{border-color:var(--danger)}
+.f-input.bad:focus{box-shadow:0 0 0 4px var(--danger-bg)}
+.f-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;width:36px;height:36px;border-radius:9px;
+  color:var(--ink-3);cursor:pointer}
+.f-eye:hover{color:var(--ink);background:var(--line)}
+.f-eye .fa{position:static;transform:none}
+.f-err{font-size:12.5px;color:var(--danger);margin-top:6px;display:flex;gap:6px;align-items:center}
+.f-caps{font-size:12px;color:#B7791F;margin-top:6px;display:flex;gap:6px;align-items:center}
+.f-row{display:flex;justify-content:space-between;align-items:center;margin:4px 0 22px}
+.f-check{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+.f-check input{position:absolute;opacity:0}
+.f-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);background:var(--field);display:grid;place-items:center;transition:.15s}
+.f-box .fa{font-size:11px;color:#fff;opacity:0}
+.f-check input:checked + .f-box{background:var(--brand);border-color:var(--brand)}
+.f-check input:checked + .f-box .fa{opacity:1}
+.f-check input:focus-visible + .f-box{box-shadow:0 0 0 4px var(--ring)}
+.f-btn{width:100%;height:50px;border:0;border-radius:12px;font:600 15px Inter;color:#fff;cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));box-shadow:0 8px 20px -8px rgba(10,98,200,.6);
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s,box-shadow .15s,filter .15s}
+.f-btn:hover:not(:disabled){filter:brightness(1.08);box-shadow:0 12px 26px -8px rgba(10,98,200,.65)}
+.f-btn:active:not(:disabled){transform:translateY(1px)}
+.f-btn:disabled{cursor:default;opacity:.85}
+.f-btn.ok{background:linear-gradient(135deg,#17B15C,#0E8A45);box-shadow:0 8px 20px -8px rgba(18,161,80,.6)}
+.f-btn .arrow{transition:transform .2s}
+.f-btn:hover .arrow{transform:translateX(3px)}
+.spin{width:18px;height:18px;border:2.2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.f-alert{display:flex;gap:11px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--danger-bg);color:var(--danger);
+  font-size:13.5px;line-height:1.45;margin-bottom:18px;border:1px solid color-mix(in srgb,var(--danger) 22%,transparent)}
+.f-alert .fa{margin-top:2px}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.fade-enter-active,.fade-leave-active{transition:opacity .2s,transform .2s}
+.fade-enter-from,.fade-leave-to{opacity:0;transform:translateY(-4px)}
+.f-secure{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--ink-3);margin-top:20px}
+
+/* ---------- Sample A : Split Horizon ---------- */
+.sa{min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr}
+.sa-art{position:relative;overflow:hidden;color:#fff;padding:44px 56px;display:flex;flex-direction:column;justify-content:space-between;
+  background:radial-gradient(1200px 600px at 110% -10%,rgba(11,168,250,.55),transparent 60%),
+             radial-gradient(800px 500px at -20% 110%,rgba(10,98,200,.9),transparent 60%),#01275C}
+.sa-art::before{content:"";position:absolute;inset:0;opacity:.18;
+  background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
+  background-size:44px 44px;mask-image:radial-gradient(ellipse at 70% 30%,#000 10%,transparent 70%)}
+.sa-art > *{position:relative}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:17px;letter-spacing:.02em}
+.logo-mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:16px;color:#fff;
+  background:linear-gradient(135deg,var(--brand-accent),var(--brand));box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.sa-art h2{font-size:clamp(28px,3.2vw,42px);line-height:1.12;font-weight:700;letter-spacing:-.025em;max-width:460px}
+.sa-art h2 em{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic;color:#9ED8FF;letter-spacing:0}
+.sa-art p.lede{color:rgba(255,255,255,.7);font-size:15px;line-height:1.6;max-width:420px;margin-top:16px}
+.sa-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+.sa-stat{padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px);min-width:130px}
+.sa-stat b{display:block;font-size:20px}
+.sa-stat span{font-size:12px;color:rgba(255,255,255,.65)}
+.sa-foot{font-size:12.5px;color:rgba(255,255,255,.5)}
+.sa-form{display:grid;place-items:center;padding:40px 24px;background:var(--surface)}
+.sa-inner{width:100%;max-width:380px}
+.sa-inner h1{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.sa-inner .sub{color:var(--ink-2);font-size:14.5px;margin:8px 0 30px}
+.sa-mobile-logo{display:none;margin-bottom:28px;color:var(--ink)}
+@media (max-width:900px){
+  .sa{grid-template-columns:1fr}
+  .sa-art{display:none}
+  .sa-mobile-logo{display:flex}
+}
+
+/* ---------- Sample B : Frosted Canvas ---------- */
+.sb{min-height:100vh;display:grid;place-items:center;padding:40px 16px 90px;position:relative;overflow:hidden;background:var(--bg)}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:float 18s ease-in-out infinite}
+.blob.b1{width:520px;height:520px;background:#5AB8FF;top:-140px;left:-120px}
+.blob.b2{width:460px;height:460px;background:#7C8CFF;bottom:-160px;right:-80px;animation-delay:-6s}
+.blob.b3{width:300px;height:300px;background:#4FE0C3;top:40%;left:55%;opacity:.3;animation-delay:-12s}
+@keyframes float{50%{transform:translate(40px,30px) scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.blob{animation:none}}
+.sb-card{position:relative;width:100%;max-width:420px;padding:38px 34px 30px;border-radius:24px;
+  background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(24px) saturate(1.4);
+  border:1px solid color-mix(in srgb,var(--surface) 60%,transparent);box-shadow:var(--shadow)}
+.sb-head{text-align:center;margin-bottom:26px}
+.sb-head .logo-mark{width:52px;height:52px;border-radius:15px;font-size:22px;margin:0 auto 18px;box-shadow:0 10px 24px -8px rgba(10,98,200,.6)}
+.sb-head h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.sb-head p{color:var(--ink-2);font-size:14px;margin-top:6px}
+.sb .f-input{background:color-mix(in srgb,var(--surface) 80%,transparent)}
+.sb-tenant{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);margin-bottom:20px;font-size:13px;color:var(--ink-2)}
+.sb-tenant b{color:var(--ink)}
+.sb-tenant .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+
+/* ---------- Sample C : Monolith ---------- */
+.sc{min-height:100vh;display:flex;flex-direction:column;background:var(--surface)}
+.sc-top{display:flex;justify-content:space-between;align-items:center;padding:24px 32px}
+.sc-top .logo{color:var(--ink)}
+.sc-top .logo-mark{border-radius:50%;background:var(--ink);color:var(--surface)}
+.sc-top a{font-size:13px;color:var(--ink-2);text-decoration:none}
+.sc-main{flex:1;display:grid;place-items:center;padding:24px 16px 100px}
+.sc-inner{width:100%;max-width:400px}
+.sc-kicker{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.sc-inner h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(40px,7vw,54px);line-height:1;letter-spacing:-.01em;margin:12px 0 10px}
+.sc-inner h1 em{color:var(--brand)}
+.sc-inner .sub{color:var(--ink-2);font-size:15px;margin-bottom:34px}
+.sc .f-input{height:52px;border-radius:0;border:0;border-bottom:1.5px solid var(--line);background:transparent;padding-left:30px}
+.sc .f-wrap .fa:first-child{left:2px}
+.sc .f-input:focus{box-shadow:none;border-bottom-color:var(--ink);background:transparent}
+.sc .f-input.bad{border-bottom-color:var(--danger)}
+.sc .f-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:0}
+.sc .f-btn{background:var(--ink);color:var(--surface);border-radius:999px;box-shadow:none}
+.sc .f-btn .spin{border-color:color-mix(in srgb,var(--surface) 35%,transparent);border-top-color:var(--surface)}
+.sc .f-btn.ok{background:var(--ok);color:#fff}
+.sc .f-box{border-radius:50%}
+.sc .f-check input:checked + .f-box{background:var(--ink);border-color:var(--ink)}
+.sc .f-check input:checked + .f-box .fa{color:var(--surface)}
+.sc-foot{text-align:center;font-size:12px;color:var(--ink-3);padding:0 16px 90px}
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+
+  <div class="hint">
+    Demo API: password <code>demo1234</code> succeeds · anything else returns 422 · 5 misses → 429 lockout
+  </div>
+
+  <!-- ===== A : Split Horizon ===== -->
+  <section v-if="sample==='a'" class="sa">
+    <aside class="sa-art">
+      <div class="logo"><span class="logo-mark"><i class="fa fa-cloud"></i></span> QLOUD</div>
+      <div>
+        <h2>Run every branch from <em>one calm place.</em></h2>
+        <p class="lede">Sales, inventory, rent-outs and accounts — synced live across your team.</p>
+        <div class="sa-stats">
+          <div class="sa-stat"><b><i class="fa fa-bolt"></i> Live</b><span>Real-time sync</span></div>
+          <div class="sa-stat"><b><i class="fa fa-shield"></i> Secure</b><span>Encrypted sessions</span></div>
+          <div class="sa-stat"><b><i class="fa fa-sitemap"></i> Multi</b><span>Branch ready</span></div>
+        </div>
+      </div>
+      <div class="sa-foot">© 2026 QLOUD · All rights reserved</div>
+    </aside>
+    <main class="sa-form">
+      <div class="sa-inner">
+        <div class="logo sa-mobile-logo"><span class="logo-mark"><i class="fa fa-cloud"></i></span> QLOUD</div>
+        <h1>Welcome back</h1>
+        <p class="sub">Sign in to your <b>{{ tenant }}</b> workspace.</p>
+        <login-form :state="state" @submit="login"></login-form>
+      </div>
+    </main>
+  </section>
+
+  <!-- ===== B : Frosted Canvas ===== -->
+  <section v-if="sample==='b'" class="sb">
+    <span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <div class="sb-card">
+      <div class="sb-head">
+        <div class="logo-mark"><i class="fa fa-cloud"></i></div>
+        <h1>Sign in</h1>
+        <p>Good to see you again.</p>
+      </div>
+      <div class="sb-tenant"><span class="dot"></span> Workspace <b>{{ tenant }}</b></div>
+      <login-form :state="state" @submit="login"></login-form>
+    </div>
+  </section>
+
+  <!-- ===== C : Monolith ===== -->
+  <section v-if="sample==='c'" class="sc">
+    <header class="sc-top">
+      <div class="logo"><span class="logo-mark"><i class="fa fa-cloud"></i></span> QLOUD</div>
+      <a href="#"><i class="fa fa-life-ring"></i> Need help?</a>
+    </header>
+    <main class="sc-main">
+      <div class="sc-inner">
+        <div class="sc-kicker">{{ tenant }} workspace</div>
+        <h1>Welcome <em>back.</em></h1>
+        <p class="sub">Enter your details to continue.</p>
+        <login-form :state="state" @submit="login"></login-form>
+      </div>
+    </main>
+    <div class="sc-foot">Protected by rate limiting &amp; encrypted sessions</div>
+  </section>
+
+  <nav class="switcher">
+    <button :class="{on:sample==='a'}" @click="sample='a'">A · Split Horizon</button>
+    <button :class="{on:sample==='b'}" @click="sample='b'">B · Frosted Canvas</button>
+    <button :class="{on:sample==='c'}" @click="sample='c'">C · Monolith</button>
+    <span class="sep"></span>
+    <button @click="toggleTheme" :title="'Theme: '+theme"><i class="fa" :class="theme==='dark'?'fa-sun-o':'fa-moon-o'"></i></button>
+  </nav>
+</div>
+
+<script type="text/x-template" id="login-form">
+  <form @submit.prevent="submit" novalidate :class="{shake: shaking}" @animationend="shaking=false">
+    <transition name="fade">
+      <div v-if="state.message" class="f-alert" role="alert">
+        <i class="fa" :class="state.lockedFor ? 'fa-clock-o' : 'fa-exclamation-circle'"></i>
+        <span v-if="state.lockedFor">Too many attempts. Try again in <b>{{ state.lockedFor }}s</b>.</span>
+        <span v-else>{{ state.message }}</span>
+      </div>
+    </transition>
+
+    <div class="f-field">
+      <label class="f-label" for="email">Email</label>
+      <div class="f-wrap">
+        <i class="fa fa-envelope-o"></i>
+        <input id="email" v-model.trim="email" type="email" class="f-input" :class="{bad: errors.email}"
+               placeholder="name@company.com" autocomplete="username" @input="errors.email=null" :disabled="busy">
+      </div>
+      <div v-if="errors.email" class="f-err"><i class="fa fa-info-circle"></i>{{ errors.email }}</div>
+    </div>
+
+    <div class="f-field">
+      <label class="f-label" for="password">Password <a href="#" tabindex="-1">Forgot?</a></label>
+      <div class="f-wrap">
+        <i class="fa fa-lock"></i>
+        <input id="password" v-model="password" :type="reveal ? 'text' : 'password'" class="f-input"
+               :class="{bad: errors.password}" placeholder="••••••••" autocomplete="current-password"
+               @input="errors.password=null" @keyup="caps=$event.getModifierState && $event.getModifierState('CapsLock')" :disabled="busy">
+        <button type="button" class="f-eye" @click="reveal=!reveal" :aria-label="reveal?'Hide password':'Show password'">
+          <i class="fa" :class="reveal ? 'fa-eye-slash' : 'fa-eye'"></i>
+        </button>
+      </div>
+      <div v-if="errors.password" class="f-err"><i class="fa fa-info-circle"></i>{{ errors.password }}</div>
+      <div v-else-if="caps" class="f-caps"><i class="fa fa-warning"></i>Caps Lock is on</div>
+    </div>
+
+    <div class="f-row">
+      <label class="f-check">
+        <input type="checkbox" v-model="remember"><span class="f-box"><i class="fa fa-check"></i></span>
+        Keep me signed in
+      </label>
+    </div>
+
+    <button type="submit" class="f-btn" :class="{ok: state.status==='success'}" :disabled="busy || state.lockedFor>0">
+      <template v-if="state.status==='loading'"><span class="spin"></span>Signing in…</template>
+      <template v-else-if="state.status==='success'"><i class="fa fa-check"></i>Welcome, {{ state.user }} — opening dashboard</template>
+      <template v-else>Sign in <i class="fa fa-arrow-right arrow"></i></template>
+    </button>
+
+    <div class="f-secure"><i class="fa fa-lock"></i> Secured connection</div>
+  </form>
+</script>
+
+<script>
+const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
+
+const LoginForm = {
+  template: '#login-form',
+  props: ['state'],
+  emits: ['submit'],
+  setup(props, { emit }) {
+    const email = ref('admin@sizerun.com'), password = ref(''), remember = ref(true);
+    const reveal = ref(false), caps = ref(false), shaking = ref(false);
+    const errors = reactive({ email: null, password: null });
+    const busy = computed(() => ['loading', 'success'].includes(props.state.status));
+
+    watch(() => props.state.errorTick, () => { shaking.value = true; });
+
+    function submit() {
+      errors.email = /^\S+@\S+\.\S+$/.test(email.value) ? null : 'Enter a valid email address.';
+      errors.password = password.value ? null : 'Password is required.';
+      if (errors.email || errors.password) { shaking.value = true; return; }
+      emit('submit', { email: email.value, password: password.value, remember: remember.value });
+    }
+    return { email, password, remember, reveal, caps, shaking, errors, busy, submit };
+  },
+};
+
+/* Stand-in for: axios.post('/api/auth/login', payload) — same shapes Laravel returns. */
+let misses = 0;
+function fakeApi({ email, password }) {
+  return new Promise((resolve, reject) => setTimeout(() => {
+    if (misses >= 5) return reject({ status: 429, data: { message: 'Too many login attempts.', retry_after: 30 } });
+    if (password === 'demo1234') { misses = 0; return resolve({ status: 200, data: { redirect: '/dashboard', user: { name: email.split('@')[0] } } }); }
+    misses++;
+    reject({ status: 422, data: { message: 'These credentials do not match our records.', errors: { email: ['These credentials do not match our records.'] } } });
+  }, 900));
+}
+
+createApp({
+  components: { LoginForm },
+  setup() {
+    const sample = ref('a');
+    const theme = ref(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const tenant = 'Size Run';
+    const state = reactive({ status: 'idle', message: null, lockedFor: 0, user: null, errorTick: 0 });
+
+    function toggleTheme() {
+      theme.value = theme.value === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = theme.value;
+    }
+
+    async function login(payload) {
+      Object.assign(state, { status: 'loading', message: null });
+      try {
+        const res = await fakeApi(payload);
+        Object.assign(state, { status: 'success', user: res.data.user.name });
+        setTimeout(() => Object.assign(state, { status: 'idle', user: null }), 2400);
+      } catch (e) {
+        state.status = 'idle'; state.errorTick++;
+        state.message = e.data.message;
+        if (e.status === 429) {
+          state.lockedFor = e.data.retry_after;
+          const t = setInterval(() => {
+            if (--state.lockedFor <= 0) { clearInterval(t); misses = 0; state.message = null; }
+          }, 1000);
+        }
+      }
+    }
+    watch(sample, () => Object.assign(state, { status: 'idle', message: null }));
+    return { sample, theme, tenant, state, login, toggleTheme };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>

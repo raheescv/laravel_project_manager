@@ -62,6 +62,14 @@
                                 @endif
                             </a>
                         </th>
+                        <th class="border-bottom py-3 text-center" width="12%">
+                            <a href="#" class="text-decoration-none text-dark d-inline-flex align-items-center gap-1" wire:click.prevent="sortBy('users_count')">
+                                Users
+                                @if ($sortField === 'users_count')
+                                    <i class="demo-pli-arrow-{{ $sortDirection === 'asc' ? 'up' : 'down' }} fs-5"></i>
+                                @endif
+                            </a>
+                        </th>
                         <th class="border-bottom py-3 text-center" width="15%">Permissions</th>
                         <th class="border-bottom py-3 text-end" width="10%">Actions</th>
                     </tr>
@@ -84,6 +92,9 @@
                                 </div>
                             </td>
                             <td class="text-center">
+                                <span class="badge {{ $item->users_count ? 'bg-primary' : 'bg-light text-muted border' }}">{{ $item->users_count }}</span>
+                            </td>
+                            <td class="text-center">
                                 <a href="{{ route('settings::roles::permission', $item->id) }}" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-2">
                                     <i class="demo-psi-list-view fs-5"></i>
                                     Manage
@@ -101,7 +112,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-4 text-muted">
+                            <td colspan="5" class="text-center py-4 text-muted">
                                 <i class="demo-pli-warning-window fs-2 d-block mb-2"></i>
                                 No roles found
                             </td>

@@ -906,6 +906,16 @@
                             </div>
                         </div>
                         <div class="c6">
+                            <label for="username" class="empx-label"><i class="fa fa-at"></i> Username</label>
+                            <div class="empx-input">
+                                <span class="empx-input-ic"><i class="fa fa-at"></i></span>
+                                {{ html()->input('username')->value('')->class('empx-control')->attribute('wire:model', 'users.username')->attribute('autocomplete', 'off')->attribute('autocapitalize', 'none')->placeholder('Optional — sign in with this or email') }}
+                            </div>
+                            @error('users.username')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="c6">
                             <label for="mobile" class="empx-label"><i class="fa fa-phone"></i> Mobile Number</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-phone"></i></span>

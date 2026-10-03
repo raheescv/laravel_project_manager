@@ -480,11 +480,54 @@ class MigratePropertyDataCommand extends Command
         return blank($oldDesignationId) ? null : ($this->designationMap[$oldDesignationId] ?? null);
     }
 
+    /** @var array<string, int>|null target users.username => users.id, for this tenant */
+    private ?array $takenUsernames = null;
+
+    /** @var array<int, string> "#<id> <nick_name>" for source users that could not keep their nick name */
+    private array $skippedUsernames = [];
+
+    /**
+     * The old system signed in by `nick_name`, so it becomes the username — shaped
+     * to the username rules (User::usernameRules). A nick name that is invalid or
+     * already taken in this tenant is left out of the row entirely, so a re-run
+     * never wipes a username set by hand after the migration.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withUsername(object $row, array $data): array
+    {
+        $this->takenUsernames ??= DB::table('users')
+            ->where('tenant_id', $this->tenantId)
+            ->whereNotNull('username')
+            ->pluck('id', 'username')
+            ->mapWithKeys(fn ($id, $username) => [Str::lower($username) => (int) $id])
+            ->all();
+
+        if (blank($row->nick_name ?? null)) {
+            return $data;
+        }
+
+        $username = Str::lower(preg_replace('/\s+/', '.', trim($row->nick_name)));
+        $ownerId = $this->takenUsernames[$username] ?? null;
+        $isValid = preg_match('/^[a-z0-9._-]{3,50}$/', $username) === 1;
+
+        if (! $isValid || ($ownerId !== null && $ownerId !== (int) $row->id)) {
+            $this->skippedUsernames[] = "#{$row->id} {$row->nick_name}";
+
+            return $data;
+        }
+
+        $this->takenUsernames[$username] = (int) $row->id;
+
+        return $data + ['username' => $username];
+    }
+
     private function migrateUsers(): void
     {
         $employeeDesignations = DB::connection('mysql2')->table('employees')->pluck('designation_id', 'id');
-        $users = DB::connection('mysql2')->table('users')->get();
-        $this->migrateTable('users', $users, 'users', fn ($row) => [
+        $users = DB::connection('mysql2')->table('users')->orderBy('id')->get();
+        $this->migrateTable('users', $users, 'users', fn ($row) => $this->withUsername($row, [
             'id' => $row->id,
             'tenant_id' => $this->tenantId,
             'type' => 'user',
@@ -512,7 +555,11 @@ class MigratePropertyDataCommand extends Command
             'second_reference_no' => $row->id,
             'created_at' => $row->created_at ?? now(),
             'updated_at' => $row->updated_at ?? now(),
-        ]);
+        ]));
+
+        if ($this->skippedUsernames !== []) {
+            $this->warn('Left without a username (invalid or already taken): '.implode(', ', $this->skippedUsernames));
+        }
 
         // Migrate employees from old employees table as type='employee'
         $employees = DB::connection('mysql2')->table('employees')->get();

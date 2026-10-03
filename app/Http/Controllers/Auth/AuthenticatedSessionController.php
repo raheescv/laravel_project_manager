@@ -37,12 +37,12 @@ class AuthenticatedSessionController extends Controller
         $tenant = $this->tenantService->getCurrentTenant();
 
         if (! $tenant) {
-            return back()->withErrors(['email' => 'Invalid subdomain or tenant not found.']);
+            return back()->withErrors(['login' => 'Invalid subdomain or tenant not found.']);
         }
 
         // Find user with tenant context
         $user = User::withoutGlobalScopes()
-            ->where('email', $request->email)
+            ->whereKey(Auth::id())
             ->where('tenant_id', $tenant->id)
             ->first();
 
@@ -50,7 +50,7 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('web')->logout();
 
             return back()->withErrors([
-                'email' => 'The provided credentials do not match our records or the account is inactive.',
+                'login' => 'The provided credentials do not match our records or the account is inactive.',
             ]);
         }
 
@@ -59,7 +59,7 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('web')->logout();
 
             return back()->withErrors([
-                'email' => 'You do not have access to this tenant.',
+                'login' => 'You do not have access to this tenant.',
             ]);
         }
 

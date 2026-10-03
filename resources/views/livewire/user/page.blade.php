@@ -94,6 +94,23 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label for="username" class="form-label small fw-medium">
+                                    <i class="fa fa-at me-1 text-muted"></i>
+                                    Username
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-secondary-subtle">
+                                        <i class="fa fa-at"></i>
+                                    </span>
+                                    {{ html()->input('username')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'users.username')->attribute('autocomplete', 'off')->attribute('autocapitalize', 'none')->placeholder('Optional — sign in with this or email') }}
+                                </div>
+                                @error('users.username')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label for="mobile" class="form-label small fw-medium">
                                     <i class="fa fa-phone me-1 text-muted"></i>
                                     Mobile Number

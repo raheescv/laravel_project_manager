@@ -7,6 +7,7 @@ use App\Http\Resources\V1\Auth\AuthUserResource;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class LoginAction
 {
@@ -15,7 +16,7 @@ class LoginAction
      *
      * Handles BOTH login methods through one action:
      *  - "pin" (default): matches the 4–6 digit MPIN.
-     *  - "password": matches username (email / code / mobile) + password.
+     *  - "password": matches username (email / username / code / mobile) + password.
      *
      * The method is taken from the request's `method` field, defaulting to "pin"
      * when nothing is passed (inferred as "password" when a username is present).
@@ -107,7 +108,7 @@ class LoginAction
     }
 
     /**
-     * Match an active user by email, code or mobile, then verify the password.
+     * Match an active user by email, username, code or mobile, then verify the password.
      */
     private function byCredentials(string $username, string $password): User
     {
@@ -118,6 +119,7 @@ class LoginAction
             ->whereNotNull('password')
             ->where(function ($query) use ($username) {
                 $query->where('email', $username)
+                    ->orWhere('username', Str::lower($username))
                     ->orWhere('code', $username)
                     ->orWhere('mobile', $username);
             })

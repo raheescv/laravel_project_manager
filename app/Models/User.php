@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
@@ -30,6 +31,7 @@ class User extends Authenticatable implements AuditableContracts
         'name',
         'code',
         'email',
+        'username',
         'mobile',
         'image',
         'is_admin',
@@ -75,6 +77,7 @@ class User extends Authenticatable implements AuditableContracts
         return array_merge([
             'name' => ['required'],
             'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
+            'username' => self::usernameRules($id),
             'password' => ['required'],
         ], $merge);
     }
@@ -86,7 +89,27 @@ class User extends Authenticatable implements AuditableContracts
         return array_merge([
             'name' => ['required'],
             'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
+            'username' => self::usernameRules($id),
         ], $merge);
+    }
+
+    /**
+     * A username is optional, but when set it is a sign-in credential — so it
+     * must be unique within the tenant and never look like an email address
+     * (the login field decides email vs username by the "@").
+     *
+     * @return array<int, mixed>
+     */
+    public static function usernameRules($id = 0): array
+    {
+        return [
+            'nullable',
+            'string',
+            'min:3',
+            'max:50',
+            'regex:/^[A-Za-z0-9._-]+$/',
+            Rule::unique(self::class, 'username')->where('tenant_id', self::getCurrentTenantId())->ignore($id),
+        ];
     }
 
     protected static function boot()
@@ -205,6 +228,15 @@ class User extends Authenticatable implements AuditableContracts
      * The plaintext isn't available in that case, so the digest is left NULL and
      * that user takes the fallback path until their next successful sign-in.
      */
+    /**
+     * Stored trimmed and lower-cased so sign-in is case-insensitive; a blank
+     * value is NULL, never '', so the unique index allows many users without one.
+     */
+    protected function username(): Attribute
+    {
+        return Attribute::set(fn ($value) => filled($value) ? Str::lower(trim((string) $value)) : null);
+    }
+
     protected function pin(): Attribute
     {
         return Attribute::set(function ($value) {

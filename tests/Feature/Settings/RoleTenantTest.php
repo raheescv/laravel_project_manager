@@ -6,6 +6,7 @@ use App\Livewire\Settings\Role\Table;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\TenantService;
 use Livewire\Livewire;
 use Tests\Support\PosWorld;
@@ -44,4 +45,13 @@ it('lets a role in any tenant hold the one shared permission row', function (): 
 
     expect(Permission::where('name', 'sale.view')->count())->toBe(1)
         ->and($foreign->fresh()->hasPermissionTo('sale.view'))->toBeTrue();
+});
+
+it('shows how many users hold each role', function (): void {
+    $role = Role::create(['tenant_id' => $this->world->tenant->id, 'name' => 'Counted Role '.uniqid(), 'guard_name' => 'web']);
+    User::factory()->count(3)->create(['tenant_id' => $this->world->tenant->id])->each->assignRole($role);
+
+    $rows = Livewire::test(Table::class)->set('search', $role->name)->viewData('data');
+
+    expect($rows->firstWhere('id', $role->id)->users_count)->toBe(3);
 });

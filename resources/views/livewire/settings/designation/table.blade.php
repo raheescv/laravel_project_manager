@@ -52,6 +52,7 @@
                         <th width="10%"> <x-sortable-header field="id" label="ID" :sortField="$sortField" :direction="$sortDirection" /> </th>
                         <th width="15%"> <x-sortable-header field="order_no" label="Order No" :sortField="$sortField" :direction="$sortDirection" /> </th>
                         <th> <x-sortable-header field="name" label="Name" :sortField="$sortField" :direction="$sortDirection" /> </th>
+                        <th width="12%" class="text-center"> <x-sortable-header field="employees_count" label="Users" :sortField="$sortField" :direction="$sortDirection" /> </th>
                         <th width="10%" class="text-end pe-4" width="120">Action</th>
                     </tr>
                 </thead>
@@ -66,6 +67,7 @@
                             <td><span class="badge bg-light text-dark border">#{{ $item->id }}</span></td>
                              <td><span class="badge bg-info">{{ $item->order_no }}</span></td>
                              <td class="fw-semibold text-dark">{{ $item->name }}</td>
+                             <td class="text-center"><span class="badge {{ $item->employees_count ? 'bg-primary' : 'bg-light text-muted border' }}">{{ $item->employees_count }}</span></td>
                             <td class="text-end pe-4">
                                 @can('designation.edit')
                                     <button table_id="{{ $item->id }}" class="btn btn-icon btn-sm btn-hover btn-light edit" title="Edit Designation">
@@ -76,7 +78,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">No designations found matching your search.</td>
+                            <td colspan="6" class="text-center py-5 text-muted">No designations found matching your search.</td>
                         </tr>
                     @endforelse
                 </tbody>

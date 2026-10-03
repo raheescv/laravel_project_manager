@@ -68,6 +68,7 @@ class Page extends Component
             $this->users = [
                 'name' => $name,
                 'email' => $email,
+                'username' => '',
                 'mobile' => $mobile,
                 'password' => $password,
             ];
@@ -87,6 +88,7 @@ class Page extends Component
         $rules = [
             'users.name' => ['required'],
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
+            'users.username' => User::usernameRules($this->table_id),
             'users.mobile' => ['required'],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
@@ -106,6 +108,8 @@ class Page extends Component
     protected $messages = [
         'users.name.required' => 'The name field is required',
         'users.name.unique' => 'The name is already Registered',
+        'users.username.unique' => 'The username is already taken',
+        'users.username.regex' => 'The username may only contain letters, numbers, dots, dashes and underscores.',
         'users.code.required' => 'The code field is required',
         'users.code.unique' => 'The code is already Registered',
         'users.code.max' => 'The code field must not be greater than 20 characters.',

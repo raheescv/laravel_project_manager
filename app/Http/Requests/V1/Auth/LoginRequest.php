@@ -54,7 +54,7 @@ class LoginRequest extends FormRequest
         return [
             'pin.required' => 'The PIN is required.',
             'pin.max' => 'The PIN must be less than 6 digits.',
-            'username.required' => 'The username (email, code or mobile) is required.',
+            'username.required' => 'The username (email, username, code or mobile) is required.',
             'password.required' => 'The password is required.',
         ];
     }
