@@ -26,13 +26,16 @@ class StoreTransactionAction
     public function charge(int $rentOutId, array $data): array
     {
         $rentOut = RentOut::findOrFail($rentOutId);
+        $incomeAccountId = $data['counter_account_id'] ?? $this->resolveChargeIncomeAccountId($rentOut, $data);
 
         return $this->execute(array_merge($data, [
             'rent_out_id' => $rentOutId,
             'credit' => 0,
             'debit' => $data['amount'],
             'account_id' => $rentOut->account_id,
-            'counter_account_id' => $data['counter_account_id'] ?? $this->resolveChargeIncomeAccountId($rentOut, $data),
+            'counter_account_id' => $incomeAccountId,
+            // category is the income account the charge is booked to.
+            'category' => $incomeAccountId,
             'journal_source' => $data['journal_source'] ?? 'income',
             // A charge is not money leaving the business: the row's own account
             // (the customer) is the debit side, the income account the credit side.
@@ -68,8 +71,11 @@ class StoreTransactionAction
         }
 
         // Entry 2: Credit — payment received. The charge leg already recognised
-        // the income, so this leg only settles the receivable it created.
-        return $this->settle($rentOutId, $data);
+        // the income, so this leg only settles the receivable it created, under
+        // the same category.
+        return $this->settle($rentOutId, array_merge($data, [
+            'category' => $chargeResponse['data']->category,
+        ]));
     }
 
     /**
@@ -344,7 +350,8 @@ class StoreTransactionAction
             'model_id' => $data['model_id'] ?? null,
             'journal_id' => $data['journal_id'] ?? null,
             'group' => $data['group'] ?? null,
-            'category' => $data['category'] ?? null,
+            // category is a foreign key to accounts - a label or slug never belongs here.
+            'category' => is_numeric($data['category'] ?? null) ? (int) $data['category'] : null,
             'payment_type' => $data['payment_type'] ?? null,
             'remark' => $data['remark'] ?? null,
             'reason' => $data['reason'] ?? null,

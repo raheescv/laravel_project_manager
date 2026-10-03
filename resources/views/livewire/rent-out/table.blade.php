@@ -3,7 +3,7 @@
         <div class="card-header bg-light py-3">
             {{-- ═══ Top Bar: Actions + Show/Search ═══ --}}
             <div class="row mt-3">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                <div class="col-12 col-lg-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-lg-0">
                     @can($config->createPermission)
                         <a href="{{ route($config->createRoute) }}"
                             class="btn btn-primary d-flex align-items-center shadow-sm">
@@ -30,8 +30,8 @@
                         <span class="d-none d-md-inline">Excel</span>
                     </button>
                 </div>
-                <div class="col-md-6">
-                    <div class="row g-2 align-items-center">
+                <div class="col-12 col-lg-6">
+                    <div class="row g-2 align-items-center flex-nowrap">
                         <div class="col-auto">
                             <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
                         </div>
@@ -43,7 +43,7 @@
                                 <option value="500">500</option>
                             </select>
                         </div>
-                        <div class="col">
+                        <div class="col" style="min-width:0;">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-secondary-subtle">
                                     <i class="fa fa-search"></i>
@@ -116,31 +116,31 @@
 
             {{-- ═══ Filter Row 1: Group, Building, Property, Customer, Status ═══ --}}
             <div class="row g-3">
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-folder-open text-primary me-1 small"></i> Group/Project
                     </label>
                     {{ html()->select('filterGroup', [])->value('')->class('select-property_group_id-list border-secondary-subtle shadow-sm')->id('rent_out_filterGroup')->placeholder('All Groups')->attribute('wire:model', 'filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-building text-primary me-1 small"></i> Building
                     </label>
                     {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('rent_out_filterBuilding')->placeholder('All Buildings')->attribute('wire:model', 'filterBuilding')->attribute('data-group-select', '#rent_out_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-md-6" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-home text-primary me-1 small"></i> Property/Unit
                     </label>
                     {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('rent_out_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#rent_out_filterBuilding')->attribute('data-group-select', '#rent_out_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-md-6" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-user text-primary me-1 small"></i> Customer
                     </label>
                     {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('rent_out_filterCustomer')->placeholder('All Customers')->attribute('wire:model', 'filterCustomer') }}
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-12 col-md-6">
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Status
                     </label>
@@ -150,21 +150,21 @@
 
             {{-- ═══ Filter Row 2: Dates + Utilities ═══ --}}
             <div class="row g-3 mt-1">
-                <div class="col-md-4 col-lg">
+                <div class="col-6 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar text-primary me-1 small"></i> From Date
                     </label>
                     <input type="date" wire:model.live="fromDate"
                         class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-6 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar-check-o text-primary me-1 small"></i> To Date
                     </label>
                     <input type="date" wire:model.live="toDate"
                         class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-12 col-sm-4 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-bolt text-primary me-1 small"></i> Electricity & Water
                     </label>
@@ -175,7 +175,7 @@
                         <option value="0">Not Included</option>
                     </select>
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-12 col-sm-4 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-snowflake-o text-primary me-1 small"></i> AC
                     </label>
@@ -186,7 +186,7 @@
                         <option value="0">Not Included</option>
                     </select>
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-12 col-sm-4 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-wifi text-primary me-1 small"></i> Wifi
                     </label>

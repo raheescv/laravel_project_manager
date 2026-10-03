@@ -28,6 +28,18 @@ class RentOutTransactionHelper
         return $rentOut?->agreement_type?->config()->paymentGroupLabel ?? 'Rent Payment';
     }
 
+    /**
+     * The Rent Out service category with this name, or null when none is mapped.
+     */
+    protected function serviceCategoryId(RentOut $rentOut, string $name): ?int
+    {
+        $ids = RentOut::serviceCategoryIds();
+
+        return $ids
+            ? Account::where('tenant_id', $rentOut->tenant_id)->whereIn('id', $ids)->where('name', $name)->value('id')
+            : null;
+    }
+
     public function charge(int $rentOutId, array $data): array
     {
         return $this->action()->charge($rentOutId, $data);
@@ -59,10 +71,10 @@ class RentOutTransactionHelper
             // Payment method for the receipt leg; the income leg is resolved
             // from the fee's own income account below.
             'account_id' => $paymentMethodId,
-            'income_account_id' => $accounts['service_charge'] ?? $accounts['sale'] ?? null,
+            'income_account_id' => $this->serviceCategoryId($rentOut, 'Management Fee')
+                ?? $accounts['service_charge'] ?? $accounts['sale'] ?? null,
             'source' => $rentOut->agreement_type?->sourceSlug(),
             'group' => 'Management Fee',
-            'category' => 'management_fee',
             'remark' => $rentOut->management_fee_remarks ?: 'Management fee for RentOut:'.$rentOut->id,
             'created_by' => $userId,
         ];
@@ -84,7 +96,6 @@ class RentOutTransactionHelper
             'account_id' => $rentOut->down_payment_payment_method_id ?? 0,
             'source' => $rentOut->agreement_type?->sourceSlug(),
             'group' => 'Down Payment',
-            'category' => 'down_payment',
             'remark' => $rentOut->down_payment_remarks ?: 'RentOut Down Payment: '.$rentOut->id,
             'created_by' => $userId,
         ]);
@@ -95,13 +106,13 @@ class RentOutTransactionHelper
         return $this->charge($rentOutId, [
             'date' => $date,
             'amount' => $amount,
+            'income_account_id' => $this->serviceCategoryId(RentOut::findOrFail($rentOutId), 'Service Charge'),
             'source' => 'ServiceCharge',
             'model' => 'RentOutService',
             'model_id' => $serviceId,
             'paid_date' => $date,
             'reason' => 'Service Charge',
             'group' => 'Service Charge',
-            'category' => 'Service Charge',
             'payment_type' => 'Services',
             'remark' => $remark,
             'created_by' => Auth::id(),
@@ -158,7 +169,6 @@ class RentOutTransactionHelper
             'paid_date' => $date,
             'reason' => $remark ?: 'Payout',
             'group' => 'Payout',
-            'category' => 'Payout',
             'payment_type' => 'Payout',
             'remark' => $remark,
             'created_by' => Auth::id(),
@@ -181,7 +191,6 @@ class RentOutTransactionHelper
             'paid_date' => $payDate,
             'reason' => $term->label ?? 'Rent Payment',
             'group' => $this->paymentGroupLabel($term->rentOut),
-            'category' => $term->label ?? '',
             'payment_type' => 'Rent',
             'remark' => $remark,
             'created_by' => Auth::id(),
@@ -204,7 +213,6 @@ class RentOutTransactionHelper
             'paid_date' => $payDate,
             'reason' => $term->utility?->name ?? 'Utility Payment',
             'group' => 'Utility Payment',
-            'category' => $term->utility?->name ?? '',
             'payment_type' => 'Utility',
             'remark' => $remark,
             'created_by' => Auth::id(),
@@ -232,7 +240,6 @@ class RentOutTransactionHelper
             'bank_name' => $cheque->bank_name,
             'reason' => 'Cheque #'.($cheque->cheque_no ?? '').' cleared',
             'group' => $this->paymentGroupLabel($cheque->rentOut),
-            'category' => $term->label ?? '',
             'payment_type' => 'Cheque',
             'remark' => $remark ?: ('Cheque #'.($cheque->cheque_no ?? '').' cleared'),
             'created_by' => Auth::id(),
@@ -328,7 +335,6 @@ class RentOutTransactionHelper
             'bank_name' => $security->bank_name,
             'reason' => $isRefund ? 'Security Deposit Refund' : 'Security Deposit Collection',
             'group' => 'Security Deposit',
-            'category' => $isRefund ? 'security_refund' : 'security_collection',
             'payment_type' => 'Security Deposit',
             'remark' => $security->remarks ?: ($isRefund ? 'Security deposit refunded' : 'Security deposit collected'),
             'created_by' => $userId ?? Auth::id(),

@@ -65,7 +65,7 @@ it('offers the six old-system statuses in the old order', function (): void {
         ->toBe(['Deposited', 'Submitted', 'Returned', 'Paid', 'Overdue', 'Paid & Released']);
 });
 
-it('posts the ledger entries each status calls for', function (SecurityStatus $status, array $expectedCategories): void {
+it('posts the ledger entries each status calls for', function (SecurityStatus $status, array $expectedLegs): void {
     $response = (new CreateAction())->execute([
         'tenant_id' => $this->tenantId,
         'branch_id' => 1,
@@ -81,23 +81,24 @@ it('posts the ledger entries each status calls for', function (SecurityStatus $s
 
     expect($response['success'])->toBeTrue($response['message'] ?? '');
 
-    $categories = DB::table('rent_out_transactions')
+    // category is an account id; the collection/refund leg is told apart by its reason.
+    $legs = DB::table('rent_out_transactions')
         ->where('model', 'RentOutSecurity')
         ->where('model_id', $response['data']->id)
         ->whereNull('deleted_at')
         ->where('account_id', $this->cashId)
         ->orderBy('id')
-        ->pluck('category')
+        ->pluck('reason')
         ->all();
 
-    expect($categories)->toBe($expectedCategories);
+    expect($legs)->toBe($expectedLegs);
 })->with([
     'submitted: cheque only held' => [SecurityStatus::Submitted, []],
     'overdue: nothing received' => [SecurityStatus::Overdue, []],
-    'deposited: banked' => [SecurityStatus::Deposited, ['security_collection']],
-    'paid: cash received' => [SecurityStatus::Paid, ['security_collection']],
-    'returned: refunded' => [SecurityStatus::Returned, ['security_collection', 'security_refund']],
-    'paid & released: refunded at end of contract' => [SecurityStatus::PaidReleased, ['security_collection', 'security_refund']],
+    'deposited: banked' => [SecurityStatus::Deposited, ['Security Deposit Collection']],
+    'paid: cash received' => [SecurityStatus::Paid, ['Security Deposit Collection']],
+    'returned: refunded' => [SecurityStatus::Returned, ['Security Deposit Collection', 'Security Deposit Refund']],
+    'paid & released: refunded at end of contract' => [SecurityStatus::PaidReleased, ['Security Deposit Collection', 'Security Deposit Refund']],
 ]);
 
 it('requires the returned date once a deposit is paid & released', function (): void {

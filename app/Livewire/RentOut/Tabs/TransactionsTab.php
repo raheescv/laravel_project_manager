@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Models\Account;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
@@ -130,6 +131,10 @@ class TransactionsTab extends Component
     protected function accruedRentCharges(): Collection
     {
         $vacateDate = $this->vacateDate();
+        // A sale bills installments, not rent.
+        $label = RentOut::whereKey($this->rentOutId)->value('agreement_type') === AgreementType::Lease
+            ? 'Installment'
+            : 'Rent';
 
         return RentOutPaymentTerm::where('rent_out_id', $this->rentOutId)
             ->whereDate('due_date', '<=', today())
@@ -140,11 +145,11 @@ class TransactionsTab extends Component
             ->get()
             ->map(fn (RentOutPaymentTerm $term): array => [
                 'date' => $term->due_date,
-                'category' => 'Rent',
+                'category' => $label,
                 'payment_mode' => null,
                 'debit' => (float) $term->total,
                 'credit' => 0.0,
-                'remark' => $term->label ?: 'Rent due '.$term->due_date?->format('d-m-Y'),
+                'remark' => $term->label ?: $label.' due '.$term->due_date?->format('d-m-Y'),
             ]);
     }
 
