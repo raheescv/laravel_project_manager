@@ -59,7 +59,7 @@ class Page extends Component
     public function getSummaryProperty(): array
     {
         $property = filled($this->rent_outs['property_id'] ?? null)
-            ? Property::with(['building.group'])->find($this->rent_outs['property_id'])
+            ? Property::with(['building.group', 'type'])->find($this->rent_outs['property_id'])
             : null;
         $total = (float) ($this->rent_outs['total'] ?? 0);
         $downPayment = $this->config->isLease ? (float) ($this->rent_outs['down_payment'] ?? 0) : 0.0;
@@ -75,7 +75,33 @@ class Page extends Component
             'down_payment' => $downPayment,
             'balance' => max(0, $total - $downPayment),
             'per_term' => (float) ($this->rent_outs['rent'] ?? 0),
+            'unit_details' => $property ? $this->unitDetails($property) : [],
         ];
+    }
+
+    /**
+     * The selected unit's physical facts, blank values dropped.
+     *
+     * @return array<string, string>
+     */
+    protected function unitDetails(Property $property): array
+    {
+        return array_filter([
+            'Type' => $property->type?->name,
+            'Unit no.' => $property->unit_no,
+            'Floor' => $property->floor,
+            'Size' => filled($property->size) && (float) $property->size > 0 ? number_format((float) $property->size, 2).' sq.m' : null,
+            'Rooms' => $property->rooms,
+            'Hall' => $property->hall,
+            'Kitchen' => $property->kitchen,
+            'Toilet' => $property->toilet,
+            'Parking' => $property->parking,
+            'Furniture' => $property->furniture,
+            'Ownership' => $property->ownership,
+            'Electricity no.' => $property->electricity,
+            'Kahramaa no.' => $property->kahramaa,
+            'Gas meter no.' => $property->gas_meter_number,
+        ], fn ($value): bool => filled($value));
     }
 
     public function loadData()

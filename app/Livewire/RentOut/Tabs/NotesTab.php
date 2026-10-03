@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Models\RentOut;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -68,7 +69,8 @@ class NotesTab extends Component
     public function render()
     {
         $rentOut = RentOut::with('notes.creator')->find($this->rentOutId);
+        $mentionUsers = User::query()->active()->orderBy('name')->pluck('name')->unique()->values();
 
-        return view('livewire.rent-out.tabs.notes-tab', ['rentOut' => $rentOut]);
+        return view('livewire.rent-out.tabs.notes-tab', ['rentOut' => $rentOut, 'mentionUsers' => $mentionUsers]);
     }
 }

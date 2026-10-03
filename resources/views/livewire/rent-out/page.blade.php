@@ -9,7 +9,6 @@
         $collectionMode = $rent_outs['collection_payment_mode'] ?? '';
         $hasTerms = collect(['remark', 'cancellation_policy_en', 'cancellation_policy_ar', 'payment_terms_en', 'payment_terms_ar', 'payment_terms_extended_en', 'payment_terms_extended_ar'])->contains(fn ($key) => filled($rent_outs[$key] ?? null));
         $currencyCode = base_currency()['code'] ?? null;
-        $downShare = $summary['total'] > 0 ? min(100, round($summary['down_payment'] / $summary['total'] * 100)) : 0;
     @endphp
     <x-rent-out.form.premium />
 
@@ -305,21 +304,23 @@
                     <div class="bk-kv"><span>Salesman</span><b class="{{ $summary['salesman_name'] ? '' : 'none' }}">{{ $summary['salesman_name'] ?? '—' }}</b></div>
                 </div>
 
-                <div class="bk-card bk-money">
-                    <div class="bk-eyebrow">Contract total</div>
-                    <div class="big">{{ currency($summary['total']) }}<small>{{ $currencyCode }}</small></div>
-                    @if ($config->isLease)
-                        <div class="bk-bar"><i style="width: {{ $downShare }}%"></i></div>
-                        <div class="bk-legend">
-                            <span><i style="background:var(--bs-success)"></i>Down {{ $downShare }}%</span>
-                            <span><i style="background:var(--acc)"></i>{{ Str::plural(Str::title($config->defaultTermLabel)) }}</span>
-                        </div>
-                        <div class="bk-kv"><span>Down payment</span><b>{{ currency($summary['down_payment']) }}</b></div>
-                        <div class="bk-kv"><span>Balance</span><b>{{ currency($summary['balance']) }}</b></div>
-                    @endif
-                    <div class="bk-kv"><span>{{ $config->unitPriceLabel }} · {{ $rent_outs['payment_frequency'] ?? '' }}</span><b>{{ currency($summary['per_term']) }}</b></div>
-                    <div class="bk-kv"><span>Terms</span><b>{{ (int) ($rent_outs['no_of_terms'] ?? 0) }}</b></div>
-                </div>
+                @if ($config->isLease)
+                    <div class="bk-card bk-money">
+                        <div class="bk-eyebrow">Unit details</div>
+                        @forelse ($summary['unit_details'] as $detailLabel => $detailValue)
+                            <div class="bk-kv"><span>{{ $detailLabel }}</span><b title="{{ $detailValue }}">{{ $detailValue }}</b></div>
+                        @empty
+                            <div class="bk-kv"><span>{{ $summary['property_number'] ? 'No details recorded for this unit' : 'Select a unit to see its details' }}</span></div>
+                        @endforelse
+                    </div>
+                @else
+                    <div class="bk-card bk-money">
+                        <div class="bk-eyebrow">Contract total</div>
+                        <div class="big">{{ currency($summary['total']) }}<small>{{ $currencyCode }}</small></div>
+                        <div class="bk-kv"><span>{{ $config->unitPriceLabel }} · {{ $rent_outs['payment_frequency'] ?? '' }}</span><b>{{ currency($summary['per_term']) }}</b></div>
+                        <div class="bk-kv"><span>Terms</span><b>{{ (int) ($rent_outs['no_of_terms'] ?? 0) }}</b></div>
+                    </div>
+                @endif
 
                 <div class="bk-card bk-actions">
                     @if (!$isCancelled)
