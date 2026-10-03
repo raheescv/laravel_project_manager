@@ -25,7 +25,7 @@ class TenantCache
         'barcode_type', 'barcode_prefix', 'sale_type', 'purchase_type', 'mobile', 'email',
         'company_name', 'company_description', 'gst_no', 'google_review_url', 'country_id',
         'currency_code', 'currency_symbol', 'base_currency_code', 'storefront_primary_color',
-        'nav_order',
+        'nav_order', 'login_layout', 'login_background',
     ];
 
     /** Configuration keys cached as their json_decoded value. */

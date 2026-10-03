@@ -128,4 +128,19 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Login Prefill
+    |--------------------------------------------------------------------------
+    |
+    | Local-development convenience: values the sign-in form starts with.
+    | Leave both unset in production.
+    |
+    */
+
+    'login_prefill' => [
+        'login' => env('DEFAULT_USERNAME'),
+        'password' => env('DEFAULT_PASSWORD'),
+    ],
+
 ];

@@ -393,6 +393,7 @@
                 ['target' => 'ModuleConfiguration', 'label' => 'Module Configuration', 'icon' => 'fa fa-cubes', 'tone' => 'amber', 'desc' => 'Switch application modules on or off.', 'show' => (bool) $user->is_super_admin],
                 ['target' => 'UniqueNoCounters', 'label' => 'Unique No Counters', 'icon' => 'fa fa-list-ol', 'tone' => 'teal', 'desc' => 'Document numbering sequences and prefixes.', 'show' => (bool) $user->is_super_admin],
                 ['target' => 'Theme', 'label' => 'Theme', 'icon' => 'demo-psi-gear', 'tone' => 'pink', 'desc' => 'Workspace appearance, colours and layout.', 'show' => $canSettings],
+                ['target' => 'LoginPage', 'label' => 'Login Page', 'icon' => 'fa fa-sign-in', 'tone' => 'indigo', 'desc' => 'Sign-in screen layout and live background.', 'show' => $canSettings],
                 ['target' => 'Storefront', 'label' => 'Storefront', 'icon' => 'fa fa-paint-brush', 'tone' => 'pink', 'desc' => 'Public storefront branding.', 'show' => false],
             ],
             'Sales & Stock' => [
@@ -583,6 +584,9 @@
                                 @can('configuration.settings')
                                     <div id="tabsCompanyProfile" class="tab-pane fade active show" role="tabpanel">
                                         @livewire('settings.company-profile')
+                                    </div>
+                                    <div id="tabsLoginPage" class="tab-pane" role="tabpanel">
+                                        @livewire('settings.login-page-settings')
                                     </div>
                                     <div id="tabsStorefront" class="tab-pane" role="tabpanel">
                                         @livewire('settings.storefront-branding')

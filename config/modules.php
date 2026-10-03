@@ -110,6 +110,91 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Login Screen Copy
+    |--------------------------------------------------------------------------
+    | What the sign-in screen says for each system type (keys match 'systems').
+    | 'default' is used when no system is chosen, and fills any key a system
+    | leaves out. 'features' are the three chips on the Split Horizon panel:
+    | 'icon' is a Font Awesome 4.3 name, or 'live' for the pulsing dot.
+    */
+    'login' => [
+
+        'default' => [
+            'headline' => 'Run your whole business from',
+            'highlight' => 'one calm place.',
+            'lede' => 'Sales, inventory, accounts and your team — in sync across every branch.',
+            'tagline' => 'Good to see you again.',
+            'features' => [
+                ['icon' => 'live', 'title' => 'Live', 'caption' => 'Real-time sync'],
+                ['icon' => 'fa-shield', 'title' => 'Secure', 'caption' => 'Encrypted sessions'],
+                ['icon' => 'fa-sitemap', 'title' => 'Multi', 'caption' => 'Branch ready'],
+            ],
+        ],
+
+        'Tailor Module' => [
+            'headline' => 'Tailor every order from',
+            'highlight' => 'measure to delivery.',
+            'lede' => 'Measurements, orders, tailors and payments — tracked from the first fitting to the final hand-over.',
+            'tagline' => 'Your tailoring desk is ready.',
+            'features' => [
+                ['icon' => 'fa-scissors', 'title' => 'Measure', 'caption' => 'Saved per customer'],
+                ['icon' => 'fa-tasks', 'title' => 'Orders', 'caption' => 'Every stage tracked'],
+                ['icon' => 'fa-users', 'title' => 'Tailors', 'caption' => 'Work & commission'],
+            ],
+        ],
+
+        'Property Management Module' => [
+            'headline' => 'Manage every property from',
+            'highlight' => 'one calm place.',
+            'lede' => 'Leases, rent, bookings, maintenance and owners — collected and reconciled for you.',
+            'tagline' => 'Your portfolio is waiting.',
+            'features' => [
+                ['icon' => 'fa-file-text-o', 'title' => 'Leases', 'caption' => 'Rent & renewals'],
+                ['icon' => 'fa-calendar', 'title' => 'Bookings', 'caption' => 'Appointments'],
+                ['icon' => 'fa-wrench', 'title' => 'Upkeep', 'caption' => 'Maintenance & snags'],
+            ],
+        ],
+
+        'POS Module' => [
+            'headline' => 'Sell faster at',
+            'highlight' => 'every counter.',
+            'lede' => 'Sales, stock, purchases and day closing — in sync across every branch and till.',
+            'tagline' => 'Your counters are ready.',
+            'features' => [
+                ['icon' => 'live', 'title' => 'Live', 'caption' => 'Real-time stock'],
+                ['icon' => 'fa-sitemap', 'title' => 'Multi', 'caption' => 'Branch ready'],
+                ['icon' => 'fa-line-chart', 'title' => 'Reports', 'caption' => 'Daily insight'],
+            ],
+        ],
+
+        'School Module' => [
+            'headline' => 'Run your school\'s',
+            'highlight' => 'cards & canteen.',
+            'lede' => 'Student wallets, canteen sales, top-ups and parents — connected in one place.',
+            'tagline' => 'Your campus is ready.',
+            'features' => [
+                ['icon' => 'fa-credit-card', 'title' => 'Wallets', 'caption' => 'Student cards'],
+                ['icon' => 'fa-cutlery', 'title' => 'Canteen', 'caption' => 'Menus & pre-orders'],
+                ['icon' => 'fa-users', 'title' => 'Parents', 'caption' => 'Portal & top-ups'],
+            ],
+        ],
+
+        'Issues Module' => [
+            'headline' => 'Resolve every issue from',
+            'highlight' => 'report to resolution.',
+            'lede' => 'Issues, stock movements and your support team — tracked and aged in one place.',
+            'tagline' => 'Your support desk is ready.',
+            'features' => [
+                ['icon' => 'fa-life-ring', 'title' => 'Issues', 'caption' => 'Track & assign'],
+                ['icon' => 'fa-clock-o', 'title' => 'Aging', 'caption' => 'Nothing slips'],
+                ['icon' => 'live', 'title' => 'Live', 'caption' => 'Real-time sync'],
+            ],
+        ],
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Module Definitions
     |--------------------------------------------------------------------------
     |

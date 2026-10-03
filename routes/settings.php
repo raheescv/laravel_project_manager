@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\FixedAssetController;
@@ -33,6 +34,7 @@ Route::middleware('auth')->group(function (): void {
 
     Route::name('settings::')->prefix('settings')->controller(SettingsController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('configuration.settings');
+        Route::get('login-preview', [AuthenticatedSessionController::class, 'preview'])->name('login_preview')->can('configuration.settings');
         Route::name('category::')->prefix('category')->controller(CategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('category.view');
             Route::get('list', 'get')->name('list');

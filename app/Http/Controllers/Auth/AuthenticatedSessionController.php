@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Configuration;
 use App\Models\User;
 use App\Services\TenantService;
+use App\Support\LoginScreen;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -23,44 +27,48 @@ class AuthenticatedSessionController extends Controller
     {
         // Never rotate the CSRF token here: every open tab shares one session, so
         // loading /login in one tab would 419 the login form already open in another.
-        return view('auth.login');
+        return view('auth.login', ['screen' => $this->screen(LoginScreen::resolve())]);
     }
 
     /**
-     * Handle an incoming authentication request.
+     * The sign-in screen as a signed-in admin sees it from Settings → Login Page,
+     * with the chosen layout and background forced and the form inert.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function preview(Request $request): View
+    {
+        $resolved = LoginScreen::resolve();
+
+        return view('auth.login', ['screen' => $this->screen([
+            'layout' => LoginScreen::sanitize($request->query('layout'), LoginScreen::LAYOUTS) === LoginScreen::RANDOM
+                ? $resolved['layout'] : $request->query('layout'),
+            'background' => LoginScreen::sanitize($request->query('background'), LoginScreen::BACKGROUNDS) === LoginScreen::RANDOM
+                ? $resolved['background'] : $request->query('background'),
+        ], preview: true)]);
+    }
+
+    /**
+     * Handle an incoming authentication request. The Vue sign-in screen posts
+     * JSON and gets the redirect target back; a plain form post is redirected.
+     *
+     * @throws ValidationException
+     */
+    public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
         $request->authenticate();
 
-        // Get current tenant from middleware
         $tenant = $this->tenantService->getCurrentTenant();
 
         if (! $tenant) {
-            return back()->withErrors(['login' => 'Invalid subdomain or tenant not found.']);
+            $this->reject('Invalid subdomain or tenant not found.');
         }
 
-        // Find user with tenant context
         $user = User::withoutGlobalScopes()
             ->whereKey(Auth::id())
             ->where('tenant_id', $tenant->id)
             ->first();
 
         if (! $user || ! $user->is_active) {
-            Auth::guard('web')->logout();
-
-            return back()->withErrors([
-                'login' => 'The provided credentials do not match our records or the account is inactive.',
-            ]);
-        }
-
-        // Verify user belongs to the tenant
-        if ($user->tenant_id !== $tenant->id) {
-            Auth::guard('web')->logout();
-
-            return back()->withErrors([
-                'login' => 'You do not have access to this tenant.',
-            ]);
+            $this->reject('The provided credentials do not match our records or the account is inactive.');
         }
 
         session(['branch_id' => $user->default_branch_id]);
@@ -70,7 +78,48 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $redirect = redirect()->intended(route('dashboard', absolute: false));
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'redirect' => $redirect->getTargetUrl(),
+                'user' => ['name' => $user->name],
+            ]);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * @param  array{layout: string, background: string}  $look
+     * @return array<string, mixed>
+     */
+    protected function screen(array $look, bool $preview = false): array
+    {
+        $logo = Configuration::where('key', 'logo')->value('value');
+
+        return [
+            ...$look,
+            'copy' => LoginScreen::copy(),
+            'preview' => $preview,
+            'company' => config('app.name'),
+            'logo' => $logo ? asset($logo) : null,
+            'loginUrl' => route('login'),
+            'prefill' => $preview ? ['login' => '', 'password' => ''] : [
+                'login' => (string) config('auth.login_prefill.login'),
+                'password' => (string) config('auth.login_prefill.password'),
+            ],
+        ];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    protected function reject(string $message): never
+    {
+        Auth::guard('web')->logout();
+
+        throw ValidationException::withMessages(['login' => $message]);
     }
 
     /**
