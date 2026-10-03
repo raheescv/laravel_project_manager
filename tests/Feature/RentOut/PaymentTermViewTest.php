@@ -24,6 +24,8 @@ beforeEach(function () {
     $this->tenantId = $user->tenant_id;
     app(TenantService::class)->setCurrentTenant(Tenant::find($this->tenantId));
     session(['branch_id' => 1]);
+    // Audits normally go through the database queue; write them inline here.
+    config(['audit.queue.enable' => false]);
 
     $account = fn (string $name, string $type) => DB::table('accounts')->insertGetId([
         'tenant_id' => $this->tenantId, 'name' => $name.' '.Str::random(6), 'account_type' => $type,
@@ -113,7 +115,9 @@ it('shows the journal entries and audit trail of a paid term', function () {
         ->assertSee('Journal #'.$payment->journal_id)
         ->assertSee('Total (Active)')
         ->assertSee('Audit Trail')
-        ->assertSee('ptv-audit-journals', false);
+        ->assertSee('ptv-audit-journals', false)
+        ->assertSee('<th class="text-nowrap">Description</th>', false)
+        ->assertDontSee('<th class="text-nowrap">Tenant Id</th>', false);
 });
 
 it('marks the journal of a reversed receipt as reversed', function () {

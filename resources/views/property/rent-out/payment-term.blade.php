@@ -195,14 +195,14 @@
                 </div>
                 <div class="tab-content p-2">
                     <div id="ptv-audit-term" class="tab-pane fade show active" role="tabpanel">
-                        <x-audit.table :audits="$termAudits" emptyMessage="No audit entries for this payment term." />
+                        <x-audit.grid :audits="$termAudits" emptyMessage="No audit entries for this payment term." />
                     </div>
                     <div id="ptv-audit-payments" class="tab-pane fade" role="tabpanel">
-                        <x-audit.table :audits="$paymentAudits" emptyMessage="No payment audit entries for this term." />
+                        <x-audit.grid :audits="$paymentAudits" :showRecord="true" emptyMessage="No payment audit entries for this term." />
                     </div>
                     @if ($canViewJournals)
                         <div id="ptv-audit-journals" class="tab-pane fade" role="tabpanel">
-                            <x-audit.table :audits="$journalAudits" emptyMessage="No journal audit entries for this term." />
+                            <x-audit.grid :audits="$journalAudits" :showRecord="true" emptyMessage="No journal audit entries for this term." />
                         </div>
                     @endif
                 </div>
