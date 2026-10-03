@@ -53,7 +53,7 @@
                             <div class="tkx-prop"><small>Created</small><b>{{ formatDate(ticket.created_at, true) }}</b></div>
                         </div>
                         <div class="tkx-sec">Description</div>
-                        <div class="tkx-desc">{{ ticket.description || 'No description.' }}</div>
+                        <div class="tkx-desc"><LinkifiedText v-if="ticket.description" :text="ticket.description" /><template v-else>No description.</template></div>
                     </template>
 
                     <template v-if="ticket">
@@ -91,7 +91,7 @@
                                     <div class="acts"><a @click="saveComment(c)">Save</a><a @click="editingComment = null">Cancel</a></div>
                                 </template>
                                 <template v-else>
-                                    <div class="txt">{{ c.comment }}</div>
+                                    <div class="txt"><LinkifiedText :text="c.comment" /></div>
                                     <div v-if="permissions.comment" class="acts"><a @click="editComment(c)">Edit</a><a class="del" @click="deleteComment(c)">Delete</a></div>
                                 </template>
                             </div>
@@ -122,6 +122,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'v
 import { useToast } from 'vue-toastification'
 import { errorMessage, ticketApi, ticketForm } from './api.js'
 import FileDrop from './FileDrop.vue'
+import LinkifiedText from './LinkifiedText.vue'
 import { formatDate, formatSize, groupColor, initials, relativeTime, STATUSES } from './ticketMeta.js'
 
 const props = defineProps({
@@ -370,6 +371,8 @@ onBeforeUnmount(() => {
 .tkx-prop b { color: var(--ink); font-weight: 500; display: flex; align-items: center; gap: 7px; min-width: 0; }
 .tkx-prop .muted { color: var(--mute); }
 .tkx-desc { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+.tkx-link { color: var(--acc); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--acc-line); }
+.tkx-link:hover { text-decoration-color: var(--acc); }
 .tkx-sec .n { font-size: 10px; background: var(--surf-2); border-radius: 10px; padding: 0 7px; letter-spacing: 0; }
 .tkx-sec.first { margin-top: 0; }
 .tkx-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }

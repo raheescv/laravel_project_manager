@@ -49,3 +49,37 @@ export function formatSize(bytes) {
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)} KB`
     return `${(bytes / 1048576).toFixed(1)} MB`
 }
+
+const URL_CANDIDATE = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi
+
+/**
+ * Split free text into plain and link segments. A candidate only becomes a link
+ * if it parses as an http(s) URL; trailing punctuation stays as text.
+ * Rendered as text nodes and <a> elements, never as HTML.
+ *
+ * @returns {Array<{ text: string, href?: string, external?: boolean }>}
+ */
+export function linkify(text) {
+    const value = text ?? ''
+    const parts = []
+    let last = 0
+    for (const match of value.matchAll(URL_CANDIDATE)) {
+        const raw = match[0].replace(/[.,;:!?)\]}]+$/, '')
+        const href = safeHref(raw)
+        if (!href) continue
+        if (match.index > last) parts.push({ text: value.slice(last, match.index) })
+        parts.push({ text: raw, href, external: new URL(href).origin !== location.origin })
+        last = match.index + raw.length
+    }
+    if (last < value.length) parts.push({ text: value.slice(last) })
+    return parts
+}
+
+function safeHref(raw) {
+    try {
+        const url = new URL(raw.startsWith('www.') ? `https://${raw}` : raw)
+        return ['http:', 'https:'].includes(url.protocol) && url.hostname ? url.href : null
+    } catch {
+        return null
+    }
+}
