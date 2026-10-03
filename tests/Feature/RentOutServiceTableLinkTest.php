@@ -87,22 +87,14 @@ it('links a rental service row to the rent view', function () {
         ->assertDontSee(route('property::sale::view', $rentOutId), false);
 });
 
-it('hides the per-row balance column on the sale services list', function () {
-    rstlRentOut($this->tenantId, 'lease');
+it('hides the per-row balance column on the services list', function (string $agreementType) {
+    rstlRentOut($this->tenantId, $agreementType);
 
-    Livewire::test(ServicePaymentTable::class, ['agreementType' => 'lease'])
+    Livewire::test(ServicePaymentTable::class, ['agreementType' => $agreementType])
         ->assertSet('visibleColumns', fn (array $columns) => ! in_array('balance', $columns))
         ->assertDontSeeHtml("toggleColumn('balance')")
         ->assertDontSeeHtml('<th class="fw-semibold text-end pe-3">Balance</th>');
-});
-
-it('keeps the per-row balance column on the rent services list', function () {
-    rstlRentOut($this->tenantId, 'rental');
-
-    Livewire::test(ServicePaymentTable::class, ['agreementType' => 'rental'])
-        ->assertSeeHtml("toggleColumn('balance')")
-        ->assertSeeHtml('<th class="fw-semibold text-end pe-3">Balance</th>');
-});
+})->with(['lease', 'rental']);
 
 it('resolves an agreement view url from its agreement_type', function (string $agreementType, string $routeName) {
     $rentOutId = rstlRentOut($this->tenantId, $agreementType);

@@ -10,6 +10,7 @@ use App\Http\Requests\Ticket\TicketRequest;
 use App\Http\Resources\Ticket\TicketCardResource;
 use App\Http\Resources\Ticket\TicketResource;
 use App\Models\Ticket;
+use App\Notifications\TicketNotification;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -25,8 +26,20 @@ class TicketController extends Controller
     /** Cards sent per status column; the column header still shows the full count. */
     public const COLUMN_LIMIT = 100;
 
-    public function index(): View
+    /**
+     * The board; `?ticket={id}` (the link in a ticket notification) opens that
+     * ticket's detail and marks its notifications read.
+     */
+    public function index(Request $request): View
     {
+        $ticketId = (int) $request->query('ticket');
+        if ($ticketId > 0) {
+            Auth::user()->unreadNotifications()
+                ->where('type', TicketNotification::class)
+                ->where('data->model_id', $ticketId)
+                ->update(['read_at' => now()]);
+        }
+
         return $this->console('board');
     }
 

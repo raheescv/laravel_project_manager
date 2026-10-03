@@ -497,6 +497,12 @@
                                             </div>
                                         @break
 
+                                        @case('App\Notifications\TicketNotification')
+                                            <div class="flex-shrink-0 me-3">
+                                                <i class="fa fa-ticket text-primary fs-2"></i>
+                                            </div>
+                                        @break
+
                                         @default
                                             <div class="flex-shrink-0 me-3">
                                                 <i class="fa fa-info-circle text-success fs-2"></i>

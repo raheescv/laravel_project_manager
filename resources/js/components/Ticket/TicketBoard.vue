@@ -68,7 +68,7 @@
         </div>
 
         <TicketDetail v-if="detail.open" :ticket-id="detail.id" :initial-status="detail.status" :groups="allGroups"
-            :permissions="permissions" @close="detail.open = false" @changed="reload" />
+            :permissions="permissions" @close="closeDetail" @changed="reload" />
     </section>
 </template>
 
@@ -138,6 +138,20 @@ function resetFilters() {
 
 function openTicket(id) {
     Object.assign(detail, { open: true, id, status: 'open' })
+    syncTicketParam(id)
+}
+
+function closeDetail() {
+    detail.open = false
+    syncTicketParam(null)
+}
+
+/** Keep `?ticket={id}` in the address bar while a ticket is open, so a notification link or a refresh lands on it. */
+function syncTicketParam(id) {
+    const url = new URL(location.href)
+    if (id) url.searchParams.set('ticket', id)
+    else url.searchParams.delete('ticket')
+    history.replaceState(history.state, '', url)
 }
 
 function openCreate(status = 'open') {
@@ -185,6 +199,8 @@ function onKey(event) {
 onMounted(() => {
     reload()
     window.addEventListener('keydown', onKey)
+    const linkedTicket = Number(new URLSearchParams(location.search).get('ticket'))
+    if (linkedTicket > 0) openTicket(linkedTicket)
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 

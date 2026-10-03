@@ -18,7 +18,8 @@ class UpdateAction
     public function execute(array $data, int $id, int $userId, array $files = []): array
     {
         try {
-            $ticket = DB::transaction(function () use ($data, $id, $userId, $files): Ticket {
+            $changes = [];
+            $ticket = DB::transaction(function () use ($data, $id, $userId, $files, &$changes): Ticket {
                 $ticket = Ticket::findOrFail($id);
 
                 $data = array_merge($ticket->only(['title', 'description', 'status', 'group']), $data);
@@ -33,6 +34,7 @@ class UpdateAction
                     'group' => $data['group'],
                     'updated_by' => $userId,
                 ]);
+                $changes = array_keys($ticket->getChanges());
 
                 foreach ($files as $file) {
                     $response = (new AttachmentCreateAction())->execute($ticket, $file);
@@ -41,8 +43,14 @@ class UpdateAction
                     }
                 }
 
+                if ($files) {
+                    $changes[] = 'attachments';
+                }
+
                 return $ticket;
             });
+
+            $this->notify($ticket, $userId, $changes);
 
             $return['success'] = true;
             $return['message'] = 'Ticket updated successfully.';
@@ -53,5 +61,22 @@ class UpdateAction
         }
 
         return $return;
+    }
+
+    /**
+     * A move between columns is announced as a status change; anything else as an edit.
+     *
+     * @param  list<string>  $changes
+     */
+    private function notify(Ticket $ticket, int $userId, array $changes): void
+    {
+        $changes = array_values(array_diff($changes, ['updated_by', 'updated_at']));
+        if (! $changes) {
+            return;
+        }
+
+        $changes === ['status']
+            ? (new NotifyParticipantsAction())->statusChanged($ticket, $userId)
+            : (new NotifyParticipantsAction())->edited($ticket, $userId);
     }
 }

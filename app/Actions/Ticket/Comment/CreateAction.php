@@ -2,6 +2,7 @@
 
 namespace App\Actions\Ticket\Comment;
 
+use App\Actions\Ticket\NotifyParticipantsAction;
 use App\Models\Ticket;
 use App\Models\TicketComment;
 
@@ -23,6 +24,8 @@ class CreateAction
                 'created_by' => $userId,
                 'updated_by' => $userId,
             ]);
+
+            (new NotifyParticipantsAction())->commented($ticket, $userId, $comment->comment);
 
             $return['success'] = true;
             $return['message'] = 'Comment added successfully.';
