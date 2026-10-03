@@ -6,12 +6,11 @@
         @php
             $isRental = $rentOut->agreement_type?->value === 'rental';
             $title = $isRental ? 'Rental Booking' : 'Sale Booking';
-            $accentColor = $isRental ? '#0891b2' : '#4f46e5';
-            $accentDark = $isRental ? '#0e7490' : '#3730a3';
-            $accentDeep = $isRental ? '#164e63' : '#1e1b4b';
         @endphp
 
         <style>
+            .bk-hero { --hero-1: color-mix(in srgb, var(--bs-primary), #fff 8%); --hero-2: color-mix(in srgb, var(--bs-primary), #000 22%); --hero-3: color-mix(in srgb, var(--bs-primary), #000 48%); background: linear-gradient(135deg, var(--hero-1), var(--hero-2) 50%, var(--hero-3)); box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+            .bk-btn-primary { background: linear-gradient(135deg, var(--bs-primary), color-mix(in srgb, var(--bs-primary), #000 22%)) !important; border: none; }
             .bk-card { transition: transform .2s, box-shadow .2s; border-radius: 10px !important; overflow: visible; }
             .bk-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.07) !important; }
             .bk-row { transition: background .15s; }
@@ -21,15 +20,14 @@
             .bk-hdr { padding: .5rem .75rem !important; background: #fff; }
             .bk-hdr-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
             .bk-hdr-title { font-size: .82rem; font-weight: 600; color: #1e293b; }
-            .ab { border-left: 3px solid #4f46e5 !important; }
+            .ab { border-left: 3px solid var(--bs-primary) !important; }
             .ae { border-left: 3px solid #059669 !important; }
             .aa { border-left: 3px solid #f59e0b !important; }
             .av { border-left: 3px solid #8b5cf6 !important; }
         </style>
 
         {{-- HEADER --}}
-        <div class="rounded-3 px-3 py-3 mb-3 text-white position-relative overflow-hidden"
-            style="background: linear-gradient(135deg, {{ $accentColor }}, {{ $accentDark }} 50%, {{ $accentDeep }}); box-shadow: 0 6px 24px rgba(0,0,0,.12);">
+        <div class="rounded-3 px-3 py-3 mb-3 text-white position-relative overflow-hidden bk-hero">
             <div class="position-absolute" style="width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.04); top: -50px; right: -20px;"></div>
 
             {{-- Breadcrumb --}}
@@ -97,8 +95,8 @@
                 <div class="card border-0 shadow-sm h-100 bk-card ab">
                     <div class="card-header bk-hdr border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="bk-hdr-icon" style="background: #eef2ff;">
-                                <i class="fa fa-building" style="color: #4f46e5; font-size: .75rem;"></i>
+                            <div class="bk-hdr-icon" style="background: var(--bs-primary-bg-subtle);">
+                                <i class="fa fa-building" style="color: var(--bs-primary); font-size: .75rem;"></i>
                             </div>
                             <span class="bk-hdr-title">Property & Customer</span>
                         </div>
@@ -297,8 +295,8 @@
                         </div>
                         <div class="col-md-2">
                             <button type="button" wire:click="saveManagementFee"
-                                class="btn btn-sm w-100 text-white fw-medium"
-                                style="background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; border-radius: 6px; font-size: .75rem;">
+                                class="btn btn-sm bk-btn-primary w-100 text-white fw-medium"
+                                style="border-radius: 6px; font-size: .75rem;">
                                 <i class="fa fa-save me-1"></i>Save
                             </button>
                         </div>
@@ -407,8 +405,8 @@
                             @can($config->bookingConfirmPermission)
                                 <button type="button" wire:click="confirm"
                                     wire:confirm="Are you sure you want to confirm this booking? This will convert it to an active agreement."
-                                    class="btn btn-sm fw-medium text-white px-2 py-1"
-                                    style="font-size: .75rem; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; border-radius: 6px;">
+                                    class="btn btn-sm bk-btn-primary fw-medium text-white px-2 py-1"
+                                    style="font-size: .75rem; border-radius: 6px;">
                                     <i class="fa fa-check-circle me-1"></i>Confirm Booking
                                 </button>
                             @endcan
@@ -465,8 +463,8 @@
                         <button type="button" class="btn btn-sm btn-light fw-medium px-2 py-1" wire:click="closeOverlapModal" style="font-size: .75rem; border-radius: 6px;">
                             <i class="fa fa-times me-1"></i>Cancel
                         </button>
-                        <button type="button" class="btn btn-sm text-white fw-medium px-2 py-1" wire:click="confirmBooking"
-                                style="font-size: .75rem; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; border-radius: 6px;">
+                        <button type="button" class="btn btn-sm bk-btn-primary text-white fw-medium px-2 py-1" wire:click="confirmBooking"
+                                style="font-size: .75rem; border-radius: 6px;">
                             <i class="fa fa-check me-1"></i>Proceed
                         </button>
                     </div>
