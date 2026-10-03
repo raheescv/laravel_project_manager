@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Ticket\Attachment\DeleteAction as AttachmentDeleteAction;
+use App\Actions\Ticket\BroadcastActivityAction;
 use App\Actions\Ticket\CreateAction;
 use App\Actions\Ticket\DeleteAction;
 use App\Actions\Ticket\UpdateAction;
+use App\Events\TicketActivity;
 use App\Http\Requests\Ticket\TicketRequest;
 use App\Http\Resources\Ticket\TicketCardResource;
 use App\Http\Resources\Ticket\TicketResource;
 use App\Models\Ticket;
 use App\Notifications\TicketNotification;
+use App\Services\TenantService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -54,6 +57,7 @@ class TicketController extends Controller
 
         return view('ticket.index', [
             'view' => $view,
+            'liveChannel' => TicketActivity::channelName((int) app(TenantService::class)->getCurrentTenantId()),
             'permissions' => collect(['create', 'edit', 'delete', 'comment', 'import'])
                 ->mapWithKeys(fn (string $action): array => [$action => $user->can("ticket.{$action}")])
                 ->all(),
@@ -125,14 +129,14 @@ class TicketController extends Controller
     {
         $response = $action->execute($request->safe()->except('files'), Auth::id(), $request->file('files', []));
 
-        return $this->respond($response, 201);
+        return $this->respond($response, 'created', null, 201);
     }
 
     public function update(int $id, TicketRequest $request, UpdateAction $action): JsonResponse
     {
         $response = $action->execute($request->safe()->except('files'), $id, Auth::id(), $request->file('files', []));
 
-        return $this->respond($response);
+        return $this->respond($response, 'updated', $id);
     }
 
     public function status(int $id, Request $request, UpdateAction $action): JsonResponse
@@ -144,29 +148,33 @@ class TicketController extends Controller
             $response['message'] = 'Moved to '.Ticket::statuses()[$request->input('status')].'.';
         }
 
-        return $this->respond($response);
+        return $this->respond($response, 'status', $id);
     }
 
     public function destroy(int $id, DeleteAction $action): JsonResponse
     {
-        return $this->respond($action->execute($id));
+        return $this->respond($action->execute($id), 'deleted', $id);
     }
 
     public function destroyAttachment(int $id, int $attachmentId, AttachmentDeleteAction $action): JsonResponse
     {
-        return $this->respond($action->execute($id, $attachmentId));
+        return $this->respond($action->execute($id, $attachmentId), 'attachment', $id);
     }
 
     /**
-     * Turn an action result into a JSON response, re-reading the full ticket on success.
+     * Turn an action result into a JSON response, re-reading the full ticket on
+     * success and telling the tenant's other open consoles to refresh.
      *
      * @param  array{success: bool, message: string, data?: mixed}  $response
      */
-    private function respond(array $response, int $code = 200): JsonResponse
+    private function respond(array $response, string $activity, ?int $ticketId = null, int $code = 200): JsonResponse
     {
         if (! $response['success']) {
             return $this->sendError($response['message'], [], 422);
         }
+
+        $ticketId ??= $response['data'] instanceof Ticket ? $response['data']->id : null;
+        app(BroadcastActivityAction::class)->execute($activity, $ticketId);
 
         $data = $response['data'] instanceof Ticket
             ? TicketResource::make($response['data']->load(['attachments', 'comments' => fn ($q) => $q->with('creator:id,name')->latest(), 'creator:id,name', 'updater:id,name']))->resolve()

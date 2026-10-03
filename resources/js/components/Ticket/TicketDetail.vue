@@ -269,6 +269,21 @@ async function refreshTicket() {
     ticket.value = data
 }
 
+/** Pick up a change made elsewhere (live channel). A draft in the edit form is left alone. */
+async function refreshFromLive() {
+    if (!ticket.value || loading.value) return
+    try {
+        await refreshTicket()
+    } catch (error) {
+        if (error?.response?.status === 404) {
+            toast.info(`#${ticket.value.id} was deleted elsewhere.`)
+            emit('close')
+        }
+    }
+}
+
+defineExpose({ refresh: refreshFromLive })
+
 async function addComment() {
     const text = newComment.value.trim()
     if (!text || busy.value) return

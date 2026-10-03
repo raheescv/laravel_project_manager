@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Ticket\BroadcastActivityAction;
 use App\Actions\Ticket\ImportAction;
 use App\Exports\Templates\TicketImportTemplate;
 use App\Http\Requests\Ticket\TicketImportRequest;
@@ -94,6 +95,7 @@ class TicketImportController extends Controller
         }
 
         TicketImportSheet::forget(Auth::id(), $request->input('token'));
+        app(BroadcastActivityAction::class)->execute('imported');
 
         return $this->sendSuccess($response['data'], $response['message']);
     }

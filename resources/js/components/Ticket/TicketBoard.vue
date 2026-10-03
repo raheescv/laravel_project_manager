@@ -20,6 +20,9 @@
                 <i class="fa fa-long-arrow-right"></i>
                 <input v-model="filters.to_date" type="date" aria-label="To date">
             </label>
+            <span class="tkx-live" :class="{ on: connected }" :title="connected ? 'Live — changes from other users and devices appear instantly' : 'Offline — reconnecting…'">
+                <span class="tkx-live-dot"></span> {{ connected ? 'Live' : 'Offline' }}
+            </span>
             <button type="button" class="tkx-btn icon" title="Reset filters" @click="resetFilters"><i class="fa fa-refresh" :class="{ 'tkx-spin': loading }"></i></button>
             <span class="tkx-deck-sep"></span>
             <button v-if="permissions.create" type="button" class="tkx-btn pri" @click="openCreate()"><i class="fa fa-plus"></i> New ticket</button>
@@ -67,7 +70,7 @@
             </div>
         </div>
 
-        <TicketDetail v-if="detail.open" :ticket-id="detail.id" :initial-status="detail.status" :groups="allGroups"
+        <TicketDetail v-if="detail.open" ref="detailPanel" :ticket-id="detail.id" :initial-status="detail.status" :groups="allGroups"
             :permissions="permissions" @close="closeDetail" @changed="reload" />
     </section>
 </template>
@@ -79,6 +82,7 @@ import { errorMessage, ticketApi } from './api.js'
 import TicketCard from './TicketCard.vue'
 import TicketDetail from './TicketDetail.vue'
 import { groupColor, NO_GROUP, STATUSES, statusOf } from './ticketMeta.js'
+import { useTicketLive } from './live.js'
 
 defineProps({ permissions: { type: Object, required: true } })
 
@@ -100,9 +104,11 @@ const dragging = ref(null)
 const dropTarget = ref(null)
 const searchInput = ref(null)
 const detail = reactive({ open: false, id: null, status: 'open' })
+const detailPanel = ref(null)
 
 let controller = null
 let debounce = null
+let liveReload = null
 
 async function reload() {
     controller?.abort()
@@ -189,6 +195,31 @@ async function onDrop(key) {
     }
 }
 
+/** Coalesce a burst of remote changes into one board refetch; never yank a card out from under a drag. */
+function scheduleLiveReload() {
+    clearTimeout(liveReload)
+    liveReload = setTimeout(() => (dragging.value ? scheduleLiveReload() : reload()), 400)
+}
+
+function onLiveActivity({ action, ticket_id: ticketId }) {
+    scheduleLiveReload()
+    if (!detail.open || !ticketId || detail.id !== ticketId) return
+    if (action === 'deleted') {
+        toast.info(`#${ticketId} was deleted elsewhere.`)
+        closeDetail()
+    } else {
+        detailPanel.value?.refresh()
+    }
+}
+
+const { connected } = useTicketLive({
+    onActivity: onLiveActivity,
+    onResync: () => {
+        scheduleLiveReload()
+        detailPanel.value?.refresh()
+    },
+})
+
 function onKey(event) {
     if (event.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
         event.preventDefault()
@@ -202,7 +233,10 @@ onMounted(() => {
     const linkedTicket = Number(new URLSearchParams(location.search).get('ticket'))
     if (linkedTicket > 0) openTicket(linkedTicket)
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onKey)
+    clearTimeout(liveReload)
+})
 
 defineExpose({ reload })
 </script>
@@ -211,6 +245,11 @@ defineExpose({ reload })
 .tkx-board-view { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 18px 0; gap: 10px; }
 .tkx-deck { flex: none; padding: 9px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .tkx-deck .tkx-search { flex: 1; min-width: 220px; }
+.tkx-live { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px; font-size: 11.5px; font-weight: 600; color: var(--mute); }
+.tkx-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bs-secondary-color); }
+.tkx-live.on { color: var(--bs-success); }
+.tkx-live.on .tkx-live-dot { background: var(--bs-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--bs-success) 50%, transparent); animation: tkx-live-pulse 2s infinite; }
+@keyframes tkx-live-pulse { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .tkx-deck-sep { width: 1px; height: 24px; background: var(--line); }
 .tkx-pills { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: thin; }
 .tkx-pill { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--surf); cursor: pointer; color: var(--ink); font-weight: 500; font-size: 12.5px; }

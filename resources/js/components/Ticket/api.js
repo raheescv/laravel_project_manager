@@ -9,6 +9,13 @@ const http = axios.create({
     },
 })
 
+/** Tag each request with this tab's socket, so the live broadcast it causes skips this screen. */
+http.interceptors.request.use((config) => {
+    const socketId = window.Echo?.socketId()
+    if (socketId) config.headers['X-Socket-ID'] = socketId
+    return config
+})
+
 const data = (response) => response.data
 
 /** The message a failed request should toast: the first validation error, else the server's message. */
