@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out.create');
                 Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out.edit');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out.view');
+                Route::get('payment-term/{id}', 'paymentTerm')->name('payment-term')->can('rent out.view');
                 Route::get('import', 'import')->name('import')->can('rent out.create');
             });
 
@@ -95,6 +96,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('booking/create/{id?}', 'bookingPage')->name('booking.create')->can('rent out lease.create');
                 Route::get('booking/edit/{id}', 'bookingPage')->name('booking.edit')->can('rent out lease.create');
                 Route::get('booking/view/{id}', 'bookingView')->name('booking.view')->can('rent out lease.view');
+                Route::get('payment-term/{id}', 'paymentTerm')->name('payment-term')->can('rent out lease.view');
                 Route::get('import', 'import')->name('import')->can('rent out lease.create');
             });
 

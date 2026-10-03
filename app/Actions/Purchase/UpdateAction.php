@@ -33,7 +33,7 @@ class UpdateAction
                 $data['updated_by'] = $userId;
             }
 
-            validationHelper(Purchase::rules($purchase_id), $data);
+            validationHelper(Purchase::rules($purchase_id), $data, null, ['account_id.required' => 'Please select vendor.']);
 
             if ($data['status'] != 'cancelled') {
                 // Reverse the posted stock and journals while the model still holds the

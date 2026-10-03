@@ -148,4 +148,21 @@ class RentOutTransaction extends Model implements AuditableContracts
     {
         return $query->where('journal_id', $journalId);
     }
+
+    /**
+     * Every transaction that paid a payment term — a direct term receipt
+     * (model = RentOutPaymentTerm) or a cheque clearance / transfer that
+     * credited the term (source = PaymentTerm / source_id = term id).
+     */
+    public function scopeForPaymentTerm($query, RentOutPaymentTerm $term)
+    {
+        return $query->where('rent_out_id', $term->rent_out_id)
+            ->where(function ($q) use ($term) {
+                $q->where(function ($q) use ($term) {
+                    $q->where('model', 'RentOutPaymentTerm')->where('model_id', $term->id);
+                })->orWhere(function ($q) use ($term) {
+                    $q->where('source', 'PaymentTerm')->where('source_id', $term->id);
+                });
+            });
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\AssignedBranchScope;
+use App\Support\Storefront\TapChargeExplanation;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -166,6 +167,16 @@ class StorefrontCheckout extends Model implements AuditableContracts
             'response_code' => data_get($charge, 'response.code'),
             'response_message' => data_get($charge, 'response.message'),
         ];
+    }
+
+    /**
+     * What happened to the charge, in words staff can act on — read from the stored Tap charge.
+     *
+     * @return array{tone: string, headline: string, summary: string, facts: list<string>, timeline: list<array{at: string, label: string, status: string}>, next: ?string}|null
+     */
+    public function chargeExplanation(): ?array
+    {
+        return TapChargeExplanation::from($this->gateway_response);
     }
 
     /** Google Maps, keyless embed of the delivery pin. */

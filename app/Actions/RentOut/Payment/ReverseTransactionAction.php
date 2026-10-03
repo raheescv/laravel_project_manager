@@ -99,14 +99,7 @@ class ReverseTransactionAction
      */
     public function reverseForTerm(RentOutPaymentTerm $term): void
     {
-        RentOutTransaction::where('rent_out_id', $term->rent_out_id)
-            ->where(function ($q) use ($term) {
-                $q->where(function ($q) use ($term) {
-                    $q->where('model', 'RentOutPaymentTerm')->where('model_id', $term->id);
-                })->orWhere(function ($q) use ($term) {
-                    $q->where('source', 'PaymentTerm')->where('source_id', $term->id);
-                });
-            })
+        RentOutTransaction::forPaymentTerm($term)
             ->get()
             ->each(fn (RentOutTransaction $payment) => $this->reverse($payment));
     }

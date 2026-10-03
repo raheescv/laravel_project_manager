@@ -20,7 +20,7 @@ use App\Models\RentOut;
  * clause's position, Latin digits on the English side and Arabic-Indic on the
  * Arabic side, so inserting a clause never means renumbering the rest by hand.
  *
- * Only a lease / sale prints them: a rental hands the unit back rather than
+ * Only a sale prints them: a rental hands the unit back rather than
  * handing it over, and its checklist carries the Move-Out block instead.
  *
  * There is deliberately no wording in this class. Starter clauses live in

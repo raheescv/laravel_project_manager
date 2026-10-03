@@ -408,9 +408,9 @@ return [
             ],
         ],
 
-        // ── Lease / Sale ──────────────────────────────────────────────────────
+        // ── Sale ──────────────────────────────────────────────────────
         'lease' => [
-            'label' => 'Lease / Sale',
+            'label' => 'Sale',
             'permissions' => [
                 'rent out lease',
                 'rent out lease booking',

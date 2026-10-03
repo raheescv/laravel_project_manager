@@ -6,7 +6,7 @@
             <div>
                 <span class="apx-pill"><i class="fa fa-list-ul"></i> RentOut &middot; Sale</span>
                 <h1 class="apx-hero-title mt-2 text-white">Appointments</h1>
-                <div class="apx-hero-meta mt-1">Customer-scheduled property appointments for lease / sale agreements</div>
+                <div class="apx-hero-meta mt-1">Customer-scheduled property appointments for sale agreements</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 @can('property appointment.calendar')

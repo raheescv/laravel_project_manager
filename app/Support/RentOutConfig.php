@@ -64,6 +64,8 @@ class RentOutConfig
 
     public string $importRoute;
 
+    public string $paymentTermRoute;
+
     // Permissions
     public string $viewPermission;
 
@@ -72,6 +74,8 @@ class RentOutConfig
     public string $editPermission;
 
     public string $deletePermission;
+
+    public string $viewJournalPermission;
 
     // Booking Permissions
     public string $bookingViewPermission;
@@ -170,6 +174,7 @@ class RentOutConfig
         $this->bookingEditRoute = $prefix.'booking.edit';
         $this->bookingViewRoute = $prefix.'booking.view';
         $this->importRoute = $prefix.'import';
+        $this->paymentTermRoute = $prefix.'payment-term';
     }
 
     protected function initPermissions(): void
@@ -179,6 +184,7 @@ class RentOutConfig
         $this->createPermission = $prefix.'.create';
         $this->editPermission = $prefix.'.edit';
         $this->deletePermission = $prefix.'.delete';
+        $this->viewJournalPermission = $prefix.'.view journal entries';
 
         $bookingPrefix = $this->isRental ? 'rent out booking' : 'rent out lease booking';
         $this->bookingViewPermission = $bookingPrefix.'.view';

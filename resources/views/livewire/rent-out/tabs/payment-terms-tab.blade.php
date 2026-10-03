@@ -96,6 +96,16 @@
                                     data-bs-toggle="tooltip">
                                     <i class="fa fa-pencil"></i>
                                 </button>
+                                @can($journalPermission)
+                                    <a href="{{ route($termRoute, $term->id) }}#journals" target="_blank"
+                                        class="btn btn-light btn-sm text-info" title="Journal Entries" data-bs-toggle="tooltip">
+                                        <i class="fa fa-book"></i>
+                                    </a>
+                                @endcan
+                                <a href="{{ route($termRoute, $term->id) }}#audit" target="_blank"
+                                    class="btn btn-light btn-sm text-primary" title="Audit History" data-bs-toggle="tooltip">
+                                    <i class="fa fa-history"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>

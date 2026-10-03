@@ -701,3 +701,27 @@ it('shows the full transaction with Tap requests and responses in the details po
         ->call('closeDetails')
         ->assertDontSee('Charge request');
 });
+
+it('explains a cancelled charge in the details popup instead of only Tap\'s message', function (): void {
+    $checkout = storefrontPaidThenRefundable($this->world, 'REFUNDED');
+    $checkout->update([
+        'status' => StorefrontCheckout::STATUS_FAILED,
+        'gateway_status' => 'CANCELLED',
+        'failure_reason' => 'Cancelled',
+        'gateway_response' => [
+            'id' => $checkout->gateway_charge_id,
+            'status' => 'CANCELLED',
+            'initiator' => 'CUSTOMER',
+            'source' => ['id' => 'src_all', 'payment_method' => ''],
+            'response' => ['code' => '302', 'message' => 'Cancelled'],
+            'transaction' => ['date' => ['created' => 1790893333251, 'completed' => 1790893350956]],
+            'activities' => [['status' => 'INITIATED', 'created' => 1790893333251, 'remarks' => 'charge - created']],
+        ],
+    ]);
+
+    Livewire::test(OnlinePayments::class)
+        ->call('showDetails', $checkout->id)
+        ->assertSee('Customer cancelled the payment')
+        ->assertSee('without choosing a card or payment method')
+        ->assertSee('nothing to refund');
+});

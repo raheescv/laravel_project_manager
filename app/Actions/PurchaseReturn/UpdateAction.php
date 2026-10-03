@@ -22,7 +22,7 @@ class UpdateAction
                 $data['updated_by'] = $user_id;
             }
 
-            validationHelper(PurchaseReturn::rules($purchase_return_id), $data);
+            validationHelper(PurchaseReturn::rules($purchase_return_id), $data, null, ['account_id.required' => 'Please select vendor.']);
             $model->update($data);
             if ($data['status'] != 'cancelled') {
 

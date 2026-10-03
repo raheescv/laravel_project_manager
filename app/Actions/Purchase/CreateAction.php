@@ -12,7 +12,7 @@ class CreateAction
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $user_id;
 
-            validationHelper(Purchase::rules(), $data);
+            validationHelper(Purchase::rules(), $data, null, ['account_id.required' => 'Please select vendor.']);
             $model = Purchase::create($data);
             foreach ($data['items'] as $value) {
                 $value['purchase_id'] = $model->id;

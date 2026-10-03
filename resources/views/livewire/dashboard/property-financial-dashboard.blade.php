@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-end mb-3">
         <button wire:click="toggleAgreementType" class="btn btn-sm btn-outline-warning">
             <i class="fa fa-exchange me-1"></i>
-            Switch to {{ $agreementType === 'rental' ? 'Lease / Sale' : 'Rental' }}
+            Switch to {{ $agreementType === 'rental' ? 'Sale' : 'Rental' }}
         </button>
     </div>
 

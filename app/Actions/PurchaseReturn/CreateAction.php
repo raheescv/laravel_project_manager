@@ -12,7 +12,7 @@ class CreateAction
             $data['branch_id'] = $data['branch_id'] ?? session('branch_id');
             $data['created_by'] = $user_id;
 
-            validationHelper(PurchaseReturn::rules(), $data);
+            validationHelper(PurchaseReturn::rules(), $data, null, ['account_id.required' => 'Please select vendor.']);
             $model = PurchaseReturn::create($data);
             foreach ($data['items'] as $value) {
                 $value['purchase_return_id'] = $model->id;

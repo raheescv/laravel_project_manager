@@ -41,7 +41,7 @@
             'title' => 'Checklist Notes',
             'status' => 'Rental · Lease',
             'ok' => true,
-            'sub' => 'Heading and declaration printed above the signature block of the Unit Handover & Snagging checklist — the Move-In block on a rental, the Handover block on a lease / sale.',
+            'sub' => 'Heading and declaration printed above the signature block of the Unit Handover & Snagging checklist — the Move-In block on a rental, the Handover block on a sale.',
             'fields' => ['checklist_notes.*'],
         ],
         'wording' => [
@@ -204,7 +204,7 @@
                     @php
                         $checklistGroups = [
                             'rental' => ['label' => 'Rental agreements', 'icon' => 'fa-refresh', 'phase' => 'Move-In block'],
-                            'lease' => ['label' => 'Lease / Sale agreements', 'icon' => 'fa-home', 'phase' => 'Handover block'],
+                            'lease' => ['label' => 'Sale agreements', 'icon' => 'fa-home', 'phase' => 'Handover block'],
                         ];
                     @endphp
 

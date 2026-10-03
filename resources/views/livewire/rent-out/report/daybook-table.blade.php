@@ -364,7 +364,7 @@
                         class="form-select form-select-sm border-secondary-subtle shadow-sm">
                         <option value="">All (Rent &amp; Sale)</option>
                         <option value="rental">Rental</option>
-                        <option value="lease">Lease / Sale</option>
+                        <option value="lease">Sale</option>
                     </select>
                 </div>
                 <div class="col-12 col-sm-6 col-lg-4 col-xl-3">

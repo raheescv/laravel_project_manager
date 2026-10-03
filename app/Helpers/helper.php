@@ -531,9 +531,8 @@ if (! function_exists('orderTypes')) {
 }
 
 if (! function_exists('validationHelper')) {
-    function validationHelper($rules, $data, $tableName = null)
+    function validationHelper($rules, $data, $tableName = null, array $messages = [])
     {
-        $messages = [];
 
         if ($tableName) {
             $messages['name.required'] = "The {$tableName} name field is required.";

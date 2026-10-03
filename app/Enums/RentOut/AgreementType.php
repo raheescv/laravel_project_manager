@@ -13,7 +13,7 @@ enum AgreementType: string
     {
         return match ($this) {
             self::Rental => 'Rental',
-            self::Lease => 'Lease / Sale',
+            self::Lease => 'Sale',
         };
     }
 

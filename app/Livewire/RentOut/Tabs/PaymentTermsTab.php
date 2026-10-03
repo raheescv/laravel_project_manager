@@ -5,6 +5,7 @@ namespace App\Livewire\RentOut\Tabs;
 use App\Actions\RentOut\PaymentTerm\DeleteAction;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
+use App\Support\RentOutConfig;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -172,9 +173,13 @@ class PaymentTermsTab extends Component
     {
         $rentOut = $this->getRentOut();
 
+        $config = RentOutConfig::make($this->isRental ? 'rental' : 'lease');
+
         return view('livewire.rent-out.tabs.payment-terms-tab', [
             'rentOut' => $rentOut,
             'isRental' => $this->isRental,
+            'termRoute' => $config->paymentTermRoute,
+            'journalPermission' => $config->viewJournalPermission,
         ]);
     }
 }

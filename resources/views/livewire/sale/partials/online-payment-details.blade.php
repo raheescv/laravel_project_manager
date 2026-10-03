@@ -1,5 +1,6 @@
 @php
     $tap = $detail->paymentDetails();
+    $explained = $detail->status !== 'paid' ? $detail->chargeExplanation() : null;
     $tone = match ($detail->status) {
         'paid' => 'ok',
         'pending' => 'warn',
@@ -382,11 +383,42 @@
             margin-bottom: 14px;
         }
 
+        .opd-why {
+            --why: var(--opd-red);
+            --why-soft: var(--opd-red-soft);
+            border: 1px solid var(--opd-line);
+            border-left: 4px solid var(--why);
+            border-radius: 12px;
+            background: var(--opd-card);
+            margin-bottom: 14px;
+            overflow: hidden;
+        }
+
+        .opd-why.warn { --why: var(--opd-amber); --why-soft: var(--opd-amber-soft); }
+        .opd-why.ok { --why: var(--opd-ac); --why-soft: var(--opd-ac-soft); }
+        .opd-why-head { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: var(--why-soft); }
+        .opd-why-head > i { color: var(--why); margin-top: 3px; }
+        .opd-why-head b { display: block; color: var(--why); font-size: 14.5px; }
+        .opd-why-head p { margin: 2px 0 0; color: var(--opd-ink); font-size: 13px; }
+        .opd-why-own { padding: 8px 14px; font-size: 12.5px; color: var(--opd-ink-2); border-bottom: 1px solid var(--opd-line); }
+        .opd-why-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; padding: 12px 14px; }
+        .opd-why-facts { margin: 0; padding-left: 18px; color: var(--opd-ink-2); font-size: 12.5px; }
+        .opd-why-facts li + li { margin-top: 4px; }
+        .opd-why-trail { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 2px solid var(--opd-line); font-size: 12px; }
+        .opd-why-trail li { position: relative; padding-bottom: 8px; }
+        .opd-why-trail li::before { content: ''; position: absolute; left: -19px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--opd-ac); }
+        .opd-why-trail li.end::before { background: var(--why); }
+        .opd-why-trail b { display: block; color: var(--opd-ink); }
+        .opd-why-trail span { color: var(--opd-mut); }
+        .opd-why-next { padding: 9px 14px; border-top: 1px solid var(--opd-line); background: var(--opd-soft); font-size: 12.5px; font-weight: 600; color: var(--opd-ink); }
+        .opd-why-next i { color: var(--why); margin-right: 4px; }
+
         @media (max-width: 767.98px) {
             .opd-hero { padding: 16px 16px 0; }
             .opd .modal-body { padding: 14px 16px; }
             .opd .modal-footer { padding: 10px 16px; }
             .opd-grid { grid-template-columns: minmax(0, 1fr); }
+            .opd-why-body { grid-template-columns: minmax(0, 1fr); }
             .opd-amount b { font-size: 26px; }
             .opd-kv { grid-template-columns: 100px minmax(0, 1fr); }
             .opd .modal-content { border-radius: 0; }
@@ -451,7 +483,39 @@
             </div>
 
             <div class="modal-body">
-                @if ($detail->failure_reason)
+                @if ($explained)
+                    <section class="opd-why {{ $explained['tone'] }}">
+                        <div class="opd-why-head">
+                            <i class="fa {{ $explained['tone'] === 'warn' ? 'fa-clock-o' : 'fa-exclamation-triangle' }}"></i>
+                            <div>
+                                <b>{{ $explained['headline'] }}</b>
+                                <p>{{ $explained['summary'] }}</p>
+                            </div>
+                        </div>
+                        @if ($detail->failure_reason && strcasecmp($detail->failure_reason, (string) $tap['response_message']) !== 0)
+                            <div class="opd-why-own"><i class="fa fa-info-circle"></i> {{ $detail->failure_reason }}</div>
+                        @endif
+                        <div class="opd-why-body">
+                            @if ($explained['facts'])
+                                <ul class="opd-why-facts">
+                                    @foreach ($explained['facts'] as $fact)
+                                        <li>{{ $fact }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @if ($explained['timeline'])
+                                <ol class="opd-why-trail">
+                                    @foreach ($explained['timeline'] as $step)
+                                        <li class="{{ in_array($step['status'], ['INITIATED', 'CAPTURED', 'AUTHORIZED'], true) ? '' : 'end' }}"><b>{{ $step['label'] }}</b><span>{{ $step['at'] }}</span></li>
+                                    @endforeach
+                                </ol>
+                            @endif
+                        </div>
+                        @if ($explained['next'])
+                            <div class="opd-why-next"><i class="fa fa-arrow-right"></i> {{ $explained['next'] }}</div>
+                        @endif
+                    </section>
+                @elseif ($detail->failure_reason)
                     <div class="opd-note"><i class="fa fa-exclamation-triangle" style="margin-top:2px"></i><span>{{ $detail->failure_reason }}</span></div>
                 @endif
 
