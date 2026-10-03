@@ -4,8 +4,8 @@
         <section v-if="screen.layout === 'split'" class="lgx-split">
             <aside class="lgx-art">
                 <LiveBackground :kind="screen.background" dark anchor="corner" />
-                <div class="lgx-brand">
-                    <span class="lgx-mark"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></span>
+                <div class="lgx-brand" :class="{ 'lgx-brand--logo': screen.logo }">
+                    <span class="lgx-mark" :class="{ 'lgx-mark--logo': screen.logo }"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></span>
                     {{ screen.company }}
                 </div>
                 <div>
@@ -26,8 +26,8 @@
             </aside>
             <main class="lgx-pane">
                 <div class="lgx-inner">
-                    <div class="lgx-brand lgx-brand--mobile">
-                        <span class="lgx-mark"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></span>
+                    <div class="lgx-brand lgx-brand--mobile" :class="{ 'lgx-brand--logo': screen.logo }">
+                        <span class="lgx-mark" :class="{ 'lgx-mark--logo': screen.logo }"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></span>
                         {{ screen.company }}
                     </div>
                     <h1>Welcome back</h1>
@@ -42,7 +42,7 @@
             <LiveBackground :kind="screen.background" :dark="dark" />
             <div class="lgx-card">
                 <div class="lgx-card-head">
-                    <div class="lgx-mark lgx-mark--lg"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></div>
+                    <div class="lgx-mark lgx-mark--lg" :class="{ 'lgx-mark--logo': screen.logo }"><img v-if="screen.logo" :src="screen.logo" alt="" /><i v-else class="fa fa-cloud"></i></div>
                     <h1>Sign in</h1>
                     <p>{{ screen.copy.tagline }}</p>
                 </div>
@@ -124,6 +124,17 @@ body { margin: 0; background: var(--lgx-bg); }
     background: linear-gradient(135deg, var(--lgx-accent), var(--lgx-brand)); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
 .lgx-mark img { width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 4px; }
 .lgx-mark--lg { width: 54px; height: 54px; border-radius: 15px; font-size: 22px; margin: 0 auto 18px; box-shadow: 0 10px 24px -8px rgba(10, 98, 200, .6); }
+.lgx-mark.lgx-mark--logo { width: auto; height: 100px; min-width: 100px; max-width: 260px; padding: 12px 16px; border-radius: 20px; background: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), 0 0 0 7px rgba(255, 255, 255, .1), 0 0 48px 6px rgba(11, 168, 250, .45), 0 18px 40px -14px rgba(0, 0, 0, .5);
+    animation: lgx-glow 4s ease-in-out infinite; }
+.lgx-mark.lgx-mark--logo img { width: auto; height: 100%; max-width: 228px; padding: 0; background: none; }
+@keyframes lgx-glow { 50% { box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), 0 0 0 10px rgba(255, 255, 255, .06), 0 0 64px 10px rgba(11, 168, 250, .55), 0 18px 40px -14px rgba(0, 0, 0, .5); } }
+.lgx-brand--logo { gap: 20px; font-size: 26px; letter-spacing: -.01em; }
+.lgx-brand--mobile .lgx-mark--logo { height: 68px; min-width: 68px; border-radius: 16px; padding: 9px 13px;
+    box-shadow: 0 0 0 1px var(--lgx-line), 0 0 0 6px color-mix(in srgb, var(--lgx-accent) 12%, transparent), 0 12px 30px -12px rgba(10, 98, 200, .45); animation: none; }
+.lgx-brand--mobile.lgx-brand--logo { font-size: 22px; }
+.lgx-mark--lg.lgx-mark--logo { height: 92px; min-width: 92px; margin: 0 auto 20px; display: flex; width: fit-content;
+    box-shadow: 0 0 0 1px var(--lgx-line), 0 0 0 7px color-mix(in srgb, var(--lgx-accent) 14%, transparent), 0 0 44px 4px color-mix(in srgb, var(--lgx-accent) 30%, transparent), 0 16px 34px -14px rgba(10, 98, 200, .5); animation: none; }
 
 /* Split Horizon */
 .lgx-split { min-height: 100vh; display: grid; grid-template-columns: 1.05fr 1fr; }
@@ -220,5 +231,5 @@ body { margin: 0; background: var(--lgx-bg); }
 .lgx-theme:hover { color: var(--lgx-ink); }
 .lgx-preview-tag { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 6px 14px; border-radius: 999px;
     background: #0B1220; color: #fff; font-size: 12px; font-weight: 600; }
-@media (prefers-reduced-motion: reduce) { .lgx-live-dot, .lgx-shake { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lgx-live-dot, .lgx-shake, .lgx-mark--logo { animation: none; } }
 </style>
