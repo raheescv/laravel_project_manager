@@ -1,223 +1,199 @@
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-primary text-white py-2">
-        <h5 class="mb-0 text-white">Sale Configuration Settings</h5>
-    </div>
-    <form wire:submit="save">
-        <div class="card-body p-3">
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="sale_type">Sale Type</label>
+@php
+    $yesNo = fn (string $key, string $label, ?string $hint = null): array => ['key' => $key, 'label' => $label, 'hint' => $hint, 'on' => $this->{$key} === 'yes'];
+@endphp
+
+<div class="scx">
+    @include('livewire.settings.partials.panel-styles')
+
+    <form wire:submit="save" class="d-flex flex-column gap-3">
+        {{-- 1 · Checkout defaults --}}
+        <section class="scx-section">
+            <div class="scx-head">
+                <span class="scx-ic" style="--tone:#2f6fd6"><i class="fa fa-shopping-cart"></i></span>
+                <div>
+                    <h6>Checkout Defaults</h6>
+                    <p>What a new sale starts with.</p>
+                </div>
+            </div>
+            <div class="scx-body">
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="sale_type">Sale Type</label>
                         {{ html()->select('sale_type', saleTypes())->value('')->class('form-select')->placeholder('Select Sale Type')->attribute('wire:model', 'sale_type') }}
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="default_customer_enabled">Default Customer</label>
-                        {{ html()->select('default_customer_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Use General Customer by default?')->attribute('wire:model', 'default_customer_enabled') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="default_product_type">Default Product Type</label>
-                        {{ html()->select('default_product_type', ['product' => 'Products', 'service' => 'Services', '' => 'All Types'])->value('')->class('form-select')->placeholder('Select Default Product Type')->attribute('wire:model', 'default_product_type') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="default_status">Default Status</label>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="default_status">Default Status</label>
                         {{ html()->select('default_status', saleStatuses())->value('')->class('form-select')->placeholder('Select Default Status')->attribute('wire:model', 'default_status') }}
                     </div>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="default_product_type">Default Product Type</label>
+                        {{ html()->select('default_product_type', ['product' => 'Products', 'service' => 'Services', '' => 'All Types'])->value('')->class('form-select')->placeholder('Select Default Product Type')->attribute('wire:model', 'default_product_type') }}
+                    </div>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="default_quantity">Default Quantity</label>
+                        {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step', '0.001')->placeholder('e.g. 1 or 0.001')->attribute('wire:model', 'default_quantity') }}
+                    </div>
+                    <div class="col-md-6 col-xl-8">
+                        <label class="form-label" for="sale_item_row_mode">Same Product Cart Rows</label>
+                        {{ html()->select('sale_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select')->placeholder('Choose how repeated product clicks behave')->attribute('wire:model', 'sale_item_row_mode') }}
+                        <div class="form-text">Tapping the same product again adds to its row, or starts a new one.</div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="thermal_printer_style">Thermal Printer Style</label>
+                <div class="scx-toggles mt-3">
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('default_customer_enabled', 'Default Customer', 'Start every sale with the General Customer selected.'))
+                </div>
+            </div>
+        </section>
+
+        {{-- 2 · Checkout rules --}}
+        <section class="scx-section">
+            <div class="scx-head">
+                <span class="scx-ic" style="--tone:#d94848"><i class="fa fa-shield"></i></span>
+                <div>
+                    <h6>Checkout Rules</h6>
+                    <p>Checks and options at the payment step.</p>
+                </div>
+            </div>
+            <div class="scx-body">
+                <div class="scx-toggles">
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('validate_unit_price_against_mrp', 'Validate Unit Price Against MRP', 'Block selling above the product&rsquo;s MRP.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('prevent_out_of_stock_sales', 'Prevent Out Of Stock Sales', 'Completed sales cannot take stock below zero.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_tip', 'Enable Tip', 'Show &ldquo;Add a Tip&rdquo; on the payment screens (web and mobile).'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('round_off_enabled', 'Round Off', 'Round the grand total to a whole number; the difference shows as &ldquo;Round Off&rdquo;.'))
+                </div>
+            </div>
+        </section>
+
+        {{-- 3 · Staff & day sessions --}}
+        <section class="scx-section">
+            <div class="scx-head">
+                <span class="scx-ic" style="--tone:#2f9e62"><i class="fa fa-users"></i></span>
+                <div>
+                    <h6>Staff &amp; Day Sessions</h6>
+                    <p>Who appears on the POS and how the business day opens and closes.</p>
+                </div>
+            </div>
+            <div class="scx-body">
+                <div class="scx-toggles">
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('show_colleague', 'Show Colleague', 'Let staff pick a colleague on the sale.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('branch_wise_employee_list', 'Branch Wise Employee List', 'The POS employee list shows only staff of the current branch.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('auto_open_day_sessions_enabled', 'Auto Open Day Sessions', 'Open every branch at the opening time in <a href="'.route('settings::working_day::index').'" target="_blank">Working Day</a> with 0 opening amount. Holidays and already-open branches are skipped.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('auto_close_day_sessions_enabled', 'Auto Close Day Sessions', 'Close all open sessions at midnight, closing amount = expected amount.'))
+                </div>
+            </div>
+        </section>
+
+        {{-- 4 · POS screen --}}
+        <section class="scx-section">
+            <div class="scx-head">
+                <span class="scx-ic" style="--tone:#7c4fd6"><i class="fa fa-desktop"></i></span>
+                <div>
+                    <h6>POS Screen</h6>
+                    <p>Layout and colours of the POS and its modals.</p>
+                </div>
+            </div>
+            <div class="scx-body">
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="pos_grid_columns">Products Per Row</label>
+                        {{ html()->select('pos_grid_columns', posGridColumns())->value('')->class('form-select')->placeholder('How many product cards per row?')->attribute('wire:model', 'pos_grid_columns') }}
+                        <div class="form-text">&ldquo;Auto&rdquo; fits the screen. Phones always show 2.</div>
+                    </div>
+                </div>
+
+                <div class="scx-sub mt-4">Colour preset</div>
+                <div class="form-text mt-n2 mb-2">&ldquo;Follow App Theme&rdquo; uses the colour from Settings &rarr; Theme.</div>
+                <div class="row g-2 pos-preset-picker">
+                    @foreach (posColorPresets() as $key => $preset)
+                        <div class="col-6 col-md-4 col-xl-3">
+                            <label class="pos-preset {{ $pos_color_preset === $key ? 'active' : '' }}">
+                                <input type="radio" class="d-none" value="{{ $key }}" wire:model.live="pos_color_preset">
+                                <span class="pos-preset-swatch">
+                                    <span class="pos-preset-bar" style="background: {{ $preset['primary'] }}"></span>
+                                    <span class="pos-preset-body" style="background: {{ $preset['canvas'] }}">
+                                        <span class="pos-preset-card" style="background: {{ $preset['panel'] }}; border-color: {{ $preset['line'] }}">
+                                            <span class="pos-preset-dot" style="background: {{ $preset['accent'] }}"></span>
+                                            <span class="pos-preset-line" style="background: {{ $preset['line'] }}"></span>
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="pos-preset-meta">
+                                    <span class="pos-preset-name">{{ $preset['name'] }}</span>
+                                    <span class="pos-preset-note">{{ $preset['note'] }}</span>
+                                </span>
+                                <i class="fa fa-check-circle pos-preset-check"></i>
+                            </label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        {{-- 5 · Receipt --}}
+        <section class="scx-section">
+            <div class="scx-head">
+                <span class="scx-ic" style="--tone:#d4931c"><i class="fa fa-print"></i></span>
+                <div>
+                    <h6>Receipt</h6>
+                    <p>The thermal receipt printed after a sale.</p>
+                </div>
+            </div>
+            <div class="scx-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="thermal_printer_style">Thermal Printer Style</label>
                         {{ html()->select('thermal_printer_style', thermalPrinterStyle())->value('')->class('form-select')->placeholder('Select Printer Style')->attribute('wire:model', 'thermal_printer_style') }}
                     </div>
-                </div>
-                <div class="col-md-6">
-                    {{-- Saved in this browser, not with the settings: each till picks its own printer. --}}
-                    <div class="form-group" wire:ignore>
-                        <label class="form-label fw-medium">Receipt Printer (this computer)</label>
-                        <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center gap-2" data-receipt-printer-choose>
-                            <i class="fa fa-print"></i>
-                            <span class="flex-grow-1 text-start text-truncate" data-receipt-printer-name>Printer</span>
-                            <i class="fa fa-cog"></i>
-                        </button>
+                    <div class="col-md-6">
+                        {{-- Saved in this browser, not with the settings: each till picks its own printer. --}}
+                        <div wire:ignore>
+                            <label class="form-label">Receipt Printer <span class="fw-normal text-body-secondary">(this computer)</span></label>
+                            <button type="button" class="btn btn-outline-secondary w-100 d-flex align-items-center gap-2" data-receipt-printer-choose>
+                                <i class="fa fa-print"></i>
+                                <span class="flex-grow-1 text-start text-truncate" data-receipt-printer-name>Printer</span>
+                                <i class="fa fa-cog"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_discount_in_print">Enable Discount In Print</label>
-                        {{ html()->select('enable_discount_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_discount_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_total_quantity_in_print">Enable Total Quantity In Print</label>
-                        {{ html()->select('enable_total_quantity_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_total_quantity_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_logo_in_print">Enable Logo In Print</label>
-                        {{ html()->select('enable_logo_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_logo_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_company_name_in_print">Enable Company Name In Print</label>
-                        {{ html()->select('enable_company_name_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_company_name_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_customer_mobile_in_print">Enable Customer Mobile In Print</label>
-                        {{ html()->select('enable_customer_mobile_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_customer_mobile_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_barcode_in_print">Enable Barcode In Print</label>
-                        {{ html()->select('enable_barcode_in_print', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Select Option')->attribute('wire:model', 'enable_barcode_in_print') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="print_item_label">Item Label In Print</label>
+                    <div class="col-md-6">
+                        <label class="form-label" for="print_item_label">Item Label</label>
                         {{ html()->select('print_item_label', ['product' => 'Product Name', 'category' => 'Category Name'])->value('')->class('form-select')->placeholder('Select what to print per item')->attribute('wire:model', 'print_item_label') }}
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="print_quantity_label">Quantity Label In Print</label>
+                    <div class="col-md-6">
+                        <label class="form-label" for="print_quantity_label">Quantity Label</label>
                         {{ html()->select('print_quantity_label', ['quantity' => 'Quantity', 'weight' => 'Weight'])->value('')->class('form-select')->placeholder('Select label for item quantity')->attribute('wire:model', 'print_quantity_label') }}
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="default_quantity">Default Quantity</label>
-                        {{ html()->input('number', 'default_quantity')->value('')->class('form-control')->attribute('step', '0.001')->placeholder('Enter default quantity (e.g., 0.001)')->attribute('wire:model', 'default_quantity') }}
-                    </div>
+
+                <div class="scx-sub mt-4">Show on receipt</div>
+                <div class="scx-toggles">
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_logo_in_print', 'Logo'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_company_name_in_print', 'Company Name'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_customer_mobile_in_print', 'Customer Mobile'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_barcode_in_print', 'Barcode'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_discount_in_print', 'Discount'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_total_quantity_in_print', 'Total Quantity'))
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="validate_unit_price_against_mrp">Validate Unit Price Against MRP</label>
-                        {{ html()->select('validate_unit_price_against_mrp', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Validate unit price against MRP?')->attribute('wire:model', 'validate_unit_price_against_mrp') }}
+
+                <div class="scx-sub mt-4">Footer message</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="thermal_printer_footer_english">English</label>
+                        {{ html()->input('thermal_printer_footer_english')->value('')->class('form-control')->placeholder('e.g. Thank you for shopping with us')->attribute('wire:model', 'thermal_printer_footer_english') }}
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="show_colleague">Show Colleague</label>
-                        {{ html()->select('show_colleague', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Do You want to show colleague?')->attribute('wire:model', 'show_colleague') }}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="branch_wise_employee_list">Branch Wise Employee List</label>
-                        {{ html()->select('branch_wise_employee_list', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Show employees of current branch only?')->attribute('wire:model', 'branch_wise_employee_list') }}
-                        <small class="form-text text-muted">When enabled, POS employee dropdown will show only employees assigned to the current branch.</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="auto_close_day_sessions_enabled">Auto Close Day Sessions</label>
-                        {{ html()->select('auto_close_day_sessions_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Enable automatic daily closing of day sessions?')->attribute('wire:model', 'auto_close_day_sessions_enabled') }}
-                        <small class="form-text text-muted">When enabled, all open day sessions will be automatically closed daily at midnight with closing amount set to expected amount.</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="auto_open_day_sessions_enabled">Auto Open Day Sessions</label>
-                        {{ html()->select('auto_open_day_sessions_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Open day sessions automatically at the opening time?')->attribute('wire:model', 'auto_open_day_sessions_enabled') }}
-                        <small class="form-text text-muted">When enabled, a day session is opened for every branch at the opening time set in <a href="{{ route('settings::working_day::index') }}" target="_blank">Settings → Working Day</a>, with an opening amount of 0. Non-working days and holidays are skipped, and a branch that already has a session for the day is left alone.</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="sale_item_row_mode">Same Product Cart Rows</label>
-                        {{ html()->select('sale_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select')->placeholder('Choose how repeated product clicks behave')->attribute('wire:model', 'sale_item_row_mode') }}
-                        <small class="form-text text-muted">Controls whether clicking the same product card adds quantity to the existing cart row or creates a new row.</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="prevent_out_of_stock_sales">Prevent Out Of Stock Sales</label>
-                        {{ html()->select('prevent_out_of_stock_sales', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Block sale completion when stock is not enough?')->attribute('wire:model', 'prevent_out_of_stock_sales') }}
-                        <small class="form-text text-muted">When enabled, completed sales cannot reduce inventory below zero.</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="enable_tip">Enable Tip</label>
-                        {{ html()->select('enable_tip', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Show the "Add a Tip" option at checkout?')->attribute('wire:model', 'enable_tip') }}
-                        <small class="form-text text-muted">When disabled, the "Add a Tip" option is hidden on the sale payment screens (web and mobile app).</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="round_off_enabled">Round Off</label>
-                        {{ html()->select('round_off_enabled', ['yes' => 'Yes', 'no' => 'No'])->value('')->class('form-select')->placeholder('Round the grand total to the nearest whole number?')->attribute('wire:model', 'round_off_enabled') }}
-                        <small class="form-text text-muted">When enabled, the grand total is rounded to the nearest whole number and the difference is shown as &ldquo;Round Off&rdquo; (web POS and mobile app).</small>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="pos_grid_columns">POS Products Per Row</label>
-                        {{ html()->select('pos_grid_columns', posGridColumns())->value('')->class('form-select')->placeholder('How many product cards per row?')->attribute('wire:model', 'pos_grid_columns') }}
-                        <small class="form-text text-muted">Number of product cards in each row of the POS catalogue. &ldquo;Auto&rdquo; fits as many as the screen allows. Phones always show 2 per row.</small>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <hr class="my-2">
-                    <label class="form-label fw-medium d-block mb-1">POS Colour Preset</label>
-                    <small class="form-text text-muted d-block mb-2">
-                        Sets the palette of the POS screen and all of its modals. Each preset is a complete
-                        combination &mdash; one primary for structure, one accent for favourites and money.
-                        &ldquo;Follow App Theme&rdquo; uses the colour picked in Settings &rarr; Theme.
-                    </small>
-                    <div class="row g-2 pos-preset-picker">
-                        @foreach (posColorPresets() as $key => $preset)
-                            <div class="col-6 col-md-4 col-xl-3">
-                                <label class="pos-preset {{ $pos_color_preset === $key ? 'active' : '' }}">
-                                    <input type="radio" class="d-none" value="{{ $key }}" wire:model.live="pos_color_preset">
-                                    <span class="pos-preset-swatch">
-                                        <span class="pos-preset-bar" style="background: {{ $preset['primary'] }}"></span>
-                                        <span class="pos-preset-body" style="background: {{ $preset['canvas'] }}">
-                                            <span class="pos-preset-card" style="background: {{ $preset['panel'] }}; border-color: {{ $preset['line'] }}">
-                                                <span class="pos-preset-dot" style="background: {{ $preset['accent'] }}"></span>
-                                                <span class="pos-preset-line" style="background: {{ $preset['line'] }}"></span>
-                                            </span>
-                                        </span>
-                                    </span>
-                                    <span class="pos-preset-meta">
-                                        <span class="pos-preset-name">{{ $preset['name'] }}</span>
-                                        <span class="pos-preset-note">{{ $preset['note'] }}</span>
-                                    </span>
-                                    <i class="fa fa-check-circle pos-preset-check"></i>
-                                </label>
-                            </div>
-                        @endforeach
-                    </div>
-                    <hr class="my-2">
-                </div>
-                <div class="col-12">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="thermal_printer_footer_english">Thermal Printer Footer (English)</label>
-                        {{ html()->input('thermal_printer_footer_english')->value('')->class('form-control')->placeholder('Enter your printer footer message')->attribute('wire:model', 'thermal_printer_footer_english') }}
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="form-group">
-                        <label class="form-label fw-medium" for="thermal_printer_footer_arabic">Thermal Printer Footer (Arabic)</label>
-                        {{ html()->input('thermal_printer_footer_arabic')->value('')->class('form-control')->attribute('dir', 'rtl')->placeholder('Enter your printer footer message')->attribute('wire:model', 'thermal_printer_footer_arabic') }}
+                    <div class="col-md-6">
+                        <label class="form-label" for="thermal_printer_footer_arabic">Arabic</label>
+                        {{ html()->input('thermal_printer_footer_arabic')->value('')->class('form-control')->attribute('dir', 'rtl')->placeholder('رسالة التذييل')->attribute('wire:model', 'thermal_printer_footer_arabic') }}
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="card-footer bg-light text-end py-2 px-3">
-            <button type="submit" class="btn btn-primary btn-sm px-3">
-                <i class="fa fa-save me-1"></i>Save Changes
+        </section>
+
+        <div class="scx-bar">
+            <span><i class="fa fa-info-circle me-1"></i>Changes apply after you save.</span>
+            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save"><i class="fa fa-save me-1"></i>Save Changes</span>
+                <span wire:loading wire:target="save"><i class="fa fa-spinner fa-spin me-1"></i>Saving…</span>
             </button>
         </div>
     </form>
@@ -234,7 +210,7 @@
                 padding: .5rem;
                 border: 1px solid var(--bs-border-color);
                 border-radius: .625rem;
-                background: var(--bs-body-bg);
+                background: var(--bs-component-bg, var(--bs-body-bg));
                 cursor: pointer;
                 transition: border-color .15s ease, box-shadow .15s ease;
             }

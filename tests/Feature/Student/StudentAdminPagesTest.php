@@ -325,7 +325,11 @@ it('saves the student card and QPay settings', function (): void {
         ->set('topup_max', 500)
         ->set('portal_url', 'https://parents.school.test')
         ->call('save')
-        ->assertDispatched('success');
+        ->assertDispatched('success')
+        ->assertDispatched('student-status', statuses: [
+            'card' => ['text' => 'Top-up 20–500', 'tone' => 'info'],
+            'canteen' => ['text' => 'Off', 'tone' => 'off'],
+        ]);
 
     expect(StudentSettings::current()->overdraftLimit)->toBe(25.0)
         ->and(StudentSettings::current()->portalLink('set-password/abc'))->toBe('https://parents.school.test/#/set-password/abc');
@@ -340,12 +344,21 @@ it('saves the student card and QPay settings', function (): void {
         ->set('user_id', (string) $this->world->user->id)
         ->call('save')
         ->assertDispatched('success')
+        ->assertDispatched('student-status', statuses: ['qpay' => ['text' => 'On · Staging', 'tone' => 'test']])
         ->assertDontSee('super-secret');
 
     $settings = QPaySettings::current();
     expect($settings->isReady())->toBeTrue()
         ->and($settings->secretKey)->toBe('super-secret')
         ->and(\App\Models\Configuration::where('key', QPaySettings::SECRET_KEY)->value('value'))->not->toContain('super-secret');
+});
+
+it('shows the student card settings as one tabbed panel with a status per pane', function (): void {
+    $this->view('settings.student-cards')
+        ->assertSeeInOrder(['Card &amp; Portal', 'Canteen', 'Debit · QPay', 'Credit · MPGS'], false)
+        ->assertSee('Top-up', false)
+        ->assertSee("x-show=\"pane === 'qpay'\"", false)
+        ->assertSee("x-show=\"pane === 'mpgs'\"", false);
 });
 
 it('imports students with both parents and updates by admission number', function (): void {

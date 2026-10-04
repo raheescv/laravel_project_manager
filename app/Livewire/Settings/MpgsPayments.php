@@ -24,6 +24,22 @@ use Livewire\Component;
  */
 class MpgsPayments extends Component
 {
+    /**
+     * What the Student Cards tab rail shows for the credit card pane.
+     *
+     * @return array<string, array{text: string, tone: string}>
+     */
+    public static function railStatus(): array
+    {
+        $settings = MpgsSettings::current();
+
+        return ['mpgs' => match (true) {
+            ! $settings->enabled => ['text' => 'Off', 'tone' => 'off'],
+            $settings->isTest() => ['text' => 'On · Test', 'tone' => 'test'],
+            default => ['text' => 'On · Live', 'tone' => 'live'],
+        }];
+    }
+
     public bool $enabled = false;
 
     public string $gateway_url = MpgsSettings::DEFAULT_GATEWAY_URL;
@@ -123,6 +139,7 @@ class MpgsPayments extends Component
             $this->notification_secret = '';
             $this->saved_notification_secret_hint = MpgsSettings::hint($notificationSecret !== '' ? $notificationSecret : $current->notificationSecret);
             $this->dispatch('success', ['message' => 'Credit card settings saved']);
+            $this->dispatch('student-status', statuses: self::railStatus());
         } catch (\Throwable $th) {
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }

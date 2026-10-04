@@ -16,6 +16,22 @@ use Livewire\Component;
  */
 class QPayPayments extends Component
 {
+    /**
+     * What the Student Cards tab rail shows for the QPay pane.
+     *
+     * @return array<string, array{text: string, tone: string}>
+     */
+    public static function railStatus(): array
+    {
+        $settings = QPaySettings::current();
+
+        return ['qpay' => match (true) {
+            ! $settings->enabled => ['text' => 'Off', 'tone' => 'off'],
+            $settings->environment === 'production' => ['text' => 'On · Live', 'tone' => 'live'],
+            default => ['text' => 'On · Staging', 'tone' => 'test'],
+        }];
+    }
+
     public bool $enabled = false;
 
     public string $environment = 'staging';
@@ -93,6 +109,7 @@ class QPayPayments extends Component
             $this->secret_key = '';
             $this->saved_key_hint = QPaySettings::hint($secret !== '' ? $secret : $saved);
             $this->dispatch('success', ['message' => 'QPay settings saved']);
+            $this->dispatch('student-status', statuses: self::railStatus());
         } catch (\Throwable $th) {
             DB::rollBack();
             $this->dispatch('error', ['message' => $th->getMessage()]);

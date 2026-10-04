@@ -26,7 +26,8 @@ beforeEach(function (): void {
 it('stores the secret key encrypted and never renders it back', function (): void {
     Livewire::test(OnlinePayments::class)
         ->assertOk()
-        ->assertSee('Online Payments')
+        ->assertSee('Tap Payments')
+        ->assertSee('Not connected')
         ->set('enabled', true)
         ->set('secret_key', 'sk_test_abcDEF1234567890wxyz')
         ->set('payment_account_id', (string) $this->tapAccountId)

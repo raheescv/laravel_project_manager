@@ -88,10 +88,29 @@ class StudentConfiguration extends Component
             DB::commit();
 
             $this->dispatch('success', ['message' => 'Student card settings saved']);
+            $this->dispatch('student-status', statuses: self::railStatus($settings));
         } catch (\Throwable $th) {
             DB::rollBack();
             $this->dispatch('error', ['message' => $th->getMessage()]);
         }
+    }
+
+    /**
+     * What the Student Cards tab rail shows for the Card and Canteen panes.
+     *
+     * @return array<string, array{text: string, tone: string}>
+     */
+    public static function railStatus(?StudentSettings $settings = null): array
+    {
+        $settings ??= StudentSettings::current();
+        $amount = fn (float $value): string => rtrim(rtrim(number_format($value, 2), '0'), '.');
+
+        return [
+            'card' => ['text' => 'Top-up '.$amount($settings->topupMin).'–'.$amount($settings->topupMax), 'tone' => 'info'],
+            'canteen' => $settings->preOrdersEnabled
+                ? ['text' => 'On · '.count($settings->schoolDays).' days', 'tone' => 'live']
+                : ['text' => 'Off', 'tone' => 'off'],
+        ];
     }
 
     public function render()

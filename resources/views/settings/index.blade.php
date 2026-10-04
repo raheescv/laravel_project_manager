@@ -563,9 +563,7 @@
                                 @endcan
                                 @if (\App\Support\ModuleAccess::school() && auth()->user()->can('student settings.edit'))
                                     <div id="tabsStudentCards" class="tab-pane" role="tabpanel">
-                                        @livewire('settings.student-configuration')
-                                        @livewire('settings.q-pay-payments')
-                                        @livewire('settings.mpgs-payments')
+                                        @include('settings.student-cards')
                                     </div>
                                 @endif
                                 @can('configuration.settings')
