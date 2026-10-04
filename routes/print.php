@@ -15,8 +15,8 @@ Route::middleware('auth')->group(function (): void {
         Route::name('rentout::')->prefix('rentout')->group(function (): void {
             Route::get('statement/{id}/{fromDate?}/{toDate?}', 'rentoutStatement')->name('statement')->can('rent out.print');
             Route::get('utilities-statement/{id}/{fromDate?}/{toDate?}', 'rentoutUtilitiesStatement')->name('utilities-statement')->can('rent out.print');
-            Route::get('reservation-form/{id}', 'reservationForm')->name('reservation-form')->can('rent out lease booking.reservation form');
-            Route::get('residential-lease/{id}/{type?}', 'residentialLease')->name('residential-lease')->can('rent out lease booking.residential lease');
+            Route::get('reservation-form/{id}', 'reservationForm')->name('reservation-form');
+            Route::get('residential-lease/{id}/{type?}', 'residentialLease')->name('residential-lease');
             Route::get('payment-receipt/{id}', 'rentOutPaymentReceipt')->name('payment-receipt');
             Route::get('payment-voucher/{id}', 'rentOutPaymentVoucher')->name('payment-voucher');
             Route::get('checklist/{id}', 'rentOutChecklist')->name('checklist')->can('rent out checklist.print');

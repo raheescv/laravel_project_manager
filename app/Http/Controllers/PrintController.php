@@ -12,6 +12,7 @@ use App\Models\Journal;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
+use App\Support\RentOutConfig;
 use App\Traits\RendersEscPosReceipts;
 use App\Traits\UsesBrowsershot;
 use Carbon\Carbon;
@@ -348,15 +349,32 @@ class PrintController extends Controller
 
     public function reservationForm($id)
     {
+        $this->authorizeBookingPrint($id, 'bookingReservationFormPermission');
+
         return (new GenerateReservationFormAction())->execute($id);
     }
 
     public function residentialLease($id, $type = 'normal')
     {
+        $this->authorizeBookingPrint($id, 'bookingResidentialLeasePermission');
+
         return (new GenerateResidentialLeaseAction())->execute($id, $type);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────
+
+    /**
+     * Booking prints share one route across rental and sale bookings, so the
+     * permission group ('rent out booking' vs 'rent out lease booking') is
+     * resolved from the record's own agreement type.
+     */
+    private function authorizeBookingPrint(int|string $id, string $permissionProperty): void
+    {
+        $rentOut = RentOut::findOrFail($id);
+        $config = RentOutConfig::make($rentOut->agreement_type->value);
+
+        abort_unless(auth()->user()?->can($config->{$permissionProperty}), 403);
+    }
 
     /**
      * Render a print view to PDF through Browsershot (Chrome).

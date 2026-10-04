@@ -1,4 +1,5 @@
 @if (auth()->user()->can('rent out.view') ||
+        auth()->user()->can('rent out booking.view') ||
         auth()->user()->can('rent out.payment') ||
         auth()->user()->can('rent out utility.view') ||
         auth()->user()->can('rent out service.view') ||
@@ -24,7 +25,7 @@
         </a>
         <ul class="mininav-content nav collapse">
             <li data-popper-arrow class="arrow"></li>
-            @can('rent out.view')
+            @can('rent out booking.view')
                 <li class="nav-item">
                     <a href="{{ route('property::rent::booking') }}"
                         class="nav-link {{ request()->is(['property/rent/booking', 'property/rent/booking/view/*', 'property/rent/booking/create', 'property/rent/booking/edit/*']) ? 'active' : '' }}">Booking</a>

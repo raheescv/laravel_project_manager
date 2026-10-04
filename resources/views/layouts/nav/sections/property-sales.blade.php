@@ -1,4 +1,5 @@
 @if (auth()->user()->can('rent out lease.view') ||
+        auth()->user()->can('rent out lease booking.view') ||
         auth()->user()->can('rent out lease.payment') ||
         auth()->user()->can('rent out lease.cheque management') ||
         auth()->user()->can('rent out service.view') ||
@@ -28,7 +29,7 @@
                         class="nav-link {{ request()->is(['property/sale', 'property/sale/view/*', 'property/sale/edit/*', 'property/sale/create']) ? 'active' : '' }}">Sales</a>
                 </li>
             @endcan
-            @can('rent out lease.view')
+            @can('rent out lease booking.view')
                 <li class="nav-item">
                     <a href="{{ route('property::sale::booking') }}"
                         class="nav-link {{ request()->is(['property/sale/booking', 'property/sale/booking/edit/*', 'property/sale/booking/view/*', 'property/sale/booking/create']) ? 'active' : '' }}">Booking</a>
