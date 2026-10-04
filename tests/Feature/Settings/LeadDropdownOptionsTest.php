@@ -16,7 +16,7 @@ beforeEach(function (): void {
     $this->actingAs($this->world->user);
 
     $permission = config('permission.models.permission');
-    $this->world->user->givePermissionTo($permission::firstOrCreate(['name' => 'configuration.settings', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo($permission::firstOrCreate(['name' => 'property lead.settings', 'guard_name' => 'web']));
 });
 
 function leadOptionsLead(array $attributes = []): PropertyLead

@@ -190,6 +190,7 @@ return [
         'edit',
         'delete',
         'download',
+        'settings',
         'booking transfer',
         'delete note',
         'dashboard status count',

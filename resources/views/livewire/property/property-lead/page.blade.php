@@ -181,7 +181,7 @@
                                         @endif
                                     </select>
                                     @if(filled($parent) && ! count($pick['subOptions']))
-                                        @can('configuration.settings')
+                                        @can('property lead.settings')
                                             <div class="hint"><a href="{{ route('settings::index', ['tab' => 'lead-settings']) }}" class="text-decoration-none" target="_blank"><i class="fa fa-plus-circle me-1"></i>Add in Lead Settings</a></div>
                                         @endcan
                                     @endif

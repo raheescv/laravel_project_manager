@@ -406,7 +406,7 @@
             ],
             'Property' => [
                 ['target' => 'RentOutSettings', 'label' => 'Rent Out Settings', 'icon' => 'demo-pli-home', 'tone' => 'indigo', 'desc' => 'Bookings, agreement print layout and PDF branding.', 'show' => $user->can('rent out.view')],
-                ['target' => 'LeadSettings', 'label' => 'Lead Settings', 'icon' => 'demo-pli-list-view', 'tone' => 'orange', 'desc' => 'Lead sources, statuses and assignee designations.', 'show' => $canSettings],
+                ['target' => 'LeadSettings', 'label' => 'Lead Settings', 'icon' => 'demo-pli-list-view', 'tone' => 'orange', 'desc' => 'Lead sources, statuses and assignee designations.', 'show' => $user->can('property lead.settings')],
             ],
             'School' => [
                 ['target' => 'StudentCards', 'label' => 'Student Cards', 'icon' => 'fa fa-graduation-cap', 'tone' => 'teal', 'desc' => 'Student card and wallet settings.', 'show' => $user->can('student settings.edit')],
@@ -555,7 +555,7 @@
                                         @livewire('settings.rent-out-configuration')
                                     </div>
                                 @endcan
-                                @can('configuration.settings')
+                                @can('property lead.settings')
                                     <div id="tabsLeadSettings" class="tab-pane" role="tabpanel">
                                         @livewire('settings.lead-assignee-designations')
                                         @livewire('settings.lead-dropdown-options')

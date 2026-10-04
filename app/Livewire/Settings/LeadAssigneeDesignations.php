@@ -54,6 +54,6 @@ class LeadAssigneeDesignations extends Component
 
     private function authorizeAccess(): void
     {
-        abort_unless(auth()->user()?->can('configuration.settings'), 403);
+        abort_unless(auth()->user()?->can('property lead.settings'), 403);
     }
 }
