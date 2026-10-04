@@ -8,6 +8,7 @@ use App\Exports\QPayRechargeReportExport;
 use App\Livewire\Concerns\HasReportPeriod;
 use App\Models\QpayTransaction;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -42,7 +43,8 @@ class QPayRechargeReport extends Component
 
     public $perPage = 25;
 
-    /** The transaction open in the details popup. */
+    /** The transaction open in the details popup — in the URL, so the popup can be linked to. */
+    #[Url(as: 'txn', except: null)]
     public ?int $detailId = null;
 
     public $sortField = 'qpay_transactions.id';

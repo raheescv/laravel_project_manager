@@ -115,7 +115,7 @@
                 </div>
 
                 <div class="opd-amount" id="qrd_title">
-                    <small>{{ $detail->currency_code ?: 'QAR' }}</small><b>{{ $isRefund ? '−' : '' }}{{ number_format((float) $detail->amount, 2) }}</b>
+                    <small>{{ in_array($detail->currency_code, [null, '', \App\Services\Payment\QPayClient::CURRENCY_QAR], true) ? 'QAR' : $detail->currency_code }}</small><b>{{ $isRefund ? '−' : '' }}{{ number_format((float) $detail->amount, 2) }}</b>
                 </div>
                 <div class="opd-who">
                     <strong>{{ $student?->name }}</strong>
@@ -133,6 +133,10 @@
                         <a href="{{ route('student::view', $detail->account_id) }}" class="opd-pill"><i class="fa fa-user"></i> {{ $student->name }}</a>
                     @endif
                     <span class="opd-pill opd-mono" title="Payment unique number">#{{ $detail->pun }}</span>
+                    <button type="button" class="opd-pill" title="Copy a link that opens this transaction"
+                        x-on:click="copy(@js(route('student::report::recharges', ['txn' => $detail->id])), $el); $el.querySelector('span').innerText = 'Link copied'; setTimeout(() => $el.querySelector('span').innerText = 'Copy link', 1400)">
+                        <i class="fa fa-link"></i> <span>Copy link</span>
+                    </button>
                 </div>
 
                 <nav class="opd-tabs" role="tablist">

@@ -184,6 +184,18 @@ it('opens a recharge with its gateway log and a plain-language explanation', fun
     $report->call('closeDetails')->assertSet('detailId', null)->assertDontSee('Payment failed — no money taken');
 });
 
+it('opens a recharge straight from its link', function (): void {
+    $payment = QpayTransaction::create(['type' => 'payment', 'gateway' => 'qpay', 'pun' => 'PUNLINK0000000000001', 'currency_code' => '634', 'account_id' => $this->sara->id, 'amount' => 100, 'status' => 'pending']);
+
+    Livewire::withQueryParams(['txn' => $payment->id])->test(QPayRechargeReport::class)
+        ->assertSet('detailId', $payment->id)
+        ->assertSee('Waiting for QPay')
+        ->assertSee('QAR')
+        ->assertSee('Copy link');
+
+    $this->get($this->world->url('/student/report/recharges?txn='.$payment->id))->assertOk()->assertSee('Waiting for QPay');
+});
+
 it('explains a credit card top-up from the Mastercard Gateway answers', function (): void {
     $payment = QpayTransaction::create(['type' => 'payment', 'gateway' => 'mpgs', 'pun' => 'PUNMPGS0000000000001', 'account_id' => $this->sara->id, 'amount' => 50, 'status' => 'failed', 'card_brand' => 'MASTERCARD', 'masked_card' => '512345xxxxxx0008', 'payload' => ['gateway_code' => 'INSUFFICIENT_FUNDS', 'authentication_status' => 'AUTHENTICATION_SUCCESSFUL']]);
     ApiLog::create(['endpoint' => 'https://mpgs.test/api/rest/version/100/merchant/X/order/PUNMPGS0000000000001', 'method' => 'GET', 'service_name' => 'MPGS Retrieve Order', 'status' => 'success', 'response' => json_encode(['status' => 'FAILED', 'transaction' => [['transaction' => ['type' => 'PAYMENT'], 'response' => ['gatewayCode' => 'INSUFFICIENT_FUNDS']]]])]);
