@@ -206,7 +206,7 @@
                                                 </a>
                                             </li>
                                         @endcan
-                                        @can('local purchase order.edit', $item)
+                                        @can('update', $item)
                                             <li>
                                                 <a class="dropdown-item" href="{{ route('lpo::edit', $item->id) }}">
                                                     <i class="demo-pli-file-edit me-2"></i> Edit
