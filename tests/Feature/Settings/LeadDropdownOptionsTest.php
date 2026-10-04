@@ -101,3 +101,10 @@ it('is closed to users without the settings permission', function (): void {
 
     Livewire::test(LeadDropdownOptions::class)->assertForbidden();
 });
+
+it('is closed to users without the lead settings permission', function (): void {
+    $this->world->user->revokePermissionTo('property lead.settings');
+    $this->world->user->givePermissionTo(config('permission.models.permission')::firstOrCreate(['name' => 'configuration.settings', 'guard_name' => 'web']));
+
+    Livewire::test(LeadDropdownOptions::class)->assertForbidden();
+});
