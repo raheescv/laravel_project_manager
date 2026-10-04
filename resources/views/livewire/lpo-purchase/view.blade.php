@@ -567,7 +567,6 @@
                     <span class="l-pill pill-purple">{{ $purchase->journals->count() }} {{ Str::plural('journal', $purchase->journals->count()) }}</span>
                 </div>
                 @foreach ($purchase->journals as $journal)
-                    @php $filteredEntries = $journal->entries->where('account_id', '!=', $purchase->account_id); @endphp
                     <div class="jnl">
                         <div class="jnl-head">
                             <div>
@@ -618,8 +617,8 @@
                                 <tfoot>
                                     <tr>
                                         <td colspan="2">Total</td>
-                                        <td class="num" style="color:var(--ok)">{{ number_format($filteredEntries->sum('debit'), 2) }}</td>
-                                        <td class="num" style="color:var(--bad)">{{ number_format($filteredEntries->sum('credit'), 2) }}</td>
+                                        <td class="num" style="color:var(--ok)">{{ number_format($journal->entries->sum('debit'), 2) }}</td>
+                                        <td class="num" style="color:var(--bad)">{{ number_format($journal->entries->sum('credit'), 2) }}</td>
                                     </tr>
                                 </tfoot>
                             </table>
