@@ -43,9 +43,12 @@ class QPayRechargeReport extends Component
 
     public $perPage = 25;
 
-    /** The transaction open in the details popup — in the URL, so the popup can be linked to. */
+    /**
+     * The transaction open in the details popup — in the URL, so the popup can be
+     * linked to. Untyped: a hand-edited ?txn= arrives as any string.
+     */
     #[Url(as: 'txn', except: null)]
-    public ?int $detailId = null;
+    public $detailId = null;
 
     public $sortField = 'qpay_transactions.id';
 
@@ -236,8 +239,9 @@ class QPayRechargeReport extends Component
     public function render()
     {
         $base = fn () => self::filteredQuery(['status' => [], 'type' => ''] + $this->filters())->reorder();
-        $detail = $this->detailId
-            ? QpayTransaction::query()->with(['account:id,name', 'account.studentDetail', 'guardian:id,name,mobile,email'])->find($this->detailId)
+        $detailId = filter_var($this->detailId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $detail = $detailId
+            ? QpayTransaction::query()->with(['account:id,name', 'account.studentDetail', 'guardian:id,name,mobile,email'])->find($detailId)
             : null;
         $detailLogs = $detail?->apiLogs();
 

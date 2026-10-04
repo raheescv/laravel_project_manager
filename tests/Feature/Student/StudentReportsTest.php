@@ -194,6 +194,11 @@ it('opens a recharge straight from its link', function (): void {
         ->assertSee('Copy link');
 
     $this->get($this->world->url('/student/report/recharges?txn='.$payment->id))->assertOk()->assertSee('Waiting for QPay');
+
+    // A blank or mangled link just shows the report.
+    foreach (['', 'abc', '-4', '99999999'] as $txn) {
+        $this->get($this->world->url('/student/report/recharges?txn='.$txn))->assertOk()->assertDontSee('Waiting for QPay');
+    }
 });
 
 it('explains a credit card top-up from the Mastercard Gateway answers', function (): void {
