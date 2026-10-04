@@ -73,7 +73,7 @@
                                 {{-- A payment QPay will not answer for blocks the parent from topping up again.
                                      Releasing frees the card without claiming the money was never taken. --}}
                                 @can('student topup.release')
-                                    @if ($transaction?->isPending() && $transaction->type === 'payment' && ! $transaction->isCreditCard())
+                                    @if ($transaction?->isReleasable())
                                         <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="release({{ $transaction->id }})" wire:loading.attr="disabled"
                                             wire:confirm="Release this {{ currency($transaction->amount) }} top-up so the parent can pay again?&#10;&#10;QPay is asked once more first. If it still has no answer the top-up is marked Unresolved — not failed — and we keep asking; the card is credited if it turns out to have been paid."
                                             title="Free the card from this unanswered payment">

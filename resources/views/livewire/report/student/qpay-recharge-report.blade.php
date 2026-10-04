@@ -1,18 +1,15 @@
 <div>
     <x-report.studio />
 
+    <style>
+        .wrx .qr-stat { font: inherit; text-align: start; width: 100%; cursor: pointer; }
+        .wrx .qr-stat.is-on:not(.hero) { border-color: var(--wrx-ac); box-shadow: 0 0 0 2px var(--wrx-ac-soft); }
+        .wrx .qr-stat.hero:not(.is-on) { opacity: .82; }
+        .wrx .qr-stat:focus-visible { outline: 2px solid var(--wrx-ac); outline-offset: 2px; }
+        .wrx .tools .search { max-width: none; }
+    </style>
+
     @php
-        $statuses = [
-            '' => 'All statuses',
-            'success' => 'Successful',
-            'pending' => 'Pending',
-            'failed' => 'Failed',
-            'cancelled' => 'Cancelled',
-            'review' => 'Needs review',
-            'unresolved' => 'Unresolved',
-            'refunded' => 'Refunded',
-            'refund_pending' => 'Refund pending',
-        ];
         $statusTone = fn (string $status) => match (true) {
             $status === 'success' => '',
             $status === 'failed' => 'bad',
@@ -45,12 +42,14 @@
                 <div class="grp">
                     <h4>Transactions</h4>
                     <div class="f">
-                        <label for="qr_status">Status</label>
-                        <select id="qr_status" wire:model.live="status">
+                        <label>Status</label>
+                        <div class="quick" role="group" aria-label="Status">
+                            <button type="button" class="{{ $selectedStatuses ? '' : 'is-on' }}" wire:click="toggleStatus('')">All</button>
                             @foreach ($statuses as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
+                                <button type="button" class="{{ in_array($value, $selectedStatuses, true) ? 'is-on' : '' }}" wire:click="toggleStatus('{{ $value }}')"
+                                    aria-pressed="{{ in_array($value, $selectedStatuses, true) ? 'true' : 'false' }}">{{ $label }}</button>
                             @endforeach
-                        </select>
+                        </div>
                     </div>
                     <div class="f">
                         <label for="qr_type">Type</label>
@@ -88,41 +87,26 @@
             <div class="main">
                 <div class="wrxsum">
                     <div class="wrxsum__row">
-                        <div class="stat hero">
+                        <button type="button" class="stat hero qr-stat {{ ! $selectedStatuses && $type === '' ? 'is-on' : '' }}" wire:click="filterCard('')" title="Show all transactions">
                             <span class="stat__ic"><i class="fa fa-money"></i></span>
                             <div class="k">Collected</div>
                             <div class="v">{{ currency($totals['collected']) }}</div>
-                        </div>
-                        <div class="stat">
-                            <span class="stat__ic"><i class="fa fa-check"></i></span>
-                            <div class="k">Top-ups</div>
-                            <div class="v">{{ number_format((int) $totals['payments']) }}</div>
-                        </div>
-                        <div class="stat out">
-                            <span class="stat__ic"><i class="fa fa-undo"></i></span>
-                            <div class="k">Refunded</div>
-                            <div class="v">{{ currency($totals['refunded']) }}</div>
-                        </div>
-                        <div class="stat warn">
-                            <span class="stat__ic"><i class="fa fa-clock-o"></i></span>
-                            <div class="k">Pending</div>
-                            <div class="v">{{ number_format((int) $totals['pending']) }}</div>
-                        </div>
-                        <div class="stat off">
-                            <span class="stat__ic"><i class="fa fa-times"></i></span>
-                            <div class="k">Failed</div>
-                            <div class="v">{{ number_format((int) $totals['failed']) }}</div>
-                        </div>
-                        <div class="stat bad">
-                            <span class="stat__ic"><i class="fa fa-exclamation-triangle"></i></span>
-                            <div class="k">Needs review</div>
-                            <div class="v">{{ number_format((int) $totals['review']) }}</div>
-                        </div>
+                        </button>
+                        @foreach ([
+                            'payments' => ['', 'fa-check', 'Top-ups', false],
+                            'refunded' => ['out', 'fa-undo', 'Refunded', true],
+                            'pending' => ['warn', 'fa-clock-o', 'Pending', false],
+                            'failed' => ['off', 'fa-times', 'Failed', false],
+                            'review' => ['bad', 'fa-exclamation-triangle', 'Needs review', false],
+                        ] as $key => [$tone, $icon, $label, $isMoney])
+                            <button type="button" class="stat qr-stat {{ $tone }} {{ $activeCard === $key ? 'is-on' : '' }}" wire:click="filterCard('{{ $key }}')"
+                                aria-pressed="{{ $activeCard === $key ? 'true' : 'false' }}" title="{{ $activeCard === $key ? 'Show all transactions' : 'Show only ' . strtolower($label) }}">
+                                <span class="stat__ic"><i class="fa {{ $icon }}"></i></span>
+                                <div class="k">{{ $label }}</div>
+                                <div class="v">{{ $isMoney ? currency($totals[$key]) : number_format((int) $totals[$key]) }}</div>
+                            </button>
+                        @endforeach
                     </div>
-                    <p class="wrxsum__note">
-                        "Collected" counts only payments the gateway confirmed — those are the ones on the students' cards and in the books.
-                        A payment left pending can be checked with its gateway (QPay for debit cards, MPGS for credit cards) from its row.
-                    </p>
                 </div>
 
                 <div class="tools">
@@ -219,11 +203,25 @@
                                     </td>
                                     <td class="num">
                                         {{-- Released payments are still asked about, so they keep the Check button. --}}
-                                        @if ($row->awaitsResult())
-                                            <button type="button" class="icon-btn" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask {{ $row->gatewayLabel() }} for the result">
-                                                <i class="fa fa-refresh"></i> Check
+                                        <div class="d-inline-flex gap-1">
+                                            @if ($row->awaitsResult())
+                                                <button type="button" class="icon-btn" wire:click="inquire({{ $row->id }})" wire:loading.attr="disabled" title="Ask {{ $row->gatewayLabel() }} for the result">
+                                                    <i class="fa fa-refresh"></i> Check
+                                                </button>
+                                            @endif
+                                            @can('student topup.release')
+                                                @if ($row->isReleasable())
+                                                    <button type="button" class="icon-btn" wire:click="release({{ $row->id }})" wire:loading.attr="disabled"
+                                                        wire:confirm="Release this {{ currency($row->amount) }} top-up so the parent can pay again?&#10;&#10;QPay is asked once more first. If it still has no answer the top-up is marked Unresolved — not failed — and we keep asking; the card is credited if it turns out to have been paid."
+                                                        title="Free the card from this unanswered payment">
+                                                        <i class="fa fa-unlock"></i> Release
+                                                    </button>
+                                                @endif
+                                            @endcan
+                                            <button type="button" class="icon-btn" wire:click="showDetails({{ $row->id }})" title="What happened, with every request and response">
+                                                <i class="fa fa-eye"></i> Details
                                             </button>
-                                        @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -256,4 +254,8 @@
             </div>
         </div>
     </div>
+
+    @if ($detail)
+        @include('livewire.report.student.partials.recharge-details', ['detail' => $detail, 'detailLogs' => $detailLogs, 'detailRelated' => $detailRelated])
+    @endif
 </div>

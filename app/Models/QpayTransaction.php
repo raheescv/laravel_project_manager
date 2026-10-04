@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Support\Payment\MpgsSettings;
+use App\Support\Payment\QPayRechargeExplanation;
 use App\Support\Payment\QPaySettings;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 /**
  * One online payment or refund for a student card (see the migrations).
@@ -137,6 +139,15 @@ class QpayTransaction extends Model
         return in_array($this->status, self::STATUSES_AWAITING_RESULT, true);
     }
 
+    /**
+     * A QPay payment still waiting for its answer holds the card; the office may
+     * release it so the parent can top up again (see ReleaseAction).
+     */
+    public function isReleasable(): bool
+    {
+        return $this->isPending() && $this->type === self::TYPE_PAYMENT && ! $this->isCreditCard();
+    }
+
     public function isCreditCard(): bool
     {
         return $this->gateway === self::GATEWAY_MPGS;
@@ -177,6 +188,62 @@ class QpayTransaction extends Model
             $brand && $last4 => $brand.' ····'.$last4,
             default => $this->masked_card ?: $brand,
         };
+    }
+
+    /**
+     * The PUNs of this payment and every refund of it (or, for a refund, of the
+     * payment it gives back) — the whole conversation with the gateway.
+     *
+     * @return list<string>
+     */
+    public function relatedPuns(): array
+    {
+        $paymentPun = $this->type === self::TYPE_REFUND && $this->original_pun ? $this->original_pun : $this->pun;
+
+        return self::query()
+            ->where(fn ($query) => $query->where('pun', $paymentPun)->orWhere('original_pun', $paymentPun))
+            ->pluck('pun')
+            ->push($this->pun, $paymentPun)
+            ->filter(fn ($pun): bool => filled($pun) && ctype_alnum((string) $pun))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Every request and response exchanged with the gateway for this payment and
+     * its refunds, oldest first. Nothing links api_logs to a transaction, so a row
+     * belongs here when its URL (MPGS order id) or body (QPay PUN) carries a PUN.
+     *
+     * @return Collection<int, ApiLog>
+     */
+    public function apiLogs(): Collection
+    {
+        $puns = $this->relatedPuns();
+        if (! $puns) {
+            return collect();
+        }
+
+        return ApiLog::query()
+            ->where(function ($query) use ($puns): void {
+                foreach ($puns as $pun) {
+                    $query->orWhere('request', 'like', '%'.$pun.'%')->orWhere('endpoint', 'like', '%'.$pun.'%');
+                }
+            })
+            ->where(fn ($query) => $query->where('service_name', 'like', 'QPay %')->orWhere('service_name', 'like', 'MPGS %'))
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * What happened to this payment, in words the office can act on.
+     *
+     * @param  Collection<int, ApiLog>|null  $logs
+     * @return array{tone: string, headline: string, summary: string, facts: list<string>, timeline: list<array{at: string, label: string, ok: bool}>, next: ?string}
+     */
+    public function explanation(?Collection $logs = null): array
+    {
+        return QPayRechargeExplanation::from($this, $logs ?? $this->apiLogs());
     }
 
     public function statusLabel(): string

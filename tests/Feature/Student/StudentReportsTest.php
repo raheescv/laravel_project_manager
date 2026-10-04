@@ -5,6 +5,7 @@ use App\Actions\Student\ManualEntryAction;
 use App\Livewire\Report\Student\QPayRechargeReport;
 use App\Livewire\Report\Student\WalletReport;
 use App\Models\Account;
+use App\Models\ApiLog;
 use App\Models\JournalEntry;
 use App\Models\QpayTransaction;
 use Livewire\Livewire;
@@ -126,19 +127,82 @@ it('reports QPay recharges with the money actually collected', function (): void
         ->and($totals['failed'])->toBe(1);
 
     // Filters narrow to one row each.
-    expect(Livewire::test(QPayRechargeReport::class)->set('status', 'pending')->viewData('rows')->count())->toBe(1);
+    expect(Livewire::test(QPayRechargeReport::class)->call('toggleStatus', 'pending')->viewData('rows')->count())->toBe(1);
+    expect(Livewire::test(QPayRechargeReport::class)->call('toggleStatus', 'pending')->call('toggleStatus', 'failed')->viewData('rows')->count())->toBe(2);
     expect(Livewire::test(QPayRechargeReport::class)->set('search', 'Omar')->viewData('rows')->count())->toBe(1);
     expect(Livewire::test(QPayRechargeReport::class)->set('type', 'refund')->viewData('rows')->count())->toBe(1);
 });
 
+it('filters the recharge report from its summary cards, keeping every card total', function (): void {
+    QpayTransaction::create(['type' => 'payment', 'pun' => 'PUNSUCCESS0000000001', 'account_id' => $this->sara->id, 'amount' => 150, 'status' => 'success']);
+    QpayTransaction::create(['type' => 'payment', 'pun' => 'PUNFAILED00000000001', 'account_id' => $this->sara->id, 'amount' => 90, 'status' => 'failed']);
+    QpayTransaction::create(['type' => 'payment', 'pun' => 'PUNPENDING0000000001', 'account_id' => $this->omar->id, 'amount' => 40, 'status' => 'pending']);
+    QpayTransaction::create(['type' => 'refund', 'pun' => 'PUNREFUND00000000001', 'account_id' => $this->sara->id, 'amount' => 150, 'status' => 'success']);
+    QpayTransaction::create(['type' => 'refund', 'pun' => 'PUNREFUNDFAILED00001', 'account_id' => $this->sara->id, 'amount' => 150, 'status' => 'failed']);
+
+    $report = Livewire::test(QPayRechargeReport::class)->call('filterCard', 'failed');
+    expect($report->get('status'))->toBe(['failed'])
+        ->and($report->viewData('activeCard'))->toBe('failed')
+        ->and($report->viewData('rows')->pluck('pun')->sort()->values()->all())->toBe(['PUNFAILED00000000001', 'PUNREFUNDFAILED00001'])
+        ->and($report->viewData('totals')['pending'])->toBe(1)
+        ->and(round((float) $report->viewData('totals')['collected'], 2))->toBe(150.0);
+
+    $report->call('filterCard', 'payments');
+    expect($report->viewData('rows')->pluck('pun')->all())->toBe(['PUNSUCCESS0000000001']);
+
+    $report->call('filterCard', 'refunded');
+    expect($report->get('type'))->toBe('refund')
+        ->and($report->viewData('activeCard'))->toBe('refunded')
+        ->and($report->viewData('rows')->pluck('pun')->all())->toBe(['PUNREFUND00000000001']);
+
+    $report->call('filterCard', 'refunded');
+    expect($report->get('status'))->toBe([])
+        ->and($report->get('type'))->toBe('')
+        ->and($report->viewData('rows')->count())->toBe(5);
+});
+
+it('opens a recharge with its gateway log and a plain-language explanation', function (): void {
+    $guardian = $this->sara->guardians->first();
+    $payment = QpayTransaction::create(['type' => 'payment', 'gateway' => 'qpay', 'pun' => 'PUNDETAIL00000000001', 'account_id' => $this->sara->id, 'guardian_id' => $guardian->id, 'amount' => 90, 'status' => 'failed', 'gateway_status' => '3000', 'gateway_status_message' => 'Payment Failed.', 'failure_reason' => 'Payment Failed.']);
+    $refund = QpayTransaction::create(['type' => 'refund', 'gateway' => 'qpay', 'pun' => 'PUNDETAILREFUND00001', 'original_pun' => 'PUNDETAIL00000000001', 'account_id' => $this->sara->id, 'amount' => 90, 'status' => 'failed']);
+    ApiLog::create(['endpoint' => 'https://qpay.test/pay', 'method' => 'POST', 'service_name' => 'QPay Payment', 'status' => 'failed', 'request' => json_encode(json_encode(['PUN' => 'PUNDETAIL00000000001', 'BankID' => 'QPAYPG02'])), 'response' => json_encode(['Status' => '3000', 'StatusMessage' => 'Payment Failed.']), 'description' => '3000: Payment Failed.']);
+    ApiLog::create(['endpoint' => 'https://qpay.test/inquiry', 'method' => 'POST', 'service_name' => 'QPay Inquiry', 'status' => 'success', 'request' => json_encode(['OriginalPUN' => 'PUNDETAILREFUND00001']), 'response' => json_encode(['Status' => '0000'])]);
+    ApiLog::create(['endpoint' => 'https://qpay.test/pay', 'method' => 'POST', 'service_name' => 'QPay Payment', 'status' => 'success', 'request' => json_encode(['PUN' => 'PUNOTHER000000000001'])]);
+
+    $report = Livewire::test(QPayRechargeReport::class)->call('showDetails', $payment->id)
+        ->assertSee('Payment failed — no money taken')
+        ->assertSee('Nothing was booked in the accounts')
+        ->assertSee('PUNDETAIL00000000001')
+        ->assertDontSee('PUNOTHER000000000001');
+
+    expect(\App\Support\Payment\QPayRechargeExplanation::decoded($report->viewData('detailLogs')->first()->request))
+        ->toBe(['PUN' => 'PUNDETAIL00000000001', 'BankID' => 'QPAYPG02']);
+
+    expect($report->viewData('detailLogs')->pluck('service_name')->all())->toBe(['QPay Payment', 'QPay Inquiry'])
+        ->and($report->viewData('detailRelated')->pluck('id')->all())->toBe([$refund->id]);
+
+    $report->call('closeDetails')->assertSet('detailId', null)->assertDontSee('Payment failed — no money taken');
+});
+
+it('explains a credit card top-up from the Mastercard Gateway answers', function (): void {
+    $payment = QpayTransaction::create(['type' => 'payment', 'gateway' => 'mpgs', 'pun' => 'PUNMPGS0000000000001', 'account_id' => $this->sara->id, 'amount' => 50, 'status' => 'failed', 'card_brand' => 'MASTERCARD', 'masked_card' => '512345xxxxxx0008', 'payload' => ['gateway_code' => 'INSUFFICIENT_FUNDS', 'authentication_status' => 'AUTHENTICATION_SUCCESSFUL']]);
+    ApiLog::create(['endpoint' => 'https://mpgs.test/api/rest/version/100/merchant/X/order/PUNMPGS0000000000001', 'method' => 'GET', 'service_name' => 'MPGS Retrieve Order', 'status' => 'success', 'response' => json_encode(['status' => 'FAILED', 'transaction' => [['transaction' => ['type' => 'PAYMENT'], 'response' => ['gatewayCode' => 'INSUFFICIENT_FUNDS']]]])]);
+
+    Livewire::test(QPayRechargeReport::class)->call('showDetails', $payment->id)
+        ->assertSee('Mastercard ····0008')
+        ->assertSee('not enough funds on the card')
+        ->assertSee('cardholder verified by their bank')
+        ->assertSee('Order failed');
+});
+
 it('resets the recharge report filters back to this month', function (): void {
     $report = Livewire::test(QPayRechargeReport::class)
-        ->set('search', 'Omar')->set('status', 'pending')->set('type', 'refund')->set('gateway', 'mpgs')
+        ->set('search', 'Omar')->call('toggleStatus', 'pending')->set('type', 'refund')->set('gateway', 'mpgs')
         ->call('setRange', 'last_30')
         ->call('resetFilters');
 
     expect($report->get('search'))->toBe('')
-        ->and($report->get('status'))->toBe('')
+        ->and($report->get('status'))->toBe([])
         ->and($report->get('type'))->toBe('')
         ->and($report->get('gateway'))->toBe('')
         ->and($report->get('from_date'))->toBe(now()->startOfMonth()->toDateString())

@@ -341,6 +341,25 @@ it('releases a payment QPay will not answer for so the parent can pay again', fu
     expect((new StartPaymentAction())->execute($this->guardian, $this->student, 50)['success'])->toBeTrue();
 });
 
+it('releases a stuck payment from the online recharge report', function (): void {
+    $this->world->user->givePermissionTo(\Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'student topup.release', 'guard_name' => 'web']));
+    $this->world->user->givePermissionTo(\Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'report.student recharge', 'guard_name' => 'web']));
+    $stuck = qpayStart($this, 100);
+    $this->actingAs($this->world->user);
+
+    \Livewire\Livewire::test(\App\Livewire\Report\Student\QPayRechargeReport::class)->assertSee('fa-unlock', false);
+
+    $this->travel(21)->minutes();
+    qpayAnswersNothing();
+
+    \Livewire\Livewire::test(\App\Livewire\Report\Student\QPayRechargeReport::class)
+        ->call('release', $stuck->id)
+        ->assertDispatched('success')
+        ->assertDontSee('fa-unlock');
+
+    expect($stuck->refresh()->status)->toBe('unresolved');
+});
+
 it('settles a payment rather than releasing it when QPay finally answers', function (): void {
     $stuck = qpayStart($this, 100);
     $this->travel(21)->minutes();

@@ -3,9 +3,11 @@
 namespace App\Livewire\Report\Student;
 
 use App\Actions\QPay\InquireAction;
+use App\Actions\QPay\ReleaseAction;
 use App\Exports\QPayRechargeReportExport;
 use App\Livewire\Concerns\HasReportPeriod;
 use App\Models\QpayTransaction;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -26,7 +28,8 @@ class QPayRechargeReport extends Component
 
     public $search = '';
 
-    public $status = '';
+    /** @var list<string> Empty means every status. */
+    public $status = [];
 
     public $type = '';
 
@@ -39,6 +42,9 @@ class QPayRechargeReport extends Component
 
     public $perPage = 25;
 
+    /** The transaction open in the details popup. */
+    public ?int $detailId = null;
+
     public $sortField = 'qpay_transactions.id';
 
     public $sortDirection = 'desc';
@@ -48,6 +54,31 @@ class QPayRechargeReport extends Component
     protected $listeners = ['Student-View-Refresh' => '$refresh'];
 
     private const SORTABLE = ['qpay_transactions.id', 'qpay_transactions.amount', 'qpay_transactions.status', 'accounts.name'];
+
+    /**
+     * Summary card → the [statuses, type] filter it applies.
+     *
+     * @var array<string, array{0: list<string>, 1: string}>
+     */
+    public const CARDS = [
+        'payments' => [[QpayTransaction::STATUS_SUCCESS], QpayTransaction::TYPE_PAYMENT],
+        'refunded' => [[QpayTransaction::STATUS_SUCCESS, QpayTransaction::STATUS_REFUND_PENDING], QpayTransaction::TYPE_REFUND],
+        'pending' => [[QpayTransaction::STATUS_PENDING], ''],
+        'failed' => [[QpayTransaction::STATUS_FAILED], ''],
+        'review' => [[QpayTransaction::STATUS_REVIEW], ''],
+    ];
+
+    /** @var array<string, string> */
+    public const STATUSES = [
+        'success' => 'Successful',
+        'pending' => 'Pending',
+        'failed' => 'Failed',
+        'cancelled' => 'Cancelled',
+        'review' => 'Needs review',
+        'unresolved' => 'Unresolved',
+        'refunded' => 'Refunded',
+        'refund_pending' => 'Refund pending',
+    ];
 
     public function mount()
     {
@@ -71,6 +102,50 @@ class QPayRechargeReport extends Component
         $this->sortField = $field;
     }
 
+    /** A summary card filters the list; pressing the active card again (or Collected) shows everything. */
+    public function filterCard(string $card): void
+    {
+        [$status, $type] = self::CARDS[$card] ?? [[], ''];
+        if ($this->activeCard() === $card) {
+            [$status, $type] = [[], ''];
+        }
+        $this->status = $status;
+        $this->type = $type;
+        $this->resetPage();
+    }
+
+    /** The summary card matching the current status + type filters, '' when none does. */
+    public function activeCard(): string
+    {
+        foreach (self::CARDS as $card => [$status, $type]) {
+            if ($this->selectedStatuses() === $status && $this->type === $type) {
+                return $card;
+            }
+        }
+
+        return '';
+    }
+
+    /** Status chips are multi-select; an empty selection means every status. */
+    public function toggleStatus(string $status): void
+    {
+        if ($status === '') {
+            $this->status = [];
+        } elseif (isset(self::STATUSES[$status])) {
+            $selected = $this->selectedStatuses();
+            $this->status = in_array($status, $selected, true)
+                ? array_values(array_diff($selected, [$status]))
+                : [...$selected, $status];
+        }
+        $this->resetPage();
+    }
+
+    /** @return list<string> */
+    public function selectedStatuses(): array
+    {
+        return array_values(array_intersect(array_keys(self::STATUSES), (array) $this->status));
+    }
+
     public function resetFilters(): void
     {
         $this->reset(['search', 'status', 'type', 'gateway']);
@@ -86,6 +161,27 @@ class QPayRechargeReport extends Component
         $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
     }
 
+    /** Free the card from a payment QPay will not answer for, so the parent can top up again. */
+    public function release($id)
+    {
+        abort_unless(auth()->user()?->can('student topup.release'), 403);
+
+        $response = (new ReleaseAction())->execute(QpayTransaction::findOrFail($id), Auth::id());
+        $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
+    }
+
+    public function showDetails(int $id): void
+    {
+        abort_unless(auth()->user()?->can('report.student recharge'), 403);
+
+        $this->detailId = QpayTransaction::query()->whereKey($id)->value('id');
+    }
+
+    public function closeDetails(): void
+    {
+        $this->detailId = null;
+    }
+
     public function export()
     {
         abort_unless(auth()->user()?->can('report.student recharge'), 403);
@@ -97,7 +193,7 @@ class QPayRechargeReport extends Component
     {
         return [
             'search' => $this->search,
-            'status' => $this->status,
+            'status' => $this->selectedStatuses(),
             'type' => $this->type,
             'gateway' => in_array($this->gateway, [QpayTransaction::GATEWAY_QPAY, QpayTransaction::GATEWAY_MPGS], true) ? $this->gateway : '',
             'from_date' => $this->from_date,
@@ -127,7 +223,7 @@ class QPayRechargeReport extends Component
                         ->orWhere('qpay_transactions.confirmation_id', 'like', "%{$value}%");
                 });
             })
-            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.status', $value))
+            ->when((array) ($filters['status'] ?? []), fn ($q, $value) => $q->whereIn('qpay_transactions.status', $value))
             ->when($filters['type'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.type', $value))
             ->when($filters['gateway'] ?? '', fn ($q, $value) => $q->where('qpay_transactions.gateway', $value))
             ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate('qpay_transactions.created_at', '>=', $value))
@@ -137,12 +233,28 @@ class QPayRechargeReport extends Component
 
     public function render()
     {
-        $base = fn () => self::filteredQuery($this->filters())->reorder();
+        $base = fn () => self::filteredQuery(['status' => [], 'type' => ''] + $this->filters())->reorder();
+        $detail = $this->detailId
+            ? QpayTransaction::query()->with(['account:id,name', 'account.studentDetail', 'guardian:id,name,mobile,email'])->find($this->detailId)
+            : null;
+        $detailLogs = $detail?->apiLogs();
 
         return view('livewire.report.student.qpay-recharge-report', [
             'rows' => self::filteredQuery($this->filters())->paginate($this->perPage),
             'ranges' => self::RANGES,
             'activeRange' => $this->currentRange(),
+            'activeCard' => $this->activeCard(),
+            'statuses' => self::STATUSES,
+            'selectedStatuses' => $this->selectedStatuses(),
+            'detail' => $detail,
+            'detailLogs' => $detailLogs,
+            'detailRelated' => $detail
+                ? QpayTransaction::query()
+                    ->whereKeyNot($detail->id)
+                    ->where(fn ($query) => $query->whereIn('pun', $detail->relatedPuns())->orWhereIn('original_pun', $detail->relatedPuns()))
+                    ->orderBy('id')
+                    ->get()
+                : collect(),
             'totals' => [
                 'collected' => (clone $base())->where('qpay_transactions.type', QpayTransaction::TYPE_PAYMENT)->where('qpay_transactions.status', QpayTransaction::STATUS_SUCCESS)->sum('qpay_transactions.amount'),
                 'refunded' => (clone $base())->where('qpay_transactions.type', QpayTransaction::TYPE_REFUND)->whereIn('qpay_transactions.status', [QpayTransaction::STATUS_SUCCESS, QpayTransaction::STATUS_REFUND_PENDING])->sum('qpay_transactions.amount'),
