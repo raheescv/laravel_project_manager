@@ -47,7 +47,7 @@
                 <div class="mesh"></div>
                 <div class="glow"></div>
                 <div class="usrx-hero-inner">
-                    <div class="doc-ic"><i class="fa fa-id-badge"></i></div>
+                    <div class="doc-ic"><i class="fa fa-user"></i></div>
                     <div class="h-main">
                         <div class="h-eyebrow">People</div>
                         <div class="h-ref">Employee Directory</div>
