@@ -230,18 +230,19 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
           _servedBy(sale, ar, s),
           // ---- footer ----
           _dashed(),
-          if (settings.footerEnglish.trim().isNotEmpty)
-            pw.Center(
-              child: pw.Text(settings.footerEnglish.trim(),
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
-            ),
-          if (ar && settings.footerArabic.trim().isNotEmpty) ...[
-            pw.SizedBox(height: 3),
+          // Arabic leads, English follows.
+          if (ar && settings.footerArabic.trim().isNotEmpty)
             pw.Center(
               child: pw.Text(settings.footerArabic.trim(),
                   textAlign: pw.TextAlign.center,
                   textDirection: pw.TextDirection.rtl,
+                  style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
+            ),
+          if (settings.footerEnglish.trim().isNotEmpty) ...[
+            if (ar && settings.footerArabic.trim().isNotEmpty) pw.SizedBox(height: 3),
+            pw.Center(
+              child: pw.Text(settings.footerEnglish.trim(),
+                  textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
             ),
           ],

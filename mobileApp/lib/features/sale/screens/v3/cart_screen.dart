@@ -55,8 +55,6 @@ class CartScreen extends StatelessWidget {
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 180),
                         children: [
                           for (final line in cart.lines) cartLineCard(context, line),
-                          const SizedBox(height: 3),
-                          OrderDiscountRow(cart: cart),
                         ],
                       ),
                     ),
@@ -68,10 +66,12 @@ class CartScreen extends StatelessWidget {
           ? null
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                // The bottom bar isn't lifted by the keyboard on its own; lift it
+                // so the discount field stays visible while typing.
+                padding: EdgeInsets.fromLTRB(14, 0, 14, 14 + MediaQuery.viewInsetsOf(context).bottom),
                 child: MaxWidthBox(
                   maxWidth: 640,
-                  child: cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review)),
+                  child: cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review), withDiscount: true),
                 ),
               ),
             ),

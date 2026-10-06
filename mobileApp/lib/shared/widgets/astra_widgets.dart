@@ -287,9 +287,10 @@ class AstraCard extends StatelessWidget {
 
 /// A rounded tinted square holding an icon (the emerald-tint chips).
 class IconChip extends StatelessWidget {
-  const IconChip({super.key, required this.icon, this.size = 38, this.radius = 11, this.bg, this.fg});
+  const IconChip({super.key, required this.icon, this.size = 38, this.radius = 11, this.bg, this.fg, this.iconSize});
   final IconData icon;
   final double size;
+  final double? iconSize;
   final double radius;
   final Color? bg;
   final Color? fg;
@@ -304,7 +305,7 @@ class IconChip extends StatelessWidget {
         color: bg ?? p.tint,
         borderRadius: BorderRadius.circular(radius),
       ),
-      child: Icon(icon, size: size * 0.4, color: fg ?? p.primary),
+      child: Icon(icon, size: iconSize ?? size * 0.4, color: fg ?? p.primary),
     );
   }
 }

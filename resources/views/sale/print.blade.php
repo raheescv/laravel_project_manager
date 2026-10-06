@@ -230,6 +230,18 @@
             margin: 5px 0;
         }
 
+        .served-by-row {
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .served-by-row > * {
+            flex: 1;
+        }
+
         .payment-badge {
             display: inline-block;
             background-color: transparent;
@@ -767,26 +779,25 @@
             </div>
         @endif
         <div class="highlight-box">
-            <div>
-                <span class="text-left"> <b>Served By</b> </span>: <b>{!! $sale->employeeNames() !!}</b>
+            <div class="served-by-row">
+                <b class="text-left">Served By :</b>
+                <b class="text-center">{!! $sale->employeeNames() !!}</b>
                 @if ($thermal_printer_style == 'with_arabic')
-                    <span class="text-right">
-                        <b>:{{ __('lang.served_by', [], 'ar') }}</b>
-                    </span>
+                    <b class="text-right" dir="ltr">{{ __('lang.served_by', [], 'ar') }} :</b>
                 @endif
             </div>
-            <div style="margin-top: 2px;">
+            <div class="text-center" style="margin-top: 2px; font-size: 11px;">
                 <b><?= date('d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>
             </div>
         </div>
 
         <div class="footer">
-            <p style="font-weight: bold; margin-bottom: 5px;">{!! $thermal_printer_footer_english !!}</p>
-            @if ($thermal_printer_style == 'with_arabic')
+             @if ($thermal_printer_style == 'with_arabic')
                 <b>
                     <p dir="rtl">{!! $thermal_printer_footer_arabic !!}</p>
                 </b>
             @endif
+            <p style="font-weight: bold; margin-bottom: 5px;">{!! $thermal_printer_footer_english !!}</p>
             <div style="margin-top: 4px; font-size: 9px; color: #777;">
                 {{ date('d/m/Y h:i A') }}
             </div>

@@ -32,6 +32,7 @@ import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
 import 'package:invo/shared/widgets/offline_image.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
+import 'package:invo/features/sale/widgets/v3/client_lookup_fields.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
 import 'package:invo/features/student_card/widgets/tap_card_sheet.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
@@ -759,9 +760,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
           // the gap that was left under the Charge card.
           if (!cart.isEmpty) ...[
             const SizedBox(height: 2),
-            OrderDiscountRow(cart: cart),
-            const SizedBox(height: 10),
-            cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review)),
+            cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review), withDiscount: true),
           ],
         ],
       ),
@@ -1053,9 +1052,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                   },
                 ),
               const SizedBox(height: 16),
-              _sheetField(ctx, 'Name', nameCtl, hint: AppStrings.walkInCustomer),
-              const SizedBox(height: 12),
-              _sheetField(ctx, 'Mobile', mobileCtl, hint: 'Optional', number: true),
+              ClientLookupFields(nameCtl: nameCtl, mobileCtl: mobileCtl),
               const SizedBox(height: 18),
               AstraButton(
                 label: 'Set client',
@@ -1077,29 +1074,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       nameCtl.dispose();
       mobileCtl.dispose();
     }
-  }
-
-  Widget _sheetField(BuildContext ctx, String label, TextEditingController c, {String? hint, bool number = false}) {
-    final p = ctx.astra;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(), style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: c,
-          keyboardType: number ? TextInputType.phone : TextInputType.text,
-          style: ui(size: 14, weight: FontWeight.w600, color: p.ink),
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: p.card,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-          ),
-        ),
-      ],
-    );
   }
 
   Future<void> _scanBarcode(CatalogCubit cat) async {

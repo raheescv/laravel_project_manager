@@ -35,7 +35,7 @@ dependencies:
   local_auth: ^2.3.0
 
   # Camera barcode / QR scanning (iOS / Android / macOS)
-  mobile_scanner: ^7.2.0
+  mobile_scanner: 7.4.0
 
   # Profile photo capture / library picking + custom in-app cropping
   image_picker: ^1.1.2
