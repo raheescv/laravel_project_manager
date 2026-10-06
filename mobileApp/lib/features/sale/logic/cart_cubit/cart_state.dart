@@ -26,6 +26,7 @@ class CartState extends Equatable {
     this.payMode = PayMode.cash,
     this.customPayments = const [],
     this.sendToWhatsapp = false,
+    this.notes = '',
     this.student,
     this.preOrder,
   });
@@ -65,6 +66,9 @@ class CartState extends Equatable {
   final PayMode payMode;
   final List<CustomPayment> customPayments;
   final bool sendToWhatsapp;
+
+  /// Free-text note the cashier attaches at Review & Pay — the sale's `notes`.
+  final String notes;
 
   /// The student whose card was tapped for this ticket. The student is the
   /// customer, and [PayMode.studentCard] spends their card balance.
@@ -161,6 +165,7 @@ class CartState extends Equatable {
     PayMode? payMode,
     List<CustomPayment>? customPayments,
     bool? sendToWhatsapp,
+    String? notes,
     StudentCard? student,
     bool clearStudent = false,
     CardPreOrder? preOrder,
@@ -189,6 +194,7 @@ class CartState extends Equatable {
         payMode: payMode ?? this.payMode,
         customPayments: customPayments ?? this.customPayments,
         sendToWhatsapp: sendToWhatsapp ?? this.sendToWhatsapp,
+        notes: notes ?? this.notes,
         student: clearStudent ? null : (student ?? this.student),
         preOrder: clearPreOrder ? null : (preOrder ?? this.preOrder),
       );
@@ -210,6 +216,7 @@ class CartState extends Equatable {
         payMode,
         customPayments,
         sendToWhatsapp,
+        notes,
         student,
         preOrder,
       ];

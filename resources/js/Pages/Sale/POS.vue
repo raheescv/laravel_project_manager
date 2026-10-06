@@ -268,8 +268,9 @@
         <!-- Sale Confirmation Modal -->
         <SaleConfirmationModal :show="showConfirmationModal" :sale-data="confirmationData" :loading="submitting"
             :payment-method="selectedPaymentMethod" :cash-payment-method-id="cashPaymentMethodId"
-            :card-payment-method-id="cardPaymentMethodId" :send-to-whatsapp="sendToWhatsapp"
+            :card-payment-method-id="cardPaymentMethodId" :send-to-whatsapp="sendToWhatsapp" :notes="form.notes"
             @update:paymentMethod="selectPaymentMethod" @update:sendToWhatsapp="val => sendToWhatsapp = val"
+            @update:notes="val => form.notes = val"
             @openCustomPayment="showCustomPaymentModal = true" @close="closeConfirmationModal"
             @submit="processSubmitSale" />
 
@@ -505,7 +506,8 @@ export default {
             custom_payment_data: {},
             rating: 0,
             feedback_type: 'compliment',
-            feedback: ''
+            feedback: '',
+            notes: ''
         })
 
         // Initialize form with sale data if provided
@@ -529,6 +531,7 @@ export default {
                 form.round_off = props.saleData.round_off || 0
                 form.total = props.saleData.total || 0
                 form.grand_total = props.saleData.grand_total || 0
+                form.notes = props.saleData.notes || ''
 
                 // Ensure the customer from the sale is included in serverCustomers
                 if (props.customers && Object.keys(props.customers).length > 0) {
@@ -1244,6 +1247,7 @@ export default {
                     rating: Number(form.rating) || 0,
                     feedback_type: form.feedback_type || null,
                     feedback: form.feedback || null,
+                    notes: (form.notes || '').trim() || null,
                     status: status
                 };
 

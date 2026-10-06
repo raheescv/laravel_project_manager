@@ -126,6 +126,7 @@ class CreateAction
                 'freight' => 0,
                 'tip' => (float) ($request->validated('tip') ?? 0),
                 'round_off' => round((float) ($request->validated('roundOff') ?? 0), 2),
+                'notes' => trim((string) $request->validated('notes')) ?: null,
                 'payment_method_ids' => $payment['ids'],
                 'payment_method_name' => $payment['names'],
                 'paid' => $payment['paid'],

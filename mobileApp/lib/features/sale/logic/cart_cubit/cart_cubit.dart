@@ -218,6 +218,7 @@ class CartCubit extends Cubit<CartState> {
   PayMode get payMode => state.payMode;
   List<CustomPayment> get customPayments => state.customPayments;
   bool get sendToWhatsapp => state.sendToWhatsapp;
+  String get notes => state.notes;
   StudentCard? get student => state.student;
   CardPreOrder? get preOrder => state.preOrder;
   bool get isEmpty => state.isEmpty;
@@ -455,6 +456,8 @@ class CartCubit extends Cubit<CartState> {
 
   void setSendToWhatsapp(bool value) => emit(state.copyWith(sendToWhatsapp: value));
 
+  void setNotes(String value) => emit(state.copyWith(notes: value));
+
   void clear() => emit(CartState(roundOffEnabled: _roundOffSetting()));
 
   void seedFromSale(Sale sale) {
@@ -498,6 +501,7 @@ class CartCubit extends Cubit<CartState> {
       roundOffEnabled: _roundOffSetting(),
       payMode: payment.mode,
       customPayments: payment.rows,
+      notes: sale.notes,
     ));
   }
 
@@ -635,6 +639,7 @@ class CartCubit extends Cubit<CartState> {
         'pending': true,
         'date': chargedAt.toIso8601String().substring(0, 10),
         'status': status,
+        'notes': state.notes.trim(),
         // The receipt header falls back to a generic mark on an empty branch, so
         // the active branch is carried over rather than left for the server to
         // fill in on a response that isn't coming yet.
@@ -733,6 +738,8 @@ class CartCubit extends Cubit<CartState> {
                   })
               .toList(),
         'sendToWhatsapp': state.sendToWhatsapp,
+        // Always sent, empty included, so clearing a note on an edit clears it.
+        'notes': state.notes.trim(),
       };
 }
 

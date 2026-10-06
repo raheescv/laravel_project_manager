@@ -162,6 +162,12 @@
                         </span>
                     </div>
                 @endif
+                @if ($sale->notes)
+                    <div class="s-dr">
+                        <span class="l"><i class="fa fa-comment-o"></i>Notes</span>
+                        <span class="v" style="font-weight:550;white-space:pre-line">{{ $sale->notes }}</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

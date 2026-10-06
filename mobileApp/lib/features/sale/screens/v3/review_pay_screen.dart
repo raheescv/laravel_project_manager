@@ -56,10 +56,36 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// starts folded and the payment controls get the height instead.
   bool _showItems = false;
 
+  /// The sale note. Owned by the screen (not a sheet) so it is disposed with
+  /// it; seeded from the cart so an edited sale or draft shows its note.
+  late final TextEditingController _noteCtl;
+  final FocusNode _noteFocus = FocusNode();
+
+  /// Folded down to a one-line prompt until the cashier asks for it — most
+  /// tickets carry no note, and the pay controls keep the height.
+  bool _noteOpen = false;
+
   @override
   void initState() {
     super.initState();
+    final notes = context.read<CartCubit>().notes;
+    _noteCtl = TextEditingController(text: notes);
+    _noteOpen = notes.isNotEmpty;
+    // Repaint the field's border on focus changes, including the Done bar's.
+    _noteFocus.addListener(_onNoteFocus);
     _loadMethods();
+  }
+
+  void _onNoteFocus() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _noteFocus.removeListener(_onNoteFocus);
+    _noteCtl.dispose();
+    _noteFocus.dispose();
+    super.dispose();
   }
 
   /// Best-effort fetch of the configured payment methods for the custom split.
@@ -481,7 +507,107 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         const SizedBox(height: 12),
         _statusCard(cart),
       ],
+      const SizedBox(height: 14),
+      _noteSection(cart),
     ];
+  }
+
+  // ---- Sale note -----------------------------------------------------------
+
+  void _openNote() {
+    setState(() => _noteOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _noteFocus.requestFocus();
+    });
+  }
+
+  void _removeNote(CartCubit cart) {
+    _noteFocus.unfocus();
+    _noteCtl.clear();
+    cart.setNotes('');
+    setState(() => _noteOpen = false);
+  }
+
+  /// An optional free-text note saved with the sale ("deliver after 6pm",
+  /// "gift wrap"). A quiet prompt until tapped, then a small field in place.
+  Widget _noteSection(CartCubit cart) {
+    final p = context.astra;
+    final t = context.astraTheme;
+
+    if (!_noteOpen) {
+      return GestureDetector(
+        onTap: _openNote,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            color: p.card,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: t.softShadow,
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.edit_note_rounded, size: 19, color: p.primaryDark),
+              const SizedBox(width: 9),
+              Text('Add a note', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+              const Spacer(),
+              Text('Optional', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              const SizedBox(width: 4),
+              Icon(Icons.add_rounded, size: 16, color: p.textMuted),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final focused = _noteFocus.hasFocus;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('SALE NOTE', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => _removeNote(cart),
+              child: Text('Remove', style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 7),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.fromLTRB(13, 11, 13, 9),
+          decoration: BoxDecoration(
+            color: p.card,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: focused ? p.primary : p.hairline, width: focused ? 1.5 : 1),
+            boxShadow: t.softShadow,
+          ),
+          child: KeyboardDoneField(
+            focusNode: _noteFocus,
+            child: TextField(
+              controller: _noteCtl,
+              focusNode: _noteFocus,
+              minLines: 2,
+              maxLines: 4,
+              maxLength: 1000,
+              textCapitalization: TextCapitalization.sentences,
+              style: ui(size: 13, weight: FontWeight.w600, color: p.ink),
+              cursorColor: p.primary,
+              decoration: InputDecoration(
+                isCollapsed: true,
+                border: InputBorder.none,
+                hintText: 'e.g. Deliver after 6 pm, gift wrap…',
+                hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
+                counterStyle: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted),
+              ),
+              onTapOutside: (_) => _noteFocus.unfocus(),
+              onChanged: cart.setNotes,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   /// The change line under the primary button — only when there is money to

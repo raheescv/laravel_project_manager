@@ -167,6 +167,7 @@ class Sale extends Equatable {
     required this.createdBy,
     this.clientUuid = '',
     this.referenceNo = '',
+    this.notes = '',
     this.pending = false,
     this.student,
   });
@@ -201,6 +202,8 @@ class Sale extends Equatable {
   // but for one synced from an offline till it holds the provisional reference
   // that was printed on the customer's receipt — see [offlineRef].
   final String referenceNo;
+  // Free-text note the cashier attached at checkout (the sale's `notes`).
+  final String notes;
   // True only for a sale held in the offline outbox: it has no server id and no
   // real invoice number yet, so Edit/Return are unavailable and the receipt
   // prints as provisional.
@@ -253,6 +256,7 @@ class Sale extends Equatable {
       createdBy: asStr(j['created_by']),
       clientUuid: asStr(j['client_uuid']),
       referenceNo: asStr(j['reference_no']),
+      notes: asStr(j['notes']),
       // The server never sends this key, so a sale off the wire is never
       // pending — only one rebuilt from the outbox is.
       pending: j['pending'] == true,
@@ -283,6 +287,7 @@ class Sale extends Equatable {
         createdBy,
         clientUuid,
         referenceNo,
+        notes,
         pending,
         student,
       ];

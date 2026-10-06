@@ -277,6 +277,29 @@ extension _ReceiptSections on InvoiceScreen {
     );
   }
 
+  /// The note the cashier attached at checkout, shown as written (line breaks
+  /// kept). Callers only build it when the sale has one.
+  Widget _noteRow(AstraPalette p) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const IconChip(icon: Icons.edit_note_rounded, size: 38, radius: 12),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sale note', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                  const SizedBox(height: 3),
+                  Text(sale.notes.trim(), style: ui(size: 13, weight: FontWeight.w600, color: p.ink, height: 1.4)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
   Widget _payRow(AstraPalette p, String method, String amount) {
     final label = method.trim().isEmpty ? 'Payment' : method;
     return Padding(

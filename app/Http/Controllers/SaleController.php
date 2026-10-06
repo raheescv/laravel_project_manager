@@ -103,6 +103,7 @@ class SaleController extends Controller
             'payment_method' => $cashPaymentMethodId,
             'custom_payment_data' => null,
             'status' => null,
+            'notes' => '',
         ];
         if (Auth::user()->type == 'employee') {
             $saleData['employee_id'] = Auth::id();
@@ -161,6 +162,7 @@ class SaleController extends Controller
                     'total' => $sale->net_amount,
                     'grand_total' => $sale->grand_total,
                     'status' => $sale->status,
+                    'notes' => $sale->notes ?? '',
                     'items' => [],
                     'comboOffers' => [],
                     'payment_method' => 'credit', // Default, will be overridden if needed

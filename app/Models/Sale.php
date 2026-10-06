@@ -63,6 +63,7 @@ class Sale extends Model implements AuditableContracts
         'payment_method_name',
 
         'address',
+        'notes',
 
         'rating',
         'feedback_type',
@@ -87,6 +88,7 @@ class Sale extends Model implements AuditableContracts
                 'account_id' => ['required'],
                 'sale_type' => ['required'],
                 'date' => ['required'],
+                'notes' => ['nullable', 'string', 'max:1000'],
             ],
             $merge,
         );

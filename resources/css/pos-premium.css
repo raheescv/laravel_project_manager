@@ -2044,6 +2044,74 @@ html.dark .posx[data-pos-preset="indigo"] {
     font-weight: 600;
 }
 
+/* sale note — a quiet dashed prompt that opens into a textarea in place */
+.posx .posx-memo-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 13px;
+    border: 1px dashed var(--pos-line-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--pos-ink-2);
+    font-size: .75rem;
+    font-weight: 700;
+    text-align: start;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+
+.posx .posx-memo-add:hover {
+    border-color: var(--pos-pri-line);
+    background: var(--pos-pri-soft);
+    color: var(--pos-ink);
+}
+
+.posx .posx-memo-add > i {
+    color: var(--pos-pri);
+}
+
+.posx .posx-memo-add > .posx-memo-hint {
+    margin-inline-start: auto;
+    color: var(--pos-muted);
+    font-size: var(--pos-fs-micro);
+    font-weight: 600;
+}
+
+.posx .posx-memo .posx-field {
+    height: auto;
+    min-height: 64px;
+    padding: 8px 10px;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.posx .posx-memo-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 5px;
+    color: var(--pos-muted);
+    font-size: .6875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.posx .posx-memo-clear {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pos-muted);
+    font-size: .6875rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.posx .posx-memo-clear:hover {
+    color: var(--pos-danger);
+}
+
 .posx .posx-note.is-warn {
     border-color: color-mix(in srgb, var(--pos-warn) 38%, transparent);
     background: var(--pos-warn-soft);

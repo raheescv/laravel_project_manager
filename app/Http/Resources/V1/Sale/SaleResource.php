@@ -29,6 +29,7 @@ class SaleResource extends JsonResource
             'client_uuid' => $this->client_uuid,
             'date' => $this->date,
             'status' => $this->status,
+            'notes' => $this->notes,
             'branch' => $this->branch?->name,
             'customer' => [
                 'name' => $this->customer_name ?: $this->account?->name,

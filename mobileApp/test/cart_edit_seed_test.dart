@@ -34,9 +34,11 @@ void main() {
     double grandTotal = 100,
     double tip = 0,
     double? paid,
+    String? notes,
   }) =>
       Sale.fromJson({
         'id': '41',
+        if (notes != null) 'notes': notes,
         'invoice_no': 'INV-41',
         'date': '2026-08-09',
         'status': status,
@@ -171,6 +173,30 @@ void main() {
 
       expect(cart.isEditing, isFalse);
       expect(cart.isEditingDraft, isFalse);
+    });
+  });
+
+  group('notes', () {
+    test('a saved note comes back onto the ticket and is sent again', () {
+      cart.seedFromSale(sale(payments: [row(2, 'Cash', 100)], notes: 'Gift wrap'));
+
+      expect(cart.notes, 'Gift wrap');
+      expect(cart.toPayload()['notes'], 'Gift wrap');
+    });
+
+    test('clearing the note on an edit sends it empty so the server clears it', () {
+      cart.seedFromSale(sale(payments: [row(2, 'Cash', 100)], notes: 'Gift wrap'));
+      cart.setNotes('');
+
+      expect(cart.toPayload().containsKey('notes'), isTrue);
+      expect(cart.toPayload()['notes'], '');
+    });
+
+    test('a new ticket starts without a note', () {
+      cart.seedFromSale(sale(payments: [row(2, 'Cash', 100)], notes: 'Gift wrap'));
+      cart.clear();
+
+      expect(cart.notes, isEmpty);
     });
   });
 }

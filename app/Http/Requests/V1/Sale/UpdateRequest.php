@@ -54,6 +54,8 @@ class UpdateRequest extends FormRequest
             'payments' => ['nullable', 'array', 'required_if:paymentMethod,custom'],
             'payments.*.payment_method_id' => ['required_with:payments', 'integer'],
             'payments.*.amount' => ['required_with:payments', 'numeric', 'min:0'],
+            // Free-text note the cashier attached at checkout.
+            'notes' => ['nullable', 'string', 'max:1000'],
             // Omitted keeps the sale on the status it already has (a plain edit).
             // Sending "completed" for a parked draft finalizes it in the same
             // call — the stock movement and journal entry are posted then.

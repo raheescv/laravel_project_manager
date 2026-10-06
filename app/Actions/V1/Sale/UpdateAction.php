@@ -100,6 +100,11 @@ class UpdateAction
                 'payments' => $payment['payments'],
                 'comboOffers' => [],
             ];
+            // Only an app build that knows about notes sends the key; an older
+            // one must not wipe a note added on the web.
+            if ($request->has('notes')) {
+                $data['notes'] = trim((string) $request->validated('notes')) ?: null;
+            }
 
             $sale = DB::transaction(function () use ($sale, $items, $data, $user) {
                 $userId = (int) $user->id;

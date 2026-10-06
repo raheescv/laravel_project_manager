@@ -125,6 +125,13 @@ class InvoiceScreen extends StatelessWidget {
                       _summaryCard(p),
                       const SizedBox(height: 12),
                       _paymentCard(p),
+                      if (sale.notes.trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        AstraCard(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          child: _noteRow(p),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -247,6 +254,10 @@ class InvoiceScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   TabletPanel(title: 'Payment', child: _paymentLines(p)),
+                  if (sale.notes.trim().isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    TabletPanel(title: 'Notes', child: _noteRow(p)),
+                  ],
                 ],
               );
             },

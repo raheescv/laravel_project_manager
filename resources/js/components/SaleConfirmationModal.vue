@@ -85,6 +85,30 @@
                     </div>
                 </div>
 
+                <!-- Sale note -->
+                <div class="posx-memo mb-3">
+                    <button v-if="!noteOpen" type="button" class="posx-memo-add" @click="openNote">
+                        <i class="fa fa-pencil-square-o"></i>
+                        <span>Add a note to this sale</span>
+                        <span class="posx-memo-hint">Optional</span>
+                    </button>
+                    <template v-else>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h6 class="posx-section-title mb-0">Sale Note</h6>
+                            <button type="button" class="posx-memo-clear" @click="clearNote">
+                                <i class="fa fa-times mr-1"></i>Remove
+                            </button>
+                        </div>
+                        <textarea ref="noteInput" v-model="localNotes" class="posx-field" rows="2"
+                            :maxlength="noteLimit"
+                            placeholder="e.g. Deliver after 6 pm, gift wrap, customer will collect tomorrow…"></textarea>
+                        <div class="posx-memo-foot">
+                            <span>Saved with the sale</span>
+                            <span>{{ localNotes.length }}/{{ noteLimit }}</span>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- Status -->
                 <div class="posx-note" :class="balanceNoteTone">
                     <div class="font-extrabold mb-0.5">
@@ -108,7 +132,7 @@
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 export default {
     name: 'SaleConfirmationModal',
@@ -136,11 +160,15 @@ export default {
         sendToWhatsapp: {
             default: false
         },
+        notes: {
+            type: String,
+            default: ''
+        },
         openCustomPayment: {
             default: () => { }
         }
     },
-    emits: ['close', 'submit', 'update:paymentMethod', 'openCustomPayment', 'update:sendToWhatsapp'],
+    emits: ['close', 'submit', 'update:paymentMethod', 'openCustomPayment', 'update:sendToWhatsapp', 'update:notes'],
     setup(props, { emit }) {
         const customerName = computed(() => {
             if (props.saleData.account_id && props.saleData.customerName) {
@@ -258,6 +286,35 @@ export default {
             }
         })
 
+        const noteLimit = 1000
+        const noteInput = ref(null)
+        // Starts open when the ticket already carries a note (an edited sale or
+        // draft), otherwise folded down to a one-line prompt.
+        const noteOpen = ref(!!props.notes)
+        watch(() => props.show, (visible) => {
+            if (visible) noteOpen.value = !!props.notes
+        })
+
+        const localNotes = computed({
+            get() {
+                return props.notes || ''
+            },
+            set(value) {
+                emit('update:notes', value)
+            }
+        })
+
+        const openNote = async () => {
+            noteOpen.value = true
+            await nextTick()
+            noteInput.value?.focus()
+        }
+
+        const clearNote = () => {
+            emit('update:notes', '')
+            noteOpen.value = false
+        }
+
         const localCustomPaymentCount = computed(() => {
             if (props.saleData.custom_payment_data?.payments) {
                 return props.saleData.custom_payment_data.payments.length
@@ -288,6 +345,12 @@ export default {
             localPaymentMethod,
             localSendToWhatsapp,
             localCustomPaymentCount,
+            noteLimit,
+            noteInput,
+            noteOpen,
+            localNotes,
+            openNote,
+            clearNote,
             formatNumber,
             close,
             submit
