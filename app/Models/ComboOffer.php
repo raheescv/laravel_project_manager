@@ -64,7 +64,6 @@ class ComboOffer extends Model
             });
         });
         $self = $self->active();
-        $self = $self->limit(10);
         $self = $self->get(['name', 'description', 'count', 'amount', 'id'])->toArray();
         $return['items'] = $self;
 
