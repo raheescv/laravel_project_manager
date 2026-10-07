@@ -781,10 +781,12 @@
         <div class="highlight-box">
             <div class="served-by-row">
                 <b class="text-left">Served By :</b>
-                <b class="text-center">{!! $sale->employeeNames() !!}</b>
                 @if ($thermal_printer_style == 'with_arabic')
                     <b class="text-right" dir="ltr">{{ __('lang.served_by', [], 'ar') }} :</b>
                 @endif
+            </div>
+            <div class="text-center" style="margin-top: 2px; font-size: 11px;">
+                <b>{!! $sale->employeeNames() !!}</b>
             </div>
             <div class="text-center" style="margin-top: 2px; font-size: 11px;">
                 <b><?= date('d-M-Y h:i A', strtotime($sale->updated_at)) ?></b>

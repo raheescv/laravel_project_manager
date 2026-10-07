@@ -220,9 +220,14 @@ class Sale extends Model implements AuditableContracts
         return saleSources()[$this->source] ?? 'Unknown';
     }
 
-    public function employeeNames()
+    /**
+     * Comma-separated names of everyone who served this sale — each item's
+     * employee and assistant — for the "Served By" line on the receipt.
+     */
+    public function employeeNames(): string
     {
-        $employeeIds = $this->items()->whereNotNull('employee_id')->distinct()->pluck('employee_id')->filter()->toArray();
+        $items = $this->items()->get(['employee_id', 'assistant_id']);
+        $employeeIds = $items->pluck('employee_id')->merge($items->pluck('assistant_id'))->filter()->unique()->values()->toArray();
         if (empty($employeeIds)) {
             return '';
         }
