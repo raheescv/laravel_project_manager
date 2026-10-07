@@ -541,6 +541,57 @@
         </div>
     </div>
 
+    {{-- Hand-over status — one card per phase: items checked, the three signatures, sealed or not.
+         The technician app works the same phases; sealing here or there is the same step. --}}
+    @if (count($lines) > 0)
+        <div class="row g-2 mb-2">
+            @foreach ($handover as $h)
+                <div class="{{ count($handover) > 1 ? 'col-md-6' : 'col-12' }}">
+                    <div class="card border shadow-none h-100 mb-0">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                                <span class="small fw-semibold text-uppercase text-muted" style="font-size:11px;">
+                                    <i class="fa fa-key me-1"></i>{{ $h['title'] }}
+                                </span>
+                                @if ($h['sealed'])
+                                    <span class="badge bg-success-subtle text-success-emphasis"><i class="fa fa-lock me-1"></i>Sealed {{ $h['sealed_on'] }}</span>
+                                @elseif ($h['ready'])
+                                    <span class="badge bg-warning-subtle text-warning-emphasis">Ready to seal</span>
+                                @else
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ collect($h['signatures'])->where('signed', true)->count() }}/3 signed</span>
+                                @endif
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <div class="progress flex-grow-1" style="height:5px;">
+                                    <div class="progress-bar bg-success" style="width: {{ $h['total'] ? round($h['checked'] / $h['total'] * 100) : 0 }}%"></div>
+                                </div>
+                                <span class="small text-muted text-nowrap">{{ $h['checked'] }}/{{ $h['total'] }} checked</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach ($h['signatures'] as $sig)
+                                    <span class="badge border fw-normal text-start {{ $sig['signed'] ? 'bg-success-subtle text-success-emphasis border-success-subtle' : 'bg-light text-muted' }}"
+                                        title="{{ $sig['signed'] ? 'Signed '.$sig['at'] : 'Not signed yet' }}">
+                                        <i class="fa {{ $sig['signed'] ? 'fa-check-circle' : 'fa-circle-o' }} me-1"></i>{{ $sig['label'] }}@if ($sig['signed'] && $sig['name']) · {{ $sig['name'] }}@endif
+                                    </span>
+                                @endforeach
+                            </div>
+                            @if ($h['ready'] && ! $h['sealed'])
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="button" class="btn btn-success d-inline-flex align-items-center"
+                                        style="font-size:.7rem; padding:.2rem .5rem; border-radius:4px;"
+                                        wire:click="seal('{{ $h['phase'] }}')"
+                                        wire:confirm="Seal the {{ strtolower($h['title']) }}? It records the hand-over date and remarks shown on this tab (today if the date is blank).">
+                                        <i class="fa fa-lock me-1"></i> Seal {{ strtolower($h['title']) }}
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     {{-- Bulk action bar (only when rows selected) --}}
     @if (count($selected) > 0)
         <div class="d-flex align-items-center flex-wrap gap-2 px-2 py-1 mb-2 rounded" style="background:#eaf2ff; border:1px solid #c9defc;">
@@ -592,7 +643,7 @@
                     <th class="py-2 cl-col-cmt" style="width:{{ $pct('in') }};">Comments</th>
 
                     @if ($showMoveOut)
-                        <th class="py-2 text-center" style="width:84px;">Move-Out</th>
+                        <th class="py-2 text-center" style="width:104px;">Move-Out</th>
                         <th class="py-2 cl-col-cmt" style="width:{{ $pct('out') }};">Comments</th>
                         <th class="py-2" style="width:106px;">Damage Cost</th>
                     @endif
@@ -669,6 +720,26 @@
                                         title="Good / Damaged / Clear">
                                         <i class="fa {{ $mo === 'ok' ? 'fa-check' : ($mo === 'not_ok' ? 'fa-times' : 'fa-minus') }}"></i>
                                     </button>
+                                    {{-- Move-out photo: saved straight to the line, same as the technician app. --}}
+                                    <div class="cl-img-cell mt-1">
+                                        @if (!empty($line['move_out_image_url']))
+                                            <span class="cl-thumb-wrap">
+                                                <img src="{{ $line['move_out_image_url'] }}" class="cl-thumb zoomable" alt=""
+                                                    data-img="{{ $line['move_out_image_url'] }}" style="cursor:zoom-in;" title="Move-out photo">
+                                            </span>
+                                            <button type="button" class="cl-img-btn text-danger" title="Remove move-out photo"
+                                                wire:click="removeMoveOutImage({{ $i }})" wire:confirm="Remove this move-out photo?">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        @elseif (!empty($line['id']))
+                                            <label class="cl-img-btn" title="Add move-out photo">
+                                                <i class="fa fa-camera"></i>
+                                                <input type="file" class="d-none" accept="image/*" wire:model="newMoveOutImages.{{ $i }}">
+                                            </label>
+                                        @endif
+                                    </div>
+                                    <div wire:loading wire:target="newMoveOutImages.{{ $i }}" class="small text-muted mt-1"><i
+                                            class="fa fa-spinner fa-spin"></i></div>
                                 </td>
                                 <td><input class="form-control form-control-sm cl-inp" placeholder="—"
                                         wire:model.blur="lines.{{ $i }}.move_out_comment"></td>

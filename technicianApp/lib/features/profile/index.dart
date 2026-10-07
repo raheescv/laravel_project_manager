@@ -1,2 +1,5 @@
-// GENERATED barrel — re-exports this folder's public API (skeleton §17).
+// Barrel — re-exports the profile feature's public API.
+export 'domain/index.dart';
+export 'logic/index.dart';
 export 'screens/index.dart';
+export 'widgets/index.dart';

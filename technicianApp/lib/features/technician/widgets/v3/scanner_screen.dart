@@ -52,7 +52,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
-            errorBuilder: (context, error, child) => _cameraError(p),
+            errorBuilder: (context, error) => _cameraError(p),
           ),
           // Dim everything but the central reticle window.
           _ReticleOverlay(color: p.accent),
@@ -184,22 +184,45 @@ class _ScannerScreenState extends State<ScannerScreen> {
       );
 
   Future<void> _manualEntry() async {
-    final ctl = TextEditingController();
-    final code = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enter barcode'),
-        content: TextField(controller: ctl, autofocus: true, decoration: const InputDecoration(hintText: 'Barcode / code')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, ctl.text.trim()), child: const Text('Find')),
-        ],
-      ),
-    );
+    final code = await showDialog<String>(context: context, builder: (_) => const _ManualCodeDialog());
     if (code != null && code.isNotEmpty && mounted) {
       Navigator.of(context).pop(code);
     }
   }
+}
+
+/// "Enter barcode" — owns and disposes its controller (it used to be created
+/// by the caller and leaked on every open).
+class _ManualCodeDialog extends StatefulWidget {
+  const _ManualCodeDialog();
+
+  @override
+  State<_ManualCodeDialog> createState() => _ManualCodeDialogState();
+}
+
+class _ManualCodeDialogState extends State<_ManualCodeDialog> {
+  final _ctl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Enter barcode'),
+        content: TextField(
+          controller: _ctl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Barcode / code'),
+          onSubmitted: (v) => Navigator.pop(context, v.trim()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, _ctl.text.trim()), child: const Text('Find')),
+        ],
+      );
 }
 
 /// Dark scrim with a transparent rounded window and gold corner brackets.

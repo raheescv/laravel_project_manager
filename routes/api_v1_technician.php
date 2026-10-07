@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\TechnicianChecklistController;
 use App\Http\Controllers\Api\V1\TechnicianController;
 use App\Http\Middleware\IdentifyTenant;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,23 @@ Route::prefix('v1')->middleware(IdentifyTenant::class)->group(function () {
             // Attachments
             Route::post('/complaints/{complaint}/attachments', [TechnicianController::class, 'storeAttachments'])->whereNumber('complaint')->name('api.v1.technician.attachments.store');
             Route::delete('/attachments/{attachment}', [TechnicianController::class, 'deleteAttachment'])->whereNumber('attachment')->name('api.v1.technician.attachments.delete');
+
+            // RentOut hand-over checklist — scoped to rent-outs the user coordinates.
+            Route::controller(TechnicianChecklistController::class)->name('api.v1.technician.checklists.')->group(function () {
+                Route::get('/checklists', 'index')->name('index');
+                Route::get('/checklists/{rentOut}', 'show')->whereNumber('rentOut')->name('show');
+                Route::get('/checklists/{rentOut}/pdf', 'pdf')->whereNumber('rentOut')->name('pdf');
+                Route::patch('/checklists/{rentOut}/lines/{line}', 'updateLine')->whereNumber(['rentOut', 'line'])->name('lines.update');
+                Route::post('/checklists/{rentOut}/lines/{line}/photo', 'linePhoto')->whereNumber(['rentOut', 'line'])->name('lines.photo');
+                Route::post('/checklists/{rentOut}/lines/mark-ok', 'markOk')->whereNumber('rentOut')->name('lines.mark-ok');
+                Route::post('/checklists/{rentOut}/signatures', 'sign')->whereNumber('rentOut')->name('sign');
+                Route::post('/checklists/{rentOut}/seal', 'seal')->whereNumber('rentOut')->name('seal');
+                Route::post('/checklists/{rentOut}/fixtures', 'storeFixture')->whereNumber('rentOut')->name('fixtures.store');
+                Route::post('/checklists/{rentOut}/fixtures/{area}/sign', 'signFixture')->whereNumber(['rentOut', 'area'])->name('fixtures.sign');
+                Route::patch('/fixture-entries/{entry}', 'updateFixture')->whereNumber('entry')->name('fixtures.update');
+                Route::post('/fixture-entries/{entry}/photo', 'fixturePhoto')->whereNumber('entry')->name('fixtures.photo');
+                Route::delete('/fixture-entries/{entry}', 'deleteFixture')->whereNumber('entry')->name('fixtures.delete');
+            });
         });
     });
 });

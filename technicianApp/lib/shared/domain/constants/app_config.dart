@@ -6,14 +6,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// emulator development we also send `X-Tenant-Subdomain` so the tenant resolves
 /// without a real subdomain host.
 ///
-/// Defaults are build-time values supplied via `--dart-define-from-file=env.json`.
-/// A `.env` file (loaded in `main.dart`) is checked next — the quickest way to
-/// point a local dev build at a different URL: edit `.env`, hot-restart, no
-/// rebuild needed. A saved in-app override (settings screen) comes after that.
+/// Precedence (same as the POS app): a connection saved from the Connection
+/// sheet WINS; the build's own address — `--dart-define-from-file=env.json`,
+/// then the dev `.env` — is only the default for a device that has never saved
+/// one. It used to be the other way round, which silently repointed a device
+/// back at the build address on every cold start (any sign-out the OS follows
+/// by killing the app). The sheet offers the build default back instead.
 class AppConfig {
-  AppConfig({required this.baseUrl, required this.tenant, this.hostHeader = ''});
+  AppConfig({required String baseUrl, required this.tenant, this.hostHeader = ''})
+      : baseUrl = normalizeBaseUrl(baseUrl);
 
-  /// e.g. http://192.168.68.106  (no trailing slash, no /api)
+  /// e.g. http://192.168.68.106  (no trailing slash, no /api) — guaranteed, the
+  /// constructor runs [normalizeBaseUrl] over whatever it is handed.
   final String baseUrl;
 
   /// Tenant subdomain, e.g. "project_manager". Sent as `X-Tenant-Subdomain` /
@@ -57,23 +61,58 @@ class AppConfig {
         : (dotenv.env['API_TENANT'] ?? '');
   }
 
-  /// Resolve the active connection. Priority: build-time `--dart-define`
-  /// (always wins so a stale saved/`.env` value can never silently shadow a
-  /// release build) > `.env` file > saved in-app override > last-resort fallback.
-  static AppConfig resolve({String? savedBaseUrl, String? savedTenant}) =>
-      AppConfig(
-        baseUrl: envBaseUrl.isNotEmpty
-            ? envBaseUrl
-            : (_dotenvBaseUrl.isNotEmpty
-                ? _dotenvBaseUrl
-                : (savedBaseUrl ?? fallbackBaseUrl)),
-        tenant: envTenant.isNotEmpty
-            ? envTenant
-            : (_dotenvTenant.isNotEmpty ? _dotenvTenant : (savedTenant ?? '')),
-        hostHeader: envHostHeader,
-      );
+  /// The build's own address: env.json, then the dev `.env`.
+  static String get buildBaseUrl => envBaseUrl.isNotEmpty ? envBaseUrl : _dotenvBaseUrl;
+  static String get buildTenant => envTenant.isNotEmpty ? envTenant : _dotenvTenant;
+
+  /// What this build points at until someone saves a connection.
+  static String get defaultBaseUrl => buildBaseUrl.isNotEmpty ? buildBaseUrl : fallbackBaseUrl;
+  static String get defaultTenant => buildTenant;
+
+  /// Resolve the active connection — saved first, then the build default.
+  /// The build values are parameters so the precedence is testable.
+  static AppConfig resolve({
+    String? savedBaseUrl,
+    String? savedTenant,
+    String? buildBaseUrl,
+    String? buildTenant,
+    String buildHostHeader = envHostHeader,
+  }) {
+    final build = buildBaseUrl ?? AppConfig.buildBaseUrl;
+    final saved = normalizeBaseUrl(savedBaseUrl ?? '');
+    final baseUrl = saved.isNotEmpty ? saved : (build.isNotEmpty ? build : fallbackBaseUrl);
+    return AppConfig(
+      baseUrl: baseUrl,
+      // A saved tenant wins even when blank: the sheet writes both fields
+      // together, so a blank one was cleared on purpose.
+      tenant: (savedTenant ?? buildTenant ?? AppConfig.buildTenant).trim(),
+      hostHeader: hostHeaderFor(baseUrl, buildBaseUrl: build, buildHostHeader: buildHostHeader),
+    );
+  }
+
+  /// The `Host` override to send to [baseUrl]. It belongs to the build's own
+  /// host (it routes a LAN-IP request to the right Valet/nginx site), so a
+  /// device pointed at any other server sends none.
+  static String hostHeaderFor(
+    String baseUrl, {
+    String? buildBaseUrl,
+    String buildHostHeader = envHostHeader,
+  }) =>
+      normalizeBaseUrl(baseUrl) == normalizeBaseUrl(buildBaseUrl ?? AppConfig.buildBaseUrl)
+          ? buildHostHeader
+          : '';
 
   String get apiV1 => '$baseUrl/api/v1';
+
+  /// Strips the whitespace and trailing slashes a hand-typed host arrives with
+  /// (`https://x.com/` would otherwise build `https://x.com//api/v1`).
+  static String normalizeBaseUrl(String raw) {
+    var value = raw.trim();
+    while (value.endsWith('/')) {
+      value = value.substring(0, value.length - 1);
+    }
+    return value;
+  }
 
   /// Absolute URL for a server asset/attachment. The API returns storage paths
   /// relative to the site root (e.g. `/storage/…`); we point them at the

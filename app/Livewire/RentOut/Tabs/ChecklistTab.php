@@ -2,13 +2,19 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Actions\RentOut\Checklist\Line\RemovePhotoAction;
+use App\Actions\RentOut\Checklist\Line\SavePhotoAction;
 use App\Actions\RentOut\Checklist\SaveAction;
 use App\Actions\RentOut\Checklist\SaveFixtureAction;
+use App\Actions\RentOut\Checklist\SealAction;
+use App\Enums\RentOut\ChecklistPhase;
+use App\Enums\RentOut\ChecklistSignatoryRole;
 use App\Enums\RentOut\FixtureStatus;
 use App\Models\Checklist;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
 use App\Models\RentOutFixtureArea;
+use App\Support\RentOutChecklistState;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
@@ -28,6 +34,13 @@ class ChecklistTab extends Component
 
     /** Pending per-line image uploads, keyed by line index. */
     public array $newImages = [];
+
+    /**
+     * Pending move-out photo uploads, keyed by line index. Unlike the line image these
+     * are written straight to the line (as the technician app does), so a later
+     * "Save Checklist" from a stale tab can never wipe a photo taken on site.
+     */
+    public array $newMoveOutImages = [];
 
     public ?string $actualMoveInDate = null;
 
@@ -104,6 +117,8 @@ class ChecklistTab extends Component
             'image_path' => $l->image_path,
             'master_image_url' => $l->item?->image_path ? asset('storage/'.$l->item->image_path) : null,
             'resolved_image_url' => $l->resolved_image_url,
+            // The move-out photo (taken here or in the technician app), shown beside the move-out status.
+            'move_out_image_url' => $l->move_out_image_path ? asset('storage/'.$l->move_out_image_path) : null,
             'qty' => $l->qty,
             'move_in_status' => $l->move_in_status?->value,
             'move_in_comment' => $l->move_in_comment,
@@ -343,6 +358,122 @@ class ChecklistTab extends Component
         unset($this->newImages[$index]);
     }
 
+    /** A move-out photo was picked — store it on the line right away. */
+    public function updatedNewMoveOutImages($value, $key): void
+    {
+        abort_unless(Auth::user()?->can('rent out checklist.edit'), 403);
+        $index = (int) $key;
+        $lineId = $this->lines[$index]['id'] ?? null;
+
+        if (! $value || ! $lineId) {
+            return;
+        }
+
+        $this->validate([
+            "newMoveOutImages.$index" => 'image|max:8192',
+        ], [
+            "newMoveOutImages.$index.image" => 'The file must be an image',
+            "newMoveOutImages.$index.max" => 'The image size must not exceed 8MB',
+        ]);
+
+        $response = (new SavePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut, $value);
+        unset($this->newMoveOutImages[$index]);
+
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->lines[$index]['move_out_image_url'] = asset('storage/'.$response['data']->move_out_image_path);
+    }
+
+    public function removeMoveOutImage($index): void
+    {
+        abort_unless(Auth::user()?->can('rent out checklist.edit'), 403);
+        $lineId = $this->lines[$index]['id'] ?? null;
+        if (! $lineId) {
+            return;
+        }
+
+        $response = (new RemovePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut);
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->lines[$index]['move_out_image_url'] = null;
+    }
+
+    /**
+     * Seal a hand-over phase once all three signatories have signed — the same step
+     * as "Seal hand-over" in the technician app. Uses the date and remarks on screen;
+     * a blank date means today.
+     */
+    public function seal(string $phase): void
+    {
+        abort_unless(Auth::user()?->can('rent out checklist.edit'), 403);
+        $phase = ChecklistPhase::from($phase);
+        $rentOut = RentOut::findOrFail($this->rentOutId);
+
+        $date = RentOutChecklistState::handoverDateColumn($rentOut, $phase) === 'actual_move_out_date'
+            ? $this->actualMoveOutDate
+            : $this->actualMoveInDate;
+
+        $response = (new SealAction())->execute($this->rentOutId, $phase, [
+            'actual_date' => $date,
+            'remarks' => $phase === ChecklistPhase::MoveIn ? $this->moveInRemarks : $this->moveOutRemarks,
+        ]);
+
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $rentOut->refresh();
+        $this->actualMoveInDate = optional($rentOut->actual_move_in_date)->format('Y-m-d');
+        $this->actualMoveOutDate = optional($rentOut->actual_move_out_date)->format('Y-m-d');
+        $this->dispatch('success', ['message' => $response['message']]);
+    }
+
+    /**
+     * Where each hand-over phase stands, for the status cards: items checked (from the
+     * rows on screen), the three signatures, and whether it is sealed.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function handoverStatus(): array
+    {
+        $rentOut = RentOut::with('checklistSignatures')->find($this->rentOutId);
+        if (! $rentOut) {
+            return [];
+        }
+
+        return collect(RentOutChecklistState::phasesFor($rentOut))->map(fn (ChecklistPhase $phase) => [
+            'phase' => $phase->value,
+            'label' => RentOutChecklistState::phaseLabel($rentOut, $phase),
+            'title' => RentOutChecklistState::isSingleHandover($rentOut) ? 'Hand-over' : $phase->label().' hand-over',
+            'checked' => collect($this->lines)->filter(fn ($l) => filled($l[$phase->statusColumn()] ?? null))->count(),
+            'total' => count($this->lines),
+            'signatures' => collect([ChecklistSignatoryRole::FacilityCoordinator, ChecklistSignatoryRole::Lessee, ChecklistSignatoryRole::LeasingCoordinator])
+                ->map(function (ChecklistSignatoryRole $role) use ($rentOut, $phase) {
+                    $signature = $rentOut->checklistSignatureFor($phase, $role);
+
+                    return [
+                        'label' => $role->labelFor($rentOut->agreement_type),
+                        'signed' => (bool) $signature?->signature_path,
+                        'name' => $signature?->signer_name,
+                        'at' => $signature?->signed_at?->format('d M Y, H:i'),
+                    ];
+                })->all(),
+            'ready' => RentOutChecklistState::isFullySigned($rentOut, $phase),
+            'sealed' => RentOutChecklistState::isSealed($rentOut, $phase),
+            'sealed_on' => $rentOut->{RentOutChecklistState::handoverDateColumn($rentOut, $phase)}?->format('d M Y'),
+        ])->all();
+    }
+
     /** Clear the line's own image so it falls back to the master item image. */
     public function removeLineImage($index): void
     {
@@ -556,6 +687,7 @@ class ChecklistTab extends Component
             'fixtureIndex' => $fixtureIndex,
             'availableCategories' => $availableCategories,
             'statusOptions' => FixtureStatus::options(),
+            'handover' => $this->handoverStatus(),
         ]);
     }
 }

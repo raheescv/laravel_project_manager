@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\PurchaseVendor\BuildStatementDataAction;
+use App\Actions\RentOut\Checklist\GeneratePdfAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
 use App\Helpers\Facades\SaleHelper;
@@ -38,48 +39,7 @@ class PrintController extends Controller
 
     public function rentOutChecklist($id)
     {
-        $rentOut = RentOut::with([
-            'account',
-            'group',
-            'building',
-            'property',
-            'type',
-            'checklistLines.item',
-            'checklistSignatures',
-            'fixtureAreas.entries',
-            'facilityCoordinator',
-            'leasingCoordinator',
-        ])->findOrFail($id);
-
-        // Rendered by Chrome rather than dompdf: the handover declaration is rich text
-        // edited in Settings and may hold Arabic clauses, which dompdf prints
-        // unshaped and back-to-front. Browsershot embeds data URIs, so the logo
-        // travels with the HTML.
-        $companyLogo = CompanyLogoResolver::dataUri();
-
-        $render = function (int $pages) use ($rentOut, $companyLogo) {
-            $html = view('print.rentout.checklist', compact('rentOut', 'companyLogo', 'pages'))->render();
-
-            return $this->makeBrowsershot($html)
-                ->format('A4')
-                ->margins(10, 10, 10, 10)
-                ->showBackground()
-                ->pdf();
-        };
-
-        // The acknowledgment has to sit at the foot of the LAST page, which the page
-        // body can only be stretched to once the page count is known — so lay it out
-        // once to count, then lay it out again at that height. If the taller body
-        // spills onto one more page (rounding), the first pass is the honest answer.
-        $pdf = $render(1);
-        $pages = $this->pdfPageCount($pdf);
-
-        if ($pages > 1) {
-            $stretched = $render($pages);
-            if ($this->pdfPageCount($stretched) === $pages) {
-                $pdf = $stretched;
-            }
-        }
+        $pdf = (new GeneratePdfAction())->execute((int) $id);
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
@@ -403,12 +363,6 @@ class PrintController extends Controller
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
-    }
-
-    /** Pages in a rendered PDF, read from the page tree; 1 when it can't be told. */
-    private function pdfPageCount(string $pdf): int
-    {
-        return preg_match('/\/Count (\d+)/', $pdf, $matches) ? max(1, (int) $matches[1]) : 1;
     }
 
     private function getCompanyInfo(): array

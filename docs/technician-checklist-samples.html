@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en" data-mode="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technician Checklist Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+/* ============================================================
+   TOKENS — FixMate emerald (mirrors FixMateBrand + AstraPalette)
+   ============================================================ */
+:root{
+  --em:#0FA968; --em-d:#0B7F4F; --em-dd:#06563A; --gold:#C9A24B; --gold-d:#9C7A2E;
+  --ok:#1F9D63; --bad:#D4546A; --na:#8A94A6; --warn:#D9952B;
+  --page:#E9EEEC; --page-ink:#0F1F1A; --page-mut:#5E726B;
+  --phone-bg:#F4F7F5; --card:#FFFFFF; --ink:#0F1F1A; --t2:#4E625B; --mut:#8C9C96;
+  --line:#E3E9E6; --tint:#E3F5EC; --ok-t:#E4F6EC; --bad-t:#FBE9EC; --na-t:#EEF0F4; --warn-t:#FBF1DF;
+  --shadow:0 6px 22px rgba(15,31,26,.08);
+  --ui:'Manrope',system-ui,sans-serif; --serif:'Marcellus',Georgia,serif;
+}
+[data-mode="dark"]{
+  --page:#070B09; --page-ink:#EAF2EE; --page-mut:#8FA59C;
+  --phone-bg:#0B1310; --card:#14201B; --ink:#EAF2EE; --t2:#A7BDB4; --mut:#6E8279;
+  --line:rgba(255,255,255,.08); --tint:rgba(15,169,104,.16); --ok-t:rgba(31,157,99,.18);
+  --bad-t:rgba(212,84,106,.18); --na-t:rgba(138,148,166,.16); --warn-t:rgba(217,149,43,.18);
+  --shadow:0 6px 22px rgba(0,0,0,.4);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--page)}
+body{font-family:var(--ui);color:var(--page-ink);min-height:100vh;padding:28px 16px 70px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+
+/* ---------- page chrome ---------- */
+.head{max-width:1480px;margin:0 auto 18px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.head h1{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:.2px}
+.head p{color:var(--page-mut);font-size:14px;margin-top:6px;max-width:720px;line-height:1.55}
+.mode{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.mode button{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--t2)}
+.mode button.on{background:var(--em);color:#fff}
+.tabs{position:sticky;top:0;z-index:20;max-width:1480px;margin:0 auto 22px;display:flex;gap:8px;flex-wrap:wrap;padding:10px 0;background:var(--page)}
+.tabs button{display:flex;align-items:center;gap:10px;padding:10px 16px 10px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-weight:700;font-size:14px;text-align:left}
+.tabs button b{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--tint);color:var(--em-d);font-size:14px}
+.tabs button small{display:block;font-weight:500;font-size:11.5px;color:var(--page-mut)}
+.tabs button.on{border-color:var(--em);box-shadow:0 0 0 3px rgba(15,169,104,.16)}
+.tabs button.on b{background:var(--em);color:#fff}
+.dir{display:none;max-width:1480px;margin:0 auto}
+.dir.on{display:block}
+.dir-intro{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-bottom:22px}
+.dir-intro h2{font-family:var(--serif);font-weight:400;font-size:24px}
+.dir-intro p{color:var(--page-mut);font-size:14px;line-height:1.6;margin-top:6px}
+.dir-intro ul{list-style:none;display:grid;gap:7px;font-size:13px;color:var(--page-mut);align-content:start}
+.dir-intro li{display:flex;gap:8px;line-height:1.45}
+.dir-intro li i{color:var(--em);margin-top:2px}
+.rail{display:flex;gap:26px;flex-wrap:wrap;justify-content:center}
+.slot{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cap{font-size:12.5px;color:var(--page-mut);text-align:center;max-width:320px;line-height:1.45}
+.cap b{color:var(--page-ink);display:block;font-size:13px;margin-bottom:2px}
+
+/* ---------- phone shell ---------- */
+.phone{width:340px;height:720px;border-radius:46px;border:10px solid #0d0f0e;background:var(--phone-bg);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 60px -20px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.04) inset;color:var(--ink)}
+.phone::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:26px;border-radius:20px;background:#0d0f0e;z-index:30}
+.sb{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 26px 0 30px;font-size:13px;font-weight:800;position:relative;z-index:5}
+.sb .ic{display:flex;gap:6px;align-items:center;font-size:12px}
+.batt{width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative;opacity:.9}
+.batt::after{content:"";position:absolute;inset:1.5px;right:5px;background:currentColor;border-radius:1px}
+.scr{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;position:relative}
+.scr::-webkit-scrollbar{display:none}
+.on-dark{color:#fff}
+
+/* shared bits */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
+.pill.in{background:var(--ok-t);color:var(--ok)}
+.pill.out{background:var(--warn-t);color:var(--warn)}
+.pill.sign{background:var(--tint);color:var(--em-d)}
+[data-mode="dark"] .pill.sign{color:#5FD6A1}
+.av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;flex:none}
+.photo{position:relative;overflow:hidden;background:linear-gradient(135deg,#cfdcd5,#93aca1)}
+.photo::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),transparent 45%),linear-gradient(180deg,transparent 55%,rgba(0,0,0,.25))}
+.photo.p1{background:linear-gradient(135deg,#d7d2c7,#9d907a)}
+.photo.p2{background:linear-gradient(135deg,#c9d6e2,#7f98ae)}
+.photo.p3{background:linear-gradient(135deg,#e1d6cc,#b08f78)}
+.photo.p4{background:linear-gradient(135deg,#d2ddd0,#86a283)}
+.photo.p5{background:linear-gradient(135deg,#dcd3e2,#9a89ab)}
+.photo.p6{background:linear-gradient(135deg,#e2dccb,#a9a07f)}
+.photo .ph-i{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;color:rgba(255,255,255,.75);z-index:1}
+.toast{position:absolute;left:50%;bottom:96px;transform:translate(-50%,20px);background:#0F1F1A;color:#fff;padding:9px 16px;border-radius:12px;font-size:12.5px;font-weight:700;opacity:0;transition:.25s;z-index:40;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* signature pad */
+.pad{position:relative;border-radius:16px;background:var(--card);border:1.5px dashed var(--line);touch-action:none;overflow:hidden}
+.pad canvas{display:block;width:100%;height:100%;cursor:crosshair;position:relative;z-index:1}
+.pad .hint{position:absolute;left:16px;right:16px;bottom:22px;border-top:1.5px solid var(--line);padding-top:6px;font-size:11px;color:var(--mut);display:flex;justify-content:space-between;pointer-events:none}
+.pad .hint::before{content:"✕";position:absolute;left:0;top:-22px;font-size:14px;color:var(--mut)}
+.pad .clr{position:absolute;top:8px;right:8px;z-index:2;font-size:11px;font-weight:700;color:var(--t2);background:var(--phone-bg);border-radius:8px;padding:4px 8px;display:none}
+.pad.inked .clr{display:block}
+.pad.inked{border-style:solid;border-color:var(--em)}
+.sig-img{display:block;width:100%;height:100%;object-fit:contain}
+[data-mode="dark"] .sig-img{filter:invert(1) hue-rotate(180deg)}
+
+/* =========================================================
+   A — WALKTHROUGH  (guided, one item at a time)
+   ========================================================= */
+.a .a-hero{background:linear-gradient(150deg,#0FA968 0%,#0B7F4F 55%,#06563A 100%);margin-top:-44px;padding:58px 20px 54px;color:#fff;position:relative;overflow:hidden}
+.a .a-hero::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-70px;top:-60px;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 65%)}
+.a-kick{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;opacity:.8}
+.a-hero h3{font-family:var(--serif);font-weight:400;font-size:28px;margin-top:4px}
+.a-hero p{font-size:13px;opacity:.85;margin-top:2px}
+.a-chips{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.a-chips span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;backdrop-filter:blur(6px)}
+.a-list{padding:0 14px 100px;margin-top:-34px;display:grid;gap:12px;position:relative;z-index:2}
+.a-job{background:var(--card);border-radius:20px;padding:14px;box-shadow:var(--shadow);display:grid;gap:10px}
+.a-job .top{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--mut);font-weight:700}
+.a-job h4{font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+.a-job .sub{font-size:12px;color:var(--t2);margin-top:1px}
+.a-job .who{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
+.a-bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.a-bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--em),#4ED39A)}
+.a-job .foot{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:700;color:var(--t2)}
+.a-job .go{width:30px;height:30px;border-radius:10px;background:var(--tint);color:var(--em-d);display:grid;place-items:center}
+.a-job.hot{outline:2px solid var(--em);outline-offset:-2px}
+.nav{position:absolute;left:12px;right:12px;bottom:12px;height:62px;border-radius:22px;background:var(--card);box-shadow:0 10px 30px rgba(0,0,0,.14);display:flex;justify-content:space-around;align-items:center;z-index:10;border:1px solid var(--line)}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--mut)}
+.nav span i{font-size:17px}
+.nav span.on{color:var(--em)}
+.nav span.on::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--em);margin-top:1px}
+.nav .new{position:relative}
+.nav .new::before{content:"NEW";position:absolute;top:-9px;right:-14px;background:var(--gold);color:#fff;font-size:7.5px;padding:1px 4px;border-radius:5px;letter-spacing:.4px}
+
+.a-top{display:flex;align-items:center;gap:10px;padding:4px 16px 10px}
+.ibtn{width:36px;height:36px;border-radius:12px;background:var(--card);display:grid;place-items:center;box-shadow:var(--shadow);flex:none;font-size:14px}
+.a-top .t{flex:1;min-width:0}
+.a-top .t b{display:block;font-size:14.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-top .t small{font-size:11.5px;color:var(--mut);font-weight:600}
+.a-areas{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px;scrollbar-width:none}
+.a-areas::-webkit-scrollbar{display:none}
+.a-area{flex:none;padding:7px 11px;border-radius:12px;background:var(--card);font-size:12px;font-weight:700;color:var(--t2);display:flex;gap:6px;align-items:center;border:1.5px solid transparent}
+.a-area b{font-size:10.5px;color:var(--mut)}
+.a-area.on{border-color:var(--em);color:var(--ink)}
+.a-area.done{color:var(--ok)}
+.a-area.done b{color:var(--ok)}
+.a-segs{display:flex;gap:4px;padding:0 16px 12px}
+.a-segs i{flex:1;height:5px;border-radius:5px;background:var(--line)}
+.a-segs i.ok{background:var(--ok)} .a-segs i.bad{background:var(--bad)} .a-segs i.na{background:var(--na)}
+.a-segs i.cur{box-shadow:0 0 0 2px var(--phone-bg),0 0 0 3.5px var(--ink)}
+.a-card{margin:0 14px;background:var(--card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.a-shot{height:178px;cursor:pointer;display:grid;place-items:center;background:repeating-linear-gradient(45deg,var(--tint) 0 10px,transparent 10px 20px);color:var(--em-d);position:relative}
+[data-mode="dark"] .a-shot{color:#5FD6A1}
+.a-shot .cta{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12.5px;font-weight:800}
+.a-shot .cta i{width:54px;height:54px;border-radius:50%;background:var(--em);color:#fff;display:grid;place-items:center;font-size:21px;box-shadow:0 8px 20px rgba(15,169,104,.4)}
+.a-shot .ref{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;align-items:center;background:rgba(0,0,0,.45);color:#fff;font-size:10px;font-weight:700;padding:4px 8px 4px 4px;border-radius:9px;z-index:2}
+.a-shot .ref .photo{width:22px;height:22px;border-radius:6px}
+.a-shot .badge{position:absolute;top:10px;right:10px;z-index:2;background:rgba(0,0,0,.5);color:#fff;font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:9px;display:none}
+.a-shot.has{background:none}
+.a-shot.has .cta{display:none}
+.a-shot.has .badge{display:block}
+.a-shot .photo{position:absolute;inset:0;display:none}
+.a-shot.has .photo{display:block}
+.a-body{padding:14px 14px 16px;display:grid;gap:12px}
+.a-name{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.a-name h4{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.a-name small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
+.qty{display:flex;align-items:center;background:var(--phone-bg);border-radius:12px;padding:3px}
+.qty button{width:28px;height:28px;border-radius:9px;font-weight:800}
+.qty button:active{background:var(--line)}
+.qty b{min-width:22px;text-align:center;font-size:14px}
+.a-status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.a-status button{border-radius:16px;padding:12px 4px 10px;background:var(--phone-bg);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--t2);border:2px solid transparent;transition:.15s}
+.a-status button i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:var(--card)}
+.a-status button[data-s=ok].on{background:var(--ok-t);border-color:var(--ok);color:var(--ok)}
+.a-status button[data-s=ok].on i{background:var(--ok);color:#fff}
+.a-status button[data-s=bad].on{background:var(--bad-t);border-color:var(--bad);color:var(--bad)}
+.a-status button[data-s=bad].on i{background:var(--bad);color:#fff}
+.a-status button[data-s=na].on{background:var(--na-t);border-color:var(--na);color:var(--na)}
+.a-status button[data-s=na].on i{background:var(--na);color:#fff}
+.a-note{background:var(--phone-bg);border-radius:14px;padding:10px 12px}
+.a-note textarea{width:100%;border:0;background:none;resize:none;outline:none;font-size:13px;height:38px}
+.qchips{display:flex;gap:5px;flex-wrap:wrap}
+.qchips button{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--card);color:var(--t2);border:1px solid var(--line)}
+.a-foot{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:12px 14px 22px}
+.a-foot .prev{width:52px;height:52px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:16px}
+.btn{height:52px;border-radius:16px;background:var(--em);color:#fff;font-weight:800;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 10px 22px -8px rgba(15,169,104,.6);width:100%}
+.btn:disabled{background:var(--line);color:var(--mut);box-shadow:none;cursor:not-allowed}
+.btn.gold{background:linear-gradient(135deg,#D8B45B,#B08A33);box-shadow:0 10px 22px -8px rgba(176,138,51,.6)}
+
+.a-ring{display:flex;gap:16px;align-items:center;margin:4px 14px 14px;background:var(--card);border-radius:22px;padding:16px;box-shadow:var(--shadow)}
+.ring{--p:0;width:84px;height:84px;border-radius:50%;background:conic-gradient(var(--em) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}
+.ring b{width:66px;height:66px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:17px;font-weight:800;line-height:1.05;text-align:center}
+.ring b small{display:block;font-size:9.5px;color:var(--mut);font-weight:700}
+.a-ring .k{display:grid;gap:5px;font-size:12.5px;color:var(--t2);flex:1}
+.a-ring .k span{display:flex;justify-content:space-between}
+.a-ring .k b{color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.sec-h{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut);padding:6px 18px 8px;display:flex;justify-content:space-between}
+.a-flag{margin:0 14px 8px;background:var(--card);border-radius:16px;padding:10px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);border-left:4px solid var(--bad)}
+.a-flag.todo{border-left-color:var(--warn)}
+.a-flag .photo{width:42px;height:42px;border-radius:11px;flex:none}
+.a-flag .tx{flex:1;min-width:0}
+.a-flag .tx b{font-size:13px;display:block}
+.a-flag .tx small{font-size:11.5px;color:var(--t2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-flag .tag{font-size:10.5px;font-weight:800;color:var(--bad)}
+.a-flag.todo .tag{color:var(--warn)}
+.a-field{margin:0 14px 10px;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);font-size:12px;color:var(--mut);font-weight:700}
+.a-field div{color:var(--ink);font-size:14px;font-weight:700;margin-top:3px;display:flex;justify-content:space-between}
+.a-field textarea{width:100%;border:0;background:none;outline:none;resize:none;color:var(--ink);font-size:13px;font-weight:500;margin-top:4px;height:40px}
+
+.a-sig{margin:0 14px 10px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.a-sig .hd{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.a-sig .num{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;background:var(--phone-bg);color:var(--t2);flex:none}
+.a-sig .hd .tx{flex:1;min-width:0}
+.a-sig .hd .tx b{display:block;font-size:13.5px}
+.a-sig .hd .tx small{font-size:11.5px;color:var(--mut);font-weight:600}
+.a-sig .st{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:999px}
+.a-sig.done .num{background:var(--ok);color:#fff}
+.a-sig.done .st{background:var(--ok-t);color:var(--ok)}
+.a-sig.live{outline:2px solid var(--em);outline-offset:-2px}
+.a-sig.live .num{background:var(--em);color:#fff}
+.a-sig.live .st{background:var(--tint);color:var(--em-d)}
+.a-sig.lock{opacity:.78}
+.a-sig.lock .st{background:var(--na-t);color:var(--na)}
+.a-sig .sigbox{height:70px;margin:0 14px 12px;border-radius:12px;background:var(--phone-bg);padding:6px}
+.a-sig .bd{padding:0 14px 14px;display:grid;gap:10px}
+.a-sig .pass{display:flex;gap:8px;align-items:center;background:var(--warn-t);color:var(--warn);font-size:11.5px;font-weight:700;padding:8px 10px;border-radius:11px}
+.a-sig .pad{height:140px}
+.a-sig .name{display:flex;align-items:center;gap:8px;background:var(--phone-bg);border-radius:12px;padding:9px 12px;font-size:13px}
+.a-sig .name input{border:0;background:none;outline:none;flex:1;font-weight:700}
+.a-sig .rem{font-size:11.5px;color:var(--t2);padding:0 14px 12px;display:flex;justify-content:space-between;align-items:center}
+.a-sig .rem a{color:var(--em-d);font-weight:800;text-decoration:none}
+[data-mode="dark"] .a-sig .rem a{color:#5FD6A1}
+.mini-btn{height:40px;border-radius:12px;background:var(--em);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px}
+.mini-btn:disabled{background:var(--line);color:var(--mut)}
+
+/* =========================================================
+   B — INSPECTION SHEET (dense, list-first)
+   ========================================================= */
+.b{--phone-bg:#F6F7F9}
+[data-mode="dark"] .b{--phone-bg:#0B0F14;--card:#151B22;--line:rgba(255,255,255,.08)}
+.b-h{padding:4px 16px 12px}
+.b-h h3{font-size:24px;font-weight:800;letter-spacing:-.6px}
+.b-h small{font-size:12px;color:var(--mut);font-weight:600}
+.b-search{margin:0 16px 10px;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:10px 12px;font-size:13px;color:var(--mut)}
+.b-filters{display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none}
+.b-filters span{flex:none;padding:6px 11px;border-radius:10px;font-size:12px;font-weight:700;background:var(--card);border:1px solid var(--line);color:var(--t2)}
+.b-filters span b{font-weight:800;color:var(--mut);margin-left:3px}
+.b-filters span.on{background:var(--ink);color:var(--phone-bg);border-color:var(--ink)}
+.b-filters span.on b{color:inherit;opacity:.7}
+.b-group{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--mut);padding:8px 18px 6px}
+.b-rows{margin:0 12px 6px;background:var(--card);border-radius:16px;border:1px solid var(--line);overflow:hidden}
+.b-row{display:flex;gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--line)}
+.b-row:last-child{border-bottom:0}
+.donut{--p:0;--c:var(--em);width:40px;height:40px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}
+.donut b{width:31px;height:31px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:10px;font-weight:800}
+.b-row .tx{flex:1;min-width:0}
+.b-row .tx b{font-size:13.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-row .tx small{font-size:11.5px;color:var(--mut);display:block;margin-top:1px}
+.b-row .rt{text-align:right;display:grid;gap:4px;justify-items:end}
+.b-row .rt small{font-size:11px;color:var(--mut);font-weight:700}
+.b-row .role{font-size:10.5px;color:var(--em-d);font-weight:800;display:flex;gap:4px;align-items:center;margin-top:3px}
+[data-mode="dark"] .b-row .role{color:#5FD6A1}
+
+.b-top{display:flex;align-items:center;gap:10px;padding:2px 14px 10px}
+.b-top .t{flex:1;min-width:0}
+.b-top .t b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-top .t small{font-size:11px;color:var(--mut);font-weight:700}
+.b .ibtn{box-shadow:none;border:1px solid var(--line)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;margin:0 14px 10px}
+.seg button{padding:7px;border-radius:9px;font-size:12.5px;font-weight:800;color:var(--mut);display:flex;gap:6px;justify-content:center;align-items:center}
+.seg button.on{background:var(--ink);color:var(--phone-bg)}
+.b-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 14px 10px}
+.b-stats div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 8px}
+.b-stats b{font-size:17px;font-weight:800;display:block;line-height:1.1}
+.b-stats small{font-size:10px;font-weight:700;color:var(--mut)}
+.b-area{margin:0 12px 8px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.b-area .ah{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.b-area .ah .ic{width:30px;height:30px;border-radius:9px;background:var(--tint);color:var(--em-d);display:grid;place-items:center;font-size:13px;flex:none}
+[data-mode="dark"] .b-area .ah .ic{color:#5FD6A1}
+.b-area .ah .tx{flex:1}
+.b-area .ah b{font-size:13.5px;display:block}
+.b-area .ah small{font-size:11px;color:var(--mut);font-weight:700}
+.b-area .ah .all{font-size:10.5px;font-weight:800;color:var(--ok);background:var(--ok-t);padding:5px 8px;border-radius:8px}
+.b-area .ah .chev{color:var(--mut);transition:.2s;font-size:12px}
+.b-area.open .ah .chev{transform:rotate(90deg)}
+.b-area .items{display:none;border-top:1px solid var(--line)}
+.b-area.open .items{display:block}
+.b-it{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.b-it:last-child{border-bottom:0}
+.b-it .th{width:38px;height:38px;border-radius:10px;flex:none;display:grid;place-items:center;cursor:pointer;color:var(--mut);background:var(--phone-bg);border:1.5px dashed var(--line);font-size:13px}
+.b-it .th.photo{border:0}
+.b-it .tx{flex:1;min-width:0;cursor:pointer}
+.b-it .tx b{font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-it .tx small{font-size:10.5px;color:var(--mut);font-weight:700;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
+.b-it .tx small .c{color:var(--t2);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.ghost{font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:5px;background:var(--na-t);color:var(--t2)}
+.ghost.ok{background:var(--ok-t);color:var(--ok)} .ghost.bad{background:var(--bad-t);color:var(--bad)}
+.tri{display:flex;background:var(--phone-bg);border-radius:10px;padding:2px;flex:none}
+.tri button{width:29px;height:27px;border-radius:8px;font-size:12px;color:var(--mut)}
+.tri button[data-s=ok].on{background:var(--ok);color:#fff}
+.tri button[data-s=bad].on{background:var(--bad);color:#fff}
+.tri button[data-s=na].on{background:var(--na);color:#fff}
+.b-foot{flex:none;padding:10px 14px 20px;background:var(--card);border-top:1px solid var(--line);display:grid;gap:8px}
+.b-foot .pr{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--t2)}
+.b-foot .pr b{color:var(--ink)}
+.stack{display:flex;height:6px;border-radius:6px;overflow:hidden;background:var(--line)}
+.stack i{display:block;height:100%}
+.b .btn{background:var(--ink);color:var(--phone-bg);box-shadow:none;height:48px;border-radius:14px}
+
+.b-dim{position:absolute;inset:0;background:rgba(10,15,20,.45);z-index:6}
+.b-under{filter:blur(1.5px);opacity:.9;pointer-events:none}
+.b-sheet{position:absolute;left:0;right:0;bottom:0;z-index:8;background:var(--card);border-radius:26px 26px 0 0;padding:8px 16px 22px;display:grid;gap:12px;box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+.b-sheet .grab{width:38px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 2px}
+.b-sheet .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.b-sheet .hd b{font-size:17px;font-weight:800;letter-spacing:-.3px;display:block}
+.b-sheet .hd small{font-size:11.5px;color:var(--mut);font-weight:700}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cmp .f{border-radius:14px;height:112px;position:relative;overflow:hidden}
+.cmp .f .lb{position:absolute;left:8px;top:8px;z-index:2;font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;background:rgba(0,0,0,.5);color:#fff;padding:3px 7px;border-radius:6px}
+.cmp .f.cap{background:var(--phone-bg);border:1.5px dashed var(--line);display:grid;place-items:center;cursor:pointer;color:var(--t2);font-size:11.5px;font-weight:800;text-align:center}
+.cmp .f.cap i{display:block;font-size:20px;color:var(--ink);margin-bottom:5px}
+.cmp .f.cap .lb{background:var(--ink);color:var(--card)}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.big3 button{border-radius:12px;padding:10px 4px;background:var(--phone-bg);font-size:12px;font-weight:800;color:var(--t2);display:flex;gap:6px;justify-content:center;align-items:center;border:1.5px solid transparent}
+.big3 button[data-s=ok].on{background:var(--ok-t);border-color:var(--ok);color:var(--ok)}
+.big3 button[data-s=bad].on{background:var(--bad-t);border-color:var(--bad);color:var(--bad)}
+.big3 button[data-s=na].on{background:var(--na-t);border-color:var(--na);color:var(--na)}
+.fld{background:var(--phone-bg);border-radius:12px;padding:8px 12px}
+.fld label{font-size:10.5px;font-weight:800;color:var(--mut);letter-spacing:.4px;text-transform:uppercase;display:block}
+.fld input,.fld textarea{width:100%;border:0;background:none;outline:none;font-size:13.5px;font-weight:600;resize:none;margin-top:2px}
+.fld.cost{display:none;border:1.5px solid var(--bad-t)}
+.fld.cost.show{display:block}
+.fld .money{display:flex;align-items:center;gap:6px;font-weight:800}
+
+.b-roles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 14px 12px}
+.b-roles button{border-radius:13px;padding:9px 18px 9px 8px;background:var(--card);border:1.5px solid var(--line);text-align:left;display:grid;gap:2px;position:relative}
+.b-roles button b{font-size:11.5px;font-weight:800;line-height:1.2}
+.b-roles button small{font-size:10px;color:var(--mut);font-weight:700}
+.b-roles button .s{position:absolute;top:7px;right:7px;font-size:11px;color:var(--mut)}
+.b-roles button.on{border-color:var(--ink)}
+.b-roles button.done .s{color:var(--ok)}
+.b-roles button.lock{opacity:.6}
+.b-signwrap{margin:0 14px;display:grid;gap:10px}
+.b-signwrap .who{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.b-signwrap .who .tx{flex:1}
+.b-signwrap .who b{font-size:13.5px;display:block}
+.b-signwrap .who small{font-size:11px;color:var(--mut);font-weight:700}
+.b-signwrap .pad{height:200px;border-radius:18px}
+.b-confirm{display:flex;gap:9px;font-size:11.5px;color:var(--t2);line-height:1.45;align-items:flex-start;cursor:pointer}
+.b-confirm .bx{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--mut);flex:none;display:grid;place-items:center;font-size:10px;color:transparent;margin-top:1px}
+.b-confirm.on .bx{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.b-lockpane{display:none;text-align:center;padding:30px 18px;background:var(--card);border:1px dashed var(--line);border-radius:18px;color:var(--t2);font-size:12.5px;line-height:1.55}
+.b-lockpane i{font-size:26px;color:var(--mut);display:block;margin-bottom:8px}
+.b-lockpane b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+.b-signed{display:none;height:200px;border-radius:18px;background:var(--card);border:1.5px solid var(--ok);padding:10px;position:relative}
+.b-signed .tag{position:absolute;left:10px;top:10px;font-size:10.5px;font-weight:800;color:var(--ok);background:var(--ok-t);padding:3px 8px;border-radius:7px}
+
+/* =========================================================
+   C — ATELIER  (inbox → rooms → room → item sheet → hand-over)
+   ========================================================= */
+.c{--phone-bg:#F7F3EA;--card:#FFFFFF;--ink:#12302A;--t2:#5B6E66;--mut:#9AA69F;--line:#ECE4D3;--tint:#E7F0EC;--em:#15806C;--em-d:#0E5648;--gold:#B8913A;--gold-d:#8E6E27;--gold-t:#F6EEDC;--shadow:0 6px 20px rgba(18,48,42,.07)}
+[data-mode="dark"] .c{--phone-bg:#08130F;--card:#10201B;--ink:#F2EEE4;--t2:#A9BDB5;--mut:#71857D;--line:rgba(227,199,127,.13);--tint:rgba(21,128,108,.22);--gold:#D5B062;--gold-d:#E3C77F;--gold-t:rgba(213,176,98,.14);--shadow:0 6px 20px rgba(0,0,0,.4)}
+.c .serif{font-family:var(--serif);font-weight:400}
+#dir-C{max-width:1880px}
+#dir-C .rail{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;padding:4px 2px 14px;scroll-snap-type:x proximity}
+#dir-C .slot{scroll-snap-align:start;flex:none}
+@media (min-width:1900px){#dir-C .rail{justify-content:center}}
+.c-kick{font-size:9.5px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--gold-d)}
+.c-ib{width:36px;height:36px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:13px;flex:none;color:var(--ink)}
+.c-top{display:flex;align-items:center;gap:10px;padding:2px 14px 10px}
+.c-top .t{flex:1;min-width:0}
+.c-top .t b{display:block;font-size:21px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c .nav span.on{color:var(--em)}
+.c .nav span.on::after{background:var(--gold)}
+.c .btn{background:var(--em);height:50px;box-shadow:0 10px 22px -10px rgba(21,128,108,.7)}
+.c .btn.gold{background:linear-gradient(135deg,#D8B45B,#A9842F);color:#1b1408}
+.c .btn:disabled{background:var(--line);color:var(--mut);box-shadow:none}
+.c-ghost{height:50px;border-radius:16px;background:var(--card);border:1px solid var(--line);font-weight:800;font-size:13px;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:7px}
+.c-foot{flex:none;display:grid;grid-template-columns:1fr 1.2fr;gap:8px;padding:10px 14px 20px}
+
+/* 1 · inbox */
+.ci-head{display:flex;justify-content:space-between;align-items:flex-end;padding:6px 18px 12px}
+.ci-head h3{font-size:31px;line-height:1.05;margin-top:4px}
+.ci-me{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#15806C,#0E5648);color:#F3E2B5;display:grid;place-items:center;font-size:13px;font-weight:800;box-shadow:0 0 0 2px var(--phone-bg),0 0 0 3.5px var(--gold)}
+.ci-strip{display:grid;grid-template-columns:repeat(4,1fr);margin:0 14px 12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 4px}
+.ci-strip div{text-align:center;border-right:1px solid var(--line)}
+.ci-strip div:last-child{border-right:0}
+.ci-strip b{display:block;font-weight:800;font-size:19px;line-height:1.2;letter-spacing:-.4px}
+.ci-strip small{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}
+.ci-strip .od b{color:var(--bad)}
+.ci-search{margin:0 14px 10px;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 12px;height:42px;color:var(--mut);font-size:13px}
+.ci-search input{border:0;background:none;outline:none;flex:1;font-size:13px;min-width:0}
+.ci-tabs{display:flex;gap:16px;padding:0 18px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.ci-tabs button{padding:8px 0 9px;font-size:12.5px;font-weight:800;color:var(--mut);position:relative}
+.ci-tabs button b{font-size:10px;color:var(--mut);margin-left:3px}
+.ci-tabs button.on{color:var(--ink)}
+.ci-tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2.5px;border-radius:2px;background:var(--gold)}
+.ci-group{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);padding:12px 18px 7px}
+.ci-group::after{content:"";flex:1;height:1px;background:var(--line)}
+.ci-group.od{color:var(--bad)}
+.ci-job{width:calc(100% - 28px);margin:0 14px 8px;display:flex;gap:12px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:11px 12px;box-shadow:var(--shadow);transition:.15s}
+.ci-job.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-t),var(--shadow)}
+.ci-date{width:44px;flex:none;text-align:center;border-radius:12px;background:var(--gold-t);padding:6px 0 5px}
+.ci-date b{display:block;font-family:var(--ui);font-weight:800;font-size:18px;line-height:1.05;color:var(--ink);letter-spacing:-.4px}
+.ci-date small{font-size:9px;font-weight:800;letter-spacing:1px;color:var(--gold-d)}
+.ci-tx{flex:1;min-width:0}
+.ci-tx > b{display:block;font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-tx > small{display:block;font-size:11.5px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-meta{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:10.5px;font-weight:700;color:var(--t2);white-space:nowrap;overflow:hidden}
+.ph{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 6px;border-radius:6px;flex:none}
+.ph.in{background:var(--ok-t);color:var(--ok)}
+.ph.out{background:var(--warn-t);color:var(--warn)}
+.ph.sg{background:var(--gold-t);color:var(--gold-d)}
+.ci-ring{--p:0;width:42px;height:42px;border-radius:50%;flex:none;background:conic-gradient(var(--em) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center}
+.ci-ring b{width:34px;height:34px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:10px;font-weight:800}
+.ci-ring.full{background:var(--gold)}
+.ci-ring.full b{color:var(--gold-d)}
+.c-empty{padding:30px;text-align:center;color:var(--mut);font-size:13px;grid-column:1/-1}
+
+/* 2 · rooms */
+.cj-hero{margin:0 14px 14px;border-radius:22px;padding:15px;color:#F3EEE2;background:radial-gradient(circle at 100% 0%,rgba(213,176,98,.32),transparent 45%),linear-gradient(160deg,#15806C,#0E5648 60%,#0A3A31);box-shadow:0 18px 30px -18px rgba(14,86,72,.8);position:relative;overflow:hidden}
+.cj-hero::before{content:"";position:absolute;inset:6px;border-radius:17px;border:1px solid rgba(227,199,127,.28);pointer-events:none}
+.cj-row{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:8px;position:relative}
+.cj-row small{display:block;font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#E3C77F}
+.cj-row b{display:block;font-size:12px;margin-top:2px;line-height:1.25}
+.cj-prog{display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);position:relative}
+.cj-big{font-family:var(--ui)!important;font-weight:800!important;font-size:36px;line-height:.9;letter-spacing:-1.5px}
+.cj-big sup{font-size:16px;margin-left:2px;color:#E3C77F}
+.cj-bars{flex:1;display:grid;gap:7px}
+.cj-bars .stack{background:rgba(255,255,255,.15);height:7px}
+.cj-leg{display:flex;justify-content:space-between;font-size:10px;font-weight:700;opacity:.9}
+.cj-leg i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+.c-title{display:flex;justify-content:space-between;align-items:baseline;padding:0 18px 10px}
+.c-title h4{font-size:19px}
+.c-title small{font-size:11px;color:var(--mut);font-weight:700}
+.cr-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 100px}
+.cr-tile{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;box-shadow:var(--shadow);position:relative;transition:.15s}
+.cr-tile.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-t),var(--shadow)}
+.cr-mos{height:74px;display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px}
+.cr-mos > :first-child{grid-row:span 2}
+.cr-mos .emp{grid-column:span 2;grid-row:span 2;display:grid;place-items:center;background:repeating-linear-gradient(-45deg,var(--phone-bg) 0 7px,transparent 7px 14px);color:var(--mut);font-size:20px}
+.cr-mos .more{background:var(--gold-t);color:var(--gold-d);display:grid;place-items:center;font-size:11px}
+.cr-bd{padding:9px 10px 10px}
+.cr-n{display:flex;align-items:center;gap:6px}
+.cr-n i{color:var(--em);font-size:12px}
+.cr-n b{font-size:13px;font-weight:800;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-flag{font-size:9.5px;font-weight:800;color:#fff;background:var(--bad);padding:1px 6px;border-radius:6px}
+.cr-bar{height:4px;border-radius:4px;background:var(--line);margin:8px 0 5px;overflow:hidden;display:flex}
+.cr-bar i{display:block;height:100%}
+.cr-bd small{font-size:10.5px;color:var(--mut);font-weight:700}
+.cr-done{position:absolute;top:7px;right:7px;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#fff;display:grid;place-items:center;font-size:11px;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.cr-hand{grid-column:span 2;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:18px;border:1.5px dashed var(--gold);color:var(--gold-d);text-align:left}
+.cr-hand .ic{width:38px;height:38px;border-radius:12px;background:var(--gold-t);display:grid;place-items:center;font-size:15px;flex:none}
+.cr-hand b{display:block;font-size:13.5px;color:var(--ink)}
+.cr-hand small{font-size:11px;font-weight:700}
+.cr-hand.ready{border-style:solid;background:var(--gold-t)}
+
+/* 3 · room grid */
+.cg-filter{display:flex;gap:6px;padding:0 14px 10px}
+.cg-filter button{padding:6px 11px;border-radius:999px;font-size:11.5px;font-weight:800;background:var(--card);border:1px solid var(--line);color:var(--t2)}
+.cg-filter button b{color:var(--mut);margin-left:3px}
+.cg-filter button.on{background:var(--ink);border-color:var(--ink);color:var(--phone-bg)}
+.cg-filter button.on b{color:inherit;opacity:.7}
+.cg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 16px}
+.cg-it{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;box-shadow:var(--shadow);position:relative;transition:.15s}
+.cg-it.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-t),var(--shadow)}
+.cg-it .photo,.cg-it .empty{height:98px}
+.cg-it .empty{display:grid;place-items:center;background:repeating-linear-gradient(-45deg,var(--phone-bg) 0 8px,transparent 8px 16px);color:var(--mut);font-size:11px;font-weight:800;text-align:center}
+.cg-it .empty i{display:block;font-size:18px;margin-bottom:3px}
+.stt{position:absolute;top:8px;right:8px;z-index:2;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.stt.ok{background:var(--ok)} .stt.bad{background:var(--bad)} .stt.na{background:var(--na)} .stt.none{background:rgba(255,255,255,.92);color:var(--mut)}
+.cg-it .was{position:absolute;left:8px;top:74px;z-index:2;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;letter-spacing:.3px}
+.cg-it .cnt{position:absolute;left:8px;top:8px;z-index:2;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:2px 6px;border-radius:6px}
+.cg-it .bd{padding:8px 10px 10px}
+.cg-it .bd b{font-size:12.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cg-it .bd small{font-size:10.5px;color:var(--mut);font-weight:700;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.cg-it .bd small .cost{color:var(--bad)}
+
+/* 4 · item sheet */
+.cs-under{position:absolute;inset:44px 0 0;filter:blur(1.5px);pointer-events:none;overflow:hidden}
+.cs-sheet{position:absolute;left:0;right:0;bottom:0;z-index:8;background:var(--phone-bg);border-radius:28px 28px 0 0;padding:8px 16px 20px;display:grid;gap:11px;box-shadow:0 -14px 40px rgba(0,0,0,.25)}
+.cs-sheet .grab{width:38px;height:5px;border-radius:5px;background:var(--line);margin:0 auto}
+.cs-hd{display:flex;align-items:flex-end;gap:10px}
+.cs-hd .t{flex:1;min-width:0}
+.cs-hd .t b{display:block;font-size:22px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-hd .navs{display:flex;gap:6px}
+.cs-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cs-cmp .f{height:108px;border-radius:16px;position:relative;overflow:hidden}
+.cs-cmp .lb{position:absolute;left:8px;top:8px;z-index:2;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;background:rgba(0,0,0,.5);color:#fff;padding:3px 7px;border-radius:6px}
+.cs-cmp .tag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;color:#fff}
+.cs-cmp .tag.ok{background:var(--ok)} .cs-cmp .tag.bad{background:var(--bad)} .cs-cmp .tag.na{background:var(--na)}
+.cs-cmp .cap{background:var(--card);border:1.5px dashed var(--gold);display:grid;place-items:center;cursor:pointer;text-align:center;color:var(--gold-d);font-size:11.5px;font-weight:800}
+.cs-cmp .cap i{width:40px;height:40px;border-radius:50%;background:var(--gold);color:#fff;display:grid;place-items:center;font-size:16px;margin:0 auto 6px}
+.cs-cmp .cap .lb{background:var(--gold)}
+.cs-cmp .shot{cursor:pointer}
+.cs-cmp .add{position:absolute;right:8px;bottom:8px;z-index:2;background:rgba(255,255,255,.92);color:#12302A;font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:8px}
+.cs-row{display:flex;justify-content:space-between;align-items:center}
+.cs-row small{font-size:11px;color:var(--mut);font-weight:700}
+.c .qty{background:var(--card);border:1px solid var(--line)}
+.cs-st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cs-st button{border-radius:13px;padding:10px 4px;background:var(--card);border:1.5px solid var(--line);font-size:12px;font-weight:800;color:var(--t2);display:flex;gap:6px;justify-content:center;align-items:center;transition:.15s}
+.cs-st button[data-s=ok].on{background:var(--ok);border-color:var(--ok);color:#fff}
+.cs-st button[data-s=bad].on{background:var(--bad);border-color:var(--bad);color:#fff}
+.cs-st button[data-s=na].on{background:var(--na);border-color:var(--na);color:#fff}
+.cs-fld{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px}
+.cs-fld label{font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);display:block}
+.cs-fld textarea,.cs-fld input{width:100%;border:0;background:none;outline:none;font-size:13px;font-weight:600;resize:none;margin-top:2px}
+.cs-fld .qchips{margin-top:6px}
+.cs-fld .qchips button{background:var(--phone-bg)}
+.cs-cost{display:none;border-color:rgba(212,84,106,.45)}
+.cs-cost.show{display:block}
+.cs-cost .money{display:flex;gap:6px;align-items:center;font-weight:800}
+
+/* 5 · hand-over */
+.cc-cert{margin:4px 14px 12px;background:var(--card);border-radius:20px;padding:16px 14px 14px;position:relative;box-shadow:var(--shadow);text-align:center}
+.cc-cert::before{content:"";position:absolute;inset:5px;border:1px solid var(--gold);border-radius:16px;opacity:.55;pointer-events:none}
+.cc-cert::after{content:"";position:absolute;inset:8px;border:1px solid var(--gold);border-radius:13px;opacity:.22;pointer-events:none}
+.cc-cert h4{font-size:19px;margin:4px 0 2px}
+.cc-cert p{font-size:11px;color:var(--mut);font-weight:700}
+.cc-r{display:grid;grid-template-columns:repeat(4,1fr);margin-top:12px}
+.cc-r div{border-right:1px solid var(--line)}
+.cc-r div:last-child{border-right:0}
+.cc-r b{display:block;font-weight:800;font-size:19px;line-height:1.2;letter-spacing:-.4px}
+.cc-r small{font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}
+.cc-ft{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:11.5px;font-weight:700;color:var(--t2)}
+.cc-ft b{color:var(--bad)}
+.cc-warn{margin:0 14px 12px;background:var(--warn-t);color:var(--warn);font-size:11.5px;font-weight:700;padding:9px 12px;border-radius:12px;display:flex;gap:8px;align-items:center}
+.tl{padding:0 14px 10px;display:grid}
+.tl .st{display:grid;grid-template-columns:34px 1fr;gap:10px;position:relative;padding-bottom:12px}
+.tl .st::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.tl .st:last-child::before{display:none}
+.tl .st.done::before{background:var(--gold)}
+.tl .dotn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;background:var(--card);border:2px solid var(--line);color:var(--mut);z-index:1}
+.tl .st.done .dotn{background:var(--em);border-color:var(--em);color:#fff}
+.tl .st.live .dotn{border-color:var(--gold);color:var(--gold-d);box-shadow:0 0 0 5px var(--gold-t)}
+.tl .bx{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow);min-width:0}
+.tl .st.live .bx{border-color:var(--gold)}
+.tl .bx .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tl .bx b{font-size:13px;display:block}
+.tl .bx small{font-size:11px;color:var(--mut);font-weight:700}
+.tl .bx .role{font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--gold-d)}
+.tl .sigmini{height:46px;margin-top:8px;border-radius:10px;background:var(--phone-bg);padding:4px}
+.tl .pad{height:120px;margin-top:10px}
+.tl .acts{display:flex;gap:8px;margin-top:8px}
+.tl .acts .mini-btn{flex:1;background:var(--em)}
+.tl .acts .mini-btn:disabled{background:var(--line);color:var(--mut)}
+.tl .st.lock .bx{opacity:.8}
+.tl .remote{margin-top:6px;font-size:11px;color:var(--t2);display:flex;gap:6px;align-items:center}
+.tl .remote a{color:var(--em);font-weight:800;cursor:pointer}
+/* decision notes */
+.notes{max-width:1480px;margin:36px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.notes > div{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;font-size:13px;line-height:1.6;color:var(--page-mut)}
+.notes h3{font-size:14px;color:var(--page-ink);margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.notes h3 i{color:var(--em)}
+.notes b{color:var(--page-ink)}
+.notes table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.notes td{padding:5px 0;border-bottom:1px solid var(--line);color:var(--page-ink)}
+.notes td:first-child{color:var(--page-mut)}
+
+@media (max-width:900px){
+  .dir-intro,.notes{grid-template-columns:1fr}
+}
+@media (max-width:400px){
+  body{padding:20px 16px 60px}
+  .phone{width:100%;max-width:340px}
+  .tabs button small{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div>
+    <h1>FixMate · Hand-over Checklist</h1>
+    <p>Three directions for bringing the RentOut move-in / move-out checklist into the technician app: the checklists assigned to you, a photo, status and comment for every item, then hand-over signatures for each role. All four screens in each direction work. Tap the status buttons, take photos, sign the pads, and switch between light and dark.</p>
+  </div>
+  <div class="mode" id="mode">
+    <button class="on" data-m="light"><i class="fa fa-sun-o"></i> Light</button>
+    <button data-m="dark"><i class="fa fa-moon-o"></i> Dark</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="on" data-d="A"><b>A</b><span>Walkthrough<small>One item at a time, camera first</small></span></button>
+  <button data-d="B"><b>B</b><span>Inspection Sheet<small>Dense list, fastest for big units</small></span></button>
+  <button data-d="C"><b>C</b><span>Atelier<small>Inbox, rooms, item sheet, signing</small></span></button>
+</div>
+
+<!-- =====================================================================
+     DIRECTION A — WALKTHROUGH
+     ===================================================================== -->
+<section class="dir on" id="dir-A">
+  <div class="dir-intro">
+    <div>
+      <h2>A · Walkthrough</h2>
+      <p>The technician walks the unit and the app walks with them. Each item gets one full card: take the photo, tap a big status button, add a note with one tap, then Next. Rooms run along the top so they can jump around. A review screen catches anything they skipped before signing.</p>
+    </div>
+    <ul>
+      <li><i class="fa fa-check"></i>Big buttons for one-handed use while holding the phone up to the item</li>
+      <li><i class="fa fa-check"></i>The master item's reference photo appears in the corner of the capture area</li>
+      <li><i class="fa fa-check"></i>Quick comments: Scratched, Not working, Missing, Stained…</li>
+      <li><i class="fa fa-check"></i>Signatures as stacked role cards. The lessee signs on this device.</li>
+    </ul>
+  </div>
+  <div class="rail">
+
+    <!-- A1 assigned list -->
+    <div class="slot">
+      <div class="phone a">
+        <div class="sb on-dark"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="scr">
+          <div class="a-hero">
+            <div class="a-kick">Wednesday · 7 Oct</div>
+            <h3>Hand-overs</h3>
+            <p>4 checklists are assigned to you</p>
+            <div class="a-chips"><span>2 today</span><span>1 overdue</span><span>1 awaiting signature</span></div>
+          </div>
+          <div class="a-list">
+            <div class="a-job hot">
+              <div class="top"><span class="pill in"><i class="fa fa-sign-in"></i> Move-in</span><span><i class="fa fa-clock-o"></i> 10:30 AM</span></div>
+              <div><h4>Unit 1204 · Tower B</h4><div class="sub">Al Waab Residences · Rental</div></div>
+              <div class="who"><span class="av" style="background:#6D5BD0">OH</span>Omar Haddad · Lessee</div>
+              <div class="a-bar"><i id="a1-bar" style="width:0%"></i></div>
+              <div class="foot"><span id="a1-prog">0 / 24 checked</span><span class="pill sign"><i class="fa fa-pencil"></i> Facility Coord.</span></div>
+            </div>
+            <div class="a-job">
+              <div class="top"><span class="pill out"><i class="fa fa-sign-out"></i> Move-out</span><span><i class="fa fa-clock-o"></i> 2:00 PM</span></div>
+              <div><h4>Villa 7 · Lusail Gardens</h4><div class="sub">Lease · 3 BHK</div></div>
+              <div class="who"><span class="av" style="background:#D9952B">MK</span>Maya Kurian · Lessee</div>
+              <div class="a-bar"><i style="width:62%"></i></div>
+              <div class="foot"><span>18 / 29 checked</span><span class="pill sign"><i class="fa fa-pencil"></i> Site Engineer</span></div>
+            </div>
+            <div class="a-job">
+              <div class="top"><span class="pill in"><i class="fa fa-sign-in"></i> Move-in</span><span style="color:var(--bad)"><i class="fa fa-exclamation-triangle"></i> Yesterday</span></div>
+              <div><h4>Apt 305 · Porto Arabia</h4><div class="sub">The Pearl · Rental</div></div>
+              <div class="a-bar"><i style="width:100%"></i></div>
+              <div class="foot"><span style="color:var(--ok)">All items checked</span><span class="pill out"><i class="fa fa-pencil"></i> Lessee to sign</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="nav"><span><i class="fa fa-th-large"></i>Dashboard</span><span><i class="fa fa-wrench"></i>My Jobs</span><span class="on new"><i class="fa fa-check-square-o"></i>Checklists</span><span><i class="fa fa-cog"></i>Settings</span></div>
+      </div>
+      <div class="cap"><b>1 · Assigned to me</b>A new Checklists tab. Each card shows the phase, when it's due, progress and the role you sign as, so it's clear before you open it.</div>
+    </div>
+
+    <!-- A2 walkthrough -->
+    <div class="slot">
+      <div class="phone a">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="a-top">
+          <span class="ibtn"><i class="fa fa-arrow-left"></i></span>
+          <div class="t"><b>Unit 1204 · Tower B</b><small><span class="pill in" style="padding:1px 6px">Move-in</span> &nbsp;<span id="a2-count">Item 1 of 5</span></small></div>
+          <span class="ibtn"><i class="fa fa-list"></i></span>
+        </div>
+        <div class="a-areas" id="a2-areas"></div>
+        <div class="a-segs" id="a2-segs"></div>
+        <div class="scr">
+          <div class="a-card">
+            <div class="a-shot" id="a2-shot">
+              <div class="photo p1" id="a2-photo"><span class="ph-i"><i class="fa fa-picture-o"></i></span></div>
+              <div class="cta"><i class="fa fa-camera"></i>Tap to photograph</div>
+              <div class="ref"><span class="photo p2"></span>Reference</div>
+              <div class="badge"><i class="fa fa-camera"></i> <span id="a2-pc">1</span> · Retake</div>
+            </div>
+            <div class="a-body">
+              <div class="a-name">
+                <div><small id="a2-area">Kitchen</small><h4 id="a2-name">Refrigerator</h4></div>
+                <div class="qty"><button data-q="-1">−</button><b id="a2-qty">1</b><button data-q="1">+</button></div>
+              </div>
+              <div class="a-status" id="a2-status">
+                <button data-s="ok"><i class="fa fa-check"></i>Good</button>
+                <button data-s="bad"><i class="fa fa-times"></i>Damaged</button>
+                <button data-s="na"><i class="fa fa-minus"></i>N/A</button>
+              </div>
+              <div class="a-note">
+                <textarea id="a2-note" placeholder="Add a comment (optional)"></textarea>
+                <div class="qchips" id="a2-chips"><button>Scratched</button><button>Not working</button><button>Missing</button><button>Stained</button><button>Loose</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="a-foot"><button class="prev" id="a2-prev"><i class="fa fa-chevron-left"></i></button><button class="btn" id="a2-next">Next item <i class="fa fa-arrow-right"></i></button></div>
+        <div class="toast" id="a2-toast"></div>
+      </div>
+      <div class="cap"><b>2 · Item card</b>Photo, status and comment on one card. Next moves on to the following item, and to the next room at the end of each room. Try it: everything is linked to screens 1 and 3.</div>
+    </div>
+
+    <!-- A3 review -->
+    <div class="slot">
+      <div class="phone a">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="a-top">
+          <span class="ibtn"><i class="fa fa-arrow-left"></i></span>
+          <div class="t"><b>Review before hand-over</b><small>Unit 1204 · Move-in</small></div>
+        </div>
+        <div class="scr" style="padding-bottom:20px">
+          <div class="a-ring">
+            <div class="ring" id="a3-ring"><b><span id="a3-pct">0%</span><small>checked</small></b></div>
+            <div class="k" id="a3-k"></div>
+          </div>
+          <div class="sec-h"><span>Needs attention</span><span id="a3-attn">0</span></div>
+          <div id="a3-flags"></div>
+          <div class="sec-h" style="margin-top:6px"><span>Hand-over details</span></div>
+          <div class="a-field">Actual move-in date<div>07 Oct 2026 <i class="fa fa-calendar" style="color:var(--mut)"></i></div></div>
+          <div class="a-field">Move-in remarks<textarea placeholder="General remarks for the hand-over…">Keys handed over: 3 main door keys + 2 access cards.</textarea></div>
+        </div>
+        <div class="a-foot" style="grid-template-columns:1fr"><button class="btn" id="a3-go">Continue to signatures <i class="fa fa-pencil"></i></button></div>
+      </div>
+      <div class="cap"><b>3 · Review</b>Unchecked items show in amber and damaged items in red, each with its comment. These are the actual-date and remarks fields from the web tab.</div>
+    </div>
+
+    <!-- A4 signatures -->
+    <div class="slot">
+      <div class="phone a">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="a-top">
+          <span class="ibtn"><i class="fa fa-arrow-left"></i></span>
+          <div class="t"><b>Hand-over signatures</b><small>Move-in · Rental agreement</small></div>
+        </div>
+        <div class="scr" style="padding-bottom:12px">
+          <div class="a-sig done">
+            <div class="hd"><span class="num"><i class="fa fa-check"></i></span><div class="tx"><b>Facility Coordinator</b><small>You · Rahul Nair</small></div><span class="st">Signed 10:52</span></div>
+            <div class="sigbox"><svg viewBox="0 0 260 60" class="sig-img"><path d="M10 42c14-26 22-30 26-18s-6 24 4 16 16-30 22-20-4 22 6 18 12-12 20-10 4 10 14 6 22-14 30-10 10 8 24 2 26-10 40-6" fill="none" stroke="#0F1F1A" stroke-width="2.4" stroke-linecap="round"/></svg></div>
+          </div>
+          <div class="a-sig live" id="a4-lessee">
+            <div class="hd"><span class="num">2</span><div class="tx"><b>Lessee</b><small>Omar Haddad · signs on this device</small></div><span class="st">Now</span></div>
+            <div class="bd">
+              <div class="pass"><i class="fa fa-mobile"></i> Hand the phone to the lessee to sign</div>
+              <div class="pad" data-pad><canvas></canvas><div class="hint"><span>Sign above the line</span><span>Omar Haddad</span></div><button class="clr" type="button">Clear</button></div>
+              <div class="name"><i class="fa fa-user" style="color:var(--mut)"></i><input value="Omar Haddad"></div>
+              <button class="mini-btn" data-accept disabled><i class="fa fa-check"></i> Accept signature</button>
+            </div>
+          </div>
+          <div class="a-sig lock">
+            <div class="hd"><span class="num"><i class="fa fa-lock"></i></span><div class="tx"><b>Leasing Coordinator</b><small>Sara Mathew</small></div><span class="st">Their login</span></div>
+            <div class="rem"><span>Only Sara can sign this role</span><a href="#" onclick="return false">Remind <i class="fa fa-bell-o"></i></a></div>
+          </div>
+        </div>
+        <div class="a-foot" style="grid-template-columns:1fr"><button class="btn" id="a4-done" disabled><i class="fa fa-check-circle"></i> Complete hand-over</button></div>
+        <div class="toast" id="a4-toast"></div>
+      </div>
+      <div class="cap"><b>4 · Role signatures</b>Your role is signed with your account. The lessee signs in person on your device. Other staff roles stay locked to the person assigned.</div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     DIRECTION B — INSPECTION SHEET
+     ===================================================================== -->
+<section class="dir" id="dir-B">
+  <div class="dir-intro">
+    <div>
+      <h2>B · Inspection Sheet</h2>
+      <p>The web checklist tab, reworked for a phone. Items are grouped by room in collapsible sections, each row has a ✓ ✗ — toggle, and each room has a "Mark all good" button. Experienced technicians can finish a 40-item villa in a couple of minutes. On a move-out each row also shows its move-in status. Tap a row to compare the move-in photo with the new one.</p>
+    </div>
+    <ul>
+      <li><i class="fa fa-check"></i>Fastest for large units, and close to how the web tab works</li>
+      <li><i class="fa fa-check"></i>Move-In and Move-Out switch on one sheet, with the move-in status shown on each row</li>
+      <li><i class="fa fa-check"></i>Damage cost appears only for items marked Damaged on a move-out</li>
+      <li><i class="fa fa-check"></i>Sample uses a <b>Lease</b>, so roles read Site Engineer / Admin Coordinator</li>
+    </ul>
+  </div>
+  <div class="rail">
+
+    <!-- B1 list -->
+    <div class="slot">
+      <div class="phone b">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="scr" style="padding-bottom:90px">
+          <div class="b-h"><small>Assigned to Rahul Nair</small><h3>Checklists</h3></div>
+          <div class="b-search"><i class="fa fa-search"></i> Search unit, building or lessee</div>
+          <div class="b-filters"><span class="on">All<b>4</b></span><span>Move-in<b>2</b></span><span>Move-out<b>2</b></span><span>To sign<b>1</b></span></div>
+          <div class="b-group">Today</div>
+          <div class="b-rows">
+            <div class="b-row"><div class="donut" style="--p:62;--c:var(--warn)"><b>62%</b></div><div class="tx"><b>Villa 7 · Lusail Gardens</b><small>Maya Kurian · Lease</small><span class="role"><i class="fa fa-pencil"></i> Site Engineer</span></div><div class="rt"><span class="pill out">Out</span><small>2:00 PM</small></div></div>
+            <div class="b-row"><div class="donut" style="--p:0"><b>0%</b></div><div class="tx"><b>Unit 1204 · Tower B</b><small>Omar Haddad · Rental</small><span class="role"><i class="fa fa-pencil"></i> Facility Coord.</span></div><div class="rt"><span class="pill in">In</span><small>10:30 AM</small></div></div>
+          </div>
+          <div class="b-group">This week</div>
+          <div class="b-rows">
+            <div class="b-row"><div class="donut" style="--p:100;--c:var(--ok)"><b><i class="fa fa-check" style="color:var(--ok)"></i></b></div><div class="tx"><b>Apt 305 · Porto Arabia</b><small>Lessee signature pending</small><span class="role"><i class="fa fa-pencil"></i> Facility Coord.</span></div><div class="rt"><span class="pill in">In</span><small style="color:var(--bad)">Yesterday</small></div></div>
+            <div class="b-row"><div class="donut" style="--p:0"><b>0%</b></div><div class="tx"><b>Shop G-14 · Doha Mall</b><small>Commercial · Rental</small><span class="role"><i class="fa fa-pencil"></i> Facility Coord.</span></div><div class="rt"><span class="pill out">Out</span><small>Fri 9 Oct</small></div></div>
+          </div>
+        </div>
+        <div class="nav"><span><i class="fa fa-th-large"></i>Dashboard</span><span><i class="fa fa-wrench"></i>My Jobs</span><span class="on new"><i class="fa fa-check-square-o"></i>Checklists</span><span><i class="fa fa-cog"></i>Settings</span></div>
+      </div>
+      <div class="cap"><b>1 · Inbox</b>A compact list grouped by date, with phase filters and a "To sign" filter. Each row shows a progress donut and your role on that job.</div>
+    </div>
+
+    <!-- B2 sheet -->
+    <div class="slot">
+      <div class="phone b">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="b-top"><span class="ibtn"><i class="fa fa-arrow-left"></i></span><div class="t"><b>Villa 7 · Lusail Gardens</b><small>Maya Kurian · Lease</small></div><span class="ibtn"><i class="fa fa-search"></i></span></div>
+        <div class="seg" id="b2-phase"><button data-p="in"><i class="fa fa-sign-in"></i> Move-in</button><button data-p="out" class="on"><i class="fa fa-sign-out"></i> Move-out</button></div>
+        <div class="b-stats" id="b2-stats"></div>
+        <div class="scr" id="b2-areas" style="padding-bottom:10px"></div>
+        <div class="b-foot">
+          <div class="pr"><span id="b2-pr"></span><span id="b2-cost"></span></div>
+          <div class="stack" id="b2-stack"></div>
+          <button class="btn">Continue to sign-off <i class="fa fa-arrow-right"></i></button>
+        </div>
+        <div class="toast" id="b2-toast"></div>
+      </div>
+      <div class="cap"><b>2 · The sheet</b>Tap ✓ ✗ — on a row, or "All good" for a whole room. Switch to Move-in to see the earlier statuses. Tap an item name to open screen 3.</div>
+    </div>
+
+    <!-- B3 item sheet -->
+    <div class="slot">
+      <div class="phone b">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="b-under">
+          <div class="b-top"><span class="ibtn"><i class="fa fa-arrow-left"></i></span><div class="t"><b>Villa 7 · Lusail Gardens</b><small>Maya Kurian · Lease</small></div></div>
+          <div class="seg"><button>Move-in</button><button class="on">Move-out</button></div>
+        </div>
+        <div class="b-dim"></div>
+        <div class="b-sheet">
+          <div class="grab"></div>
+          <div class="hd"><div><small id="b3-area">Master Bedroom</small><b id="b3-name">Split AC unit</b></div><span class="ibtn"><i class="fa fa-times"></i></span></div>
+          <div class="cmp">
+            <div class="f photo p2"><span class="lb">Move-in · 12 Jan</span><span class="ph-i"><i class="fa fa-picture-o"></i></span></div>
+            <div class="f cap" id="b3-cap"><span class="lb">Move-out</span><span><i class="fa fa-camera"></i>Take photo</span></div>
+          </div>
+          <div class="big3" id="b3-status">
+            <button data-s="ok"><i class="fa fa-check"></i> Good</button>
+            <button data-s="bad"><i class="fa fa-times"></i> Damaged</button>
+            <button data-s="na"><i class="fa fa-minus"></i> N/A</button>
+          </div>
+          <div class="fld"><label>Comment</label><textarea id="b3-note" rows="2" placeholder="What did you find?"></textarea></div>
+          <div class="fld cost" id="b3-cost"><label>Damage cost</label><div class="money"><span style="color:var(--mut)">QAR</span><input id="b3-amt" value="350.00" inputmode="decimal"></div></div>
+          <button class="btn" id="b3-save">Save item</button>
+        </div>
+        <div class="toast" id="b3-toast"></div>
+      </div>
+      <div class="cap"><b>3 · Item detail</b>The move-in photo sits next to the move-out capture. Mark it Damaged to see the damage cost field. This writes to <code>damage_cost</code> on the line.</div>
+    </div>
+
+    <!-- B4 sign -->
+    <div class="slot">
+      <div class="phone b">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="b-top"><span class="ibtn"><i class="fa fa-arrow-left"></i></span><div class="t"><b>Sign-off · Move-out</b><small>Villa 7 · 29 items · 2 damaged · QAR 470</small></div></div>
+        <div class="b-roles" id="b4-roles">
+          <button class="on" data-r="se"><i class="fa fa-circle-o s"></i><b>Site Engineer</b><small>You</small></button>
+          <button data-r="ls"><i class="fa fa-circle-o s"></i><b>Lessee</b><small>On device</small></button>
+          <button class="lock" data-r="ac"><i class="fa fa-lock s"></i><b>Admin Coord.</b><small>Sara M.</small></button>
+        </div>
+        <div class="scr">
+          <div class="b-signwrap">
+            <div class="who"><span class="av" id="b4-av" style="background:#0FA968">RN</span><div class="tx"><b id="b4-who">Rahul Nair</b><small id="b4-role">Signing as Site Engineer</small></div><i class="fa fa-shield" style="color:var(--mut)"></i></div>
+            <div class="pad" data-pad id="b4-pad"><canvas></canvas><div class="hint"><span>Sign above the line</span><span>07 Oct 2026</span></div><button class="clr" type="button">Clear</button></div>
+            <div class="b-signed" id="b4-signed"><span class="tag"><i class="fa fa-check"></i> Signed</span><img class="sig-img" alt=""></div>
+            <div class="b-lockpane" id="b4-lock"><i class="fa fa-lock"></i><b>Sara Mathew signs this</b>The Admin Coordinator signs from their own login on the web or in the app. They'll get a notification once the lessee has signed.</div>
+            <div class="b-confirm" id="b4-confirm"><span class="bx"><i class="fa fa-check"></i></span><span>I confirm the condition recorded for all 29 items and the QAR 470 damage total.</span></div>
+          </div>
+        </div>
+        <div class="b-foot"><button class="btn" id="b4-save" disabled>Save signature</button></div>
+      </div>
+      <div class="cap"><b>4 · Sign-off by role</b>The role tabs show who signs and how. Signing needs the confirm tick and some ink, then moves on to the next role. Your own role is locked to your account.</div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     DIRECTION C — ATELIER  (inbox → rooms → room → item sheet → hand-over)
+     ===================================================================== -->
+<section class="dir" id="dir-C">
+  <div class="dir-intro">
+    <div>
+      <h2>C · Atelier</h2>
+      <p>The room-by-room visual flow, redesigned in a refined ivory, emerald and gold style, now with B's inbox and B's item sheet. All five screens are linked: pick a job in the inbox, open a room, tap an item to edit it in the sheet, and the room tiles, progress and hand-over record update as you go.</p>
+    </div>
+    <ul>
+      <li><i class="fa fa-check"></i>Inbox from B, grouped Overdue / Today / This week, with search, phase filters and your role on every row</li>
+      <li><i class="fa fa-check"></i>Room tiles show a mosaic of the photos taken so far and a progress bar split by status</li>
+      <li><i class="fa fa-check"></i>Item sheet from B: the earlier photo next to the new one, status, quick comments, and damage cost on a move-out</li>
+      <li><i class="fa fa-check"></i>Role names follow the agreement. Pick Villa 7 (Lease) to see Site Engineer / Admin Coordinator.</li>
+    </ul>
+  </div>
+  <div class="rail">
+
+    <!-- C1 inbox -->
+    <div class="slot">
+      <div class="phone c">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="scr" style="padding-bottom:96px">
+          <div class="ci-head"><div><div class="c-kick">Wednesday · 7 October</div><h3 class="serif">Hand-overs</h3></div><span class="ci-me">RN</span></div>
+          <div class="ci-strip"><div class="od"><b>1</b><small>Overdue</small></div><div><b>2</b><small>Today</small></div><div><b>1</b><small>This week</small></div><div><b id="c1-sign">1</b><small>To sign</small></div></div>
+          <div class="ci-search"><i class="fa fa-search"></i><input id="c1-q" placeholder="Unit, building or lessee"></div>
+          <div class="ci-tabs" id="c1-filter"><button data-f="all">All<b></b></button><button data-f="in">Move-in<b></b></button><button data-f="out">Move-out<b></b></button><button data-f="sign">To sign<b></b></button></div>
+          <div id="c1-list"></div>
+        </div>
+        <div class="nav"><span><i class="fa fa-th-large"></i>Dashboard</span><span><i class="fa fa-wrench"></i>My Jobs</span><span class="on new"><i class="fa fa-check-square-o"></i>Checklists</span><span><i class="fa fa-cog"></i>Settings</span></div>
+        <div class="toast" id="c1-toast"></div>
+      </div>
+      <div class="cap"><b>1 · Inbox</b>B's inbox in the Atelier style. Search and filters work. Tap a job to load it into screens 2–5.</div>
+    </div>
+
+    <!-- C2 rooms -->
+    <div class="slot">
+      <div class="phone c">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="c-top"><span class="c-ib"><i class="fa fa-arrow-left"></i></span><div class="t"><div class="c-kick" id="c2-kick"></div><b class="serif" id="c2-title"></b></div><span class="c-ib"><i class="fa fa-phone"></i></span></div>
+        <div class="scr">
+          <div class="cj-hero">
+            <div class="cj-row"><div><small>Lessee</small><b id="c2-lessee"></b></div><div><small>Scheduled</small><b id="c2-when"></b></div><div><small>You sign as</small><b id="c2-role"></b></div></div>
+            <div class="cj-prog"><div class="cj-big serif" id="c2-pct"></div><div class="cj-bars"><div class="stack" id="c2-stack"></div><div class="cj-leg" id="c2-leg"></div></div></div>
+          </div>
+          <div class="c-title"><h4 class="serif">Rooms</h4><small id="c2-left"></small></div>
+          <div class="cr-tiles" id="c2-tiles"></div>
+        </div>
+        <div class="nav"><span><i class="fa fa-th-large"></i>Dashboard</span><span><i class="fa fa-wrench"></i>My Jobs</span><span class="on new"><i class="fa fa-check-square-o"></i>Checklists</span><span><i class="fa fa-cog"></i>Settings</span></div>
+        <div class="toast" id="c2-toast"></div>
+      </div>
+      <div class="cap"><b>2 · Rooms</b>Each room tile shows the photos taken so far and its progress. The Hand-over tile unlocks once every item is checked. Tap a room to open it on screen 3.</div>
+    </div>
+
+    <!-- C3 room grid -->
+    <div class="slot">
+      <div class="phone c">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="c-top"><span class="c-ib"><i class="fa fa-arrow-left"></i></span><div class="t"><div class="c-kick" id="c3-k"></div><b class="serif" id="c3-name"></b></div><span class="c-ib"><i class="fa fa-plus"></i></span></div>
+        <div class="cg-filter" id="c3-filter"><button data-rf="all">All<b></b></button><button data-rf="todo">To do<b></b></button><button data-rf="bad">Damaged<b></b></button></div>
+        <div class="scr"><div class="cg-grid" id="c3-grid"></div></div>
+        <div class="c-foot"><button class="c-ghost" id="c3-all"><i class="fa fa-check"></i> Rest are good</button><button class="btn" id="c3-next">Next room <i class="fa fa-arrow-right"></i></button></div>
+        <div class="toast" id="c3-toast"></div>
+      </div>
+      <div class="cap"><b>3 · Room</b>Items as a photo grid. The corner badge shows the status, and on a move-out the tag shows how the item was at move-in. Tap an item to edit it on screen 4.</div>
+    </div>
+
+    <!-- C4 item sheet (from B) -->
+    <div class="slot">
+      <div class="phone c">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="cs-under" id="c4-under"></div>
+        <div class="b-dim"></div>
+        <div class="cs-sheet">
+          <div class="grab"></div>
+          <div class="cs-hd"><div class="t"><div class="c-kick" id="c4-kick"></div><b class="serif" id="c4-name"></b></div><div class="navs"><button class="c-ib" id="c4-prev"><i class="fa fa-chevron-left"></i></button><button class="c-ib" id="c4-nxt"><i class="fa fa-chevron-right"></i></button></div></div>
+          <div class="cs-cmp" id="c4-cmp"></div>
+          <div class="cs-row"><small id="c4-hint"></small><div class="qty"><button data-cq="-1">−</button><b id="c4-qty">1</b><button data-cq="1">+</button></div></div>
+          <div class="cs-st" id="c4-status"><button data-s="ok"><i class="fa fa-check"></i> Good</button><button data-s="bad"><i class="fa fa-times"></i> Damaged</button><button data-s="na"><i class="fa fa-minus"></i> N/A</button></div>
+          <div class="cs-fld"><label>Comment</label><textarea id="c4-note" rows="2" placeholder="What did you find?"></textarea><div class="qchips" id="c4-chips"><button>Scratched</button><button>Not working</button><button>Missing</button><button>Stained</button></div></div>
+          <div class="cs-fld cs-cost" id="c4-cost"><label>Damage cost</label><div class="money"><span style="color:var(--mut)">QAR</span><input id="c4-amt" inputmode="decimal"></div></div>
+          <button class="btn" id="c4-save">Save &amp; next <i class="fa fa-arrow-right"></i></button>
+        </div>
+        <div class="toast" id="c4-toast"></div>
+      </div>
+      <div class="cap"><b>4 · Item sheet</b>B's item detail as a sheet over the room. The earlier photo (the move-in photo, or the reference image on a move-in) sits next to the new one. Tap it to add photos. Damage cost appears for a damaged item on a move-out.</div>
+    </div>
+
+    <!-- C5 hand-over -->
+    <div class="slot">
+      <div class="phone c">
+        <div class="sb"><span>9:41</span><span class="ic"><i class="fa fa-signal"></i><i class="fa fa-wifi"></i><span class="batt"></span></span></div>
+        <div class="c-top"><span class="c-ib"><i class="fa fa-arrow-left"></i></span><div class="t"><div class="c-kick" id="c5-kick"></div><b class="serif">Hand-over</b></div><span class="c-ib"><i class="fa fa-file-pdf-o"></i></span></div>
+        <div class="scr">
+          <div class="cc-cert">
+            <div class="c-kick">Condition record</div>
+            <h4 class="serif" id="c5-unit"></h4>
+            <p id="c5-sub"></p>
+            <div class="cc-r" id="c5-r"></div>
+            <div class="cc-ft"><span><i class="fa fa-camera"></i> <span id="c5-photos"></span></span><b id="c5-dmg"></b></div>
+          </div>
+          <div class="cc-warn" id="c5-warn"></div>
+          <div class="tl">
+            <div class="st done"><span class="dotn"><i class="fa fa-check"></i></span><div class="bx"><div class="hd"><div><span class="role" id="c5-r1"></span><b>Rahul Nair · You</b></div><small>4:41 PM</small></div><div class="sigmini"><svg viewBox="0 0 260 46" class="sig-img"><path d="M8 30c12-20 20-24 24-14s-6 20 4 12 14-24 20-16-4 18 6 14 10-10 18-8 4 8 12 4 20-12 28-8 8 6 22 2 24-8 36-4" fill="none" stroke="#12302A" stroke-width="2.2" stroke-linecap="round"/></svg></div></div></div>
+            <div class="st live" id="c5-lessee"><span class="dotn">2</span><div class="bx"><div class="hd"><div><span class="role">Lessee</span><b id="c5-les"></b></div><small>On this device</small></div>
+              <div class="pad" data-pad><canvas></canvas><div class="hint"><span>Sign here</span><span id="c5-les2"></span></div><button class="clr" type="button">Clear</button></div>
+              <div class="acts"><button class="mini-btn" data-accept disabled><i class="fa fa-check"></i> Accept signature</button></div>
+            </div></div>
+            <div class="st lock"><span class="dotn"><i class="fa fa-lock"></i></span><div class="bx"><div class="hd"><div><span class="role" id="c5-r3"></span><b>Sara Mathew</b></div><small>Remote</small></div><div class="remote"><i class="fa fa-paper-plane-o"></i> Signs from their own login · <a>Remind</a></div></div></div>
+          </div>
+        </div>
+        <div class="c-foot" style="grid-template-columns:1fr"><button class="btn gold" id="c5-seal" disabled><i class="fa fa-key"></i> Seal hand-over</button></div>
+        <div class="toast" id="c5-toast"></div>
+      </div>
+      <div class="cap"><b>5 · Hand-over</b>A condition record followed by the signing timeline. Role names follow the agreement type. Sealing needs every item checked and the lessee's signature. Pick Apt 1802 in the inbox to try a finished job.</div>
+    </div>
+  </div>
+</section>
+<div class="notes">
+  <div>
+    <h3><i class="fa fa-database"></i> Maps onto existing data</h3>
+    <table>
+      <tr><td>Item status</td><td><code>move_in_status</code> / <code>move_out_status</code> · ok · not_ok · na</td></tr>
+      <tr><td>Comment</td><td><code>move_in_comment</code> / <code>move_out_comment</code></td></tr>
+      <tr><td>Photo</td><td><code>image_path</code> on the line (master image used as reference)</td></tr>
+      <tr><td>Damage</td><td><code>damage_cost</code> (move-out only)</td></tr>
+      <tr><td>Signatures</td><td><code>rent_out_checklist_signatures</code> · phase × role</td></tr>
+      <tr><td>Role labels</td><td><code>ChecklistSignatoryRole::labelFor()</code>, Rental vs Lease/Sale</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3><i class="fa fa-user"></i> "Assigned" and role rules</h3>
+    Proposal: a technician sees rent-outs where they are the <b>facility_coordinator_id</b> or <b>leasing_coordinator_id</b>.
+    They can sign <b>their own role(s)</b> with their account, and can capture the <b>Lessee</b> signature in person on their device.
+    Any other staff role is shown locked with the assigned person's name.
+  </div>
+  <div>
+    <h3><i class="fa fa-question-circle"></i> To decide</h3>
+    <b>1.</b> Is "assigned" the coordinator fields above, or a new technician field on the rent-out?<br>
+    <b>2.</b> Should the per-room Fixture Comments (before/after photos and owner signature) be included in v1, or later?<br>
+    <b>3.</b> Which signatures must be in place before "Complete hand-over" unlocks?
+  </div>
+</div>
+
+<script>
+/* ---------------- data (one unit per direction) ---------------- */
+const BASE = [
+  {n:'Living Room', i:'fa-home', items:[['Split AC unit',1],['Ceiling lights',4],['Curtain set',2],['Sofa 3-seater',1],['Main door lock',1]]},
+  {n:'Kitchen', i:'fa-cutlery', items:[['Refrigerator',1],['Cooker hood',1],['Gas hob 4-burner',1],['Kitchen cabinets',8],['Sink mixer tap',1]]},
+  {n:'Master Bedroom', i:'fa-bed', items:[['Wardrobe',1],['Bed frame (king)',1],['Split AC unit',1],['Bedside lamps',2]]},
+  {n:'Bathroom', i:'fa-tint', items:[['Water heater',1],['Mirror cabinet',1],['Shower mixer',1],['Exhaust fan',1]]},
+  {n:'Balcony', i:'fa-sun-o', items:[['Sliding door',1],['Floor tiles',1]]},
+  {n:'Others', i:'fa-key', items:[['Apartment keys',3],['Access cards',2],['Smoke detectors',3]]},
+];
+const make = () => BASE.map((a,ai)=>({n:a.n,i:a.i,items:a.items.map(([n,q],ii)=>({n,q,s:null,c:'',p:0,ph:'p'+(((ai*3+ii)%6)+1)}))}));
+const all = st => st.flatMap(a=>a.items);
+const LBL = {ok:'Good',bad:'Damaged',na:'N/A'};
+const ICO = {ok:'fa-check',bad:'fa-times',na:'fa-minus'};
+function toast(id,msg){const t=document.getElementById(id);if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),1500)}
+
+/* ---------------- page chrome ---------------- */
+document.getElementById('mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.documentElement.dataset.mode=b.dataset.m;document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x===b));});
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.dir').forEach(d=>d.classList.toggle('on',d.id==='dir-'+b.dataset.d));fitPads();});
+
+/* ---------------- signature pads ---------------- */
+function fitPad(pad){const c=pad.querySelector('canvas');const r=pad.getBoundingClientRect();if(!r.width)return;const d=window.devicePixelRatio||1;if(c.width===Math.round(r.width*d))return;c.width=r.width*d;c.height=r.height*d;const x=c.getContext('2d');x.scale(d,d);x.lineCap='round';x.lineJoin='round';x.lineWidth=2.4;x.strokeStyle='#0F1F1A';pad.classList.remove('inked');pad.dispatchEvent(new Event('ink'));}
+function fitPads(){requestAnimationFrame(()=>document.querySelectorAll('[data-pad]').forEach(fitPad))}
+document.querySelectorAll('[data-pad]').forEach(pad=>{
+  const c=pad.querySelector('canvas');let down=false,last=null;
+  const pt=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  c.addEventListener('pointerdown',e=>{fitPad(pad);down=true;last=pt(e);c.setPointerCapture(e.pointerId)});
+  c.addEventListener('pointermove',e=>{if(!down)return;const p=pt(e),x=c.getContext('2d');x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke();last=p;if(!pad.classList.contains('inked')){pad.classList.add('inked');pad.dispatchEvent(new Event('ink'))}});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>c.addEventListener(t,()=>down=false));
+  pad.querySelector('.clr').addEventListener('click',()=>{c.getContext('2d').clearRect(0,0,c.width,c.height);pad.classList.remove('inked');pad.dispatchEvent(new Event('ink'))});
+});
+window.addEventListener('resize',fitPads);fitPads();
+function wireAccept(card,onDone){
+  const pad=card.querySelector('[data-pad]'),btn=card.querySelector('[data-accept]');
+  pad.addEventListener('ink',()=>btn.disabled=!pad.classList.contains('inked'));
+  btn.addEventListener('click',()=>{
+    const url=pad.querySelector('canvas').toDataURL();
+    const box=document.createElement('div');box.className=card.classList.contains('st')?'sigmini':'sigbox';box.innerHTML='<img class="sig-img" src="'+url+'">';
+    if(card.classList.contains('st')){pad.replaceWith(box);card.querySelector('.acts')?.remove()}else{card.querySelector('.bd').replaceWith(box)}
+    onDone();
+  });
+}
+
+/* =====================================================
+   A — walkthrough
+   ===================================================== */
+const A={st:make(),a:1,i:0};
+A.st[0].items.forEach((it,k)=>{it.s=k===2?'bad':'ok';it.p=1;if(k===2)it.c='Curtain rail bracket loose on left side'});
+A.st[1].items[0].p=0;
+function aRender(){
+  const ar=A.st[A.a],it=ar.items[A.i];
+  document.getElementById('a2-areas').innerHTML=A.st.map((x,k)=>{const d=x.items.filter(i=>i.s).length;return `<button class="a-area ${k===A.a?'on':''} ${d===x.items.length?'done':''}" data-a="${k}"><i class="fa ${d===x.items.length?'fa-check-circle':x.i}"></i>${x.n}<b>${d}/${x.items.length}</b></button>`}).join('');
+  document.getElementById('a2-segs').innerHTML=ar.items.map((x,k)=>`<i class="${x.s||''} ${k===A.i?'cur':''}"></i>`).join('');
+  document.getElementById('a2-count').textContent=`Item ${A.i+1} of ${ar.items.length}`;
+  document.getElementById('a2-area').textContent=ar.n;
+  document.getElementById('a2-name').textContent=it.n;
+  document.getElementById('a2-qty').textContent=it.q;
+  const shot=document.getElementById('a2-shot');shot.classList.toggle('has',it.p>0);document.getElementById('a2-pc').textContent=it.p;
+  document.getElementById('a2-photo').className='photo '+it.ph;
+  document.querySelectorAll('#a2-status button').forEach(b=>b.classList.toggle('on',b.dataset.s===it.s));
+  document.getElementById('a2-note').value=it.c;
+  const last=A.a===A.st.length-1&&A.i===ar.items.length-1;
+  document.getElementById('a2-next').innerHTML=last?'Review <i class="fa fa-check"></i>':(A.i===ar.items.length-1?'Next room <i class="fa fa-arrow-right"></i>':'Next item <i class="fa fa-arrow-right"></i>');
+  document.querySelector('#a2-areas .on')?.scrollIntoView({inline:'nearest',block:'nearest'});
+  aSummary();
+}
+function aSummary(){
+  const its=all(A.st),done=its.filter(i=>i.s).length,pct=Math.round(done/its.length*100);
+  document.getElementById('a1-bar').style.width=pct+'%';
+  document.getElementById('a1-prog').textContent=`${done} / ${its.length} checked`;
+  document.getElementById('a3-ring').style.setProperty('--p',pct);
+  document.getElementById('a3-pct').textContent=pct+'%';
+  const n=s=>its.filter(i=>i.s===s).length;
+  document.getElementById('a3-k').innerHTML=`<span><span><i class="dot" style="background:var(--ok)"></i>Good</span><b>${n('ok')}</b></span><span><span><i class="dot" style="background:var(--bad)"></i>Damaged</span><b>${n('bad')}</b></span><span><span><i class="dot" style="background:var(--na)"></i>N/A</span><b>${n('na')}</b></span><span><span><i class="dot" style="background:var(--line)"></i>Not checked</span><b>${its.length-done}</b></span>`;
+  const flags=[];A.st.forEach(a=>a.items.forEach(i=>{if(i.s==='bad')flags.push({i,a,t:'bad'})}));
+  const todo=[];A.st.forEach(a=>a.items.forEach(i=>{if(!i.s)todo.push({i,a})}));
+  document.getElementById('a3-attn').textContent=flags.length+todo.length;
+  let h=flags.map(f=>`<div class="a-flag"><span class="photo ${f.i.ph}"></span><div class="tx"><b>${f.i.n}</b><small>${f.a.n} · ${f.i.c||'No comment'}</small></div><span class="tag">DAMAGED</span></div>`).join('');
+  if(todo.length){const byArea={};todo.forEach(t=>(byArea[t.a.n]=(byArea[t.a.n]||0)+1));h+=Object.entries(byArea).slice(0,3).map(([k,v])=>`<div class="a-flag todo"><span class="photo" style="background:var(--warn-t);display:grid;place-items:center;color:var(--warn)"><i class="fa fa-hand-o-up"></i></span><div class="tx"><b>${k}</b><small>${v} item${v>1?'s':''} not checked yet</small></div><span class="tag">TO DO</span></div>`).join('')}
+  document.getElementById('a3-flags').innerHTML=h||'<div class="a-flag" style="border-left-color:var(--ok)"><div class="tx"><b>All clear</b><small>Every item is checked</small></div></div>';
+  document.getElementById('a3-go').disabled=todo.length>0;
+}
+document.getElementById('a2-areas').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;A.a=+b.dataset.a;A.i=Math.max(0,A.st[A.a].items.findIndex(i=>!i.s));aRender()});
+document.getElementById('a2-segs').addEventListener('click',e=>{const k=[...e.currentTarget.children].indexOf(e.target);if(k>=0){A.i=k;aRender()}});
+document.getElementById('a2-status').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const it=A.st[A.a].items[A.i];it.s=it.s===b.dataset.s?null:b.dataset.s;aRender()});
+document.getElementById('a2-shot').addEventListener('click',()=>{const it=A.st[A.a].items[A.i];it.p++;aRender();toast('a2-toast','Photo '+it.p+' saved')});
+document.querySelectorAll('.a [data-q]').forEach(b=>b.addEventListener('click',()=>{const it=A.st[A.a].items[A.i];it.q=Math.max(0,it.q+ +b.dataset.q);aRender()}));
+document.getElementById('a2-note').addEventListener('input',e=>{A.st[A.a].items[A.i].c=e.target.value;aSummary()});
+document.getElementById('a2-chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const it=A.st[A.a].items[A.i];it.c=it.c?it.c+', '+b.textContent.toLowerCase():b.textContent;aRender()});
+document.getElementById('a2-next').addEventListener('click',()=>{
+  const ar=A.st[A.a],it=ar.items[A.i];
+  if(!it.s){toast('a2-toast','Pick a status first');return}
+  if(A.i<ar.items.length-1)A.i++;else if(A.a<A.st.length-1){A.a++;A.i=0;toast('a2-toast',ar.n+' complete ✓')}else{toast('a2-toast','All rooms done. Review is ready.')}
+  aRender();
+});
+document.getElementById('a2-prev').addEventListener('click',()=>{if(A.i>0)A.i--;else if(A.a>0){A.a--;A.i=A.st[A.a].items.length-1}aRender()});
+aRender();
+wireAccept(document.getElementById('a4-lessee'),()=>{const c=document.getElementById('a4-lessee');c.classList.remove('live');c.classList.add('done');c.querySelector('.num').innerHTML='<i class="fa fa-check"></i>';c.querySelector('.st').textContent='Signed now';document.getElementById('a4-done').disabled=false;toast('a4-toast','Lessee signature saved')});
+document.getElementById('a4-done').addEventListener('click',()=>toast('a4-toast','Hand-over completed ✓'));
+
+/* =====================================================
+   B — inspection sheet (move-out on a lease)
+   ===================================================== */
+const B={st:make(),phase:'out',open:new Set([2]),sel:{a:2,i:2}};
+all(B.st).forEach(it=>{it.si='ok';it.so=null;it.ci='';it.co='';it.cost=0});
+B.st[3].items[1].si='bad';B.st[3].items[1].ci='Hairline crack, bottom-left corner';
+B.st[5].items[1].si='na';
+B.st.slice(0,2).forEach(a=>a.items.forEach(it=>{it.so='ok';it.p=1}));
+B.st[1].items[2].so='bad';B.st[1].items[2].co='Two burner knobs missing';B.st[1].items[2].cost=120;
+B.st[2].items[0].so='ok';B.st[2].items[1].so='ok';
+B.st[2].items[2].so='bad';B.st[2].items[2].co='Not cooling, compressor noise';B.st[2].items[2].cost=350;
+const bKey=()=>B.phase==='in'?'si':'so';
+function bRender(){
+  const its=all(B.st),k=bKey(),n=s=>its.filter(i=>i[k]===s).length,left=its.filter(i=>!i[k]).length;
+  document.querySelectorAll('#b2-phase button').forEach(b=>b.classList.toggle('on',b.dataset.p===B.phase));
+  document.getElementById('b2-stats').innerHTML=`<div><b style="color:var(--ok)">${n('ok')}</b><small>Good</small></div><div><b style="color:var(--bad)">${n('bad')}</b><small>Damaged</small></div><div><b style="color:var(--na)">${n('na')}</b><small>N/A</small></div><div><b>${left}</b><small>Left</small></div>`;
+  document.getElementById('b2-areas').innerHTML=B.st.map((a,ai)=>{
+    const d=a.items.filter(i=>i[k]).length;
+    return `<div class="b-area ${B.open.has(ai)?'open':''}" data-ai="${ai}"><div class="ah" data-toggle><span class="ic"><i class="fa ${a.i}"></i></span><div class="tx"><b>${a.n}</b><small>${d}/${a.items.length} checked${a.items.some(i=>i[k]==='bad')?' · <span style="color:var(--bad)">'+a.items.filter(i=>i[k]==='bad').length+' damaged</span>':''}</small></div>${d<a.items.length?'<button class="all" data-all>All good</button>':'<i class="fa fa-check-circle" style="color:var(--ok)"></i>'}<i class="fa fa-chevron-right chev"></i></div><div class="items">${a.items.map((it,ii)=>{
+      const c=B.phase==='in'?it.ci:it.co;
+      const ghost=B.phase==='out'?`<span class="ghost ${it.si}">IN ${it.si==='ok'?'✓':it.si==='bad'?'✗':'—'}</span>`:'';
+      return `<div class="b-it" data-ii="${ii}"><span class="th ${it.p?'photo '+it.ph:''}" data-shot>${it.p?'':'<i class="fa fa-camera"></i>'}</span><div class="tx" data-open><b>${it.n}</b><small>${ghost}×${it.q}${B.phase==='out'&&it.cost?' · <span style="color:var(--bad);flex:none">QAR '+it.cost+'</span>':''}${c?' · <span class="c">'+c+'</span>':''}</small></div><div class="tri">${['ok','bad','na'].map(s=>`<button data-s="${s}" class="${it[k]===s?'on':''}"><i class="fa ${ICO[s]}"></i></button>`).join('')}</div></div>`}).join('')}</div></div>`}).join('');
+  const done=its.length-left;
+  document.getElementById('b2-pr').innerHTML=`<b>${done}</b> of ${its.length} checked`;
+  const cost=its.reduce((s,i)=>s+(i.so==='bad'?+i.cost:0),0);
+  document.getElementById('b2-cost').innerHTML=B.phase==='out'?`Damage <b style="color:var(--bad)">QAR ${cost.toLocaleString()}</b>`:'';
+  const w=s=>n(s)/its.length*100;
+  document.getElementById('b2-stack').innerHTML=`<i style="width:${w('ok')}%;background:var(--ok)"></i><i style="width:${w('bad')}%;background:var(--bad)"></i><i style="width:${w('na')}%;background:var(--na)"></i>`;
+  bSheet();
+}
+function bSheet(){
+  const a=B.st[B.sel.a],it=a.items[B.sel.i];
+  document.getElementById('b3-area').textContent=a.n;
+  document.getElementById('b3-name').textContent=it.n;
+  document.querySelectorAll('#b3-status button').forEach(b=>b.classList.toggle('on',b.dataset.s===it.so));
+  document.getElementById('b3-note').value=it.co;
+  document.getElementById('b3-cost').classList.toggle('show',it.so==='bad');
+  document.getElementById('b3-amt').value=(+it.cost||0).toFixed(2);
+  const cap=document.getElementById('b3-cap');
+  if(it.p){cap.className='f photo '+it.ph;cap.innerHTML='<span class="lb">Move-out · now</span><span class="ph-i"><i class="fa fa-picture-o"></i></span>'}
+  else{cap.className='f cap';cap.innerHTML='<span class="lb">Move-out</span><span><i class="fa fa-camera"></i>Take photo</span>'}
+}
+document.getElementById('b2-phase').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;B.phase=b.dataset.p;bRender()});
+document.getElementById('b2-areas').addEventListener('click',e=>{
+  const area=e.target.closest('.b-area');if(!area)return;const ai=+area.dataset.ai,k=bKey();
+  if(e.target.closest('[data-all]')){B.st[ai].items.forEach(i=>{if(!i[k])i[k]='ok'});bRender();toast('b2-toast',B.st[ai].n+': rest marked good');return}
+  if(e.target.closest('[data-toggle]')){B.open.has(ai)?B.open.delete(ai):B.open.add(ai);bRender();return}
+  const row=e.target.closest('.b-it');if(!row)return;const it=B.st[ai].items[+row.dataset.ii];
+  const s=e.target.closest('[data-s]');
+  if(s){it[k]=it[k]===s.dataset.s?null:s.dataset.s;if(it[k]==='bad'&&B.phase==='out'){B.sel={a:ai,i:+row.dataset.ii};toast('b2-toast','Add details on screen 3 →')}bRender();return}
+  if(e.target.closest('[data-shot]')){it.p=(it.p||0)+1;bRender();toast('b2-toast','Photo attached');return}
+  if(e.target.closest('[data-open]')){B.sel={a:ai,i:+row.dataset.ii};if(B.phase!=='out'){B.phase='out'}bRender();toast('b2-toast','Opened on screen 3 →')}
+});
+document.getElementById('b3-status').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const it=B.st[B.sel.a].items[B.sel.i];it.so=b.dataset.s;bRender()});
+document.getElementById('b3-cap').addEventListener('click',()=>{const it=B.st[B.sel.a].items[B.sel.i];it.p=(it.p||0)+1;bRender()});
+document.getElementById('b3-note').addEventListener('input',e=>{B.st[B.sel.a].items[B.sel.i].co=e.target.value});
+document.getElementById('b3-amt').addEventListener('input',e=>{B.st[B.sel.a].items[B.sel.i].cost=parseFloat(e.target.value)||0});
+document.getElementById('b3-save').addEventListener('click',()=>{bRender();toast('b3-toast','Item saved')});
+bRender();
+
+/* B4 role sign-off */
+const B4={r:'se',done:{},confirm:false,people:{se:['Rahul Nair','RN','#0FA968','Signing as Site Engineer'],ls:['Maya Kurian','MK','#D9952B','Lessee · signing on your device'],ac:['Sara Mathew','SM','#8A94A6','Admin Coordinator · remote']}};
+function b4Render(){
+  const p=B4.people[B4.r],pad=document.getElementById('b4-pad'),signed=document.getElementById('b4-signed'),lock=document.getElementById('b4-lock'),conf=document.getElementById('b4-confirm');
+  document.querySelectorAll('#b4-roles button').forEach(b=>{b.classList.toggle('on',b.dataset.r===B4.r);if(B4.done[b.dataset.r]){b.classList.add('done');b.querySelector('.s').className='fa fa-check-circle s'}});
+  document.getElementById('b4-who').textContent=p[0];document.getElementById('b4-av').textContent=p[1];document.getElementById('b4-av').style.background=p[2];document.getElementById('b4-role').textContent=p[3];
+  const isLock=B4.r==='ac',isDone=!!B4.done[B4.r];
+  pad.style.display=isLock||isDone?'none':'';lock.style.display=isLock?'block':'none';signed.style.display=isDone?'block':'none';
+  if(isDone)signed.querySelector('img').src=B4.done[B4.r];
+  conf.style.display=isLock||isDone?'none':'flex';conf.classList.toggle('on',B4.confirm);
+  const save=document.getElementById('b4-save');
+  save.disabled=isLock||isDone||!(B4.confirm&&pad.classList.contains('inked'));
+  save.textContent=isLock?'Waiting for Sara Mathew':isDone?'Signed ✓':'Save signature';
+  fitPads();
+}
+document.getElementById('b4-roles').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;B4.r=b.dataset.r;B4.confirm=false;const pad=document.getElementById('b4-pad');pad.querySelector('canvas').getContext('2d').clearRect(0,0,9999,9999);pad.classList.remove('inked');b4Render()});
+document.getElementById('b4-confirm').addEventListener('click',()=>{B4.confirm=!B4.confirm;b4Render()});
+document.getElementById('b4-pad').addEventListener('ink',b4Render);
+document.getElementById('b4-save').addEventListener('click',()=>{const pad=document.getElementById('b4-pad');B4.done[B4.r]=pad.querySelector('canvas').toDataURL();pad.querySelector('canvas').getContext('2d').clearRect(0,0,9999,9999);pad.classList.remove('inked');B4.confirm=false;if(B4.r==='se')B4.r='ls';b4Render()});
+b4Render();
+
+/* =====================================================
+   C — atelier (inbox → rooms → room → item sheet → hand-over)
+   ===================================================== */
+const CJ=[
+  {t:'Apt 305 · Porto Arabia',sub:'The Pearl · Tower 11',type:'Rental',ph:'out',les:'Leena Varghese',when:'Today · 4:00 PM',grp:'Today',d:'07'},
+  {t:'Unit 1204 · Tower B',sub:'Al Waab Residences',type:'Rental',ph:'in',les:'Omar Haddad',when:'Today · 10:30 AM',grp:'Today',d:'07'},
+  {t:'Villa 7 · Lusail Gardens',sub:'Lusail · 3 BHK',type:'Lease',ph:'out',les:'Maya Kurian',when:'Thu · 2:00 PM',grp:'This week',d:'08'},
+  {t:'Apt 1802 · Zig Zag Towers',sub:'West Bay',type:'Rental',ph:'in',les:'Daniel Costa',when:'Yesterday · 5 PM',grp:'Overdue',d:'06'},
+];
+const GROUPS=['Overdue','Today','This week'];
+const cRoles=j=>j.type==='Lease'?['Site Engineer','Admin Coordinator']:['Facility Coordinator','Leasing Coordinator'];
+CJ.forEach((j,k)=>{
+  j.st=make();all(j.st).forEach(it=>{it.si='ok';it.cost=0});
+  const ok=a=>a.items.forEach(it=>{it.s='ok';it.p=1});
+  if(k===0){ok(j.st[0]);const kt=j.st[1].items;kt[0].s='ok';kt[0].p=1;kt[1].s='bad';kt[1].p=2;kt[1].c='Filter grease-clogged, light not working';kt[1].cost=180;j.st[3].items[1].si='bad';j.st[5].items[1].si='na'}
+  if(k===2){ok(j.st[0]);ok(j.st[1]);const ac=j.st[2].items[2];ac.s='bad';ac.p=1;ac.c='Not cooling, compressor noise';ac.cost=350}
+  if(k===3){j.st.forEach(ok);const f=j.st[3].items[3];f.s='bad';f.c='Rattles when running'}
+});
+const C={j:0,a:1,i:1,f:'all',rf:'all',q:'',signed:false};
+const cJob=()=>CJ[C.j];
+const cPct=j=>{const its=all(j.st);return Math.round(its.filter(i=>i.s).length/its.length*100)};
+const cset=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+const cMatch=(j,f)=>f==='all'||(f==='sign'?cPct(j)===100:j.ph===f);
+const segs=(items,colors)=>['ok','bad','na'].map(s=>`<i style="width:${items.filter(i=>i.s===s).length/items.length*100}%;background:${colors[s]}"></i>`).join('');
+
+function cInbox(){
+  const q=C.q.trim().toLowerCase();
+  const list=CJ.map((j,k)=>({j,k})).filter(({j})=>cMatch(j,C.f)&&(!q||(j.t+' '+j.sub+' '+j.les).toLowerCase().includes(q)));
+  document.querySelectorAll('#c1-filter button').forEach(b=>{b.classList.toggle('on',b.dataset.f===C.f);b.querySelector('b').textContent=CJ.filter(j=>cMatch(j,b.dataset.f)).length});
+  cset('c1-sign',CJ.filter(j=>cPct(j)===100).length);
+  document.getElementById('c1-list').innerHTML=GROUPS.map(g=>{
+    const rows=list.filter(x=>x.j.grp===g);if(!rows.length)return'';
+    return `<div class="ci-group ${g==='Overdue'?'od':''}">${g}</div>`+rows.map(({j,k})=>{const p=cPct(j);
+      return `<button class="ci-job ${k===C.j?'on':''}" data-j="${k}"><span class="ci-date"><b class="serif">${j.d}</b><small>OCT</small></span><span class="ci-tx"><b>${j.t}</b><small>${j.les} · ${j.type}</small><span class="ci-meta"><span class="ph ${j.ph}">Move-${j.ph}</span>${p===100?'<span class="ph sg">Ready to sign</span>':`<span><i class="fa fa-pencil"></i> ${j.type==='Lease'?'Site Engineer':'Facility Coord.'}</span>`}</span></span><span class="ci-ring ${p===100?'full':''}" style="--p:${p}"><b>${p===100?'<i class="fa fa-pencil"></i>':p+'%'}</b></span></button>`}).join('')}).join('')||'<p class="c-empty">No hand-overs match</p>';
+}
+function cRooms(){
+  const j=cJob(),its=all(j.st),n=s=>its.filter(i=>i.s===s).length,left=its.filter(i=>!i.s).length;
+  cset('c2-kick',`Move-${j.ph} · ${j.type}`);cset('c2-title',j.t);cset('c2-lessee',j.les);cset('c2-when',j.when);cset('c2-role',cRoles(j)[0]);
+  document.getElementById('c2-pct').innerHTML=`${cPct(j)}<sup>%</sup>`;
+  document.getElementById('c2-stack').innerHTML=segs(its,{ok:'#4ED39A',bad:'#F08A9C',na:'#C9CFDB'});
+  document.getElementById('c2-leg').innerHTML=`<span><i style="background:#4ED39A"></i>${n('ok')} good</span><span><i style="background:#F08A9C"></i>${n('bad')} damaged</span><span><i style="background:#C9CFDB"></i>${n('na')} N/A</span><span>${left} left</span>`;
+  cset('c2-left',left?`${left} items left`:'All checked');
+  document.getElementById('c2-tiles').innerHTML=j.st.map((a,k)=>{
+    const d=a.items.filter(i=>i.s).length,bad=a.items.filter(i=>i.s==='bad').length,shots=a.items.filter(i=>i.p);
+    const mos=shots.length?shots.slice(0,3).map(i=>`<span class="photo ${i.ph}"></span>`).join('')+'<span class="more"><i class="fa fa-camera"></i></span>'.repeat(Math.max(0,3-shots.length)):`<span class="emp"><i class="fa ${a.i}"></i></span>`;
+    return `<button class="cr-tile ${k===C.a?'on':''}" data-a="${k}">${d===a.items.length?'<span class="cr-done"><i class="fa fa-check"></i></span>':''}<div class="cr-mos">${mos}</div><div class="cr-bd"><div class="cr-n"><i class="fa ${a.i}"></i><b>${a.n}</b>${bad?`<span class="cr-flag">${bad} ✗</span>`:''}</div><div class="cr-bar">${segs(a.items,{ok:'var(--ok)',bad:'var(--bad)',na:'var(--na)'})}</div><small>${d} of ${a.items.length} checked</small></div></button>`;
+  }).join('')+`<button class="cr-hand ${left?'':'ready'}" data-hand><span class="ic"><i class="fa ${left?'fa-lock':'fa-pencil'}"></i></span><span style="flex:1"><b>Hand-over &amp; signatures</b><small>${left?'Unlocks when every item is checked · '+left+' left':'Ready to sign'}</small></span><i class="fa fa-chevron-right"></i></button>`;
+}
+function cGridHTML(){
+  const j=cJob(),a=j.st[C.a];
+  return a.items.map((it,k)=>({it,k})).filter(({it})=>C.rf==='all'||(C.rf==='todo'?!it.s:it.s==='bad')).map(({it,k})=>`<button class="cg-it ${k===C.i?'on':''}" data-i="${k}">${it.p?`<div class="photo ${it.ph}"><span class="ph-i"><i class="fa fa-picture-o"></i></span></div>`:`<div class="empty"><span><i class="fa fa-camera"></i>Tap to inspect</span></div>`}<span class="stt ${it.s||'none'}"><i class="fa ${it.s?ICO[it.s]:'fa-circle-o'}"></i></span>${it.p>1?`<span class="cnt"><i class="fa fa-camera"></i> ${it.p}</span>`:''}${j.ph==='out'?`<span class="was">IN ${it.si==='ok'?'✓':it.si==='bad'?'✗':'—'}</span>`:''}<div class="bd"><b>${it.n}</b><small>Qty ${it.q}${it.c?' · <i class="fa fa-comment"></i>':''}${j.ph==='out'&&it.s==='bad'&&it.cost?` · <span class="cost">QAR ${it.cost}</span>`:''}</small></div></button>`).join('')||'<p class="c-empty">Nothing in this filter</p>';
+}
+function cRoom(){
+  const j=cJob(),a=j.st[C.a],html=cGridHTML();
+  cset('c3-k',`Room ${C.a+1} of ${j.st.length} · ${j.t.split(' · ')[0]}`);cset('c3-name',a.n);
+  document.querySelectorAll('#c3-filter button').forEach(b=>{b.classList.toggle('on',b.dataset.rf===C.rf);b.querySelector('b').textContent=a.items.filter(i=>b.dataset.rf==='all'||(b.dataset.rf==='todo'?!i.s:i.s==='bad')).length});
+  document.getElementById('c3-grid').innerHTML=html;
+  const last=!j.st.some((x,k)=>k!==C.a&&x.items.some(i=>!i.s));
+  document.getElementById('c3-next').innerHTML=last?'Hand-over <i class="fa fa-pencil"></i>':'Next room <i class="fa fa-arrow-right"></i>';
+  document.getElementById('c4-under').innerHTML=`<div class="c-top"><span class="c-ib"><i class="fa fa-arrow-left"></i></span><div class="t"><div class="c-kick">Room ${C.a+1} of ${j.st.length}</div><b class="serif">${a.n}</b></div></div><div class="cg-grid">${html}</div>`;
+}
+function cSheet(){
+  const j=cJob(),a=j.st[C.a],it=a.items[C.i],out=j.ph==='out';
+  cset('c4-kick',`${a.n} · Item ${C.i+1} of ${a.items.length}`);cset('c4-name',it.n);cset('c4-qty',it.q);
+  cset('c4-hint',`Condition at move-${j.ph}`);
+  const left=out?`<div class="f photo ${it.ph}"><span class="lb">Move-in · 12 Jan</span><span class="ph-i"><i class="fa fa-picture-o"></i></span><span class="tag ${it.si}">${LBL[it.si]}</span></div>`:`<div class="f photo p2"><span class="lb">Reference</span><span class="ph-i"><i class="fa fa-picture-o"></i></span></div>`;
+  const right=it.p?`<div class="f photo ${it.ph} shot" data-cap><span class="lb">Move-${j.ph} · now</span><span class="ph-i"><i class="fa fa-picture-o"></i></span><span class="add"><i class="fa fa-camera"></i> ${it.p} · Add</span></div>`:`<div class="f cap" data-cap><span class="lb">Move-${j.ph}</span><span><i class="fa fa-camera"></i>Take photo</span></div>`;
+  document.getElementById('c4-cmp').innerHTML=left+right;
+  document.querySelectorAll('#c4-status button').forEach(b=>b.classList.toggle('on',b.dataset.s===it.s));
+  document.getElementById('c4-note').value=it.c;
+  document.getElementById('c4-cost').classList.toggle('show',out&&it.s==='bad');
+  document.getElementById('c4-amt').value=(+it.cost||0).toFixed(2);
+}
+function cHand(){
+  const j=cJob(),its=all(j.st),n=s=>its.filter(i=>i.s===s).length,left=its.filter(i=>!i.s).length,[r1,r3]=cRoles(j);
+  cset('c5-kick',`Move-${j.ph} · ${j.type}`);cset('c5-unit',j.t);cset('c5-sub',`${j.sub} · ${its.length} items · 07 Oct 2026`);
+  document.getElementById('c5-r').innerHTML=`<div><b style="color:var(--ok)">${n('ok')}</b><small>Good</small></div><div><b style="color:var(--bad)">${n('bad')}</b><small>Damaged</small></div><div><b>${n('na')}</b><small>N/A</small></div><div><b style="color:var(--gold-d)">${left}</b><small>Left</small></div>`;
+  cset('c5-photos',`${its.reduce((s,i)=>s+i.p,0)} photos attached`);
+  const dmg=its.reduce((s,i)=>s+(i.s==='bad'?+i.cost:0),0);
+  cset('c5-dmg',j.ph==='out'?`Damage QAR ${dmg.toLocaleString()}`:(n('bad')?`${n('bad')} item${n('bad')>1?'s':''} flagged`:'No damage'));
+  const w=document.getElementById('c5-warn');w.style.display=left?'flex':'none';w.innerHTML=`<i class="fa fa-exclamation-triangle"></i> ${left} item${left>1?'s':''} still to check before sealing`;
+  cset('c5-r1',r1);cset('c5-r3',r3);cset('c5-les',j.les);cset('c5-les2',j.les);
+  document.getElementById('c5-seal').disabled=!(C.signed&&!left);
+}
+function cAll(){cInbox();cRooms();cRoom();cSheet();cHand()}
+function cOpenJob(k){C.j=k;const st=CJ[k].st;C.a=Math.max(0,st.findIndex(a=>a.items.some(i=>!i.s)));C.i=Math.max(0,st[C.a].items.findIndex(i=>!i.s));C.rf='all';cAll()}
+function cStep(dir){const st=cJob().st;C.i+=dir;if(C.i>=st[C.a].items.length){if(C.a<st.length-1){C.a++;C.i=0}else C.i--}if(C.i<0){if(C.a>0){C.a--;C.i=st[C.a].items.length-1}else C.i=0}}
+const cItem=()=>cJob().st[C.a].items[C.i];
+
+document.getElementById('c1-filter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;C.f=b.dataset.f;cInbox()});
+document.getElementById('c1-q').addEventListener('input',e=>{C.q=e.target.value;cInbox()});
+document.getElementById('c1-list').addEventListener('click',e=>{const b=e.target.closest('[data-j]');if(!b)return;cOpenJob(+b.dataset.j);toast('c1-toast','Opened on screens 2–5 →')});
+document.getElementById('c2-tiles').addEventListener('click',e=>{
+  if(e.target.closest('[data-hand]')){toast('c2-toast',all(cJob().st).some(i=>!i.s)?'Finish every room first':'Ready: see screen 5 →');return}
+  const b=e.target.closest('[data-a]');if(!b)return;C.a=+b.dataset.a;C.i=Math.max(0,cJob().st[C.a].items.findIndex(i=>!i.s));C.rf='all';cAll();toast('c2-toast','Opened on screen 3 →');
+});
+document.getElementById('c3-filter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;C.rf=b.dataset.rf;cRoom()});
+document.getElementById('c3-grid').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;C.i=+b.dataset.i;cAll();toast('c3-toast','Editing on screen 4 →')});
+document.getElementById('c3-all').addEventListener('click',()=>{cJob().st[C.a].items.forEach(i=>{if(!i.s)i.s='ok'});cAll();toast('c3-toast','Remaining items marked good')});
+document.getElementById('c3-next').addEventListener('click',()=>{
+  const st=cJob().st;if(st[C.a].items.some(i=>!i.s)){toast('c3-toast','Some items still need a status');return}
+  const nx=st.findIndex(a=>a.items.some(i=>!i.s));
+  if(nx<0){toast('c3-toast','All rooms done. Sign on screen 5.');return}
+  C.a=nx;C.i=st[nx].items.findIndex(i=>!i.s);C.rf='all';cAll();toast('c3-toast','Next: '+st[nx].n);
+});
+document.getElementById('c4-status').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cItem().s=b.dataset.s;cAll()});
+document.getElementById('c4-cmp').addEventListener('click',e=>{if(!e.target.closest('[data-cap]'))return;const it=cItem();it.p++;cAll();toast('c4-toast','Photo '+it.p+' saved')});
+document.getElementById('c4-chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const it=cItem();it.c=it.c?it.c+', '+b.textContent.toLowerCase():b.textContent;cAll()});
+document.getElementById('c4-note').addEventListener('input',e=>{cItem().c=e.target.value;cRoom()});
+document.getElementById('c4-amt').addEventListener('input',e=>{cItem().cost=parseFloat(e.target.value)||0;cRoom();cHand()});
+document.querySelectorAll('[data-cq]').forEach(b=>b.addEventListener('click',()=>{const it=cItem();it.q=Math.max(0,it.q+ +b.dataset.cq);cAll()}));
+document.getElementById('c4-prev').addEventListener('click',()=>{cStep(-1);cAll()});
+document.getElementById('c4-nxt').addEventListener('click',()=>{cStep(1);cAll()});
+document.getElementById('c4-save').addEventListener('click',()=>{if(!cItem().s){toast('c4-toast','Pick a status first');return}cStep(1);cAll();toast('c4-toast','Saved · next item')});
+cAll();
+wireAccept(document.getElementById('c5-lessee'),()=>{const s=document.getElementById('c5-lessee');s.classList.remove('live');s.classList.add('done');s.querySelector('.dotn').innerHTML='<i class="fa fa-check"></i>';s.querySelector('.hd small').textContent='Just now';C.signed=true;cHand();toast('c5-toast','Lessee signed ✓')});
+document.getElementById('c5-seal').addEventListener('click',()=>toast('c5-toast','Hand-over sealed · PDF ready'));
+</script>
+</body>
+</html>

@@ -10,7 +10,10 @@ import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/skeleton.dart';
 
 import '../../domain/models/technician_models.dart';
 import '../../logic/dashboard_cubit/dashboard_cubit.dart';
@@ -21,7 +24,10 @@ import '../../widgets/v3/status_style.dart';
 /// floating KPI bento, outstanding alert, "up next" job spotlight, priority
 /// meter, weekly completion chart and the recent complaints feed.
 class TechnicianDashboardScreen extends StatefulWidget {
-  const TechnicianDashboardScreen({super.key});
+  const TechnicianDashboardScreen({super.key, this.onSelectTab});
+
+  /// Switches the shell tab (View all → My Jobs, avatar → Profile on a tablet).
+  final ValueChanged<int>? onSelectTab;
 
   @override
   State<TechnicianDashboardScreen> createState() =>
@@ -39,6 +45,43 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
         (_) => context.read<TechnicianDashboardCubit>().load());
   }
 
+  /// Set while a complaint is open — a double tap must not push it twice.
+  bool _opening = false;
+
+  Future<void> _openComplaint(int id) async {
+    if (_opening) return;
+    _opening = true;
+    try {
+      await context.push(Routes.complaintDetail(id));
+    } finally {
+      _opening = false;
+    }
+  }
+
+  void _openJobs() =>
+      widget.onSelectTab != null ? widget.onSelectTab!(Routes.jobsTabIndex) : context.go(Routes.complaints);
+
+  /// Profile is a shell destination on a tablet (an in-place swap) and a
+  /// pushed route on a phone.
+  void _openProfile() => context.isTablet && widget.onSelectTab != null
+      ? widget.onSelectTab!(kProfileTab)
+      : context.push(Routes.profile);
+
+  Widget _avatar(BuildContext context, String name, {double size = 46}) {
+    final auth = context.watch<AuthCubit>();
+    final user = auth.user;
+    final cfg = auth.config;
+    return GestureDetector(
+      onTap: _openProfile,
+      child: ProfileAvatar(
+        letter: name.isNotEmpty ? name[0].toUpperCase() : 'T',
+        imageUrl: user != null && user.hasPhoto ? cfg.assetUrl(user.photoUrl) : null,
+        headers: cfg.assetHeaders,
+        size: size,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<TechnicianDashboardCubit>();
@@ -53,10 +96,12 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
         child: RefreshIndicator(
           onRefresh: () => cubit.load(),
           edgeOffset: MediaQuery.of(context).padding.top,
-          child: MaxWidthBox(
-            maxWidth: 620,
-            child: _body(context, cubit, data, name),
-          ),
+          child: context.isTablet
+              ? SafeArea(bottom: false, child: _tabletBody(context, cubit, data, name))
+              : MaxWidthBox(
+                  maxWidth: 620,
+                  child: _body(context, cubit, data, name),
+                ),
         ),
       ),
     );
@@ -66,7 +111,19 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
       TechnicianDashboard? data, String name) {
     final p = context.astra;
     if (cubit.loading && data == null) {
-      return Center(child: CircularProgressIndicator(color: p.primary));
+      // The shape of the dashboard, pulsing — not a bare spinner.
+      return ListView(physics: const NeverScrollableScrollPhysics(), padding: EdgeInsets.zero, children: [
+        SkeletonPulse(
+          child: Container(
+            height: 250,
+            decoration: BoxDecoration(
+              gradient: p.heroGradient,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+            ),
+          ),
+        ),
+        const SkeletonList(count: 4, padding: EdgeInsets.fromLTRB(16, 18, 16, 16)),
+      ]);
     }
     if (cubit.error != null && data == null) {
       return ListView(children: [
@@ -114,7 +171,7 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
               const SizedBox(height: 20),
               _section(SectionLabel('Recent complaints',
                   trailing: GestureDetector(
-                    onTap: () => context.go('/complaints'),
+                    onTap: _openJobs,
                     child: Text('View all',
                         style: ui(size: 11.5, weight: FontWeight.w700, color: p.primary)),
                   ))),
@@ -130,13 +187,211 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                     child: ComplaintCard(
                         item: item,
-                        onTap: () => context.push('/complaints/${item.id}')),
+                        onTap: () => _openComplaint(item.id)),
                   ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  // ---- Tablet ------------------------------------------------------------------
+
+  /// Tablet: no full-bleed band — the gradient hero is an inset rounded card,
+  /// KPIs run four across, and the insights sit side by side.
+  Widget _tabletBody(BuildContext context, TechnicianDashboardCubit cubit, TechnicianDashboard? data, String name) {
+    final p = context.astra;
+    if (cubit.loading && data == null) {
+      return ListView(padding: const EdgeInsets.all(24), children: [
+        SkeletonPulse(
+          child: Container(height: 200, decoration: BoxDecoration(gradient: p.heroGradient, borderRadius: BorderRadius.circular(26))),
+        ),
+        const SizedBox(height: 18),
+        const SkeletonPulse(
+          child: Row(children: [
+            Expanded(child: SkeletonCard(height: 76)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonCard(height: 76)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonCard(height: 76)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonCard(height: 76)),
+          ]),
+        ),
+        const SkeletonList(count: 3, padding: EdgeInsets.only(top: 18)),
+      ]);
+    }
+    if (cubit.error != null && data == null) {
+      return EmptyState(
+        icon: Icons.wifi_off_rounded,
+        title: 'Could not load',
+        message: cubit.error,
+        action: AstraButton(label: 'Retry', expand: false, onTap: () => cubit.load()),
+      );
+    }
+    if (data == null) return const SizedBox.shrink();
+    final c = data.counts;
+    return LayoutBuilder(builder: (context, box) {
+      final roomy = box.maxWidth >= 820;
+      final pad = roomy ? 26.0 : 18.0;
+      final insights = <Widget>[
+        if (data.next != null)
+          _tabletBlock('Up next', _nextJobCard(context, data.next!), fill: roomy),
+        _tabletBlock('Open jobs by priority', _priorityCard(context, data.priority), fill: roomy),
+        if (data.week.isNotEmpty) _tabletBlock('Your week', _weekCard(context, data.week), fill: roomy),
+      ];
+      return ListView(
+        padding: EdgeInsets.fromLTRB(pad, 20, pad, 40),
+        children: [
+          _heroTablet(context, data, name),
+          const SizedBox(height: 18),
+          _kpiRow(context, c, box.maxWidth - pad * 2),
+          if (c.outstanding > 0) ...[
+            const SizedBox(height: 14),
+            _outstandingBanner(context, c.outstanding),
+          ],
+          const SizedBox(height: 22),
+          if (roomy)
+            IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                for (var i = 0; i < insights.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 16),
+                  Expanded(child: insights[i]),
+                ],
+              ]),
+            )
+          else
+            for (final w in insights) ...[w, const SizedBox(height: 18)],
+          const SizedBox(height: 24),
+          SectionLabel('Recent complaints',
+              trailing: GestureDetector(
+                onTap: _openJobs,
+                child: Text('View all', style: ui(size: 11.5, weight: FontWeight.w700, color: p.primary)),
+              )),
+          const SizedBox(height: 10),
+          if (data.recent.isEmpty)
+            const EmptyState(icon: Icons.inbox_outlined, title: 'No complaints yet', message: 'Assigned jobs will show up here.')
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: data.recent.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: context.isWide ? 3 : 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 128,
+              ),
+              itemBuilder: (_, i) {
+                final item = data.recent[i];
+                return ComplaintCard(item: item, onTap: () => _openComplaint(item.id));
+              },
+            ),
+        ],
+      );
+    });
+  }
+
+  /// A titled insight. In the side-by-side row ([fill]) the card stretches to
+  /// the tallest sibling; stacked, it keeps its own height.
+  Widget _tabletBlock(String label, Widget child, {bool fill = true}) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [SectionLabel(label), const SizedBox(height: 10), fill ? Expanded(child: child) : child],
+      );
+
+  /// The two-column tablet hero: greeting + duty line + stats left, the shift
+  /// ring right — an inset card, never a stretched phone band.
+  Widget _heroTablet(BuildContext context, TechnicianDashboard data, String name) {
+    final p = context.astra;
+    final c = data.counts;
+    final open = c.assigned + c.pending + c.outstanding;
+    final total = c.completedToday + open;
+    final progress = total == 0 ? 0.0 : c.completedToday / total;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: p.heroGradient,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: context.astraTheme.floatShadow(p.primary),
+      ),
+      child: Stack(children: [
+        Positioned(
+          top: -110,
+          right: -60,
+          child: Container(
+            width: 280,
+            height: 280,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: 0.07)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(26, 24, 26, 24),
+          child: Row(children: [
+            Expanded(
+              flex: 6,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  _avatar(context, name, size: 52),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(DateFormat('EEEE · d MMMM').format(DateTime.now()).toUpperCase(),
+                          style: ui(size: 10, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.66), letterSpacing: 1.4)),
+                      const SizedBox(height: 4),
+                      Text('Welcome back, $name',
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 26, color: Colors.white)),
+                    ]),
+                  ),
+                ]),
+                const SizedBox(height: 18),
+                Row(children: [
+                  _heroStat('${c.completedToday}', 'Done today'),
+                  _heroStat('$open', 'Remaining'),
+                  _heroStat('${c.completedWeek}', 'This week'),
+                  _heroStat('${data.priority.critical}', 'Critical'),
+                ]),
+              ]),
+            ),
+            const SizedBox(width: 24),
+            Column(mainAxisSize: MainAxisSize.min, children: [
+              _progressRing(progress),
+              const SizedBox(height: 8),
+              Text('On duty · $open open ${open == 1 ? 'job' : 'jobs'}',
+                  style: ui(size: 11, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.75))),
+            ]),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  /// KPIs in one row; tile height follows the tile width so they never become
+  /// empty slabs on a wide window.
+  Widget _kpiRow(BuildContext context, DashboardCounts c, double width) {
+    final tiles = [
+      _kpi(context, 'Assigned', c.assigned, Icons.assignment_ind_outlined, 'info'),
+      _kpi(context, 'Pending', c.pending, Icons.pending_actions_outlined, 'warning'),
+      _kpi(context, 'Done today', c.completedToday, Icons.today_outlined, 'success'),
+      _kpi(context, 'Done this week', c.completedWeek, Icons.date_range_outlined, 'success'),
+    ];
+    final cols = width >= 640 ? 4 : 2;
+    final tileW = (width - 12 * (cols - 1)) / cols;
+    return GridView.count(
+      crossAxisCount: cols,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: tileW / 76,
+      children: tiles,
+    );
+  }
+
+  Widget _outstandingBanner(BuildContext context, int outstanding) {
+    // The phone alert, without its own horizontal inset.
+    final alert = _outstandingAlert(context, outstanding);
+    return alert is Padding ? alert.child! : alert;
   }
 
   Widget _section(Widget child) =>
@@ -228,7 +483,7 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Monogram(letter: name.isNotEmpty ? name[0].toUpperCase() : 'T', size: 46),
+                        _avatar(context, name),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -362,7 +617,7 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
   Widget _outstandingAlert(BuildContext context, int outstanding) {
     final p = context.astra;
     return _section(GestureDetector(
-      onTap: () => context.go('/complaints'),
+      onTap: _openJobs,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
@@ -467,7 +722,7 @@ class _TechnicianDashboardScreenState extends State<TechnicianDashboardScreen> {
                 child: AstraButton(
                   label: 'Open job',
                   icon: Icons.arrow_forward_rounded,
-                  onTap: () => context.push('/complaints/${item.id}'),
+                  onTap: () => _openComplaint(item.id),
                 ),
               ),
               if (item.customerMobile.isNotEmpty) ...[

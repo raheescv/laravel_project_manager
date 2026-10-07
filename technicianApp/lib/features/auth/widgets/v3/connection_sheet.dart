@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 
@@ -9,68 +10,151 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 class ConnectionSheet {
   static Future<void> show(BuildContext context) {
     final auth = context.read<AuthCubit>();
-    final urlCtl = TextEditingController(text: auth.config.baseUrl);
-    final tenantCtl = TextEditingController(text: auth.config.tenant);
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        final p = ctx.astra;
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(
-              color: p.sheet,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      builder: (ctx) => _ConnectionSheetBody(auth: auth),
+    );
+  }
+}
+
+/// Stateful so the controllers live exactly as long as the sheet's own element.
+/// Disposing them from `showModalBottomSheet(...).whenComplete` instead fires
+/// while the dismissal animation is still rebuilding the fields, which throws
+/// "A TextEditingController was used after being disposed".
+class _ConnectionSheetBody extends StatefulWidget {
+  const _ConnectionSheetBody({required this.auth});
+
+  final AuthCubit auth;
+
+  @override
+  State<_ConnectionSheetBody> createState() => _ConnectionSheetBodyState();
+}
+
+class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
+  late final _urlCtl = TextEditingController(text: widget.auth.config.baseUrl);
+  late final _tenantCtl = TextEditingController(text: widget.auth.config.tenant);
+
+  @override
+  void dispose() {
+    _urlCtl.dispose();
+    _tenantCtl.dispose();
+    super.dispose();
+  }
+
+  /// Puts the build's own server back in the fields. The saved connection now
+  /// outlives every restart, so this is the only way back to what `env.json`
+  /// compiled in — the user still taps Save, like any other edit.
+  void _useDefault() {
+    _urlCtl.text = AppConfig.defaultBaseUrl;
+    _tenantCtl.text = AppConfig.defaultTenant;
+  }
+
+  bool get _isDefault =>
+      AppConfig.normalizeBaseUrl(_urlCtl.text) ==
+          AppConfig.normalizeBaseUrl(AppConfig.defaultBaseUrl) &&
+      _tenantCtl.text.trim() == AppConfig.defaultTenant.trim();
+
+  Future<void> _save() async {
+    final auth = widget.auth;
+    final url = _urlCtl.text.trim();
+    await auth.updateConnection(
+      baseUrl: url.isEmpty ? auth.config.baseUrl : url,
+      tenant: _tenantCtl.text.trim(),
+    );
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(
+          color: p.sheet,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: p.hairline,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: p.hairline,
-                      borderRadius: BorderRadius.circular(3),
+            const SizedBox(height: 16),
+            const SectionLabel('Connection'),
+            const SizedBox(height: 4),
+            Text('Server', style: serif(size: 22, color: p.ink)),
+            const SizedBox(height: 16),
+            _field('Base URL', _urlCtl,
+                hint: 'https://your-company.com', keyboard: TextInputType.url),
+            const SizedBox(height: 12),
+            _field('Tenant subdomain', _tenantCtl, hint: 'demo (optional)'),
+            // Follows the fields live, so it disappears the moment they match the
+            // build default and reappears when the user types something else.
+            ListenableBuilder(
+              listenable: Listenable.merge([_urlCtl, _tenantCtl]),
+              builder: (_, __) => _isDefault
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _defaultRow(),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const SectionLabel('Connection'),
-                const SizedBox(height: 4),
-                Text('Server', style: serif(size: 22, color: p.ink)),
-                const SizedBox(height: 16),
-                _field(ctx, 'Base URL', urlCtl, hint: 'https://your-salon.com'),
-                const SizedBox(height: 12),
-                _field(ctx, 'Tenant subdomain', tenantCtl, hint: 'demo (optional)'),
-                const SizedBox(height: 20),
-                AstraButton(
-                  label: 'Save',
-                  icon: Icons.check,
-                  onTap: () async {
-                    await auth.updateConnection(
-                      baseUrl: urlCtl.text.trim().isEmpty
-                          ? auth.config.baseUrl
-                          : urlCtl.text.trim(),
-                      tenant: tenantCtl.text.trim(),
-                    );
-                    if (ctx.mounted) Navigator.pop(ctx);
-                  },
-                ),
-              ],
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 20),
+            AstraButton(label: 'Save', icon: Icons.check, onTap: _save),
+          ],
+        ),
+      ),
     );
   }
 
-  static Widget _field(BuildContext ctx, String label, TextEditingController c, {String? hint}) {
-    final p = ctx.astra;
+  Widget _defaultRow() {
+    final p = context.astra;
+    // Just the host reads better in a one-line row; a value `Uri` cannot make a
+    // host of (no scheme) is shown whole rather than as nothing.
+    final parsed = Uri.tryParse(AppConfig.defaultBaseUrl)?.host ?? '';
+    final host = parsed.isEmpty ? AppConfig.defaultBaseUrl : parsed;
+    return Row(
+      children: [
+        Icon(Icons.restore_rounded, size: 16, color: p.textMuted),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text('This build was made for $host',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: _useDefault,
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Text('Use it',
+                style: ui(size: 12, weight: FontWeight.w800, color: p.primary)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// [keyboard] is `TextInputType.url` for the Base URL so the OS keypad puts
+  /// `.` `/` `:` (and `.com`) on the primary layer. Autocorrect/capitalisation
+  /// are off on every field here — both mangle a hand-typed host.
+  Widget _field(String label, TextEditingController c,
+      {String? hint, TextInputType? keyboard}) {
+    final p = context.astra;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -79,6 +163,10 @@ class ConnectionSheet {
         const SizedBox(height: 6),
         TextField(
           controller: c,
+          keyboardType: keyboard ?? TextInputType.text,
+          autocorrect: false,
+          enableSuggestions: false,
+          textCapitalization: TextCapitalization.none,
           style: ui(size: 14, weight: FontWeight.w600, color: p.ink),
           decoration: InputDecoration(
             hintText: hint,

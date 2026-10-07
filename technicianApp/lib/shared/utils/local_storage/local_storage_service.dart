@@ -51,6 +51,24 @@ class LocalStorageService {
   Future<void> setThemeMode(String v) =>
       _prefs.setString(LocalStorageKeys.themeMode, v);
 
+  String? get typefaceId => _prefs.getString(LocalStorageKeys.typeface);
+  Future<void> setTypefaceId(String v) =>
+      _prefs.setString(LocalStorageKeys.typeface, v);
+
+  /// Tablet window chrome (see `AstraChrome`); device-local.
+  String? get chromeId => _prefs.getString(LocalStorageKeys.chrome);
+  Future<void> setChromeId(String v) =>
+      _prefs.setString(LocalStorageKeys.chrome, v);
+
+  bool? get hapticsEnabled => _prefs.getBool(LocalStorageKeys.haptics);
+  Future<void> setHapticsEnabled(bool v) =>
+      _prefs.setBool(LocalStorageKeys.haptics, v);
+
+  /// Digits in the last PIN that signed in on this device (4–6); the login
+  /// keypad shows that many dots and auto-submits at that length.
+  int get pinLength => (_prefs.getInt(LocalStorageKeys.pinLength) ?? 4).clamp(4, 6);
+  Future<void> setPinLength(int v) => _prefs.setInt(LocalStorageKeys.pinLength, v.clamp(4, 6));
+
   String? get currencyCode => _prefs.getString(LocalStorageKeys.currency);
   Future<void> setCurrencyCode(String v) =>
       _prefs.setString(LocalStorageKeys.currency, v);

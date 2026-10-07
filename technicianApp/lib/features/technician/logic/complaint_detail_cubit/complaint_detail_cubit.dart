@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/logic/base/holder_cubit.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
@@ -28,15 +30,24 @@ class ComplaintDetailCubit extends HolderCubit {
   List<ProductOption> products = [];
   bool productsLoading = false;
 
+  /// Bumped per load — a pull-to-refresh racing an earlier load must not let
+  /// the older response overwrite the newer one.
+  int _loadId = 0;
+
   Future<void> load() async {
+    final req = ++_loadId;
     loading = true;
     error = null;
     refresh();
     try {
-      detail = await _repo.detail(complaintId);
+      final result = await _repo.detail(complaintId);
+      if (req != _loadId) return;
+      detail = result;
     } on ApiException catch (e) {
+      if (req != _loadId) return;
       error = e.message;
     } catch (_) {
+      if (req != _loadId) return;
       error = 'Could not load this complaint.';
     }
     loading = false;
@@ -124,23 +135,57 @@ class ComplaintDetailCubit extends HolderCubit {
 
   // ---- Supply-item sheet lookups ----
 
-  Future<void> ensureBranches() async {
-    if (branches.isNotEmpty) return;
+  /// One in-flight fetch shared by every caller (the sheet's opener and the
+  /// sheet itself), so awaiting it always means "branches are in".
+  Future<void>? _branchesFetch;
+
+  Future<void> ensureBranches() {
+    if (branches.isNotEmpty) return Future.value();
+    return _branchesFetch ??= _fetchBranches();
+  }
+
+  Future<void> _fetchBranches() async {
     try {
       branches = await _repo.branches();
       refresh();
-    } catch (_) {/* leave empty; the sheet shows a hint */}
+    } on Exception catch (_) {
+      // API or network failure — leave empty; the sheet shows a "select a store" hint and a retry
+      // happens on the next open.
+    } finally {
+      _branchesFetch = null;
+    }
+  }
+
+  Timer? _productDebounce;
+  int _productReq = 0;
+
+  /// Product search as the user types: debounced, and a slower response for
+  /// an older query is dropped (including its effect on [productsLoading]).
+  void searchProducts(String search) {
+    _productDebounce?.cancel();
+    _productDebounce = Timer(const Duration(milliseconds: 300), () => loadProducts(search));
   }
 
   Future<void> loadProducts(String search) async {
+    final req = ++_productReq;
     productsLoading = true;
     refresh();
+    List<ProductOption> result;
     try {
-      products = await _repo.products(search: search);
-    } catch (_) {
-      products = [];
+      result = await _repo.products(search: search);
+    } on Exception catch (_) {
+      // API or network failure — show "No products" rather than stale rows.
+      result = [];
     }
+    if (req != _productReq) return;
+    products = result;
     productsLoading = false;
     refresh();
+  }
+
+  @override
+  Future<void> close() {
+    _productDebounce?.cancel();
+    return super.close();
   }
 }

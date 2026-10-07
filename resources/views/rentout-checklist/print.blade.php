@@ -1,208 +1,75 @@
+{{-- The hand-over checklist on screen, where the parties sign. It renders the SAME
+     document as the PDF (print.rentout.partials.checklist-document) — the web
+     "Download PDF" and the technician app's PDF are that document too — with the
+     unsigned signature boxes turned into signature pads. --}}
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Unit Handover & Snagging</title>
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendors/font-awesome/font-awesome.min.css') }}">
     <script src="{{ asset('assets/js/signature_pdf.js') }}"></script>
+    @include('print.rentout.partials.checklist-styles')
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
             background-color: #f0f2f5;
-            padding: 2rem;
+            padding: 2rem 1rem;
         }
 
-        .checklist-card {
+        /* An A4 sheet on the desk: the document is laid out at the PDF's 10px scale,
+           so the sheet is sized like the page and the type scaled up for reading. */
+        .ck-sheet {
             background: #ffffff;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            max-width: 1100px;
-            margin: auto;
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 28px 32px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
         }
 
-        .form-heading {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #212529;
-            margin-bottom: 0.25rem;
+        .ck-sheet .ck-doc {
+            zoom: 1.25;
         }
 
-        .form-subtitle {
-            font-size: 0.95rem;
-            color: #6c757d;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #6c757d;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .meta-table th {
-            background-color: #f8f9fa;
-            color: #495057;
-        }
-
-        .table th,
-        .table td {
-            vertical-align: middle;
-            font-size: 0.9rem;
-        }
-
-        .category-row th {
-            background-color: #eef1f4;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.03em;
-        }
-
-        /* ---- Fixture Comments: one read-only block per area, under that area's items ---- */
-        .fixture-row>td {
-            background: #fbfcfe;
-            border-top: 2px solid #e0e3e7 !important;
-        }
-
-        .fx-standalone .fx-block {
-            border: 1px solid #e0e3e7;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .fx-head {
+        .ck-toolbar {
+            max-width: 1080px;
+            margin: 0 auto 12px;
             display: flex;
-            align-items: center;
-            gap: .4rem;
-            flex-wrap: wrap;
-            padding: .45rem .75rem;
-            background: #eef1f4;
-            border-bottom: 1px solid #e0e3e7;
+            justify-content: flex-end;
+            gap: 8px;
         }
 
-        .fx-title {
-            font-weight: 700;
-            font-size: .8rem;
-            text-transform: uppercase;
-            letter-spacing: .03em;
-            color: #495057;
+        /* The pad component carries its own name header; in the document the ruled
+           line under the box already names the signatory. */
+        .sign-cell .sigpad-block > .section-title {
+            display: none;
         }
 
-        .fx-ar {
-            font-weight: 400;
-            text-transform: none;
-            color: #8a929b;
-            margin-inline-start: .35rem;
+        .sign-cell .sigpad-block {
+            text-align: left;
+            font-size: 12px;
         }
 
-        .fx-entry {
-            display: grid;
-            grid-template-columns: 104px 104px minmax(180px, 1fr) 130px;
-            gap: .75rem;
-            align-items: start;
-            padding: .6rem .75rem;
-            border-bottom: 1px solid #eef0f3;
+        .ck-doc img.zoomable {
+            cursor: zoom-in;
         }
 
-        .fx-lbl {
-            display: block;
-            font-size: .62rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #98a0aa;
-            margin-bottom: .15rem;
-        }
-
-        .fx-photo {
-            width: 104px;
-            height: 76px;
-            border-radius: 7px;
-            border: 1px solid #e0e3e7;
-            background: #f6f8fb;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ccd2d9;
-        }
-
-        .fx-photo.is-empty {
-            border-style: dashed;
-        }
-
-        .fx-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .fx-cmt {
-            font-size: .85rem;
-        }
-
-        .fx-date {
-            color: #8a929b;
-            font-size: .72rem;
-            margin-top: .15rem;
-        }
-
-        .fx-sign {
-            padding: .75rem;
-            background: #f8fafc;
-            border-top: 1px solid #eef0f3;
-        }
-
-        @media (max-width: 767.98px) {
-            .fx-entry {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .fx-cmt {
-                grid-column: 1 / -1;
-            }
-        }
-
-        .acceptance-block {
-            border: 1px solid #e0e3e7;
-            border-radius: 10px;
-            padding: 1rem;
-            height: 100%;
-        }
-
-        .phase-heading {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #212529;
-            margin-bottom: 1rem;
-        }
-
-        .signed-box {
-            border: 1px dashed #ccc;
-            padding: 8px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        @media (max-width: 767.98px) {
+        @media (max-width: 768px) {
             body {
-                padding: .75rem;
+                padding: .5rem;
             }
 
-            .checklist-card {
-                padding: 1.25rem;
+            .ck-sheet {
+                padding: 12px;
+                border-radius: 8px;
             }
 
-            .form-heading {
-                font-size: 1.35rem;
-            }
-
-            .table th,
-            .table td {
-                font-size: .82rem;
+            .ck-sheet .ck-doc {
+                zoom: 1;
+                overflow-x: auto;
             }
         }
 
@@ -212,13 +79,20 @@
                 padding: 0;
             }
 
-            .checklist-card {
+            .ck-sheet {
                 box-shadow: none;
                 border-radius: 0;
                 max-width: 100%;
+                padding: 0;
+            }
+
+            .ck-sheet .ck-doc {
+                zoom: 1;
             }
 
             .no-print,
+            .fx-pad,
+            .sigpad-block,
             [class^="sigpad-container-"],
             [class^="sigpad-actions-"] {
                 display: none !important;
@@ -228,253 +102,29 @@
 </head>
 
 <body>
-    <div class="checklist-card">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <div class="form-heading">Unit Handover & Snagging</div>
-                <div class="form-subtitle">Property Handover Inventory &amp; Condition Record</div>
-            </div>
-            <a class="btn btn-primary no-print" href="{{ route('print::rentout::checklist', $rentOut->id) }}" target="_blank"><i class="fa fa-download"></i> Download PDF</a>
-        </div>
-
-        @php
-            $tenant = $rentOut?->account;
-            // Move-Out / damage tracking only applies to rentals — a lease/sale never hands the unit back.
-            $showMoveOut = $rentOut?->agreement_type === \App\Enums\RentOut\AgreementType::Rental;
-            $colCount = $showMoveOut ? 9 : 6;
-
-            // Split the free width between Item and Comments in proportion to the text
-            // they actually hold — see the PDF view for the same sizing rationale.
-            $lengthOf = function ($values) {
-                $lengths = collect($values)->map(fn ($v) => mb_strlen(trim((string) $v)))->filter()->sort()->values();
-                if ($lengths->isEmpty()) {
-                    return 0;
-                }
-                return (int) $lengths[(int) floor(($lengths->count() - 1) * 0.9)];
-            };
-            $checklistLines = $rentOut->checklistLines;
-            $freeWidth = $showMoveOut ? 60.0 : 76.0;
-            $weigh = fn ($len) => $len <= 0 ? 0.45 : max(0.8, min(3.2, $len / 26));
-            $weights = [
-                'desc' => $weigh($lengthOf($checklistLines->map(fn ($l) => $l->item?->name))) * 1.15,
-                'in' => $weigh($lengthOf($checklistLines->map(fn ($l) => $l->move_in_comment))),
-            ];
-            if ($showMoveOut) {
-                $weights['out'] = $weigh($lengthOf($checklistLines->map(fn ($l) => $l->move_out_comment)));
+    @php
+        $imageSrc = function (?string $relative) {
+            if (! $relative) {
+                return null;
             }
-            $weightTotal = array_sum($weights) ?: 1;
-            $pct = fn ($k) => round($freeWidth * $weights[$k] / $weightTotal, 1) . '%';
-        @endphp
+            $relative = ltrim(preg_replace('#^public/#', '', $relative), '/');
 
-        {{-- (a) Property Details --}}
-        <table class="table table-bordered table-sm meta-table mb-4">
-            <tbody>
-                <tr>
-                    <th style="width:18%">Tenant</th>
-                    <td style="width:32%"><b>{{ $tenant?->name ?? '-' }}</b></td>
-                    <th style="width:18%">Mobile</th>
-                    <td style="width:32%">{{ $tenant?->mobile ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <th>Group</th>
-                    <td>{{ $rentOut?->group?->name ?? '-' }}</td>
-                    <th>Building</th>
-                    <td>{{ $rentOut?->building?->name ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <th>Unit</th>
-                    <td>{{ $rentOut?->property?->number ?? ($rentOut?->property?->unit_no ?? '-') }}</td>
-                    <th>Type</th>
-                    <td>{{ $rentOut?->type?->name ?? '-' }}</td>
-                </tr>
-                @if ($showMoveOut)
-                    <tr>
-                        <th>Actual Move-In Date</th>
-                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
-                        <th>Actual Move-Out Date</th>
-                        <td>{{ $rentOut->actual_move_out_date ? systemDate($rentOut->actual_move_out_date) : '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Electricity &amp; Water</th>
-                        <td>{{ $rentOut?->include_electricity_water ? 'Included' : 'Not Included' }}</td>
-                        <th>Air Conditioning</th>
-                        <td>{{ $rentOut?->include_ac ? 'Included' : 'Not Included' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Internet / WiFi</th>
-                        <td>{{ $rentOut?->include_wifi ? 'Included' : 'Not Included' }}</td>
-                        <th></th>
-                        <td></td>
-                    </tr>
-                @else
-                    {{-- A lease/sale reports handover milestones and meter references. --}}
-                    <tr>
-                        <th>Inspection Date</th>
-                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_in_date) : '-' }}</td>
-                        <th>Hand Over Date</th>
-                        <td>{{ $rentOut->actual_move_in_date ? systemDate($rentOut->actual_move_out_date) : '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Kahrama Number</th>
-                        <td>{{ $rentOut?->property?->kahramaa ?: '-' }}</td>
-                        <th>Gas Meter Number</th>
-                        <td>{{ $rentOut?->property?->gas_meter_number ?: '-' }}</td>
-                    </tr>
-                @endif
-            </tbody>
-        </table>
+            return is_file(public_path('storage/' . $relative)) ? asset('storage/' . $relative) : null;
+        };
+    @endphp
 
-        {{-- (b) Inventory & Condition --}}
-        <p class="section-title">Inventory &amp; Condition</p>
-        <div class="table-responsive">
-        <table class="table table-sm table-bordered">
-            <thead class="table-light">
-                <tr>
-                    <th style="width:40px;">Sn</th>
-                    <th class="text-center" style="width:50px;">Qty</th>
-                    <th class="text-center" style="width:60px;">Image</th>
-                    <th style="width:{{ $pct('desc') }}; min-width:140px;">Item</th>
-                    <th class="text-center" style="width:70px;">Move-In</th>
-                    <th style="width:{{ $pct('in') }}; min-width:140px;">Comments</th>
-                    @if ($showMoveOut)
-                        <th class="text-center" style="width:70px;">Move-Out</th>
-                        <th style="width:{{ $pct('out') }}; min-width:140px;">Move-Out Comments</th>
-                        <th class="text-end" style="width:80px;">Damage</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $grouped = $rentOut->checklistLines->groupBy(fn ($l) => $l->item?->category ?: 'Others');
-                    $sn = 0;
-                @endphp
-                @forelse ($grouped as $category => $lines)
-                    <tr class="category-row">
-                        <th colspan="{{ $colCount }}">{{ $category ?: 'Others' }}</th>
-                    </tr>
-                    @foreach ($lines as $line)
-                        @php $sn++; @endphp
-                        <tr>
-                            <td>{{ $sn }}</td>
-                            <td class="text-center">{{ $line->qty }}</td>
-                            <td class="text-center">
-                                @if ($line->resolved_image_url)
-                                    <img src="{{ $line->resolved_image_url }}" alt="" class="zoomable"
-                                        data-img="{{ $line->resolved_image_url }}"
-                                        style="width:34px; height:34px; object-fit:cover; border-radius:4px; cursor:zoom-in;"
-                                        title="Click to enlarge">
-                                @endif
-                            </td>
-                            <td>{{ $line->item?->name }}</td>
-                            <td class="text-center">{{ $line->move_in_status?->symbol() }}</td>
-                            <td>{{ $line->move_in_comment }}</td>
-                            @if ($showMoveOut)
-                                <td class="text-center">{{ $line->move_out_status?->symbol() }}</td>
-                                <td>{{ $line->move_out_comment }}</td>
-                                <td class="text-end">{{ number_format((float) $line->damage_cost, 2) }}</td>
-                            @endif
-                        </tr>
-                    @endforeach
-                    {{-- Fixture Comments for this area, directly under its items. --}}
-                    @php $fxArea = $rentOut->fixtureAreaFor($category); @endphp
-                    @if ($fxArea && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
-                        <tr class="fixture-row">
-                            <td colspan="{{ $colCount }}" class="p-0">
-                                @include('rentout-checklist.partials.fixture-block', ['area' => $fxArea])
-                            </td>
-                        </tr>
-                    @endif
-                @empty
-                    <tr>
-                        <td colspan="{{ $colCount }}" class="text-center text-muted">No items recorded.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-            @if ($showMoveOut)
-                <tfoot>
-                    <tr>
-                        <th colspan="8" class="text-end">Total Damage</th>
-                        <th class="text-end"><b>{{ number_format($rentOut->checklistDamageTotal(), 2) }}</b></th>
-                    </tr>
-                </tfoot>
-            @endif
-        </table>
-        </div>
+    <div class="ck-toolbar no-print">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa fa-print me-1"></i> Print</button>
+        <a class="btn btn-primary btn-sm" href="{{ route('print::rentout::checklist', $rentOut->id) }}" target="_blank"><i class="fa fa-download me-1"></i> Download PDF</a>
+    </div>
 
-        {{-- Areas recorded by hand — they have no items, so the table above never showed them. --}}
-        @foreach ($rentOut->fixtureAreas as $fxArea)
-            @if (! $grouped->has($fxArea->category) && ($fxArea->entries->isNotEmpty() || $fxArea->isSigned()))
-                <div class="fx-standalone mt-3">
-                    @include('rentout-checklist.partials.fixture-block', ['area' => $fxArea])
-                </div>
-            @endif
-        @endforeach
-
-        {{-- (c) Acceptance Blocks: Move-In then Move-Out --}}
-        @php
-            $phases = $showMoveOut
-                ? [\App\Enums\RentOut\ChecklistPhase::MoveIn, \App\Enums\RentOut\ChecklistPhase::MoveOut]
-                : [\App\Enums\RentOut\ChecklistPhase::MoveIn];
-            $roles = [
-                \App\Enums\RentOut\ChecklistSignatoryRole::Lessee,
-                \App\Enums\RentOut\ChecklistSignatoryRole::FacilityCoordinator,
-                \App\Enums\RentOut\ChecklistSignatoryRole::LeasingCoordinator,
-            ];
-        @endphp
-
-        <div class="row mt-4">
-            @foreach ($phases as $phase)
-                <div class="{{ count($phases) > 1 ? 'col-md-6' : 'col-12' }}">
-                    <div class="acceptance-block mb-4">
-                        <div class="phase-heading">{{ $phase->label() }} Acceptance</div>
-                        <div class="row">
-                            @foreach ($roles as $role)
-                                @php
-                                    $resolvedName = match ($role->value) {
-                                        'lessee' => $tenant?->name,
-                                        'facility_coordinator' => $rentOut->facilityCoordinator?->name,
-                                        'leasing_coordinator' => $rentOut->leasingCoordinator?->name,
-                                        default => null,
-                                    };
-                                    $sig = $rentOut->checklistSignatureFor($phase, $role);
-                                    $userId = match ($role->value) {
-                                        'facility_coordinator' => $rentOut->facility_coordinator_id,
-                                        'leasing_coordinator' => $rentOut->leasing_coordinator_id,
-                                        default => null,
-                                    };
-                                @endphp
-                                <div class="col-12 mb-3">
-                                    @if ($sig && $sig->signature_path)
-                                        <p class="section-title mb-1">
-                                            {{ $resolvedName ?: '-' }}
-                                            <small class="text-muted">({{ $role->labelFor($rentOut->agreement_type) }})</small>
-                                        </p>
-                                        <div class="signed-box">
-                                            <img src="{{ asset('storage/' . $sig->signature_path) }}"
-                                                alt="Signature" style="max-height:80px">
-                                            <div class="mt-1">
-                                                <b>{{ $sig->signer_name ?: ($resolvedName ?: '-') }}</b>
-                                            </div>
-                                            <div class="text-muted" style="font-size:0.8rem">
-                                                {{ $sig->signed_at ? systemDateTime($sig->signed_at) : '' }}
-                                            </div>
-                                        </div>
-                                    @else
-                                        @livewire('rent-out.checklist.sign', [
-                                            'rentOut' => $rentOut,
-                                            'phase' => $phase->value,
-                                            'role' => $role->value,
-                                            'signerName' => $resolvedName,
-                                            'userId' => $userId,
-                                        ], key('sign-' . $phase->value . '-' . $role->value . '-' . $rentOut->id))
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
+    <div class="ck-sheet">
+        @include('print.rentout.partials.checklist-document', [
+            'rentOut' => $rentOut,
+            'imageSrc' => $imageSrc,
+            'companyLogo' => \App\Services\CompanyLogoResolver::dataUri(),
+            'interactive' => true,
+        ])
     </div>
 
     {{-- Self-contained image lightbox (no Bootstrap JS dependency on this standalone page) --}}

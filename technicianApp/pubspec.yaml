@@ -37,10 +37,12 @@ dependencies:
   local_auth: ^2.3.0
 
   # Camera barcode / QR scanning (iOS / Android / macOS)
-  mobile_scanner: ^6.0.10
+  mobile_scanner: ^7.4.2
 
   # Technician attachments — capture from camera / gallery and pick files
   image_picker: ^1.1.2
+  # Square/circular avatar crop before upload (same as mobileApp)
+  crop_your_image: ^2.0.0
   file_picker: ^8.1.6
 
   # Tap-to-call / open attachment URLs externally

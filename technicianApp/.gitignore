@@ -15,6 +15,8 @@ migrate_working_dir/
 # Environment variables
 .env
 !.env.example
+# Per-machine build-time connection (template: env.example.json)
+/env.json
 
 # IntelliJ related
 *.iml

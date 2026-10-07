@@ -12,15 +12,25 @@ import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
+import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/skeleton.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import '../../domain/models/technician_models.dart';
 import '../../logic/complaint_detail_cubit/complaint_detail_cubit.dart';
+import '../../logic/complaints_cubit/complaints_cubit.dart';
+import '../../logic/dashboard_cubit/dashboard_cubit.dart';
 import '../../widgets/v3/status_style.dart';
+import '../../widgets/v3/edit_supply_item_sheet.dart';
 import '../../widgets/v3/supply_item_sheet.dart';
 
 class ComplaintDetailScreen extends StatefulWidget {
-  const ComplaintDetailScreen({super.key});
+  const ComplaintDetailScreen({super.key, this.onClose});
+
+  /// Set when the detail is embedded in My Jobs' right pane on a tablet: the
+  /// head shows a close ✕ instead of a back arrow. Null when pushed.
+  final VoidCallback? onClose;
 
   @override
   State<ComplaintDetailScreen> createState() => _ComplaintDetailScreenState();
@@ -60,6 +70,21 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
             ? detail.propertyInfo.building
             : (detail.propertyInfo.group.isNotEmpty ? detail.propertyInfo.group : null));
 
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          child: SafeArea(
+            bottom: false,
+            child: Column(children: [
+              _tabletHead(context, detail, current),
+              Expanded(child: _tabletBody(context, cubit, detail, current)),
+            ]),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
@@ -82,10 +107,97 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     );
   }
 
-  Widget _body(BuildContext context, ComplaintDetailCubit cubit, ComplaintDetail? detail, SiblingComplaint? current) {
+  // ── Tablet: flat head + two-column body, the same whether embedded in My
+  // Jobs' detail pane or pushed (the rail wraps the pushed route). ──
+
+  Widget _tabletHead(BuildContext context, ComplaintDetail? detail, SiblingComplaint? current) {
     final p = context.astra;
+    final info = detail?.propertyInfo;
+    final where = info == null
+        ? null
+        : [
+            if (info.propertyNumber.isNotEmpty) 'Unit ${info.propertyNumber}',
+            if (info.building.isNotEmpty) info.building else if (info.group.isNotEmpty) info.group,
+          ].join(' · ');
+    final mobile = detail?.customerInfo.customerMobile ?? '';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 20, 16),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: p.hairline))),
+      child: TabletDetailHead(
+        label: detail == null ? 'Complaint' : 'REG #${detail.propertyInfo.registrationId}',
+        amount: (current?.complaintName ?? '').isNotEmpty ? current!.complaintName : 'Complaint',
+        subtitle: (where ?? '').isEmpty ? null : where,
+        badge: detail == null ? null : AstraStatusPill(label: detail.statusLabel, colorName: detail.statusColor),
+        leading: widget.onClose == null && context.canPop()
+            ? TabletIconButton(icon: Icons.chevron_left, onTap: () => context.pop())
+            : null,
+        actions: [
+          if (mobile.isNotEmpty) TabletActionButton(label: 'Call', icon: Icons.call_outlined, onTap: () => _call(mobile)),
+          if (widget.onClose != null) TabletIconButton(icon: Icons.close, tooltip: 'Close', onTap: widget.onClose),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabletBody(BuildContext context, ComplaintDetailCubit cubit, ComplaintDetail? detail, SiblingComplaint? current) {
     if (cubit.loading && detail == null) {
-      return Center(child: CircularProgressIndicator(color: p.primary));
+      return const SkeletonList(count: 5, padding: EdgeInsets.fromLTRB(24, 20, 24, 20), itemHeight: 96);
+    }
+    if (cubit.error != null && detail == null) {
+      return EmptyState(
+        icon: Icons.wifi_off_rounded,
+        title: 'Could not load',
+        message: cubit.error,
+        action: AstraButton(label: 'Retry', expand: false, onTap: () => cubit.load()),
+      );
+    }
+    if (detail == null) return const SizedBox.shrink();
+    final locked = detail.isLocked;
+    final left = <Widget>[
+      _propertyBar(context, detail, current),
+      _detailsCard(context, detail.customerInfo),
+      _remarkCard(context, cubit, detail, locked),
+      _activityCard(context, detail.activityLog),
+      if (detail.allComplaints.length > 1) _siblingsCard(context, detail),
+    ];
+    final right = <Widget>[
+      _supplyCard(context, cubit, detail, locked),
+      _notesCard(context, cubit, detail, locked),
+      _attachmentsCard(context, cubit, detail, locked),
+      if (!locked) _actions(context, cubit, detail),
+    ];
+    Widget column(List<Widget> items) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < items.length; i++) ...[if (i > 0) const SizedBox(height: 14), items[i]],
+          ],
+        );
+    return RefreshIndicator(
+      onRefresh: () => cubit.load(),
+      child: LayoutBuilder(builder: (context, box) {
+        final split = box.maxWidth >= 760;
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+          children: [
+            if (split)
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(flex: 11, child: column(left)),
+                const SizedBox(width: 18),
+                Expanded(flex: 10, child: column(right)),
+              ])
+            else
+              MaxWidthBox(maxWidth: 680, child: column([...left, ...right])),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _body(BuildContext context, ComplaintDetailCubit cubit, ComplaintDetail? detail, SiblingComplaint? current) {
+    if (cubit.loading && detail == null) {
+      return ListView(physics: const NeverScrollableScrollPhysics(), children: const [
+        SkeletonList(count: 5, padding: EdgeInsets.fromLTRB(16, 14, 16, 16), itemHeight: 96),
+      ]);
     }
     if (cubit.error != null && detail == null) {
       return EmptyState(
@@ -516,7 +628,13 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     final p = context.astra;
     final tint = astraTint(context, s.statusColor);
     return GestureDetector(
-      onTap: s.isCurrent ? null : () => context.pushReplacement('/complaints/${s.id}'),
+      // Embedded in My Jobs' pane there is no detail route to replace (it would
+      // replace the shell), so a sibling opens as a pushed page instead.
+      onTap: s.isCurrent
+          ? null
+          : () => widget.onClose != null
+              ? context.push(Routes.complaintDetail(s.id))
+              : context.pushReplacement(Routes.complaintDetail(s.id)),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -970,6 +1088,11 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     HapticFeedback.mediumImpact();
     final ok = await cubit.complete(_remarkCtl.text.trim());
     _toast(ok ? 'Complaint completed' : (cubit.actionError ?? 'Could not complete'));
+    // The list (and the master pane beside an embedded detail) shows status.
+    if (ok && mounted) {
+      this.context.read<ComplaintsCubit>().load();
+      this.context.read<TechnicianDashboardCubit>().load();
+    }
   }
 
   Future<void> _addNote(ComplaintDetailCubit cubit) async {
@@ -998,92 +1121,21 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   }
 
   Future<void> _editItem(BuildContext context, ComplaintDetailCubit cubit, SupplyItem item) async {
-    final qtyCtl = TextEditingController(text: qtyLabel(item.quantity));
-    final priceCtl = TextEditingController(text: item.unitPrice.toStringAsFixed(2));
-    final remarksCtl = TextEditingController(text: item.remarks);
-    var mode = item.mode;
-    final p = context.astra;
-
-    await showModalBottomSheet<void>(
+    final edit = await showModalBottomSheet<SupplyItemEdit>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => StatefulBuilder(
-        builder: (sheetCtx, setSheet) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
-          child: Container(
-            decoration: BoxDecoration(color: p.canvas, borderRadius: const BorderRadius.vertical(top: Radius.circular(26))),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Edit item', style: serif(size: 20, color: p.ink)),
-                    const SizedBox(height: 4),
-                    Text(item.productName, style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
-                    const SizedBox(height: 16),
-                    Row(children: [
-                      for (final m in const ['New', 'Damaged'])
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: AstraChip(label: m, active: mode == m, onTap: () => setSheet(() => mode = m)),
-                        ),
-                    ]),
-                    const SizedBox(height: 14),
-                    Row(children: [
-                      Expanded(child: _sheetField(context, qtyCtl, 'Quantity', keyboardType: const TextInputType.numberWithOptions(decimal: true))),
-                      const SizedBox(width: 10),
-                      Expanded(child: _sheetField(context, priceCtl, 'Unit price', keyboardType: const TextInputType.numberWithOptions(decimal: true))),
-                    ]),
-                    const SizedBox(height: 12),
-                    _sheetField(context, remarksCtl, 'Remarks'),
-                    const SizedBox(height: 18),
-                    AstraButton(
-                      label: 'Save changes',
-                      onTap: () async {
-                        Navigator.of(sheetCtx).pop();
-                        final done = await cubit.updateSupplyItem(
-                          item.id,
-                          mode: mode,
-                          quantity: double.tryParse(qtyCtl.text.trim()),
-                          unitPrice: double.tryParse(priceCtl.text.trim()),
-                          remarks: remarksCtl.text.trim(),
-                        );
-                        if (!done) _toast(cubit.actionError ?? 'Could not update item');
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      builder: (_) => EditSupplyItemSheet(item: item),
     );
-  }
-
-  Widget _sheetField(BuildContext context, TextEditingController ctl, String label, {TextInputType? keyboardType}) {
-    final p = context.astra;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(), style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: p.cardBorder)),
-          child: TextField(
-            controller: ctl,
-            keyboardType: keyboardType,
-            style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
-            decoration: const InputDecoration(isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 13), border: InputBorder.none),
-          ),
-        ),
-      ],
+    if (edit == null || !mounted) return;
+    final done = await cubit.updateSupplyItem(
+      item.id,
+      mode: edit.mode,
+      quantity: edit.quantity,
+      unitPrice: edit.unitPrice,
+      remarks: edit.remarks,
     );
+    if (!done) _toast(cubit.actionError ?? 'Could not update item');
   }
 
   Future<void> _pickAttachment(BuildContext context, ComplaintDetailCubit cubit) async {

@@ -51,8 +51,8 @@ trait LogsApiActivity
                 'endpoint' => $request->path(),
                 'method' => $request->method(),
                 'service_name' => $serviceName,
-                // Exclude binary uploads so the log stays a readable JSON blob.
-                'request' => $request->except(['attachments', 'attachments.*']),
+                // Exclude binary uploads and signature images so the log stays a readable JSON blob.
+                'request' => $request->except(['attachments', 'attachments.*', 'photo', 'signature']),
                 'status' => 'pending',
                 'user_id' => $request->user()?->id,
                 'user_name' => $request->user()?->name,

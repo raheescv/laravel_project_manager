@@ -18,6 +18,7 @@ class RentOutChecklistLine extends Model implements AuditableContracts
         'rent_out_id',
         'checklist_id',
         'image_path',
+        'move_out_image_path',
         'qty',
         'move_in_status',
         'move_in_comment',

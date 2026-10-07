@@ -52,19 +52,69 @@ class AuthCubit extends HolderCubit {
     refresh();
   }
 
+  /// Saves the connection from the Connection sheet — it now outlives every
+  /// restart (see [AppConfig.resolve]). The Host override travels with the
+  /// build's own host only ([AppConfig.hostHeaderFor]).
   Future<void> updateConnection(
       {required String baseUrl, required String tenant}) async {
-    // copyWith preserves the build-time hostHeader so LAN-IP vhost routing
-    // survives a manual connection change.
-    _http.config =
-        _http.config.copyWith(baseUrl: baseUrl.trim(), tenant: tenant.trim());
-    await _storage.setBaseUrl(baseUrl.trim());
+    final url = AppConfig.normalizeBaseUrl(baseUrl);
+    _http.config = AppConfig(
+      baseUrl: url,
+      tenant: tenant.trim(),
+      hostHeader: AppConfig.hostHeaderFor(url),
+    );
+    await _storage.setBaseUrl(url);
     await _storage.setTenant(tenant.trim());
     refresh();
   }
 
-  Future<bool> login(String pin) =>
-      _runLogin(() => _repo.login(pin), biometric: {'mode': 'pin', 'pin': pin});
+  /// Replaces the signed-in user after a profile edit / photo upload, so every
+  /// screen (dashboard avatar, rail, settings) reflects it immediately.
+  Future<void> applyUser(ApiUser updated) async {
+    user = updated;
+    refresh();
+    await _storage.setUserJson(jsonEncode(updated.toJson()));
+  }
+
+  /// Digits in the PIN this device last signed in with (4–6, default 4).
+  int get pinLength => _storage.pinLength;
+
+  Future<bool> login(String pin) async {
+    final ok = await _runLogin(() => _repo.login(pin), biometric: {'mode': 'pin', 'pin': pin});
+    if (ok) await _storage.setPinLength(pin.length);
+    return ok;
+  }
+
+  /// After Change MPIN succeeds: remember the new length for the keypad and,
+  /// when biometric sign-in is enrolled with a PIN, store the new PIN so
+  /// Face ID / fingerprint keeps working.
+  Future<void> applyChangedPin(String pin) async {
+    await _storage.setPinLength(pin.length);
+    final saved = await _savedBiometric();
+    if (saved != null && saved['mode'] == 'pin') {
+      await _storage.writeBiometric(jsonEncode({'mode': 'pin', 'pin': pin}));
+    }
+  }
+
+  /// After Change password succeeds: keep a credential-mode biometric login
+  /// in step with the new password.
+  Future<void> applyChangedPassword(String password) async {
+    final saved = await _savedBiometric();
+    if (saved != null && saved['mode'] == 'cred') {
+      await _storage.writeBiometric(jsonEncode({...saved, 'password': password}));
+    }
+  }
+
+  Future<Map<String, dynamic>?> _savedBiometric() async {
+    final raw = await _storage.readBiometric();
+    if (raw == null) return null;
+    try {
+      return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    } on FormatException catch (_) {
+      // A corrupt saved credential is treated as not enrolled.
+      return null;
+    }
+  }
 
   Future<bool> loginWithCredential(String username, String password) =>
       _runLogin(
@@ -137,8 +187,10 @@ class AuthCubit extends HolderCubit {
     try {
       ok = await _localAuth.authenticate(
         localizedReason: 'Authenticate to sign in to Invo',
+        // Biometrics only: a device-passcode fallback would let anyone who
+        // knows the phone's passcode sign in as the technician.
         options: const AuthenticationOptions(
-            biometricOnly: false, stickyAuth: true),
+            biometricOnly: true, stickyAuth: true),
       );
     } catch (e) {
       return 'Biometric authentication is unavailable on this device.';

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:invo/shared/domain/helpers/responsive.dart';
 
 import 'palette.dart';
+import 'styles_manager.dart';
+import 'transitions.dart';
+import 'typeface.dart';
 
 /// Theme extension that carries the live [AstraPalette] plus the shared design
 /// tokens (radii, shadows) so any widget can read them via `context.astra`.
@@ -89,14 +92,16 @@ extension AstraThemeX on BuildContext {
   AstraPalette get astra => astraTheme.palette;
 }
 
-/// Build the single [ThemeData] for the given [AstraPalette].
-ThemeData buildAstraTheme(AstraPalette p) {
+/// Build the single [ThemeData] for the given [AstraPalette] and type pairing.
+/// [typeface] defaults to the live choice so a caller that only cares about
+/// colour can keep passing a palette alone.
+ThemeData buildAstraTheme(AstraPalette p, [AstraTypeface? typeface]) {
   final base = p.isDark ? ThemeData.dark() : ThemeData.light();
 
-  final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
-    bodyColor: p.ink,
-    displayColor: p.ink,
-  );
+  final textTheme = (typeface ?? AstraTypefaces.current).textTheme(base.textTheme).apply(
+        bodyColor: p.ink,
+        displayColor: p.ink,
+      );
 
   return base.copyWith(
     scaffoldBackgroundColor: p.canvas,
@@ -110,6 +115,23 @@ ThemeData buildAstraTheme(AstraPalette p) {
     ),
     textTheme: textTheme,
     splashFactory: InkRipple.splashFactory,
+    // One transition system app-wide — see transitions.dart.
+    pageTransitionsTheme: astraPageTransitionsTheme,
+    // Modal sheets are phone-shaped; on a tablet cap them to the same column
+    // every other capped surface uses. A no-op on phones.
+    bottomSheetTheme: base.bottomSheetTheme.copyWith(
+      constraints: const BoxConstraints(maxWidth: Breakpoints.contentMaxWidth),
+    ),
+    // Messages float as a rounded pill clear of the bottom edge rather than a
+    // full-bleed band sitting on the buttons they talk about.
+    snackBarTheme: base.snackBarTheme.copyWith(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: p.darkSurface,
+      contentTextStyle: ui(size: 12.5, weight: FontWeight.w700, color: Colors.white, height: 1.35),
+      insetPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 8,
+    ),
     extensions: [AstraTheme(p)],
   );
 }

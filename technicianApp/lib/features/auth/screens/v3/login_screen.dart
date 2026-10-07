@@ -61,11 +61,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     }
   }
 
+  /// Length of the PIN this device last signed in with (4–6). The keypad
+  /// auto-submits at that length; ✓ submits any 4–6 digit PIN.
+  int get _expected => context.read<AuthCubit>().pinLength;
+
   void _tap(String d) {
     if (_pin.length >= 6) return;
     HapticFeedback.selectionClick();
     setState(() => _pin += d);
-    if (_pin.length == 4) _submit();
+    if (_pin.length == _expected) _submit();
+  }
+
+  void _enter() {
+    if (_pin.length < 4 || _pin.length > 6) return;
+    _submit();
   }
 
   void _backspace() {
@@ -200,9 +209,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
+  /// The remembered length's worth of dots, growing up to 6 while typing.
   Widget _dots(Color gold) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(4, (i) {
+        children: List.generate(_pin.length.clamp(_expected, 6), (i) {
           final filled = i < _pin.length;
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 7),
@@ -223,10 +233,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       ['1', '2', '3'],
       ['4', '5', '6'],
       ['7', '8', '9'],
-      ['', '0', '<'],
+      ['ok', '0', '<'],
     ];
     Widget cell(String k) {
-      if (k.isEmpty) return const Expanded(child: SizedBox(height: 50));
+      if (k == 'ok') {
+        final ready = _pin.length >= 4;
+        return Expanded(
+          child: Semantics(
+            button: true,
+            label: 'Sign in',
+            child: _key(
+              child: Icon(Icons.check_rounded, size: 22, color: Colors.white.withValues(alpha: ready ? 0.95 : 0.3)),
+              onTap: _enter,
+              bare: true,
+            ),
+          ),
+        );
+      }
       if (k == '<') {
         return Expanded(
           child: _key(

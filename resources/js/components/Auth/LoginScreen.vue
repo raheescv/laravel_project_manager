@@ -32,7 +32,7 @@
                     </div>
                     <h1>Welcome back</h1>
                     <p class="lgx-sub">Sign in to your <b>{{ screen.company }}</b> workspace.</p>
-                    <LoginForm :login-url="screen.loginUrl" :prefill="screen.prefill" :preview="screen.preview" />
+                    <LoginForm :login-url="screen.loginUrl" :prefill="screen.prefill" :preview="screen.preview" @signed-in="openWorkspace" />
                 </div>
             </main>
         </section>
@@ -47,7 +47,7 @@
                     <p>{{ screen.copy.tagline }}</p>
                 </div>
                 <div class="lgx-tenant"><span class="lgx-dot"></span> Workspace <b>{{ screen.company }}</b></div>
-                <LoginForm :login-url="screen.loginUrl" :prefill="screen.prefill" :preview="screen.preview" />
+                <LoginForm :login-url="screen.loginUrl" :prefill="screen.prefill" :preview="screen.preview" @signed-in="openWorkspace" />
             </div>
         </section>
 
@@ -55,6 +55,8 @@
             <i class="fa" :class="dark ? 'fa-sun-o' : 'fa-moon-o'"></i>
         </button>
         <div v-if="screen.preview" class="lgx-preview-tag"><i class="fa fa-eye"></i> Preview</div>
+
+        <WorkspaceOpening v-if="opening" :origin="opening.origin" :name="opening.name" :company="screen.company" :logo="screen.logo" />
     </div>
 </template>
 
@@ -62,6 +64,7 @@
 import { onMounted, ref } from 'vue'
 import LiveBackground from './LiveBackground.vue'
 import LoginForm from './LoginForm.vue'
+import WorkspaceOpening from './WorkspaceOpening.vue'
 
 defineProps({
     screen: { type: Object, required: true },
@@ -70,6 +73,7 @@ defineProps({
 const STORAGE_KEY = 'login-theme'
 const year = new Date().getFullYear()
 const dark = ref(false)
+const opening = ref(null)
 
 function readStoredTheme() {
     try {
@@ -93,7 +97,17 @@ function toggleTheme() {
     }
 }
 
+function openWorkspace({ redirect, name, origin }) {
+    opening.value = { name, origin }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // Navigation starts once the portal has covered the screen; the overlay stays up until the workspace paints.
+    setTimeout(() => window.location.assign(redirect), reduced ? 250 : 1150)
+}
+
 onMounted(() => {
+    // Back-button from the workspace restores this page frozen mid-animation; reload it instead.
+    window.addEventListener('pageshow', (event) => event.persisted && window.location.reload())
+
     const stored = readStoredTheme()
     dark.value = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
     applyTheme()
@@ -214,7 +228,15 @@ body { margin: 0; background: var(--lgx-bg); }
 .lgx-submit:hover:not(:disabled) { filter: brightness(1.08); }
 .lgx-submit:active:not(:disabled) { transform: translateY(1px); }
 .lgx-submit:disabled { cursor: default; opacity: .85; }
-.lgx-submit.lgx-ok { background: linear-gradient(135deg, #17B15C, #0E8A45); box-shadow: 0 8px 20px -8px rgba(18, 161, 80, .6); }
+.lgx-submit { margin-inline: auto; position: relative; }
+.lgx-submit.lgx-ok { width: 50px; border-radius: 25px; opacity: 1; gap: 0; background: linear-gradient(135deg, #17B15C, #0E8A45); box-shadow: 0 10px 26px -8px rgba(18, 161, 80, .7);
+    transition: width .45s cubic-bezier(.65, 0, .35, 1), border-radius .45s cubic-bezier(.65, 0, .35, 1), background .3s, box-shadow .3s; }
+.lgx-submit.lgx-ok::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 0 rgba(23, 177, 92, .55); animation: lgx-ripple 1s .45s ease-out both; }
+@keyframes lgx-ripple { to { box-shadow: 0 0 0 22px rgba(23, 177, 92, 0); } }
+.lgx-tick { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.lgx-tick path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: lgx-draw .35s .3s cubic-bezier(.65, 0, .35, 1) forwards; }
+@keyframes lgx-draw { to { stroke-dashoffset: 0; } }
+.lgx-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .lgx-arrow { transition: transform .2s; }
 .lgx-submit:hover .lgx-arrow { transform: translateX(3px); }
 .lgx-spin { width: 18px; height: 18px; border: 2.2px solid rgba(255, 255, 255, .35); border-top-color: #fff; border-radius: 50%; animation: lgx-spin .7s linear infinite; }
@@ -234,5 +256,56 @@ body { margin: 0; background: var(--lgx-bg); }
 .lgx-theme:hover { color: var(--lgx-ink); }
 .lgx-preview-tag { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 5; padding: 6px 14px; border-radius: 999px;
     background: #0B1220; color: #fff; font-size: 12px; font-weight: 600; }
-@media (prefers-reduced-motion: reduce) { .lgx-live-dot, .lgx-shake, .lgx-mark--logo { animation: none; } }
+
+/* sign-in success: the button's tick opens a portal into the workspace */
+.lgx-open { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; overflow: hidden; color: #fff; text-align: center;
+    background: radial-gradient(900px 600px at 50% 46%, rgba(11, 168, 250, .32), transparent 65%),
+        radial-gradient(1200px 700px at 110% -10%, rgba(11, 168, 250, .4), transparent 60%),
+        radial-gradient(900px 600px at -20% 110%, rgba(10, 98, 200, .85), transparent 60%), #01275C;
+    clip-path: circle(0 at var(--ox) var(--oy)); animation: lgx-portal .75s .5s cubic-bezier(.7, 0, .2, 1) forwards; }
+@keyframes lgx-portal { to { clip-path: circle(var(--or) at var(--ox) var(--oy)); } }
+.lgx-open::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .09) 50%, transparent 65%) 0 0 / 250% 100%; animation: lgx-sheen 2.4s 1s ease-in-out infinite; }
+@keyframes lgx-sheen { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.lgx-open-rings { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.lgx-open-rings span { position: absolute; left: -90px; top: -90px; width: 180px; height: 180px; border-radius: 50%; border: 1px solid rgba(158, 216, 255, .35);
+    opacity: 0; animation: lgx-wave 2.8s 1s cubic-bezier(.2, .6, .3, 1) infinite; }
+.lgx-open-rings span:nth-child(2) { animation-delay: 1.9s; }
+.lgx-open-rings span:nth-child(3) { animation-delay: 2.8s; }
+@keyframes lgx-wave { 0% { transform: scale(.5); opacity: .9; } 100% { transform: scale(5); opacity: 0; } }
+.lgx-open-body { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 24px; }
+.lgx-open-body > * { opacity: 0; animation: lgx-rise .7s cubic-bezier(.2, .8, .2, 1) forwards; }
+.lgx-open-mark { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-size: 26px; margin-bottom: 26px;
+    background: linear-gradient(135deg, var(--lgx-accent), var(--lgx-brand));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), 0 0 0 8px rgba(255, 255, 255, .06), 0 0 60px 8px rgba(11, 168, 250, .45);
+    animation-name: lgx-pop !important; animation-delay: .85s !important; }
+.lgx-open-mark--logo { width: auto; height: 84px; padding: 12px 18px; border-radius: 20px; background: #fff; }
+.lgx-open-mark--logo img { display: block; height: 60px; max-width: 220px; object-fit: contain; }
+@keyframes lgx-pop { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
+.lgx-open-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: rgba(255, 255, 255, .7); animation-delay: 1s !important; }
+.lgx-open-dot { width: 7px; height: 7px; border-radius: 50%; background: #3DF5A6; animation: lgx-ping 1.8s infinite; }
+.lgx-open-title { font-size: clamp(30px, 4.4vw, 50px); line-height: 1.1; font-weight: 700; letter-spacing: -.025em; margin: 12px 0 0 !important;
+    opacity: 1 !important; animation: none !important; }
+.lgx-open-title > * { display: inline-block; opacity: 0; animation: lgx-rise .7s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: calc(1.05s + var(--i) * .09s); }
+.lgx-open-title em { font-family: "Instrument Serif", serif; font-weight: 400; font-style: italic; color: #9ED8FF; letter-spacing: 0; padding-right: .06em; }
+.lgx-open-sub { font-size: 15px; color: rgba(255, 255, 255, .72); margin-top: 12px !important; animation-delay: 1.3s !important; }
+.lgx-open-sub b { color: #fff; font-weight: 600; }
+.lgx-open-bar { width: 180px; height: 3px; border-radius: 3px; margin-top: 30px; overflow: hidden; background: rgba(255, 255, 255, .14); animation-delay: 1.4s !important; }
+.lgx-open-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #9ED8FF, #fff);
+    box-shadow: 0 0 12px rgba(158, 216, 255, .9); animation: lgx-load 1.1s 1.4s cubic-bezier(.3, .7, .3, 1) forwards, lgx-crawl 8s 2.5s ease-out forwards; }
+@keyframes lgx-load { to { width: 72%; } }
+@keyframes lgx-crawl { from { width: 72%; } to { width: 94%; } }
+@keyframes lgx-rise { from { opacity: 0; transform: translateY(14px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .lgx-live-dot, .lgx-shake, .lgx-mark--logo, .lgx-submit.lgx-ok::after, .lgx-open::before, .lgx-open-rings, .lgx-open-dot { animation: none; }
+    .lgx-open-rings { display: none; }
+    .lgx-submit.lgx-ok { transition: none; }
+    .lgx-tick path { animation-duration: .01s; animation-delay: 0s; }
+    .lgx-open { clip-path: none; opacity: 0; animation: lgx-fadein .2s forwards; }
+    .lgx-open-body > *, .lgx-open-title > * { animation: none !important; opacity: 1; }
+    .lgx-open-bar i { animation: none; width: 72%; }
+}
+@keyframes lgx-fadein { to { opacity: 1; } }
 </style>

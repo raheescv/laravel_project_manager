@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
  */
 trait InteractsWithComplaint
 {
+    use RunsSharedActions;
+
     /**
      * The eager loads the detail payload (loadData) needs.
      *
@@ -72,21 +74,5 @@ trait InteractsWithComplaint
     protected function findOwnedComplaintBySupplyRequest(int $supplyRequestId): MaintenanceComplaint
     {
         return $this->ownedComplaints()->where('supply_request_id', $supplyRequestId)->firstOrFail();
-    }
-
-    /**
-     * Unwrap a shared action's `['success','message','data']` result, throwing
-     * on failure so the ApiLog records `failed` and the controller responds 422.
-     *
-     * @param  array<string, mixed>  $result
-     * @return mixed the shared action's `data`
-     */
-    protected function runShared(array $result): mixed
-    {
-        if (! ($result['success'] ?? false)) {
-            throw new \RuntimeException($result['message'] ?? 'Operation failed.');
-        }
-
-        return $result['data'] ?? null;
     }
 }

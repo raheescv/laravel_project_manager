@@ -3,6 +3,7 @@
 namespace App\Actions\RentOut\Checklist;
 
 use App\Enums\RentOut\ChecklistItemStatus;
+use App\Enums\RentOut\ChecklistPhase;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
 use Illuminate\Support\Facades\DB;
@@ -48,9 +49,9 @@ class SaveAction
                     'checklist_id' => $checklistId,
                     'image_path' => $line['image_path'] ?? null,
                     'qty' => $this->toIntOrNull($line['qty'] ?? null),
-                    'move_in_status' => $this->moveInStatus($line['move_in_status'] ?? null),
+                    'move_in_status' => ChecklistItemStatus::normalizeFor(ChecklistPhase::MoveIn, $line['move_in_status'] ?? null),
                     'move_in_comment' => $line['move_in_comment'] ?? null,
-                    'move_out_status' => $this->moveOutStatus($line['move_out_status'] ?? null),
+                    'move_out_status' => ChecklistItemStatus::normalizeFor(ChecklistPhase::MoveOut, $line['move_out_status'] ?? null),
                     'move_out_comment' => $line['move_out_comment'] ?? null,
                     'damage_cost' => $this->toMoney($line['damage_cost'] ?? null),
                     'sort_order' => (int) ($line['sort_order'] ?? ($index + 1)),
@@ -87,18 +88,6 @@ class SaveAction
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
-    }
-
-    /** Move-In only ever stores "present" (ok) or null. */
-    private function moveInStatus($value): ?string
-    {
-        return $value === ChecklistItemStatus::Ok->value ? ChecklistItemStatus::Ok->value : null;
-    }
-
-    /** Move-Out accepts ok / not_ok, anything else (incl. blank) becomes null. */
-    private function moveOutStatus($value): ?string
-    {
-        return ChecklistItemStatus::tryFrom((string) $value)?->value;
     }
 
     private function toIntOrNull($value): ?int

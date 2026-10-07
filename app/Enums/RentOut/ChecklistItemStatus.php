@@ -8,6 +8,19 @@ enum ChecklistItemStatus: string
     case NotOk = 'not_ok';
     case Na = 'na';
 
+    /**
+     * The value a line may store for [phase]. Move-In is binary — present (ok) or
+     * blank — while Move-Out takes any recognised status; anything else is blank.
+     */
+    public static function normalizeFor(ChecklistPhase $phase, mixed $value): ?string
+    {
+        if ($phase === ChecklistPhase::MoveIn) {
+            return $value === self::Ok->value ? self::Ok->value : null;
+        }
+
+        return self::tryFrom((string) $value)?->value;
+    }
+
     public function label(): string
     {
         return match ($this) {

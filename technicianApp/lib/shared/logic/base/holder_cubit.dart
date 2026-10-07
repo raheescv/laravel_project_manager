@@ -11,6 +11,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 abstract class HolderCubit extends Cubit<int> {
   HolderCubit() : super(0);
 
-  /// Notify listeners that the owned data changed.
-  void refresh() => emit(state + 1);
+  /// Notify listeners that the owned data changed. A no-op once closed: these
+  /// cubits refresh after awaits, and the screen that owned one (a tablet
+  /// detail pane switching jobs, a popped route) may have closed it meanwhile —
+  /// emitting then throws "Cannot emit new states after calling close".
+  void refresh() {
+    if (isClosed) return;
+    emit(state + 1);
+  }
 }

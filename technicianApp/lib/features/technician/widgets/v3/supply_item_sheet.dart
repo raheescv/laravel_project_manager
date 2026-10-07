@@ -13,7 +13,6 @@ import 'scanner_screen.dart';
 /// (which re-fetches the detail) and returns true. Mirrors the web addCart row:
 /// store, product (or barcode scan), mode New/Damaged, qty, price, remarks.
 Future<void> showAddSupplyItemSheet(BuildContext context, ComplaintDetailCubit cubit) async {
-  cubit.ensureBranches();
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -42,6 +41,17 @@ class _SupplyItemSheetState extends State<_SupplyItemSheet> {
   @override
   void initState() {
     super.initState();
+    _preselectBranch();
+    if (_branch == null) {
+      // Branches arrive after the sheet opens on first use — pre-select the
+      // first store as soon as they do.
+      widget.cubit.ensureBranches().then((_) {
+        if (mounted && _branch == null) setState(_preselectBranch);
+      });
+    }
+  }
+
+  void _preselectBranch() {
     final branches = widget.cubit.branches;
     if (branches.isNotEmpty) _branch = branches.first;
   }
@@ -444,7 +454,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                         child: TextField(
                           controller: _searchCtl,
                           autofocus: true,
-                          onChanged: (v) => cubit.loadProducts(v),
+                          onChanged: cubit.searchProducts,
                           style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
                           decoration: InputDecoration(
                             isDense: true,

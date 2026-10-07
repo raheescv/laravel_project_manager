@@ -1,13 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/routes.dart';
+import 'package:invo/shared/widgets/astra_range_picker.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/skeleton.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
+
+import '../../domain/models/technician_models.dart';
+import '../../logic/complaint_detail_cubit/complaint_detail_cubit.dart';
+import 'complaint_detail_screen.dart';
 
 import '../../logic/complaints_cubit/complaints_cubit.dart';
 import '../../widgets/v3/complaint_card.dart';
@@ -58,15 +66,32 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
   final _searchFocus = FocusNode();
   Timer? _searchDebounce;
 
+  /// Tablet master–detail: the job open in the right pane. Null = the first
+  /// row (auto-selected) unless the user closed the pane.
+  int? _selectedId;
+  bool _paneClosed = false;
+
+  /// Rotating a tablet moves the list between the split and single-pane
+  /// layouts. The keys keep both panes' state through that, and once the
+  /// detail pane has been shown it stays mounted (offstage) while the window
+  /// is too narrow for it — a remark being typed, or a sheet open on its cubit,
+  /// survives the rotation instead of being torn down.
+  final _listPaneKey = GlobalKey();
+  final _detailPaneKey = GlobalKey();
+  bool _detailMounted = false;
+
   @override
   void initState() {
     super.initState();
     _scrollCtl.addListener(_onScroll);
     _searchFocus.addListener(() => setState(() {}));
+    // Seed the field from the cubit (it outlives this screen) before the
+    // listener goes on, so seeding never fires a search.
+    _searchCtl.text = context.read<ComplaintsCubit>().search;
     _searchCtl.addListener(_onSearchChanged);
+    // Always refresh on open — the cubit may hold a previous session's rows.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cubit = context.read<ComplaintsCubit>();
-      if (cubit.rows.isEmpty) cubit.load();
+      if (mounted) context.read<ComplaintsCubit>().load();
     });
   }
 
@@ -97,16 +122,35 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
     }
   }
 
+  /// Set while a complaint is open — a double tap must not push it twice.
+  bool _opening = false;
+
+  Future<void> _open(ComplaintListItem item) async {
+    if (_opening) return;
+    _opening = true;
+    try {
+      await context.push(Routes.complaintDetail(item.id));
+    } finally {
+      _opening = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cubit = context.watch<ComplaintsCubit>();
+    if (context.isTablet) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(child: SafeArea(bottom: false, child: _tablet(context, cubit))),
+      );
+    }
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
         child: Column(
           children: [
             EmeraldHeader(
-              title: 'My Complaints',
+              title: 'My Jobs',
               subtitle: '${cubit.total} total',
             ),
             Expanded(
@@ -380,8 +424,9 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
 
   Future<void> _pickCustomRange(BuildContext context, ComplaintsCubit cubit) async {
     final now = DateTime.now();
-    final range = await showDateRangePicker(
-      context: context,
+    final range = await showAstraDateRangePicker(
+      context,
+      title: 'Complaint dates',
       firstDate: DateTime(now.year - 3),
       lastDate: DateTime(now.year + 1),
       initialDateRange: DateTimeRange(start: cubit.startDate, end: cubit.endDate),
@@ -389,10 +434,144 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
     if (range != null) cubit.setCustomRange(range.start, range.end);
   }
 
+  // ---- Tablet: master–detail ---------------------------------------------------
+
+  Widget _tablet(BuildContext context, ComplaintsCubit cubit) {
+    return LayoutBuilder(builder: (context, box) {
+      final m = TabletMetrics.forWidth(box.maxWidth);
+      // Narrow tablets keep a single pane; a tap pushes the detail.
+      final split = box.maxWidth >= 760;
+      final listPane = TabletPane(
+        width: split ? m.listColumn : null,
+        edge: split ? PaneEdge.right : PaneEdge.none,
+        child: Column(children: [
+          TabletPaneHead(
+            title: 'My Jobs',
+            subtitle: '${cubit.total} ${cubit.total == 1 ? 'complaint' : 'complaints'}',
+            children: [
+              const SizedBox(height: 12),
+              _searchField(context, cubit),
+              const SizedBox(height: 10),
+              _statusSegments(context, cubit),
+              const SizedBox(height: 10),
+              _priorityRow(context, cubit),
+              const SizedBox(height: 8),
+              _dateRow(context, cubit),
+            ],
+          ),
+          Expanded(child: _tabletList(context, cubit, split)),
+        ]),
+      );
+      if (split) _detailMounted = true;
+      final list = KeyedSubtree(key: _listPaneKey, child: listPane);
+      final detail = KeyedSubtree(key: _detailPaneKey, child: _detailPane(context, cubit));
+      return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (split) list else Expanded(child: list),
+        if (split)
+          Expanded(child: detail)
+        else if (_detailMounted)
+          // Laid out at a usable width but never painted or hit-tested.
+          SizedBox(
+            width: 0,
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              minWidth: 600,
+              maxWidth: 600,
+              child: Offstage(child: detail),
+            ),
+          ),
+      ]);
+    });
+  }
+
+  int? _effectiveSelection(ComplaintsCubit cubit) {
+    if (_paneClosed) return null;
+    if (_selectedId != null && cubit.rows.any((r) => r.id == _selectedId)) return _selectedId;
+    return cubit.rows.isEmpty ? null : cubit.rows.first.id;
+  }
+
+  Widget _detailPane(BuildContext context, ComplaintsCubit cubit) {
+    final sel = _effectiveSelection(cubit);
+    final Widget child;
+    if (sel == null) {
+      child = cubit.loading && cubit.rows.isEmpty
+          ? const SkeletonList(key: ValueKey('loading'), count: 4, padding: EdgeInsets.all(28), itemHeight: 110)
+          : EmptyState(
+              key: const ValueKey('none'),
+              icon: Icons.assignment_outlined,
+              title: 'Select a job',
+              message: cubit.rows.isEmpty ? 'No complaints match these filters.' : 'Pick a complaint on the left to open it here.',
+            );
+    } else {
+      child = BlocProvider(
+        key: ValueKey(sel),
+        create: (_) => ComplaintDetailCubit(sel)..load(),
+        child: ComplaintDetailScreen(onClose: () => setState(() => _paneClosed = true)),
+      );
+    }
+    return astraPaneSwitcher(child: child);
+  }
+
+  Widget _tabletList(BuildContext context, ComplaintsCubit cubit, bool split) {
+    final p = context.astra;
+    if (cubit.loading && cubit.rows.isEmpty) {
+      return const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        child: SkeletonList(count: 7, padding: EdgeInsets.all(14), itemHeight: 78),
+      );
+    }
+    if (cubit.error != null && cubit.rows.isEmpty) {
+      return EmptyState(
+        icon: Icons.wifi_off_rounded,
+        title: 'Could not load',
+        message: cubit.error,
+        action: AstraButton(label: 'Retry', expand: false, onTap: () => cubit.load()),
+      );
+    }
+    if (cubit.rows.isEmpty) {
+      return const EmptyState(
+          icon: Icons.inbox_outlined, title: 'No complaints found', message: 'Try a different status or date range.');
+    }
+    final sel = _effectiveSelection(cubit);
+    return RefreshIndicator(
+      onRefresh: () => cubit.load(),
+      child: ListView.builder(
+        controller: _scrollCtl,
+        padding: const EdgeInsets.only(bottom: 24),
+        itemCount: cubit.rows.length + (cubit.hasMore ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (i >= cubit.rows.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2, color: p.primary)),
+              ),
+            );
+          }
+          final item = cubit.rows[i];
+          return _ComplaintRow(
+            key: ValueKey(item.id),
+            item: item,
+            selected: split && item.id == sel,
+            onTap: split
+                ? () => setState(() {
+                      _selectedId = item.id;
+                      _paneClosed = false;
+                    })
+                : () => _open(item),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _list(BuildContext context, ComplaintsCubit cubit) {
     final p = context.astra;
     if (cubit.loading && cubit.rows.isEmpty) {
-      return Center(child: CircularProgressIndicator(color: p.primary));
+      return const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        child: SkeletonList(count: 6, itemHeight: 104),
+      );
     }
     if (cubit.error != null && cubit.rows.isEmpty) {
       return EmptyState(
@@ -430,9 +609,50 @@ class _ComplaintsListScreenState extends State<ComplaintsListScreen> {
             );
           }
           final item = cubit.rows[i];
-          return ComplaintCard(item: item, onTap: () => context.push('/complaints/${item.id}'));
+          return ComplaintCard(key: ValueKey(item.id), item: item, onTap: () => _open(item));
         },
       ),
+    );
+  }
+}
+
+/// A flat master-pane row (tablet) — title, category, status, location, date.
+class _ComplaintRow extends StatelessWidget {
+  const _ComplaintRow({super.key, required this.item, required this.selected, required this.onTap});
+  final ComplaintListItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final tint = astraTint(context, item.priorityColor);
+    final where = [
+      if (item.propertyNumber.isNotEmpty) 'Unit ${item.propertyNumber}',
+      if (item.building.isNotEmpty) item.building,
+    ].join(' · ');
+    return TabletListRow(
+      selected: selected,
+      onTap: onTap,
+      child: Row(children: [
+        IconChip(icon: priorityIcon(item.priority), size: 34, radius: 10, bg: tint.bg, fg: tint.fg),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(item.complaintName.isEmpty ? 'Complaint #${item.id}' : item.complaintName,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+            const SizedBox(height: 2),
+            Text(
+              [if (where.isNotEmpty) where, if (item.date.isNotEmpty) Dates.human(item.date)].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 11, weight: FontWeight.w600, color: p.textMuted),
+            ),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        AstraStatusPill(label: item.statusLabel, colorName: item.statusColor),
+      ]),
     );
   }
 }

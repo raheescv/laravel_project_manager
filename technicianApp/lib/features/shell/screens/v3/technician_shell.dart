@@ -3,14 +3,21 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
-import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/features/technician/screens/v3/technician_dashboard_screen.dart';
-import 'package:invo/features/technician/screens/v3/complaints_list_screen.dart';
+import 'package:invo/features/checklist/screens/v3/checklist_inbox_screen.dart';
+import 'package:invo/features/profile/screens/v3/profile_screen.dart';
 import 'package:invo/features/settings/screens/v3/technician_settings_screen.dart';
+import 'package:invo/features/technician/screens/v3/complaints_list_screen.dart';
+import 'package:invo/features/technician/screens/v3/technician_dashboard_screen.dart';
+import 'package:invo/shared/domain/helpers/responsive.dart';
+import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 
-/// Primary technician shell: Dashboard · My Jobs · Settings, behind a frosted
-/// glass bottom nav (the app's "Aurora" style, trimmed to three tabs — no POS
-/// centre FAB).
+/// Primary technician shell: Dashboard · My Jobs · Checklists · Settings.
+///
+/// Phone: the frosted glass bottom nav (hides on scroll-down). Tablet: the
+/// side-rail via [AstraRailShell], plus My Profile as a rail-less destination
+/// ([kProfileTab]) reached from the rail's avatar. Tabs live in an
+/// [IndexedStack] (state survives switching) and the incoming tab fades in.
 class TechnicianShell extends StatefulWidget {
   const TechnicianShell({super.key, this.initialTab = 0});
 
@@ -20,21 +27,64 @@ class TechnicianShell extends StatefulWidget {
   State<TechnicianShell> createState() => _TechnicianShellState();
 }
 
-class _TechnicianShellState extends State<TechnicianShell> {
-  late int _index = widget.initialTab.clamp(0, _pages.length - 1);
+class _TechnicianShellState extends State<TechnicianShell> with SingleTickerProviderStateMixin {
+  late int _index = widget.initialTab.clamp(0, kProfileTab);
   bool _navHidden = false;
 
-  static const _pages = [
-    TechnicianDashboardScreen(),
-    ComplaintsListScreen(),
-    TechnicianSettingsScreen(),
-  ];
+  /// Destinations built so far — the profile page is only built once opened.
+  late final Set<int> _visited = {_index};
 
-  static const _tabs = [
-    (icon: Icons.grid_view_rounded, label: 'Dashboard'),
-    (icon: Icons.assignment_outlined, label: 'My Jobs'),
-    (icon: Icons.settings_outlined, label: 'Settings'),
-  ];
+  /// Keeps the tab stack (every tab's state, cubit reads, scroll positions)
+  /// alive when the layout flips between the phone and tablet forms or the
+  /// tablet's window chrome changes — both move the stack to a new parent.
+  final _stackKey = GlobalKey();
+
+  late final AnimationController _fade = AnimationController(vsync: this, duration: AstraMotion.medium, value: 1);
+
+  /// Built once — a CurvedAnimation per build would register a new status
+  /// listener on [_fade] every time the shell rebuilds.
+  late final CurvedAnimation _fadeCurve = CurvedAnimation(parent: _fade, curve: AstraMotion.curve);
+
+  static const _tabs = technicianTabs;
+
+  @override
+  void initState() {
+    super.initState();
+    shellTabRequests.addListener(_onTabRequest);
+  }
+
+  @override
+  void dispose() {
+    shellTabRequests.removeListener(_onTabRequest);
+    _fadeCurve.dispose();
+    _fade.dispose();
+    super.dispose();
+  }
+
+  void _onTabRequest() {
+    final tab = shellTabRequests.tab;
+    if (tab != null && mounted) _goToTab(tab);
+  }
+
+  void _goToTab(int i) {
+    // Profile is a tablet destination; a phone pushes its own route instead.
+    final target = i.clamp(0, kProfileTab);
+    if (target == _index) return;
+    setState(() {
+      _index = target;
+      _visited.add(target);
+      _navHidden = false;
+    });
+    _fade.forward(from: 0);
+  }
+
+  List<Widget> _pages(BuildContext context) => [
+        TechnicianDashboardScreen(onSelectTab: _goToTab),
+        const ComplaintsListScreen(),
+        const ChecklistInboxScreen(),
+        TechnicianSettingsScreen(onSelectTab: _goToTab),
+        context.isTablet && _visited.contains(kProfileTab) ? const ProfileScreen() : const SizedBox.shrink(),
+      ];
 
   /// Nav slides away while the technician scrolls down a page and glides back
   /// the moment they scroll up or settle near the top. Scroll notifications
@@ -50,14 +100,41 @@ class _TechnicianShellState extends State<TechnicianShell> {
     return false;
   }
 
+  /// The tab stack with the incoming tab fading in over a 1.5% rise — state is
+  /// kept (IndexedStack), only the reveal animates.
+  Widget _stack(BuildContext context, int index) {
+    // Fades from 40%, never from nothing: the outgoing tab is already gone, and
+    // a full fade-in would flash bare canvas between the two.
+    final a = _fadeCurve;
+    final stack = KeyedSubtree(key: _stackKey, child: IndexedStack(index: index, children: _pages(context)));
+    return FadeTransition(
+      opacity: Tween(begin: 0.4, end: 1.0).animate(a),
+      child: SlideTransition(
+        position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(a),
+        child: stack,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (context.isTablet) {
+      return Scaffold(
+        body: AstraRailShell(
+          activeIndex: _index,
+          onSelect: _goToTab,
+          child: _stack(context, _index),
+        ),
+      );
+    }
+    // Phones have no profile destination in the stack (it is a pushed route).
+    final index = _index >= _tabs.length ? 0 : _index;
     return Scaffold(
       extendBody: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: context.astra.canvas,
       body: NotificationListener<UserScrollNotification>(
         onNotification: _onUserScroll,
-        child: IndexedStack(index: _index, children: _pages),
+        child: _stack(context, index),
       ),
       bottomNavigationBar: AnimatedSlide(
         offset: _navHidden ? const Offset(0, 1.3) : Offset.zero,
@@ -67,13 +144,13 @@ class _TechnicianShellState extends State<TechnicianShell> {
           opacity: _navHidden ? 0 : 1,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
-          child: _navBar(context),
+          child: _navBar(context, index),
         ),
       ),
     );
   }
 
-  Widget _navBar(BuildContext context) {
+  Widget _navBar(BuildContext context, int index) {
     final p = context.astra;
     final light = !p.isDark;
     final accent = light ? p.primary : p.accent;
@@ -121,7 +198,7 @@ class _TechnicianShellState extends State<TechnicianShell> {
                   const hPad = 10.0;
                   const indWidth = 32.0;
                   final tabW = (c.maxWidth - hPad * 2) / _tabs.length;
-                  final indLeft = hPad + _index * tabW + (tabW - indWidth) / 2;
+                  final indLeft = hPad + index * tabW + (tabW - indWidth) / 2;
                   return Stack(
                     children: [
                       // Glass sheen along the top edge.
@@ -140,7 +217,7 @@ class _TechnicianShellState extends State<TechnicianShell> {
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 380),
                         curve: Curves.easeOutCubic,
-                        left: hPad + _index * tabW,
+                        left: hPad + index * tabW,
                         top: 0,
                         bottom: 0,
                         width: tabW,
@@ -163,7 +240,7 @@ class _TechnicianShellState extends State<TechnicianShell> {
                           padding: const EdgeInsets.symmetric(horizontal: hPad),
                           child: Row(
                             children: [
-                              for (var i = 0; i < _tabs.length; i++) _item(context, i, accent),
+                              for (var i = 0; i < _tabs.length; i++) _item(context, i, index, accent),
                             ],
                           ),
                         ),
@@ -204,14 +281,14 @@ class _TechnicianShellState extends State<TechnicianShell> {
     );
   }
 
-  Widget _item(BuildContext context, int i, Color accent) {
+  Widget _item(BuildContext context, int i, int index, Color accent) {
     final p = context.astra;
     final light = !p.isDark;
-    final active = i == _index;
+    final active = i == index;
     final color = active ? accent : (light ? p.textMuted : Colors.white.withValues(alpha: 0.55));
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _index = i),
+        onTap: () => _goToTab(i),
         behavior: HitTestBehavior.opaque,
         child: AnimatedSlide(
           offset: active ? const Offset(0, -0.1) : Offset.zero,

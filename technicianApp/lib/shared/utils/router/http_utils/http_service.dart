@@ -148,6 +148,25 @@ class HttpService {
     return _unwrap(res);
   }
 
+  /// Multipart POST of raw in-memory [bytes] as a single file field — for data
+  /// that never touched disk (e.g. a cropped image).
+  Future<dynamic> postFileBytes(
+    String path, {
+    required String field,
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final form = FormData();
+    form.files.add(MapEntry(field, MultipartFile.fromBytes(bytes, filename: filename)));
+    final res = await _dio.post(
+      '${config.apiV1}$path',
+      data: form,
+      queryParameters: _query(),
+      options: await _authOpts(),
+    );
+    return _unwrap(res);
+  }
+
   Future<dynamic> put(String path, {Object? body, bool auth = true}) async {
     final res = await _dio.put(
       '${config.apiV1}$path',
@@ -158,11 +177,23 @@ class HttpService {
     return _unwrap(res);
   }
 
-  Future<dynamic> delete(String path, {Object? body, bool auth = true}) async {
-    final res = await _dio.delete(
+  /// Partial update — only the keys present in [body] are changed server-side.
+  Future<dynamic> patch(String path, {Object? body, bool auth = true}) async {
+    final res = await _dio.patch(
       '${config.apiV1}$path',
       data: body,
       queryParameters: _query(),
+      options: auth ? await _authOpts() : _opts(),
+    );
+    return _unwrap(res);
+  }
+
+  Future<dynamic> delete(String path,
+      {Object? body, Map<String, dynamic>? query, bool auth = true}) async {
+    final res = await _dio.delete(
+      '${config.apiV1}$path',
+      data: body,
+      queryParameters: _encodeQuery({..._query(), ...?query}),
       options: auth ? await _authOpts() : _opts(),
     );
     return _unwrap(res);

@@ -16,6 +16,8 @@ class ApiUser {
     this.daySessionOpenedAt = '',
     this.lastClosedSessionAt = '',
     this.permissions = const [],
+    this.role = '',
+    this.photoUrl = '',
   });
 
   final String id;
@@ -31,6 +33,13 @@ class ApiUser {
   final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
   final String lastClosedSessionAt; // 'Y-m-d H:i:s' of the most recent close, else ''
   final List<String> permissions; // Spatie permission slugs granted to this user
+  final String role; // Spatie role name(s), comma-joined; '' when none assigned
+
+  /// Root-relative `/storage/…` avatar path ('' when none) — resolve with
+  /// `AppConfig.assetUrl`.
+  final String photoUrl;
+
+  bool get hasPhoto => photoUrl.isNotEmpty;
 
   bool get dayOpen => daySessionStatus == 'open';
 
@@ -50,6 +59,8 @@ class ApiUser {
         permissions: (j['permissions'] as List<dynamic>? ?? [])
             .map((e) => asStr(e))
             .toList(),
+        role: asStr(j['role']),
+        photoUrl: asStr(j['photo']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -66,11 +77,17 @@ class ApiUser {
         'sale_day_session_opened_at': daySessionOpenedAt,
         'last_closed_session_at': lastClosedSessionAt,
         'permissions': permissions,
+        'role': role,
+        'photo': photoUrl,
       };
 
-  /// Returns a copy with the day-session fields replaced — used after a
-  /// successful open/close so the profile row and dashboard pill update live.
+  /// Returns a copy with the given fields replaced — profile edits and the
+  /// day-session sync both go through here so every screen updates live.
   ApiUser copyWith({
+    String? name,
+    String? email,
+    String? mobile,
+    String? photoUrl,
     String? daySessionStatus,
     String? daySessionDate,
     String? daySessionOpenedAt,
@@ -78,10 +95,10 @@ class ApiUser {
   }) =>
       ApiUser(
         id: id,
-        name: name,
+        name: name ?? this.name,
         code: code,
-        email: email,
-        mobile: mobile,
+        email: email ?? this.email,
+        mobile: mobile ?? this.mobile,
         isAdmin: isAdmin,
         designation: designation,
         branchId: branchId,
@@ -90,6 +107,8 @@ class ApiUser {
         daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
         lastClosedSessionAt: lastClosedSessionAt ?? this.lastClosedSessionAt,
         permissions: permissions,
+        role: role,
+        photoUrl: photoUrl ?? this.photoUrl,
       );
 
   String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';

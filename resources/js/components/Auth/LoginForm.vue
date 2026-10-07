@@ -60,9 +60,12 @@
             Keep me signed in
         </label>
 
-        <button type="submit" class="lgx-submit" :class="{ 'lgx-ok': status === 'success' }" :disabled="busy || lockedFor > 0 || preview">
+        <button ref="button" type="submit" class="lgx-submit" :class="{ 'lgx-ok': status === 'success' }" :disabled="busy || lockedFor > 0 || preview">
             <template v-if="status === 'loading'"><span class="lgx-spin"></span>Signing in…</template>
-            <template v-else-if="status === 'success'"><i class="fa fa-check"></i>Welcome back — opening your workspace</template>
+            <template v-else-if="status === 'success'">
+                <svg class="lgx-tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                <span class="lgx-sr">Signed in</span>
+            </template>
             <template v-else-if="preview">Preview — sign-in disabled</template>
             <template v-else>Sign in <i class="fa fa-arrow-right lgx-arrow"></i></template>
         </button>
@@ -80,6 +83,9 @@ const props = defineProps({
     preview: { type: Boolean, default: false },
 })
 
+const emit = defineEmits(['signed-in'])
+
+const button = ref(null)
 const login = ref(props.prefill.login || '')
 const password = ref(props.prefill.password || '')
 const remember = ref(false)
@@ -149,8 +155,13 @@ async function submit() {
     const body = await response.json().catch(() => ({}))
 
     if (response.ok) {
+        const rect = button.value.getBoundingClientRect()
         status.value = 'success'
-        setTimeout(() => window.location.assign(body.redirect || '/'), 450)
+        emit('signed-in', {
+            redirect: body.redirect || '/',
+            name: (body.user?.name ?? '').trim().split(/\s+/)[0],
+            origin: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+        })
         return
     }
 

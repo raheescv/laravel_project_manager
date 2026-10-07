@@ -565,14 +565,13 @@ class EmptyState extends StatelessWidget {
         ],
       ),
     );
-    // Center vertically when the height is bounded (e.g. inside Expanded / a
-    // Scaffold body). When height is unbounded (e.g. a direct ListView child),
-    // skip the filling Center — it can't lay out under unbounded constraints and
-    // throws the shifted_box `hasSize` assertion, which also orphans siblings.
-    return LayoutBuilder(
-      builder: (context, constraints) =>
-          constraints.maxHeight.isFinite ? Center(child: content) : content,
-    );
+    // Center fills a bounded box (Expanded, a Scaffold body) and shrink-wraps an
+    // unbounded one (a direct ListView child) on its own, so no LayoutBuilder is
+    // needed — and there must not be one: SliverFillRemaining(hasScrollBody:
+    // false) measures its child's intrinsic height, which a LayoutBuilder cannot
+    // report ("LayoutBuilder does not support returning intrinsic dimensions",
+    // then a cascade of null-check errors on every rebuild).
+    return Center(child: content);
   }
 }
 
@@ -655,4 +654,65 @@ class _KeyboardDoneFieldState extends State<KeyboardDoneField> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// The signed-in user's avatar: their photo when they have one, else the
+/// initial on the preset's deep colour — inside the gold ring of [Monogram].
+/// [imageUrl] must already be absolute (`AppConfig.assetUrl`).
+class ProfileAvatar extends StatelessWidget {
+  const ProfileAvatar({
+    super.key,
+    required this.letter,
+    this.imageUrl,
+    this.headers,
+    this.size = 78,
+    this.fontSize,
+  });
+  final String letter;
+  final String? imageUrl;
+  final Map<String, String>? headers;
+  final double size;
+  final double? fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final url = imageUrl;
+    final hasPhoto = url != null && url.startsWith('http');
+    final letterChild = Text(letter, style: serif(size: fontSize ?? size * 0.42, color: Colors.white));
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+
+    final Widget inner = hasPhoto
+        ? Image.network(
+            url,
+            headers: headers,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            cacheWidth: (size * dpr).round(),
+            errorBuilder: (_, __, ___) => Center(child: letterChild),
+            loadingBuilder: (context, child, progress) => progress == null
+                ? child
+                : Center(
+                    child: SizedBox(
+                      width: size * 0.3,
+                      height: size * 0.3,
+                      child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    ),
+                  ),
+          )
+        : Center(child: letterChild);
+
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(shape: BoxShape.circle, gradient: p.accentGradient),
+      child: Container(
+        decoration: BoxDecoration(shape: BoxShape.circle, color: p.primaryDark),
+        clipBehavior: Clip.antiAlias,
+        alignment: Alignment.center,
+        child: inner,
+      ),
+    );
+  }
 }

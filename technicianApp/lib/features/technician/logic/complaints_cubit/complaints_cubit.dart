@@ -10,9 +10,35 @@ import '../../domain/repository/technician_repository.dart';
 /// paginated infinite scroll. Mirrors the Sales "Bento control card" flow.
 class ComplaintsCubit extends HolderCubit {
   ComplaintsCubit() {
+    _defaults();
+  }
+
+  /// "All time" by default: open jobs are often dated earlier than this month
+  /// or scheduled ahead of today, and a month-to-date window hid them. The
+  /// range only seeds the custom picker until a preset is chosen.
+  void _defaults() {
     final now = DateTime.now();
     endDate = DateTime(now.year, now.month, now.day);
-    startDate = DateTime(now.year, now.month, 1); // month-to-date default
+    startDate = DateTime(now.year, now.month, 1);
+    datePreset = 'all';
+    status = null;
+    priority = null;
+    search = '';
+  }
+
+  /// Forget everything — the previous technician's jobs and filters must not
+  /// survive a sign-out. Drops any in-flight response too.
+  void reset() {
+    _reqId++;
+    _defaults();
+    rows = [];
+    total = 0;
+    _page = 1;
+    _lastPage = 1;
+    loading = false;
+    loadingMore = false;
+    error = null;
+    refresh();
   }
 
   TechnicianRepository get _repo => serviceLocator<TechnicianRepository>();
@@ -34,7 +60,7 @@ class ComplaintsCubit extends HolderCubit {
   String? status; // null = all
   String? priority; // null = all — low | medium | high | critical
   String search = '';
-  String datePreset = 'month'; // today | 7d | 30d | month | all | custom
+  String datePreset = 'all'; // today | 7d | 30d | month | all | custom
   late DateTime startDate;
   late DateTime endDate;
 

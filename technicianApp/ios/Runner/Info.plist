@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Used to scan product barcodes and capture photos of maintenance work.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>FixMate connects to your company's server on the local network.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Used to attach photos to a maintenance complaint.</string>
 	<key>NSFaceIDUsageDescription</key>

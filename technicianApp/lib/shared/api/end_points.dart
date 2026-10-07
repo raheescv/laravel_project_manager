@@ -10,6 +10,10 @@ class EndPoints {
   static const String changePin = '/change-pin';
   static const String changePassword = '/change-password';
 
+  // ---- Profile (self-service) ----
+  static const String profile = '/profile';
+  static const String profilePhoto = '/profile/photo';
+
   // ---- Catalog ----
   static const String products = '/products';
   static const String categories = '/categories';
@@ -52,4 +56,26 @@ class EndPoints {
       '/technician/complaints/$id/attachments';
   static String technicianAttachment(int imageId) =>
       '/technician/attachments/$imageId';
+
+  // ---- Technician hand-over checklists ----
+  static const String checklists = '/technician/checklists';
+  static String checklist(int id) => '/technician/checklists/$id';
+  static String checklistLine(int id, int lineId) =>
+      '/technician/checklists/$id/lines/$lineId';
+  static String checklistLinePhoto(int id, int lineId) =>
+      '/technician/checklists/$id/lines/$lineId/photo';
+  static String checklistMarkOk(int id) =>
+      '/technician/checklists/$id/lines/mark-ok';
+  static String checklistSignatures(int id) =>
+      '/technician/checklists/$id/signatures';
+  static String checklistSeal(int id) => '/technician/checklists/$id/seal';
+  static String checklistFixtures(int id) =>
+      '/technician/checklists/$id/fixtures';
+  static String checklistFixtureSign(int id, int areaId) =>
+      '/technician/checklists/$id/fixtures/$areaId/sign';
+  static String fixtureEntry(int entryId) =>
+      '/technician/fixture-entries/$entryId';
+  static String fixtureEntryPhoto(int entryId) =>
+      '/technician/fixture-entries/$entryId/photo';
+  static String checklistPdf(int id) => '/technician/checklists/$id/pdf';
 }

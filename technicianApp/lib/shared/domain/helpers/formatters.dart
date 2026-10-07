@@ -35,9 +35,18 @@ class Money {
 }
 
 class Dates {
+  /// Parses a server date/time into device-local time. Offset / `Z` forms
+  /// (`2026-10-08T10:15:00+03:00`) parse as UTC and are converted; plain
+  /// `Y-m-d` / `Y-m-d H:i` strings are already wall-clock and stay as they are.
+  static DateTime? parseLocal(String? iso) {
+    if (iso == null || iso.trim().isEmpty) return null;
+    final d = DateTime.tryParse(iso.trim());
+    return d?.toLocal();
+  }
+
   static String human(String? iso) {
     if (iso == null || iso.isEmpty) return '';
-    final d = DateTime.tryParse(iso);
+    final d = parseLocal(iso);
     if (d == null) return iso;
     return DateFormat('d MMM yyyy').format(d);
   }
@@ -60,7 +69,7 @@ class Dates {
   /// `21 Jun 2026 · 9:12 AM` from an ISO/datetime string (empty if unparseable).
   static String humanDateTime(String? iso) {
     if (iso == null || iso.isEmpty) return '';
-    final d = DateTime.tryParse(iso);
+    final d = parseLocal(iso);
     if (d == null) return iso;
     return DateFormat('d MMM yyyy · h:mm a').format(d);
   }
