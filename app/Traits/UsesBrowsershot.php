@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Spatie\Browsershot\Browsershot;
 
 trait UsesBrowsershot
@@ -32,7 +34,7 @@ trait UsesBrowsershot
                 '--disable-breakpad',
                 '--crash-dumps-dir=/tmp',
                 '--no-zygote',
-                '--user-data-dir=/tmp/chrome-browsershot',
+                '--user-data-dir='.$this->browsershotProfileDirectory(),
             ])
             ->margins(0, 0, 0, 0)
             ->deviceScaleFactor(1);
@@ -48,5 +50,24 @@ trait UsesBrowsershot
         }
 
         return $instance;
+    }
+
+    /**
+     * A fresh Chrome profile per render: a shared one makes concurrent renders
+     * fail on the profile's SingletonLock. Profiles older than ten minutes are
+     * leftovers of finished renders and are pruned.
+     */
+    private function browsershotProfileDirectory(): string
+    {
+        foreach (File::glob('/tmp/browsershot-profile-*', GLOB_ONLYDIR) as $directory) {
+            if (@filemtime($directory) < now()->subMinutes(10)->getTimestamp()) {
+                File::deleteDirectory($directory);
+            }
+        }
+
+        $directory = '/tmp/browsershot-profile-'.Str::uuid();
+        File::ensureDirectoryExists($directory);
+
+        return $directory;
     }
 }

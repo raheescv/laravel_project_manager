@@ -1417,3 +1417,12 @@ if (! function_exists('extract403Details')) {
         ];
     }
 }
+
+if (! function_exists('errorReference')) {
+    // Per-request support code: logged with the exception and shown on the 500 page,
+    // so a user can quote it and the matching log entry can be found.
+    function errorReference(): string
+    {
+        return once(fn () => 'ERR-'.strtoupper(bin2hex(random_bytes(4))));
+    }
+}

@@ -9,7 +9,9 @@
     'primaryAction' => 'back',
     'countdown' => false,
     'details' => null,
+    'detailsTitle' => 'Denied Details',
     'retryUrl' => null,
+    'primaryLabel' => null,
 ])
 
 @php
@@ -40,6 +42,15 @@
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                             <line x1="12" y1="16" x2="12" y2="19"/>
+                        </svg>
+                    @elseif($icon === 'server')
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="7" rx="2"/>
+                            <rect x="2" y="14" width="20" height="7" rx="2"/>
+                            <line x1="6" y1="6.5" x2="6.01" y2="6.5"/>
+                            <line x1="6" y1="17.5" x2="6.01" y2="17.5"/>
+                            <line x1="10" y1="6.5" x2="18" y2="6.5"/>
+                            <line x1="10" y1="17.5" x2="18" y2="17.5"/>
                         </svg>
                     @elseif($icon === 'compass')
                         <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -95,9 +106,32 @@
                                 <line x1="16" y1="13" x2="8" y2="13"/>
                                 <line x1="16" y1="17" x2="8" y2="17"/>
                             </svg>
-                            <span>Denied Details</span>
+                            <span>{{ $detailsTitle }}</span>
                         </div>
                         <div class="error-details-body">
+                            @if(!empty($details['reference']))
+                                <div class="error-detail-row">
+                                    <span class="error-detail-label">Reference</span>
+                                    <span class="error-detail-value error-detail-value--copy">
+                                        <span class="error-detail-value--highlight error-detail-value--mono" id="error-reference">{{ $details['reference'] }}</span>
+                                        <button type="button" class="error-copy-btn" title="Copy reference" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('error-reference').textContent).then(() => { this.classList.add('is-copied'); setTimeout(() => this.classList.remove('is-copied'), 1600); })">
+                                            <svg class="error-copy-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                            </svg>
+                                            <svg class="error-copied-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"/>
+                                            </svg>
+                                        </button>
+                                    </span>
+                                </div>
+                            @endif
+                            @if(!empty($details['occurred_at']))
+                                <div class="error-detail-row">
+                                    <span class="error-detail-label">Time</span>
+                                    <span class="error-detail-value">{{ $details['occurred_at'] }}</span>
+                                </div>
+                            @endif
                             @if(!empty($details['permission']))
                                 <div class="error-detail-row">
                                     <span class="error-detail-label">Permission</span>
@@ -139,7 +173,7 @@
                                 <polyline points="23 4 23 10 17 10"/>
                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                             </svg>
-                            <span>Refresh Page</span>
+                            <span>{{ $primaryLabel ?? 'Refresh Page' }}</span>
                         </button>
                     @else
                         <button type="button" onclick="window.history.back()" class="btn btn-primary btn-lg">
@@ -187,6 +221,36 @@
         [data-theme="light"] .error-info-box {
             background: rgba({{ $colorRgb }}, 0.04) !important;
             border-color: rgba({{ $colorRgb }}, 0.15) !important;
+        }
+        .error-detail-value--copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .error-copy-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+        .error-copy-btn:hover {
+            color: {{ $color }};
+            border-color: rgba({{ $colorRgb }}, 0.4);
+        }
+        .error-copy-btn .error-copied-icon,
+        .error-copy-btn.is-copied .error-copy-icon {
+            display: none;
+        }
+        .error-copy-btn.is-copied .error-copied-icon {
+            display: inline;
+            color: #10b981;
         }
         [data-theme="light"] .error-icon-inner {
             box-shadow: 0 4px 16px rgba({{ $colorRgb }}, 0.2) !important;

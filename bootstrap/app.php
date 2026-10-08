@@ -88,6 +88,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Tag every logged exception with the reference the 500 page shows the user.
+        $exceptions->context(fn () => ['reference' => errorReference()]);
+
         // Show 419 error page when session expires or CSRF token mismatch.
         // Laravel converts TokenMismatchException into HttpException(419) before any
         // render callback runs, so the callback must match the HttpException.
