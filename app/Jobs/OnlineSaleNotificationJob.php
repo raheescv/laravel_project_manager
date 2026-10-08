@@ -49,7 +49,7 @@ class OnlineSaleNotificationJob implements ShouldQueue
             ->where('tenant_id', $this->tenantId)
             ->active()
             ->get()
-            ->filter(fn (User $user): bool => $user->is_admin || $user->can('sale.online payments'));
+            ->filter(fn (User $user): bool => $user->is_admin || $user->can('sale.online payments') || $user->can('sale.view'));
 
         foreach ($recipients as $user) {
             $user->notify(new OnlineSaleNotification($title, $message, $this->link, $sale->id));
