@@ -49,11 +49,13 @@ class Page extends Component
             $this->brands = [
                 'name' => $name,
                 'image_path' => null,
+                'online_visibility_flag' => true,
             ];
             $this->image = null;
         } else {
             $brand = Brand::find($this->table_id);
             $this->brands = $brand->toArray();
+            $this->brands['online_visibility_flag'] ??= true;
             $this->image = null;
         }
     }

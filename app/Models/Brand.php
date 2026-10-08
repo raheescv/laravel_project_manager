@@ -19,6 +19,11 @@ class Brand extends Model
         'tenant_id',
         'name',
         'image_path',
+        'online_visibility_flag',
+    ];
+
+    protected $casts = [
+        'online_visibility_flag' => 'boolean',
     ];
 
     public static function rules($id = 0, $merge = [])

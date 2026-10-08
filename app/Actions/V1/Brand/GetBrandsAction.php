@@ -25,6 +25,7 @@ class GetBrandsAction
         $branchId = $filters->get('branch_id');
 
         $brands = Brand::query()
+            ->where('online_visibility_flag', true)
             ->when($filters->get('query'), function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%");
             })

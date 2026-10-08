@@ -207,6 +207,10 @@ class GetProductsAction
             ->when($filters['brand_id'] ?? null, function ($q, $value) {
                 return $q->where('brand_id', $value);
             })
+            // Storefront callers only — the POS catalog must still see hidden brands/categories.
+            ->when($filters['online_only'] ?? false, function ($q) {
+                return $q->onlineVisible();
+            })
             // HSN code filter (used to surface related products)
             ->when($filters['hsn_code'] ?? null, function ($q, $value) {
                 return $q->where('hsn_code', $value);

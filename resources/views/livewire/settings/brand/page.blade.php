@@ -26,6 +26,23 @@
                 </div>
             @endif
         </div>
+
+        <div class="mb-0">
+            <label class="form-label fw-semibold mb-2 d-flex align-items-center">
+                <i class="fa fa-globe me-2 text-primary"></i>
+                Online Visibility
+            </label>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="brand_online_visibility_flag" wire:model="brands.online_visibility_flag">
+                <label class="form-check-label" for="brand_online_visibility_flag">
+                    <span class="fw-semibold">Visible Online</span>
+                    <small class="text-muted d-block mt-1">
+                        <i class="fa fa-info-circle me-1"></i>
+                        When enabled, this brand and its products will be visible on the online platform
+                    </small>
+                </label>
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
         <button class="btn btn-outline-danger" wire:click="save(true)">Save & Close</button>

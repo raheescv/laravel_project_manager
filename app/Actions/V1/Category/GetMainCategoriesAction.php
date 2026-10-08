@@ -29,6 +29,7 @@ class GetMainCategoriesAction
 
         $scope = function ($query) use ($type, $size, $availableOnly, $branchId) {
             $query
+                ->whereDoesntHave('brand', fn ($brandQuery) => $brandQuery->where('online_visibility_flag', false))
                 ->when($type, fn ($q, $v) => $q->where('type', $v))
                 ->when($size, fn ($q, $v) => $q->where('size', $v))
                 ->when($availableOnly, fn ($q) => $q->whereHas('inventories', function ($invQ) use ($branchId) {

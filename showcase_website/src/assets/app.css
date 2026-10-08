@@ -125,7 +125,6 @@ fieldset{border:0;padding:0} legend{padding:0}
 .tick--top:hover .tick__num{color:#fff3d6}
 .tick--top.is-on .tick__mark{background:#fff}
 .tick--top.is-on .tick__num{background:#fff;color:var(--blue)}
-.tick--top-last{margin-inline-end:28px}
 
 /* --- stage 2: brands ------------------------------------------------------ */
 .brand{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:6px;display:flex;flex-direction:column;gap:0;text-align:start;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
@@ -403,7 +402,6 @@ html[dir="rtl"] .bag{transform:translateX(-102%)}
   .tick--top .tick__num{background:none;color:#ffe2a8}
   .tick--top.is-on{background:#fff;border-color:#fff}
   .tick--top.is-on .tick__num{color:var(--blue)}
-  .tick--top-last{margin-inline-end:0}
   .size__escape{margin-block-start:14px}
   .hero__title{font-size:clamp(2.3rem,11vw,3.2rem)}
   .hero__lede{font-size:1rem}

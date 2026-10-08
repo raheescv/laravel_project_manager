@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import { fetchBrands, fetchProducts, fetchSizes } from '@/api/resources'
 import router from '@/router'
-import { sortSizes } from '@/utils/catalog'
+import { sortSizes, sortSizesDescending } from '@/utils/catalog'
 
 const STORAGE_KEY = 'sr.catalog'
 const PER_PAGE = 24
@@ -57,8 +57,8 @@ export const useCatalogStore = defineStore('catalog', () => {
   /**
    * One ruler for the whole shop: adult and kids sizes merged into a single
    * run. A size string that the backend files under both groups collapses to
-   * one tick. The five best-selling sizes lead (flagged `top`); every other
-   * size follows in ascending order (numbers first, letter sizes after).
+   * one tick. The run reads large to small (50 … 16, then XXL … XS); the five
+   * best-selling sizes stay in place and are flagged `top`.
    */
   const allSizes = computed(() => {
     const bySize = new Map()
@@ -73,14 +73,11 @@ export const useCatalogStore = defineStore('catalog', () => {
           }
         : { ...s })
     }
-    const ascending = sortSizes([...bySize.values()], (s) => s.size)
+    const run = sortSizesDescending([...bySize.values()], (s) => s.size)
     const top = new Set(
-      [...ascending].filter((s) => s.sold_qty > 0).sort((a, b) => b.sold_qty - a.sold_qty).slice(0, TOP_SIZES),
+      [...run].filter((s) => s.sold_qty > 0).sort((a, b) => b.sold_qty - a.sold_qty).slice(0, TOP_SIZES),
     )
-    return [
-      ...[...top].map((s) => ({ ...s, top: true })),
-      ...ascending.filter((s) => !top.has(s)),
-    ]
+    return run.map((s) => (top.has(s) ? { ...s, top: true } : s))
   })
 
   // ---- persistence ------------------------------------------------------
@@ -235,6 +232,7 @@ export const useCatalogStore = defineStore('catalog', () => {
       sort_by: sortBy,
       sort_direction: sortDirection,
       in_stock_only: 1,
+      online_only: 1,
       type: 'product',
       per_page: PER_PAGE,
     }

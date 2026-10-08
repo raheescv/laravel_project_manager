@@ -47,6 +47,8 @@ class GetProductsRequest extends FormRequest
             // has no way to ask the question at all.
             'has_360' => ['nullable', 'boolean'],
             'type' => ['nullable', 'string', 'in:product,service'],
+            // Storefront callers ask for only what is online visible (category and brand).
+            'online_only' => ['nullable', 'boolean'],
         ];
     }
 

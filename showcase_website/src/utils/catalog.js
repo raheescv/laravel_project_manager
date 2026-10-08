@@ -34,6 +34,33 @@ export function sortSizes(list, pick = (x) => x) {
   })
 }
 
+const LETTER_SIZES = ['XXXS', 'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'XXXXL']
+
+/** XS < S < M < L < XL …; "2XL"/"3XL" read as XXL/XXXL. Unknown letters return -1. */
+function letterRank(size) {
+  const s = String(size).trim().toUpperCase().replace(/^(\d)XL$/, (_, n) => 'X'.repeat(Number(n)) + 'L')
+  return LETTER_SIZES.indexOf(s)
+}
+
+/**
+ * The size ruler's order: largest number first (50, 49.5, 49 … 16), then
+ * letter sizes from large to small (XXL, XL, L, M, S, XS), then anything else.
+ */
+export function sortSizesDescending(list, pick = (x) => x) {
+  const numeric = (v) => /^\d+(\.\d+)?$/.test(v)
+  const group = (v) => (numeric(v) ? 0 : letterRank(v) >= 0 ? 1 : 2)
+  return [...list].sort((a, b) => {
+    const sa = String(pick(a)).trim()
+    const sb = String(pick(b)).trim()
+    const ga = group(sa)
+    const gb = group(sb)
+    if (ga !== gb) return ga - gb
+    if (ga === 0) return parseFloat(sb) - parseFloat(sa)
+    if (ga === 1) return letterRank(sb) - letterRank(sa)
+    return collator.compare(sa, sb)
+  })
+}
+
 /** Text mark for a brand without a logo: initials for multi-word names, else the first letters. */
 export function brandMark(name) {
   const words = String(name || '')

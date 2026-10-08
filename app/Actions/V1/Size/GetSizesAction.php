@@ -45,8 +45,8 @@ class GetSizesAction
             ->when($filters['main_category_id'] ?? null, fn ($q, $v) => $q->where('products.main_category_id', $v))
             ->when($filters['sub_category_id'] ?? null, fn ($q, $v) => $q->where('products.sub_category_id', $v))
             ->when($filters['brand_id'] ?? null, fn ($q, $v) => $q->where('products.brand_id', $v))
-            // Only surface sizes from products in an online-visible category (matches /categories).
-            ->whereHas('mainCategory', fn ($catQ) => $catQ->where('online_visibility_flag', true))
+            // Only surface sizes from products in an online-visible category and brand (matches /categories and /brands).
+            ->onlineVisible()
             ->whereNotNull('products.size')
             ->where('products.size', '!=', '')
             ->groupBy('products.size', 'products.size_category')

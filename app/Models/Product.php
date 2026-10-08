@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -245,6 +246,17 @@ class Product extends Model implements AuditableContracts
     public function scopeIsSelling($query)
     {
         return $query->where('is_selling', true);
+    }
+
+    /**
+     * Products the online storefront may show: their main category is online
+     * visible and their brand (when they have one) has not been hidden.
+     */
+    public function scopeOnlineVisible(Builder $query): Builder
+    {
+        return $query
+            ->whereHas('mainCategory', fn ($categoryQuery) => $categoryQuery->where('online_visibility_flag', true))
+            ->whereDoesntHave('brand', fn ($brandQuery) => $brandQuery->where('online_visibility_flag', false));
     }
 
     public function setNameAttribute($value)

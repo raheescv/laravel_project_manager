@@ -104,6 +104,8 @@ class CatalogService implements CatalogRepository {
       // — and sending `false` would put a second key in the count cache for
       // every query that never asked the question.
       if (has360) 'has_360': true,
+      // Hidden brands/categories stay off the showcase grid (the POS still sees them).
+      'online_only': true,
       'sort_by': sortBy,
       'sort_direction': sortDirection,
       'type': 'product',

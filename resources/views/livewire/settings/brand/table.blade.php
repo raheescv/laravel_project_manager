@@ -53,6 +53,14 @@
                             </a>
                         </th>
                         <th width="15%">Logo</th>
+                        <th width="15%">
+                            <a href="#" wire:click.prevent="sortBy('online_visibility_flag')">
+                                Online Visibility
+                                @if ($sortField === 'online_visibility_flag')
+                                    {!! sortDirection($sortDirection) !!}
+                                @endif
+                            </a>
+                        </th>
                         <th width="10%">Action</th>
                     </tr>
                 </thead>
@@ -69,6 +77,19 @@
                                     <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }} Logo" class="img-thumbnail" style="max-width: 50px; max-height: 50px;">
                                 @else
                                     <span class="text-muted">No Logo</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($item->online_visibility_flag ?? true)
+                                    <span class="badge bg-info">
+                                        <i class="fa fa-globe me-1"></i>
+                                        Visible
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary">
+                                        <i class="fa fa-globe me-1"></i>
+                                        Hidden
+                                    </span>
                                 @endif
                             </td>
                             <td>
