@@ -165,7 +165,7 @@
         <tr>
             <td>
                 <div class="sig-line"></div>
-                <div class="sig-lbl">Prepared By</div>
+                <div class="sig-lbl">Manager Signature</div>
             </td>
             <td>
                 <div class="sig-line"></div>
@@ -173,7 +173,7 @@
             </td>
             <td>
                 <div class="sig-line"></div>
-                <div class="sig-lbl">Authorised Signature</div>
+                <div class="sig-lbl">Accountant Signature</div>
             </td>
         </tr>
     </table>
