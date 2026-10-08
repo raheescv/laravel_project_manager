@@ -16,14 +16,26 @@ tenant-entered rich text must never make the server request a URL.
 import json
 import sys
 
-from weasyprint import HTML, default_url_fetcher
+from weasyprint import HTML
 
+try:
+    # Newer WeasyPrint (70 has it): fetchers are URLFetcher instances.
+    from weasyprint import URLFetcher
 
-def data_uri_only(url, *args, **kwargs):
-    if not url.startswith('data:'):
-        raise ValueError('external resources are blocked: ' + url[:80])
+    def data_uri_fetcher():
+        return URLFetcher(allowed_protocols={'data'})
+except ImportError:
+    # Older WeasyPrint (66 has it): fetchers are plain functions.
+    from weasyprint import default_url_fetcher
 
-    return default_url_fetcher(url, *args, **kwargs)
+    def data_uri_fetcher():
+        def fetch(url, *args, **kwargs):
+            if not url.startswith('data:'):
+                raise ValueError('external resources are blocked: ' + url[:80])
+
+            return default_url_fetcher(url, *args, **kwargs)
+
+        return fetch
 
 
 def foot_gap(document):
@@ -47,7 +59,7 @@ def main():
         return 2
 
     html = sys.stdin.buffer.read().decode('utf-8')
-    document = HTML(string=html, url_fetcher=data_uri_only).render()
+    document = HTML(string=html, url_fetcher=data_uri_fetcher()).render()
     document.write_pdf(sys.argv[1])
     sys.stdout.write(json.dumps({'pages': len(document.pages), 'foot_gap': foot_gap(document)}))
 
