@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Process\Process;
@@ -28,11 +29,17 @@ trait UsesWeasyPrint
     {
         $output = sys_get_temp_dir().'/weasyprint-'.Str::uuid().'.pdf';
 
+        // Fontconfig keeps its font cache under $XDG_CACHE_HOME (default ~/.cache).
+        // The web user's home is often not writable (/var/www), and then every
+        // render rescans the installed fonts — seconds with a large Noto set.
+        $cache = storage_path('framework/cache/weasyprint');
+        File::ensureDirectoryExists($cache);
+
         $process = new Process([
             config('weasyprint.python_binary'),
             base_path('tools/weasyprint-pdf.py'),
             $output,
-        ], base_path());
+        ], base_path(), ['XDG_CACHE_HOME' => $cache]);
 
         $process->setInput($html);
         $process->setTimeout((float) config('weasyprint.timeout', 60));

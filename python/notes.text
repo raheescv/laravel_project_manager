@@ -1,0 +1,5 @@
+sudo apt install python3-venv libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-noto-core fonts-dejavu-core
+sudo python3 -m venv /opt/weasyprint && sudo /opt/weasyprint/bin/pip install weasyprint
+# .env
+WEASYPRINT_PYTHON_BINARY=/opt/weasyprint/bin/python
+php artisan config:clear
