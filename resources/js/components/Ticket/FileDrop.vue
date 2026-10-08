@@ -52,8 +52,8 @@ function remove(index) {
 
 <style>
 .tkx-drop { display: flex; flex-direction: column; align-items: center; gap: 3px; border: 1.5px dashed var(--acc-line); border-radius: 11px; padding: 16px; text-align: center; color: var(--mute); background: var(--acc-soft); cursor: pointer; margin: 0; transition: background .15s, border-color .15s; }
-.tkx-drop i { font-size: 20px; color: var(--acc); }
-.tkx-drop b { color: var(--acc); }
+.tkx-drop i { font-size: 20px; color: var(--acc-ink); }
+.tkx-drop b { color: var(--acc-ink); }
 .tkx-drop small { font-size: 11px; }
 .tkx-drop.over { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 16%, transparent); }
 .tkx-drop.compact { flex-direction: row; justify-content: center; gap: 8px; padding: 10px; }

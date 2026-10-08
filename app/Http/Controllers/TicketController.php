@@ -84,9 +84,14 @@ class TicketController extends Controller
                 'total' => (int) ($counts[$status] ?? 0),
                 'tickets' => (int) ($counts[$status] ?? 0) === 0 ? [] : TicketCardResource::collection(
                     $filtered()
+                        ->select(['id', 'title', 'status', 'group', 'created_by', 'created_at'])
+                        ->selectRaw('LEFT(description, ?) as excerpt', [TicketCardResource::EXCERPT_LENGTH + 20])
                         ->where('status', $status)
                         ->withCount(['attachments', 'comments'])
-                        ->with(['creator:id,name', 'attachments:id,ticket_id,file_path,mime_type'])
+                        ->with([
+                            'creator:id,name',
+                            'attachments' => fn ($q) => $q->select(['id', 'ticket_id', 'file_path', 'mime_type'])->where('mime_type', 'like', 'image/%')->orderBy('id'),
+                        ])
                         ->orderByDesc('id')
                         ->limit(self::COLUMN_LIMIT)
                         ->get()

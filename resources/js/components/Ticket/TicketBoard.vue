@@ -1,31 +1,44 @@
 <template>
     <section class="tkx-board-view">
-        <div class="tkx-card tkx-deck">
+        <div class="tkx-card tkx-deck" :class="{ 'is-open': filtersOpen }">
             <label class="tkx-inp tkx-search">
                 <i class="fa fa-search"></i>
-                <input ref="searchInput" v-model="filters.search" placeholder="Search tickets…  ( / )" type="search">
+                <input ref="searchInput" v-model="filters.search" placeholder="Search tickets…" type="search">
+                <kbd class="tkx-kbd">/</kbd>
             </label>
-            <label class="tkx-inp">
-                <i class="fa fa-circle-o"></i>
-                <select v-model="filters.status" aria-label="Status">
-                    <option value="">All statuses</option>
-                    <option v-for="s in STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
-                </select>
-            </label>
-            <label class="tkx-inp" title="Created from">
-                <i class="fa fa-calendar"></i>
-                <input v-model="filters.from_date" type="date" aria-label="From date">
-            </label>
-            <label class="tkx-inp" title="Created to">
-                <i class="fa fa-long-arrow-right"></i>
-                <input v-model="filters.to_date" type="date" aria-label="To date">
-            </label>
-            <span class="tkx-live" :class="{ on: connected }" :title="connected ? 'Live — changes from other users and devices appear instantly' : 'Offline — reconnecting…'">
-                <span class="tkx-live-dot"></span> {{ connected ? 'Live' : 'Offline' }}
-            </span>
-            <button type="button" class="tkx-btn icon" title="Reset filters" @click="resetFilters"><i class="fa fa-refresh" :class="{ 'tkx-spin': loading }"></i></button>
-            <span class="tkx-deck-sep"></span>
-            <button v-if="permissions.create" type="button" class="tkx-btn pri" @click="openCreate()"><i class="fa fa-plus"></i> New ticket</button>
+            <button type="button" class="tkx-btn icon tkx-filter-tg" :class="{ on: activeFilterCount }" :aria-expanded="filtersOpen" title="Filters" @click="filtersOpen = !filtersOpen">
+                <i class="fa fa-sliders"></i><span v-if="activeFilterCount" class="tkx-badge">{{ activeFilterCount }}</span>
+            </button>
+            <button v-if="permissions.create" type="button" class="tkx-btn pri icon tkx-new-sm" title="New ticket" @click="openCreate()"><i class="fa fa-plus"></i></button>
+
+            <div class="tkx-deck-filters">
+                <label class="tkx-inp tkx-status">
+                    <span class="tkx-dot" :style="{ '--c': filters.status ? statusOf(filters.status).color : 'var(--mute)' }"></span>
+                    <select v-model="filters.status" aria-label="Status">
+                        <option value="">All statuses</option>
+                        <option v-for="s in STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+                    </select>
+                </label>
+                <div class="tkx-inp tkx-range" title="Created between">
+                    <i class="fa fa-calendar"></i>
+                    <input v-model="filters.from_date" type="date" aria-label="From date">
+                    <span class="to">–</span>
+                    <input v-model="filters.to_date" type="date" aria-label="To date">
+                </div>
+                <div class="tkx-seg tkx-density" role="group" aria-label="Card view">
+                    <button v-for="d in DENSITIES" :key="d.key" type="button" :class="{ on: density === d.key }" :aria-pressed="density === d.key" :title="d.hint" @click="density = d.key">
+                        <i class="fa" :class="d.icon"></i> <span>{{ d.label }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tkx-deck-end">
+                <span class="tkx-live" :class="{ on: connected }" :title="connected ? 'Live — changes from other users and devices appear instantly' : 'Offline — reconnecting…'">
+                    <span class="tkx-live-dot"></span> {{ connected ? 'Live' : 'Offline' }}
+                </span>
+                <button type="button" class="tkx-btn icon" title="Reset filters" @click="resetFilters"><i class="fa fa-refresh" :class="{ 'tkx-spin': loading }"></i></button>
+                <button v-if="permissions.create" type="button" class="tkx-btn pri tkx-new" @click="openCreate()"><i class="fa fa-plus"></i> New ticket</button>
+            </div>
         </div>
 
         <div class="tkx-pills" role="tablist" aria-label="Groups">
@@ -52,12 +65,12 @@
                     <span class="ct">{{ columns[s.key]?.total ?? 0 }}</span>
                     <button v-if="permissions.create" type="button" class="plus" :title="`New ${s.label} ticket`" @click="openCreate(s.key)"><i class="fa fa-plus"></i></button>
                 </div>
-                <div class="tkx-col-b">
+                <div class="tkx-col-b" :class="{ 'is-compact': density === 'title' }">
                     <template v-if="!loaded">
-                        <div v-for="n in 3" :key="n" class="tkx-skel" style="height: 96px"></div>
+                        <div v-for="n in 3" :key="n" class="tkx-skel" :style="{ height: density === 'title' ? '42px' : '96px' }"></div>
                     </template>
                     <template v-else>
-                        <TicketCard v-for="t in columns[s.key]?.tickets ?? []" :key="t.id" :ticket="t" :draggable="permissions.edit"
+                        <TicketCard v-for="t in columns[s.key]?.tickets ?? []" :key="t.id" :ticket="t" :draggable="permissions.edit" :compact="density === 'title'"
                             @open="openTicket" @dragstart="dragging = $event" @dragend="dragging = null; dropTarget = null" />
                         <div v-if="!(columns[s.key]?.tickets ?? []).length" class="tkx-empty">
                             {{ dragging ? 'Drop here' : 'No tickets' }}
@@ -92,6 +105,11 @@ const today = () => {
     return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
 }
 const monthStart = () => today().slice(0, 8) + '01'
+const DENSITY_KEY = 'tkx.board.density'
+const DENSITIES = [
+    { key: 'detailed', label: 'Detailed', icon: 'fa-th-large', hint: 'Cards with group, description, image and activity' },
+    { key: 'title', label: 'Title only', icon: 'fa-list', hint: 'One compact line per ticket' },
+]
 const defaults = () => ({ search: '', status: '', group: '', from_date: monthStart(), to_date: today() })
 
 const filters = reactive(defaults())
@@ -103,8 +121,25 @@ const loaded = ref(false)
 const dragging = ref(null)
 const dropTarget = ref(null)
 const searchInput = ref(null)
+const filtersOpen = ref(false)
 const detail = reactive({ open: false, id: null, status: 'open' })
 const detailPanel = ref(null)
+const density = ref(storedDensity())
+
+/** The card view is a per-device preference; storage can be blocked, so it falls back to the detailed cards. */
+function storedDensity() {
+    try {
+        return DENSITIES.some((d) => d.key === localStorage.getItem(DENSITY_KEY)) ? localStorage.getItem(DENSITY_KEY) : 'detailed'
+    } catch {
+        return 'detailed'
+    }
+}
+
+watch(density, (value) => {
+    try {
+        localStorage.setItem(DENSITY_KEY, value)
+    } catch {}
+})
 
 let controller = null
 let debounce = null
@@ -133,6 +168,10 @@ watch(() => ({ ...filters }), (next, prev) => {
     debounce = setTimeout(reload, next.search !== prev.search ? 300 : 0)
 })
 
+const activeFilterCount = computed(() => {
+    const base = defaults()
+    return ['status', 'from_date', 'to_date'].filter((key) => filters[key] !== base[key]).length
+})
 const groupTotal = computed(() => groups.value.reduce((sum, g) => sum + g.count, 0))
 const visibleTotal = computed(() => STATUSES.reduce((sum, s) => sum + (columns.value[s.key]?.total ?? 0), 0))
 const share = (key) => (visibleTotal.value ? Math.round(((columns.value[key]?.total ?? 0) / visibleTotal.value) * 100) : 0)
@@ -243,38 +282,71 @@ defineExpose({ reload })
 
 <style>
 .tkx-board-view { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 18px 0; gap: 10px; }
-.tkx-deck { flex: none; padding: 9px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.tkx-deck .tkx-search { flex: 1; min-width: 220px; }
-.tkx-live { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px; font-size: 11.5px; font-weight: 600; color: var(--mute); }
+.tkx-deck { flex: none; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tkx-deck .tkx-search { flex: 1; min-width: 160px; }
+.tkx-deck-filters { display: contents; }
+.tkx-deck-end { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+.tkx-kbd { font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--mute); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 3px 6px; background: var(--surf-2); }
+.tkx-search:focus-within .tkx-kbd { display: none; }
+.tkx-status { min-width: 150px; }
+.tkx-range { gap: 6px; }
+.tkx-range input { flex: 0 1 auto; width: 118px; }
+.tkx-range .to { color: var(--mute); }
+.tkx-range input::-webkit-calendar-picker-indicator { opacity: .45; cursor: pointer; }
+.tkx-deck .tkx-filter-tg, .tkx-deck .tkx-new-sm { display: none; position: relative; }
+.tkx-filter-tg.on { color: var(--acc-ink); border-color: var(--acc-line); }
+.tkx-badge { position: absolute; top: -6px; inset-inline-end: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--acc); color: #fff; font-size: 10px; font-weight: 600; display: grid; place-items: center; }
+.tkx-live { display: inline-flex; align-items: center; gap: 6px; padding: 0 4px; font-size: 11.5px; font-weight: 600; color: var(--mute); }
 .tkx-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bs-secondary-color); }
 .tkx-live.on { color: var(--bs-success); }
 .tkx-live.on .tkx-live-dot { background: var(--bs-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--bs-success) 50%, transparent); animation: tkx-live-pulse 2s infinite; }
 @keyframes tkx-live-pulse { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-.tkx-deck-sep { width: 1px; height: 24px; background: var(--line); }
+.tkx-seg.tkx-density { flex: none; flex-wrap: nowrap; align-items: stretch; height: 34px; padding: 3px; gap: 2px; border-radius: 9px; }
+.tkx-seg.tkx-density button { flex: 1 1 auto; height: 100%; padding: 0 11px; border-radius: 6px; font-size: 12.5px; line-height: 1; transition: color .15s, background .15s; }
+.tkx-seg.tkx-density button:hover:not(.on) { color: var(--ink); }
+.tkx-seg.tkx-density button.on { background: var(--acc); color: #fff; box-shadow: 0 3px 8px -4px var(--acc); }
+.tkx-col-b.is-compact { flex: 0 1 auto; gap: 0; padding: 4px; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 21, 34, .04); }
+.tkx-col-b.is-compact .tkx-empty { border: 0; padding: 22px 10px; }
+.tkx-col-b.is-compact .tkx-skel { margin: 3px; border-radius: 8px; }
+.tkx-col-b.is-compact .tkx-more { border-top: 1px dashed var(--line); margin-top: 4px; }
+.tkx-col.is-drop .tkx-col-b.is-compact { background: transparent; }
 .tkx-pills { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: thin; }
 .tkx-pill { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--surf); cursor: pointer; color: var(--ink); font-weight: 500; font-size: 12.5px; }
 .tkx-pill:hover { border-color: var(--acc-line); }
 .tkx-pill .ct { font-size: 10.5px; color: var(--mute); }
-.tkx-pill.on { background: var(--ink); color: var(--surf); border-color: var(--ink); }
-.tkx-pill.on .ct { color: inherit; opacity: .7; }
+.tkx-pill.on { background: var(--acc-soft); color: var(--acc-ink); border-color: var(--acc-line); font-weight: 600; }
+.tkx-pill.on .ct { color: inherit; opacity: .75; }
 .tkx-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(270px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 14px; }
 .tkx-col { display: flex; flex-direction: column; min-height: 0; border-radius: var(--r); transition: background .15s, box-shadow .15s; }
 .tkx-col.is-drop { background: color-mix(in srgb, var(--c) 8%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
-.tkx-col-h { flex: none; padding: 11px 13px; display: flex; align-items: center; gap: 10px; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 9px; position: relative; overflow: hidden; }
+.tkx-col-h { flex: none; padding: 11px 13px; display: flex; align-items: center; gap: 10px; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 21, 34, .05); margin-bottom: 9px; position: relative; overflow: hidden; }
 .tkx-col-h::after { content: ""; position: absolute; inset: auto 0 0 0; height: 3px; background: linear-gradient(90deg, var(--c) var(--p), var(--surf-2) var(--p)); }
 .tkx-col-h .ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); }
 .tkx-col-h b { color: var(--ink); font-weight: 600; }
 .tkx-col-h .ct { margin-inline-start: auto; font-size: 18px; font-weight: 600; color: var(--ink); }
 .tkx-col-h .plus { border: 0; background: var(--surf-2); width: 26px; height: 26px; border-radius: 8px; cursor: pointer; color: var(--mute); }
-.tkx-col-h .plus:hover { color: var(--acc); background: var(--acc-soft); }
+.tkx-col-h .plus:hover { color: var(--acc-ink); background: var(--acc-soft); }
 .tkx-col-b { flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 3px 10px; scrollbar-width: thin; }
 .tkx-more { font-size: 11.5px; color: var(--mute); text-align: center; padding: 6px; }
 
+@media (max-width: 1199px) {
+    .tkx-density span { display: none; }
+    .tkx-live { font-size: 0; gap: 0; }
+}
 @media (max-width: 767px) {
-    .tkx-board-view { padding: 10px 10px 0; }
-    .tkx-deck .tkx-inp:not(.tkx-search) { flex: 1 1 45%; }
-    .tkx-deck-sep { display: none; }
-    .tkx-deck .tkx-btn.pri { flex: 1; }
+    .tkx-board-view { padding: 10px 10px 0; gap: 8px; }
+    .tkx-deck { flex-wrap: wrap; gap: 6px; padding: 6px; }
+    .tkx-deck .tkx-search { min-width: 0; }
+    .tkx-kbd { display: none; }
+    .tkx-deck .tkx-filter-tg, .tkx-deck .tkx-new-sm { display: inline-flex; height: 34px; }
+    .tkx-deck-filters, .tkx-deck-end { display: none; }
+    .tkx-deck.is-open .tkx-deck-filters { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; width: 100%; padding-top: 6px; border-top: 1px solid var(--line); }
+    .tkx-deck.is-open .tkx-range { grid-column: 1 / -1; order: -1; }
+    .tkx-deck.is-open .tkx-range input { flex: 1; width: auto; }
+    .tkx-deck.is-open .tkx-deck-end { display: flex; width: 100%; justify-content: space-between; }
+    .tkx-deck-end .tkx-new { display: none; }
+    .tkx-live { font-size: 11.5px; gap: 6px; }
+    .tkx-status { min-width: 0; }
     .tkx-cols { grid-template-columns: repeat(4, 84vw); scroll-snap-type: x mandatory; }
     .tkx-col { scroll-snap-align: start; }
     .tkx-col-b { max-height: 70dvh; }

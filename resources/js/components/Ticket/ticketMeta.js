@@ -1,8 +1,8 @@
 export const STATUSES = [
-    { key: 'open', label: 'Open', icon: 'fa-inbox', color: '#2a9fd6' },
-    { key: 'in_progress', label: 'In Progress', icon: 'fa-spinner', color: '#d99a17' },
-    { key: 'resolved', label: 'Resolved', icon: 'fa-check-circle', color: '#1f9d63' },
-    { key: 'closed', label: 'Closed', icon: 'fa-archive', color: '#7b8494' },
+    { key: 'open', label: 'Open', icon: 'fa-inbox', color: '#6b93c9' },
+    { key: 'in_progress', label: 'In Progress', icon: 'fa-spinner', color: '#c9a35b' },
+    { key: 'resolved', label: 'Resolved', icon: 'fa-check-circle', color: '#6aa88a' },
+    { key: 'closed', label: 'Closed', icon: 'fa-archive', color: '#929aa6' },
 ]
 
 export const statusOf = (key) => STATUSES.find((s) => s.key === key) ?? STATUSES[0]
@@ -10,11 +10,12 @@ export const statusOf = (key) => STATUSES.find((s) => s.key === key) ?? STATUSES
 /** Filter value for tickets without a group — mirrors Ticket::NO_GROUP. */
 export const NO_GROUP = '__none'
 
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#ef4444', '#14b8a6', '#6366f1', '#84cc16', '#f97316']
+/** Muted, low-saturation tones — easy on the eyes for stripes, tags and dots on long sessions. */
+const PALETTE = ['#6f95c8', '#6aa88f', '#c8a25f', '#9787c4', '#c98ba3', '#c98b74', '#64a3a6', '#8590c9', '#93a86a', '#c99a72']
 
 /** Groups are free text, so the colour is derived from the name: the same group is always the same colour. */
 export function groupColor(name) {
-    if (!name) return '#94a3b8'
+    if (!name) return '#a3abb7'
     let hash = 0
     for (const char of name.toLowerCase()) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
     return PALETTE[hash % PALETTE.length]

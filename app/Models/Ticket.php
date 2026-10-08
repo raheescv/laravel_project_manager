@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -72,8 +73,23 @@ class Ticket extends Model
             ->when(! empty($filter['status']), fn (Builder $q): Builder => $q->where('status', $filter['status']))
             ->when(($filter['group'] ?? '') === self::NO_GROUP, fn (Builder $q): Builder => $q->whereNull('group'))
             ->when(! in_array($filter['group'] ?? '', ['', self::NO_GROUP], true), fn (Builder $q): Builder => $q->where('group', $filter['group']))
-            ->when(! empty($filter['from_date']), fn (Builder $q): Builder => $q->whereDate('created_at', '>=', $filter['from_date']))
-            ->when(! empty($filter['to_date']), fn (Builder $q): Builder => $q->whereDate('created_at', '<=', $filter['to_date']));
+            ->when(self::filterDay($filter['from_date'] ?? null), fn (Builder $q, CarbonImmutable $day): Builder => $q->where('created_at', '>=', $day))
+            ->when(self::filterDay($filter['to_date'] ?? null), fn (Builder $q, CarbonImmutable $day): Builder => $q->where('created_at', '<', $day->addDay()));
+    }
+
+    /**
+     * A `Y-m-d` filter value as the start of that day. Comparing the raw column
+     * against a range (instead of `DATE(created_at)`) lets the index be used.
+     */
+    private static function filterDay(?string $value): ?CarbonImmutable
+    {
+        if (! $value || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        $day = CarbonImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $day && $day->format('Y-m-d') === $value ? $day : null;
     }
 
     /**

@@ -351,13 +351,13 @@ function restart() {
 .tkx-imp-body.narrow { max-width: 760px; }
 .tkx-imp-pad { padding: 18px; }
 .tkx-bigdrop { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 38px 16px; border: 2px dashed var(--acc-line); border-radius: 14px; background: var(--acc-soft); color: var(--mute); cursor: pointer; margin: 0; transition: background .15s, border-color .15s; }
-.tkx-bigdrop .ic { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-size: 26px; color: var(--acc); background: var(--surf); box-shadow: 0 8px 20px -12px var(--acc); margin-bottom: 6px; }
+.tkx-bigdrop .ic { width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-size: 26px; color: var(--acc-ink); background: var(--surf); box-shadow: 0 8px 20px -12px var(--acc); margin-bottom: 6px; }
 .tkx-bigdrop b { color: var(--ink); font-size: 15px; font-weight: 600; }
 .tkx-bigdrop.over { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 16%, transparent); }
 .tkx-bigdrop.busy { cursor: progress; }
 .tkx-imp-notes { display: grid; gap: 10px; margin: 18px 0; }
 .tkx-imp-notes div { display: flex; gap: 12px; align-items: flex-start; line-height: 1.5; }
-.tkx-imp-notes i { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surf-2); color: var(--acc); flex: none; }
+.tkx-imp-notes i { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surf-2); color: var(--acc-ink); flex: none; }
 .tkx-imp-notes b { color: var(--ink); font-weight: 600; }
 .tkx-imp-tpl { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--line); color: var(--mute); }
 .tkx-imp-file { padding: 11px 14px; margin-bottom: 12px; }
@@ -400,11 +400,8 @@ function restart() {
 .tkx-cols-list .t b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tkx-cols-list b { color: var(--ink); font-weight: 500; }
 .tkx-cols-list .to { font-size: 11px; color: var(--mute); white-space: nowrap; }
-.tkx-cols-list li.used .to { color: var(--acc); font-weight: 600; }
+.tkx-cols-list li.used .to { color: var(--acc-ink); font-weight: 600; }
 .tkx-cols-list small { color: var(--mute); font-size: 11.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tkx-seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--surf-2); border: 1px solid var(--line); padding: 3px; border-radius: 10px; }
-.tkx-seg button { flex: 1 1 auto; border: 0; background: transparent; padding: 6px 10px; border-radius: 7px; cursor: pointer; color: var(--mute); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; font-size: 12.5px; }
-.tkx-seg button.on { background: var(--surf); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
 .tkx-imp-foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .tkx-imp-foot .msg { flex: 1; color: var(--mute); font-size: 12px; text-align: end; }
 .tkx-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }

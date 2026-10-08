@@ -61,7 +61,7 @@
                         <div v-if="ticket.attachments.length" class="tkx-files">
                             <div v-for="a in ticket.attachments" :key="a.id" class="tkx-file">
                                 <a :href="a.url" target="_blank" rel="noopener" class="thumb">
-                                    <img v-if="a.is_image" :src="a.url" :alt="a.name" loading="lazy">
+                                    <img v-if="a.is_image" :src="a.url" :alt="a.name" loading="lazy" decoding="async">
                                     <video v-else-if="a.is_video" :src="a.url" muted preload="metadata"></video>
                                     <i v-else class="fa" :class="fileIcon(a)"></i>
                                 </a>
@@ -358,8 +358,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-.tkx-ovl { position: fixed; inset: 0; z-index: 1050; background: rgba(10, 14, 22, .55); backdrop-filter: blur(3px); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow: auto; }
-.tkx-mdl { width: min(1180px, 100%); background: var(--surf); border-radius: 18px; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .45); }
+.tkx-ovl { position: fixed; inset: 0; z-index: 1050; background: rgba(10, 14, 22, .6); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow: auto; overscroll-behavior: contain; animation: tkx-fade .15s ease-out; }
+.tkx-mdl { animation: tkx-rise .18s ease-out; width: min(1180px, 100%); background: var(--surf); border-radius: 18px; border: 1px solid var(--line); overflow: hidden; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .45); }
 .tkx-mdl-h { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, var(--acc-soft), transparent); }
 .tkx-mdl-h .id { font-weight: 600; color: var(--ink); font-size: 14px; }
 .tkx-mdl-h .acts { margin-inline-start: auto; display: flex; gap: 8px; }
@@ -374,7 +374,9 @@ onBeforeUnmount(() => {
 .tkx-mdl-main { padding: 20px 22px; border-inline-end: 1px solid var(--line); min-width: 0; }
 .tkx-mdl-b.is-form .tkx-mdl-main { border-inline-end: 0; }
 .tkx-mdl-side { padding: 20px 22px; background: var(--surf-2); min-width: 0; max-height: 72vh; overflow-y: auto; }
-.tkx-mdl-title { margin: 0; font-size: 20px; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
+@keyframes tkx-fade { from { opacity: 0; } }
+@keyframes tkx-rise { from { opacity: 0; transform: translateY(10px); } }
+.tkx-mdl-title { margin: 0; font-family: inherit; line-height: 1.3; font-size: 20px; color: var(--ink); font-weight: 600; overflow-wrap: anywhere; }
 .tkx-title-input { font-size: 16px; font-weight: 600; }
 .tkx-mdl .tkx-label.mt { margin-top: 14px; }
 .tkx-gsuggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -386,14 +388,14 @@ onBeforeUnmount(() => {
 .tkx-prop b { color: var(--ink); font-weight: 500; display: flex; align-items: center; gap: 7px; min-width: 0; }
 .tkx-prop .muted { color: var(--mute); }
 .tkx-desc { line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
-.tkx-link { color: var(--acc); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--acc-line); }
+.tkx-link { color: var(--acc-ink); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: var(--acc-line); }
 .tkx-link:hover { text-decoration-color: var(--acc); }
 .tkx-sec .n { font-size: 10px; background: var(--surf-2); border-radius: 10px; padding: 0 7px; letter-spacing: 0; }
 .tkx-sec.first { margin-top: 0; }
 .tkx-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
 .tkx-file { position: relative; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: var(--surf); }
-.tkx-file .thumb { display: grid; place-items: center; height: 84px; background: var(--surf-2); color: var(--mute); font-size: 24px; }
-.tkx-file .thumb img, .tkx-file .thumb video { width: 100%; height: 100%; object-fit: cover; }
+.tkx-file .thumb { overflow: hidden; display: grid; place-items: center; height: 84px; background: var(--surf-2); color: var(--mute); font-size: 24px; }
+.tkx-file .thumb img, .tkx-file .thumb video { width: 100%; height: 84px; object-fit: cover; }
 .tkx-file .n { padding: 6px 9px 0; font-size: 11.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tkx-file .s { padding: 0 9px 6px; font-size: 10.5px; color: var(--mute); }
 .tkx-file .rm { position: absolute; top: 6px; right: 6px; border: 0; width: 26px; height: 26px; border-radius: 7px; background: rgba(0, 0, 0, .55); color: #fff; cursor: pointer; opacity: 0; transition: opacity .15s; }
@@ -411,7 +413,7 @@ onBeforeUnmount(() => {
 .tkx-bub .txt { white-space: pre-line; overflow-wrap: anywhere; }
 .tkx-bub .acts { margin-top: 6px; font-size: 11px; display: flex; gap: 12px; }
 .tkx-bub .acts a { color: var(--mute); text-decoration: none; cursor: pointer; }
-.tkx-bub .acts a:hover { color: var(--acc); }
+.tkx-bub .acts a:hover { color: var(--acc-ink); }
 .tkx-bub .acts a.del:hover { color: var(--bs-danger); }
 .tkx-ev { font-size: 11.5px; color: var(--mute); display: flex; gap: 8px; align-items: center; padding-inline-start: 8px; }
 .tkx-mdl-f { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); }
@@ -426,6 +428,10 @@ onBeforeUnmount(() => {
     .tkx-ovl { padding: 0; }
     .tkx-mdl { border-radius: 0; min-height: 100dvh; }
     .tkx-props { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .tkx-mdl-h .acts { margin-inline-start: 0; }
+    .tkx-prop:last-child { grid-column: 1 / -1; }
+    .tkx-mdl-h { gap: 10px; padding: 12px 14px; }
+    .tkx-stpick { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .tkx-stpick button { flex: 1 0 auto; justify-content: center; }
+    .tkx-mdl-main, .tkx-mdl-side { padding: 16px 14px; }
 }
 </style>

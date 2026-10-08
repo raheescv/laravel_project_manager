@@ -14,6 +14,9 @@ use Illuminate\Support\Str;
  */
 class TicketCardResource extends JsonResource
 {
+    /** Characters of the description a card shows. */
+    public const EXCERPT_LENGTH = 140;
+
     /**
      * @return array<string, mixed>
      */
@@ -24,7 +27,7 @@ class TicketCardResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'excerpt' => Str::limit((string) $this->description, 140),
+            'excerpt' => Str::limit((string) ($this->excerpt ?? $this->description), self::EXCERPT_LENGTH),
             'status' => $this->status,
             'group' => $this->group,
             'comments_count' => (int) $this->comments_count,

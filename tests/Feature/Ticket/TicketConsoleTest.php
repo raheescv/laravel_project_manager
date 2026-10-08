@@ -63,6 +63,20 @@ it('returns the board as status columns with group counts that ignore the group 
         ->and($ungrouped['columns']['open']['total'])->toBe(0);
 });
 
+it('sends compact cards with an image cover and filters the created range by whole days', function (): void {
+    $ticket = ($this->ticket)(['title' => 'Receipt', 'description' => str_repeat('word ', 80), 'status' => 'open', 'created_at' => '2026-10-07 23:30:00']);
+    TicketAttachment::create(['ticket_id' => $ticket->id, 'file_path' => "tickets/{$ticket->id}/log.pdf", 'file_name' => 'log.pdf', 'mime_type' => 'application/pdf', 'file_size' => 1]);
+    TicketAttachment::create(['ticket_id' => $ticket->id, 'file_path' => "tickets/{$ticket->id}/shot.png", 'file_name' => 'shot.png', 'mime_type' => 'image/png', 'file_size' => 1]);
+    ($this->ticket)(['title' => 'Next day', 'status' => 'open', 'created_at' => '2026-10-08 00:00:00']);
+
+    $card = $this->getJson(($this->api)('/board?from_date=2026-10-07&to_date=2026-10-07'))->assertOk()->json('data.columns.open');
+    expect($card['total'])->toBe(1)
+        ->and($card['tickets'][0])->toMatchArray(['title' => 'Receipt', 'attachments_count' => 2, 'cover' => "/storage/tickets/{$ticket->id}/shot.png"])
+        ->and(mb_strlen($card['tickets'][0]['excerpt']))->toBeLessThanOrEqual(143);
+
+    $this->getJson(($this->api)('/board?from_date=not-a-date'))->assertOk()->assertJsonPath('data.columns.open.total', 2);
+});
+
 it('creates a ticket with files and folds the group into the spelling already in use', function (): void {
     Storage::fake('public');
     ($this->ticket)(['group' => 'Sales']);
