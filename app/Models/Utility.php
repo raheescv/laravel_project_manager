@@ -43,6 +43,7 @@ class Utility extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<RentOutUtilityTerm, $this> */
     public function utilityTerms(): HasMany
     {
         return $this->hasMany(RentOutUtilityTerm::class);

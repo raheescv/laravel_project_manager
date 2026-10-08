@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Livewire\Report\Student\WalletReport;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -15,7 +16,7 @@ class StudentWalletReportExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return WalletReport::filteredQuery($this->filters);
     }

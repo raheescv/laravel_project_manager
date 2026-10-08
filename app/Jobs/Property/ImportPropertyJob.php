@@ -77,6 +77,7 @@ class ImportPropertyJob implements ShouldQueue
         $totalRows = max($totalRows - 1, 0);
         Excel::import(new PropertyImport($this->user_id, $totalRows, $this->branchId, $this->mappings), $file);
 
+        // @phpstan-ignore if.alwaysTrue (PHPStan remembers the earlier file_exists() check; the import may have removed the file since)
         if (file_exists($file)) {
             unlink($file);
         }

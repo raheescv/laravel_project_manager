@@ -107,7 +107,7 @@ class Table extends Component
         abort_unless(auth()->user()?->can('purchase return.export'), 403);
         $count = $this->query()->count();
         if ($count > 2000) {
-            ExportPurchaseReturnJob::dispatch(Auth::id());
+            ExportPurchaseReturnJob::dispatch(Auth::user());
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'PurchaseReturn_'.now()->timestamp.'.xlsx';

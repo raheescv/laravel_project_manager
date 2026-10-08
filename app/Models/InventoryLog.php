@@ -7,6 +7,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read string $month Select alias (Y-m) from monthly_summary().
+ * @property-read string $day Select alias (Y-m-d) from daily_summary().
+ * @property-read float|string|null $total_in SUM(quantity_in) select alias.
+ * @property-read float|string|null $total_out SUM(quantity_out) select alias.
+ */
 class InventoryLog extends Model
 {
     use BelongsToTenant;
@@ -46,26 +52,31 @@ class InventoryLog extends Model
         ], $merge);
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function employee()
+    /** @return BelongsTo<User, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

@@ -49,7 +49,7 @@ class ChecklistDetailResource extends ChecklistJobResource
         return [
             'id' => $line->id,
             'checklist_id' => $line->checklist_id,
-            'name' => (string) ($line->item?->name ?? ''),
+            'name' => (string) ($line->item->name ?? ''),
             'category' => $line->item?->category ?: 'Others',
             'qty' => $line->qty,
             'sort_order' => $line->sort_order,
@@ -91,7 +91,7 @@ class ChecklistDetailResource extends ChecklistJobResource
                     'owner_signed_at' => $area?->owner_signed_at?->toIso8601String(),
                     'owner_signature' => self::storagePath($area?->owner_signature_path),
                     'ready_for_acceptance' => (bool) $area?->isReadyForAcceptance(),
-                    'entries' => collect($area?->entries ?? [])->map(fn ($entry) => [
+                    'entries' => collect($area->entries ?? [])->map(fn ($entry) => [
                         'id' => $entry->id,
                         'comments' => $entry->comments,
                         'status' => ($entry->status ?? FixtureStatus::Pending)->value,

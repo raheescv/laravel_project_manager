@@ -44,6 +44,7 @@ class PropertyAppointmentTimeOff extends Model implements AuditableContracts
         return blank($this->start_time) || blank($this->end_time);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

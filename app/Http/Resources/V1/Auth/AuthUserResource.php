@@ -4,9 +4,15 @@ namespace App\Http\Resources\V1\Auth;
 
 use App\Models\Branch;
 use App\Models\SaleDaySession;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin User
+ *
+ * @property-read string|null $username
+ */
 class AuthUserResource extends JsonResource
 {
     /**

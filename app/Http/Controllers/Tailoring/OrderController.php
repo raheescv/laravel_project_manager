@@ -162,9 +162,8 @@ class OrderController extends Controller
             $tableOptions = array_values(TailoringMeasurementOption::getOptionsByType($type));
             // Also get from history if some are missing (only from rows that have this key)
             $historyOptions = TailoringOrderMeasurement::whereNotNull('data')
-                ->get(['data'])
                 ->pluck('data')
-                ->filter(fn ($data) => is_array($data) && isset($data[$type]) && $data[$type] !== null && $data[$type] !== '')
+                ->filter(fn ($data) => is_array($data) && isset($data[$type]) && $data[$type] !== '')
                 ->map(fn ($data) => (string) $data[$type])
                 ->unique()
                 ->values()
@@ -173,7 +172,7 @@ class OrderController extends Controller
             $merged = array_unique(array_merge($tableOptions, $historyOptions));
             sort($merged);
 
-            $options[$type] = array_values($merged);
+            $options[$type] = $merged;
         }
 
         return $options;
@@ -441,7 +440,7 @@ class OrderController extends Controller
                 'id' => $m->id,
                 'order_no' => $m->order?->order_no,
                 'order_date' => $m->order?->order_date?->format('Y-m-d'),
-                'model_name' => $m->categoryModel?->name ?? 'Standard',
+                'model_name' => $m->categoryModel->name ?? 'Standard',
                 'tailoring_category_model_id' => $m->tailoring_category_model_id,
                 'tailoring_category_model_name' => $m->categoryModel?->name,
                 'tailoring_category_model_type_id' => $m->tailoring_category_model_type_id,
@@ -450,7 +449,7 @@ class OrderController extends Controller
                 'data' => $m->data ?? [],
             ];
             // Merge data keys at top level for frontend compatibility
-            if (! empty($m->data) && is_array($m->data)) {
+            if (! empty($m->data)) {
                 foreach ($m->data as $k => $v) {
                     if ($v !== null && $v !== '') {
                         $item[$k] = $v;

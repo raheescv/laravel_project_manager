@@ -7,6 +7,9 @@ use App\Models\ApiLog;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * @property-read \Illuminate\Support\Collection<int, string> $serviceNames
+ */
 class Table extends Component
 {
     use WithPagination;
@@ -65,7 +68,9 @@ class Table extends Component
         try {
             $apiLog = ApiLog::findOrFail($apiLogId);
 
-            $result = MoqSolutionsHelper::syncDayCloseAmount(json_decode($apiLog->request, true));
+            /** @var string $requestJson MoqSolutionsHelper json_encodes the payload before the array cast, so the cast hands back a JSON string. */
+            $requestJson = $apiLog->request;
+            $result = MoqSolutionsHelper::syncDayCloseAmount(json_decode($requestJson, true));
 
             if ($result['success']) {
                 $this->dispatch('success', ['message' => 'API call retried successfully']);

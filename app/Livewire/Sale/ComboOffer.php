@@ -8,6 +8,9 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
+/**
+ * @property-read array<int|string, mixed> $filteredItems
+ */
 class ComboOffer extends Component
 {
     public $selectedComboOffers = [];

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JournalEntryCounterAccount extends Model
 {
@@ -14,27 +15,32 @@ class JournalEntryCounterAccount extends Model
         'counter_account_id',
     ];
 
-    public function tenant()
+    /** @return BelongsTo<Tenant, $this> */
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function journal()
+    /** @return BelongsTo<Journal, $this> */
+    public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);
     }
 
-    public function journalEntry()
+    /** @return BelongsTo<JournalEntry, $this> */
+    public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);
     }
 
-    public function counterAccount()
+    /** @return BelongsTo<Account, $this> */
+    public function counterAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'counter_account_id');
     }

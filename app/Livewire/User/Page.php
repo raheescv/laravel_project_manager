@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Traits\OptimizesUploadedImage;
 use Faker\Factory;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -62,7 +63,7 @@ class Page extends Component
             if (! app()->isProduction()) {
                 $name = $faker->text(20);
                 $email = $faker->email();
-                $mobile = '+91'.rand('9000000000', '9999999999');
+                $mobile = '+91'.rand(9000000000, 9999999999);
                 $password = 'asdasd';
             }
             $this->users = [

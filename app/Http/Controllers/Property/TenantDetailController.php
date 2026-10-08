@@ -12,11 +12,4 @@ class TenantDetailController extends Controller
     {
         return view('property.tenant.index');
     }
-
-    public function get(Request $request)
-    {
-        $list = (new TenantDetail())->getDropDownList($request->all());
-
-        return response()->json($list);
-    }
 }

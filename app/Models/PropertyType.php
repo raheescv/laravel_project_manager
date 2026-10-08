@@ -51,6 +51,7 @@ class PropertyType extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<Property, $this> */
     public function properties(): HasMany
     {
         return $this->hasMany(Property::class);

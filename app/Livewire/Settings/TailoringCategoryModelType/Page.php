@@ -6,6 +6,7 @@ use App\Actions\Settings\TailoringCategoryModelType\CreateAction;
 use App\Actions\Settings\TailoringCategoryModelType\UpdateAction;
 use App\Models\TailoringCategory;
 use App\Models\TailoringCategoryModelType;
+use App\Services\TenantService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -71,7 +72,7 @@ class Page extends Component
                 'required',
                 'max:255',
                 Rule::unique('tailoring_category_model_types', 'name')
-                    ->where('tenant_id', TailoringCategoryModelType::getCurrentTenantId())
+                    ->where('tenant_id', app(TenantService::class)->getCurrentTenantId())
                     ->where('tailoring_category_id', $categoryId)
                     ->ignore($this->table_id),
             ],

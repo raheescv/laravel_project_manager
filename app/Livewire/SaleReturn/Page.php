@@ -32,6 +32,7 @@ class Page extends Component
 
     public $products;
 
+    /** @var int|string|null */
     public $table_id;
 
     public $accounts;
@@ -56,6 +57,9 @@ class Page extends Component
 
     public $default_payment_method_id = 1;
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null, $sale_id = null, $sale_item_ids = null)
     {
         // Allow shortcut from Sale view page: ?sale_id=...&sale_item_ids=1,2,3
@@ -278,6 +282,7 @@ class Page extends Component
         }
         if (in_array($key, ['sale_returns.other_discount'])) {
             if (str_ends_with($value, '%')) {
+                /** @var numeric-string $percentage */
                 $percentage = rtrim($value, '%');
                 $value = round($this->sale_returns['total'] / 100 * $percentage, 2);
                 if ($value > $this->sale_returns['total']) {
@@ -416,7 +421,7 @@ class Page extends Component
             $single['discount'] = $saleItem->discount;
             $single['tax'] = $saleItem->tax;
             $single['unit_id'] = $saleItem->unit_id;
-            $single['unit_name'] = $saleItem->unit?->name ?? $single['unit_name'];
+            $single['unit_name'] = $saleItem->unit->name ?? $single['unit_name'];
             $single['conversion_factor'] = $saleItem->conversion_factor;
         }
 
@@ -630,8 +635,8 @@ class Page extends Component
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'sales return.edit' : 'sales return.create'), 403);
         $this->validate();
+        $oldStatus = $this->sale_returns['status'];
         try {
-            $oldStatus = $this->sale_returns['status'];
             DB::beginTransaction();
             if (! count($this->items)) {
                 throw new Exception('Please add any item', 1);

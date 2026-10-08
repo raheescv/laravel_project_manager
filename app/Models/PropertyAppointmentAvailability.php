@@ -40,6 +40,7 @@ class PropertyAppointmentAvailability extends Model implements AuditableContract
         ], $merge);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

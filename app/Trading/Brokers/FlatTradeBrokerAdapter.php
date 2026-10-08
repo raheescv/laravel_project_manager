@@ -50,7 +50,7 @@ class FlatTradeBrokerAdapter implements BrokerContract
                 $request->product,
             );
 
-            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+            if (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg'])) {
                 $err = trim(($raw['emsg'] ?? 'PlaceOrder Not_Ok'));
 
                 return OrderResult::failure('FlatTrade rejected: '.$err, $raw, $this->code());
@@ -163,16 +163,14 @@ class FlatTradeBrokerAdapter implements BrokerContract
     public function positions(): array
     {
         try {
-            $raw = method_exists($this->service, 'getPositionBookAll')
-                ? $this->service->getPositionBookAll()
-                : [];
+            $raw = $this->service->getPositionBookAll();
 
             // FlatTrade returns either a top-level array of positions or an
             // error envelope. The error case has no positions to read.
-            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+            if (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg'])) {
                 return [];
             }
-            $rows = is_array($raw) ? ($raw['values'] ?? (array_is_list($raw) ? $raw : [])) : [];
+            $rows = $raw['values'] ?? (array_is_list($raw) ? $raw : []);
 
             return collect($rows)->map(fn ($p) => new PositionSnapshot(
                 symbol: $this->stripEqSuffix($p['tsym'] ?? $p['symbol'] ?? ''),
@@ -193,10 +191,8 @@ class FlatTradeBrokerAdapter implements BrokerContract
     public function holdings(): array
     {
         try {
-            $raw = method_exists($this->service, 'getHoldings')
-                ? $this->service->getHoldings()
-                : [];
-            $rows = $raw['values'] ?? $raw['holdings'] ?? $raw ?? [];
+            $raw = $this->service->getHoldings();
+            $rows = $raw['values'] ?? $raw['holdings'] ?? $raw;
 
             return collect($rows)->map(fn ($h) => new PositionSnapshot(
                 symbol: $h['tsym'] ?? $h['symbol'] ?? '',
@@ -253,14 +249,14 @@ class FlatTradeBrokerAdapter implements BrokerContract
 
             $raw = $this->service->getTimePriceSeries('NSE', $token, $startTime, $endTime, $minutes);
 
-            if (is_array($raw) && (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg']))) {
+            if (($raw['stat'] ?? null) === 'Not_Ok' || isset($raw['emsg'])) {
                 $err = trim(($raw['emsg'] ?? 'TPSeries Not_Ok').'');
                 $this->recordBarsError($symbol, 'api_error: '.$err);
 
                 return [];
             }
 
-            $rows = is_array($raw) ? ($raw['values'] ?? $raw) : [];
+            $rows = $raw['values'] ?? $raw;
             if (! is_array($rows) || empty($rows)) {
                 $this->recordBarsError($symbol, 'empty_response');
 
@@ -329,6 +325,7 @@ class FlatTradeBrokerAdapter implements BrokerContract
         // Cache::remember treats null as a miss and re-runs the callback —
         // we MUST return a sentinel array on failure so a missing scrip
         // doesn't hammer searchScrip on every tick.
+        /** @var mixed $cached Whatever the cache store hands back. */
         $cached = Cache::remember("trading:flat_trade:scrip:{$clean}", 86400, function () use ($clean) {
             $base = str_ends_with($clean, '-EQ') ? substr($clean, 0, -3) : $clean;
             // Try the -EQ suffix first (covers Nifty 50 equities) then the
@@ -401,11 +398,9 @@ class FlatTradeBrokerAdapter implements BrokerContract
     public function availableFunds(): float
     {
         try {
-            if (method_exists($this->service, 'getLimits')) {
-                $raw = $this->service->getLimits();
+            $raw = $this->service->getLimits();
 
-                return (float) ($raw['cash'] ?? $raw['available_funds'] ?? $raw['marginused'] ?? 0);
-            }
+            return (float) ($raw['cash'] ?? $raw['available_funds'] ?? $raw['marginused'] ?? 0);
         } catch (\Throwable) {
             // ignore
         }

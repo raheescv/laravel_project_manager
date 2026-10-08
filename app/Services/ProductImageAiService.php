@@ -134,7 +134,7 @@ class ProductImageAiService
             $attempt++;
 
             if ($attempt < self::MAX_ATTEMPTS) {
-                $delay = self::RETRY_DELAYS_SECONDS[$attempt - 1] ?? 15;
+                $delay = self::RETRY_DELAYS_SECONDS[$attempt - 1];
                 sleep($delay);
             }
         }

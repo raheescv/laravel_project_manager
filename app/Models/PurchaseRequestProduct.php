@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -17,12 +18,14 @@ class PurchaseRequestProduct extends Model implements AuditableContracts
         'quantity',
     ];
 
-    public function purchaseRequest()
+    /** @return BelongsTo<PurchaseRequest, $this> */
+    public function purchaseRequest(): BelongsTo
     {
         return $this->belongsTo(PurchaseRequest::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }

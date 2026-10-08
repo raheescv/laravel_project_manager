@@ -246,7 +246,7 @@ class CustomerReceipt extends Component
                     'payment_method' => $payment['payment_method_id'],
                     'total_amount' => $payment['amount'],
                     'receipt_data' => $receiptData,
-                    'payment_ids' => array_filter($paymentIds),
+                    'payment_ids' => $paymentIds,
                 ]);
             }
         } catch (\Exception $e) {

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 
 class ComboOffer extends Model
@@ -35,12 +36,14 @@ class ComboOffer extends Model
         ], $merge);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function saleComboOffers()
+    /** @return HasMany<SaleComboOffer, $this> */
+    public function saleComboOffers(): HasMany
     {
         return $this->hasMany(SaleComboOffer::class);
     }

@@ -40,11 +40,13 @@ class AssetDepreciationSchedule extends Model
         'closing_book_value' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    /** @return BelongsTo<Journal, $this> */
     public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);

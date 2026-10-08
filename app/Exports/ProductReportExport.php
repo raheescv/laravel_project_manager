@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Actions\Product\ProductReportAction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,7 +15,7 @@ class ProductReportExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return (new ProductReportAction())->execute($this->filters);
     }

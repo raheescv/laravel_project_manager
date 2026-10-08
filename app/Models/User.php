@@ -123,25 +123,30 @@ class User extends Authenticatable implements AuditableContracts
         });
     }
 
-    public function branches()
+    /** @return HasMany<UserHasBranch, $this> */
+    public function branches(): HasMany
     {
         return $this->hasMany(UserHasBranch::class, 'user_id');
     }
 
     /**
      * Stock handed over to this employee and not yet returned or sold.
+     *
+     * @return HasMany<Inventory, $this>
      */
     public function inventories(): HasMany
     {
         return $this->hasMany(Inventory::class, 'employee_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'default_branch_id');
     }
@@ -178,12 +183,14 @@ class User extends Authenticatable implements AuditableContracts
         return $this->default_branch_id ? (int) $this->default_branch_id : null;
     }
 
-    public function attendances()
+    /** @return HasMany<UserAttendance, $this> */
+    public function attendances(): HasMany
     {
         return $this->hasMany(UserAttendance::class, 'employee_id');
     }
 
-    public function designation()
+    /** @return BelongsTo<Designation, $this> */
+    public function designation(): BelongsTo
     {
         return $this->belongsTo(Designation::class, 'designation_id');
     }

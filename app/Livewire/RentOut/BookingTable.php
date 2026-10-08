@@ -14,6 +14,10 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read int $activeFilterCount
+ * @property-read RentOutConfig $config
+ */
 class BookingTable extends Component
 {
     use WithPagination;

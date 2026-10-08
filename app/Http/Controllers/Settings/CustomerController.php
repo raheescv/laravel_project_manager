@@ -22,7 +22,7 @@ class CustomerController extends Controller
             $data['model'] = 'customer';
 
             $accountReceivableGroup = AccountCategory::firstWhere(['tenant_id' => 1, 'name' => 'Account Receivable']);
-            if (! $accountReceivableGroup) {
+            if ($accountReceivableGroup) {
                 $data['account_category_id'] = $accountReceivableGroup['id'];
             }
 

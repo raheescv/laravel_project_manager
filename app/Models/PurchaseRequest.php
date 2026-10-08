@@ -39,26 +39,31 @@ class PurchaseRequest extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<PurchaseRequestProduct, $this> */
     public function products(): HasMany
     {
         return $this->hasMany(PurchaseRequestProduct::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function decisionMaker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decision_by');

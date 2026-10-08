@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleComboOffer extends Model
 {
@@ -21,12 +23,14 @@ class SaleComboOffer extends Model
         ], $merge);
     }
 
-    public function sale()
+    /** @return BelongsTo<Sale, $this> */
+    public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
 
-    public function comboOffer()
+    /** @return BelongsTo<ComboOffer, $this> */
+    public function comboOffer(): BelongsTo
     {
         return $this->belongsTo(ComboOffer::class);
     }
@@ -39,7 +43,8 @@ class SaleComboOffer extends Model
             ->update(['sale_combo_offer_id' => $sale_combo_offer_id]);
     }
 
-    public function items()
+    /** @return HasMany<SaleItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class, 'sale_combo_offer_id');
     }

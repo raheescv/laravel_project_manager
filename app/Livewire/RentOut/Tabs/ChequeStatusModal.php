@@ -74,7 +74,7 @@ class ChequeStatusModal extends Component
                         'cheque_no' => $cheque->cheque_no,
                         'amount' => $cheque->amount,
                         'date' => $cheque->date?->format('d-m-Y'),
-                        'customer' => $cheque->rentOut?->customer?->name ?? '',
+                        'customer' => $cheque->rentOut?->customer->name ?? '',
                         'available_terms' => $response['available_terms'],
                     ];
                 }
@@ -121,7 +121,7 @@ class ChequeStatusModal extends Component
                 'amount' => $c->amount,
                 'date' => $c->date?->format('d-m-Y'),
                 'rent_out_id' => $c->rent_out_id,
-                'agreement_type' => $c->rentOut?->agreement_type?->value ?? 'rental',
+                'agreement_type' => $c->rentOut?->agreement_type->value ?? 'rental',
             ])
             ->toArray();
     }

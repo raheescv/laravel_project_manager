@@ -724,6 +724,7 @@ class MigrateDataCommand extends Command
         $progressBar->start();
         $lastProcessed = 0;
         while (true) {
+            /** @var \Illuminate\Bus\Batch|null $batch fresh() returns null once the batch row is gone. */
             $batch = $batch->fresh();
             if (! $batch) {
                 break;
@@ -854,6 +855,7 @@ class MigrateDataCommand extends Command
                                 $sale_id = null;
                                 $sale_item_id = null;
 
+                                /** @var \stdClass|null $secondSale */
                                 $secondSale = DB::connection('mysql2')->table('sales')->find($value->sale_id);
                                 if ($secondSale) {
                                     $sale = Sale::where('invoice_no', $secondSale->invoice_no)->first();

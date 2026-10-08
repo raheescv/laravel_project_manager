@@ -40,7 +40,7 @@ class Page extends Component
             $code = '';
             if (! app()->isProduction()) {
                 $name = $faker->text(20);
-                $code = $faker->hexcolor;
+                $code = $faker->hexColor;
             }
             $this->units = [
                 'code' => $code,

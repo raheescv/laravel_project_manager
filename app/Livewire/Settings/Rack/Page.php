@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\Rack;
 use App\Actions\Settings\Rack\CreateAction;
 use App\Actions\Settings\Rack\UpdateAction;
 use App\Models\Rack;
+use App\Services\TenantService;
 use Faker\Factory;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -60,7 +61,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'racks.name' => ['required', 'max:100', Rule::unique('racks', 'name')->where('tenant_id', Rack::getCurrentTenantId())->ignore($this->table_id)],
+            'racks.name' => ['required', 'max:100', Rule::unique('racks', 'name')->where('tenant_id', app(TenantService::class)->getCurrentTenantId())->ignore($this->table_id)],
             'racks.description' => ['nullable', 'max:255'],
             'racks.is_active' => ['nullable', 'boolean'],
         ];

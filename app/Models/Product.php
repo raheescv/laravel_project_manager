@@ -6,12 +6,16 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
+/**
+ * @property 'product'|'service'|'asset' $type
+ */
 class Product extends Model implements AuditableContracts
 {
     use Auditable;
@@ -248,27 +252,32 @@ class Product extends Model implements AuditableContracts
         $this->attributes['name'] = trim($value);
     }
 
-    public function images()
+    /** @return HasMany<ProductImage, $this> */
+    public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class);
     }
 
-    public function angleImages()
+    /** @return HasMany<ProductImage, $this> */
+    public function angleImages(): HasMany
     {
         return $this->hasMany(ProductImage::class)->angle()->orderedByAngle();
     }
 
-    public function normalImages()
+    /** @return HasMany<ProductImage, $this> */
+    public function normalImages(): HasMany
     {
         return $this->hasMany(ProductImage::class)->normal();
     }
 
-    public function units()
+    /** @return HasMany<ProductUnit, $this> */
+    public function units(): HasMany
     {
         return $this->hasMany(ProductUnit::class);
     }
 
-    public function unit()
+    /** @return BelongsTo<Unit, $this> */
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
@@ -350,32 +359,38 @@ class Product extends Model implements AuditableContracts
         Cache::increment('product_units_version_'.$this->id);
     }
 
-    public function brand()
+    /** @return BelongsTo<Brand, $this> */
+    public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
     }
 
-    public function department()
+    /** @return BelongsTo<Department, $this> */
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function mainCategory()
+    /** @return BelongsTo<Category, $this> */
+    public function mainCategory(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'main_category_id');
     }
 
-    public function subCategory()
+    /** @return BelongsTo<Category, $this> */
+    public function subCategory(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'sub_category_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function inventories()
+    /** @return HasMany<Inventory, $this> */
+    public function inventories(): HasMany
     {
         return $this->hasMany(Inventory::class);
     }
@@ -390,7 +405,7 @@ class Product extends Model implements AuditableContracts
     public static function generateUniqueCode($prefix = 'PRD', $length = 6)
     {
         do {
-            $code = $prefix.str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
+            $code = $prefix.str_pad((string) rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
         } while (self::where('code', $code)->exists());
 
         return $code;
@@ -448,7 +463,7 @@ class Product extends Model implements AuditableContracts
             $nextNumber = 1;
         }
 
-        return $prefix.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     public static function constructData($data, $user_id)
@@ -580,37 +595,44 @@ class Product extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function incomeAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'income_account_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function expenseAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'expense_account_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function assetAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'asset_account_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function accumulatedDepreciationAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'accumulated_depreciation_account_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function depreciationExpenseAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'depreciation_expense_account_id');
     }
 
-    public function depreciationSchedules()
+    /** @return HasMany<AssetDepreciationSchedule, $this> */
+    public function depreciationSchedules(): HasMany
     {
         return $this->hasMany(AssetDepreciationSchedule::class, 'product_id');
     }
 
-    public function prices()
+    /** @return HasMany<ProductPrice, $this> */
+    public function prices(): HasMany
     {
         return $this->hasMany(ProductPrice::class, 'product_id');
     }

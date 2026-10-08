@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\TailoringMeasurementOption;
 use App\Actions\Settings\TailoringMeasurementOption\CreateAction;
 use App\Actions\Settings\TailoringMeasurementOption\UpdateAction;
 use App\Models\TailoringMeasurementOption;
+use App\Services\TenantService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -64,7 +65,7 @@ class Page extends Component
                 'string',
                 'max:255',
                 Rule::unique('tailoring_measurement_options', 'value')
-                    ->where('tenant_id', TailoringMeasurementOption::getCurrentTenantId())
+                    ->where('tenant_id', app(TenantService::class)->getCurrentTenantId())
                     ->where('option_type', $optionType)
                     ->ignore($this->table_id),
             ],

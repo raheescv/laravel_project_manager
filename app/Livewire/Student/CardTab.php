@@ -75,7 +75,7 @@ class CardTab extends Component
             ->latest()
             ->limit(30)
             ->get()
-            ->filter(fn ($audit) => array_intersect(array_keys($audit->new_values ?? []), ['card_uid', 'card_status']))
+            ->filter(fn ($audit) => (bool) array_intersect(array_keys($audit->new_values ?? []), ['card_uid', 'card_status']))
             ->map(function ($audit) {
                 $new = $audit->new_values;
                 [$event, $kind] = match (true) {
@@ -86,7 +86,7 @@ class CardTab extends Component
                     default => [null, null],
                 };
 
-                return $event ? ['at' => $audit->created_at, 'event' => $event, 'kind' => $kind, 'by' => $audit->user?->name] : null;
+                return $event ? ['at' => $audit->getAttribute('created_at'), 'event' => $event, 'kind' => $kind, 'by' => $audit->user?->name] : null;
             })
             ->filter()
             ->values();

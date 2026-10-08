@@ -9,9 +9,9 @@ use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Services\TenantService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 

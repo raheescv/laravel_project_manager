@@ -107,11 +107,11 @@ class PropertyComplaintDashboard extends Component
             ->limit(5)
             ->get()
             ->map(function ($item) {
-                $building = PropertyBuilding::find($item->property_building_id);
+                $building = PropertyBuilding::find($item->getAttribute('property_building_id'));
 
                 return [
-                    'name' => $building?->name ?? 'Unknown',
-                    'count' => $item->total,
+                    'name' => $building->name ?? 'Unknown',
+                    'count' => $item->getAttribute('total'),
                 ];
             })->toArray();
 

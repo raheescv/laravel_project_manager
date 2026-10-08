@@ -69,26 +69,31 @@ class TailoringPayment extends Model implements AuditableContracts
     }
 
     // Relationships
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<TailoringOrder, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(TailoringOrder::class, 'tailoring_order_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_method_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

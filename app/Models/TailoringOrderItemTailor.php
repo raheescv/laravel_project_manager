@@ -53,11 +53,13 @@ class TailoringOrderItemTailor extends Model implements AuditableContracts
         });
     }
 
+    /** @return BelongsTo<TailoringOrderItem, $this> */
     public function tailoringOrderItem(): BelongsTo
     {
         return $this->belongsTo(TailoringOrderItem::class, 'tailoring_order_item_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function tailor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'tailor_id');

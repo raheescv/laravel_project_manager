@@ -62,7 +62,7 @@ class JournalEntryAction
             // Payment entry: Debit payment mode, Credit inventory account (for Add)
             // or Debit inventory, Credit payment mode (for Return)
             if ($supplyRequest->grand_total > 0 && $supplyRequest->payment_mode_id) {
-                $paymentMethodName = $supplyRequest->paymentMode?->name ?? 'Payment';
+                $paymentMethodName = $supplyRequest->paymentMode->name ?? 'Payment';
                 if ($supplyRequest->type === 'Add') {
                     $remarks = $paymentMethodName.' payment for Supply Request '.$supplyRequest->order_no;
                     $entries[] = $this->makeEntryPair(

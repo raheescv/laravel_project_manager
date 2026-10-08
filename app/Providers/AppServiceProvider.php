@@ -30,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(TenantService::class);
 
         // Bind custom database channel to replace the default one
-        $this->app->singleton(BaseDatabaseChannel::class, function ($app) {
-            return new DatabaseChannel($app['db']);
+        $this->app->singleton(BaseDatabaseChannel::class, function () {
+            return new DatabaseChannel();
         });
     }
 

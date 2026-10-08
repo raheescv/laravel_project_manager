@@ -76,7 +76,7 @@ class TrialBalanceExport implements FromCollection, WithColumnFormatting, WithEv
         $rows = [];
 
         // Helper function to flatten tree structure
-        $flattenTree = function ($tree, $sectionName, $indent = 0) use (&$rows, &$flattenTree) {
+        $flattenTree = function ($tree, $sectionName, $indent = 0) use (&$rows) {
             foreach ($tree as $key => $item) {
                 if ($key === 'uncategorized') {
                     // Handle uncategorized accounts

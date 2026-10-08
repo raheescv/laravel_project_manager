@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -12,7 +13,7 @@ class CategoryExport implements FromQuery, WithHeadings, WithMapping
 {
     use Exportable;
 
-    public function query()
+    public function query(): Builder
     {
         return Category::query();
     }

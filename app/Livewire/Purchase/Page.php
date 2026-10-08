@@ -26,6 +26,7 @@ class Page extends Component
 
     public $barcode_key;
 
+    /** @var int|string|null */
     public $table_id;
 
     public $account_balance;
@@ -50,6 +51,9 @@ class Page extends Component
 
     public $purchase_item_row_mode = 'merge';
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
@@ -158,6 +162,7 @@ class Page extends Component
         }
         if (in_array($key, ['purchases.other_discount'])) {
             if (str_ends_with($value, '%')) {
+                /** @var numeric-string $percentage */
                 $percentage = rtrim($value, '%');
                 $value = round($this->purchases['total'] / 100 * $percentage, 2);
                 if ($value > $this->purchases['total']) {
@@ -212,7 +217,8 @@ class Page extends Component
 
             return false;
         }
-        $this->selectItem($Product->id);
+        $key = $this->addToCart($Product);
+        $this->cartCalculator($key);
     }
 
     public function cartCalculator($key = null)
@@ -477,9 +483,9 @@ class Page extends Component
 
             return;
         }
+        $oldStatus = $this->purchases['status'];
         try {
             $account_id = $this->purchases['account_id'];
-            $oldStatus = $this->purchases['status'];
 
             DB::beginTransaction();
             if (! count($this->items)) {

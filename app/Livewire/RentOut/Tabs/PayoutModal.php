@@ -46,7 +46,7 @@ class PayoutModal extends Component
         $this->editingId = $payment->id;
 
         $this->form = [
-            'date' => $payment->date?->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'date' => $payment->date->format('Y-m-d'),
             'amount' => $payment->debit > 0 ? $payment->debit : $payment->credit,
             'account_id' => $payment->account_id ?? '',
             'remark' => $payment->remark ?? '',

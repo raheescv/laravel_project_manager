@@ -7,6 +7,7 @@ use App\Models\Scopes\CurrentBranchScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -44,22 +45,26 @@ class SaleDaySession extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function opener()
+    /** @return BelongsTo<User, $this> */
+    public function opener(): BelongsTo
     {
         return $this->belongsTo(User::class, 'opened_by');
     }
 
-    public function closer()
+    /** @return BelongsTo<User, $this> */
+    public function closer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
     }
@@ -71,7 +76,7 @@ class SaleDaySession extends Model implements AuditableContracts
      */
     public function getOpenedByNameAttribute(): string
     {
-        return $this->opened_by ? ($this->opener?->name ?? 'Unknown') : 'System';
+        return $this->opened_by ? ($this->opener->name ?? 'Unknown') : 'System';
     }
 
     /** Who closed the day, for display: null while open, "System" for an auto-close. */
@@ -81,15 +86,17 @@ class SaleDaySession extends Model implements AuditableContracts
             return null;
         }
 
-        return $this->closed_by ? ($this->closer?->name ?? 'Unknown') : 'System';
+        return $this->closed_by ? ($this->closer->name ?? 'Unknown') : 'System';
     }
 
-    public function sales()
+    /** @return HasMany<Sale, $this> */
+    public function sales(): HasMany
     {
         return $this->hasMany(Sale::class, 'sale_day_session_id')->where('status', 'completed');
     }
 
-    public function tailoringOrders()
+    /** @return HasMany<TailoringOrder, $this> */
+    public function tailoringOrders(): HasMany
     {
         return $this->hasMany(TailoringOrder::class, 'sale_day_session_id');
     }

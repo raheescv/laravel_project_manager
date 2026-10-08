@@ -19,7 +19,7 @@ class ImportAction
     public function execute(array $rows, array $mappings, array $options, int $userId): array
     {
         try {
-            if (! isset($mappings['title']) || $mappings['title'] === null || $mappings['title'] === '') {
+            if (! isset($mappings['title'])) {
                 throw new Exception('Match a column to Title before importing.');
             }
 

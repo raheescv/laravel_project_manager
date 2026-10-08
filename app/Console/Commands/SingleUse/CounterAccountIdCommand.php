@@ -21,11 +21,12 @@ class CounterAccountIdCommand extends Command
             ->get();
 
         foreach ($entries as $entry) {
+            $groupedIds = (string) $entry->getAttribute('ids');
             try {
-                $ids = explode(',', $entry->ids);
+                $ids = explode(',', $groupedIds);
 
                 if (count($ids) != 2) {
-                    $this->warn("Less than two journal entries found for group: {$entry->ids}");
+                    $this->warn("Less than two journal entries found for group: {$groupedIds}");
 
                     continue;
                 }
@@ -34,7 +35,7 @@ class CounterAccountIdCommand extends Command
                 $second = JournalEntry::find($ids[1]);
 
                 if (! $first || ! $second) {
-                    $this->warn("Journal entries not found for IDs: {$entry->ids}");
+                    $this->warn("Journal entries not found for IDs: {$groupedIds}");
 
                     continue;
                 }
@@ -44,7 +45,7 @@ class CounterAccountIdCommand extends Command
 
                 $this->info("Updated pair: {$first->id} <=> {$second->id}");
             } catch (\Throwable $th) {
-                $this->error("Error processing IDs: {$entry->ids}. Message: ".$th->getMessage());
+                $this->error("Error processing IDs: {$groupedIds}. Message: ".$th->getMessage());
             }
         }
 

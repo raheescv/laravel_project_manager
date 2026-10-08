@@ -253,7 +253,7 @@ class CustomerReceipt extends Component
                 if (! ($response['success'] ?? false)) {
                     throw new \Exception($response['message'] ?? 'Failed to create payment');
                 }
-                $paymentIds[] = ($response['data'] ?? null)?->id ?? null;
+                $paymentIds[] = ($response['data'] ?? null)->id ?? null;
                 $receiptData[] = [
                     'invoice_no' => $order->order_no,
                     'amount' => $row['payment'],

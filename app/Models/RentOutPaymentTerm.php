@@ -63,6 +63,7 @@ class RentOutPaymentTerm extends Model implements AuditableContracts
         ];
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
@@ -91,7 +92,7 @@ class RentOutPaymentTerm extends Model implements AuditableContracts
         if ($this->paid > 0) {
             return 'Partially Paid';
         }
-        if ($this->due_date && $this->due_date->isPast()) {
+        if ($this->due_date->isPast()) {
             return 'Pending';
         }
 

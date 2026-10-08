@@ -4,7 +4,6 @@ namespace App\Trading\Pipelines;
 
 use App\Trading\Brokers\BrokerManager;
 use App\Trading\DataObjects\OrderRequest;
-use App\Trading\DataObjects\PositionSnapshot;
 use App\Trading\Exits\ExitEngine;
 use App\Trading\Reconciliation\OrderReconciler;
 use App\Trading\Services\TradeExecutor;
@@ -26,7 +25,7 @@ final class SquareoffPipeline
     {
         $mode = $options['mode'] ?? 'paper';
         $broker = $this->brokers->broker();
-        $positions = array_filter($broker->positions(), fn ($p) => $p instanceof PositionSnapshot);
+        $positions = $broker->positions();
 
         $flattened = [];
         foreach ($positions as $pos) {

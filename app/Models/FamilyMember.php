@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FamilyMember extends Model
 {
@@ -22,22 +24,26 @@ class FamilyMember extends Model
     ];
 
     // Relationships
-    public function father()
+    /** @return BelongsTo<FamilyMember, $this> */
+    public function father(): BelongsTo
     {
         return $this->belongsTo(FamilyMember::class, 'father_id');
     }
 
-    public function mother()
+    /** @return BelongsTo<FamilyMember, $this> */
+    public function mother(): BelongsTo
     {
         return $this->belongsTo(FamilyMember::class, 'mother_id');
     }
 
-    public function spouse()
+    /** @return BelongsTo<FamilyMember, $this> */
+    public function spouse(): BelongsTo
     {
         return $this->belongsTo(FamilyMember::class, 'spouse_id');
     }
 
-    public function children()
+    /** @return HasMany<FamilyMember, $this> */
+    public function children(): HasMany
     {
         return $this->hasMany(FamilyMember::class, 'father_id')
             ->orWhere('mother_id', $this->id);

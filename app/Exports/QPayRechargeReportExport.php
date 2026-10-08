@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Livewire\Report\Student\QPayRechargeReport;
 use App\Models\QpayTransaction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,7 +17,7 @@ class QPayRechargeReportExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return QPayRechargeReport::filteredQuery($this->filters);
     }

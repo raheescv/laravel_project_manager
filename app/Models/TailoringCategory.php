@@ -52,36 +52,43 @@ class TailoringCategory extends Model
         return $return;
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return HasMany<TailoringCategoryModel, $this> */
     public function models(): HasMany
     {
         return $this->hasMany(TailoringCategoryModel::class);
     }
 
+    /** @return HasMany<TailoringCategoryModel, $this> */
     public function activeModels(): HasMany
     {
         return $this->hasMany(TailoringCategoryModel::class)->where('is_active', true);
     }
 
+    /** @return HasMany<TailoringCategoryModelType, $this> */
     public function modelTypes(): HasMany
     {
         return $this->hasMany(TailoringCategoryModelType::class);
     }
 
+    /** @return HasMany<TailoringCategoryModelType, $this> */
     public function activeModelTypes(): HasMany
     {
         return $this->hasMany(TailoringCategoryModelType::class)->where('is_active', true);
     }
 
+    /** @return HasMany<TailoringCategoryMeasurement, $this> */
     public function measurements(): HasMany
     {
         return $this->hasMany(TailoringCategoryMeasurement::class);
     }
 
+    /** @return HasMany<TailoringCategoryMeasurement, $this> */
     public function activeMeasurements(): HasMany
     {
         return $this->hasMany(TailoringCategoryMeasurement::class)->where('is_active', true)->orderBy('sort_order');

@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\ApiLog;
+use App\Models\Guardian;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
@@ -37,6 +38,7 @@ final class QPayApiLog
     public static function start(string $service, string $endpoint, ?array $request, ?string $merchantId): ?ApiLog
     {
         try {
+            /** @var User|Guardian|null $actor The web user, else the parent-portal guardian. */
             $actor = self::actor();
 
             return ApiLog::create([

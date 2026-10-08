@@ -59,7 +59,7 @@ class Page extends Component
                     'ordered_quantity' => $lpoItem->quantity,
                     'rate' => $lpoItem->rate,
                     'account_id' => $lpoItem->account_id,
-                    'quantity' => $grnItem?->quantity ?? 0,
+                    'quantity' => $grnItem->quantity ?? 0,
                 ];
             })->toArray();
         }

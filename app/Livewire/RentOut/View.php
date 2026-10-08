@@ -7,6 +7,9 @@ use App\Livewire\RentOut\Concerns\HasPaymentTermManagement;
 use App\Support\RentOutConfig;
 use Livewire\Component;
 
+/**
+ * @property-read RentOutConfig $config
+ */
 class View extends Component
 {
     use HasPaymentTermManagement;

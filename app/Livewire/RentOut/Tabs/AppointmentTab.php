@@ -18,6 +18,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
+/**
+ * @property-read RentOut|null $rentOut
+ * @property-read PropertyAppointment|null $appointment
+ * @property-read User|null $employee
+ * @property-read array $slots
+ * @property-read array{open: int, free: int, closed: int, days: int} $rangeStats
+ * @property-read array{label: string, blanks: int, canBack: bool, canForward: bool, canBackAny: bool, canForwardAny: bool, cells: array<int, array<string, mixed>>} $calendar
+ */
 class AppointmentTab extends Component
 {
     public $rentOutId;
@@ -69,7 +77,7 @@ class AppointmentTab extends Component
     {
         $this->rentOutId = $rentOutId;
         $this->linkValidUntil = now()->addDays(14)->format('Y-m-d');
-        $this->employee_id = $this->appointment?->employee_id ?? '';
+        $this->employee_id = $this->appointment->employee_id ?? '';
         $this->seedBookingRange();
         $this->calendarMonth = substr($this->availableFrom, 0, 7);
     }
@@ -321,7 +329,7 @@ class AppointmentTab extends Component
 
         // Whatever the database settled on wins — a rejected change must not
         // leave the picker showing someone who is not on the appointment.
-        $this->employee_id = $this->appointment?->employee_id ?? '';
+        $this->employee_id = $this->appointment->employee_id ?? '';
         unset($this->slots, $this->employee);
         $this->syncEmployeePicker();
     }
@@ -331,7 +339,7 @@ class AppointmentTab extends Component
     {
         $this->dispatch('appointment-employee-synced', [
             'id' => (string) $this->employee_id,
-            'name' => $this->employee?->name ?? '',
+            'name' => $this->employee->name ?? '',
         ]);
     }
 

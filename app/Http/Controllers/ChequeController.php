@@ -29,7 +29,7 @@ class ChequeController extends Controller
             'payee' => $request->input('payee', 'Sample Payee Name'),
             'amount' => $request->input('amount', 1000.00),
             'amount_in_words' => $request->input('amount_in_words', $this->numberToWords($request->input('amount', 1000.00))),
-            'cheque_number' => $request->input('cheque_number', 'CHQ-'.str_pad(rand(1, 9999), 6, '0', STR_PAD_LEFT)),
+            'cheque_number' => $request->input('cheque_number', 'CHQ-'.str_pad((string) rand(1, 9999), 6, '0', STR_PAD_LEFT)),
             'account_number' => $request->input('account_number', '5002-626450536-14516568'),
             'bank_name' => $request->input('bank_name', 'Bank Name'),
             'signature' => $request->input('signature', ''),
@@ -43,11 +43,7 @@ class ChequeController extends Controller
 
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'] ?? 210, $settings['height'] ?? 100)
-            ->pdf([
-                'printBackground' => true,
-                'preferCSSPageSize' => true,
-                'scale' => 1,
-            ]);
+            ->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')

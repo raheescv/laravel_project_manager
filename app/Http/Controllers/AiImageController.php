@@ -42,7 +42,7 @@ class AiImageController extends Controller
                 CURLOPT_POST => true,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_SSL_VERIFYHOST => 0,
                 CURLOPT_HTTPHEADER => [
                     'Authorization: Bearer '.$apiKey,
                     'Content-Type: application/json',

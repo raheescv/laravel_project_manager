@@ -40,13 +40,13 @@ class Assign extends Component
         $this->complaintData = $this->maintenance->maintenanceComplaints->map(function ($mc) {
             return [
                 'id' => $mc->id,
-                'complaint_name' => $mc->complaint?->name ?? 'N/A',
-                'category_name' => $mc->complaint?->category?->name ?? 'N/A',
+                'complaint_name' => $mc->complaint->name ?? 'N/A',
+                'category_name' => $mc->complaint?->category->name ?? 'N/A',
                 'status' => $mc->status->value,
                 'status_label' => $mc->status->label(),
                 'status_color' => $mc->status->color(),
                 'technician_id' => $mc->technician_id ?? '',
-                'technician_name' => $mc->technician?->name ?? '',
+                'technician_name' => $mc->technician->name ?? '',
                 'technician_remark' => $mc->technician_remark ?? '',
             ];
         })->toArray();

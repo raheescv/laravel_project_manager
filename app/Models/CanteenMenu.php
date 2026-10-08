@@ -29,6 +29,7 @@ class CanteenMenu extends Model
         'courses' => 'array',
     ];
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

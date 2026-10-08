@@ -167,11 +167,11 @@ class TrialBalance extends Component
         foreach ($otherAccounts as $account) {
             $d = round((float) ($account->total_debit ?? 0), 2);
             $c = round((float) ($account->total_credit ?? 0), 2);
-            $otherDebit = bcadd($otherDebit, $d, 2);
-            $otherCredit = bcadd($otherCredit, $c, 2);
+            $otherDebit = bcadd($otherDebit, (string) $d, 2);
+            $otherCredit = bcadd($otherCredit, (string) $c, 2);
             $otherFlat[] = [
                 'id' => $account->account_id,
-                'name' => $account->account_name,
+                'name' => $account->getAttribute('account_name'),
                 'debit' => $d,
                 'credit' => $c,
                 'balance' => round($d - $c, 2),
@@ -190,10 +190,10 @@ class TrialBalance extends Component
             foreach ($typeAccounts as $account) {
                 $d = round((float) ($account->total_debit ?? 0), 2);
                 $c = round((float) ($account->total_credit ?? 0), 2);
-                $debit = bcadd($debit, $d, 2);
-                $credit = bcadd($credit, $c, 2);
+                $debit = bcadd($debit, (string) $d, 2);
+                $credit = bcadd($credit, (string) $c, 2);
                 $flat[] = [
-                    'name' => $account->account_name,
+                    'name' => $account->getAttribute('account_name'),
                     'debit' => $d,
                     'credit' => $c,
                     'balance' => round($d - $c, 2),
@@ -207,8 +207,8 @@ class TrialBalance extends Component
         $totalAssets = bcsub($sectionTotals['asset']['debit'], $sectionTotals['asset']['credit'], 2);
         $totalLiabilities = bcsub($sectionTotals['liability']['credit'], $sectionTotals['liability']['debit'], 2);
 
-        $totalDebit = bcadd(round(array_sum(array_column($sectionTotals, 'debit')), 2), $otherDebit, 2);
-        $totalCredit = bcadd(round(array_sum(array_column($sectionTotals, 'credit')), 2), $otherCredit, 2);
+        $totalDebit = bcadd((string) round(array_sum(array_column($sectionTotals, 'debit')), 2), $otherDebit, 2);
+        $totalCredit = bcadd((string) round(array_sum(array_column($sectionTotals, 'credit')), 2), $otherCredit, 2);
 
         return [
             'assets' => $flatLists['asset'],

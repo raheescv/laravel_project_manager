@@ -6,6 +6,8 @@ use App\Models\Scopes\AssignedBranchScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -46,47 +48,56 @@ class Journal extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
-    public function entries()
+    /** @return HasMany<JournalEntry, $this> */
+    public function entries(): HasMany
     {
         return $this->hasMany(JournalEntry::class);
     }
 
-    public function sale()
+    /** @return BelongsTo<Sale, $this> */
+    public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class, 'model_id');
     }
 
-    public function purchase()
+    /** @return BelongsTo<Purchase, $this> */
+    public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class, 'model_id');
     }
 
-    public function saleReturn()
+    /** @return BelongsTo<SaleReturn, $this> */
+    public function saleReturn(): BelongsTo
     {
         return $this->belongsTo(SaleReturn::class, 'model_id');
     }
 
-    public function purchaseReturn()
+    /** @return BelongsTo<PurchaseReturn, $this> */
+    public function purchaseReturn(): BelongsTo
     {
         return $this->belongsTo(PurchaseReturn::class, 'model_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
-    public function createdBy()
+    /** @return BelongsTo<User, $this> */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function rentOutTransaction()
+    /** @return HasOne<RentOutTransaction, $this> */
+    public function rentOutTransaction(): HasOne
     {
         return $this->hasOne(RentOutTransaction::class, 'journal_id');
     }

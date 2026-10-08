@@ -9,6 +9,7 @@ class GetTailoringOrderAction
     public function execute($id)
     {
         try {
+            // @phpstan-ignore larastan.relationExistence (OwenIt Audit::user() declares no return type, so Larastan cannot see the 'audits.user' relation)
             $order = TailoringOrder::with([
                 'branch:id,name,location,mobile',
                 'account:id,name,mobile',

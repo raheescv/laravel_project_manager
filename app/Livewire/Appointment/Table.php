@@ -56,7 +56,7 @@ class Table extends Component
                 throw new \Exception('Please select any item to delete.', 1);
             }
             foreach ($this->selected as $id) {
-                $response = (new DeleteAction())->execute($id, Auth::id());
+                $response = (new DeleteAction())->execute($id);
                 if (! $response['success']) {
                     throw new \Exception($response['message'], 1);
                 }

@@ -143,7 +143,7 @@ class RentOutImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     $months++;
                 }
                 $months = max($months, 0);
-                $row['total'] = ((float) $row['rent']) * $months - ((float) ($row['discount'] ?? 0));
+                $row['total'] = ((float) $row['rent']) * $months - ((float) $row['discount']);
             } catch (\Throwable $e) {
                 // ignore - validation will catch
             }

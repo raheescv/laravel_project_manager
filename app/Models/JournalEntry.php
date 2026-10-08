@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
+/**
+ * @property-read string $month Select alias (Y-m) from the monthly summary query.
+ */
 class JournalEntry extends Model implements AuditableContracts
 {
     use Auditable;
@@ -71,7 +74,8 @@ class JournalEntry extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function journal()
+    /** @return BelongsTo<Journal, $this> */
+    public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);
     }
@@ -86,26 +90,31 @@ class JournalEntry extends Model implements AuditableContracts
         return $query->where('source', 'income');
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function purchase()
+    /** @return BelongsTo<Purchase, $this> */
+    public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class, 'model_id');
     }
 
-    public function counterAccount()
+    /** @return BelongsTo<Account, $this> */
+    public function counterAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'counter_account_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

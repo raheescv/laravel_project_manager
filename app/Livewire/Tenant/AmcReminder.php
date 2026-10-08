@@ -33,7 +33,7 @@ class AmcReminder extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    /** @var array<string, array{0: string, 1: string}> */
+    /** @var array<int|string, array{0: string, 1: string}> */
     public const WINDOWS = [
         '7' => ['fa-bolt', 'Next 7 days'],
         '30' => ['fa-calendar', 'Next 30 days'],
@@ -118,8 +118,9 @@ class AmcReminder extends Component
             ->selectRaw('SUM(CASE WHEN renews_on < ? THEN COALESCE(amc_amount, 0) ELSE 0 END) as overdue_amount', [$today])
             ->selectRaw('SUM(renews_on >= ? AND renews_on <= ?) as week_count', [$today, $weekEnd])
             ->selectRaw('SUM(CASE WHEN renews_on >= ? AND renews_on <= ? THEN COALESCE(amc_amount, 0) ELSE 0 END) as week_amount', [$today, $weekEnd])
+            ->toBase()
             ->first();
-        $windowTotals = $this->windowQuery()->selectRaw('COUNT(*) as total, COALESCE(SUM(amc_amount), 0) as amount')->first();
+        $windowTotals = $this->windowQuery()->selectRaw('COUNT(*) as total, COALESCE(SUM(amc_amount), 0) as amount')->toBase()->first();
 
         $contacts = Configuration::withoutGlobalScopes()
             ->whereIn('tenant_id', $data->pluck('id'))

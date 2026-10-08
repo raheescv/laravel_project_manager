@@ -22,7 +22,7 @@ class InvoiceScanner
 
     /**
      * @param  array|null  $bands  column ranges saved for this vendor, when there are any
-     * @return array{columns: array, bands: array, rows: array, meta: array, pageCount: int, skipped: int, source: string}
+     * @return array{columns: array, bands: array, rows: array, meta: array, pageCount: int, skipped: int, source: string, low_confidence?: array<int, array<int, string>>}
      */
     public function scan(string $path, string $extension, ?array $bands = null): array
     {

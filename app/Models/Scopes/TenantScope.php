@@ -29,12 +29,14 @@ class TenantScope implements Scope
      */
     public function extend(Builder $builder): void
     {
-        $builder->macro('withoutTenant', function (Builder $builder) {
-            return $builder->withoutGlobalScope($this);
+        $scope = $this;
+
+        $builder->macro('withoutTenant', function (Builder $builder) use ($scope) {
+            return $builder->withoutGlobalScope($scope);
         });
 
-        $builder->macro('withTenant', function (Builder $builder, $tenantId) {
-            return $builder->withoutGlobalScope($this)->where('tenant_id', $tenantId);
+        $builder->macro('withTenant', function (Builder $builder, $tenantId) use ($scope) {
+            return $builder->withoutGlobalScope($scope)->where('tenant_id', $tenantId);
         });
     }
 }

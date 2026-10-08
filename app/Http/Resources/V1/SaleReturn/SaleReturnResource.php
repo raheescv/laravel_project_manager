@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources\V1\SaleReturn;
 
+use App\Models\SaleReturn;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin SaleReturn
+ */
 class SaleReturnResource extends JsonResource
 {
     /**
@@ -22,7 +26,7 @@ class SaleReturnResource extends JsonResource
             'reference_no' => $this->reference_no,
             // The source sale this return is raised against — the app needs it to
             // re-fetch the returnable lines when editing.
-            'sale_id' => $this->sale_id ? (string) $this->sale_id : null,
+            'sale_id' => $this->sourceSaleId(),
             'account_id' => $this->account_id ? (int) $this->account_id : null,
             'date' => $this->date,
             'status' => $this->status,
@@ -66,5 +70,17 @@ class SaleReturnResource extends JsonResource
             ],
             'created_by' => $this->createdUser?->name,
         ];
+    }
+
+    /**
+     * The sale this return was raised against. sale_returns carries no sale_id
+     * column — the link lives on sale_return_items.sale_item_id — so it is read
+     * from the first line that points back at a sale item.
+     */
+    private function sourceSaleId(): ?string
+    {
+        $saleId = $this->items->firstWhere('sale_item_id', '!=', null)?->saleItem?->sale_id;
+
+        return $saleId ? (string) $saleId : null;
     }
 }

@@ -73,13 +73,18 @@ class Page extends Component
                 'status' => $detail?->status ?: 'active',
                 'card_uid' => (string) $detail?->card_uid,
             ]);
-            $this->guardians = $account->guardians->map(fn (Guardian $guardian) => [
-                'name' => $guardian->name,
-                'mobile' => $guardian->mobile,
-                'email' => (string) $guardian->email,
-                'relation' => $guardian->pivot->relation,
-                'is_primary' => (bool) $guardian->pivot->is_primary,
-            ])->values()->all() ?: [$this->blankGuardian(true)];
+            $this->guardians = $account->guardians->map(function (Guardian $guardian): array {
+                /** @var object{relation: string|null, is_primary: bool|int|null} $pivot */
+                $pivot = $guardian->getRelation('pivot');
+
+                return [
+                    'name' => $guardian->name,
+                    'mobile' => $guardian->mobile,
+                    'email' => (string) $guardian->email,
+                    'relation' => $pivot->relation,
+                    'is_primary' => (bool) $pivot->is_primary,
+                ];
+            })->values()->all() ?: [$this->blankGuardian(true)];
         }
     }
 

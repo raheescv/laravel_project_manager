@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Traits\OptimizesUploadedImage;
 use Faker\Factory;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -60,7 +61,7 @@ class Page extends Component
             $email = '';
             if (! app()->isProduction()) {
                 $name = $faker->name;
-                $code = $faker->hexcolor;
+                $code = $faker->hexColor;
                 $email = $faker->email;
             }
             $this->users = [

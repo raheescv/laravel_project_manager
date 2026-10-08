@@ -73,7 +73,6 @@ class Units extends Component
         }
 
         return UniversalUnitConversion::where('base_unit_id', $baseUnitId)
-            ->get()
             ->pluck('conversion_factor', 'sub_unit_id')
             ->toArray();
     }

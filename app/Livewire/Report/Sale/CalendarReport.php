@@ -87,7 +87,7 @@ class CalendarReport extends Component
 
         // Add actual days with date values
         for ($i = 1; $i <= $daysInMonth; $i++) {
-            $days->push(['day' => $i, 'date' => $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($i, 2, '0', STR_PAD_LEFT), 'total' => 0, 'count' => 0]);
+            $days->push(['day' => $i, 'date' => $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad((string) $i, 2, '0', STR_PAD_LEFT), 'total' => 0, 'count' => 0]);
         }
 
         // Calculate empty days at end to complete last week row
@@ -211,14 +211,14 @@ class CalendarReport extends Component
 
         $salesData = collect();
         foreach ($saleData as $row) {
-            $salesData[$row->date] = (object) ['date' => $row->date, 'total' => (float) $row->total, 'count' => (int) $row->count];
+            $salesData[$row->date] = (object) ['date' => $row->date, 'total' => (float) $row->total, 'count' => (int) $row->getAttribute('count')];
         }
         foreach ($tailoringData as $row) {
-            if (! isset($salesData[$row->date])) {
-                $salesData[$row->date] = (object) ['date' => $row->date, 'total' => 0, 'count' => 0];
+            if (! isset($salesData[$row->getAttribute('date')])) {
+                $salesData[$row->getAttribute('date')] = (object) ['date' => $row->getAttribute('date'), 'total' => 0, 'count' => 0];
             }
-            $salesData[$row->date]->total += (float) $row->total;
-            $salesData[$row->date]->count += (int) $row->count;
+            $salesData[$row->getAttribute('date')]->total += (float) $row->total;
+            $salesData[$row->getAttribute('date')]->count += (int) $row->getAttribute('count');
         }
 
         // Get comparison data for previous month if enabled
@@ -229,7 +229,7 @@ class CalendarReport extends Component
 
             // Get last month's days
             for ($i = 1; $i <= $prevMonth->daysInMonth; $i++) {
-                $date = $prevMonth->format('Y-m-').str_pad($i, 2, '0', STR_PAD_LEFT);
+                $date = $prevMonth->format('Y-m-').str_pad((string) $i, 2, '0', STR_PAD_LEFT);
                 $prevMonthDays->push($date);
             }
 
@@ -256,17 +256,17 @@ class CalendarReport extends Component
             $prevMonthData = collect();
             foreach ($prevSaleData as $row) {
                 $day = Carbon::parse($row->date)->day;
-                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
-                $prevMonthData[$mappedDate] = (object) ['date' => $mappedDate, 'total' => (float) $row->total, 'count' => (int) $row->count];
+                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad((string) $day, 2, '0', STR_PAD_LEFT);
+                $prevMonthData[$mappedDate] = (object) ['date' => $mappedDate, 'total' => (float) $row->total, 'count' => (int) $row->getAttribute('count')];
             }
             foreach ($prevTailoringData as $row) {
-                $day = Carbon::parse($row->date)->day;
-                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad($day, 2, '0', STR_PAD_LEFT);
+                $day = Carbon::parse($row->getAttribute('date'))->day;
+                $mappedDate = $this->year.'-'.str_pad($this->month, 2, '0', STR_PAD_LEFT).'-'.str_pad((string) $day, 2, '0', STR_PAD_LEFT);
                 if (! isset($prevMonthData[$mappedDate])) {
                     $prevMonthData[$mappedDate] = (object) ['date' => $mappedDate, 'total' => 0, 'count' => 0];
                 }
                 $prevMonthData[$mappedDate]->total += (float) $row->total;
-                $prevMonthData[$mappedDate]->count += (int) $row->count;
+                $prevMonthData[$mappedDate]->count += (int) $row->getAttribute('count');
             }
         }
 

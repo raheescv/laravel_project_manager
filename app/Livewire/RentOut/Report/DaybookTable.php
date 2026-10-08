@@ -11,6 +11,10 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read array $kpis
+ * @property-read array $summary
+ */
 class DaybookTable extends Component
 {
     use HasRentOutReportFilters, WithPagination {
@@ -44,6 +48,9 @@ class DaybookTable extends Component
         return ['date', 'voucher', 'customer', 'group', 'building', 'property', 'category', 'source', 'group_col', 'payment_type', 'remark', 'charge', 'paid', 'balance'];
     }
 
+    /**
+     * @return Builder<RentOutTransaction>
+     */
     protected function baseTransactionQuery(): Builder
     {
         return RentOutTransaction::query()
@@ -115,14 +122,14 @@ class DaybookTable extends Component
 
         $summary = [];
         foreach ($rows as $row) {
-            $charge = (float) $row->charge;
-            $paid = (float) $row->paid;
+            $charge = (float) $row->getAttribute('charge');
+            $paid = (float) $row->getAttribute('paid');
             $summary[] = [
                 'name' => $row->source ?: 'Uncategorised',
                 'charge' => $charge,
                 'paid' => $paid,
                 'balance' => $charge - $paid,
-                'txns' => (int) $row->txns,
+                'txns' => (int) $row->getAttribute('txns'),
             ];
         }
 

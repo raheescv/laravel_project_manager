@@ -50,21 +50,25 @@ class StudentPreOrder extends Model
         'weekdays' => 'array',
     ];
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return BelongsTo<Guardian, $this> */
     public function guardian(): BelongsTo
     {
         return $this->belongsTo(Guardian::class);
     }
 
+    /** @return HasMany<StudentPreOrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(StudentPreOrderItem::class);
     }
 
+    /** @return HasMany<StudentPreOrderCollection, $this> */
     public function collections(): HasMany
     {
         return $this->hasMany(StudentPreOrderCollection::class);

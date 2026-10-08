@@ -44,7 +44,7 @@ class View extends Component
 
     public string $customDomain = '';
 
-    /** @var array{paid_on: string, type: string, amount: string, method: string, reference: string, note: string} */
+    /** @var array{paid_on: string, type: string, amount: string, method: string, reference: string, note: string}|array{} */
     public array $payment = [];
 
     /** AMC payments move the renewal date one cycle forward unless unticked. */

@@ -88,7 +88,7 @@ class GetProductByBarcodeAction
                 'barcode' => $barcode,
                 'mrp' => $price,
                 'stock' => $inventory->quantity ?? 0,
-                'category_id' => $inventory->category_id,
+                'category_id' => $inventory->product->main_category_id,
                 'product_id' => $inventory->product_id,
                 'branch_id' => $inventory->branch_id,
                 'image' => $imageUrl,

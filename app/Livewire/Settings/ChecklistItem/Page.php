@@ -68,7 +68,7 @@ class Page extends Component
         } else {
             $item = Checklist::with('propertyType:id,name')->find($this->table_id);
             $this->formData = $item->toArray();
-            $this->propertyTypeName = $item->propertyType?->name ?? '';
+            $this->propertyTypeName = $item->propertyType->name ?? '';
         }
     }
 

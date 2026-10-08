@@ -47,6 +47,7 @@ class QuickBooksSheetImport implements ToCollection, WithBatchInserts, WithChunk
         private int $userId,
         private int $totalRows,
         private int $branchId,
+        // @phpstan-ignore property.onlyWritten (accepted for parity with GeneralVoucherImport; QuickBooks columns are detected from the header row)
         private array $mappings = []
     ) {}
 

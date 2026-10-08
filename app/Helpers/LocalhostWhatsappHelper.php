@@ -93,7 +93,7 @@ class LocalhostWhatsappHelper
 
         return [
             'success' => false,
-            'message' => "WhatsApp server error: {$lastError?->getMessage()}",
+            'message' => "WhatsApp server error: {$lastError->getMessage()}",
         ];
     }
 

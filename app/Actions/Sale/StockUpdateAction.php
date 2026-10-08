@@ -190,7 +190,7 @@ class StockUpdateAction
             }
 
             if ((float) $inventory->quantity < $requiredQuantity) {
-                $productName = $inventory->product?->name ?? ('product id '.$productId);
+                $productName = $inventory->product->name ?? ('product id '.$productId);
 
                 throw new Exception(
                     "Insufficient raw material stock for {$productName}. Available: {$inventory->quantity}, required: {$requiredQuantity}.",

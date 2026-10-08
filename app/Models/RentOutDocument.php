@@ -36,21 +36,25 @@ class RentOutDocument extends Model implements AuditableContracts
         ];
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<DocumentType, $this> */
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

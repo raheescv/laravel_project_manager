@@ -41,7 +41,10 @@ class RentOutChecklistState
     /** A lease/sale is handed over once — there is no move-out to inspect. */
     public static function isSingleHandover(RentOut $rentOut): bool
     {
-        return $rentOut->agreement_type !== null && $rentOut->agreement_type !== AgreementType::Rental;
+        /** @var AgreementType|null $agreementType Unset on a RentOut created without an explicit type. */
+        $agreementType = $rentOut->agreement_type;
+
+        return $agreementType !== null && $agreementType !== AgreementType::Rental;
     }
 
     public static function hasPhase(RentOut $rentOut, ChecklistPhase $phase): bool
@@ -69,7 +72,7 @@ class RentOutChecklistState
     public static function signaturesDone(RentOut $rentOut, ChecklistPhase $phase): int
     {
         return collect(ChecklistSignatoryRole::cases())
-            ->filter(fn (ChecklistSignatoryRole $role) => $rentOut->checklistSignatureFor($phase, $role)?->signature_path)
+            ->filter(fn (ChecklistSignatoryRole $role): bool => (bool) $rentOut->checklistSignatureFor($phase, $role)?->signature_path)
             ->count();
     }
 
@@ -90,7 +93,10 @@ class RentOutChecklistState
             return true;
         }
 
-        return $rentOut->end_date !== null && $rentOut->end_date->lte(now()->addDays(self::MOVE_OUT_LEAD_DAYS));
+        /** @var CarbonInterface|null $endDate */
+        $endDate = $rentOut->end_date;
+
+        return $endDate !== null && $endDate->lte(now()->addDays(self::MOVE_OUT_LEAD_DAYS));
     }
 
     /** The phase still waiting for work, or null when nothing is due. */

@@ -110,16 +110,19 @@ class QpayTransaction extends Model
         'tampered_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return BelongsTo<Guardian, $this> */
     public function guardian(): BelongsTo
     {
         return $this->belongsTo(Guardian::class);
     }
 
+    /** @return BelongsTo<Journal, $this> */
     public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);

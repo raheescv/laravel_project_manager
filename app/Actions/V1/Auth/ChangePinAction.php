@@ -3,6 +3,7 @@
 namespace App\Actions\V1\Auth;
 
 use App\Http\Requests\V1\Auth\ChangePinRequest;
+use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 
@@ -18,7 +19,7 @@ class ChangePinAction
     {
         $user = $request->user();
 
-        if (! $user->pin || ! Hash::check($request->validated('current_pin'), $user->pin)) {
+        if (! $user instanceof User || ! $user->pin || ! Hash::check($request->validated('current_pin'), $user->pin)) {
             throw new AuthenticationException('The provided current PIN does not match our records.');
         }
 

@@ -6,13 +6,10 @@ use App\Models\AccountNote;
 
 class DeleteAction
 {
-    public function execute($id)
+    public function execute(int|string|null $id)
     {
         try {
             $model = AccountNote::find($id);
-            if ($model->is_locked) {
-                throw new \Exception("You can't delete this AccountNote; it's locked", 1);
-            }
             if (! $model) {
                 throw new \Exception("AccountNote not found with the specified ID: $id.", 1);
             }

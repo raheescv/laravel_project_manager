@@ -66,7 +66,7 @@ class Page extends Component
                 'email' => $email,
                 'model' => 'Vendor',
                 'account_category_id' => $account_category_id,
-                'place' => $place ?? '',
+                'place' => '',
                 'credit_period_days' => null,
             ];
         } else {

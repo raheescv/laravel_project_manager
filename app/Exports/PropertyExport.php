@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Property;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -16,7 +17,7 @@ class PropertyExport implements FromQuery, WithColumnFormatting, WithHeadings, W
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return Property::with(['building.group', 'type'])
             ->when($this->filters['search'] ?? '', function ($query, $value) {

@@ -90,8 +90,6 @@ class TradingStrategyService
         $currentPrice = end($prices);
         if (count($prices) < 20) { // Minimum data for reliable signals
             return ['HOLD', $currentPrice];
-
-            return ['signal' => 'HOLD', 'confidence' => 0.0, 'details' => 'Insufficient data'];
         }
         if ($currentPrice > 600) {
             return ['HOLD', $currentPrice];

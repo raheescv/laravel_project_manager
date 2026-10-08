@@ -47,7 +47,7 @@ class ReportAction
             'branch_location' => $session->branch?->location,
             'branch_mobile' => $session->branch?->mobile,
             'status' => $session->status,
-            'opened_at' => $session->opened_at?->format('Y-m-d H:i:s'),
+            'opened_at' => $session->opened_at->format('Y-m-d H:i:s'),
             'closed_at' => $session->closed_at?->format('Y-m-d H:i:s'),
             'opened_by' => $session->opened_by_name,
             'closed_by' => $session->closed_by_name,

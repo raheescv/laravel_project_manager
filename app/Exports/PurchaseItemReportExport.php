@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\PurchaseItem;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -18,7 +19,7 @@ class PurchaseItemReportExport implements FromQuery, WithColumnFormatting, WithE
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $query = PurchaseItem::join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {

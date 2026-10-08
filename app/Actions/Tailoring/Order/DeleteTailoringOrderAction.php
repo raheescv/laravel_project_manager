@@ -4,8 +4,10 @@ namespace App\Actions\Tailoring\Order;
 
 use App\Actions\Tailoring\JournalEntryAction;
 use App\Models\TailoringOrder;
+use App\Models\TailoringOrderItem;
+use App\Models\TailoringOrderMeasurement;
+use App\Models\TailoringPayment;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class DeleteTailoringOrderAction
@@ -54,7 +56,7 @@ class DeleteTailoringOrderAction
         return ['success' => $success, 'message' => $message, 'data' => $data];
     }
 
-    private function softDelete(Model $model, int $userId): void
+    private function softDelete(TailoringOrder|TailoringOrderItem|TailoringOrderMeasurement|TailoringPayment $model, int $userId): void
     {
         $model->deleted_by = $userId;
         $model->save();

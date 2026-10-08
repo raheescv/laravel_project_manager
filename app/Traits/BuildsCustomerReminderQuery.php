@@ -124,9 +124,7 @@ trait BuildsCustomerReminderQuery
                 'recent' => '(derived_sales.last_purchase_date IS NULL OR (derived_sales.last_purchase_date IS NOT NULL AND ABS(DATEDIFF(CURDATE(), derived_sales.last_purchase_date)) < 30))',
                 default => '1=1'
             };
-            if ($priorityFilter !== 'all') {
-                $query->havingRaw($havingClause);
-            }
+            $query->havingRaw($havingClause);
         }
 
         $sortField = $filters['sort_field'] ?? 'derived_sales.last_purchase_date';

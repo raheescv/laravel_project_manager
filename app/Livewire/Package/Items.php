@@ -15,6 +15,7 @@ class Items extends Component
 {
     use WithPagination;
 
+    /** @var int|string|null */
     public $package_id;
 
     protected $paginationTheme = 'bootstrap';

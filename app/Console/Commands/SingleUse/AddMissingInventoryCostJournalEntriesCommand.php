@@ -87,7 +87,7 @@ class AddMissingInventoryCostJournalEntriesCommand extends Command
                     ->filter(fn ($item) => $item->product?->type === 'product')
                     ->sum(function ($item) {
                         // Use current inventory cost if available, otherwise use product cost
-                        $cost = $item->inventory?->cost ?? ($item->product?->cost ?? 0);
+                        $cost = $item->inventory->cost ?? ($item->product->cost ?? 0);
 
                         return $cost * $item->quantity;
                     });

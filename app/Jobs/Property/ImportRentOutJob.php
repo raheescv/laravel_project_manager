@@ -81,6 +81,7 @@ class ImportRentOutJob implements ShouldQueue
             $file
         );
 
+        // @phpstan-ignore if.alwaysTrue (PHPStan remembers the earlier file_exists() check; the import may have removed the file since)
         if (file_exists($file)) {
             unlink($file);
         }

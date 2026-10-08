@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -58,12 +60,14 @@ class SalePayment extends Model implements AuditableContracts
         });
     }
 
-    public function sale()
+    /** @return BelongsTo<Sale, $this> */
+    public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
 
-    public function paymentMethod()
+    /** @return BelongsTo<Account, $this> */
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_method_id');
     }
@@ -73,7 +77,8 @@ class SalePayment extends Model implements AuditableContracts
         return $this->paymentMethod?->name;
     }
 
-    public function journalEntries()
+    /** @return HasMany<JournalEntry, $this> */
+    public function journalEntries(): HasMany
     {
         return $this->hasMany(JournalEntry::class, 'model_id')->where('model', 'SalePayment');
     }

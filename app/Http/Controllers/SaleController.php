@@ -30,6 +30,9 @@ class SaleController extends Controller
         return view('sale.page', compact('id'));
     }
 
+    /**
+     * @param  int|string|null  $id
+     */
     public function posPage($id = null)
     {
         $showColleague = Configuration::where('key', 'show_colleague')->value('value') ?? 'yes';
@@ -159,7 +162,7 @@ class SaleController extends Controller
                     'other_discount' => $sale->other_discount,
                     'freight' => $sale->freight,
                     'round_off' => $sale->round_off,
-                    'total' => $sale->net_amount,
+                    'total' => $sale->total,
                     'grand_total' => $sale->grand_total,
                     'status' => $sale->status,
                     'notes' => $sale->notes ?? '',

@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources\V1\SaleReturn;
 
+use App\Models\SaleReturn;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin SaleReturn
+ */
 class SaleReturnListResource extends JsonResource
 {
     /**
@@ -31,7 +35,7 @@ class SaleReturnListResource extends JsonResource
                 'name' => $this->account?->name,
                 'mobile' => $this->account?->mobile,
             ],
-            'items_count' => (int) ($this->items_count ?? $this->items?->count() ?? 0),
+            'items_count' => (int) ($this->items_count ?? $this->items->count()),
             'summary' => [
                 'gross_amount' => (float) $this->gross_amount,
                 'item_discount' => (float) $this->item_discount,

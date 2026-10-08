@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Actions\RentOut\Payment\StoreTransactionAction;
+use App\Enums\RentOut\AgreementType;
 use App\Models\Account;
 use App\Models\RentOut;
 use App\Models\RentOutCheque;
@@ -73,7 +74,7 @@ class RentOutTransactionHelper
             'account_id' => $paymentMethodId,
             'income_account_id' => $this->serviceCategoryId($rentOut, 'Management Fee')
                 ?? $accounts['service_charge'] ?? $accounts['sale'] ?? null,
-            'source' => $rentOut->agreement_type?->sourceSlug(),
+            'source' => $this->sourceSlugOf($rentOut),
             'group' => 'Management Fee',
             'remark' => $rentOut->management_fee_remarks ?: 'Management fee for RentOut:'.$rentOut->id,
             'created_by' => $userId,
@@ -86,6 +87,18 @@ class RentOutTransactionHelper
             : $this->charge($rentOut->id, $data);
     }
 
+    /**
+     * The journal source for the agreement; a RentOut created without an explicit
+     * agreement_type carries none in memory until it is reloaded.
+     */
+    private function sourceSlugOf(RentOut $rentOut): ?string
+    {
+        /** @var AgreementType|null $agreementType */
+        $agreementType = $rentOut->agreement_type;
+
+        return $agreementType?->sourceSlug();
+    }
+
     public function storeDownPayment(RentOut $rentOut, int $userId): array
     {
         return $this->execute([
@@ -94,7 +107,7 @@ class RentOutTransactionHelper
             'debit' => 0,
             'credit' => $rentOut->down_payment,
             'account_id' => $rentOut->down_payment_payment_method_id ?? 0,
-            'source' => $rentOut->agreement_type?->sourceSlug(),
+            'source' => $this->sourceSlugOf($rentOut),
             'group' => 'Down Payment',
             'remark' => $rentOut->down_payment_remarks ?: 'RentOut Down Payment: '.$rentOut->id,
             'created_by' => $userId,
@@ -190,7 +203,7 @@ class RentOutTransactionHelper
             'source_id' => $term->id,
             'model' => 'RentOutPaymentTerm',
             'model_id' => $term->id,
-            'due_date' => $term->due_date?->format('Y-m-d'),
+            'due_date' => $term->due_date->format('Y-m-d'),
             'paid_date' => $payDate,
             'reason' => $term->label ?? 'Rent Payment',
             'group' => $this->paymentGroupLabel($term->rentOut),
@@ -212,9 +225,9 @@ class RentOutTransactionHelper
             'source_id' => $term->id,
             'model' => 'RentOutUtilityTerm',
             'model_id' => $term->id,
-            'due_date' => $term->date?->format('Y-m-d'),
+            'due_date' => $term->date->format('Y-m-d'),
             'paid_date' => $payDate,
-            'reason' => $term->utility?->name ?? 'Utility Payment',
+            'reason' => $term->utility->name ?? 'Utility Payment',
             'group' => 'Utility Payment',
             'payment_type' => 'Utility',
             'remark' => $remark,
@@ -236,7 +249,7 @@ class RentOutTransactionHelper
             'source_id' => $term->id,
             'model' => 'RentOutCheque',
             'model_id' => $cheque->id,
-            'due_date' => $term->due_date?->format('Y-m-d'),
+            'due_date' => $term->due_date->format('Y-m-d'),
             'paid_date' => $date,
             'cheque_date' => $cheque->date->format('Y-m-d'),
             'cheque_no' => $cheque->cheque_no,

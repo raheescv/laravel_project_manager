@@ -51,7 +51,7 @@ final class EntryPipeline
         $broker = $this->brokers->broker();
         $heldSymbols = array_map(
             fn (PositionSnapshot $p) => strtoupper($p->symbol),
-            array_filter($broker->positions(), fn ($p) => $p instanceof PositionSnapshot),
+            $broker->positions(),
         );
 
         if (count($heldSymbols) >= $maxConcurrent) {

@@ -2,10 +2,15 @@
 
 namespace App\Http\Resources\V1\Parent;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** A row of a student's bills. @mixin \App\Models\Sale */
+/**
+ * A row of a student's bills.
+ *
+ * @mixin Sale
+ */
 class BillResource extends JsonResource
 {
     /**

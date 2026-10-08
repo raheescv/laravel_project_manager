@@ -152,6 +152,9 @@ class OrderManagement extends Component
         ]);
     }
 
+    /**
+     * @param  int|string  $orderId
+     */
     public function openItemsModal($orderId)
     {
         $order = TailoringOrder::with([
@@ -174,9 +177,9 @@ class OrderManagement extends Component
         $this->selectedOrderDetails = [
             'id' => $order->id,
             'order_no' => $order->order_no,
-            'order_date' => $order->order_date ? $order->order_date->format('Y-m-d') : null,
+            'order_date' => $order->order_date->format('Y-m-d'),
             'account_id' => $order->account_id,
-            'customer_name' => $order->account?->name ?? $order->customer_name,
+            'customer_name' => $order->account->name ?? $order->customer_name,
             'customer_mobile' => $order->customer_mobile,
         ];
 
@@ -186,7 +189,7 @@ class OrderManagement extends Component
                 $measurementData = [];
                 $activeMeasurementKeys = $item->category?->activeMeasurements?->pluck('field_key')->toArray() ?? [];
                 foreach ($activeMeasurementKeys as $fieldKey) {
-                    if (isset($item->{$fieldKey}) && $item->{$fieldKey} !== null && $item->{$fieldKey} !== '') {
+                    if (isset($item->{$fieldKey}) && $item->{$fieldKey} !== '') {
                         $measurementData[$fieldKey] = $item->{$fieldKey};
                     }
                 }

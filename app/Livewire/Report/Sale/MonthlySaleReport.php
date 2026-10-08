@@ -143,12 +143,12 @@ class MonthlySaleReport extends Component
             $payment = $payments[$monthKey] ?? null;
             $tailoringPayment = $tailoringPayments[$monthKey] ?? null;
 
-            $grossSales = ($sale ? (float) $sale->gross_sales : 0) + ($tailoringSale ? (float) $tailoringSale->gross_sales : 0);
-            $discount = ($sale ? (float) $sale->discount : 0) + ($tailoringSale ? (float) $tailoringSale->discount : 0);
-            $netSale = ($sale ? (float) $sale->net_sale : 0) + ($tailoringSale ? (float) $tailoringSale->net_sale : 0);
-            $paidTotal = ($payment ? (float) $payment->paid_total : 0) + ($tailoringPayment ? (float) $tailoringPayment->paid_total : 0);
-            $card = ($payment ? (float) $payment->card : 0) + ($tailoringPayment ? (float) $tailoringPayment->card : 0);
-            $cash = ($payment ? (float) $payment->cash : 0) + ($tailoringPayment ? (float) $tailoringPayment->cash : 0);
+            $grossSales = ($sale ? (float) $sale->getAttribute('gross_sales') : 0) + ($tailoringSale ? (float) $tailoringSale->getAttribute('gross_sales') : 0);
+            $discount = ($sale ? (float) $sale->getAttribute('discount') : 0) + ($tailoringSale ? (float) $tailoringSale->getAttribute('discount') : 0);
+            $netSale = ($sale ? (float) $sale->getAttribute('net_sale') : 0) + ($tailoringSale ? (float) $tailoringSale->getAttribute('net_sale') : 0);
+            $paidTotal = ($payment ? (float) $payment->getAttribute('paid_total') : 0) + ($tailoringPayment ? (float) $tailoringPayment->getAttribute('paid_total') : 0);
+            $card = ($payment ? (float) $payment->getAttribute('card') : 0) + ($tailoringPayment ? (float) $tailoringPayment->getAttribute('card') : 0);
+            $cash = ($payment ? (float) $payment->getAttribute('cash') : 0) + ($tailoringPayment ? (float) $tailoringPayment->getAttribute('cash') : 0);
             $credit = $netSale - $paidTotal;
 
             $allMonths[$monthKey] = [

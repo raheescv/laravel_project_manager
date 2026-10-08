@@ -72,27 +72,32 @@ class Inventory extends Model implements AuditableContracts
         return self::withoutGlobalScopes()->find($id);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function employee()
+    /** @return BelongsTo<User, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function updatedUser()
+    /** @return BelongsTo<User, $this> */
+    public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

@@ -14,6 +14,7 @@ use Livewire\Component;
 
 class View extends Component
 {
+    /** @var int|string|null */
     public $table_id;
 
     public $items = [];
@@ -28,6 +29,9 @@ class View extends Component
 
     public $inventory_logs = [];
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;
@@ -79,8 +83,8 @@ class View extends Component
     public function save($type = 'completed')
     {
         abort_unless(auth()->user()?->can('sale.edit'), 403);
+        $oldStatus = $this->sales['status'];
         try {
-            $oldStatus = $this->sales['status'];
             DB::beginTransaction();
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);

@@ -3,9 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin User
+ */
 class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -13,7 +17,6 @@ class UserResource extends JsonResource
         return [
             'token' => $this->createToken('astra-auth-token')->plainTextToken,
             'id' => (string) $this->id,
-            'type' => $this->type,
             'type' => 'admin',
             'user_type' => $this->type,
             'name' => $this->name,

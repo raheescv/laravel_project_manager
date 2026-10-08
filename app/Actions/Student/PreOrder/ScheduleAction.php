@@ -77,8 +77,8 @@ class ScheduleAction
             return [
                 'product_id' => $item->product_id,
                 'quantity' => $item->quantity,
-                'name' => $product?->name ?? 'Item no longer sold',
-                'price' => round((float) ($product?->mrp ?? 0), 2),
+                'name' => $product->name ?? 'Item no longer sold',
+                'price' => round((float) ($product->mrp ?? 0), 2),
                 'thumbnail' => $product ? MenuAction::product($product)['thumbnail'] : null,
                 'available' => (bool) $product,
             ];

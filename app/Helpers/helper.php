@@ -1055,7 +1055,7 @@ if (! function_exists('TableView')) {
         foreach ($data as $single) {
             echo '<tr>';
             foreach ((array) $single as $key => $value) {
-                echo "<td align='right'>".$single[$key] ?? $single->key.'</td>';
+                echo "<td align='right'>".$value.'</td>';
             }
             echo '</tr>';
         }

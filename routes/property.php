@@ -136,7 +136,6 @@ Route::middleware('auth')->group(function (): void {
         // Tenant Details
         Route::name('tenant::')->prefix('tenant')->controller(TenantDetailController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('tenant detail.view');
-            Route::get('list', 'get')->name('list');
         });
 
         // Maintenance

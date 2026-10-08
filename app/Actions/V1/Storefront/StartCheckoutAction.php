@@ -220,7 +220,7 @@ class StartCheckoutAction
 
             $label = $product->name.($product->size ? " (size {$product->size})" : '');
             $inventory = $inventories->get($productId);
-            $available = max(0, (int) floor((float) ($inventory?->quantity ?? 0)));
+            $available = max(0, (int) floor((float) ($inventory->quantity ?? 0)));
 
             if (! $inventory || $available < $quantity) {
                 throw new StorefrontCheckoutException($available > 0

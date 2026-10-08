@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckoutAction
 {
-    public function execute($id, $userId)
+    public function execute(int|string|null $id, $userId)
     {
         try {
             if (Auth::user()->cannot('appointment.checkout')) {

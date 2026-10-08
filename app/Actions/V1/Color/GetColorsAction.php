@@ -28,7 +28,7 @@ class GetColorsAction
         return $colors->map(function ($color) {
             return [
                 'color' => $color->color,
-                'product_count' => $color->product_count,
+                'product_count' => $color->getAttribute('product_count'),
             ];
         })->toArray();
     }

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\SaleItem;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -18,7 +19,7 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $query = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {

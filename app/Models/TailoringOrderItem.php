@@ -119,61 +119,73 @@ class TailoringOrderItem extends Model implements AuditableContracts
     }
 
     // Relationships
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<TailoringOrder, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(TailoringOrder::class, 'tailoring_order_id');
     }
 
+    /** @return BelongsTo<TailoringCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TailoringCategory::class, 'tailoring_category_id');
     }
 
+    /** @return BelongsTo<TailoringCategoryModel, $this> */
     public function categoryModel(): BelongsTo
     {
         return $this->belongsTo(TailoringCategoryModel::class, 'tailoring_category_model_id');
     }
 
+    /** @return BelongsTo<TailoringCategoryModelType, $this> */
     public function categoryModelType(): BelongsTo
     {
         return $this->belongsTo(TailoringCategoryModelType::class, 'tailoring_category_model_type_id');
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    /** @return BelongsTo<Inventory, $this> */
     public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class, 'inventory_id');
     }
 
+    /** @return BelongsTo<Unit, $this> */
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
+    /** @return HasMany<TailoringOrderItemTailor, $this> */
     public function tailorAssignments(): HasMany
     {
         return $this->hasMany(TailoringOrderItemTailor::class, 'tailoring_order_item_id');
     }
 
+    /** @return HasOne<TailoringOrderItemTailor, $this> */
     public function latestTailorAssignment(): HasOne
     {
         return $this->hasOne(TailoringOrderItemTailor::class, 'tailoring_order_item_id')->latestOfMany('id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

@@ -64,11 +64,11 @@ class GetSizesAction
             // never backfilled (defensive; the migration backfills existing data).
             $category = $row->size_category ?: Product::classifySizeCategory($size);
 
-            $inStockCount = (int) $row->in_stock_product_count;
+            $inStockCount = (int) $row->getAttribute('in_stock_product_count');
 
             $entry = [
                 'size' => $size,
-                'stock_total' => (int) $row->stock_total,
+                'stock_total' => (int) $row->getAttribute('stock_total'),
                 'sold_qty' => (int) ($soldBySize[$size] ?? 0),
                 // Availability follows the product count, not the unit total: a
                 // live catalogue accumulates negative quantities, and a size

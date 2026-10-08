@@ -25,6 +25,7 @@ class UpcomingAppointments extends Component
                 'employee:id,name',
             ])
             ->whereHas('appointment', function ($query): void {
+                // @phpstan-ignore method.notFound (Larastan types whereHas closures as Builder<Model>; this is Builder<Appointment>::scopePending)
                 $query->pending()
                     ->where('start_time', '>=', Carbon::now())
                     ->where('start_time', '<=', Carbon::now()->addDays(7));

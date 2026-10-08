@@ -2,20 +2,15 @@
 
 namespace App\Livewire\Report\Sale;
 
-use App\Exports\DayBookReportExport;
-use App\Jobs\Export\ExportSaleItemReportJob;
 use App\Models\Account;
-use App\Models\Models\Views\Ledger;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\TailoringOrder;
 use App\Models\TailoringPayment;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Maatwebsite\Excel\Facades\Excel;
 
 class DailySalesInsightsReport extends Component
 {
@@ -48,41 +43,6 @@ class DailySalesInsightsReport extends Component
     {
         if (in_array($period, ['daily', 'weekly', 'monthly'], true)) {
             $this->chart_period = $period;
-        }
-    }
-
-    public function export()
-    {
-        $count = Ledger::when($this->search, function ($query, $value) {
-            return $query->where(function ($q) use ($value): void {
-                $value = trim($value);
-                $q->where('description', 'like', "%{$value}%")
-                    ->orWhere('reference_number', 'like', "%{$value}%")
-                    ->orWhere('remarks', 'like', "%{$value}%");
-            });
-        })->when($this->from_date ?? '', function ($query, $value) {
-            return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
-        })->when($this->to_date ?? '', function ($query, $value) {
-            return $query->where('date', '<=', date('Y-m-d', strtotime($value)));
-        })->when($this->branch_id ?? '', function ($query, $value) {
-            return $query->where('branch_id', $value);
-        })->when($this->account_id ?? '', function ($query, $value) {
-            return $query->where('account_id', $value);
-        })->count();
-
-        $filter = [
-            'from_date' => $this->from_date,
-            'to_date' => $this->to_date,
-            'account_id' => $this->account_id,
-        ];
-
-        if ($count > 2000) {
-            ExportSaleItemReportJob::dispatch(Auth::user(), $filter);
-            $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
-        } else {
-            $exportFileName = 'DayBookReport-'.now()->timestamp.'.xlsx';
-
-            return Excel::download(new DayBookReportExport($filter), $exportFileName);
         }
     }
 

@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
+/**
+ * @property string $status awaiting|scheduled|completed|cancelled|no_show (kept wide so labels tolerate unexpected values)
+ */
 class PropertyAppointment extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
@@ -92,26 +95,31 @@ class PropertyAppointment extends Model implements AuditableContracts
         ], $merge);
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return MorphMany<EmailLog, $this> */
     public function emailLogs(): MorphMany
     {
         return $this->morphMany(EmailLog::class, 'related');

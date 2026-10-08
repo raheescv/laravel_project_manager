@@ -57,6 +57,7 @@ class Complaint extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return BelongsTo<ComplaintCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(ComplaintCategory::class, 'complaint_category_id');

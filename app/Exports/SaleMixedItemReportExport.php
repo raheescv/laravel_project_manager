@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\SaleItem;
 use App\Models\SaleReturnItem;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -21,7 +22,7 @@ class SaleMixedItemReportExport implements FromQuery, WithColumnFormatting, With
 
     public function __construct(public array $filters = [], public array $visibleColumns = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $accessibleBranchIds = Auth::user()->branches->pluck('branch_id')->toArray();
 

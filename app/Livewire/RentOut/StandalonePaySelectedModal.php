@@ -38,9 +38,9 @@ class StandalonePaySelectedModal extends Component
             return [
                 'id' => $term->id,
                 'rent_out_id' => $term->rent_out_id,
-                'date' => $term->due_date?->format('d-m-Y'),
-                'customer' => $term->rentOut?->customer?->name ?? '',
-                'property' => $term->rentOut?->property?->number ?? '',
+                'date' => $term->due_date->format('d-m-Y'),
+                'customer' => $term->rentOut?->customer->name ?? '',
+                'property' => $term->rentOut?->property->number ?? '',
                 'balance' => (float) $term->balance,
                 'amount' => (float) $term->balance,
                 'payment_mode' => $this->payPaymentMode,

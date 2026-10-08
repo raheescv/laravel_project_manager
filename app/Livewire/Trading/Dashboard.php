@@ -66,9 +66,9 @@ class Dashboard extends Component
             'tripped' => (bool) ($state?->breaker_tripped),
             'reason' => $state?->trip_reason,
             'tripped_at' => $state?->tripped_at?->format('H:i:s'),
-            'realized_pnl' => (float) ($state?->realized_pnl ?? 0),
-            'unrealized_pnl' => (float) ($state?->unrealized_pnl ?? 0),
-            'trades_count' => (int) ($state?->trades_count ?? 0),
+            'realized_pnl' => (float) ($state->realized_pnl ?? 0),
+            'unrealized_pnl' => (float) ($state->unrealized_pnl ?? 0),
+            'trades_count' => (int) ($state->trades_count ?? 0),
         ];
 
         $this->exposure = $this->computeExposure();

@@ -91,8 +91,8 @@ class BoardPeek extends Component
             'label' => $label,
             'from' => $from,
             'to' => $to,
-            'user' => $audit->user?->name ?? 'System',
-            'at' => $audit->created_at?->diffForHumans(),
+            'user' => $audit->user->name ?? 'System',
+            'at' => $audit->getAttribute('created_at')?->diffForHumans(),
         ];
     }
 
@@ -105,7 +105,10 @@ class BoardPeek extends Component
         $notes = [];
         $activity = [];
         if ($lead) {
-            $notes = is_array($lead->remarks) ? $lead->remarks : (json_decode((string) $lead->remarks, true) ?: []);
+            /** @var array<int, mixed>|string|null $remarks Legacy rows can hold a double-encoded JSON string under the array cast. */
+            $remarks = $lead->remarks;
+            $notes = is_array($remarks) ? $remarks : (json_decode((string) $remarks, true) ?: []);
+            // @phpstan-ignore larastan.relationExistence (OwenIt Audit::user() is an untyped morphTo Larastan cannot see)
             $activity = Audit::where('auditable_type', PropertyLead::class)
                 ->where('auditable_id', $lead->id)
                 ->with('user')

@@ -74,7 +74,11 @@ class Guardian extends Authenticatable implements AuditableContracts
         ], $merge);
     }
 
-    /** The student accounts this parent may see. */
+    /**
+     * The student accounts this parent may see.
+     *
+     * @return BelongsToMany<Account, $this>
+     */
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(Account::class, 'guardian_student', 'guardian_id', 'account_id')

@@ -34,11 +34,13 @@ class Rack extends Model
         ], $merge);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return HasMany<TailoringOrder, $this> */
     public function orders(): HasMany
     {
         return $this->hasMany(TailoringOrder::class, 'rack_id');

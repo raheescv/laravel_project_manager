@@ -27,6 +27,7 @@ class AuthenticateParent
     {
         $guardian = Auth::guard('parent')->user();
 
+        // @phpstan-ignore instanceof.alwaysTrue (a web-session login arrives holding a Sanctum TransientToken; HasApiTokens' default TToken claims PersonalAccessToken)
         if (! $guardian instanceof Guardian || ! $guardian->currentAccessToken() instanceof PersonalAccessToken || ! $guardian->isActive()) {
             return response()->json(['success' => false, 'message' => 'Please sign in again.'], 401);
         }

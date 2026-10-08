@@ -4,6 +4,7 @@ namespace App\Actions\RentOut\Payment\Concerns;
 
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
+use Carbon\Carbon;
 
 /**
  * The payment-term side of a receipt.
@@ -73,7 +74,7 @@ trait AppliesPaymentTerms
 
         $term->paid = (float) $term->paid + $amount;
         if ($stampPaidDate || ! $term->paid_date) {
-            $term->paid_date = $date;
+            $term->paid_date = Carbon::parse($date);
         }
         $term->save();
     }

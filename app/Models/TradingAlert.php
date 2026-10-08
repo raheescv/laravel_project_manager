@@ -16,6 +16,7 @@ class TradingAlert extends Model
         'acknowledged_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<TradingAlertRule, $this> */
     public function rule(): BelongsTo
     {
         return $this->belongsTo(TradingAlertRule::class, 'alert_rule_id');

@@ -45,6 +45,7 @@ class DocumentType extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<RentOutDocument, $this> */
     public function documents(): HasMany
     {
         return $this->hasMany(RentOutDocument::class);

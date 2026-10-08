@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -47,7 +48,8 @@ class PurchasePayment extends Model implements AuditableContracts
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
     }
 
-    public function paymentMethod()
+    /** @return BelongsTo<Account, $this> */
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_method_id');
     }
@@ -57,7 +59,8 @@ class PurchasePayment extends Model implements AuditableContracts
         return $this->paymentMethod?->name;
     }
 
-    public function purchase()
+    /** @return BelongsTo<Purchase, $this> */
+    public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class);
     }

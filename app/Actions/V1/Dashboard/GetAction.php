@@ -6,7 +6,7 @@ use App\Http\Requests\V1\Dashboard\IndexRequest;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\SalePayment;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class GetAction
@@ -117,8 +117,8 @@ class GetAction
             ->orderByDesc('total')
             ->get()
             ->map(fn ($row) => [
-                'title' => $row->paymentMethod?->name ?? 'Unknown',
-                'value' => round((float) $row->total, 2),
+                'title' => $row->paymentMethod->name ?? 'Unknown',
+                'value' => round((float) $row->getAttribute('total'), 2),
                 'type' => 'currency',
             ])
             ->all();

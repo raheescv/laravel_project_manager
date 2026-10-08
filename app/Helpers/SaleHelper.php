@@ -89,7 +89,7 @@ class SaleHelper
         // multiply every other value by 3
         $multiply = false;
         foreach ($vals as $k => $v) {
-            $vals[$k] = $multiply ? $v * 3 : $v;
+            $vals[$k] = $multiply ? (int) $v * 3 : $v;
             $vals[$k] = (string) ($vals[$k]);
             $multiply = ! $multiply;
         }

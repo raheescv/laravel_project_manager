@@ -39,6 +39,7 @@ class BasicDetails extends Component
 
     public function render()
     {
+        /** @var Account|null $account */
         $account = $this->account_id
             ? Account::with(['customerType', 'kycConfirmer:id,name'])->find($this->account_id)
             : null;

@@ -92,6 +92,7 @@ class StudentDetail extends Model implements AuditableContracts
         $this->attributes['card_uid'] = self::normalizeCardUid($value);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);

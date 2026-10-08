@@ -37,7 +37,7 @@ class MigrateInvoiceToCustomNumber extends Command
             foreach ($list as $sale) {
                 $oldInvoice = $sale->invoice_no;
                 $invoiceNo = explode('-', $sale->invoice_no);
-                $invoiceNo[3] += $startingNo;
+                $invoiceNo[3] = (int) $invoiceNo[3] + $startingNo;
                 $newInvoiceNo = implode('-', $invoiceNo);
 
                 $sale->update(['invoice_no' => $newInvoiceNo]);

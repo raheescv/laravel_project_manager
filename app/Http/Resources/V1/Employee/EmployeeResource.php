@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources\V1\Employee;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin User
+ */
 class EmployeeResource extends JsonResource
 {
     /**

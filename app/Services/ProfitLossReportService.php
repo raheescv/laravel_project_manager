@@ -337,7 +337,7 @@ class ProfitLossReportService
             ->first();
 
         $structure[] = [
-            'id' => $indirectCategory?->id ?? 0,
+            'id' => $indirectCategory->id ?? 0,
             'name' => $targetName,
             'total' => $rowsTotal,
             'groups' => [],

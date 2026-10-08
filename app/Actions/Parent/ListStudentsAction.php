@@ -36,7 +36,7 @@ class ListStudentsAction
             'card_blocked' => (bool) $detail?->isCardBlocked(),
             'balance' => $balance,
             'available' => max(0, round($balance + $overdraftLimit, 2)),
-            'relation' => $account->pivot?->relation,
+            'relation' => $account->getAttribute('pivot')?->relation,
         ];
     }
 }

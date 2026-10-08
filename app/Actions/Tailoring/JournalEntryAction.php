@@ -38,7 +38,7 @@ class JournalEntryAction
                 return ['success' => true, 'message' => 'Journal skipped (missing sale or customer account).'];
             }
 
-            $customerName = $order->customer_name ?: $order->account?->name ?? '';
+            $customerName = $order->customer_name ?: $order->account->name ?? '';
             $grandTotal = (float) ($order->grand_total ?? ($order->total ?? 0));
             $taxAmount = (float) ($order->tax_amount ?? 0);
             $itemDiscount = (float) ($order->item_discount ?? 0);
@@ -50,7 +50,7 @@ class JournalEntryAction
 
             $data = [
                 'tenant_id' => $order->tenant_id,
-                'date' => $order->order_date?->format('Y-m-d') ?? date('Y-m-d'),
+                'date' => $order->order_date->format('Y-m-d'),
                 'branch_id' => $order->branch_id,
                 'description' => 'Tailoring Order: '.$order->order_no,
                 'remarks' => 'Tailoring order '.$order->order_no,
@@ -104,7 +104,7 @@ class JournalEntryAction
 
             // Payments: Dr Payment method, Cr Customer
             foreach ($order->payments as $payment) {
-                $remarks = ($payment->paymentMethod?->name ?? 'Payment').' payment by '.$customerName;
+                $remarks = ($payment->paymentMethod->name ?? 'Payment').' payment by '.$customerName;
                 $entries = array_merge($entries, $this->makeEntryPair($payment->payment_method_id, $order->account_id, (float) $payment->amount, 0, $remarks, 'TailoringPayment', $payment->id, $userId));
             }
 

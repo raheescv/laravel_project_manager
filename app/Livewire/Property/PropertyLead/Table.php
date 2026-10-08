@@ -335,7 +335,7 @@ class Table extends Component
             ->get()
             ->each(function ($row) use (&$statusSummary): void {
                 $status = LeadPipeline::canonical($row->status);
-                $statusSummary[$row->property_group_id][$status] = ($statusSummary[$row->property_group_id][$status] ?? 0) + (int) $row->total;
+                $statusSummary[$row->property_group_id][$status] = ($statusSummary[$row->property_group_id][$status] ?? 0) + (int) $row->getAttribute('total');
             });
 
         $groups = PropertyGroup::orderBy('name')->pluck('name', 'id')->toArray();

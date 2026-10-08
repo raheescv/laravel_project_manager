@@ -59,21 +59,25 @@ class AppointmentItem extends Model implements AuditableContracts
         );
     }
 
-    public function appointment()
+    /** @return BelongsTo<Appointment, $this> */
+    public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
     }
 
-    public function service()
+    /** @return BelongsTo<Product, $this> */
+    public function service(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'service_id');
     }
 
-    public function employee()
+    /** @return BelongsTo<User, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

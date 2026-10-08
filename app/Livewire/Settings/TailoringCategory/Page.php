@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\TailoringCategory;
 use App\Actions\Settings\TailoringCategory\CreateAction;
 use App\Actions\Settings\TailoringCategory\UpdateAction;
 use App\Models\TailoringCategory;
+use App\Services\TenantService;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -57,7 +58,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'categories.name' => ['required', 'max:255', Rule::unique('tailoring_categories', 'name')->where('tenant_id', TailoringCategory::getCurrentTenantId())->ignore($this->table_id)],
+            'categories.name' => ['required', 'max:255', Rule::unique('tailoring_categories', 'name')->where('tenant_id', app(TenantService::class)->getCurrentTenantId())->ignore($this->table_id)],
             'categories.description' => ['nullable', 'string', 'max:500'],
             'categories.is_active' => ['nullable', 'boolean'],
             'categories.order' => ['nullable', 'integer'],

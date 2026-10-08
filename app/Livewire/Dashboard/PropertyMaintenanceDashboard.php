@@ -105,8 +105,8 @@ class PropertyMaintenanceDashboard extends Component
             ->with('technician:id,name')
             ->get()
             ->map(fn ($item) => [
-                'name' => $item->technician?->name ?? 'Unassigned',
-                'total' => $item->total_jobs,
+                'name' => $item->technician->name ?? 'Unassigned',
+                'total' => $item->getAttribute('total_jobs'),
                 'completed' => MaintenanceComplaint::where('technician_id', $item->technician_id)
                     ->where('status', MaintenanceComplaintStatus::Completed)
                     ->when($dateRange, fn ($q) => $q->whereHas('maintenance', fn ($mq) => $mq->whereBetween('date', $dateRange)))
@@ -120,14 +120,14 @@ class PropertyMaintenanceDashboard extends Component
             ->get()
             ->map(fn ($m) => [
                 'id' => $m->id,
-                'date' => $m->date?->format('d M Y'),
-                'property' => $m->property?->number ?? '-',
-                'building' => $m->building?->name ?? '-',
-                'customer' => $m->customer?->name ?? '-',
-                'priority' => $m->priority?->label() ?? '-',
-                'priority_color' => $m->priority?->color() ?? 'secondary',
-                'status' => $m->status?->label() ?? '-',
-                'status_color' => $m->status?->color() ?? 'secondary',
+                'date' => $m->date->format('d M Y'),
+                'property' => $m->property->number ?? '-',
+                'building' => $m->building->name ?? '-',
+                'customer' => $m->customer->name ?? '-',
+                'priority' => $m->priority->label(),
+                'priority_color' => $m->priority->color(),
+                'status' => $m->status->label(),
+                'status_color' => $m->status->color(),
             ])->toArray();
 
         // Maintenance by group (top 6)

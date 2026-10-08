@@ -18,6 +18,7 @@ class Page extends Component
 {
     public $product_id;
 
+    /** @var int|string|null */
     public $table_id;
 
     public $account_balance;
@@ -56,6 +57,9 @@ class Page extends Component
         'purchase_returns.invoice_no' => 'The invoice no field is required',
     ];
 
+    /**
+     * @param  int|string|null  $id
+     */
     public function mount($id = null)
     {
         $this->table_id = $id;
@@ -165,6 +169,7 @@ class Page extends Component
         }
         if (in_array($key, ['purchase_returns.other_discount'])) {
             if (str_ends_with($value, '%')) {
+                /** @var numeric-string $percentage */
                 $percentage = rtrim($value, '%');
                 $value = round($this->purchase_returns['total'] / 100 * $percentage, 2);
                 if ($value > $this->purchase_returns['total']) {
@@ -428,9 +433,9 @@ class Page extends Component
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'purchase return.edit' : 'purchase return.create'), 403);
         $this->validate();
+        $oldStatus = $this->purchase_returns['status'];
         try {
             $account_id = $this->purchase_returns['account_id'];
-            $oldStatus = $this->purchase_returns['status'];
             DB::beginTransaction();
             if (! count($this->items)) {
                 throw new \Exception('Please add any item', 1);

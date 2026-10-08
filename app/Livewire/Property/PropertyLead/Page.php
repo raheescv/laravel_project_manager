@@ -67,10 +67,12 @@ class Page extends Component
                 ? \Carbon\Carbon::parse($lead->meeting_time)->format('H:i')
                 : null;
 
-            $this->notes = is_array($lead->remarks) ? $lead->remarks : (json_decode($lead->remarks ?? '[]', true) ?: []);
+            /** @var array<int, mixed>|string|null $remarks Legacy rows can hold a double-encoded JSON string under the array cast. */
+            $remarks = $lead->remarks;
+            $this->notes = is_array($remarks) ? $remarks : (json_decode($remarks ?? '[]', true) ?: []);
         } else {
             $this->formData = [
-                'name' => 'New Lead - '.((PropertyLead::withTrashed()->count() ?? 0) + 1),
+                'name' => 'New Lead - '.(PropertyLead::withTrashed()->count() + 1),
                 'mobile' => '',
                 'branch_id' => session('branch_id'),
                 'email' => '',

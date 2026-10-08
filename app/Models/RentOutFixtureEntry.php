@@ -12,6 +12,8 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 /**
  * One rectification record inside an area's Fixture Comments block: what was wrong,
  * a photo before the work and one after it, and how far along the work is.
+ *
+ * @property FixtureStatus|null $status Null on a freshly created instance until the DB default ('pending') is re-read.
  */
 class RentOutFixtureEntry extends Model implements AuditableContracts
 {
@@ -33,6 +35,7 @@ class RentOutFixtureEntry extends Model implements AuditableContracts
         'completed_date' => 'date',
     ];
 
+    /** @return BelongsTo<RentOutFixtureArea, $this> */
     public function area(): BelongsTo
     {
         return $this->belongsTo(RentOutFixtureArea::class, 'rent_out_fixture_area_id');

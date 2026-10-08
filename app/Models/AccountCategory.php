@@ -7,6 +7,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 
 class AccountCategory extends Model
@@ -29,22 +30,26 @@ class AccountCategory extends Model
         ], $merge);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function parent()
+    /** @return BelongsTo<AccountCategory, $this> */
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(AccountCategory::class, 'parent_id');
     }
 
-    public function children()
+    /** @return HasMany<AccountCategory, $this> */
+    public function children(): HasMany
     {
         return $this->hasMany(AccountCategory::class, 'parent_id');
     }
 
-    public function accounts()
+    /** @return HasMany<Account, $this> */
+    public function accounts(): HasMany
     {
         return $this->hasMany(Account::class, 'account_category_id');
     }

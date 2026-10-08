@@ -18,7 +18,7 @@ class StockUpdateAction
      * Update inventory for items whose used_quantity or wastage changed.
      * Total consumption = used_quantity + wastage; inventory is reduced by the delta of that total.
      *
-     * @param  array<int, array{item: TailoringOrderItem, old_quantity: float, new_quantity: float}>  $itemsWithQuantity
+     * @param  array<int, array{item: TailoringOrderItem, old_quantity: float|string|null, new_quantity: float|string|null}>  $itemsWithQuantity
      */
     public function execute(TailoringOrder $order, array $itemsWithQuantity, int $userId, string $remarksPrefix = self::REMARKS_COMPLETION): array
     {
@@ -53,7 +53,7 @@ class StockUpdateAction
         $order->loadMissing('items');
 
         $itemsWithQuantity = $order->items
-            ->filter(fn (TailoringOrderItem $item) => $item->product_id)
+            ->filter(fn (TailoringOrderItem $item) => (bool) $item->product_id)
             ->map(fn (TailoringOrderItem $item) => [
                 'item' => $item,
                 'old_quantity' => $item->total_quantity_used,

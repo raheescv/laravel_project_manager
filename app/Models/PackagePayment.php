@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PackagePayment extends Model
 {
@@ -25,22 +26,26 @@ class PackagePayment extends Model
         );
     }
 
-    public function package()
+    /** @return BelongsTo<Package, $this> */
+    public function package(): BelongsTo
     {
         return $this->belongsTo(Package::class);
     }
 
-    public function paymentMethod()
+    /** @return BelongsTo<Account, $this> */
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_method_id');
     }
 
-    public function createdBy()
+    /** @return BelongsTo<User, $this> */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    /** @return BelongsTo<User, $this> */
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

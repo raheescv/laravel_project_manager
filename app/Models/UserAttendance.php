@@ -19,12 +19,14 @@ class UserAttendance extends Model implements AuditableContracts
         'employee_id',
     ];
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function employee()
+    /** @return BelongsTo<User, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }

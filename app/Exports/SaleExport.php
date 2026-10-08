@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Sale;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -18,7 +19,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         // Matches the list's "Based On" selector: the invoice date or the row's
         // creation timestamp.
@@ -97,8 +98,8 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             systemDate($row->date),
             $row->invoice_no,
             $row->reference_no,
-            $row->branch?->name ?? 'N/A',
-            $row->account?->name ?? 'N/A',
+            $row->branch->name ?? 'N/A',
+            $row->account->name ?? 'N/A',
             $row->gross_amount ?? 0,
             $row->item_discount ?? 0,
             $row->tax_amount ?? 0,
@@ -109,11 +110,11 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             $row->paid ?? 0,
             $row->balance ?? 0,
             ucfirst($row->status ?? ''),
-            $row->createdUser?->name ?? 'N/A',
+            $row->createdUser->name ?? 'N/A',
             systemDateTime($row->created_at),
-            $row->updatedUser?->name ?? 'N/A',
+            $row->updatedUser->name ?? 'N/A',
             systemDateTime($row->updated_at),
-            $row->cancelledUser?->name ?? 'N/A',
+            $row->cancelledUser->name ?? 'N/A',
             $row->cancelled_at ? systemDateTime($row->cancelled_at) : 'N/A',
             $row->source_label,
         ];

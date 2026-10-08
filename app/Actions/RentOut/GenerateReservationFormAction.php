@@ -34,7 +34,6 @@ class GenerateReservationFormAction
             ->format('A4')
             ->margins(15, 15, 15, 15)
             ->showBackground()
-            ->preferCssPageSize()
             ->pdf();
 
         return response($pdf)
@@ -100,7 +99,7 @@ class GenerateReservationFormAction
         }
 
         $details[] = [
-            'english' => ['title' => 'Parking Slot', 'value' => $rentOut->property?->parking ?? '1 Parking Slot'],
+            'english' => ['title' => 'Parking Slot', 'value' => $rentOut->property->parking ?? '1 Parking Slot'],
             'arabic' => ['title' => 'موقف السيار ة'],
         ];
 

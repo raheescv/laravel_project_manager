@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources\V1\DaySession;
 
+use App\Models\SaleDaySession;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin SaleDaySession
+ */
 class DaySessionResource extends JsonResource
 {
     /**

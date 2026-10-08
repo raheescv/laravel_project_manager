@@ -15,6 +15,7 @@ class TradingAlertRule extends Model
         'channels' => 'array',
     ];
 
+    /** @return HasMany<TradingAlert, $this> */
     public function alerts(): HasMany
     {
         return $this->hasMany(TradingAlert::class, 'alert_rule_id');

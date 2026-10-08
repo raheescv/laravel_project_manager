@@ -12,6 +12,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read array $summaryCards
+ */
 class SecurityTable extends Component
 {
     use HasRentOutReportFilters, WithPagination {

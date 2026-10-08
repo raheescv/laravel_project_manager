@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Maintenance;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,7 +15,7 @@ class MaintenanceExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return Maintenance::with(['property', 'building.group', 'customer', 'creator'])
             ->withCount('maintenanceComplaints')
@@ -74,16 +75,16 @@ class MaintenanceExport implements FromQuery, WithHeadings, WithMapping
         return [
             $row->id,
             $row->date?->format('Y-m-d'),
-            $row->property?->name ?? '',
-            $row->building?->name ?? '',
-            $row->building?->group?->name ?? '',
-            $row->customer?->name ?? '',
+            $row->property->name ?? '',
+            $row->building->name ?? '',
+            $row->building?->group->name ?? '',
+            $row->customer->name ?? '',
             $row->priority?->label() ?? '',
             $row->segment?->label() ?? '',
             $row->maintenance_complaints_count,
             $row->status?->label() ?? '',
             $row->contact_no ?? '',
-            $row->creator?->name ?? '',
+            $row->creator->name ?? '',
         ];
     }
 }

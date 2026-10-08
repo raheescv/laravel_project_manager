@@ -2,10 +2,15 @@
 
 namespace App\Http\Resources\V1\Parent;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** One bill with its lines and how it was paid. @mixin \App\Models\Sale */
+/**
+ * One bill with its lines and how it was paid.
+ *
+ * @mixin Sale
+ */
 class BillDetailResource extends JsonResource
 {
     /**

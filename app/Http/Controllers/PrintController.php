@@ -174,7 +174,7 @@ class PrintController extends Controller
         foreach ($utilityTerms as $uTerm) {
             $payments->push([
                 'date' => $uTerm->date,
-                'utility' => $uTerm->utility?->name ?? '',
+                'utility' => $uTerm->utility->name ?? '',
                 'payment_mode' => 'Utility Due',
                 'debit' => $uTerm->amount ?? 0,
                 'credit' => 0,

@@ -3,6 +3,7 @@
 namespace App\Exports\RentOut;
 
 use App\Models\RentOutUtilityTerm;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,7 +15,7 @@ class UtilityExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return RentOutUtilityTerm::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'utility'])

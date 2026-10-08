@@ -95,8 +95,8 @@ class LeadAuditTrail
 
             $rows[] = [
                 'event' => $audit->event,
-                'at' => $audit->created_at,
-                'user' => $names['users'][$audit->user_id] ?? null,
+                'at' => $audit->getAttribute('created_at'),
+                'user' => $names['users'][$audit->getAttribute('user_id')] ?? null,
                 'cells' => $cells,
             ];
         }

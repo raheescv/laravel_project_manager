@@ -47,21 +47,25 @@ class PropertyGroup extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<PropertyBuilding, $this> */
     public function buildings(): HasMany
     {
         return $this->hasMany(PropertyBuilding::class);
     }
 
+    /** @return HasMany<Property, $this> */
     public function properties(): HasMany
     {
         return $this->hasMany(Property::class, 'property_group_id');
     }
 
+    /** @return HasMany<RentOut, $this> */
     public function rentOuts(): HasMany
     {
         return $this->hasMany(RentOut::class, 'property_group_id');
     }
 
+    /** @return HasMany<Maintenance, $this> */
     public function maintenances(): HasMany
     {
         return $this->hasMany(Maintenance::class, 'property_group_id');

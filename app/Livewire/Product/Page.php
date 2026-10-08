@@ -82,7 +82,7 @@ class Page extends Component
             $cost = 0;
             if (! app()->isProduction()) {
                 $name = $faker->name;
-                $code = $faker->hexcolor;
+                $code = $faker->hexColor;
                 $barcode = $faker->ean13();
                 $code = '';
                 $cost = rand(100, 900);

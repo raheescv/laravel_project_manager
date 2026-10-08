@@ -146,23 +146,15 @@ class Nifty50TradingController extends Controller
 
     /**
      * Get market status and trading hours
+     *
+     * FlatTradeService has no market-status endpoint yet.
      */
     public function getMarketStatus(): JsonResponse
     {
-        try {
-            $marketStatus = $this->flatTradeService->getMarketStatus();
-
-            return response()->json([
-                'success' => true,
-                'data' => $marketStatus,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to get market status: '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Market status is not supported by the FlatTrade integration yet.',
+        ], 501);
     }
 
     /**

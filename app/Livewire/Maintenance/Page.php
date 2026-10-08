@@ -94,14 +94,14 @@ class Page extends Component
             'property_type_id' => $maintenance->property_type_id,
             'rent_out_id' => $maintenance->rent_out_id,
             'account_id' => $maintenance->account_id,
-            'date' => $maintenance->date?->format('Y-m-d'),
+            'date' => $maintenance->date->format('Y-m-d'),
             'time' => $maintenance->time,
-            'priority' => $maintenance->priority?->value,
+            'priority' => $maintenance->priority->value,
             'segment' => $maintenance->segment?->value,
             'contact_no' => $maintenance->contact_no,
             'remark' => $maintenance->remark,
             'company_remark' => $maintenance->company_remark,
-            'status' => $maintenance->status?->value,
+            'status' => $maintenance->status->value,
         ];
 
         $property_name = $maintenance->property ? $maintenance->property->number.($maintenance->property->building ? ' - '.$maintenance->property->building->name : '') : '';
@@ -128,21 +128,21 @@ class Page extends Component
         $rentOut = $maintenance->rentOut;
         $this->propertyInfo = [
             'rentout_id' => $maintenance->rent_out_id,
-            'status' => $maintenance->status?->label() ?? 'Pending',
-            'status_color' => $maintenance->status?->color() ?? 'warning',
+            'status' => $maintenance->status->label(),
+            'status_color' => $maintenance->status->color(),
             'property_status' => $maintenance->property?->status?->label() ?? '',
-            'customer_name' => $maintenance->customer?->name ?? ($rentOut?->customer?->name ?? ''),
+            'customer_name' => $maintenance->customer->name ?? ($rentOut?->customer->name ?? ''),
             'customer_mobile' => $maintenance->contact_no ?? '',
             'agreement_start_date' => $rentOut?->start_date?->format('d M Y') ?? '',
         ];
 
         // Activity log sidebar
         $this->activityLog = [
-            'created_by' => $maintenance->creator?->name ?? '',
+            'created_by' => $maintenance->creator->name ?? '',
             'created_at' => $maintenance->created_at?->format('d M Y H:i') ?? '',
-            'updated_by' => $maintenance->updater?->name ?? '',
+            'updated_by' => $maintenance->updater->name ?? '',
             'updated_at' => $maintenance->updated_at?->format('d M Y H:i') ?? '',
-            'completed_by' => $maintenance->completedBy?->name ?? '',
+            'completed_by' => $maintenance->completedBy->name ?? '',
             'completed_at' => $maintenance->completed_at?->format('d M Y H:i') ?? '',
         ];
 
@@ -150,14 +150,14 @@ class Page extends Component
             return [
                 'id' => $mc->id,
                 'complaint_id' => $mc->complaint_id,
-                'complaint_name' => $mc->complaint?->name ?? '',
-                'category_name' => $mc->complaint?->category?->name ?? '',
+                'complaint_name' => $mc->complaint->name ?? '',
+                'category_name' => $mc->complaint?->category->name ?? '',
                 'technician_id' => $mc->technician_id,
-                'technician_name' => $mc->technician?->name ?? '',
+                'technician_name' => $mc->technician->name ?? '',
                 'technician_remark' => $mc->technician_remark ?? '',
-                'status' => $mc->status?->value ?? 'pending',
-                'status_label' => $mc->status?->label() ?? 'Pending',
-                'status_color' => $mc->status?->color() ?? 'warning',
+                'status' => $mc->status->value,
+                'status_label' => $mc->status->label(),
+                'status_color' => $mc->status->color(),
             ];
         })->toArray();
     }
@@ -173,16 +173,16 @@ class Page extends Component
                 $this->formData['property_type_id'] = $property->property_type_id;
 
                 // Update property status in sidebar
-                $this->propertyInfo['property_status'] = $property->status?->label() ?? '';
+                $this->propertyInfo['property_status'] = $property->status->label();
 
                 // Dispatch event to auto-fill Group/Building/Type TomSelects in JS
                 $this->dispatch('PropertyDetailsLoaded', [
                     'property_group_id' => $property->property_group_id,
-                    'group_name' => $property->building?->group?->name ?? '',
+                    'group_name' => $property->building?->group->name ?? '',
                     'property_building_id' => $property->property_building_id,
-                    'building_name' => $property->building?->name ?? '',
+                    'building_name' => $property->building->name ?? '',
                     'property_type_id' => $property->property_type_id,
-                    'type_name' => $property->type?->name ?? '',
+                    'type_name' => $property->type->name ?? '',
                 ]);
             }
 
@@ -195,11 +195,11 @@ class Page extends Component
             if ($rentOut) {
                 $this->formData['rent_out_id'] = $rentOut->id;
                 $this->formData['account_id'] = $rentOut->account_id;
-                $this->formData['contact_no'] = $rentOut->customer?->mobile ?? '';
+                $this->formData['contact_no'] = $rentOut->customer->mobile ?? '';
                 $this->propertyInfo['rentout_id'] = $rentOut->id;
-                $this->propertyInfo['customer_name'] = $rentOut->customer?->name ?? '';
-                $this->propertyInfo['customer_mobile'] = $rentOut->customer?->mobile ?? '';
-                $this->propertyInfo['agreement_start_date'] = $rentOut->start_date?->format('d M Y') ?? '';
+                $this->propertyInfo['customer_name'] = $rentOut->customer->name ?? '';
+                $this->propertyInfo['customer_mobile'] = $rentOut->customer->mobile ?? '';
+                $this->propertyInfo['agreement_start_date'] = $rentOut->start_date->format('d M Y');
             } else {
                 // Clear if no occupied rentout
                 $this->formData['rent_out_id'] = '';
@@ -223,15 +223,15 @@ class Page extends Component
 
         // Lookup complaint + category names from DB
         $complaint = \App\Models\Complaint::with('category')->find($this->newComplaint['complaint_id']);
-        $complaintName = $complaint?->name ?? '';
-        $categoryName = $complaint?->category?->name ?? '';
+        $complaintName = $complaint->name ?? '';
+        $categoryName = $complaint?->category->name ?? '';
 
         // Lookup technician name from DB
         $technicianName = '';
         $technicianId = $this->newComplaint['technician_id'] ?? '';
         if ($technicianId) {
             $technician = \App\Models\User::find($technicianId);
-            $technicianName = $technician?->name ?? '';
+            $technicianName = $technician->name ?? '';
         }
 
         $this->complaints[] = [
@@ -298,7 +298,7 @@ class Page extends Component
         $technicianName = '';
         if ($technicianId) {
             $technician = \App\Models\User::find($technicianId);
-            $technicianName = $technician?->name ?? '';
+            $technicianName = $technician->name ?? '';
         }
 
         $this->complaints[$index]['technician_id'] = $technicianId;

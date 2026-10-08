@@ -45,6 +45,7 @@ class Table extends Component
 
     public function render()
     {
+        // @phpstan-ignore larastan.relationExistence (OwenIt Audit::user() is an untyped morphTo Larastan cannot see)
         $base = Audit::with('user')
             ->where('auditable_type', 'App\\Models\\'.$this->model)
             ->where('auditable_id', $this->table_id);
@@ -53,8 +54,8 @@ class Table extends Component
 
         $filtered = $all->when($this->event !== '', fn ($c) => $c->where('event', $this->event))
             ->when($this->user_id !== '', fn ($c) => $c->where('user_id', $this->user_id))
-            ->when($this->date_from !== '', fn ($c) => $c->filter(fn ($a) => optional($a->created_at)->toDateString() >= $this->date_from))
-            ->when($this->date_to !== '', fn ($c) => $c->filter(fn ($a) => optional($a->created_at)->toDateString() <= $this->date_to))
+            ->when($this->date_from !== '', fn ($c) => $c->filter(fn ($a) => optional($a->getAttribute('created_at'))->toDateString() >= $this->date_from))
+            ->when($this->date_to !== '', fn ($c) => $c->filter(fn ($a) => optional($a->getAttribute('created_at'))->toDateString() <= $this->date_to))
             ->when($this->search !== '', function ($c) {
                 $needle = mb_strtolower($this->search);
 
@@ -69,7 +70,7 @@ class Table extends Component
             ->values();
 
         $events = $all->pluck('event')->unique()->filter()->values();
-        $users = $all->map(fn ($a) => ['id' => $a->user_id, 'name' => $a->user?->name ?? 'System'])
+        $users = $all->map(fn ($a) => ['id' => $a->getAttribute('user_id'), 'name' => $a->user->name ?? 'System'])
             ->unique('id')
             ->values();
 
@@ -79,8 +80,8 @@ class Table extends Component
         $stats = [
             'total' => $all->count(),
             'shown' => $filtered->count(),
-            'first_at' => $first?->created_at,
-            'last_at' => $last?->created_at,
+            'first_at' => $first?->getAttribute('created_at'),
+            'last_at' => $last?->getAttribute('created_at'),
             'contributors' => $users,
         ];
 

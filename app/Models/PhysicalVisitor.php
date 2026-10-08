@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PhysicalVisitor extends Model
@@ -36,12 +37,14 @@ class PhysicalVisitor extends Model
     ];
 
     // Relationships
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function hostEmployee()
+    /** @return BelongsTo<User, $this> */
+    public function hostEmployee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'host_employee_id');
     }
@@ -89,8 +92,8 @@ class PhysicalVisitor extends Model
         }
 
         $totalVisitors = $query->count();
-        $checkedIn = $query->checkedIn()->count();
-        $checkedOut = $query->checkedOut()->count();
+        $checkedIn = (clone $query)->checkedIn()->count();
+        $checkedOut = (clone $query)->checkedOut()->count();
 
         return [
             'total_visitors' => $totalVisitors,

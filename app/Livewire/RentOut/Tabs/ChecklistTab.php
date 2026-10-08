@@ -165,14 +165,14 @@ class ChecklistTab extends Component
                 'owner_name' => $area?->owner_name,
                 'owner_signed_at' => $area?->owner_signed_at?->format('d M Y, H:i'),
                 'signature_url' => $area?->owner_signature_url,
-                'entries' => collect($area?->entries ?? [])->map(fn ($e) => [
+                'entries' => collect($area->entries ?? [])->map(fn ($e) => [
                     'id' => $e->id,
                     'before_image_path' => $e->before_image_path,
                     'before_image_url' => $e->before_image_url,
                     'after_image_path' => $e->after_image_path,
                     'after_image_url' => $e->after_image_url,
                     'comments' => $e->comments,
-                    'status' => $e->status?->value ?? FixtureStatus::Pending->value,
+                    'status' => $e->status->value ?? FixtureStatus::Pending->value,
                     'completed_date' => $e->completed_date?->format('Y-m-d'),
                     'sort_order' => $e->sort_order,
                 ])->values()->toArray(),

@@ -447,7 +447,7 @@ class StudentImportSheet
      */
     private function existingStudents(array $parsed): array
     {
-        $admissions = array_values(array_unique(array_filter(array_map(fn ($p) => $p['data']['admission_no'], $parsed), 'strlen')));
+        $admissions = array_values(array_unique(array_filter(array_map(fn ($p) => $p['data']['admission_no'], $parsed), fn ($value): bool => strlen((string) $value) > 0)));
         $cards = array_values(array_unique(array_filter(array_map(fn ($p) => StudentDetail::normalizeCardUid($p['data']['card_uid']), $parsed))));
 
         $students = collect();
@@ -481,7 +481,7 @@ class StudentImportSheet
             'account_id' => $existing?->account_id,
             'admission_no' => $data['admission_no'],
             'name' => $data['name'],
-            'class' => implode(' - ', array_filter([$data['grade'], $data['section']], 'strlen')),
+            'class' => implode(' - ', array_filter([$data['grade'], $data['section']], fn ($value): bool => strlen((string) $value) > 0)),
             'gender' => $data['gender'],
             'card_uid' => StudentDetail::normalizeCardUid($data['card_uid']),
             'parents' => array_values(array_map(fn ($p) => Arr::only($p, ['name', 'mobile', 'relation']), $parents)),

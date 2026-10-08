@@ -171,10 +171,10 @@ class FeedbackReport extends Component
 
         return [
             'sales' => self::salesQuery($filters)->count(),
-            'responses' => (int) $row?->responses,
-            'rated' => (int) $row?->rated,
-            'average' => round((float) $row?->average, 1),
-            'comments' => (int) $row?->comments,
+            'responses' => (int) $row?->getAttribute('responses'),
+            'rated' => (int) $row?->getAttribute('rated'),
+            'average' => round((float) $row?->getAttribute('average'), 1),
+            'comments' => (int) $row?->getAttribute('comments'),
             'stars' => collect([5, 4, 3, 2, 1])->mapWithKeys(fn ($star) => [$star => (int) ($stars[$star] ?? 0)])->all(),
             'types' => collect(array_keys(feedbackTypes()))->mapWithKeys(fn ($type) => [$type => (int) ($types[$type] ?? 0)])->all(),
         ];

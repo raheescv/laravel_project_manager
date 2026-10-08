@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Actions\Product\InventoryProductWiseAction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,7 +17,7 @@ class InventoryProductWiseExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return (new InventoryProductWiseAction())->execute($this->filters);
     }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -34,12 +35,14 @@ class PurchaseReturnPayment extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function purchaseReturn()
+    /** @return BelongsTo<PurchaseReturn, $this> */
+    public function purchaseReturn(): BelongsTo
     {
         return $this->belongsTo(PurchaseReturn::class);
     }
 
-    public function paymentMethod()
+    /** @return BelongsTo<Account, $this> */
+    public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_method_id');
     }

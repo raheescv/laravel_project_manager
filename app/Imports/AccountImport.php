@@ -180,7 +180,7 @@ class AccountImport implements ToCollection, WithBatchInserts, WithChunkReading,
         return $id;
     }
 
-    private function resolveCustomerType(string $name): ?int
+    private function resolveCustomerType(string $name): int
     {
         $key = strtolower($name);
         if (isset($this->customerTypeCache[$key])) {

@@ -46,7 +46,7 @@ class DashboardAction
             ->get();
 
         $priorityRows = $openJobs
-            ->groupBy(fn ($mc) => $mc->maintenance?->priority?->value ?? 'low')
+            ->groupBy(fn ($mc) => $mc->maintenance?->priority->value ?? 'low')
             ->map->count();
 
         $priority = [
@@ -61,11 +61,11 @@ class DashboardAction
         $severity = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
         $nextId = $openJobs
             ->sortBy([
-                fn ($a, $b) => ($severity[$a->maintenance?->priority?->value ?? 'low'] ?? 3)
-                    <=> ($severity[$b->maintenance?->priority?->value ?? 'low'] ?? 3),
-                fn ($a, $b) => ($a->maintenance?->date?->timestamp ?? PHP_INT_MAX)
-                    <=> ($b->maintenance?->date?->timestamp ?? PHP_INT_MAX),
-                fn ($a, $b) => ($a->maintenance?->time ?? '') <=> ($b->maintenance?->time ?? ''),
+                fn ($a, $b) => ($severity[$a->maintenance?->priority->value ?? 'low'] ?? 3)
+                    <=> ($severity[$b->maintenance?->priority->value ?? 'low'] ?? 3),
+                fn ($a, $b) => ($a->maintenance?->date->timestamp ?? PHP_INT_MAX)
+                    <=> ($b->maintenance?->date->timestamp ?? PHP_INT_MAX),
+                fn ($a, $b) => ($a->maintenance->time ?? '') <=> ($b->maintenance->time ?? ''),
             ])
             ->first()?->id;
 
@@ -105,7 +105,7 @@ class DashboardAction
         return [
             'technician' => [
                 'id' => (string) Auth::id(),
-                'name' => Auth::user()?->name ?? '',
+                'name' => Auth::user()->name ?? '',
             ],
             'counts' => $counts,
             'priority' => $priority,

@@ -79,51 +79,61 @@ class Maintenance extends Model implements AuditableContracts
         });
     }
 
+    /** @return BelongsTo<Property, $this> */
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class)->withTrashed();
     }
 
+    /** @return BelongsTo<PropertyBuilding, $this> */
     public function building(): BelongsTo
     {
         return $this->belongsTo(PropertyBuilding::class, 'property_building_id')->withTrashed();
     }
 
+    /** @return BelongsTo<PropertyGroup, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
     }
 
+    /** @return BelongsTo<PropertyType, $this> */
     public function type(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class, 'property_type_id');
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class, 'rent_out_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return HasMany<MaintenanceComplaint, $this> */
     public function maintenanceComplaints(): HasMany
     {
         return $this->hasMany(MaintenanceComplaint::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

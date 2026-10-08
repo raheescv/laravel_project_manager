@@ -142,7 +142,7 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/visitors', [PhysicalVisitorController::class, 'index'])->name('visitors.index');
     Route::get('/visitors/create', [PhysicalVisitorController::class, 'create'])->name('visitors.create');
     Route::post('/visitors', [PhysicalVisitorController::class, 'store'])->name('visitors.store');
+    Route::get('/visitors/stats', [PhysicalVisitorController::class, 'stats'])->name('visitors.stats');
     Route::get('/visitors/{visitor}', [PhysicalVisitorController::class, 'show'])->name('visitors.show');
     Route::post('/visitors/{visitor}/checkout', [PhysicalVisitorController::class, 'checkout'])->name('visitors.checkout');
-    Route::get('/visitors/stats', [PhysicalVisitorController::class, 'stats'])->name('visitors.stats');
 });

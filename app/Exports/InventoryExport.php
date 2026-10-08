@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Actions\Product\Inventory\GetAction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,7 +17,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return (new GetAction())->execute($this->filters)
             ->select(

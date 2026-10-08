@@ -21,7 +21,7 @@ class PurchaseCostUpdateToInventoryCommand extends Command
         // Get weighted average cost per product and branch from completed purchases
         $averageCosts = PurchaseItem::withoutTrashed()
             ->whereHas('purchase', function ($query) {
-                $query->where('status', 'completed')->withoutTrashed();
+                $query->where('status', 'completed')->withoutTrashed(); // @phpstan-ignore method.notFound (SoftDeletingScope builder macro; larastan types this whereHas closure as Builder<Model>)
             })
             ->select('purchase_items.product_id', DB::raw('SUM(purchase_items.unit_price * purchase_items.quantity) as total_cost'), DB::raw('SUM(purchase_items.quantity) as total_quantity'))
             ->groupBy('purchase_items.product_id')
@@ -32,7 +32,9 @@ class PurchaseCostUpdateToInventoryCommand extends Command
         $skippedCount = 0;
 
         foreach ($averageCosts as $costData) {
-            $averageCost = round($costData->total_quantity > 0 ? $costData->total_cost / $costData->total_quantity : 0, 2);
+            $totalCost = $costData->getAttribute('total_cost');
+            $totalQuantity = $costData->getAttribute('total_quantity');
+            $averageCost = round($totalQuantity > 0 ? $totalCost / $totalQuantity : 0, 2);
 
             Inventory::withoutGlobalScopes()
                 ->where('product_id', $costData->product_id)

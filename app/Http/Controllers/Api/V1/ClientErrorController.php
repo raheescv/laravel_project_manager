@@ -56,6 +56,6 @@ class ClientErrorController extends Controller
             'user_name' => $user?->name,
         ]);
 
-        return $this->successResponse(null, 'Recorded.');
+        return $this->sendSuccess(null, 'Recorded.');
     }
 }

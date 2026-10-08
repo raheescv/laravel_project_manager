@@ -21,11 +21,13 @@ class StudentPreOrderItem extends Model
         'quantity' => 'integer',
     ];
 
+    /** @return BelongsTo<StudentPreOrder, $this> */
     public function preOrder(): BelongsTo
     {
         return $this->belongsTo(StudentPreOrder::class, 'student_pre_order_id');
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

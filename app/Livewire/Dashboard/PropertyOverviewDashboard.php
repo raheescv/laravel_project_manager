@@ -70,8 +70,8 @@ class PropertyOverviewDashboard extends Component
 
         $this->groupOccupancyRates = $groups->map(function ($group): array {
             $total = (int) $group->properties_count;
-            $occupied = (int) $group->occupied_count;
-            $vacant = (int) $group->vacant_count;
+            $occupied = (int) $group->getAttribute('occupied_count');
+            $vacant = (int) $group->getAttribute('vacant_count');
             $rate = $total > 0 ? round(($occupied / $total) * 100, 1) : 0;
 
             return [
@@ -95,8 +95,8 @@ class PropertyOverviewDashboard extends Component
 
         $this->groupAvailabilityRates = $groups->map(function ($group): array {
             $total = (int) $group->properties_count;
-            $available = (int) $group->available_count;
-            $sold = (int) $group->sold_count;
+            $available = (int) $group->getAttribute('available_count');
+            $sold = (int) $group->getAttribute('sold_count');
             $availableRate = $total > 0 ? round(($available / $total) * 100, 1) : 0;
             $soldRate = $total > 0 ? round(($sold / $total) * 100, 1) : 0;
 

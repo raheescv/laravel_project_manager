@@ -55,7 +55,7 @@ class ServiceModal extends Component
         $this->editingId = $payment->id;
 
         $this->form = [
-            'date' => $payment->date?->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'date' => $payment->date->format('Y-m-d'),
             'amount' => $payment->debit > 0 ? $payment->debit : $payment->credit,
             'category' => $payment->category ?? '',
             'account_id' => $payment->account_id ?? '',

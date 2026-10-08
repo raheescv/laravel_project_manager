@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Traits\Report\BuildsTailoringNonDeliveryQuery;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -18,7 +19,7 @@ class TailoringNonDeliveryReportExport implements FromQuery, WithEvents, WithHea
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $allowedBranchIds = Auth::user()->branches->pluck('branch_id')->toArray();
 

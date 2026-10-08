@@ -142,9 +142,7 @@ class TableReader
                 $current = ['centre' => $centre, 'words' => [$word]];
             }
 
-            if ($current !== null) {
-                $rows[] = $this->finishRow($current, (int) ($page['number'] ?? 1), $offset);
-            }
+            $rows[] = $this->finishRow($current, (int) ($page['number'] ?? 1), $offset);
 
             $offset += (float) ($page['height'] ?? 0);
         }
@@ -275,9 +273,7 @@ class TableReader
             $current = [$row];
         }
 
-        if ($current !== []) {
-            $blocks[] = $current;
-        }
+        $blocks[] = $current;
 
         usort($blocks, fn ($a, $b) => count($b) <=> count($a));
         $winner = array_shift($blocks);

@@ -69,6 +69,8 @@ class BarcodeController extends Controller
             $product = $productUnit->product;
             $conversionFactor = $productUnit->conversion_factor;
             $barcode = $productUnit->barcode;
+        } else {
+            abort(404);
         }
 
         $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
@@ -83,11 +85,7 @@ class BarcodeController extends Controller
         putenv('HOME=/tmp');
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->pdf([
-                'printBackground' => false,
-                'preferCSSPageSize' => true,
-                'scale' => 1,
-            ]);
+            ->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
@@ -117,11 +115,7 @@ class BarcodeController extends Controller
         putenv('HOME=/tmp');
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->pdf([
-                'printBackground' => false,
-                'preferCSSPageSize' => true,
-                'scale' => 1,
-            ]);
+            ->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
@@ -186,7 +180,7 @@ class BarcodeController extends Controller
 
         $productId = $request->integer('product_id');
         $product = $productId ? Product::with('unit')->find($productId) : null;
-        $product ??= $productUnit?->product ?? $inventory?->product;
+        $product ??= $productUnit->product ?? $inventory?->product;
 
         if (! $product && ! $id) {
             $inventory = Inventory::with('product')->first();
@@ -194,9 +188,9 @@ class BarcodeController extends Controller
         }
 
         $product ??= Product::with('unit')->orderBy('name')->first();
-        abort_unless($product, 404);
+        abort_unless($product !== null, 404);
 
-        $barcode = $productUnit?->barcode ?? ($inventory?->barcode ?: ($product->barcode ?: ''));
+        $barcode = $productUnit->barcode ?? ($inventory?->barcode ?: ($product->barcode ?: ''));
         $conversionFactor = $productUnit ? (float) $productUnit->conversion_factor : 1;
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
         $row = BarcodeLabel::rowValues($settings, [

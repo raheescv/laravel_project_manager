@@ -35,15 +35,16 @@ class SaleItemSummary extends Component
                 ->get();
 
             $products = Product::whereIn('id', $rows->pluck('product_id')->filter())->pluck('name', 'id');
-            $rows->each(fn ($row) => $row->product_name = $products[$row->product_id] ?? '—');
+            $rows->each(fn ($row) => $row->setAttribute('product_name', $products[$row->product_id] ?? '—'));
 
             $span = Sale::where('account_id', $this->account_id)
                 ->selectRaw('COUNT(*) AS invoices, MIN(date) AS first_date, MAX(date) AS last_date')
+                ->toBase()
                 ->first();
 
             $months = 0;
-            if ($span?->first_date && $span?->last_date) {
-                $months = max((float) \Carbon\Carbon::parse($span->first_date)->floatDiffInMonths($span->last_date), 1);
+            if ($span && $span->first_date && $span->last_date) {
+                $months = max((float) \Carbon\Carbon::parse($span->first_date)->diffInMonths($span->last_date), 1);
             }
 
             $highlights = [

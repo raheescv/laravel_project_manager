@@ -45,36 +45,43 @@ class MaintenanceComplaint extends Model implements AuditableContracts
         ];
     }
 
+    /** @return BelongsTo<Maintenance, $this> */
     public function maintenance(): BelongsTo
     {
         return $this->belongsTo(Maintenance::class);
     }
 
+    /** @return BelongsTo<Complaint, $this> */
     public function complaint(): BelongsTo
     {
         return $this->belongsTo(Complaint::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function technician(): BelongsTo
     {
         return $this->belongsTo(User::class, 'technician_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<SupplyRequest, $this> */
     public function supplyRequest(): BelongsTo
     {
         return $this->belongsTo(SupplyRequest::class);

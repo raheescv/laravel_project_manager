@@ -88,7 +88,7 @@ class TailoringOrder extends Model implements AuditableContracts
     {
         static::creating(function ($order): void {
             if (empty($order->order_no)) {
-                $order->order_no = self::generateOrderNo();
+                $order->order_no = getNextTailorOrderNo($order->branch_id);
             }
             if (empty($order->created_by)) {
                 $order->created_by = Auth::id();
@@ -120,66 +120,79 @@ class TailoringOrder extends Model implements AuditableContracts
     }
 
     // Relationships
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<SaleDaySession, $this> */
     public function saleDaySession(): BelongsTo
     {
         return $this->belongsTo(SaleDaySession::class, 'sale_day_session_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function salesman(): BelongsTo
     {
         return $this->belongsTo(User::class, 'salesman_id');
     }
 
+    /** @return BelongsTo<Rack, $this> */
     public function rack(): BelongsTo
     {
         return $this->belongsTo(Rack::class, 'rack_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function cutter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cutter_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /** @return HasMany<TailoringOrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(TailoringOrderItem::class);
     }
 
+    /** @return HasMany<TailoringOrderMeasurement, $this> */
     public function measurements(): HasMany
     {
         return $this->hasMany(TailoringOrderMeasurement::class);
     }
 
+    /** @return HasMany<TailoringPayment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(TailoringPayment::class);
     }
 
+    /** @return HasMany<Journal, $this> */
     public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'TailoringOrder');
@@ -326,6 +339,7 @@ class TailoringOrder extends Model implements AuditableContracts
             $item->setAttribute('tailoring_category_model_type_id', $meas->tailoring_category_model_type_id);
             $item->setAttribute('tailoring_notes', $meas->tailoring_notes);
 
+            /** @var mixed $data The array cast decodes whatever JSON is stored, so a malformed row may yield a scalar. */
             $data = $meas->data;
             if (! empty($data) && (is_array($data) || is_object($data))) {
                 $fieldKeys = $meas->category->activeMeasurements->pluck('field_key')->toArray();

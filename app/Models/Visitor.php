@@ -5,8 +5,18 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property-read int $views COUNT(*) select alias.
+ * @property-read int $users COUNT(DISTINCT user_id) select alias.
+ * @property-read int $sessions COUNT(*) select alias.
+ * @property-read int $sessions_count COUNT(*) select alias.
+ * @property-read string|null $last_active_at MAX(visited_at) select alias.
+ * @property-read int $total_visits COUNT(*) select alias.
+ * @property-read string|null $last_visit MAX(visited_at) select alias.
+ */
 class Visitor extends Model
 {
     use BelongsToTenant;
@@ -31,7 +41,8 @@ class Visitor extends Model
         'visited_at' => 'datetime',
     ];
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

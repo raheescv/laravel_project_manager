@@ -18,6 +18,7 @@ class ReceiptAction
                 throw new Exception('Order not found.');
             }
 
+            $journalRemarks = $paymentData['remarks'] ?? '';
             $paymentData = [
                 'tailoring_order_id' => $orderId,
                 'payment_method_id' => $paymentData['payment_method_id'],
@@ -42,7 +43,7 @@ class ReceiptAction
                     'branch_id' => $order->branch_id ?? session('branch_id'),
                     'date' => $paymentData['date'],
                     'description' => 'Tailoring: '.$order->order_no,
-                    'remarks' => $paymentData['remarks'] ?? '',
+                    'remarks' => $journalRemarks,
                     'reference_number' => $order->order_no,
                     'person_name' => $customerName,
                     'source' => 'Tailoring Receipt',

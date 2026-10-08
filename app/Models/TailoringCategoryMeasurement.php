@@ -29,11 +29,13 @@ class TailoringCategoryMeasurement extends Model
         'sort_order' => 'integer',
     ];
 
+    /** @return BelongsTo<TailoringCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TailoringCategory::class, 'tailoring_category_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

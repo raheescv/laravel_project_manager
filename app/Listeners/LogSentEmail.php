@@ -29,8 +29,8 @@ class LogSentEmail
 
             $subject = $message->getSubject() ?? '';
             $body = $message->getHtmlBody() ?: $message->getTextBody() ?: '';
-            $to = collect($message->getTo() ?? [])->map(fn ($address) => $address->getAddress())->implode(', ');
-            $replyTo = collect($message->getReplyTo() ?? [])->map(fn ($address) => $address->getAddress())->first();
+            $to = collect($message->getTo())->map(fn ($address) => $address->getAddress())->implode(', ');
+            $replyTo = collect($message->getReplyTo())->map(fn ($address) => $address->getAddress())->first();
 
             $logId = $headers->has(self::LOG_HEADER)
                 ? (int) $headers->get(self::LOG_HEADER)->getBodyAsString()

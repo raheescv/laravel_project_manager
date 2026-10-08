@@ -26,6 +26,7 @@ class SupplyRequestImage extends Model
         return Str::contains($this->type ?? '', ['pdf']);
     }
 
+    /** @return BelongsTo<SupplyRequest, $this> */
     public function supplyRequest(): BelongsTo
     {
         return $this->belongsTo(SupplyRequest::class);

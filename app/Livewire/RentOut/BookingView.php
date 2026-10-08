@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
+/**
+ * @property-read RentOutConfig $config
+ */
 class BookingView extends Component
 {
     use HasPaymentTermManagement;
@@ -133,7 +136,7 @@ class BookingView extends Component
             if ($overlaps->isNotEmpty()) {
                 $this->overlappingRentOuts = $overlaps->map(fn ($r) => [
                     'id' => $r->id,
-                    'customer' => $r->customer?->name ?? 'N/A',
+                    'customer' => $r->customer->name ?? 'N/A',
                     'start_date' => $r->start_date?->format('d M Y'),
                     'end_date' => $r->end_date?->format('d M Y'),
                     'status' => $r->status?->label(),

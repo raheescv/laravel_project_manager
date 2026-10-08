@@ -50,36 +50,43 @@ class Issue extends Model implements AuditableContracts
         ], $merge);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /** @return HasMany<IssueItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(IssueItem::class);
     }
 
+    /** @return BelongsTo<Issue, $this> */
     public function sourceIssue(): BelongsTo
     {
         return $this->belongsTo(Issue::class, 'source_issue_id');
     }
 
+    /** @return HasMany<Issue, $this> */
     public function returnIssues(): HasMany
     {
         return $this->hasMany(Issue::class, 'source_issue_id');

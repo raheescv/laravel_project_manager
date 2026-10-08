@@ -64,7 +64,7 @@ class ChequesTab extends Component
                 'bank_name' => '',
                 'amount' => $rentOut->rent ?? 0,
                 'date' => now()->format('Y-m-d'),
-                'payee_name' => $rentOut->customer?->name ?? '',
+                'payee_name' => $rentOut->customer->name ?? '',
                 'status' => 'uncleared',
                 'remarks' => '',
             ],
@@ -87,7 +87,7 @@ class ChequesTab extends Component
                 'amount' => $cheque->amount,
                 'date' => $cheque->date?->format('Y-m-d') ?? '',
                 'payee_name' => $cheque->payee_name ?? '',
-                'status' => $cheque->status?->value ?? 'uncleared',
+                'status' => $cheque->status->value,
                 'remarks' => $cheque->remarks ?? '',
             ],
             editingId: $id,
@@ -106,7 +106,7 @@ class ChequesTab extends Component
             startDate: now()->format('Y-m-d'),
             count: $rentOut->no_of_terms ?? 12,
             frequency: $rentOut->payment_frequency ?? 'Monthly',
-            payeeName: $rentOut->customer?->name ?? '',
+            payeeName: $rentOut->customer->name ?? '',
         );
     }
 

@@ -44,9 +44,9 @@ class ServiceChargeModal extends Component
         $rentOut = RentOut::with('property')->findOrFail($rentOutId);
 
         $this->date = now()->format('Y-m-d');
-        $this->startDate = $rentOut->start_date?->format('Y-m-d') ?? now()->format('Y-m-d');
+        $this->startDate = $rentOut->start_date->format('Y-m-d');
         $this->endDate = now()->endOfYear()->format('Y-m-d');
-        $this->unitSize = (float) ($rentOut->property?->size ?? 0);
+        $this->unitSize = (float) ($rentOut->property->size ?? 0);
         $this->perSqMeterPrice = 10;
         $this->remark = '';
 

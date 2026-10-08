@@ -65,66 +65,79 @@ class SupplyRequest extends Model implements AuditableContracts
         ], $merge);
     }
 
+    /** @return HasMany<SupplyRequestItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(SupplyRequestItem::class);
     }
 
+    /** @return HasMany<SupplyRequestImage, $this> */
     public function images(): HasMany
     {
         return $this->hasMany(SupplyRequestImage::class);
     }
 
+    /** @return HasMany<SupplyRequestNote, $this> */
     public function notes(): HasMany
     {
         return $this->hasMany(SupplyRequestNote::class);
     }
 
+    /** @return BelongsTo<Property, $this> */
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function accountant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'accounted_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function finalApprover(): BelongsTo
     {
         return $this->belongsTo(User::class, 'final_approved_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function completer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function paymentMode(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'payment_mode_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

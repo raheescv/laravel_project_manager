@@ -8,6 +8,8 @@ use App\Support\Migration\BulkImport;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -98,52 +100,62 @@ class SaleReturn extends Model implements AuditableContracts
             ->when($to, fn ($q) => $q->where('date', '<=', $to));
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function createdUser()
+    /** @return BelongsTo<User, $this> */
+    public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedUser()
+    /** @return BelongsTo<User, $this> */
+    public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function items()
+    /** @return HasMany<SaleReturnItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(SaleReturnItem::class);
     }
 
-    public function payments()
+    /** @return HasMany<SaleReturnPayment, $this> */
+    public function payments(): HasMany
     {
         return $this->hasMany(SaleReturnPayment::class);
     }
 
-    public function journal()
+    /** @return HasOne<Journal, $this> */
+    public function journal(): HasOne
     {
         return $this->hasOne(Journal::class, 'model_id')->where('model', 'SaleReturn');
     }
 
-    public function journals()
+    /** @return HasMany<Journal, $this> */
+    public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'SaleReturn');
     }
 
-    public function ledgers()
+    /** @return HasMany<Ledger, $this> */
+    public function ledgers(): HasMany
     {
         return $this->hasMany(Ledger::class, 'model_id')->where('model', 'SaleReturn');
     }

@@ -83,7 +83,7 @@ class MeasurementEditModal extends Component
 
         $this->measurementModalMeta = [
             'category_id' => $item->tailoring_category_id,
-            'category_name' => $item->category?->name ?? 'Category',
+            'category_name' => $item->category->name ?? 'Category',
             'model_id' => $item->tailoring_category_model_id,
             'model_name' => $resolvedModelName ?? 'Standard',
             'model_type_id' => $item->tailoring_category_model_type_id,
@@ -199,11 +199,11 @@ class MeasurementEditModal extends Component
                 }
             }
 
-            $modelName = $sourceItem->categoryModel?->name
+            $modelName = $sourceItem->categoryModel->name
                 ?? ($modelNameMap[$sourceItem->tailoring_category_model_id] ?? null)
                 ?? ($sourceSavedData['tailoring_category_model_name'] ?? null)
                 ?? 'Model';
-            $modelTypeName = $sourceItem->categoryModelType?->name
+            $modelTypeName = $sourceItem->categoryModelType->name
                 ?? ($modelTypeNameMap[$sourceItem->tailoring_category_model_type_id] ?? null)
                 ?? ($sourceSavedData['tailoring_category_model_type_name'] ?? null)
                 ?? '-';
@@ -217,7 +217,7 @@ class MeasurementEditModal extends Component
             ];
         })->values()->all();
 
-        $this->measurementModalNotes = (string) ($item->tailoring_notes ?? ($measurementRow?->tailoring_notes ?? ''));
+        $this->measurementModalNotes = (string) ($item->tailoring_notes ?? ($measurementRow->tailoring_notes ?? ''));
 
         $this->dispatch('tailoring-measurement-modal-open');
     }
@@ -328,7 +328,7 @@ class MeasurementEditModal extends Component
             $this->measurementModalForm[$fieldKey] = is_scalar($value) ? (string) $value : '';
         }
 
-        $this->measurementModalNotes = (string) ($sourceItem->tailoring_notes ?? ($sourceMeasurementRow?->tailoring_notes ?? ''));
+        $this->measurementModalNotes = (string) ($sourceItem->tailoring_notes ?? ($sourceMeasurementRow->tailoring_notes ?? ''));
         $this->dispatch('success', ['message' => 'Measurements copied from selected item']);
     }
 

@@ -72,21 +72,25 @@ class PropertyBuilding extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return BelongsTo<PropertyGroup, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
     }
 
+    /** @return HasMany<Property, $this> */
     public function properties(): HasMany
     {
         return $this->hasMany(Property::class);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
+    /** @return HasMany<RentOut, $this> */
     public function rentOuts(): HasMany
     {
         return $this->hasMany(RentOut::class, 'property_building_id');

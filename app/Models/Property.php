@@ -91,7 +91,7 @@ class Property extends Model implements AuditableContracts
             return [
                 'id' => $item->id,
                 'name' => $item->number,
-                'status' => $item->status?->value ?? $item->status,
+                'status' => $item->status->value,
                 'group' => $item->group?->name,
                 'building' => $item->building?->name,
                 'type' => $item->type?->name,
@@ -106,26 +106,31 @@ class Property extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return BelongsTo<PropertyGroup, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
     }
 
+    /** @return BelongsTo<PropertyBuilding, $this> */
     public function building(): BelongsTo
     {
         return $this->belongsTo(PropertyBuilding::class, 'property_building_id')->withTrashed();
     }
 
+    /** @return BelongsTo<PropertyType, $this> */
     public function type(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class, 'property_type_id');
     }
 
+    /** @return HasMany<RentOut, $this> */
     public function rentOuts(): HasMany
     {
         return $this->hasMany(RentOut::class);
     }
 
+    /** @return HasMany<TenantDetail, $this> */
     public function tenantDetails(): HasMany
     {
         return $this->hasMany(TenantDetail::class);

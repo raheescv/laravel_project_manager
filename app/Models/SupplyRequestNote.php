@@ -13,11 +13,13 @@ class SupplyRequestNote extends Model
         'created_by',
     ];
 
+    /** @return BelongsTo<SupplyRequest, $this> */
     public function supplyRequest(): BelongsTo
     {
         return $this->belongsTo(SupplyRequest::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

@@ -5,6 +5,9 @@ namespace App\Livewire\User;
 use App\Models\User;
 use Livewire\Component;
 
+/**
+ * @property-read string $bot_username
+ */
 class TelegramSetup extends Component
 {
     public $userId;

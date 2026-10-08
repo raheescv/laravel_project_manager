@@ -117,28 +117,28 @@ class Complaint extends Component
 
         $this->maintenanceComplaint = $mc;
         $this->technician_remark = $mc->technician_remark ?? '';
-        $this->isCompleted = $mc->status?->value === 'completed';
-        $this->isCancelled = $mc->status?->value === 'cancelled';
-        $this->status = $mc->status?->value ?? 'pending';
+        $this->isCompleted = $mc->status->value === 'completed';
+        $this->isCancelled = $mc->status->value === 'cancelled';
+        $this->status = $mc->status->value;
 
         $maintenance = $mc->maintenance;
         $property = $maintenance?->property;
         $rentOut = $maintenance?->rentOut;
-        $customer = $maintenance?->customer ?? $rentOut?->customer;
+        $customer = $maintenance->customer ?? $rentOut?->customer;
 
         // Property Information
         $this->propertyInfo = [
             'registration_id' => $maintenance?->id,
-            'group' => $property?->building?->group?->name ?? '',
-            'building' => $property?->building?->name ?? '',
-            'type' => $property?->type?->name ?? '',
-            'property_number' => $property?->number ?? '',
+            'group' => $property?->building?->group->name ?? '',
+            'building' => $property?->building->name ?? '',
+            'type' => $property?->type->name ?? '',
+            'property_number' => $property->number ?? '',
             'priority' => $maintenance?->priority?->label() ?? '',
             'priority_color' => $maintenance?->priority?->color() ?? 'secondary',
             'segment' => $maintenance?->segment?->label() ?? '',
             'segment_color' => $maintenance?->segment?->color() ?? 'secondary',
             'date' => $maintenance?->date?->format('d-m-Y') ?? '',
-            'time' => $maintenance?->time ?? '',
+            'time' => $maintenance->time ?? '',
         ];
 
         // Supply Request data
@@ -151,23 +151,23 @@ class Complaint extends Component
 
         // Customer & Request Information
         $this->customerInfo = [
-            'complaint_status' => $mc->status?->label() ?? 'Pending',
-            'complaint_status_color' => $mc->status?->color() ?? 'warning',
-            'rentout_id' => $rentOut?->id ?? '',
+            'complaint_status' => $mc->status->label(),
+            'complaint_status_color' => $mc->status->color(),
+            'rentout_id' => $rentOut->id ?? '',
             'rentout_status' => $rentOut?->status?->label() ?? '',
             'agreement_start_date' => $rentOut?->start_date?->format('d-m-Y') ?? '',
-            'customer_name' => $customer?->name ?? '',
-            'customer_mobile' => $customer?->mobile ?? $maintenance?->contact_no ?? '',
+            'customer_name' => $customer->name ?? '',
+            'customer_mobile' => $customer->mobile ?? $maintenance->contact_no ?? '',
             'work_order_no' => $supplyRequest ? ($supplyRequest->order_no ?? $supplyRequest->id) : 'Not assigned',
         ];
 
         // Activity Log
         $this->activityLog = [
-            'created_by' => $mc->creator?->name ?? '',
+            'created_by' => $mc->creator->name ?? '',
             'created_at' => $mc->created_at?->format('d-m-Y h:i:s A') ?? '',
-            'assigned_by' => $mc->assignedBy?->name ?? '',
+            'assigned_by' => $mc->assignedBy->name ?? '',
             'assigned_at' => $mc->assigned_at?->format('d-m-Y h:i:s A') ?? '',
-            'completed_by' => $mc->completedBy?->name ?? '',
+            'completed_by' => $mc->completedBy->name ?? '',
             'completed_at' => $mc->completed_at?->format('d-m-Y h:i:s A') ?? '',
         ];
 
@@ -175,13 +175,13 @@ class Complaint extends Component
         $this->allComplaints = $maintenance?->maintenanceComplaints->map(function ($item) {
             return [
                 'id' => $item->id,
-                'category_name' => $item->complaint?->category?->name ?? '',
-                'complaint_name' => $item->complaint?->name ?? '',
-                'technician_name' => $item->technician?->name ?? '',
+                'category_name' => $item->complaint?->category->name ?? '',
+                'complaint_name' => $item->complaint->name ?? '',
+                'technician_name' => $item->technician->name ?? '',
                 'technician_remark' => $item->technician_remark ?? '',
-                'status' => $item->status?->value ?? 'pending',
-                'status_label' => $item->status?->label() ?? 'Pending',
-                'status_color' => $item->status?->color() ?? 'warning',
+                'status' => $item->status->value,
+                'status_label' => $item->status->label(),
+                'status_color' => $item->status->color(),
                 'is_current' => $item->id === $this->complaint_id,
             ];
         })->toArray() ?? [];
@@ -191,8 +191,8 @@ class Complaint extends Component
         if ($supplyRequest) {
             foreach ($supplyRequest->items as $value) {
                 $single = $value->toArray();
-                $single['branch_name'] = $value->branch?->name ?? 'Main Store';
-                $single['product_name'] = $value->product?->name ?? '';
+                $single['branch_name'] = $value->branch->name ?? 'Main Store';
+                $single['product_name'] = $value->product->name ?? '';
                 $single['edit_flag'] = false;
                 $this->items[] = $single;
             }
@@ -205,7 +205,7 @@ class Complaint extends Component
                 $this->notes[] = [
                     'id' => $value->id,
                     'note' => $value->note,
-                    'creator' => $value->creator?->name ?? '',
+                    'creator' => $value->creator->name ?? '',
                     'created_at' => $value->created_at,
                     'delete_flag' => true,
                 ];

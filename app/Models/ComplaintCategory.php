@@ -52,6 +52,7 @@ class ComplaintCategory extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<Complaint, $this> */
     public function complaints(): HasMany
     {
         return $this->hasMany(Complaint::class);

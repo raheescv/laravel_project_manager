@@ -47,7 +47,7 @@ class CreateTailoringOrderAction
                 $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
                 if ($totalDiscount) {
                     $user = User::find($this->userId);
-                    User::validateMaxDiscount($user->max_discount_per_sale, $this->model->gross_amount, $totalDiscount);
+                    User::validateMaxDiscount($user->max_discount_per_sale, (float) $this->model->gross_amount, $totalDiscount);
                 }
             });
 

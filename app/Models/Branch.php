@@ -54,6 +54,8 @@ class Branch extends Model
 
     /**
      * Get the tenant that owns this branch
+     *
+     * @return BelongsTo<Tenant, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -108,6 +110,8 @@ class Branch extends Model
 
     /**
      * Get all users assigned to this branch
+     *
+     * @return HasMany<UserHasBranch, $this>
      */
     public function assignedUsers(): HasMany
     {

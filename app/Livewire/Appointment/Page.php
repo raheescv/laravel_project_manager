@@ -16,6 +16,7 @@ use Livewire\Component;
 
 class Page extends Component
 {
+    /** @var int|string|null */
     public $table_id;
 
     public $appointments;
@@ -33,6 +34,9 @@ class Page extends Component
         'Update-Appointment-Page-Component' => 'update',
     ];
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;

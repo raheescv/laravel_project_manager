@@ -103,10 +103,7 @@ class CanteenMenu extends Component
             return;
         }
 
-        foreach ($template['courses'] as $index => [$name, $note]) {
-            if ($index >= CanteenMenuModel::MAX_COURSES) {
-                break;
-            }
+        foreach (array_slice($template['courses'], 0, CanteenMenuModel::MAX_COURSES) as $index => [$name, $note]) {
             $this->courses[$index] ??= $this->blankCourse();
             $this->courses[$index]['name'] = $name;
             $this->courses[$index]['note'] = $note;
@@ -316,7 +313,7 @@ class CanteenMenu extends Component
     {
         $menu = $this->product_id ? CanteenMenuModel::where('product_id', $this->product_id)->first() : null;
 
-        $this->courses = $this->normalise($menu?->courses ?? []);
+        $this->courses = $this->normalise($menu->courses ?? []);
     }
 
     /** Every course with a slot for every weekday, so the grid can bind to it. */

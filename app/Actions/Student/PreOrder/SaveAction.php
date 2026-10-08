@@ -126,7 +126,7 @@ class SaveAction
         foreach ($productIds as $productId) {
             foreach ($weekdays as $weekday) {
                 if (! MenuAction::servedOn($menus->get($productId), $weekday)) {
-                    $name = $menus->get($productId)->product?->name ?? 'This meal';
+                    $name = $menus->get($productId)->product->name ?? 'This meal';
 
                     throw new Exception($name.' is not served on '.self::WEEKDAY_NAMES[$weekday].'s.', 1);
                 }

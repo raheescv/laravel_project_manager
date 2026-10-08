@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\JournalEntry;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -18,7 +19,7 @@ class ExpenseExport implements FromQuery, WithColumnFormatting, WithEvents, With
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $query = JournalEntry::expenseList($this->filters)
             ->with('account:id,name', 'journal:id,date,description');

@@ -100,16 +100,19 @@ class StorefrontCheckout extends Model implements AuditableContracts
         static::addGlobalScope(new AssignedBranchScope());
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<Sale, $this> */
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function refundRequestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'refund_requested_by');

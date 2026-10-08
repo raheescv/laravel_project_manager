@@ -16,7 +16,7 @@ class UpdateAction
 
     public $model;
 
-    public function execute($data, $saleId, $userId)
+    public function execute($data, int|string|null $saleId, $userId)
     {
         try {
             $this->userId = $userId;
@@ -41,22 +41,20 @@ class UpdateAction
 
                 validationHelper(Sale::rules($saleId), $data);
                 // to avoid storing the audit log
-                if (true) {
-                    if ($model->gross_amount == $data['gross_amount']) {
-                        $data['gross_amount'] = $model->gross_amount;
-                    }
-                    if ($model->item_discount == $data['item_discount']) {
-                        $data['item_discount'] = $model->item_discount;
-                    }
-                    if ($model->tax_amount == $data['tax_amount']) {
-                        $data['tax_amount'] = $model->tax_amount;
-                    }
-                    if ($model->total == $data['total']) {
-                        $data['total'] = $model->total;
-                    }
-                    if ($model->paid == ($data['paid'] ?? 0)) {
-                        $data['paid'] = $model->paid;
-                    }
+                if ($model->gross_amount == $data['gross_amount']) {
+                    $data['gross_amount'] = $model->gross_amount;
+                }
+                if ($model->item_discount == $data['item_discount']) {
+                    $data['item_discount'] = $model->item_discount;
+                }
+                if ($model->tax_amount == $data['tax_amount']) {
+                    $data['tax_amount'] = $model->tax_amount;
+                }
+                if ($model->total == $data['total']) {
+                    $data['total'] = $model->total;
+                }
+                if ($model->paid == ($data['paid'] ?? 0)) {
+                    $data['paid'] = $model->paid;
                 }
                 if ($data['paid'] == $model->paid) {
                     unset($model['paid']);

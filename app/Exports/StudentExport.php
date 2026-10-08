@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Actions\Student\GetBalanceAction;
 use App\Exports\Templates\StudentImportTemplate;
 use App\Livewire\Student\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -20,7 +21,7 @@ class StudentExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return Table::filteredQuery($this->filters)
             ->with(['guardians' => fn ($q) => $q->orderByDesc('guardian_student.is_primary')])

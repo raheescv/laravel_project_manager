@@ -150,6 +150,7 @@ class BuildDaySessionReportAction
             $add($payment['payment_method'], (float) $payment['amount'], 'due');
         }
 
+        /** @var array<string, array{method: string, invoice: float, due: float}> $methods */
         return array_values($methods);
     }
 

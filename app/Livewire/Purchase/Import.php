@@ -219,7 +219,7 @@ class Import extends Component
 
         $this->truncated = count($rows) >= self::MAX_ROWS;
         $this->putRawRows($rows);
-        $this->previewRows = array_slice(array_values($rows), 0, 5);
+        $this->previewRows = array_slice($rows, 0, 5);
         $this->fileName = $this->file->getClientOriginalName();
         $this->autoMap();
     }

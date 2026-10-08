@@ -132,6 +132,7 @@ class Page extends Component
     protected function loadInitialData()
     {
         // Load all initial data in parallel using Redis
+        // @phpstan-ignore arguments.count (resolved against ext-redis \Redis::pipeline(); Laravel's PhpRedisConnection::pipeline() takes the callback)
         $data = Redis::pipeline(function ($pipe): void {
             $pipe->get($this->cachePrefix.'payment_methods');
             $pipe->get($this->cachePrefix.'employees');
@@ -578,6 +579,7 @@ class Page extends Component
         }
         if (in_array($key, ['sales.other_discount'])) {
             if (str_ends_with($value, '%')) {
+                /** @var numeric-string $percentage */
                 $percentage = rtrim($value, '%');
                 $value = round($this->sales['total'] / 100 * $percentage, 2);
                 if ($value > $this->sales['total']) {
@@ -1039,8 +1041,8 @@ class Page extends Component
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'sale.edit' : 'sale.create'), 403);
         $this->validate();
+        $oldStatus = $this->sales['status'];
         try {
-            $oldStatus = $this->sales['status'];
             DB::beginTransaction();
             if (! count($this->items)) {
                 throw new Exception('Please add any item', 1);

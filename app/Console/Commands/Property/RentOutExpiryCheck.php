@@ -34,8 +34,8 @@ class RentOutExpiryCheck extends Command
 
         foreach ($expiringRentOuts as $rentOut) {
             $daysLeft = Carbon::today()->diffInDays($rentOut->end_date);
-            $customerName = $rentOut->customer?->name ?? 'N/A';
-            $propertyName = $rentOut->property?->name ?? 'N/A';
+            $customerName = $rentOut->customer->name ?? 'N/A';
+            $propertyName = $rentOut->property->name ?? 'N/A';
 
             $this->warn("Rent Out ID {$rentOut->id} - Customer: {$customerName}, Property: {$propertyName}, Expires in {$daysLeft} days ({$rentOut->end_date->format('Y-m-d')})");
 

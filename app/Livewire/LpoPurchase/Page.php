@@ -80,7 +80,7 @@ class Page extends Component
         $lpo = LocalPurchaseOrder::with('items')->find($this->local_purchase_order_id);
         $item = $lpo?->items->firstWhere('product_id', $productId);
 
-        return (float) ($item?->quantity ?? 0);
+        return (float) ($item->quantity ?? 0);
     }
 
     public function getLpoItems()
@@ -109,7 +109,7 @@ class Page extends Component
                 'account_id' => $item->account_id,
                 'product_name' => $item->product->name,
                 'unit_id' => $item->product->unit_id ?? null,
-                'unit_name' => $item->product->unit?->name ?? '-',
+                'unit_name' => $item->product->unit->name ?? '-',
                 'ordered_quantity' => (float) $item->quantity,
                 'quantity' => (float) $item->quantity,
                 'unit_price' => (float) $item->rate,

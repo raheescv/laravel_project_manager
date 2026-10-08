@@ -64,26 +64,31 @@ class IssueItem extends Model implements AuditableContracts
         ], $merge);
     }
 
+    /** @return BelongsTo<Issue, $this> */
     public function issue(): BelongsTo
     {
         return $this->belongsTo(Issue::class);
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** @return BelongsTo<Inventory, $this> */
     public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class, 'inventory_id');
     }
 
+    /** @return BelongsTo<IssueItem, $this> */
     public function sourceIssueItem(): BelongsTo
     {
         return $this->belongsTo(IssueItem::class, 'source_issue_item_id');
     }
 
+    /** @return HasMany<IssueItem, $this> */
     public function returnedItems(): HasMany
     {
         return $this->hasMany(IssueItem::class, 'source_issue_item_id');

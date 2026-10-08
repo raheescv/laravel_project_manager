@@ -71,6 +71,7 @@ class ImportChecklistItemsJob implements ShouldQueue
 
         event(new FileImportProgress($this->userId, 'ChecklistItem', 100));
 
+        // @phpstan-ignore if.alwaysTrue (PHPStan remembers the earlier file_exists() check; the import may have removed the file since)
         if (file_exists($file)) {
             unlink($file);
         }

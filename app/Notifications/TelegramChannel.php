@@ -17,6 +17,7 @@ class TelegramChannel
     public function send(object $notifiable, Notification $notification): void
     {
         if ($notifiable->is_telegram_enabled) {
+            // @phpstan-ignore method.notFound (duck-typed channel contract: notifications routed to this channel define toTelegram())
             $data = $notification->toTelegram($notifiable);
             $messageData = [
                 'mobile' => $notifiable->mobile,

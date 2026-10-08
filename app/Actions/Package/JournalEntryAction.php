@@ -84,7 +84,7 @@ class JournalEntryAction
                 $accounts['sale'],
                 $package->account_id,
                 0,
-                $package->amount,
+                (float) $package->amount,
                 $remarks,
                 self::MODEL_PACKAGE,
                 $package->id
@@ -102,7 +102,7 @@ class JournalEntryAction
             $this->makeEntryPair(
                 $packagePayment->payment_method_id,
                 $package->account_id,
-                $packagePayment->amount,
+                (float) $packagePayment->amount,
                 0,
                 $remarks,
                 self::MODEL_PACKAGE_PAYMENT,

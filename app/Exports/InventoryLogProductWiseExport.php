@@ -26,6 +26,7 @@ class InventoryLogProductWiseExport implements FromCollection, ShouldAutoSize, W
 
     public function collection(): Collection
     {
+        /** @var Collection<int, InventoryLog|\stdClass> $rows */
         $rows = $this->query()->get();
 
         return $rows->push((object) [
@@ -37,6 +38,9 @@ class InventoryLogProductWiseExport implements FromCollection, ShouldAutoSize, W
         ]);
     }
 
+    /**
+     * @return Builder<InventoryLog>
+     */
     public function query(): Builder
     {
         $latestDates = $this->baseQuery()

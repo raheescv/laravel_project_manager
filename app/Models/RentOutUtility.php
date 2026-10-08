@@ -31,11 +31,13 @@ class RentOutUtility extends Model implements AuditableContracts
         ];
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
     }
 
+    /** @return HasMany<RentOutUtilityTerm, $this> */
     public function terms(): HasMany
     {
         return $this->hasMany(RentOutUtilityTerm::class);

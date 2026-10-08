@@ -115,7 +115,7 @@ class OnlinePayments extends Component
         }
 
         $message = match ($checkout->status) {
-            StorefrontCheckout::STATUS_PAID => 'Paid — sale '.($checkout->sale?->invoice_no ?? '').' recorded.',
+            StorefrontCheckout::STATUS_PAID => 'Paid — sale '.($checkout->sale->invoice_no ?? '').' recorded.',
             StorefrontCheckout::STATUS_FAILED => 'Tap reports the payment was not completed.',
             StorefrontCheckout::STATUS_REVIEW => 'Still needs review: '.$checkout->failure_reason,
             default => 'The customer has not finished paying yet.',

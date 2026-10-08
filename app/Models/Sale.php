@@ -13,6 +13,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -236,67 +238,80 @@ class Sale extends Model implements AuditableContracts
         return implode(', ', $employeeNames);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function saleDaySession()
+    /** @return BelongsTo<SaleDaySession, $this> */
+    public function saleDaySession(): BelongsTo
     {
         return $this->belongsTo(SaleDaySession::class);
     }
 
-    public function createdUser()
+    /** @return BelongsTo<User, $this> */
+    public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedUser()
+    /** @return BelongsTo<User, $this> */
+    public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function cancelledUser()
+    /** @return BelongsTo<User, $this> */
+    public function cancelledUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
     }
 
-    public function items()
+    /** @return HasMany<SaleItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
     }
 
-    public function comboOffers()
+    /** @return HasMany<SaleComboOffer, $this> */
+    public function comboOffers(): HasMany
     {
         return $this->hasMany(SaleComboOffer::class);
     }
 
-    public function payments()
+    /** @return HasMany<SalePayment, $this> */
+    public function payments(): HasMany
     {
         return $this->hasMany(SalePayment::class);
     }
 
-    public function journal()
+    /** @return HasOne<Journal, $this> */
+    public function journal(): HasOne
     {
         return $this->hasOne(Journal::class, 'model_id')->where('model', 'Sale');
     }
 
-    public function journals()
+    /** @return HasMany<Journal, $this> */
+    public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'Sale');
     }
 
-    public function ledgers()
+    /** @return HasMany<Ledger, $this> */
+    public function ledgers(): HasMany
     {
         return $this->hasMany(Ledger::class, 'model_id')->where('model', 'Sale');
     }

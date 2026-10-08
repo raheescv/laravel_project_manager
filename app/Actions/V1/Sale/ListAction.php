@@ -60,8 +60,8 @@ class ListAction
         return [
             'data' => SaleListResource::collection($sales->items()),
             'summary' => [
-                'invoices' => (int) $summary->invoices,
-                'total_paid' => round((float) $summary->total_paid, 2),
+                'invoices' => (int) $summary->getAttribute('invoices'),
+                'total_paid' => round((float) $summary->getAttribute('total_paid'), 2),
             ],
             'pagination' => [
                 'current_page' => $sales->currentPage(),

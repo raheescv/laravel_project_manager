@@ -91,10 +91,8 @@ class MarketInfo extends Component
             // Handle different response formats
             if (isset($response['data']) && is_array($response['data'])) {
                 $indices = $response['data'];
-            } elseif (is_array($response)) {
-                $indices = $response;
             } else {
-                return [];
+                $indices = $response;
             }
 
             // Sort by change percentage and take top 5
@@ -121,10 +119,8 @@ class MarketInfo extends Component
             // Handle different response formats
             if (isset($response['data']) && is_array($response['data'])) {
                 $data = $response['data'];
-            } elseif (is_array($response)) {
-                $data = $response;
             } else {
-                return [];
+                $data = $response;
             }
 
             if (! $ascending && $criteria === 'CHANGE') {

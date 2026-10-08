@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Actions\Property\PropertyLead\GetAction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,7 +17,7 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return (new GetAction())->execute($this->filters)['list']
             ->orderByDesc('id');
@@ -70,7 +71,7 @@ class PropertyLeadExport implements FromQuery, WithHeadings, WithMapping, WithSt
             $row->group?->name,
             $row->assignee?->name,
             $row->assign_date?->format('Y-m-d'),
-            $row->country?->name ?? $row->nationality,
+            $row->country->name ?? $row->nationality,
             $row->location,
             $row->meeting_date?->format('Y-m-d'),
             $row->meeting_time,

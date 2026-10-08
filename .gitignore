@@ -30,3 +30,4 @@ dump.rdb
 .cache/*
 /.cache/puppeteer
 /.claude/worktrees
+phpstan.neon

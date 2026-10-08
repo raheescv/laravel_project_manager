@@ -104,7 +104,7 @@ class BookAction
             return ['success' => false, 'message' => $th->getMessage()];
         }
 
-        if (($return['success'] ?? false) && $wasReschedule && $return['data'] instanceof PropertyAppointment) {
+        if ($wasReschedule && $return['data'] instanceof PropertyAppointment) {
             // After the commit, and never able to fail the booking itself.
             (new NotifyAction())->execute($return['data'], 'appointment_rescheduled', $userId);
         }

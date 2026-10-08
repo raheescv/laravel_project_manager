@@ -41,16 +41,19 @@ class UniversalUnitConversion extends Model
         ], $merge);
     }
 
+    /** @return BelongsTo<Unit, $this> */
     public function baseUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'base_unit_id');
     }
 
+    /** @return BelongsTo<Unit, $this> */
     public function subUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'sub_unit_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

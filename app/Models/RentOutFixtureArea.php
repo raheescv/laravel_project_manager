@@ -34,11 +34,13 @@ class RentOutFixtureArea extends Model implements AuditableContracts
         'owner_signed_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class, 'rent_out_id');
     }
 
+    /** @return HasMany<RentOutFixtureEntry, $this> */
     public function entries(): HasMany
     {
         return $this->hasMany(RentOutFixtureEntry::class, 'rent_out_fixture_area_id')
@@ -46,6 +48,7 @@ class RentOutFixtureArea extends Model implements AuditableContracts
             ->orderBy('id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
@@ -82,7 +85,7 @@ class RentOutFixtureArea extends Model implements AuditableContracts
     public function statusCounts(): array
     {
         return $this->entries
-            ->groupBy(fn ($e) => $e->status?->value ?? FixtureStatus::Pending->value)
+            ->groupBy(fn ($e) => $e->status->value ?? FixtureStatus::Pending->value)
             ->map->count()
             ->all();
     }

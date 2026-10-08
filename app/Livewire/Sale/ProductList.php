@@ -60,11 +60,11 @@ class ProductList extends Component
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
-                    'type' => $item->type,
+                    'type' => $item->getAttribute('type'),
                     'quantity' => $item->quantity,
-                    'name' => $item->name,
+                    'name' => $item->getAttribute('name'),
                     'mrp' => $item->product->saleTypePrice($sale_type),
-                    'thumbnail' => $item->thumbnail,
+                    'thumbnail' => $item->getAttribute('thumbnail'),
                 ];
             })
             ->toArray();

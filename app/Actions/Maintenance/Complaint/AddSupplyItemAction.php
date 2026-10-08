@@ -52,7 +52,7 @@ class AddSupplyItemAction
             // Price defaults to product cost when the caller omits it.
             $unitPrice = array_key_exists('unit_price', $data) && $data['unit_price'] !== null
                 ? (float) $data['unit_price']
-                : (float) ($product?->cost ?? 0);
+                : (float) ($product->cost ?? 0);
 
             $item = DB::transaction(function () use ($mc, $data, $quantity, $unitPrice, $userId) {
                 $sr = $this->getOrCreateSupplyRequest($mc, $userId);

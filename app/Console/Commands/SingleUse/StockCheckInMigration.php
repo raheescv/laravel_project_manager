@@ -97,7 +97,7 @@ class StockCheckInMigration extends Command
             ->whereNotNull('products.second_reference_no');
 
         $primaryInventory = $primaryInventoryQuery->get()->keyBy(function ($item) {
-            return $item->second_reference_no.'_'.$item->branch_id;
+            return $item->getAttribute('second_reference_no').'_'.$item->branch_id;
         });
 
         $this->info('Found '.$primaryInventory->count().' inventory records in primary database');

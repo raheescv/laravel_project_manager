@@ -4,6 +4,7 @@ namespace App\Exports\RentOut;
 
 use App\Models\Account;
 use App\Models\RentOutTransaction;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -22,7 +23,7 @@ class ServiceExport implements FromQuery, WithHeadings, WithMapping, WithStyles
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $query = RentOutTransaction::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'account'])

@@ -61,7 +61,7 @@ class ListAction
 
                 return $date !== null && (! $from || $date->gte($from)) && (! $to || $date->lte($to));
             })
-            ->sortBy(fn (array $job) => RentOutChecklistState::scheduledDate($job['rentOut'], $job['phase'])?->timestamp ?? PHP_INT_MAX)
+            ->sortBy(fn (array $job) => RentOutChecklistState::scheduledDate($job['rentOut'], $job['phase'])->timestamp ?? PHP_INT_MAX)
             ->values();
     }
 

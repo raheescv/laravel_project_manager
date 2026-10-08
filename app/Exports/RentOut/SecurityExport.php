@@ -3,6 +3,7 @@
 namespace App\Exports\RentOut;
 
 use App\Models\RentOutSecurity;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -14,7 +15,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         return RentOutSecurity::query()
             ->with(['rentOut.customer', 'rentOut.property', 'rentOut.building', 'rentOut.group', 'rentOut.type', 'account'])
@@ -54,7 +55,7 @@ class SecurityExport implements FromQuery, WithHeadings, WithMapping
             $row->rentOut?->type?->name,
             $row->rentOut?->property?->number,
             $row->type?->label(),
-            $row->account?->name ?? $row->payment_mode?->label(),
+            $row->account->name ?? $row->payment_mode?->label(),
             $row->cheque_no,
             $row->bank_name,
             $row->due_date?->format('d-m-Y'),

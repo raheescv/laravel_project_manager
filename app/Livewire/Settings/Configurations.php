@@ -27,7 +27,7 @@ class Configurations extends Component
         $this->payment_methods = Configuration::where('key', 'payment_methods')->value('value');
         $this->default_payment_method_id = Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1;
         $this->country_id = Configuration::where('key', 'country_id')->value('value');
-        $this->payment_methods = json_decode($this->payment_methods, 1);
+        $this->payment_methods = json_decode($this->payment_methods, true);
         $this->paymentMethods = [];
         if ($this->payment_methods) {
             $this->paymentMethods = Account::whereIn('id', $this->payment_methods)->pluck('name', 'id')->toArray();

@@ -61,8 +61,6 @@ class StorefrontCheckoutController extends Controller
             report($e);
 
             return $this->sendServerError($e->getMessage() ?: 'Checkout could not be started. Please try again.');
-
-            return $this->sendServerError('Checkout could not be started. Please try again.');
         }
     }
 

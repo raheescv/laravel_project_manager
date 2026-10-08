@@ -56,36 +56,43 @@ class TailoringOrderMeasurement extends Model implements AuditableContracts
     }
 
     // Relationships
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<TailoringOrder, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(TailoringOrder::class, 'tailoring_order_id');
     }
 
+    /** @return BelongsTo<TailoringCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(TailoringCategory::class, 'tailoring_category_id');
     }
 
+    /** @return BelongsTo<TailoringCategoryModel, $this> */
     public function categoryModel(): BelongsTo
     {
         return $this->belongsTo(TailoringCategoryModel::class, 'tailoring_category_model_id');
     }
 
+    /** @return BelongsTo<TailoringCategoryModelType, $this> */
     public function categoryModelType(): BelongsTo
     {
         return $this->belongsTo(TailoringCategoryModelType::class, 'tailoring_category_model_type_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updatedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');

@@ -17,11 +17,13 @@ class ProductRawMaterial extends Model
         'quantity',
     ];
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function rawMaterial(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'raw_material_id');

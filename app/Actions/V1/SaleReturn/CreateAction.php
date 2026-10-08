@@ -156,7 +156,7 @@ class CreateAction
             $returnable = max(0, round((float) $saleItem->quantity - (float) ($alreadyReturned[$saleItemId] ?? 0), 3));
 
             if ($quantity > $returnable + 0.0001) {
-                $name = $saleItem->product?->name ?? "item #{$saleItemId}";
+                $name = $saleItem->product->name ?? "item #{$saleItemId}";
                 throw new RuntimeException("Return quantity for {$name} cannot exceed the remaining {$returnable}.");
             }
 

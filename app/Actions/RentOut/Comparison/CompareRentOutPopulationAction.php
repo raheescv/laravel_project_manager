@@ -2,7 +2,7 @@
 
 namespace App\Actions\RentOut\Comparison;
 
-use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Connection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -140,7 +140,7 @@ class CompareRentOutPopulationAction
         ];
     }
 
-    private function assertRequiredTablesExist(ConnectionInterface $old, ConnectionInterface $new): void
+    private function assertRequiredTablesExist(Connection $old, Connection $new): void
     {
         foreach ([[$old, 'rentouts', 'legacy'], [$new, 'rent_outs', 'new'], [$new, 'accounts', 'new']] as [$connection, $table, $label]) {
             if (! $connection->getSchemaBuilder()->hasTable($table)) {
@@ -152,7 +152,7 @@ class CompareRentOutPopulationAction
     /**
      * @param  array<int>  $ids
      */
-    private function headerQuery(ConnectionInterface $connection, string $table, array $ids, ?string $type)
+    private function headerQuery(Connection $connection, string $table, array $ids, ?string $type)
     {
         return $connection->table($table)
             ->when($ids !== [], fn ($query) => $query->whereIn('id', $ids))
@@ -163,7 +163,7 @@ class CompareRentOutPopulationAction
     /**
      * @return array<int, string>
      */
-    private function paymentModeMap(ConnectionInterface $old): array
+    private function paymentModeMap(Connection $old): array
     {
         if (! $old->getSchemaBuilder()->hasTable('account_heads')) {
             return [];
@@ -172,7 +172,7 @@ class CompareRentOutPopulationAction
         return $old->table('account_heads')
             ->whereIn('account_category_id', [16, 17])
             ->pluck('name', 'id')
-            ->map(fn ($name): string => $this->normalisePaymentMode($name) ?? 'cash')
+            ->map(fn ($name): string => $this->normalisePaymentMode($name))
             ->all();
     }
 
@@ -251,7 +251,7 @@ class CompareRentOutPopulationAction
      * @param  array<int, string>  $paymentModes
      * @return array<string, array<int, array<string, mixed>>>
      */
-    private function loadChildComparisons(ConnectionInterface $old, ConnectionInterface $new, array $ids, array $paymentModes): array
+    private function loadChildComparisons(Connection $old, Connection $new, array $ids, array $paymentModes): array
     {
         $result = [];
 
@@ -300,8 +300,8 @@ class CompareRentOutPopulationAction
      * @return array<int, array<string, mixed>>
      */
     private function loadServiceComparisons(
-        ConnectionInterface $old,
-        ConnectionInterface $new,
+        Connection $old,
+        Connection $new,
         array $ids,
         array $paymentModes,
     ): array {
@@ -473,8 +473,8 @@ class CompareRentOutPopulationAction
     }
 
     /**
-     * @param  Collection<int, object>  $oldRows
-     * @param  Collection<int, object>  $newRows
+     * @param  Collection<int, covariant object>  $oldRows
+     * @param  Collection<int, covariant object>  $newRows
      * @param  array<string, array{string, string, string}>  $fields
      * @param  array<int, string>  $paymentModes
      * @return array<string, mixed>
@@ -525,7 +525,7 @@ class CompareRentOutPopulationAction
      * @param  array<int>  $paymentModeIds
      * @return array<int, array{rows: int, debit: float, credit: float}>
      */
-    private function oldLedger(ConnectionInterface $old, array $ids, array $paymentModeIds): array
+    private function oldLedger(Connection $old, array $ids, array $paymentModeIds): array
     {
         $schema = $old->getSchemaBuilder();
         if (! $schema->hasTable('journal_views') && ! $schema->hasView('journal_views')) {
@@ -551,7 +551,7 @@ class CompareRentOutPopulationAction
      * @param  array<int>  $ids
      * @return array<int, array{rows: int, debit: float, credit: float}>
      */
-    private function newLedger(ConnectionInterface $new, array $ids): array
+    private function newLedger(Connection $new, array $ids): array
     {
         $result = [];
         if ($new->getSchemaBuilder()->hasTable('rent_out_transactions')) {
@@ -645,7 +645,7 @@ class CompareRentOutPopulationAction
             : $this->normaliseValue($value);
     }
 
-    private function normaliseSecurityStatus(mixed $value): ?string
+    private function normaliseSecurityStatus(mixed $value): string
     {
         return match ($this->normaliseValue($value)) {
             'deposited' => 'deposited',
@@ -657,7 +657,7 @@ class CompareRentOutPopulationAction
         };
     }
 
-    private function normalisePaymentMode(mixed $value): ?string
+    private function normalisePaymentMode(mixed $value): string
     {
         $value = $this->normaliseValue($value);
         if ($value === null) {

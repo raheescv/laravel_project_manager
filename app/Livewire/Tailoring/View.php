@@ -107,7 +107,7 @@ class View extends Component
         }
 
         $referenceItem = $items->first();
-        $activeMeasurements = $referenceItem->category?->activeMeasurements ?? collect();
+        $activeMeasurements = $referenceItem->category->activeMeasurements ?? collect();
         $sectionGroups = [
             'dimensions' => 'basic_body',
             'components' => 'collar_cuff',

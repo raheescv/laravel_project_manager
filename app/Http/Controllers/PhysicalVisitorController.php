@@ -6,7 +6,6 @@ use App\Models\PhysicalVisitor;
 use App\Models\User;
 use App\Services\IDCardScannerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class PhysicalVisitorController extends Controller
@@ -67,13 +66,12 @@ class PhysicalVisitorController extends Controller
         try {
             // Scan ID card
             $scanResult = $this->scannerService->scanIDCard($request->file('id_card_image'));
-            dd($scanResult);
             // Store the ID card image
             $imagePath = $request->file('id_card_image')->store('visitor-id-cards', 'public');
 
             // Create visitor record
             $visitor = PhysicalVisitor::create([
-                'branch_id' => Auth::user()->branch_id,
+                'branch_id' => session('branch_id'),
                 'name' => $scanResult['name'],
                 'date_of_birth' => $scanResult['dob'],
                 'id_card_number' => $scanResult['id_number'],
@@ -135,12 +133,6 @@ class PhysicalVisitorController extends Controller
         $startDate = $request->start_date ? now()->parse($request->start_date) : now()->startOfMonth();
         $endDate = $request->end_date ? now()->parse($request->end_date) : now();
 
-        $stats = PhysicalVisitor::getVisitorStats($startDate, $endDate);
-
-        if ($request->wantsJson()) {
-            return response()->json($stats);
-        }
-
-        return view('visitors.stats', compact('stats', 'startDate', 'endDate'));
+        return response()->json(PhysicalVisitor::getVisitorStats($startDate, $endDate));
     }
 }

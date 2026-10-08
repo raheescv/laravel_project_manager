@@ -20,7 +20,7 @@ use Livewire\Component;
  * pushed into SQL with withSum/withCount instead of loading payment terms.
  *
  * @property-read Property|null $property
- * @property-read Collection $agreements
+ * @property-read Collection<int, RentOut> $agreements
  * @property-read RentOut|null $live
  * @property-read array<string, mixed> $stats
  * @property-read array<string, mixed>|null $current
@@ -48,7 +48,11 @@ class View extends Component
             ->find($this->propertyId);
     }
 
-    /** All agreements raised on this unit, newest first, with their money rolled up in SQL. */
+    /**
+     * All agreements raised on this unit, newest first, with their money rolled up in SQL.
+     *
+     * @return Collection<int, RentOut>
+     */
     #[Computed]
     public function agreements(): Collection
     {
@@ -72,7 +76,7 @@ class View extends Component
     public function live(): ?RentOut
     {
         return $this->agreements->first(
-            fn (RentOut $a) => in_array($a->status?->value, ['occupied', 'booked'], true)
+            fn (RentOut $a) => in_array($a->status->value, ['occupied', 'booked'], true)
         );
     }
 
@@ -88,7 +92,7 @@ class View extends Component
     {
         $today = Carbon::today();
         $timeline = $this->agreements
-            ->reject(fn (RentOut $a) => $a->status?->value === 'cancelled')
+            ->reject(fn (RentOut $a) => $a->status->value === 'cancelled')
             ->sortBy('start_date')
             ->values();
 
@@ -98,12 +102,8 @@ class View extends Component
         $cursor = null;
 
         foreach ($timeline as $agreement) {
-            $start = $agreement->start_date?->copy()->startOfDay();
-            $end = ($agreement->vacate_date ?: $agreement->end_date)?->copy()->startOfDay();
-
-            if (! $start || ! $end) {
-                continue;
-            }
+            $start = $agreement->start_date->copy()->startOfDay();
+            $end = ($agreement->vacate_date ?: $agreement->end_date)->copy()->startOfDay();
 
             $end = $end->gt($today) ? $today->copy() : $end;
 
@@ -130,7 +130,7 @@ class View extends Component
         $trackedDays = $firstStart ? (int) $firstStart->diffInDays($today) : 0;
 
         $tenancyMonths = $timeline
-            ->map(fn (RentOut $a) => $a->start_date && $a->end_date ? $a->start_date->diffInMonths($a->end_date) : null)
+            ->map(fn (RentOut $a) => $a->start_date->diffInMonths($a->end_date))
             ->filter();
 
         return [
@@ -161,19 +161,19 @@ class View extends Component
         $today = Carbon::today();
         $start = $live->start_date;
         $end = $live->end_date;
-        $span = $start && $end ? (int) $start->diffInDays($end) : 0;
-        $done = $start ? max(0, min($span, (int) $start->diffInDays($today))) : 0;
-        $net = (float) $live->terms_total;
+        $span = (int) $start->diffInDays($end);
+        $done = max(0, min($span, (int) $start->diffInDays($today)));
+        $net = (float) $live->getAttribute('terms_total');
 
         return [
             'agreement' => $live,
             'elapsed' => $span > 0 ? (int) round($done / $span * 100) : 0,
-            'days_left' => $end ? (int) $today->diffInDays($end, false) : 0,
+            'days_left' => (int) $today->diffInDays($end, false),
             'total' => $net,
-            'paid' => (float) $live->terms_paid,
-            'balance' => (float) $live->terms_balance,
-            'security' => (float) $live->security_total,
-            'collected_percent' => $net > 0 ? min(100, (int) round($live->terms_paid / $net * 100)) : 0,
+            'paid' => (float) $live->getAttribute('terms_paid'),
+            'balance' => (float) $live->getAttribute('terms_balance'),
+            'security' => (float) $live->getAttribute('security_total'),
+            'collected_percent' => $net > 0 ? min(100, (int) round($live->getAttribute('terms_paid') / $net * 100)) : 0,
         ];
     }
 

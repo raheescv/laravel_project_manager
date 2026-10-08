@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LocalPurchaseOrderItem extends Model
@@ -20,17 +21,20 @@ class LocalPurchaseOrderItem extends Model
         // 'total',
     ];
 
-    public function order()
+    /** @return BelongsTo<LocalPurchaseOrder, $this> */
+    public function order(): BelongsTo
     {
         return $this->belongsTo(LocalPurchaseOrder::class, 'local_purchase_order_id');
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }

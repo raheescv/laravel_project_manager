@@ -156,7 +156,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
         return $items;
     }
 
-    private function createItemFromRow(array $row, int $employeeId): ?array
+    private function createItemFromRow(array $row, int $employeeId): array
     {
         // Get product
         $productId = null;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\V1\SaleReturn;
 
+use App\Models\Sale;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,6 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * the remaining returnable quantity so the app can cap the qty steppers. The
  * `returned_quantity` / `returnable_quantity` attributes are populated by
  * V1\SaleReturn\ReturnableSaleAction.
+ *
+ * @mixin Sale
  */
 class ReturnableSaleResource extends JsonResource
 {

@@ -27,7 +27,7 @@ class EmployeeBranchAssignCommand extends Command
             return Command::FAILURE;
         }
 
-        $sheets = Excel::toArray([], $filePath);
+        $sheets = Excel::toArray(new \stdClass(), $filePath);
         $rows = $sheets[0] ?? [];
 
         foreach ($rows as $index => $row) {

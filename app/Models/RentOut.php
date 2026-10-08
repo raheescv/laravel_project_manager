@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
+/**
+ * @property AgreementType|null $agreement_type
+ */
 class RentOut extends Model implements AuditableContracts
 {
     use Auditable, BelongsToTenant, SoftDeletes;
@@ -198,86 +201,103 @@ class RentOut extends Model implements AuditableContracts
     }
 
     // Relationships
+    /** @return BelongsTo<Account, $this> */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function salesman(): BelongsTo
     {
         return $this->belongsTo(User::class, 'salesman_id');
     }
 
+    /** @return HasMany<PropertyAppointment, $this> */
     public function appointments(): HasMany
     {
         return $this->hasMany(PropertyAppointment::class)->latest('id');
     }
 
+    /** @return BelongsTo<Property, $this> */
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class)->withTrashed();
     }
 
+    /** @return BelongsTo<PropertyBuilding, $this> */
     public function building(): BelongsTo
     {
         return $this->belongsTo(PropertyBuilding::class, 'property_building_id')->withTrashed();
     }
 
+    /** @return BelongsTo<PropertyGroup, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
     }
 
+    /** @return BelongsTo<PropertyType, $this> */
     public function type(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class, 'property_type_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function managementFeePaymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'management_fee_payment_method_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function downPaymentPaymentMethod(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'down_payment_payment_method_id');
     }
 
+    /** @return HasMany<RentOutSecurity, $this> */
     public function securities(): HasMany
     {
         return $this->hasMany(RentOutSecurity::class);
     }
 
+    /** @return HasMany<RentOutExtend, $this> */
     public function extends(): HasMany
     {
         return $this->hasMany(RentOutExtend::class);
     }
 
+    /** @return HasMany<RentOutCheque, $this> */
     public function cheques(): HasMany
     {
         return $this->hasMany(RentOutCheque::class);
     }
 
+    /** @return HasMany<RentOutUtilityTerm, $this> */
     public function utilityTerms(): HasMany
     {
         return $this->hasMany(RentOutUtilityTerm::class);
     }
 
+    /** @return HasMany<RentOutService, $this> */
     public function services(): HasMany
     {
         return $this->hasMany(RentOutService::class);
     }
 
+    /** @return HasMany<RentOutNote, $this> */
     public function notes(): HasMany
     {
         return $this->hasMany(RentOutNote::class);
     }
 
+    /** @return HasMany<RentOutDocument, $this> */
     public function documents(): HasMany
     {
         return $this->hasMany(RentOutDocument::class);
@@ -350,67 +370,83 @@ class RentOut extends Model implements AuditableContracts
         return self::parseDocumentTypeIds($this->mandatory_documents);
     }
 
+    /** @return HasMany<RentOutPaymentTerm, $this> */
     public function paymentTerms(): HasMany
     {
         return $this->hasMany(RentOutPaymentTerm::class);
     }
 
+    /** @return HasMany<RentOutTransaction, $this> */
     public function rentOutTransactions(): HasMany
     {
         return $this->hasMany(RentOutTransaction::class);
     }
 
+    /** @return HasMany<Journal, $this> */
     public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', self::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function submittedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitted_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function financialApprovedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'financial_approved_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    /** @return HasMany<RentOutChecklistLine, $this> */
     public function checklistLines(): HasMany
     {
         return $this->hasMany(RentOutChecklistLine::class, 'rent_out_id')->orderBy('sort_order')->orderBy('id');
     }
 
+    /** @return HasMany<RentOutChecklistSignature, $this> */
     public function checklistSignatures(): HasMany
     {
         return $this->hasMany(RentOutChecklistSignature::class, 'rent_out_id');
     }
 
-    /** Fixture Comments blocks — one per area of the unit, each holding its own entries. */
+    /**
+     * Fixture Comments blocks — one per area of the unit, each holding its own entries.
+     *
+     * @return HasMany<RentOutFixtureArea, $this>
+     */
     public function fixtureAreas(): HasMany
     {
         return $this->hasMany(RentOutFixtureArea::class, 'rent_out_id')->orderBy('sort_order')->orderBy('id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function facilityCoordinator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'facility_coordinator_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function leasingCoordinator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'leasing_coordinator_id');
@@ -420,7 +456,7 @@ class RentOut extends Model implements AuditableContracts
     public function getAgreementNoAttribute(): string
     {
         $yearCode = date('y', strtotime($this->start_date));
-        $id = str_pad($this->id, 3, '0', STR_PAD_LEFT);
+        $id = str_pad((string) $this->id, 3, '0', STR_PAD_LEFT);
 
         if ($this->agreement_type === AgreementType::Rental) {
             return "BASL/{$yearCode}-{$id}";
@@ -432,7 +468,7 @@ class RentOut extends Model implements AuditableContracts
     public function getReferenceNoAttribute(): string
     {
         $yearCode = date('y', strtotime($this->start_date));
-        $id = str_pad($this->id, 3, '0', STR_PAD_LEFT);
+        $id = str_pad((string) $this->id, 3, '0', STR_PAD_LEFT);
 
         if ($this->agreement_type === AgreementType::Rental) {
             return "BAS/L/{$yearCode} - {$id}";
@@ -457,7 +493,7 @@ class RentOut extends Model implements AuditableContracts
         $role = $role instanceof \App\Enums\RentOut\ChecklistSignatoryRole ? $role->value : $role;
 
         return $this->checklistSignatures->first(function ($s) use ($phase, $role) {
-            return $s->phase?->value === $phase && $s->role?->value === $role;
+            return $s->phase->value === $phase && $s->role->value === $role;
         });
     }
 
@@ -478,7 +514,7 @@ class RentOut extends Model implements AuditableContracts
 
     public function daysUntil($date): int
     {
-        return Carbon::now()->diffInDays($date, false);
+        return (int) Carbon::now()->diffInDays($date, false);
     }
 
     public function vacateDaysLeft(): string
@@ -500,8 +536,8 @@ class RentOut extends Model implements AuditableContracts
 
     public function remaining(): int
     {
-        $months = date('m', strtotime($this->start_date)) - date('m') + 1
-            + 12 * (date('Y', strtotime($this->end_date)) - date('Y'));
+        $months = (int) date('m', strtotime($this->start_date)) - (int) date('m') + 1
+            + 12 * ((int) date('Y', strtotime($this->end_date)) - (int) date('Y'));
 
         return max($months, 0);
     }

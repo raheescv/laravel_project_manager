@@ -63,6 +63,7 @@ class Checklist extends Model implements AuditableContracts
         return $return;
     }
 
+    /** @return HasMany<RentOutChecklistLine, $this> */
     public function lines(): HasMany
     {
         return $this->hasMany(RentOutChecklistLine::class, 'checklist_id');
@@ -71,6 +72,8 @@ class Checklist extends Model implements AuditableContracts
     /**
      * Property type this item applies to. A null property_type_id means the item
      * is universal (shown for every property type).
+     *
+     * @return BelongsTo<PropertyType, $this>
      */
     public function propertyType(): BelongsTo
     {

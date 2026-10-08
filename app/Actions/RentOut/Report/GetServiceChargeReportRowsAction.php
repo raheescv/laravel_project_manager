@@ -164,7 +164,7 @@ class GetServiceChargeReportRowsAction
      * expanded row always adds up to the total printed on its parent.
      *
      * @param  array<int, int>  $rentOutIds
-     * @return Collection<int, Collection<int, RentOutService>>
+     * @return Collection<array-key, covariant Collection<int, RentOutService>>
      */
     public function lines(array $filters, array $rentOutIds): Collection
     {
@@ -220,6 +220,8 @@ class GetServiceChargeReportRowsAction
 
     /**
      * Charge lines for sale (lease) agreements, joined out for grouping and filtered.
+     *
+     * @return Builder<RentOutService>
      */
     private function baseQuery(array $filters): Builder
     {
@@ -312,8 +314,10 @@ class GetServiceChargeReportRowsAction
     /**
      * Stamp each row with its settlement state so the view and the export label it identically.
      *
-     * @param  Collection<int, object>  $rows
-     * @return Collection<int, object>
+     * @template TRow of object
+     *
+     * @param  Collection<int, TRow>  $rows
+     * @return Collection<int, TRow>
      */
     private function withStatus(Collection $rows): Collection
     {

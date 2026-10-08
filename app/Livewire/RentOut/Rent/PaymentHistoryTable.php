@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * @property-read RentOutConfig $config
+ * @property-read array $statistics
+ */
 class PaymentHistoryTable extends Component
 {
     use HasRentOutReportFilters, WithPagination {

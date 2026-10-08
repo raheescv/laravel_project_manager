@@ -12,6 +12,9 @@ use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
 
+/**
+ * @property-read RentOutConfig $config
+ */
 class Import extends Component
 {
     use WithFileUploads;

@@ -142,7 +142,7 @@ class WhatsappHelper
             ];
         } catch (Exception $e) {
             Log::error('Error sending WhatsApp message', [
-                'to' => $to ?? null,
+                'to' => $to,
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -291,7 +291,7 @@ class WhatsappHelper
             ];
         } catch (Exception $e) {
             Log::error('Error sending WhatsApp template message', [
-                'to' => $to ?? null,
+                'to' => $to,
                 'template' => $templateName,
                 'message' => $e->getMessage(),
             ]);
@@ -348,7 +348,7 @@ class WhatsappHelper
             ];
         } catch (Exception $e) {
             Log::error('Error sending WhatsApp image', [
-                'to' => $to ?? null,
+                'to' => $to,
                 'message' => $e->getMessage(),
             ]);
 

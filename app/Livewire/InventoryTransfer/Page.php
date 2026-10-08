@@ -22,6 +22,7 @@ class Page extends Component
 
     public $toBranch;
 
+    /** @var int|string|null */
     public $table_id;
 
     public $inventory_id;
@@ -39,6 +40,9 @@ class Page extends Component
         $this->mount($this->table_id);
     }
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null)
     {
         $this->table_id = $table_id;

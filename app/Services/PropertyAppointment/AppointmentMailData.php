@@ -24,16 +24,16 @@ class AppointmentMailData
 
         return [
             'company_name' => tenant_cache('company_name', '') ?: config('app.name'),
-            'customer_name' => $appointment->customer?->name ?? '',
+            'customer_name' => $appointment->customer->name ?? '',
             // property_name is the unit identifier on its own ("1508");
             // building_name and project_name give the address around it, so a
             // template can say "Unit 1508, MARINA TOWER" without hardcoding.
-            'property_name' => $appointment->rentOut?->property?->number ?? '',
-            'unit_number' => $appointment->rentOut?->property?->number ?? '',
-            'building_name' => $appointment->rentOut?->building?->name ?? '',
-            'project_name' => $appointment->rentOut?->group?->name ?? '',
-            'employee_name' => $appointment->employee?->name ?? '',
-            'employee_phone' => $appointment->employee?->mobile ?? '',
+            'property_name' => $appointment->rentOut?->property->number ?? '',
+            'unit_number' => $appointment->rentOut?->property->number ?? '',
+            'building_name' => $appointment->rentOut?->building->name ?? '',
+            'project_name' => $appointment->rentOut?->group->name ?? '',
+            'employee_name' => $appointment->employee->name ?? '',
+            'employee_phone' => $appointment->employee->mobile ?? '',
             'agreement_no' => '#'.$appointment->rent_out_id,
             'appointment_link' => route('property_appointment::public', $appointment->token),
             // A complete, styled call-to-action. Tenants drop this in and get

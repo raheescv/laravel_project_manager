@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class StockCheckItem extends Model
@@ -35,22 +36,26 @@ class StockCheckItem extends Model
         );
     }
 
-    public function tenant()
+    /** @return BelongsTo<Tenant, $this> */
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    public function stockCheck()
+    /** @return BelongsTo<StockCheck, $this> */
+    public function stockCheck(): BelongsTo
     {
         return $this->belongsTo(StockCheck::class);
     }
 
-    public function inventory()
+    /** @return BelongsTo<Inventory, $this> */
+    public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }

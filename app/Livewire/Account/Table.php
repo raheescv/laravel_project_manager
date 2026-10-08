@@ -296,7 +296,7 @@ class Table extends Component
             $uncategorized = [];
 
             foreach ($typeAccounts as $account) {
-                $categoryName = $account->accountCategory?->name ?? 'Uncategorized';
+                $categoryName = $account->accountCategory->name ?? 'Uncategorized';
                 $categoryId = $account->account_category_id ?? 0;
 
                 if ($categoryId) {

@@ -39,7 +39,7 @@ class TicketResource extends JsonResource
             'comments' => $this->comments->map(fn ($comment): array => [
                 'id' => $comment->id,
                 'comment' => $comment->comment,
-                'author' => $comment->creator?->name ?? 'User',
+                'author' => $comment->creator->name ?? 'User',
                 'created_at' => $comment->created_at?->toIso8601String(),
                 'edited' => $comment->updated_at && $comment->created_at && $comment->updated_at->gt($comment->created_at),
             ])->values(),

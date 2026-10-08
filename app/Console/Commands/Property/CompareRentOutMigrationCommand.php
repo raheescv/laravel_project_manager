@@ -33,7 +33,7 @@ class CompareRentOutMigrationCommand extends Command
 
         $ids = collect(explode(',', (string) $this->option('ids')))
             ->push($this->option('id'))
-            ->filter(fn ($id) => $id !== null && $id !== '')
+            ->filter(fn (?string $id): bool => (string) $id !== '')
             ->map(fn ($id): int => (int) $id)
             ->filter(fn ($id): bool => $id > 0)
             ->unique()

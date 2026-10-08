@@ -72,11 +72,7 @@ class PurchaseController extends Controller
 
         $pdf = $this->makeBrowsershot($html)
             ->paperSize($settings['width'], $settings['height'])
-            ->pdf([
-                'printBackground' => true,
-                'preferCSSPageSize' => true,
-                'scale' => 1,
-            ]);
+            ->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')

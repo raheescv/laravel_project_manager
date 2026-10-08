@@ -61,7 +61,7 @@ class RentoutHistory extends Component
 
         return view('livewire.account.customer.rentout-history', [
             'rentouts' => $rentouts,
-            'active_count' => $rentouts->filter(fn ($r) => in_array($r->status?->value ?? (string) $r->status, $activeStatuses, true))->count(),
+            'active_count' => $rentouts->filter(fn ($r) => in_array($r->status->value ?? (string) $r->status, $activeStatuses, true))->count(),
         ]);
     }
 }

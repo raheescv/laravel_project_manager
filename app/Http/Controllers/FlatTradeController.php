@@ -194,7 +194,7 @@ class FlatTradeController extends Controller
                 $recentTrades = $tradeBook['data'] ?? [];
                 // Extract balance from limits if available
                 if (isset($limits['cash'])) {
-                    $accountBalance = $limits['cash'] ?? 0;
+                    $accountBalance = $limits['cash'];
                 }
             }
         } catch (\Exception $e) {
@@ -283,8 +283,8 @@ class FlatTradeController extends Controller
             $flatTradeService = new FlatTradeService();
 
             // Try to get user profile to check connection status
-            $profile = $flatTradeService->getUserProfile();
-            $balance = $flatTradeService->getAccountBalance();
+            $profile = $flatTradeService->getUserDetails();
+            $balance = $flatTradeService->getLimits();
 
             return response()->json([
                 'connected' => true,
@@ -567,6 +567,8 @@ class FlatTradeController extends Controller
 
     /**
      * Cancel an order
+     *
+     * FlatTradeService has no endpoint for cancelling a regular order yet.
      */
     public function cancelOrder(Request $request): JsonResponse
     {
@@ -574,34 +576,10 @@ class FlatTradeController extends Controller
             'order_id' => 'required|string',
         ]);
 
-        try {
-            $flatTradeService = new FlatTradeService();
-            $result = $flatTradeService->cancelOrder($request->order_id);
-
-            Log::info('Order cancelled successfully', [
-                'user_id' => Auth::id(),
-                'order_id' => $request->order_id,
-                'result' => $result,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Order cancelled successfully',
-                'result' => $result,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Order cancellation failed', [
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-                'order_id' => $request->order_id,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 400);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Cancelling orders is not supported by the FlatTrade integration yet.',
+        ], 501);
     }
 
     /**

@@ -80,6 +80,7 @@ class RentOutController extends Controller
 
         abort_unless($term->rentOut?->agreement_type === $config->agreementType, 404);
 
+        // @phpstan-ignore larastan.relationExistence (Audit::user() is a real MorphTo in owen-it/laravel-auditing; the vendor method has no return type)
         $transactions = RentOutTransaction::withTrashed()
             ->forPaymentTerm($term)
             ->with(['account', 'audits.user'])
@@ -91,6 +92,7 @@ class RentOutController extends Controller
 
         $journals = collect();
         if ($canViewJournals) {
+            // @phpstan-ignore larastan.relationExistence (Audit::user() is a real MorphTo in owen-it/laravel-auditing; the vendor method has no return type)
             $journals = Journal::withTrashed()
                 ->with(['entries' => fn ($query) => $query->withTrashed()->with('account'), 'audits.user'])
                 ->whereIn('id', $transactions->pluck('journal_id')->filter())

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 
 class Package extends Model
@@ -45,42 +46,50 @@ class Package extends Model
         ], $merge);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
-    public function packageCategory()
+    /** @return BelongsTo<PackageCategory, $this> */
+    public function packageCategory(): BelongsTo
     {
         return $this->belongsTo(PackageCategory::class);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function items()
+    /** @return HasMany<PackageItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(PackageItem::class);
     }
 
-    public function payments()
+    /** @return HasMany<PackagePayment, $this> */
+    public function payments(): HasMany
     {
         return $this->hasMany(PackagePayment::class);
     }
 
-    public function journals()
+    /** @return HasMany<Journal, $this> */
+    public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'Package');
     }
 
-    public function createdBy()
+    /** @return BelongsTo<User, $this> */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    /** @return BelongsTo<User, $this> */
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

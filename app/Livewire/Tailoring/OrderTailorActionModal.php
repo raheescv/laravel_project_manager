@@ -170,16 +170,16 @@ class OrderTailorActionModal extends Component
         $this->selectedTailorOrderDetails = [
             'id' => (int) $order->id,
             'order_no' => (string) $order->order_no,
-            'order_date' => $order->order_date ? $order->order_date->format('Y-m-d') : null,
-            'customer_name' => $order->account?->name ?? $order->customer_name,
+            'order_date' => $order->order_date->format('Y-m-d'),
+            'customer_name' => $order->account->name ?? $order->customer_name,
             'customer_mobile' => $order->customer_mobile,
             'status' => (string) ($order->status ?? ''),
         ];
 
         $this->selectedTailorAssignments = $order->items
             ->sortBy('item_no')
-            ->flatMap(function ($item) {
-                return $item->tailorAssignments->sortBy('id')->map(function ($assignment) use ($item) {
+            ->flatMap(function (TailoringOrderItem $item) {
+                return $item->tailorAssignments->sortBy('id')->map(function (TailoringOrderItemTailor $assignment) use ($item) {
                     return [
                         'assignment_id' => (int) $assignment->id,
                         'item_id' => (int) $item->id,
@@ -188,13 +188,13 @@ class OrderTailorActionModal extends Component
                         'quantity' => (float) $item->quantity,
                         'completion_status' => (string) ($item->completion_status ?? ''),
                         'delivery_status' => (string) ($item->delivery_status ?? ''),
-                        'tailor_name' => (string) ($assignment->tailor?->name ?? 'Unassigned'),
+                        'tailor_name' => (string) ($assignment->tailor->name ?? 'Unassigned'),
                         'tailor_commission' => (float) ($assignment->tailor_commission ?? 0),
                         'completion_date' => $assignment->completion_date ? $assignment->completion_date->format('Y-m-d') : null,
                         'rating' => $assignment->rating !== null ? (int) $assignment->rating : null,
                         'status' => strtolower(trim((string) ($assignment->status ?? 'pending'))),
                     ];
-                });
+                })->all();
             })
             ->values()
             ->toArray();

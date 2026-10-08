@@ -64,7 +64,7 @@ class GetCustomerDetailsAction
             'total_amount' => (float) ($statistics->total_amount ?? 0),
             'total_paid' => (float) ($statistics->total_paid ?? 0),
             'total_balance' => (float) ($statistics->total_balance ?? 0),
-            'last_purchase' => $statistics->last_purchase,
+            'last_purchase' => $statistics->getAttribute('last_purchase'),
         ];
     }
 

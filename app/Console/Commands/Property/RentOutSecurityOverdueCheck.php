@@ -34,8 +34,8 @@ class RentOutSecurityOverdueCheck extends Command
         $this->info("Found {$overdueSecurities->count()} overdue security deposit(s).");
 
         foreach ($overdueSecurities as $security) {
-            $customerName = $security->rentOut?->customer?->name ?? 'N/A';
-            $propertyName = $security->rentOut?->property?->name ?? 'N/A';
+            $customerName = $security->rentOut?->customer->name ?? 'N/A';
+            $propertyName = $security->rentOut?->property->name ?? 'N/A';
             $daysOverdue = Carbon::today()->diffInDays($security->due_date);
 
             $this->warn("Security ID {$security->id} - Rent Out ID {$security->rent_out_id}, Customer: {$customerName}, Property: {$propertyName}, Amount: {$security->amount}, Overdue by {$daysOverdue} days");

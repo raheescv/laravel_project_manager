@@ -100,6 +100,7 @@ class ImportProductJob implements ShouldQueue
         ), $file);
 
         // Clean up the file after import
+        // @phpstan-ignore if.alwaysTrue (PHPStan remembers the earlier file_exists() check; the import may have removed the file since)
         if (file_exists($file)) {
             unlink($file);
         }

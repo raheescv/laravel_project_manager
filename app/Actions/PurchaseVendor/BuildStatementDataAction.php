@@ -94,6 +94,7 @@ class BuildStatementDataAction
         ];
     }
 
+    /** @return Builder<JournalEntry> */
     private function baseQuery(Account $vendor): Builder
     {
         return JournalEntry::query()

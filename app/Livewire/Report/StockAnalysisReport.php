@@ -537,7 +537,7 @@ class StockAnalysisReport extends Component
 
         // Paginators must be unwrapped to their underlying item collection;
         // collect($paginator) returns the meta array, not the items.
-        $items = $rows instanceof \Illuminate\Contracts\Pagination\Paginator
+        $items = $rows instanceof \Illuminate\Pagination\AbstractPaginator
             ? $rows->getCollection()
             : collect($rows);
 

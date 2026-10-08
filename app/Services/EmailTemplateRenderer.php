@@ -104,7 +104,7 @@ class EmailTemplateRenderer
 
         $known = EmailTemplate::variablesFor($module, $type);
 
-        return array_values(array_unique(array_diff($matches[1] ?? [], $known)));
+        return array_values(array_unique(array_diff($matches[1], $known)));
     }
 
     private function replace(?string $content, array $variables, bool $isHtml): string

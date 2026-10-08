@@ -247,7 +247,7 @@ class Whatsapp extends Component
                 continue;
             }
 
-            if ($configuration->value !== null && $configuration->value !== '') {
+            if ($configuration->value !== '') {
                 return $configuration->value;
             }
         }
@@ -267,7 +267,7 @@ class Whatsapp extends Component
             return null;
         }
 
-        return $configuration->value !== null && $configuration->value !== '' ? $configuration->value : $default;
+        return $configuration->value !== '' ? $configuration->value : $default;
     }
 
     private function saveSetting(string $key, string $value): void

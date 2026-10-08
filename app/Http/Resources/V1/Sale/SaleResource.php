@@ -3,10 +3,14 @@
 namespace App\Http\Resources\V1\Sale;
 
 use App\Actions\Student\GetBalanceAction;
+use App\Models\Sale;
 use App\Models\StudentDetail;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Sale
+ */
 class SaleResource extends JsonResource
 {
     /**

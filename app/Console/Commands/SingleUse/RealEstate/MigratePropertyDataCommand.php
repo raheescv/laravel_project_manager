@@ -245,7 +245,7 @@ class MigratePropertyDataCommand extends Command
      * summary line (with an accurate inserted-vs-skipped count) are handled here.
      *
      * @param  callable(object):?array  $mapper
-     * @param  callable(array):void|null  $writer  Custom write; defaults to updateOrInsert keyed on $uniqueBy.
+     * @param  callable(array):mixed|null  $writer  Custom write; defaults to updateOrInsert keyed on $uniqueBy.
      */
     private function migrateTable(
         string $noun,

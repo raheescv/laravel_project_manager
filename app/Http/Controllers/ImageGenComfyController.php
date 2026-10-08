@@ -10,7 +10,7 @@ class ImageGenComfyController extends Controller
     public function generate(Request $request)
     {
         $name = 'tiger ballet candy 37.5';
-        GenerateProductImageWithOpenAIJob::dispatchSync($name);
+        GenerateProductImageWithOpenAIJob::dispatchSync('', $name);
 
         return response()->json([
             'success' => true,

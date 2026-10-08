@@ -4,7 +4,6 @@ namespace App\Trading\Pipelines;
 
 use App\Trading\Brokers\BrokerManager;
 use App\Trading\DataObjects\OrderRequest;
-use App\Trading\DataObjects\PositionSnapshot;
 use App\Trading\DataObjects\Signal;
 use App\Trading\Exits\ExitEngine;
 use App\Trading\Reconciliation\OrderReconciler;
@@ -32,7 +31,7 @@ final class ExitPipeline
         $squareoffAt = $options['squareoff_at'] ?? null;
 
         $broker = $this->brokers->broker();
-        $positions = array_filter($broker->positions(), fn ($p) => $p instanceof PositionSnapshot);
+        $positions = $broker->positions();
 
         $exited = [];
         foreach ($positions as $pos) {

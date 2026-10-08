@@ -10,7 +10,7 @@ use App\Models\PurchaseReturn;
 
 class PaymentAction
 {
-    public function execute($account_id, $name, $purchase_return_id, $data, $paymentData, $user_id)
+    public function execute($account_id, $name, int|string $purchase_return_id, $data, $paymentData, $user_id)
     {
         try {
             $paymentMethod = Account::find($paymentData['payment_method_id']);
@@ -24,7 +24,6 @@ class PaymentAction
                 'created_by' => $user_id,
                 'description' => 'PurchaseReturn:'.$model->invoice_no,
                 'remarks' => $paymentData['remarks'],
-                'reference_no' => $model->reference_no,
                 'model' => 'PurchaseReturn',
                 'model_id' => $purchase_return_id,
             ];

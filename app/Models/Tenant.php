@@ -149,6 +149,8 @@ class Tenant extends Model
 
     /**
      * Get all branches belonging to this tenant
+     *
+     * @return HasMany<Branch, $this>
      */
     public function branches(): HasMany
     {
@@ -157,6 +159,8 @@ class Tenant extends Model
 
     /**
      * Get all users belonging to this tenant
+     *
+     * @return HasMany<User, $this>
      */
     public function users(): HasMany
     {
@@ -165,6 +169,8 @@ class Tenant extends Model
 
     /**
      * Get all products belonging to this tenant
+     *
+     * @return HasMany<Product, $this>
      */
     public function products(): HasMany
     {
@@ -173,6 +179,8 @@ class Tenant extends Model
 
     /**
      * Get all sales belonging to this tenant
+     *
+     * @return HasMany<Sale, $this>
      */
     public function sales(): HasMany
     {
@@ -181,6 +189,8 @@ class Tenant extends Model
 
     /**
      * Payments this tenant made to the installation owner.
+     *
+     * @return HasMany<TenantPayment, $this>
      */
     public function payments(): HasMany
     {
@@ -266,6 +276,8 @@ class Tenant extends Model
 
     /**
      * Get all purchases belonging to this tenant
+     *
+     * @return HasMany<Purchase, $this>
      */
     public function purchases(): HasMany
     {
@@ -274,6 +286,8 @@ class Tenant extends Model
 
     /**
      * Get all accounts belonging to this tenant
+     *
+     * @return HasMany<Account, $this>
      */
     public function accounts(): HasMany
     {
@@ -282,6 +296,8 @@ class Tenant extends Model
 
     /**
      * Get all journals belonging to this tenant
+     *
+     * @return HasMany<Journal, $this>
      */
     public function journals(): HasMany
     {
@@ -290,6 +306,8 @@ class Tenant extends Model
 
     /**
      * Get all inventories belonging to this tenant
+     *
+     * @return HasMany<Inventory, $this>
      */
     public function inventories(): HasMany
     {

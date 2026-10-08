@@ -7,6 +7,9 @@ use App\Models\Country;
 use App\Traits\HasDocumentExpiryState;
 use Livewire\Component;
 
+/**
+ * @property-read array{filled: int, total: int, missing: int, percent: int} $completeness
+ */
 class Kyc extends Component
 {
     use HasDocumentExpiryState;
@@ -62,6 +65,7 @@ class Kyc extends Component
         if (! $this->account_id) {
             return;
         }
+        /** @var Account|null $account */
         $account = Account::find($this->account_id);
         if (! $account) {
             return;
@@ -113,7 +117,7 @@ class Kyc extends Component
             'filled' => $filled,
             'total' => $total,
             'missing' => $total - $filled,
-            'percent' => $total > 0 ? (int) round(($filled / $total) * 100) : 0,
+            'percent' => (int) round(($filled / $total) * 100),
         ];
     }
 

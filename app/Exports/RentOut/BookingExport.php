@@ -5,6 +5,7 @@ namespace App\Exports\RentOut;
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\RentOutStatus;
 use App\Models\RentOut;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -16,7 +17,7 @@ class BookingExport implements FromQuery, WithHeadings, WithMapping
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $agreementType = AgreementType::from($this->filters['agreementType'] ?? 'lease');
 

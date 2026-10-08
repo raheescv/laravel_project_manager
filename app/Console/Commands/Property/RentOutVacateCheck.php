@@ -46,7 +46,7 @@ class RentOutVacateCheck extends Command
 
                 DB::commit();
                 $updatedCount++;
-                $customerName = $rentOut->customer?->name ?? 'N/A';
+                $customerName = $rentOut->customer->name ?? 'N/A';
                 $this->info("Vacated Rent Out ID {$rentOut->id} - Customer: {$customerName}, Vacate Date: {$rentOut->vacate_date->format('Y-m-d')}");
             } catch (\Exception $e) {
                 DB::rollBack();

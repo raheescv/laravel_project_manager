@@ -31,11 +31,11 @@ class ProfitBasedTradingCommand extends Command
     public function handle()
     {
         $symbol = $this->argument('symbol');
-        $quantity = $this->option('quantity');
+        $quantity = (int) $this->option('quantity');
         $exchange = $this->option('exchange');
-        $minProfitPercent = $this->option('min-profit-percent');
-        $maxLossPercent = $this->option('max-loss-percent');
-        $lookbackDays = $this->option('lookback-days');
+        $minProfitPercent = (float) $this->option('min-profit-percent');
+        $maxLossPercent = (float) $this->option('max-loss-percent');
+        $lookbackDays = (int) $this->option('lookback-days');
         $dryRun = $this->option('dry-run');
 
         $this->info("Starting profit-based trading analysis for {$symbol}");
@@ -363,8 +363,8 @@ class ProfitBasedTradingCommand extends Command
             return 'UNKNOWN';
         }
 
-        $firstHalf = array_slice($prices, 0, floor(count($prices) / 2));
-        $secondHalf = array_slice($prices, floor(count($prices) / 2));
+        $firstHalf = array_slice($prices, 0, (int) floor(count($prices) / 2));
+        $secondHalf = array_slice($prices, (int) floor(count($prices) / 2));
 
         $firstAvg = array_sum($firstHalf) / count($firstHalf);
         $secondAvg = array_sum($secondHalf) / count($secondHalf);

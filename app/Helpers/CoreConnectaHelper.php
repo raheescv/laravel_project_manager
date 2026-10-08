@@ -313,7 +313,7 @@ class CoreConnectaHelper
     /**
      * Normalize list-session API payloads (bare array, or wrapped in `data` / `sessions`).
      *
-     * @param  array<string, mixed>  $sessionsResponse
+     * @param  array<array-key, mixed>  $sessionsResponse
      * @return list<array<string, mixed>>
      */
     private function normalizedSessionRows(array $sessionsResponse): array
@@ -332,7 +332,7 @@ class CoreConnectaHelper
             return $this->onlySessionShapeRows($data['sessions']);
         }
 
-        if (isset($data['id'], $data['status']) && ! array_is_list($data)) {
+        if (isset($data['id'], $data['status'])) {
             return [$data];
         }
 
@@ -417,7 +417,7 @@ class CoreConnectaHelper
                 continue;
             }
 
-            if ($configuration->value !== null && $configuration->value !== '') {
+            if ((string) $configuration->value !== '') {
                 return $configuration->value;
             }
         }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -41,22 +42,26 @@ class PurchaseItem extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function purchase()
+    /** @return BelongsTo<Purchase, $this> */
+    public function purchase(): BelongsTo
     {
         return $this->belongsTo(Purchase::class);
     }
 
-    public function unit()
+    /** @return BelongsTo<Unit, $this> */
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }

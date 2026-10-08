@@ -34,8 +34,8 @@ class ReturnableSaleAction
 
         foreach ($sale->items as $item) {
             $alreadyReturned = (float) ($returned[$item->id] ?? 0);
-            $item->returned_quantity = round($alreadyReturned, 3);
-            $item->returnable_quantity = max(0, round((float) $item->quantity - $alreadyReturned, 3));
+            $item->setAttribute('returned_quantity', round($alreadyReturned, 3));
+            $item->setAttribute('returnable_quantity', max(0, round((float) $item->quantity - $alreadyReturned, 3)));
         }
 
         return $sale;

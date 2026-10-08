@@ -99,12 +99,10 @@ class JournalEntryAction
                 $rentOut->id
             );
 
-            if (! empty($entries)) {
-                $data['entries'] = array_merge(...$entries);
-                $response = (new CreateAction())->execute($data);
-                if (! $response['success']) {
-                    throw new \Exception($response['message']);
-                }
+            $data['entries'] = array_merge(...$entries);
+            $response = (new CreateAction())->execute($data);
+            if (! $response['success']) {
+                throw new \Exception($response['message']);
             }
 
             $return['success'] = true;
@@ -155,12 +153,10 @@ class JournalEntryAction
                 $rentOut->id
             );
 
-            if (! empty($entries)) {
-                $data['entries'] = array_merge(...$entries);
-                $response = (new CreateAction())->execute($data);
-                if (! $response['success']) {
-                    throw new \Exception($response['message']);
-                }
+            $data['entries'] = array_merge(...$entries);
+            $response = (new CreateAction())->execute($data);
+            if (! $response['success']) {
+                throw new \Exception($response['message']);
             }
 
             $return['success'] = true;

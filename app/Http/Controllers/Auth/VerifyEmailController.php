@@ -19,6 +19,7 @@ class VerifyEmailController extends Controller
         }
 
         if ($request->user()->markEmailAsVerified()) {
+            // @phpstan-ignore argument.type (Verified's constructor is untyped; User has the MustVerifyEmail trait methods via Authenticatable but deliberately not the interface)
             event(new Verified($request->user()));
         }
 

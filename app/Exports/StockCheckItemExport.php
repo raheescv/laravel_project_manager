@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\StockCheck;
 use App\Models\StockCheckItem;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -18,7 +19,7 @@ class StockCheckItemExport implements FromQuery, WithHeadings, WithMapping, With
 
     public function __construct(public int $stockCheckId) {}
 
-    public function query()
+    public function query(): Builder
     {
         $stockCheck = StockCheck::findOrFail($this->stockCheckId);
 

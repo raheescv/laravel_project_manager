@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * One outbound email, with the exact subject and body that were sent.
+ *
+ * @property string $status queued|sent|failed (kept wide so labels tolerate unexpected values)
  */
 class EmailLog extends Model
 {
@@ -36,16 +38,19 @@ class EmailLog extends Model
         'sent_at' => 'datetime',
     ];
 
+    /** @return MorphTo<Model, $this> */
     public function related(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<EmailTemplate, $this> */
     public function template(): BelongsTo
     {
         return $this->belongsTo(EmailTemplate::class, 'email_template_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

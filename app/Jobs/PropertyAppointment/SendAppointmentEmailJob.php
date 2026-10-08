@@ -56,7 +56,7 @@ class SendAppointmentEmailJob implements ShouldQueue
         $email = $appointment->customer?->email;
 
         if (blank($email)) {
-            $log?->update(['status' => 'failed', 'error' => 'The customer has no email address on file.']);
+            $log->update(['status' => 'failed', 'error' => 'The customer has no email address on file.']);
 
             return;
         }

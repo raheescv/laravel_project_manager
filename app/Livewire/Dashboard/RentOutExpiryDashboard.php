@@ -47,11 +47,11 @@ class RentOutExpiryDashboard extends Component
             return [
                 'id' => $r->id,
                 'agreement_no' => $r->agreement_no,
-                'property' => $r->property?->number ?? '-',
-                'building' => $r->building?->name ?? '-',
-                'group' => $r->group?->name ?? '-',
-                'customer' => $r->customer?->name ?? '-',
-                'end_date' => $r->end_date?->format('d M Y'),
+                'property' => $r->property->number ?? '-',
+                'building' => $r->building->name ?? '-',
+                'group' => $r->group->name ?? '-',
+                'customer' => $r->customer->name ?? '-',
+                'end_date' => $r->end_date->format('d M Y'),
                 'days_left' => (int) $daysLeft,
                 'urgency' => $daysLeft <= 7 ? 'danger' : ($daysLeft <= 30 ? 'warning' : 'info'),
                 'rent' => $r->rent,
@@ -66,16 +66,16 @@ class RentOutExpiryDashboard extends Component
         $this->expiredCount = (clone $expiredQuery)->count();
 
         $this->expiredRentOuts = $expiredQuery->limit(10)->get()->map(function ($r) {
-            $daysExpired = $r->end_date ? now()->diffInDays($r->end_date) : 0;
+            $daysExpired = now()->diffInDays($r->end_date);
 
             return [
                 'id' => $r->id,
                 'agreement_no' => $r->agreement_no,
-                'property' => $r->property?->number ?? '-',
-                'building' => $r->building?->name ?? '-',
-                'group' => $r->group?->name ?? '-',
-                'customer' => $r->customer?->name ?? '-',
-                'end_date' => $r->end_date?->format('d M Y'),
+                'property' => $r->property->number ?? '-',
+                'building' => $r->building->name ?? '-',
+                'group' => $r->group->name ?? '-',
+                'customer' => $r->customer->name ?? '-',
+                'end_date' => $r->end_date->format('d M Y'),
                 'days_expired' => (int) $daysExpired,
                 'rent' => $r->rent,
             ];

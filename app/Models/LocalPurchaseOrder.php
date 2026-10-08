@@ -42,41 +42,49 @@ class LocalPurchaseOrder extends Model
 
     protected static function booted() {}
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'vendor_id');
     }
 
+    /** @return HasMany<LocalPurchaseOrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(LocalPurchaseOrderItem::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function decisionMaker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decision_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function confirmedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmation_by');
     }
 
+    /** @return HasMany<Grn, $this> */
     public function grns(): HasMany
     {
         return $this->hasMany(Grn::class);

@@ -8,6 +8,9 @@ use App\Support\TenantCache;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -15,6 +18,37 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 use RuntimeException;
 
+/**
+ * KYC columns are added in a loop by 2026_07_23_000001_add_kyc_fields_to_accounts_table, which Larastan cannot read.
+ *
+ * @property string|null $emergency_contact_no
+ * @property string|null $po_box
+ * @property string|null $passport_no
+ * @property string|null $marital_status
+ * @property string|null $occupation
+ * @property string|null $job
+ * @property string|null $sponsor_name
+ * @property string|null $position_nature_of_business
+ * @property string|null $residential_address
+ * @property string|null $employer_address
+ * @property string|null $contact_person
+ * @property string|null $contact_person_mobile
+ * @property string|null $cr_number
+ * @property string|null $cp_number
+ * @property string|null $eid_number
+ * @property string|null $tax_card_no
+ * @property string|null $monthly_income
+ * @property string|null $id_expiry_date
+ * @property string|null $cr_issue_date
+ * @property string|null $cr_expiry_date
+ * @property string|null $cp_issue_date
+ * @property string|null $cp_expiry_date
+ * @property string|null $eid_issue_date
+ * @property string|null $eid_expiry_date
+ * @property string|null $tax_card_issue_date
+ * @property string|null $kyc_confirmed_at
+ * @property int|null $kyc_confirmed_by
+ */
 class Account extends Model implements AuditableContracts
 {
     use Auditable;
@@ -209,55 +243,68 @@ class Account extends Model implements AuditableContracts
         return strtolower((string) $this->model) === 'student';
     }
 
-    public function studentDetail()
+    /** @return HasOne<StudentDetail, $this> */
+    public function studentDetail(): HasOne
     {
         return $this->hasOne(StudentDetail::class);
     }
 
-    /** Parent portal logins that may see this student. */
-    public function guardians()
+    /**
+     * Parent portal logins that may see this student.
+     *
+     * @return BelongsToMany<Guardian, $this>
+     */
+    public function guardians(): BelongsToMany
     {
         return $this->belongsToMany(Guardian::class, 'guardian_student', 'account_id', 'guardian_id')
             ->withPivot(['relation', 'is_primary'])
             ->withTimestamps();
     }
 
-    public function notes()
+    /** @return HasMany<AccountNote, $this> */
+    public function notes(): HasMany
     {
         return $this->hasMany(AccountNote::class);
     }
 
-    public function ledger()
+    /** @return HasMany<Ledger, $this> */
+    public function ledger(): HasMany
     {
         return $this->hasMany(Ledger::class, 'account_id');
     }
 
-    public function journalEntries()
+    /** @return HasMany<JournalEntry, $this> */
+    public function journalEntries(): HasMany
     {
         return $this->hasMany(JournalEntry::class, 'account_id');
     }
 
-    public function customerType()
+    /** @return BelongsTo<CustomerType, $this> */
+    public function customerType(): BelongsTo
     {
         return $this->belongsTo(CustomerType::class);
     }
 
-    public function accountCategory()
+    /** @return BelongsTo<AccountCategory, $this> */
+    public function accountCategory(): BelongsTo
     {
         return $this->belongsTo(AccountCategory::class);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function kycConfirmer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'kyc_confirmed_by');
     }
 
-    public function sales()
+    /** @return HasMany<Sale, $this> */
+    public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
     }

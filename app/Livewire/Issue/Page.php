@@ -50,13 +50,13 @@ class Page extends Component
                 return;
             }
             $this->type = $issue->type;
-            $this->accounts = [$issue->account_id => $issue->account?->name ?? 'Customer'];
+            $this->accounts = [$issue->account_id => $issue->account->name ?? 'Customer'];
             $this->source_issue_id = $issue->source_issue_id;
             $this->issues = [
                 'account_id' => $issue->account_id,
                 'type' => $issue->type,
                 'source_issue_id' => $issue->source_issue_id,
-                'date' => $issue->date?->format('Y-m-d') ?? date('Y-m-d'),
+                'date' => $issue->date->format('Y-m-d'),
                 'remarks' => $issue->remarks ?? '',
             ];
             foreach ($issue->items->values() as $index => $item) {
@@ -69,9 +69,9 @@ class Page extends Component
                     'source_issue_item_id' => $item->source_issue_item_id,
                     'source_item_order' => $item->source_item_order ?: ($index + 1),
                     'inventory_id' => $resolvedInventoryId,
-                    'product_id' => $inventoryProduct?->id ?? $item->product_id,
-                    'name' => $inventoryProduct?->name ?? $item->product?->name,
-                    'thumbnail' => $inventoryProduct?->thumbnail ?? $item->product?->thumbnail,
+                    'product_id' => $inventoryProduct->id ?? $item->product_id,
+                    'name' => $inventoryProduct->name ?? $item->product?->name,
+                    'thumbnail' => $inventoryProduct->thumbnail ?? $item->product?->thumbnail,
                     'quantity_in' => (string) $item->quantity_in,
                     'quantity_out' => (string) $item->quantity_out,
                 ];
@@ -302,7 +302,7 @@ class Page extends Component
             return;
         }
 
-        $this->accounts = [$sourceIssue->account_id => $sourceIssue->account?->name ?? 'Customer'];
+        $this->accounts = [$sourceIssue->account_id => $sourceIssue->account->name ?? 'Customer'];
         $this->issues['account_id'] = $sourceIssue->account_id;
 
         $rows = [];

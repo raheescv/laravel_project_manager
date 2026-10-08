@@ -19,7 +19,7 @@ class ImportSaleJob implements ShouldQueue
     public function handle()
     {
         $file = storage_path('app/public/'.$this->filePath);
-        $collection = Excel::toCollection(null, $file)->first();
+        $collection = Excel::toCollection(new \stdClass(), $file)->first();
         $totalRows = $collection->filter(function ($row) {
             return $row->filter()->isNotEmpty();
         })->count();

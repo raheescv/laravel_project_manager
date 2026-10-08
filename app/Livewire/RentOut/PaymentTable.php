@@ -13,6 +13,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read RentOutConfig $config
+ * @property-read array $statistics
+ * @property-read array $overdueAlert
+ */
 class PaymentTable extends Component
 {
     use HasRentOutReportFilters, WithPagination {

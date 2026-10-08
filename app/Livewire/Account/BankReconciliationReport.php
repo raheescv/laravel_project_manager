@@ -11,13 +11,16 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+/**
+ * @property-read LengthAwarePaginator $items
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Account> $bankAccounts
+ * @property-read object $summary
+ */
 class BankReconciliationReport extends Component
 {
     use WithPagination;
 
     // Filter constants
-    private const FILTER_ALL = 'all';
-
     private const FILTER_DELIVERED = 'delivered';
 
     private const FILTER_PENDING = 'pending';

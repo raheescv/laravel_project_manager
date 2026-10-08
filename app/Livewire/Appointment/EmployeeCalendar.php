@@ -32,7 +32,7 @@ class EmployeeCalendar extends Component
             ->with([
                 'employee:id,name',
                 'service:id,name',
-                'appointment:id,start_time,end_time,color',
+                'appointment:id,start_time,end_time,color,status',
             ])
             ->when($this->employee_id, fn ($query, $value) => $query->whereIn('employee_id', $value))
             ->whereHas('appointment', function ($query): void {
@@ -46,9 +46,9 @@ class EmployeeCalendar extends Component
                 'end' => $item->appointment->end_time,
                 'key' => $item->service_id.'-'.$item->employee_id,
                 'resourceId' => $item->employee_id,
-                'backgroundColor' => $item->appointment?->color ?? '#3788d8',
-                'borderColor' => $item->appointment?->color ?? '#3788d8',
-                'status' => $item->status,
+                'backgroundColor' => $item->appointment->color ?? '#3788d8',
+                'borderColor' => $item->appointment->color ?? '#3788d8',
+                'status' => $item->appointment->status,
             ]);
     }
 

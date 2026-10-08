@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
+/**
+ * @property-read RentOutConfig $config
+ * @property-read array{property_number: ?string, building_name: ?string, group_name: ?string, property_status: ?string, customer_name: ?string, salesman_name: ?string, total: float, down_payment: float, balance: float, per_term: float, unit_details: array<string, string|int>} $summary
+ */
 class Page extends Component
 {
     public $type = 'RentOut';
@@ -54,7 +58,7 @@ class Page extends Component
     /**
      * Live snapshot for the editor's hero and summary rail.
      *
-     * @return array{property_number: ?string, building_name: ?string, group_name: ?string, property_status: ?string, customer_name: ?string, salesman_name: ?string, total: float, down_payment: float, balance: float, per_term: float}
+     * @return array{property_number: ?string, building_name: ?string, group_name: ?string, property_status: ?string, customer_name: ?string, salesman_name: ?string, total: float, down_payment: float, balance: float, per_term: float, unit_details: array<string, string|int>}
      */
     public function getSummaryProperty(): array
     {
@@ -82,7 +86,7 @@ class Page extends Component
     /**
      * The selected unit's physical facts, blank values dropped.
      *
-     * @return array<string, string>
+     * @return array<string, string|int>
      */
     protected function unitDetails(Property $property): array
     {
@@ -114,11 +118,11 @@ class Page extends Component
                 return redirect()->route($this->config->indexRoute);
             }
             $this->rent_outs = $this->rentOut->toArray();
-            $this->rent_outs['agreement_type'] = $this->rentOut->agreement_type?->value ?? $this->agreementType;
-            $this->rent_outs['status'] = $this->rentOut->status?->value ?? '';
-            $this->rent_outs['collection_payment_mode'] = $this->rentOut->collection_payment_mode?->value ?? '';
-            $this->rent_outs['start_date'] = $this->rentOut->start_date?->format('Y-m-d') ?? '';
-            $this->rent_outs['end_date'] = $this->rentOut->end_date?->format('Y-m-d') ?? '';
+            $this->rent_outs['agreement_type'] = $this->rentOut->agreement_type->value;
+            $this->rent_outs['status'] = $this->rentOut->status->value;
+            $this->rent_outs['collection_payment_mode'] = $this->rentOut->collection_payment_mode->value;
+            $this->rent_outs['start_date'] = $this->rentOut->start_date->format('Y-m-d');
+            $this->rent_outs['end_date'] = $this->rentOut->end_date->format('Y-m-d');
             $property_name = $this->rentOut->property ? $this->rentOut->property->number.($this->rentOut->property->building ? ' - '.$this->rentOut->property->building->name : '') : '';
             $this->preFilledDropDowns = [
                 'group' => [

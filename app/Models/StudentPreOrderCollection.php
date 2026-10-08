@@ -24,11 +24,13 @@ class StudentPreOrderCollection extends Model
         'date' => 'date',
     ];
 
+    /** @return BelongsTo<StudentPreOrder, $this> */
     public function preOrder(): BelongsTo
     {
         return $this->belongsTo(StudentPreOrder::class, 'student_pre_order_id');
     }
 
+    /** @return BelongsTo<Sale, $this> */
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);

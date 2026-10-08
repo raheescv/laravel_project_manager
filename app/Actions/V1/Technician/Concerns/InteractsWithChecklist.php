@@ -37,6 +37,7 @@ trait InteractsWithChecklist
         ];
     }
 
+    /** @return Builder<RentOut> */
     protected function ownedRentOuts(): Builder
     {
         $userId = Auth::id();

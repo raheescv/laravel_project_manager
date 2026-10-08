@@ -122,7 +122,7 @@ class GetAction
             ->when($employeeId, fn ($q, $value) => $q->whereHas('items', fn ($i) => $i->where('employee_id', $value)));
 
         $totals = (clone $base)->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as paid')->first();
-        $total = (int) $totals->invoices;
+        $total = (int) $totals->getAttribute('invoices');
 
         $rows = (clone $base)
             ->with('account:id,name')

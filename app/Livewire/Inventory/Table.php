@@ -191,7 +191,7 @@ class Table extends Component
     public function clearCache()
     {
         // Clear all inventory-related cache when needed
-        cache()->forget('inventory_visible_column_'.(Auth::user()?->id ?? 'guest'));
+        cache()->forget('inventory_visible_column_'.(Auth::user()->id ?? 'guest'));
         $this->dispatch('success', ['message' => 'Cache cleared successfully']);
     }
 
@@ -336,6 +336,9 @@ class Table extends Component
         return "stock-adjustment-selection:{$userId}:{$token}";
     }
 
+    /**
+     * @param  Collection<int, Inventory>  $inventories
+     */
     protected function storeBarcodeCartItems(Collection $inventories): int
     {
         $cartItems = session('cart_items', []);

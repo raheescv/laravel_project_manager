@@ -275,6 +275,7 @@ class MergeDuplicateProductsCommand extends Command
             return null;
         }
 
+        /** @var \stdClass|null $keep */
         $keep = DB::table('products')->find($keepId);
         if (! $keep) {
             $this->error("Product {$keepId} does not exist.");
@@ -356,6 +357,7 @@ class MergeDuplicateProductsCommand extends Command
         }
 
         foreach ($this->uniqueRepoint as [$table, $column, $keyColumns]) {
+            /** @var Collection<string, int|true> $existing */
             $existing = DB::table($table)->where($column, $keepId)->get()
                 ->map(fn ($row) => $this->keyOf($row, $keyColumns))
                 ->flip();
@@ -378,6 +380,7 @@ class MergeDuplicateProductsCommand extends Command
         // so a soft delete here would block the rename below.
         DB::table('products')->whereIn('id', $mergeIds)->delete();
 
+        /** @var \stdClass $keep */
         $keep = DB::table('products')->find($keepId);
         $taken = DB::table('products')
             ->where('tenant_id', $keep->tenant_id)
@@ -410,6 +413,7 @@ class MergeDuplicateProductsCommand extends Command
         }
 
         foreach ($this->uniqueRepoint as [$table, $column, $keyColumns]) {
+            /** @var Collection<string, int|true> $existing */
             $existing = DB::table($table)->where($column, $keepId)->get()
                 ->map(fn ($row) => $this->keyOf($row, $keyColumns))
                 ->flip();
@@ -613,7 +617,7 @@ class MergeDuplicateProductsCommand extends Command
      * that a merge turns into duplicates. Pass $asProductId to group rows across products
      * as they will sit once every row has been repointed onto the survivor.
      *
-     * @return Collection<string, Collection<int, object>>
+     * @return Collection<array-key, Collection<int, \stdClass>>
      */
     private function inventoryGroups(array $productIds, ?int $asProductId = null): Collection
     {

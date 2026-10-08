@@ -3,6 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Models\ApiLog;
+use App\Models\Guardian;
 use App\Models\User;
 use App\Support\Payment\MpgsSettings;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -232,6 +233,7 @@ class MpgsClient
     private function startLog(string $service, string $method, string $url, ?array $body): ?ApiLog
     {
         try {
+            /** @var User|Guardian|null $actor The web user, else the parent-portal guardian. */
             $actor = $this->actor();
 
             return ApiLog::create([

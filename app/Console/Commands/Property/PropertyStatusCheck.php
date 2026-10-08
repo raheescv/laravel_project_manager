@@ -75,7 +75,7 @@ class PropertyStatusCheck extends Command
                     if (isset($changes['availability_status'])) {
                         $parts[] = "availability → {$newAvailability}";
                     }
-                    $this->info("Property ID {$property->id} ({$property->name}): ".implode(', ', $parts));
+                    $this->info("Property ID {$property->id} ({$property->number}): ".implode(', ', $parts));
                 }
             } catch (\Exception $e) {
                 DB::rollBack();

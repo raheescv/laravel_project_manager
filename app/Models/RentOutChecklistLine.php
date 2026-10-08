@@ -34,11 +34,13 @@ class RentOutChecklistLine extends Model implements AuditableContracts
         'damage_cost' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class, 'rent_out_id');
     }
 
+    /** @return BelongsTo<Checklist, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(Checklist::class, 'checklist_id');

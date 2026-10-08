@@ -86,21 +86,25 @@ class Ticket extends Model
         return self::query()->whereNotNull('group')->distinct()->orderBy('group')->pluck('group')->all();
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /** @return HasMany<TicketAttachment, $this> */
     public function attachments(): HasMany
     {
         return $this->hasMany(TicketAttachment::class);
     }
 
+    /** @return HasMany<TicketComment, $this> */
     public function comments(): HasMany
     {
         return $this->hasMany(TicketComment::class);

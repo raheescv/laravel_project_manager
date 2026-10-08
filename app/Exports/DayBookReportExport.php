@@ -18,7 +18,7 @@ class DayBookReportExport implements FromQuery, WithColumnFormatting, WithEvents
 
     public function __construct(public Builder $query) {}
 
-    public function query()
+    public function query(): Builder
     {
         return $this->query
             ->orderBy('journal_entries.date', 'asc')

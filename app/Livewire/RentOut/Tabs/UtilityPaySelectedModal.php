@@ -44,10 +44,10 @@ class UtilityPaySelectedModal extends Component
         $this->cashTerms = $terms->map(function ($term) use ($rentOut) {
             return [
                 'id' => $term->id,
-                'date' => $term->date?->format('d-m-Y'),
-                'customer' => $rentOut->customer?->name ?? '',
-                'property' => $rentOut->property?->number ?? '',
-                'utility' => $term->utility?->name ?? '',
+                'date' => $term->date->format('d-m-Y'),
+                'customer' => $rentOut->customer->name ?? '',
+                'property' => $rentOut->property->number ?? '',
+                'utility' => $term->utility->name ?? '',
                 'balance' => (float) $term->balance,
                 'amount' => (float) $term->balance,
                 'payment_mode' => 1,

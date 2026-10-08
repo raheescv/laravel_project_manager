@@ -46,6 +46,7 @@ class Unit extends Model
             ?? self::query()->orderBy('id')->first(['id', 'name']);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

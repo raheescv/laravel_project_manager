@@ -17,6 +17,8 @@ use App\Models\Product;
  * The host component supplies:
  *   public string $matchBy;   'auto' | 'code' | 'barcode' | 'name'
  *   public $defaultTax;       tax % to fall back on
+ *
+ * @property-read array<string, array{label: string, hint: string, aliases: array<int, string>}> $fields
  */
 trait MatchesInvoiceLines
 {
@@ -303,7 +305,7 @@ trait MatchesInvoiceLines
         // Tax falls back to the product's own rate, then the sheet-wide default.
         if ($item['tax'] === null) {
             $item['tax'] = $item['product_id']
-                ? (float) (Product::find($item['product_id'])?->tax ?? $this->number($this->defaultTax, 0))
+                ? (float) (Product::find($item['product_id'])->tax ?? $this->number($this->defaultTax, 0))
                 : $this->number($this->defaultTax, 0);
         }
 

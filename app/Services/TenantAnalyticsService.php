@@ -79,11 +79,11 @@ class TenantAnalyticsService
             SaleReturn::withoutGlobalScopes()->where('tenant_id', $tenantId)->max('created_at'),
         ])->filter()->max();
 
-        $userTotal = (int) $users->total;
-        $userActive = (int) $users->active;
+        $userTotal = (int) $users->getAttribute('total');
+        $userActive = (int) $users->getAttribute('active');
 
         return [
-            'users' => ['total' => $userTotal, 'active' => $userActive, 'inactive' => $userTotal - $userActive, 'employees' => (int) $users->employees],
+            'users' => ['total' => $userTotal, 'active' => $userActive, 'inactive' => $userTotal - $userActive, 'employees' => (int) $users->getAttribute('employees')],
             'branches' => Branch::withoutGlobalScopes()->where('tenant_id', $tenantId)->count(),
             'products' => Product::withoutGlobalScopes()->where('tenant_id', $tenantId)->whereNull('deleted_at')->count(),
             'customers' => Account::withoutGlobalScopes()->where('tenant_id', $tenantId)->whereNull('deleted_at')->where('model', 'customer')->count(),
@@ -93,8 +93,8 @@ class TenantAnalyticsService
                 'this_month' => (float) $sales->this_month,
                 'last_30_days' => (float) $sales->last_30_days,
             ],
-            'purchases' => ['count' => (int) $purchases->count, 'total' => (float) $purchases->total],
-            'returns' => ['count' => (int) $returns->count, 'total' => (float) $returns->total],
+            'purchases' => ['count' => (int) $purchases->getAttribute('count'), 'total' => (float) $purchases->total],
+            'returns' => ['count' => (int) $returns->getAttribute('count'), 'total' => (float) $returns->total],
             'last_activity' => $lastActivity ? Carbon::parse($lastActivity)->toDateTimeString() : null,
             'trend' => $this->monthlyTrend($tenantId),
             'top_branches' => $this->topBranches($tenantId),

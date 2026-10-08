@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
 
 class StockCheck extends Model
@@ -40,32 +42,38 @@ class StockCheck extends Model
         ], $merge);
     }
 
-    public function tenant()
+    /** @return BelongsTo<Tenant, $this> */
+    public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    public function branch()
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    public function signedBy()
+    /** @return BelongsTo<User, $this> */
+    public function signedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'signed_by');
     }
 
-    public function createdBy()
+    /** @return BelongsTo<User, $this> */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    /** @return BelongsTo<User, $this> */
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function items()
+    /** @return HasMany<StockCheckItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(StockCheckItem::class, 'stock_check_id');
     }

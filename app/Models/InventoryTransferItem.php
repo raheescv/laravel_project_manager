@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 
@@ -35,17 +36,20 @@ class InventoryTransferItem extends Model implements AuditableContracts
         });
     }
 
-    public function inventoryTransfer()
+    /** @return BelongsTo<InventoryTransfer, $this> */
+    public function inventoryTransfer(): BelongsTo
     {
         return $this->belongsTo(InventoryTransfer::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function inventory()
+    /** @return BelongsTo<Inventory, $this> */
+    public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);
     }

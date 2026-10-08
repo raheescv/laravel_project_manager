@@ -28,10 +28,10 @@ class ExtendTab extends Component
         $this->dispatch('open-extend-modal',
             form: [
                 'rent_out_id' => $rentOut->id,
-                'start_date' => $rentOut->end_date?->format('Y-m-d') ?? now()->format('Y-m-d'),
-                'end_date' => $rentOut->end_date?->addYear()->format('Y-m-d') ?? now()->addYear()->format('Y-m-d'),
+                'start_date' => $rentOut->end_date->format('Y-m-d'),
+                'end_date' => $rentOut->end_date->addYear()->format('Y-m-d'),
                 'rent_amount' => $rentOut->rent ?? 0,
-                'payment_mode' => $rentOut->collection_payment_mode?->value ?? 'cash',
+                'payment_mode' => $rentOut->collection_payment_mode->value,
                 'remarks' => '',
             ],
             editingId: null,

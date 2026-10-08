@@ -13,6 +13,7 @@ use App\Services\PropertyAppointment\SlotService;
 use App\Services\TenantService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class PropertyAppointmentController extends Controller
 {
@@ -69,7 +70,7 @@ class PropertyAppointmentController extends Controller
 
             return [
                 'id' => $appointment->id,
-                'title' => trim(($appointment->customer?->name ?? 'Appointment').' — '.($property?->number ?? '')),
+                'title' => trim(($appointment->customer->name ?? 'Appointment').' — '.($property->number ?? '')),
                 // A slot is a wall-clock time in the branch's day, not an
                 // instant on a world clock, so the times go out WITHOUT a
                 // timezone offset. FullCalendar renders in the viewer's device
@@ -110,13 +111,14 @@ class PropertyAppointmentController extends Controller
     /**
      * The holiday shading for a calendar range, as FullCalendar background events.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    private function holidayEvents(Request $request)
+    private function holidayEvents(Request $request): Collection
     {
         $from = $request->start ? Carbon::parse($request->start) : now()->startOfMonth();
         $to = $request->end ? Carbon::parse($request->end) : now()->endOfMonth();
 
+        /** @var Collection<int, array<string, mixed>> */
         return collect(Holiday::datesBetween($from, $to))->map(fn (string $name, string $date) => [
             'id' => 'holiday-'.$date,
             'title' => $name,

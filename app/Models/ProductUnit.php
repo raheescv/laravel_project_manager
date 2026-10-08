@@ -52,16 +52,19 @@ class ProductUnit extends Model
         ], $merge);
     }
 
-    public function subUnit()
+    /** @return BelongsTo<Unit, $this> */
+    public function subUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'sub_unit_id');
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

@@ -67,12 +67,12 @@ class ProductList extends Component
         $this->products = $products->map(function ($item) {
             return [
                 'id' => $item->inventory_id,
-                'sale_item_id' => $item->sale_item_id,
+                'sale_item_id' => $item->getAttribute('sale_item_id'),
                 'product_id' => $item->product_id,
-                'type' => $item->type,
+                'type' => $item->getAttribute('type'),
                 'quantity' => $item->quantity,
                 'name' => $item->name,
-                'thumbnail' => $item->thumbnail,
+                'thumbnail' => $item->getAttribute('thumbnail'),
                 'mrp' => $item->unit_price,
             ];
         })->toArray();

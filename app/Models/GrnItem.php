@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class GrnItem extends Model
@@ -21,22 +22,26 @@ class GrnItem extends Model
         // 'total',
     ];
 
-    public function grn()
+    /** @return BelongsTo<Grn, $this> */
+    public function grn(): BelongsTo
     {
         return $this->belongsTo(Grn::class);
     }
 
-    public function localPurchaseOrderItem()
+    /** @return BelongsTo<LocalPurchaseOrderItem, $this> */
+    public function localPurchaseOrderItem(): BelongsTo
     {
         return $this->belongsTo(LocalPurchaseOrderItem::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function account()
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
     }

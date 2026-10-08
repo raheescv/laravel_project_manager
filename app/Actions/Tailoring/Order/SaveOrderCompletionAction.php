@@ -37,7 +37,7 @@ class SaveOrderCompletionAction
             if (isset($data['completion_date'])) {
                 $order->completion_date = $data['completion_date'];
             } elseif (! empty($options['default_completion_date'])) {
-                $order->completion_date = date('Y-m-d');
+                $order->completion_date = today();
             }
 
             $order->save();

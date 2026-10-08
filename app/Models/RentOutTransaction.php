@@ -54,11 +54,13 @@ class RentOutTransaction extends Model implements AuditableContracts
         'debit' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'account_id');
@@ -66,17 +68,21 @@ class RentOutTransaction extends Model implements AuditableContracts
 
     /**
      * The income account a charge is booked to - category holds its id.
+     *
+     * @return BelongsTo<Account, $this>
      */
     public function categoryAccount(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'category');
     }
 
+    /** @return BelongsTo<Journal, $this> */
     public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);
     }
 
+    /** @return BelongsTo<JournalEntry, $this> */
     public function journalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class);

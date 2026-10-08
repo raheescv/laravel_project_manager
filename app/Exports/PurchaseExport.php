@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Purchase;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -18,7 +19,7 @@ class PurchaseExport implements FromQuery, WithColumnFormatting, WithEvents, Wit
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $query = Purchase::query()
             ->when($this->filter['branch_id'] ?? '', function ($query, $value) {

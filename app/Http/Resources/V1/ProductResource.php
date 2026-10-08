@@ -5,7 +5,15 @@ namespace App\Http\Resources\V1;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
+/**
+ * @mixin Product
+ *
+ * @property-read int|string|null $spin_frame_count
+ * @property-read int|float|string|null $stock_total
+ * @property-read int|float|string|null $stock_in_branch
+ */
 class ProductResource extends JsonResource
 {
     /**
@@ -98,6 +106,7 @@ class ProductResource extends JsonResource
             // normal images only to resolve the card thumbnail (see below), so skip
             // this per-row re-query there to avoid an N+1.
             'images' => $this->when(! $isList && $this->relationLoaded('images'), function () {
+                /** @var Collection<int, array<string, mixed>> */
                 return $this->normalImages()->get()->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -112,6 +121,7 @@ class ProductResource extends JsonResource
             }),
 
             'images360' => $this->when(! $isList && $this->relationLoaded('images'), function () {
+                /** @var Collection<int, array<string, mixed>> */
                 return $this->angleImages()->orderedByAngle()->get()->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -131,6 +141,7 @@ class ProductResource extends JsonResource
             // stock figures come from SQL aggregates instead (see $hasStock),
             // so no inventory row is hydrated for a card that never shows one.
             'inventories' => $this->when(! $isList && $this->relationLoaded('inventories'), function () {
+                /** @var Collection<int, array<string, mixed>> */
                 return $this->inventories->map(function ($inventory) {
                     return [
                         'id' => $inventory->id,

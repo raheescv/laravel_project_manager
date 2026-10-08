@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\TailoringOrderItem;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -19,7 +20,7 @@ class TailoringOrderItemReportExport implements FromQuery, WithColumnFormatting,
 
     public function __construct(public array $filters = []) {}
 
-    public function query()
+    public function query(): Builder
     {
         $dateType = $this->filters['date_type'] ?? 'order_date';
         $allowedBranchIds = Auth::user()->branches->pluck('branch_id')->toArray();

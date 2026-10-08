@@ -29,7 +29,7 @@ class TenantController extends Controller
 
     public function enter(string $token, TenantSwitchService $switch, TenantService $tenantService): RedirectResponse
     {
-        abort_unless($switch->enter($token, $tenantService->getCurrentTenant()), 403, 'This switch link is invalid or has expired. Start again from Tenant Control.');
+        abort_unless($switch->enter($token, $tenantService->getCurrentTenant()) !== null, 403, 'This switch link is invalid or has expired. Start again from Tenant Control.');
 
         return redirect()->route('dashboard');
     }

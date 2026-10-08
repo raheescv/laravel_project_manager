@@ -51,8 +51,8 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
         return [
             systemDate($entry->date),
             $transactionType,
-            $entry->reference_number ?? $entry->journal?->reference_number ?? '-',
-            $entry->description ?? $entry->journal?->description ?? '-',
+            $entry->reference_number ?? $entry->journal->reference_number ?? '-',
+            $entry->description ?? $entry->journal->description ?? '-',
             $entry->remarks ?? '-',
             $entry->debit > 0 ? $entry->debit : 0,
             $entry->credit > 0 ? $entry->credit : 0,
@@ -127,7 +127,6 @@ class TaxReportExport implements FromCollection, WithColumnFormatting, WithEvent
 
                 // Style net payable row
                 $sheet->getStyle("A{$netRow}:G{$netRow}")->applyFromArray([
-                    'font' => ['bold' => true],
                     'fill' => [
                         'fillType' => 'solid',
                         'startColor' => ['rgb' => '4472C4'],

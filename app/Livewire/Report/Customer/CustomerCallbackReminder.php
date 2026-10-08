@@ -12,6 +12,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read array $customerStats
+ */
 class CustomerCallbackReminder extends Component
 {
     use BuildsCustomerReminderQuery, WithPagination;
@@ -52,8 +55,6 @@ class CustomerCallbackReminder extends Component
         'customerReminderCallbackFilterChanged' => 'filterChanged',
         'refreshData' => '$refresh',
     ];
-
-    private const CACHE_KEY_CUSTOMER_DATA = 'reminder_callback_customer_data';
 
     private const CACHE_TTL = 300; // 5 minutes
 
@@ -122,10 +123,10 @@ class CustomerCallbackReminder extends Component
             $customers = $this->buildCustomerReminderListQuery($filters)->get();
 
             $customers->transform(function ($customer) {
-                if ($customer->last_purchase_date) {
-                    $customer->days_since_purchase = abs(now()->diffInDays($customer->last_purchase_date));
+                if ($customer->getAttribute('last_purchase_date')) {
+                    $customer->setAttribute('days_since_purchase', abs(now()->diffInDays($customer->getAttribute('last_purchase_date'))));
                 } else {
-                    $customer->days_since_purchase = 0;
+                    $customer->setAttribute('days_since_purchase', 0);
                 }
 
                 return $customer;
@@ -192,25 +193,6 @@ class CustomerCallbackReminder extends Component
         Cache::forget('customer_stats_'.md5(serialize($this->getFiltersArray())));
     }
 
-    private function getPriorityLabel(?int $days): string // This method seems unused now in this class, consider removing if not used by blade directly
-    {
-        if (! $days) {
-            return 'Unknown';
-        }
-
-        return match (true) {
-            $days > 90 => 'High Priority',
-            $days > 60 => 'Medium Priority',
-            $days > 30 => 'Low Priority',
-            $days < 30 => 'Recent',
-        };
-    }
-
-    private function getFilterHash(): string
-    {
-        return md5(serialize($this->getFiltersArray()));
-    }
-
     public function getSortIcon(string $field): string
     {
         if ($this->sortField !== $field) {
@@ -238,26 +220,6 @@ class CustomerCallbackReminder extends Component
         ];
     }
 
-    private function paginateCollection(Collection $collection): \Illuminate\Pagination\LengthAwarePaginator
-    {
-        $currentPage = $this->getPage();
-        $perPage = $this->perPage;
-        $total = $collection->count();
-
-        $items = $collection->forPage($currentPage, $perPage);
-
-        return new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $total,
-            $perPage,
-            $currentPage,
-            [
-                'path' => request()->url(),
-                'pageName' => 'page',
-            ]
-        );
-    }
-
     public function render()
     {
         try {
@@ -266,11 +228,11 @@ class CustomerCallbackReminder extends Component
             $paginatedCustomers = $query->paginate($this->perPage);
 
             collect($paginatedCustomers->items())->transform(function ($customer) {
-                if ($customer->last_purchase_date) {
-                    $customer->days_since_purchase = abs(now()->diffInDays($customer->last_purchase_date));
+                if ($customer->getAttribute('last_purchase_date')) {
+                    $customer->setAttribute('days_since_purchase', abs(now()->diffInDays($customer->getAttribute('last_purchase_date'))));
                 } else {
                     // For display and filtering consistency, 0 is a reasonable default if it implies "no purchase history" or "very recent".
-                    $customer->days_since_purchase = 0;
+                    $customer->setAttribute('days_since_purchase', 0);
                 }
 
                 return $customer;

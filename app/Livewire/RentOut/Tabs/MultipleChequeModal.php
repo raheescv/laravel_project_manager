@@ -133,7 +133,7 @@ class MultipleChequeModal extends Component
             $prefix = $matches[1];
             $number = $matches[2];
             $length = strlen($number);
-            $newNumber = str_pad((int) $number + $increment, $length, '0', STR_PAD_LEFT);
+            $newNumber = str_pad((string) ((int) $number + $increment), $length, '0', STR_PAD_LEFT);
 
             return $prefix.$newNumber;
         }

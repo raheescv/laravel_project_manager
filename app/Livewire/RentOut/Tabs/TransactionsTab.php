@@ -149,7 +149,7 @@ class TransactionsTab extends Component
                 'payment_mode' => null,
                 'debit' => (float) $term->total,
                 'credit' => 0.0,
-                'remark' => $term->label ?: $label.' due '.$term->due_date?->format('d-m-Y'),
+                'remark' => $term->label ?: $label.' due '.$term->due_date->format('d-m-Y'),
             ]);
     }
 
@@ -165,7 +165,7 @@ class TransactionsTab extends Component
                 'payment_mode' => null,
                 'debit' => (float) $term->amount,
                 'credit' => 0.0,
-                'remark' => $term->utility?->name ?: 'Utility due '.$term->date?->format('d-m-Y'),
+                'remark' => $term->utility?->name ?: 'Utility due '.$term->date->format('d-m-Y'),
             ]);
     }
 

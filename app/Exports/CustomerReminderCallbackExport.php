@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Traits\BuildsCustomerReminderQuery;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -26,7 +27,7 @@ class CustomerReminderCallbackExport implements FromQuery, WithChunkReading, Wit
         $this->filters = $filters;
     }
 
-    public function query()
+    public function query(): Builder
     {
         return $this->buildCustomerReminderListQuery($this->filters);
     }
@@ -38,7 +39,7 @@ class CustomerReminderCallbackExport implements FromQuery, WithChunkReading, Wit
             $daysSinceLastPurchase = Carbon::parse($account->last_purchase_date)->diffInDays(now(), true);
         }
 
-        $priority = $this->getPriorityLabel($daysSinceLastPurchase);
+        $priority = $this->getPriorityLabel($daysSinceLastPurchase !== null ? (int) $daysSinceLastPurchase : null);
 
         return [
             'ID' => $account->id,
@@ -65,7 +66,7 @@ class CustomerReminderCallbackExport implements FromQuery, WithChunkReading, Wit
             $days > 90 => 'High Priority',
             $days > 60 => 'Medium Priority',
             $days > 30 => 'Low Priority',
-            $days >= 0 && $days <= 30 => 'Recent',
+            $days >= 0 => 'Recent',
             default => 'Unknown',
         };
     }

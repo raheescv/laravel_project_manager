@@ -37,6 +37,7 @@ class SyncCheckoutAction
      * webhook body or the redirect's tap_id. That call is what makes it trustworthy.
      *
      * @throws \App\Services\Payment\TapException when Tap cannot be asked
+     * @throws \App\Exceptions\StorefrontCheckoutException when the checkout cannot be settled
      */
     public function execute(StorefrontCheckout $checkout): StorefrontCheckout
     {
@@ -231,7 +232,7 @@ class SyncCheckoutAction
                 'inventory_id' => $line['inventory_id'],
                 'name' => $line['name'],
                 'quantity' => $line['quantity'],
-                'current_stock' => (float) ($sources->get($line['inventory_id'])?->quantity ?? 0),
+                'current_stock' => (float) ($sources->get($line['inventory_id'])->quantity ?? 0),
             ], $checkout->items),
         ], $userId);
 

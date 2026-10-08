@@ -12,6 +12,7 @@ use Livewire\Component;
 
 class View extends Component
 {
+    /** @var int|string|null */
     public $table_id;
 
     public $items = [];
@@ -26,6 +27,9 @@ class View extends Component
 
     public $inventory_logs = [];
 
+    /**
+     * @param  int|string|null  $table_id
+     */
     public function mount($table_id = null): void
     {
         $this->table_id = $table_id;
@@ -36,7 +40,7 @@ class View extends Component
             return;
         }
 
-        $this->purchase = Purchase::with([
+        $purchase = Purchase::with([
             'account:id,name,mobile,email',
             'branch:id,name',
             'localPurchaseOrder:id',
@@ -54,11 +58,13 @@ class View extends Component
             'audits.user:id,name',
         ])->find($this->table_id);
 
-        if (! $this->purchase) {
+        if (! $purchase) {
             $this->redirect(route('purchase::index'), true);
 
             return;
         }
+
+        $this->purchase = $purchase;
 
         $this->purchases = $this->purchase->toArray();
         $this->items = $this->purchase->items->mapWithKeys(function ($item) {

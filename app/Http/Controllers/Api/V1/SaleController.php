@@ -85,11 +85,8 @@ class SaleController extends Controller
             // producing a single continuous 80mm-wide receipt instead of an A4 page.
             $pdf = $this->makeBrowsershot($html)
                 ->showBackground()
-                ->pdf([
-                    'printBackground' => true,
-                    'preferCSSPageSize' => true,
-                    'scale' => 1,
-                ]);
+                ->setOption('preferCSSPageSize', true)
+                ->pdf();
 
             return response($pdf, 200, [
                 'Content-Type' => 'application/pdf',

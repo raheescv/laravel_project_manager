@@ -193,7 +193,7 @@ final class QPayRechargeExplanation
             $facts[] = 'No gateway messages were logged for this payment (it may predate logging).';
         }
 
-        return array_values(array_filter($facts));
+        return $facts;
     }
 
     /**

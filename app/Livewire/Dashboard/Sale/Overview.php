@@ -190,6 +190,7 @@ class Overview extends Component
             ->get();
 
         $paymentData = $salePaymentData
+            ->toBase()
             ->merge($tailoringPaymentData)
             ->groupBy('method')
             ->map(function ($items, $method) {

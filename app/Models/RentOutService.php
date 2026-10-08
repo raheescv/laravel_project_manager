@@ -50,6 +50,7 @@ class RentOutService extends Model implements AuditableContracts
         ];
     }
 
+    /** @return BelongsTo<RentOut, $this> */
     public function rentOut(): BelongsTo
     {
         return $this->belongsTo(RentOut::class);

@@ -502,7 +502,7 @@ class BalanceSheetExport implements FromCollection, WithColumnFormatting, WithEv
             }
 
             // Category rows (no group, has amount)
-            if (empty($group) && ! empty($accountName) && is_numeric($amount)) {
+            if (empty($group) && is_numeric($amount)) {
                 $sheet->getStyle("A{$row}:".self::LAST_COLUMN."{$row}")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 10, 'color' => ['rgb' => '2C3E50']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => self::CATEGORY_BG]],

@@ -313,7 +313,7 @@ class BarcodeLabel
     {
         $qty = rtrim(rtrim(number_format($conversionFactor, 2, '.', ''), '0'), '.');
         $unit = $product->relationLoaded('unit') ? $product->unit : $product->unit()->first();
-        $unitName = trim((string) ($unit?->code ?? $unit?->name ?? ''));
+        $unitName = trim((string) ($unit->code ?? $unit->name ?? ''));
 
         return $unitName === '' ? $qty : $qty.' '.$unitName;
     }

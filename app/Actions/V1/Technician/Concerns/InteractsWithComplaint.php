@@ -44,6 +44,8 @@ trait InteractsWithComplaint
 
     /**
      * Base query scoped to complaints assigned to the authenticated technician.
+     *
+     * @return Builder<MaintenanceComplaint>
      */
     protected function ownedComplaints(): Builder
     {

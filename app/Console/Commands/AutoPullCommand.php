@@ -58,7 +58,7 @@ class AutoPullCommand extends Command
             return Command::FAILURE;
         }
 
-        if ($hasChanges && $force) {
+        if ($hasChanges) {
             $this->warn('⚠️  Stashing local changes...');
             $stashProcess = new Process(['git', 'stash'], $projectDir);
             $stashProcess->run();
@@ -72,7 +72,7 @@ class AutoPullCommand extends Command
             ];
 
             // Try to use SSH agent if available
-            $sshAuthSock = env('SSH_AUTH_SOCK');
+            $sshAuthSock = getenv('SSH_AUTH_SOCK');
             if ($sshAuthSock) {
                 $env['SSH_AUTH_SOCK'] = $sshAuthSock;
             }

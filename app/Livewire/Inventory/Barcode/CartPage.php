@@ -365,7 +365,6 @@ class CartPage extends Component
     public function addAllInventory()
     {
         $addedCount = 0;
-        $skippedCount = 0;
 
         // Add all Inventory items
         $inventories = Inventory::with('product')->get();
@@ -380,9 +379,6 @@ class CartPage extends Component
 
         if ($addedCount > 0) {
             $message = "Successfully added {$addedCount} inventory item(s) to cart.";
-            if ($skippedCount > 0) {
-                $message .= " {$skippedCount} item(s) were skipped.";
-            }
             $this->dispatch('success', ['message' => $message]);
         } else {
             $this->dispatch('error', ['message' => 'No inventory items could be added to cart.']);
@@ -395,7 +391,6 @@ class CartPage extends Component
     public function addAllProductUnits()
     {
         $addedCount = 0;
-        $skippedCount = 0;
 
         // Build query for ProductUnit items
         $productUnitsQuery = ProductUnit::with('product', 'subUnit');
@@ -419,9 +414,6 @@ class CartPage extends Component
         if ($addedCount > 0) {
             $unitFilter = ! empty($this->selectedUnitId) ? ' (filtered by unit)' : '';
             $message = "Successfully added {$addedCount} product unit(s) to cart{$unitFilter}.";
-            if ($skippedCount > 0) {
-                $message .= " {$skippedCount} item(s) were skipped.";
-            }
             $this->dispatch('success', ['message' => $message]);
         } else {
             $unitFilter = ! empty($this->selectedUnitId) ? ' for the selected unit' : '';

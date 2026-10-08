@@ -20,7 +20,7 @@ class DeleteAction
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the Package. Please try again.', 1);
             }
-            $this->deleteJournalEntries($model, $userId);
+            $this->deleteJournalEntries($model);
             $return['success'] = true;
             $return['message'] = 'Successfully Deleted Package';
             $return['data'] = [];

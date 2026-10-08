@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Csv;
 use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
+use PhpOffice\PhpSpreadsheet\Reader\Xls;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 /**
@@ -135,6 +138,7 @@ class TicketImportSheet
      */
     private static function prepare(int $userId, string $token, string $path, ?string $sheet, ?int $headerRow): array
     {
+        /** @var Xlsx|Xls|Csv $reader Uploads are limited to csv/xlsx/xls. */
         $reader = IOFactory::createReaderForFile($path);
         $sheets = collect($reader->listWorksheetInfo($path))
             ->map(fn (array $info): array => ['name' => (string) $info['worksheetName'], 'rows' => (int) $info['totalRows']])
@@ -262,7 +266,7 @@ class TicketImportSheet
      * Check every row against the mapping and options.
      *
      * @param  list<array<int, mixed>>  $rows
-     * @param  array<string, ?int>  $mappings
+     * @param  array<string, int|string|null>  $mappings  Column indexes as posted; request input may carry them as strings.
      * @param  array{default_status?: string, duplicates?: string}  $options
      * @return list<array{line: int, state: string, issues: list<string>, data: array{title: string, description: string, status: string, group: ?string, created_at: ?string}}>
      */
@@ -277,7 +281,7 @@ class TicketImportSheet
         $result = [];
 
         foreach ($rows as $i => $row) {
-            $cell = fn (string $field): string => isset($mappings[$field]) && $mappings[$field] !== null && $mappings[$field] !== ''
+            $cell = fn (string $field): string => isset($mappings[$field]) && $mappings[$field] !== ''
                 ? trim((string) ($row[(int) $mappings[$field]] ?? ''))
                 : '';
             $issues = [];

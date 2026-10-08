@@ -55,12 +55,12 @@ class SupplyRequestDashboard extends Component
                 'id' => $sr->id,
                 'order_no' => $sr->order_no,
                 'date' => $sr->date ? date('d M Y', strtotime($sr->date)) : '-',
-                'property' => $sr->property?->number ?? '-',
+                'property' => $sr->property->number ?? '-',
                 'type' => ucfirst($sr->type ?? '-'),
                 'amount' => $sr->grand_total,
-                'status' => $sr->status?->label() ?? '-',
-                'status_color' => $sr->status?->color() ?? 'secondary',
-                'creator' => $sr->creator?->name ?? '-',
+                'status' => $sr->status->label(),
+                'status_color' => $sr->status->color(),
+                'creator' => $sr->creator->name ?? '-',
             ])->toArray();
     }
 

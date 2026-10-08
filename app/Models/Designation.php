@@ -33,11 +33,13 @@ class Designation extends Model
         $this->attributes['name'] = ucfirst(trim($value));
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return HasMany<User, $this> */
     public function employees(): HasMany
     {
         return $this->hasMany(User::class, 'designation_id');

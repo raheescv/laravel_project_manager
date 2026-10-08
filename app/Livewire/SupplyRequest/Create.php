@@ -25,6 +25,7 @@ class Create extends Component
 
     public $supply_request = [];
 
+    /** @var int|string|null */
     public $table_id;
 
     public $items = [];
@@ -106,17 +107,17 @@ class Create extends Component
     {
         $model = SupplyRequest::with('property.building.group', 'property.type')->find($this->table_id);
         $this->supply_request = $model->toArray();
-        $this->supply_request['creator'] = $model->creator?->name ?? '';
+        $this->supply_request['creator'] = $model->creator->name ?? '';
         $this->supply_request['created_at_formatted'] = $model->created_at?->format('d M Y, h:i A') ?? '';
-        $this->supply_request['approver'] = $model->approver?->name ?? '';
+        $this->supply_request['approver'] = $model->approver->name ?? '';
         $this->supply_request['approved_at_formatted'] = $model->approved_at?->format('d M Y, h:i A') ?? '';
-        $this->supply_request['accountant'] = $model->accountant?->name ?? '';
+        $this->supply_request['accountant'] = $model->accountant->name ?? '';
         $this->supply_request['accounted_at_formatted'] = $model->accounted_at?->format('d M Y, h:i A') ?? '';
-        $this->supply_request['final_approver'] = $model->finalApprover?->name ?? '';
+        $this->supply_request['final_approver'] = $model->finalApprover->name ?? '';
         $this->supply_request['final_approved_at_formatted'] = $model->final_approved_at?->format('d M Y, h:i A') ?? '';
-        $this->supply_request['completer'] = $model->completer?->name ?? '';
+        $this->supply_request['completer'] = $model->completer->name ?? '';
         $this->supply_request['completed_at_formatted'] = $model->completed_at?->format('d M Y, h:i A') ?? '';
-        $this->supply_request['payment_mode_name'] = $model->paymentMode?->name ?? '';
+        $this->supply_request['payment_mode_name'] = $model->paymentMode->name ?? '';
         $this->payment_mode_id = $model->payment_mode_id ?? '';
 
         // Pre-fill property dropdowns for edit
@@ -126,9 +127,9 @@ class Create extends Component
             $group = $building?->group;
             $type = $property->type;
 
-            $this->supply_request['property_group_id'] = $group?->id ?? '';
-            $this->supply_request['property_building_id'] = $building?->id ?? '';
-            $this->supply_request['property_type_id'] = $type?->id ?? '';
+            $this->supply_request['property_group_id'] = $group->id ?? '';
+            $this->supply_request['property_building_id'] = $building->id ?? '';
+            $this->supply_request['property_type_id'] = $type->id ?? '';
 
             $this->preFilledDropDowns = [
                 'group' => $group ? [$group->id => $group->name] : [],
@@ -140,8 +141,8 @@ class Create extends Component
 
         foreach ($model->items as $value) {
             $single = $value->toArray();
-            $single['branch_name'] = $value->branch?->name ?? 'Main Store';
-            $single['product_name'] = $value->product?->name ?? '';
+            $single['branch_name'] = $value->branch->name ?? 'Main Store';
+            $single['product_name'] = $value->product->name ?? '';
             $single['edit_flag'] = false;
             $this->items[] = $single;
         }
@@ -167,7 +168,7 @@ class Create extends Component
             $this->notes[] = [
                 'id' => $value->id,
                 'note' => $value->note,
-                'creator' => $value->creator?->name ?? '',
+                'creator' => $value->creator->name ?? '',
                 'created_at' => $value->created_at,
                 'delete_flag' => false,
             ];
@@ -233,11 +234,11 @@ class Create extends Component
 
         return [
             'property_group_id' => $property->property_group_id,
-            'property_group_name' => $property->group?->name ?? '',
+            'property_group_name' => $property->group->name ?? '',
             'property_building_id' => $property->property_building_id,
-            'property_building_name' => $property->building?->name ?? '',
+            'property_building_name' => $property->building->name ?? '',
             'property_type_id' => $property->property_type_id,
-            'property_type_name' => $property->type?->name ?? '',
+            'property_type_name' => $property->type->name ?? '',
         ];
     }
 
@@ -314,8 +315,8 @@ class Create extends Component
             $branch = Branch::find($this->item['branch_id']);
             $product = Product::find($this->item['product_id']);
 
-            $this->item['branch_name'] = $branch?->name ?? '';
-            $this->item['product_name'] = $product?->name ?? '';
+            $this->item['branch_name'] = $branch->name ?? '';
+            $this->item['product_name'] = $product->name ?? '';
             $this->item['edit_flag'] = false;
 
             $this->items[] = $this->item;

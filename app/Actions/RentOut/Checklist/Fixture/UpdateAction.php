@@ -31,7 +31,7 @@ class UpdateAction
                 $changes['completed_date'] = filled($data['completed_date']) ? Carbon::parse($data['completed_date'])->toDateString() : null;
             }
 
-            $completed = ($changes['status'] ?? $entry->status?->value) === FixtureStatus::Completed->value;
+            $completed = ($changes['status'] ?? $entry->status->value) === FixtureStatus::Completed->value;
             if ($completed && empty($changes['completed_date']) && ! $entry->completed_date) {
                 $changes['completed_date'] = now()->toDateString();
             }

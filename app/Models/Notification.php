@@ -12,6 +12,7 @@ class Notification extends Model
 
     protected $guarded = [];
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

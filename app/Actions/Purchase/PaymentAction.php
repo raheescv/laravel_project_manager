@@ -10,7 +10,7 @@ use App\Models\Purchase;
 
 class PaymentAction
 {
-    public function execute($account_id, $name, $purchase_id, $data, $paymentData, $user_id)
+    public function execute($account_id, $name, int|string $purchase_id, $data, $paymentData, $user_id)
     {
         try {
             $paymentMethod = Account::find($paymentData['payment_method_id']);
@@ -24,7 +24,6 @@ class PaymentAction
                 'created_by' => $user_id,
                 'description' => 'Purchase:'.$purchase->invoice_no,
                 'remarks' => $paymentData['remarks'],
-                'reference_no' => $purchase->reference_no,
                 'model' => 'Purchase',
                 'model_id' => $purchase_id,
             ];

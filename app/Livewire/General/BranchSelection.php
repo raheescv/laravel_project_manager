@@ -35,7 +35,7 @@ class BranchSelection extends Component
     public function select($branch_id)
     {
         // Click-and-go: only allow switching to a branch assigned to the user.
-        $allowed = Auth::user()->branches()->pluck('branch_id')->contains((int) $branch_id);
+        $allowed = Auth::user()->branches()->where('branch_id', (int) $branch_id)->exists();
         if (! $allowed) {
             return;
         }

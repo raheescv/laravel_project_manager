@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[UsePolicy(GrnPolicy::class)]
@@ -36,46 +37,55 @@ class Grn extends Model
         'decision_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<Account, $this> */
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'vendor_id');
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
+    /** @return BelongsTo<LocalPurchaseOrder, $this> */
     public function localPurchaseOrder(): BelongsTo
     {
         return $this->belongsTo(LocalPurchaseOrder::class);
     }
 
+    /** @return HasMany<GrnItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(GrnItem::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function decisionMaker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decision_by');
     }
 
-    public function journal()
+    /** @return HasOne<Journal, $this> */
+    public function journal(): HasOne
     {
         return $this->hasOne(Journal::class, 'model_id')->where('model', 'Grn');
     }
 
+    /** @return HasMany<Journal, $this> */
     public function journals(): HasMany
     {
         return $this->hasMany(Journal::class, 'model_id')->where('model', 'Grn');

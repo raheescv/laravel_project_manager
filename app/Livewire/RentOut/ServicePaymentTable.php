@@ -12,6 +12,10 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * @property-read array $summary
+ * @property-read array $kpis
+ */
 class ServicePaymentTable extends Component
 {
     use HasRentOutReportFilters, WithPagination {
@@ -103,8 +107,8 @@ class ServicePaymentTable extends Component
 
         $summary = [];
         foreach ($rows as $row) {
-            $charge = (float) $row->charge;
-            $paid = (float) $row->paid;
+            $charge = (float) $row->getAttribute('charge');
+            $paid = (float) $row->getAttribute('paid');
             $summary[] = [
                 'name' => $names[$row->category] ?? ($row->category ?: 'Uncategorised'),
                 'charge' => $charge,

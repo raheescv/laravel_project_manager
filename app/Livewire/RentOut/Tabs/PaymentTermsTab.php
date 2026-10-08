@@ -78,7 +78,7 @@ class PaymentTermsTab extends Component
             $this->dispatch('open-single-term-modal',
                 form: [
                     'rent_out_id' => $term->rent_out_id,
-                    'due_date' => $term->due_date?->format('Y-m-d'),
+                    'due_date' => $term->due_date->format('Y-m-d'),
                     'label' => $term->label ?? '',
                     'amount' => $term->amount,
                     'discount' => $term->discount,

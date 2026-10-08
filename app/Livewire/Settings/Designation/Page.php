@@ -5,6 +5,7 @@ namespace App\Livewire\Settings\Designation;
 use App\Actions\Settings\Designation\CreateAction;
 use App\Actions\Settings\Designation\UpdateAction;
 use App\Models\Designation;
+use App\Services\TenantService;
 use Faker\Factory;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -58,7 +59,7 @@ class Page extends Component
     protected function rules()
     {
         return [
-            'designations.name' => ['required', 'max:100', Rule::unique('designations', 'name')->where('tenant_id', Designation::getCurrentTenantId())->ignore($this->table_id)],
+            'designations.name' => ['required', 'max:100', Rule::unique('designations', 'name')->where('tenant_id', app(TenantService::class)->getCurrentTenantId())->ignore($this->table_id)],
             'designations.order_no' => ['nullable', 'integer'],
         ];
     }

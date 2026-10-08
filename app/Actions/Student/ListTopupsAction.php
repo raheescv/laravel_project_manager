@@ -34,7 +34,7 @@ class ListTopupsAction
                 'at' => $entry->created_at,
                 'date' => $entry->date,
                 'channel' => 'Office',
-                'method' => $entry->counterAccount?->name ?? '-',
+                'method' => $entry->counterAccount->name ?? '-',
                 'reference' => null,
                 'amount' => round((float) $entry->credit - (float) $entry->debit, 2),
                 'status' => 'success',

@@ -96,9 +96,9 @@ class UpdateStatusAction
             ->map(fn ($term) => [
                 'id' => $term->id,
                 'label' => $term->label ?? '',
-                'due_date' => $term->due_date?->format('d-m-Y') ?? '',
-                'amount' => number_format($term->total, 2),
-                'balance' => number_format($term->balance, 2),
+                'due_date' => $term->due_date->format('d-m-Y'),
+                'amount' => number_format((float) $term->total, 2),
+                'balance' => number_format((float) $term->balance, 2),
                 'raw_balance' => (float) $term->balance,
             ])
             ->toArray();
@@ -129,7 +129,7 @@ class UpdateStatusAction
         return RentOutTransactionHelper::storeChequePayment(
             $cheque,
             $term,
-            $payAmount,
+            (float) $payAmount,
             $paymentMethodId,
             $journalDate,
             $remark ?? ''

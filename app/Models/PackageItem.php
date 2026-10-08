@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class PackageItem extends Model
@@ -37,17 +38,20 @@ class PackageItem extends Model
         );
     }
 
-    public function package()
+    /** @return BelongsTo<Package, $this> */
+    public function package(): BelongsTo
     {
         return $this->belongsTo(Package::class);
     }
 
-    public function createdBy()
+    /** @return BelongsTo<User, $this> */
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updatedBy()
+    /** @return BelongsTo<User, $this> */
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }

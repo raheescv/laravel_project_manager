@@ -53,6 +53,7 @@ class PageController extends Controller
 
     protected function loadInitialData()
     {
+        // @phpstan-ignore arguments.count (resolved through the \Redis mixin; Laravel's PhpRedis/Predis connections take a pipeline callback)
         $data = Redis::pipeline(function ($pipe): void {
             $pipe->get(self::CACHE_PREFIX.'payment_methods');
             $pipe->get(self::CACHE_PREFIX.'employees');

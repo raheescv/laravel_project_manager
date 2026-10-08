@@ -50,36 +50,43 @@ class SaleReturnItem extends Model implements AuditableContracts
         ], $merge);
     }
 
-    public function inventory()
+    /** @return BelongsTo<Inventory, $this> */
+    public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function employee()
+    /** @return BelongsTo<User, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
 
-    public function saleReturn()
+    /** @return BelongsTo<SaleReturn, $this> */
+    public function saleReturn(): BelongsTo
     {
         return $this->belongsTo(SaleReturn::class);
     }
 
-    public function unit()
+    /** @return BelongsTo<Unit, $this> */
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    public function saleItem()
+    /** @return BelongsTo<SaleItem, $this> */
+    public function saleItem(): BelongsTo
     {
         return $this->belongsTo(SaleItem::class);
     }
 
+    /** @return BelongsTo<Tenant, $this> */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

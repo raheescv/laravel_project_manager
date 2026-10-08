@@ -26,7 +26,9 @@ class AddNoteAction
                 'date' => ['nullable', 'date'],
             ], $data);
 
-            $notes = is_array($model->remarks) ? $model->remarks : (json_decode((string) $model->remarks, true) ?: []);
+            /** @var mixed $remarks A legacy row can still hold the notes as a JSON-encoded string. */
+            $remarks = $model->remarks;
+            $notes = is_array($remarks) ? $remarks : (json_decode((string) $remarks, true) ?: []);
             $notes[] = [
                 'date' => ($data['date'] ?? null) ?: now()->format('Y-m-d'),
                 'note' => $data['note'],

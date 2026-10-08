@@ -30,10 +30,10 @@ class UpdateAction
                 $item['appointment_id'] = $model->id;
                 $item['updated_by'] = $userId;
                 if (isset($item['id'])) {
-                    $response = (new Item\UpdateAction())->execute($item, $item['id'], $userId);
+                    $response = (new Item\UpdateAction())->execute($item, $item['id']);
                 } else {
                     $item['created_by'] = $userId;
-                    $response = (new Item\CreateAction())->execute($item, $userId);
+                    $response = (new Item\CreateAction())->execute($item);
                 }
                 if (! $response['success']) {
                     throw new Exception($response['message'], 1);

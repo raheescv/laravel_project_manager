@@ -96,21 +96,25 @@ class PropertyLead extends Model implements AuditableContracts
         return $query;
     }
 
+    /** @return BelongsTo<PropertyGroup, $this> */
     public function group(): BelongsTo
     {
         return $this->belongsTo(PropertyGroup::class, 'property_group_id');
     }
 
+    /** @return BelongsTo<PropertyType, $this> */
     public function propertyType(): BelongsTo
     {
         return $this->belongsTo(PropertyType::class, 'property_type_id');
     }
 
+    /** @return BelongsTo<Country, $this> */
     public function country(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'country_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');

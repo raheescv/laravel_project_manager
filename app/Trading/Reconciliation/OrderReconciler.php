@@ -6,7 +6,6 @@ use App\Models\TradingStrategyRun;
 use App\Trading\Brokers\BrokerManager;
 use App\Trading\DataObjects\OrderRequest;
 use App\Trading\DataObjects\OrderResult;
-use App\Trading\DataObjects\PositionSnapshot;
 
 /**
  * After an order is placed, verifies it actually appears in the broker's
@@ -72,9 +71,6 @@ final class OrderReconciler
     {
         $broker = $this->brokers->broker();
         foreach ($broker->positions() as $p) {
-            if (! $p instanceof PositionSnapshot) {
-                continue;
-            }
             if (strcasecmp($p->symbol, $symbol) === 0) {
                 return $p->quantity;
             }

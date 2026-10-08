@@ -25,7 +25,7 @@ class AppointmentChart extends Component
         if ($this->period === 'week') {
             $startDate = Carbon::now()->startOfWeek();
             $endDate = Carbon::now()->endOfWeek();
-        } elseif ($this->period === 'month') {
+        } else {
             $startDate = Carbon::now()->startOfMonth();
             $endDate = Carbon::now()->endOfMonth();
         }

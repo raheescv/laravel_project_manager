@@ -116,8 +116,8 @@ class IssueAgingReport extends Component
         $data = $query->paginate($this->limit);
 
         $total = [
-            'quantity_out' => (clone $totalQuery)->get()->sum('quantity_out'),
-            'quantity_in' => (clone $totalQuery)->get()->sum('quantity_in'),
+            'quantity_out' => (clone $totalQuery)->get()->sum('quantity_out'), // @phpstan-ignore larastan.noUnnecessaryCollectionCall (grouped + HAVING query: a SQL SUM would not total the per-group rows)
+            'quantity_in' => (clone $totalQuery)->get()->sum('quantity_in'), // @phpstan-ignore larastan.noUnnecessaryCollectionCall (grouped + HAVING query: a SQL SUM would not total the per-group rows)
             'net_quantity' => (clone $totalQuery)->get()->sum('net_quantity'),
         ];
 

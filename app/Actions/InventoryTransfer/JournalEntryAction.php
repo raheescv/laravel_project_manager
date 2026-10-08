@@ -24,7 +24,7 @@ class JournalEntryAction
             }
 
             $totalValue = $inventoryTransfer->items->sum(function ($item): float {
-                return (float) $item->quantity * (float) ($item->inventory?->cost ?? 0);
+                return (float) $item->quantity * (float) ($item->inventory->cost ?? 0);
             });
 
             $existingJournal = Journal::withoutGlobalScopes()
@@ -69,8 +69,8 @@ class JournalEntryAction
 
     protected function buildJournalData(InventoryTransfer $inventoryTransfer, int $inventoryAccountId, float $totalValue): array
     {
-        $fromBranchName = $inventoryTransfer->fromBranch?->name ?? 'Source Branch';
-        $toBranchName = $inventoryTransfer->toBranch?->name ?? 'Destination Branch';
+        $fromBranchName = $inventoryTransfer->fromBranch->name ?? 'Source Branch';
+        $toBranchName = $inventoryTransfer->toBranch->name ?? 'Destination Branch';
         $remarks = 'InventoryTransfer:'.$inventoryTransfer->id.' ['.$fromBranchName.' -> '.$toBranchName.']';
 
         return [

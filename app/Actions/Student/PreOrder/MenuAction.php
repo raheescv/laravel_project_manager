@@ -33,13 +33,13 @@ class MenuAction
         $menus = self::menus($products->pluck('id')->all());
 
         return $products
-            ->groupBy(fn (Product $product) => self::menuCategory($product, $settings)?->id ?? 0)
+            ->groupBy(fn (Product $product) => self::menuCategory($product, $settings)->id ?? 0)
             ->map(function ($items) use ($settings, $menus) {
                 $category = self::menuCategory($items->first(), $settings);
 
                 return [
-                    'id' => $category?->id ?? 0,
-                    'name' => $category?->name ?? 'Other',
+                    'id' => $category->id ?? 0,
+                    'name' => $category->name ?? 'Other',
                     'items' => $items->map(fn (Product $product) => self::product($product) + self::weekly($menus->get($product->id), $settings))->values()->all(),
                 ];
             })
@@ -48,7 +48,11 @@ class MenuAction
             ->all();
     }
 
-    /** Selling products on the menu. */
+    /**
+     * Selling products on the menu.
+     *
+     * @return Builder<Product>
+     */
     public static function query(StudentSettings $settings): Builder
     {
         $ids = $settings->preOrderCategoryIds;

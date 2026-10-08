@@ -30,7 +30,6 @@ class GenerateResidentialLeaseAction
             ->format('A4')
             ->margins(15, 15, 15, 15)
             ->showBackground()
-            ->preferCssPageSize()
             ->pdf();
 
         return response($pdf)
@@ -65,7 +64,7 @@ class GenerateResidentialLeaseAction
 
     private function buildSaleLeaseHtml(RentOut $rentOut): string
     {
-        $words = convert_number_to_words(round($rentOut->rent));
+        $words = convert_number_to_words(round((float) $rentOut->rent));
         $numberToWord = [
             'english' => $words,
             'arabic' => $words, // Arabic translation can be added later if needed
@@ -175,7 +174,7 @@ class GenerateResidentialLeaseAction
     private function buildContractDetails(RentOut $rentOut, string $type): array
     {
         $rentOutExtend = $rentOut->extends()->latest()->first();
-        $rent = round($rentOut->rent);
+        $rent = round((float) $rentOut->rent);
         if ($rentOutExtend) {
             $rent = $rentOutExtend->rent_amount;
         }
@@ -202,7 +201,7 @@ class GenerateResidentialLeaseAction
 
         // Security Deposit
         $securityDepositAmount = $rentOut->securities->sum('amount');
-        $securityDepositModes = $rentOut->securities->map(fn ($s) => $s->payment_mode?->value ?? 'Cash')->unique()->implode(', ');
+        $securityDepositModes = $rentOut->securities->map(fn ($s) => $s->payment_mode->value ?? 'Cash')->unique()->implode(', ');
 
         $details[] = [
             'english' => ['title' => 'Security Deposit', 'value' => $securityDepositModes, 'value1' => $securityDepositAmount],
