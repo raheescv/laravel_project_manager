@@ -71,25 +71,15 @@ class GeneratePdfAction
     }
 
     /**
-     * The same two passes, measured rather than stretched: the first layout reports
-     * the gap left under the acknowledgment, and the second pushes it down by that
-     * much. A pass that gains a page (rounding) loses to the first, as above.
+     * The same idea, measured rather than stretched: tools/weasyprint-pdf.py lays the
+     * document out, measures the gap under the acknowledgment and lays it out again
+     * with the block pushed down by that much — both passes in one process.
      */
     private function renderWithWeasyPrint(RentOut $rentOut, ?string $companyLogo): string
     {
-        $render = fn (float $footGap) => $this->weasyPrintPdf(
-            view('print.rentout.checklist', ['rentOut' => $rentOut, 'companyLogo' => $companyLogo, 'footGap' => $footGap])->render()
-        );
+        $html = view('print.rentout.checklist', ['rentOut' => $rentOut, 'companyLogo' => $companyLogo, 'weasyPrint' => true])->render();
 
-        $first = $render(0);
-
-        if (($first['footGap'] ?? 0) < 1) {
-            return $first['pdf'];
-        }
-
-        $pinned = $render(floor($first['footGap']) - 1);
-
-        return $pinned['pages'] === $first['pages'] ? $pinned['pdf'] : $first['pdf'];
+        return $this->weasyPrintPdf($html)['pdf'];
     }
 
     /** Pages in a rendered PDF, read from the page tree; 1 when it can't be told. */

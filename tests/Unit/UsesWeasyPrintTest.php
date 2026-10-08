@@ -20,7 +20,7 @@ function weasyPrinter(): object
             return $this->weasyPrintEnabled();
         }
 
-        /** @return array{pdf: string, pages: int, footGap: float|null} */
+        /** @return array{pdf: string, pages: int, footShift: float} */
         public function render(string $html): array
         {
             return $this->weasyPrintPdf($html);
@@ -54,21 +54,27 @@ it('renders english and arabic text to a pdf and counts its pages', function ():
 
     expect($result['pdf'])->toStartWith('%PDF-')
         ->and($result['pages'])->toBe(2)
-        ->and($result['footGap'])->toBeNull();
+        ->and($result['footShift'])->toBe(0.0);
 });
 
-it('measures the gap under the foot block so it can be pinned to the page foot', function (): void {
+it('pins the foot block to the foot of its page', function (): void {
     skipWithoutWeasyPrint();
 
-    $html = fn (float $gap) => '<style>@page { size: A4; margin: 10mm; }</style>'
-        .'<p>Inventory</p><div data-pdf-foot style="height: 100px; padding-top: '.$gap.'px; box-sizing: content-box;">Sign here</div>';
+    $result = weasyPrinter()->render('<style>@page { size: A4; margin: 10mm; }</style>'
+        .'<p>Inventory</p><div data-pdf-foot style="height: 100px;">Sign here</div>');
 
-    $first = weasyPrinter()->render($html(0));
-    $pinned = weasyPrinter()->render($html(floor($first['footGap']) - 1));
+    expect($result['pages'])->toBe(1)
+        ->and($result['footShift'])->toBeGreaterThan(800);
+});
 
-    expect($first['footGap'])->toBeGreaterThan(800)
-        ->and($pinned['pages'])->toBe(1)
-        ->and($pinned['footGap'])->toBeLessThan(2);
+it('lays the page out again when something follows the foot block', function (): void {
+    skipWithoutWeasyPrint();
+
+    $result = weasyPrinter()->render('<style>@page { size: A4; margin: 10mm; }</style>'
+        .'<p>Inventory</p><div data-pdf-foot style="height: 100px;">Sign here</div><p>Annex</p>');
+
+    expect($result['pages'])->toBe(1)
+        ->and($result['footShift'])->toBeGreaterThan(700);
 });
 
 it('never fetches anything outside the html', function (): void {
