@@ -18,6 +18,9 @@
     <title>Unit Handover & Snagging</title>
     @include('print.rentout.partials.checklist-styles')
     <style>
+        /* WeasyPrint takes the paper from here; Browsershot passes the same A4 and
+           10mm margins as options. */
+        @page { size: A4; margin: 10mm; }
         body { margin: 0; }
         /* The acknowledgment signs off the document, so it sits at the FOOT of the last
            page rather than trailing the inventory table. Chrome has no "footer on the
@@ -28,25 +31,23 @@
            with — vh can't be used here, it measures the whole page, margins included,
            and would spill onto an extra page. 2mm is shaved off so rounding can't do
            the same. */
+        @if (! empty($weasyPrint))
+        /* WeasyPrint measures instead (tools/weasyprint-pdf.py pads the data-pdf-foot
+           block down by the gap its first layout left under it): a flex column
+           stretched over several pages loses content there. The group is kept whole
+           so the gap is measured on the page it will be pinned to. */
+        .ck-doc .wrap { display: block; }
+        .ck-doc .accept-group { break-inside: avoid; }
+        @else
         .ck-doc .wrap { min-height: calc({{ $bodyPages }} * 277mm - 2mm); }
+        @endif
     </style>
 </head>
 <body>
 @php
-    // Browsershot renders the page from a temp file, so images have to travel with
-    // it — every stored path is inlined as a data URI.
-    $dataUri = function (?string $relative) {
-        if (! $relative) {
-            return null;
-        }
-        $path = public_path('storage/' . ltrim(preg_replace('#^public/#', '', $relative), '/'));
-        if (! is_file($path)) {
-            return null;
-        }
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION)) ?: 'png';
-
-        return 'data:image/' . ($ext === 'svg' ? 'svg+xml' : $ext) . ';base64,' . base64_encode(file_get_contents($path));
-    };
+    // The renderer reads the page from a temp file or stdin, so images have to
+    // travel with it — every stored path is inlined as a print-sized data URI.
+    $dataUri = fn (?string $relative) => \App\Support\PrintImage::dataUri($relative);
 @endphp
 @include('print.rentout.partials.checklist-document', ['imageSrc' => $dataUri, 'interactive' => false, 'terms' => $terms])
 </body>

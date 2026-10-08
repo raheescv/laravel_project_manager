@@ -199,7 +199,8 @@
         </tbody>
     </table>
 
-    <div class="accept-group">
+    {{-- data-pdf-foot: the block WeasyPrint measures to pin it to the page foot. --}}
+    <div class="accept-group" data-pdf-foot>
     @foreach ($phases as $phaseKey => $phase)
         <div class="accept">
             <div class="ph">{{ $phase['label'] }}</div>
