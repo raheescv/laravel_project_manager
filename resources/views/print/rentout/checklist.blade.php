@@ -18,6 +18,9 @@
     <title>Unit Handover & Snagging</title>
     @include('print.rentout.partials.checklist-styles')
     <style>
+        /* WeasyPrint takes the paper from here; Browsershot passes the same A4 and
+           10mm margins as options. */
+        @page { size: A4; margin: 10mm; }
         body { margin: 0; }
         /* The acknowledgment signs off the document, so it sits at the FOOT of the last
            page rather than trailing the inventory table. Chrome has no "footer on the
@@ -28,7 +31,18 @@
            with — vh can't be used here, it measures the whole page, margins included,
            and would spill onto an extra page. 2mm is shaved off so rounding can't do
            the same. */
+        @if (isset($footGap))
+        /* WeasyPrint measures instead: a flex column stretched over several pages
+           loses content there, so the block is pushed down by the gap its first
+           layout left under it (GeneratePdfAction passes $footGap). The group is
+           kept whole so the gap is measured on the page it will be pinned to.
+           Padding rather than margin: a margin collapses into the one above it and
+           is dropped when the block opens a page. */
+        .ck-doc .wrap { display: block; }
+        .ck-doc .accept-group { padding-top: {{ $footGap }}px; break-inside: avoid; }
+        @else
         .ck-doc .wrap { min-height: calc({{ $bodyPages }} * 277mm - 2mm); }
+        @endif
     </style>
 </head>
 <body>
