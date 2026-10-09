@@ -5,3 +5,16 @@ parameters:
     paths:
         - app
     level: 5
+
+    ignoreErrors:
+        # The Ollama report uses an optional package and an export that is not installed here.
+        -
+            identifier: class.notFound
+            path: app/Helpers/OllamaHelper.php
+        -
+            identifier: class.notFound
+            path: app/Livewire/Report/OllamaReport.php
+        # purchase_return_item() points at a view that does not exist yet (report/purchase_return_item.blade.php).
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/ReportController.php

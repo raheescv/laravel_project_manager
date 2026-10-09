@@ -181,6 +181,8 @@ class GetProductsAction
 
     /**
      * Apply filters to the query.
+     *
+     * @param  Builder<Product>  $query
      */
     private function applyFilters(Builder $query, array $filters): void
     {
