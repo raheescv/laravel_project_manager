@@ -29,6 +29,12 @@
                                 <span class="d-none d-md-inline">Import</span>
                             </a>
                         @endcan
+                        @can('product offer.view')
+                            <a class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" title="Offer prices" data-bs-toggle="tooltip" href="{{ route('product::offer::index', ['type' => 'service']) }}">
+                                <i class="fa fa-tags me-md-1 fs-5"></i>
+                                <span class="d-none d-md-inline">Offers</span>
+                            </a>
+                        @endcan
                     </div>
                 </div>
 

@@ -50,9 +50,24 @@ it('offers the certificate as override.crt for the printing PCs', function (): v
         ->assertHeader('Content-Disposition', 'attachment; filename="override.crt"');
 });
 
-it('answers 404 until the certificate has been generated', function (): void {
-    $this->get(route('inventory::barcode::qz::certificate'))->assertNotFound();
-    $this->postJson(route('inventory::barcode::qz::sign'), ['request' => 'a1b2c3'])->assertNotFound();
+it('generates the pair on first use when qz:certificate was never run', function (): void {
+    expect(QzTray::isConfigured())->toBeFalse();
+
+    $certificate = $this->get(route('inventory::barcode::qz::certificate', ['download' => 1]))
+        ->assertOk()
+        ->assertHeader('Content-Disposition', 'attachment; filename="override.crt"')
+        ->getContent();
+    $signature = $this->postJson(route('inventory::barcode::qz::sign'), ['request' => 'a1b2c3'])->assertOk()->getContent();
+
+    expect(openssl_x509_parse($certificate)['subject']['O'])->toBe(config('app.name'))
+        ->and(openssl_verify('a1b2c3', base64_decode($signature), openssl_pkey_get_public($certificate), OPENSSL_ALGO_SHA512))->toBe(1);
+});
+
+it('keeps an existing pair instead of regenerating it', function (): void {
+    QzTray::generate('Test Shop');
+    $original = QzTray::certificate();
+
+    $this->get(route('inventory::barcode::qz::certificate'))->assertOk()->assertSee($original, false);
 });
 
 it('signs only for signed-in users', function (): void {

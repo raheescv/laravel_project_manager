@@ -18,15 +18,17 @@ class AddItemAction
             $saleType = $saleType ?? 'normal';
 
             $baseUnit = $this->getBaseUnit($inventory);
-            $baseUnitPrice = $inventory->product->saleTypePrice($saleType);
+            $pricing = $this->basePricing($inventory, $saleType);
+            $baseUnitPrice = $pricing['unit_price'];
 
             $unitInfo = $this->getUnitInfo($inventory, $unitId);
             $unitPrice = $baseUnitPrice * $unitInfo['conversion_factor'];
+            $offerUnitDiscount = $pricing['offer_discount'] * $unitInfo['conversion_factor'];
 
             $taxRate = $inventory->product->tax ?? 0;
             $quantity = $this->getDefaultQuantity();
 
-            $totals = $this->calculateTotals($unitPrice, $quantity, $taxRate);
+            $totals = $this->calculateTotals($unitPrice, $quantity, $taxRate, round($offerUnitDiscount * $quantity, 2));
             $employeeName = $this->getEmployeeName($employeeId);
 
             $item = $this->buildItemData(
@@ -40,7 +42,12 @@ class AddItemAction
                 $taxRate,
                 $quantity,
                 $totals
-            );
+            ) + [
+                'base_offer_discount' => $pricing['offer_discount'],
+                'offer_unit_discount' => $offerUnitDiscount,
+                'offer_price' => $unitPrice - $offerUnitDiscount,
+                'offer_label' => $pricing['offer_discount'] > 0 ? (priceTypes()[$saleType] ?? 'Offer') : null,
+            ];
 
             return [
                 'success' => true,
@@ -60,6 +67,25 @@ class AddItemAction
     private function loadInventory(int $inventoryId): Inventory
     {
         return Inventory::with(['product.unit', 'product.units.subUnit'])->findOrFail($inventoryId);
+    }
+
+    /**
+     * Base-unit pricing for the sale type. A sale-type price below MRP (an
+     * offer) is shown as MRP less a per-unit discount, so the line keeps the
+     * real price and the discount grows with the quantity.
+     *
+     * @return array{unit_price: float, offer_discount: float}
+     */
+    private function basePricing(Inventory $inventory, string $saleType): array
+    {
+        $mrp = (float) $inventory->product->mrp;
+        $saleTypePrice = (float) $inventory->product->saleTypePrice($saleType);
+
+        if ($saleTypePrice < $mrp) {
+            return ['unit_price' => $mrp, 'offer_discount' => round($mrp - $saleTypePrice, 4)];
+        }
+
+        return ['unit_price' => $saleTypePrice, 'offer_discount' => 0.0];
     }
 
     private function getBaseUnit(Inventory $inventory): array
@@ -113,10 +139,9 @@ class AddItemAction
         return (float) (Configuration::where('key', 'default_quantity')->value('value') ?? '0.001');
     }
 
-    private function calculateTotals(float $unitPrice, float $quantity, float $taxRate): array
+    private function calculateTotals(float $unitPrice, float $quantity, float $taxRate, float $discount = 0): array
     {
         $grossAmount = $unitPrice * $quantity;
-        $discount = 0;
         $netAmount = $grossAmount - $discount;
         $taxAmount = $netAmount * ($taxRate / 100);
         $total = $netAmount + $taxAmount;

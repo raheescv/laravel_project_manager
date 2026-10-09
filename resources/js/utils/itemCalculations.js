@@ -46,14 +46,18 @@ export const calculateItemTotals = (item) => {
             total: total
         }
     } else {
-        // Regular calculation without combo offer
+        // Regular calculation without combo offer. An offer line carries its
+        // per-unit discount, so the discount follows the quantity.
+        const offerUnitDiscount = Number(item.offer_unit_discount) || 0
+        const discount = offerUnitDiscount > 0 ? roundToTwoDecimals(offerUnitDiscount * quantity) : discountAmount
         const grossAmount = unitPrice * quantity
-        const netAmount = grossAmount - discountAmount
+        const netAmount = grossAmount - discount
         const taxAmount = roundToTwoDecimals(netAmount * (taxRate / 100))
         const total = roundToTwoDecimals(netAmount + taxAmount)
 
         return {
             ...item,
+            discount: discount,
             gross_amount: grossAmount,
             net_amount: netAmount,
             tax_amount: taxAmount,

@@ -287,7 +287,7 @@
             @if ($enable_discount_in_print == 'yes')
                 <tr>
                     <td class="text-left" width="39%"><b>Net Value</b></td>
-                    <td class="text-right"><b>{{ currency($sale->total) }}</b></td>
+                    <td class="text-right"><b>{{ currency($sale->gross_amount) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
                         <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}</b> </td>
                     @endif

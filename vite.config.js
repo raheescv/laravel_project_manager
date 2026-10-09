@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/js/barcode-template-config.js',
                 'resources/js/property-appointment.js',
                 'resources/js/ticket-console.js',
+                'resources/js/product-offer.js',
                 'resources/js/login-page.js'
             ],
             refresh: true,

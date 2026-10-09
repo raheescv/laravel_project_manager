@@ -28,6 +28,12 @@
                                 <span class="d-none d-md-inline">Gallery</span>
                             </a>
                         @endcan
+                        @can('product offer.view')
+                            <a class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" title="Offer prices" data-bs-toggle="tooltip" href="{{ route('product::offer::index') }}">
+                                <i class="fa fa-tags me-md-1 fs-5"></i>
+                                <span class="d-none d-md-inline">Offers</span>
+                            </a>
+                        @endcan
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -445,6 +451,14 @@
                         <a class="dropdown-item d-flex align-items-center" href="{{ route('product::gallery') }}">
                             <i class="demo-psi-camera me-2 text-secondary"></i>
                             Image Gallery
+                        </a>
+                    </li>
+                @endcan
+                @can('product offer.view')
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::offer::index') }}">
+                            <i class="fa fa-tags me-2 text-warning"></i>
+                            Offers
                         </a>
                     </li>
                 @endcan

@@ -230,6 +230,12 @@
             margin: 5px 0;
         }
 
+        .savings-box {
+            text-align: center;
+            font-size: 12px;
+            border-style: dashed;
+        }
+
         .served-by-row {
             font-size: 11px;
             display: flex;
@@ -675,7 +681,7 @@
             @if ($enable_discount_in_print == 'yes')
                 <tr>
                     <td class="text-left" width="39%"><b>Net Value ({{ tenant_cache('currency_code', '') }})</b></td>
-                    <td class="text-right"><b>{{ currency($sale->total) }}</b></td>
+                    <td class="text-right"><b>{{ currency($sale->gross_amount) }}</b></td>
                     @if ($thermal_printer_style == 'with_arabic')
                         <td width="39%" class="text-right"> <b>{{ __('lang.net_value', [], 'ar') }}
                                 ({{ tenant_cache('currency_symbol', '') }})</b> </td>
@@ -766,6 +772,17 @@
                 </tr>
             @endif
         </table>
+        @php
+            $total_saved = $sale->other_discount + $sale->item_discount;
+        @endphp
+        @if ($enable_discount_in_print == 'yes' && $total_saved > 0)
+            <div class="highlight-box savings-box">
+                @if ($thermal_printer_style == 'with_arabic')
+                    <div dir="rtl"><b>{{ __('lang.you_saved', ['amount' => currency($total_saved), 'currency' => tenant_cache('currency_symbol', '')], 'ar') }}</b></div>
+                @endif
+                <div><b>{{ __('lang.you_saved', ['amount' => currency($total_saved), 'currency' => tenant_cache('currency_code', '')], 'en') }}</b></div>
+            </div>
+        @endif
         @if ($enable_barcode_in_print == 'yes')
             <div class="codes-container">
                 <div class="barcode">

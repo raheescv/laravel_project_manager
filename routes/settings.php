@@ -6,6 +6,7 @@ use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\FixedAssetController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductOfferController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Settings\AccountCategoryController;
@@ -118,6 +119,20 @@ Route::middleware('auth')->group(function (): void {
         Route::name('package_category::')->prefix('package-category')->controller(PackageCategoryController::class)->group(function (): void {
             Route::get('', 'index')->name('index')->can('package category.view');
             Route::get('list', 'get')->name('list');
+        });
+    });
+    Route::name('product::offer::')->prefix('product/offer')->controller(ProductOfferController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('product offer.view');
+        Route::get('create', 'page')->name('create')->can('product offer.create');
+        Route::get('edit/{id}', 'page')->whereNumber('id')->name('edit')->can('product offer.edit');
+        Route::name('api::')->prefix('api')->group(function (): void {
+            Route::get('', 'list')->name('list')->can('product offer.view');
+            Route::get('categories', 'categories')->name('categories')->can('product offer.view');
+            Route::get('products', 'products')->name('products')->can('product offer.view');
+            Route::get('{id}', 'show')->whereNumber('id')->name('show')->can('product offer.view');
+            Route::post('', 'store')->name('store')->can('product offer.create');
+            Route::put('{id}', 'update')->whereNumber('id')->name('update')->can('product offer.edit');
+            Route::delete('{id}', 'destroy')->whereNumber('id')->name('destroy')->can('product offer.delete');
         });
     });
     Route::name('product::')->prefix('product')->controller(ProductController::class)->group(function (): void {

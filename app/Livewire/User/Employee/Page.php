@@ -32,6 +32,10 @@ class Page extends Component
     // action's mass-assignment path; applied by applyAdminFlag() instead.
     public $isAdmin = false;
 
+    // Form-only "Login access" switch: reveals the Authentication and Role
+    // Assignment panels. Not persisted; seeded from existing credentials.
+    public $allowLogin = false;
+
     // Newly-picked upload (Livewire temporary file) and the path of the avatar
     // already on record, kept so it can be deleted once a replacement is saved.
     public $photo;
@@ -75,12 +79,14 @@ class Page extends Component
                 'order_no' => '',
             ];
             $this->isAdmin = false;
+            $this->allowLogin = false;
             $this->originalImage = null;
         } else {
             $user = User::with('designation')->find($this->table_id);
             $this->users = $user->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
             $this->isAdmin = (bool) $user->is_admin;
+            $this->allowLogin = $this->hasLoginAccess($user);
             $this->originalImage = $this->users['image'] ?? null;
         }
         $this->dispatch('SelectDropDownValues', $this->users);
@@ -91,7 +97,7 @@ class Page extends Component
         $rules = [
             'users.name' => ['required'],
             'users.designation_id' => ['required'],
-            'users.email' => ['required', 'unique:users,email,'.$this->table_id],
+            'users.email' => [$this->allowLogin ? 'required' : 'nullable', 'unique:users,email,'.$this->table_id],
             'users.username' => User::usernameRules($this->table_id),
             'users.max_discount_per_sale' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'users.order_no' => ['nullable', 'integer'],
@@ -113,6 +119,7 @@ class Page extends Component
     protected $messages = [
         'users.name.required' => 'The name field is required',
         'users.designation_id.required' => 'The designation field is required',
+        'users.email.required' => 'The email field is required when login access is on',
         'users.name.unique' => 'The name is already Registered',
         'users.email.unique' => 'The email is already Registered',
         'users.username.unique' => 'The username is already taken',
@@ -126,6 +133,9 @@ class Page extends Component
     public function save($close = false)
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'employee.edit' : 'employee.create'), 403);
+        if (blank($this->users['email'] ?? null)) {
+            $this->users['email'] = null;
+        }
         $this->validate();
         try {
             // A freshly-picked upload replaces the stored avatar path.
@@ -201,6 +211,17 @@ class Page extends Component
         if ((bool) $user->is_admin !== $isAdmin) {
             $user->update(['is_admin' => $isAdmin]);
         }
+    }
+
+    /**
+     * An employee already set up to sign in opens with the login panels shown.
+     */
+    private function hasLoginAccess(User $user): bool
+    {
+        return filled($user->pin)
+            || $user->roles->isNotEmpty()
+            || (bool) $user->is_admin
+            || $user->last_login_at !== null;
     }
 
     /**

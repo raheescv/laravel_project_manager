@@ -33,7 +33,8 @@
                 </span>
                 <span v-else></span>
 
-                <span class="posx-price">
+                <span class="posx-price" :class="{ 'has-offer': hasOffer }">
+                    <s v-if="hasOffer" class="posx-price-was" title="Original price">{{ formatPrice(product.original_price) }}</s>
                     {{ formatPrice(product.mrp) }}<em v-if="product.unit_name">/{{ product.unit_name }}</em>
                 </span>
             </div>
@@ -60,6 +61,9 @@ export default {
     computed: {
         isProduct() {
             return this.product.type === 'product';
+        },
+        hasOffer() {
+            return Number(this.product.original_price) > Number(this.product.mrp);
         },
         isOutOfStock() {
             return this.isProduct && Number(this.product.stock) <= 0;
@@ -126,6 +130,19 @@ export default {
 
 .posx-card:hover .hover-scale {
     transform: scale(1.06);
+}
+
+.posx-price-was {
+    display: block;
+    font-size: .78em;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: right;
+    color: var(--pos-muted);
+}
+
+.posx-price.has-offer {
+    text-align: right;
 }
 
 .posx-card-meta b {

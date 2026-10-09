@@ -86,6 +86,11 @@
                                             <span class="posx-amount-ok">{{ formatNumber(item.combo_offer_price) }}</span>
                                             <span class="posx-chip-ok">Combo</span>
                                         </span>
+                                        <span v-else-if="item.offer_unit_discount > 0" class="inline-flex items-center gap-1">
+                                            <span class="line-through posx-muted">{{ formatNumber(item.unit_price) }}</span>
+                                            <span class="posx-amount-ok">{{ formatNumber(item.unit_price - item.offer_unit_discount) }}</span>
+                                            <span class="posx-chip-ok">{{ item.offer_label || 'Offer' }}</span>
+                                        </span>
                                         <span v-else>{{ formatNumber(item.unit_price) }}</span>
                                         <span> × {{ formatNumber(item.quantity) }} <span class="text-[10px] font-semibold posx-muted">{{ item.unit_name }}</span></span>
                                     </div>

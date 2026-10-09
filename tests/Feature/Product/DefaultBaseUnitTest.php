@@ -4,6 +4,7 @@ use App\Livewire\Product\Page;
 use App\Models\Unit;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
@@ -27,4 +28,16 @@ it('defaults the base unit to Nos even when another unit was created first', fun
 
 it('falls back to the oldest unit when the tenant has no Nos', function (): void {
     expect(Unit::defaultBaseUnit()->id)->toBe($this->world->product->unit_id);
+});
+
+it('moves focus forward to brand, not back to department, after picking a unit', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'product.create', 'guard_name' => 'web']));
+
+    $html = $this->get(route('product::create'))->assertOk()->getContent();
+
+    $unitChangeHandler = str($html)->after("\$('#unit_id').on('change'")->before('});')->toString();
+
+    expect($unitChangeHandler)
+        ->toContain("document.querySelector('#brand_id')?.tomselect?.open();")
+        ->not->toContain('#department_id');
 });

@@ -76,7 +76,7 @@ class User extends Authenticatable implements AuditableContracts
 
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
+            'email' => ['required_unless:type,employee', 'nullable', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
             'username' => self::usernameRules($id),
             'password' => ['required'],
         ], $merge);
@@ -88,7 +88,7 @@ class User extends Authenticatable implements AuditableContracts
 
         return array_merge([
             'name' => ['required'],
-            'email' => ['required', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
+            'email' => ['required_unless:type,employee', 'nullable', Rule::unique(self::class, 'email')->where('tenant_id', $tenantId)->ignore($id)],
             'username' => self::usernameRules($id),
         ], $merge);
     }

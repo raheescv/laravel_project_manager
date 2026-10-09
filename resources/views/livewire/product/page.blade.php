@@ -92,8 +92,34 @@
 
                     <div class="card-body p-4">
                         <div class="row g-3">
-                            <div class="row g-1">
-                                <div class="col-md-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label fw-medium">
+                                        <i class="fa fa-tag text-primary me-1 small"></i>
+                                        {{ $entityNameLabel }} <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-primary-subtle">
+                                            <i class="fa fa-pencil"></i>
+                                        </span>
+                                        {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter ' . strtolower($entityNameLabel))->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="name_arabic" class="form-label fw-medium">
+                                        <i class="fa fa-language text-primary me-1 small"></i>
+                                        Arabic Name
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-secondary-subtle">
+                                            <i class="fa fa-flag"></i>
+                                        </span>
+                                        {{ html()->input('name_arabic')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->id('name_arabic')->attribute('wire:model', 'products.name_arabic') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-8">
                                     <label for="code" class="form-label fw-medium">
                                         <i class="fa fa-code text-primary me-1 small"></i>
                                         {{ $isFixedAsset ? 'Asset Code / Tag' : 'Code/UPC/EAN/ISBN/SKU' }}
@@ -102,36 +128,10 @@
                                         <span class="input-group-text bg-light border-primary-subtle">
                                             <i class="fa fa-barcode"></i>
                                         </span>
-                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder($isFixedAsset ? 'Enter asset code or tag number' : 'Enter product or service code')->attribute('wire:model', 'products.code') }}
+                                        {{ html()->input('code')->value('')->class('form-control border-primary-subtle shadow-sm')->placeholder($isFixedAsset ? 'Enter asset code or tag number' : 'Enter product or service code')->id('code')->attribute('wire:model', 'products.code') }}
                                     </div>
-                                    <small class="text-muted mt-1 d-block">
-                                        {{ $isFixedAsset ? 'Use the internal asset number, tag, or identification code.' : 'Use your internal item code, SKU, barcode-linked code, or another unique reference.' }}
-                                    </small>
-                                </div>
-                                <div class="col-md-8">
-                                    <label for="name" class="form-label fw-medium">
-                                        <i class="fa fa-tag text-primary me-1 small"></i>
-                                        {{ $entityNameLabel }} <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group mb-3">
-                                        <span class="input-group-text bg-light border-primary-subtle">
-                                            <i class="fa fa-pencil"></i>
-                                        </span>
-                                        {{ html()->input('name')->value('')->class('form-control border-primary-subtle shadow-sm')->required(true)->placeholder('Enter ' . strtolower($entityNameLabel))->id('name')->autofocus()->attribute('wire:model', 'products.name') }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-1">
-                                <div class="col-md-8">
-                                    <label for="name_arabic" class="form-label fw-medium">
-                                        <i class="fa fa-pencil text-primary me-1 small"></i>
-                                        Arabic Name
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light border-secondary-subtle">
-                                            <i class="fa fa-flag"></i>
-                                        </span>
-                                        {{ html()->input('name_arabic')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter arabic name')->id('name_arabic')->attribute('wire:model', 'products.name_arabic') }}
+                                    <div class="form-text">
+                                        {{ $isFixedAsset ? 'Internal asset number, tag, or identification code.' : 'Internal item code, SKU, barcode-linked code, or another unique reference.' }}
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -1432,7 +1432,7 @@
                 $('#unit_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('products.unit_id', value);
-                    document.querySelector('#department_id').tomselect.open();
+                    document.querySelector('#brand_id')?.tomselect?.open();
                 });
                 $('#department_id').on('change', function(e) {
                     const value = $(this).val() || null;

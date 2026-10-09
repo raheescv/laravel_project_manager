@@ -192,6 +192,12 @@ class POSController extends Controller
         $discount = (float) ($item['discount'] ?? 0);
         $tax_rate = (float) ($item['tax'] ?? 0);
 
+        $offerUnitDiscount = (float) ($item['offer_unit_discount'] ?? 0);
+        if ($offerUnitDiscount > 0) {
+            $discount = round($offerUnitDiscount * $quantity, 2);
+            $item['discount'] = $discount;
+        }
+
         $gross_amount = $unit_price * $quantity;
         $net_amount = $gross_amount - $discount;
         $tax_amount = $net_amount * ($tax_rate / 100);

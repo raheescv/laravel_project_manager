@@ -29,7 +29,7 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Users</li>
+                    <li class="breadcrumb-item active" aria-current="page">Admin Users</li>
                 </ol>
             </nav>
 
@@ -46,7 +46,7 @@
                     <div class="doc-ic"><i class="fa fa-users"></i></div>
                     <div class="h-main">
                         <div class="h-eyebrow">Access Control</div>
-                        <div class="h-ref">Users Directory</div>
+                        <div class="h-ref">Admin Users</div>
                         <div class="h-meta">
                             <span><i class="fa fa-shield"></i>System login accounts</span>
                             <span><i class="fa fa-users"></i>{{ $data->total() }} {{ Str::plural('user', $data->total()) }} matching</span>

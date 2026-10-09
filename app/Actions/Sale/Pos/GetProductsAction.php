@@ -95,6 +95,7 @@ class GetProductsAction
             'size' => $product->size,
             'code' => $product->code,
             'mrp' => $product->saleTypePrice($saleType),
+            'original_price' => (float) $product->mrp,
             'stock' => $inventory->quantity ?? 0,
             'category_id' => $product->main_category_id,
             'product_id' => $inventory->product_id,

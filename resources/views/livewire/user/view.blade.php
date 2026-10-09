@@ -760,7 +760,7 @@
 
             <nav class="uvx-crumb" aria-label="breadcrumb">
                 <a href="{{ route('dashboard') }}">Home</a> &nbsp;/&nbsp;
-                <a href="{{ route('users::index') }}">Users</a> &nbsp;/&nbsp;
+                <a href="{{ route('users::index') }}">Admin Users</a> &nbsp;/&nbsp;
                 <b>{{ $user->name }}</b>
             </nav>
 

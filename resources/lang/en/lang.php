@@ -89,6 +89,7 @@ return [
     'visit_us_again' => 'Visit Us Again',
     'net_value' => 'Net Value',
     'discount' => 'Discount',
+    'you_saved' => 'You saved :currency :amount on this purchase',
     'paid' => 'Paid',
     'return' => 'Return',
     // SideBar

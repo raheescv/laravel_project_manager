@@ -241,6 +241,7 @@ return [
                 'rack',
                 'service',
                 'combo offer',
+                'product offer',
             ],
         ],
 

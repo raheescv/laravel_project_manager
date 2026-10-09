@@ -87,6 +87,7 @@ class GetProductByBarcodeAction
                 'type' => $inventory->product->type,
                 'barcode' => $barcode,
                 'mrp' => $price,
+                'original_price' => (float) $inventory->product->mrp * $selectedConversionFactor,
                 'stock' => $inventory->quantity ?? 0,
                 'category_id' => $inventory->product->main_category_id,
                 'product_id' => $inventory->product_id,

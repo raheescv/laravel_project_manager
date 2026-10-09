@@ -227,7 +227,7 @@
 
         /* ═══════════  BODY  ═══════════ */
         .empx-body {
-            padding: 14px 16px;
+            padding: 12px 14px;
             background: var(--surface-2);
             max-height: 64vh;
             overflow-y: auto;
@@ -274,25 +274,38 @@
             border-radius: var(--r-lg);
             box-shadow: var(--shadow-sm);
             overflow: hidden;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
         .empx-panel:last-child {
             margin-bottom: 0;
         }
 
+        .empx-switch-row.empx-login-row {
+            margin: 0 0 10px;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
+        }
+
         .empx-panel-head {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 13px;
+            gap: 9px;
+            padding: 7px 12px;
             border-bottom: 1px solid var(--border);
             background: linear-gradient(110deg, rgba(var(--brand-rgb), .07), var(--surface) 60%);
         }
 
+        .empx-panel-head > div {
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0 8px;
+        }
+
         .empx-panel-ic {
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             flex: 0 0 auto;
             border-radius: 8px;
             display: inline-flex;
@@ -300,7 +313,7 @@
             justify-content: center;
             background: rgba(var(--brand-rgb), .12);
             color: var(--brand-600);
-            font-size: 12.5px;
+            font-size: 11px;
         }
 
         .empx-panel-title {
@@ -313,18 +326,21 @@
         .empx-panel-sub {
             font-size: 10px;
             color: var(--text-3);
-            margin-top: 1px;
         }
 
         .empx-panel-body {
-            padding: 14px 13px;
+            padding: 10px 12px 12px;
         }
 
         /* field grid */
         .empx-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 13px 12px;
+            gap: 9px 10px;
+        }
+
+        .c3 {
+            grid-column: span 3;
         }
 
         .c4 {
@@ -350,7 +366,7 @@
             letter-spacing: .05em;
             text-transform: uppercase;
             color: var(--text-3);
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .empx-label i {
@@ -388,7 +404,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 34px;
+            width: 30px;
             flex: 0 0 auto;
             color: var(--text-3);
             background: var(--surface-2);
@@ -402,7 +418,7 @@
             border: none;
             outline: none;
             background: transparent;
-            padding: 7px 10px;
+            padding: 6px 9px;
             font-size: 12px;
             color: var(--text);
             width: 100%;
@@ -426,7 +442,7 @@
 
         .empx-eye {
             flex: 0 0 auto;
-            width: 34px;
+            width: 30px;
             border: none;
             border-left: 1px solid var(--border);
             background: var(--surface-2);
@@ -451,8 +467,8 @@
             border-radius: var(--r-sm) !important;
             background: var(--surface) !important;
             color: var(--text) !important;
-            min-height: 36px;
-            padding: 4px 9px !important;
+            min-height: 31px;
+            padding: 3px 9px !important;
             box-shadow: none !important;
             font-size: 12px;
         }
@@ -472,6 +488,67 @@
             color: var(--text-3);
         }
 
+        /* designation: TomSelect seated inside an .empx-input row, value shown as plain text */
+        .empx-input-select {
+            overflow: visible;
+        }
+
+        .empx-input-select .empx-input-ic {
+            border-radius: var(--r-sm) 0 0 var(--r-sm);
+        }
+
+        .empx-input-select .ts-wrapper {
+            flex: 1 1 auto;
+        }
+
+        .empx .empx-input-select .ts-control,
+        .empx .empx-input-select .ts-wrapper.focus .ts-control {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            min-height: 29px;
+            padding: 0 28px 0 9px !important;
+            border: 0 !important;
+            border-radius: 0 var(--r-sm) var(--r-sm) 0 !important;
+            box-shadow: none !important;
+        }
+
+        .empx .empx-input-select .ts-control .item {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            color: var(--text) !important;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .empx .empx-input-select .ts-control .item .remove {
+            margin-left: 6px;
+            padding: 0 4px !important;
+            border: 0 !important;
+            border-radius: 4px;
+            color: var(--text-3);
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .empx .empx-input-select .ts-control .item .remove:hover {
+            background: var(--danger-bg) !important;
+            color: var(--danger);
+        }
+
+        .empx .empx-input-select .ts-control input {
+            font-size: 12px;
+        }
+
+        .empx .empx-input-select .ts-dropdown {
+            z-index: 30;
+            margin-top: 4px;
+        }
+
         .empx .ts-dropdown {
             border: 1px solid var(--border) !important;
             background: var(--surface) !important;
@@ -489,15 +566,15 @@
         .empx-roles {
             display: flex;
             flex-wrap: wrap;
-            gap: 9px;
+            gap: 7px;
         }
 
         .empx-role {
             position: relative;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 7px 12px 7px 10px;
+            gap: 7px;
+            padding: 5px 11px 5px 8px;
             border: 1px solid var(--border);
             border-radius: 999px;
             background: var(--surface);
@@ -518,8 +595,8 @@
         }
 
         .empx-role-box {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             flex: 0 0 auto;
             border-radius: 6px;
             border: 1.5px solid var(--border-strong);
@@ -582,8 +659,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-top: 14px;
-            padding: 11px 13px;
+            margin-top: 10px;
+            padding: 8px 12px;
             border: 1px solid var(--border);
             border-radius: var(--r-md);
             background: var(--surface-2);
@@ -678,7 +755,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 9px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             background: var(--surface);
             border-top: 1px solid var(--border);
         }
@@ -748,11 +825,27 @@
         }
 
         /* ═══════════  RESPONSIVE  ═══════════ */
+        @media (max-width: 900px) {
+            .c3 {
+                grid-column: span 6;
+            }
+        }
+
         @media (max-width: 720px) {
             .empx-grid {
                 grid-template-columns: 1fr;
             }
 
+            .empx-personal {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .empx-personal > .empx-grid {
+                align-self: stretch;
+            }
+
+            .c3,
             .c4,
             .c6,
             .c8,
@@ -822,16 +915,17 @@
             @endif
 
             <style>
-                .empx-photo { display: flex; align-items: center; gap: 16px; }
-                .empx-photo-uploader { position: relative; width: 84px; height: 84px; flex: 0 0 auto; }
+                .empx-personal { display: flex; align-items: flex-start; gap: 14px; }
+                .empx-personal > .empx-grid { flex: 1 1 auto; min-width: 0; }
+                .empx-photo { width: 78px; flex: 0 0 auto; text-align: center; padding-top: 2px; }
+                .empx-photo-uploader { position: relative; width: 72px; height: 72px; margin: 0 auto; }
                 .empx-photo-uploader.is-loading { opacity: .5; }
-                .empx-photo-img { width: 84px; height: 84px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border); background: var(--surface-3); }
-                .empx-photo-edit { position: absolute; right: -2px; bottom: -2px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--brand); color: #fff; cursor: pointer; border: 2px solid var(--surface); font-size: .72rem; transition: transform .15s ease; }
+                .empx-photo-img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 2px solid var(--border); background: var(--surface-3); }
+                .empx-photo-edit { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--brand); color: #fff; cursor: pointer; border: 2px solid var(--surface); font-size: .72rem; transition: transform .15s ease; }
                 .empx-photo-edit:hover { transform: scale(1.08); }
                 .empx-photo-remove { position: absolute; right: -2px; top: -2px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--danger); color: #fff; cursor: pointer; border: 2px solid var(--surface); font-size: .6rem; padding: 0; line-height: 1; }
                 .empx-photo-spin { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--brand); }
-                .empx-photo-title { font-weight: 700; color: var(--text); }
-                .empx-photo-hint { color: var(--text-3); font-size: .68rem; margin-top: 2px; }
+                .empx-photo-hint { color: var(--text-3); font-size: 9.5px; line-height: 1.3; margin-top: 6px; }
                 .empx-photo-err { color: var(--danger); font-size: .68rem; margin-top: 4px; }
             </style>
 
@@ -844,35 +938,30 @@
                         <div class="empx-panel-sub">Identity & contact details</div>
                     </div>
                 </div>
-                <div class="empx-panel-body">
-                    <div class="empx-grid">
-                        <div class="c12">
-                            @php
-                                $previewUrl = $photo
-                                    ? $photo->temporaryUrl()
-                                    : (! empty($users['image'])
-                                        ? asset('storage/' . $users['image'])
-                                        : secure_asset('assets/img/profile-photos/1.png'));
-                            @endphp
-                            <div class="empx-photo">
-                                <div class="empx-photo-uploader" wire:loading.class="is-loading" wire:target="photo">
-                                    <img src="{{ $previewUrl }}" alt="Employee Photo" class="empx-photo-img">
-                                    <label for="employee_photo_input" class="empx-photo-edit" title="Upload photo"><i class="fa fa-camera"></i></label>
-                                    <div wire:loading wire:target="photo" class="empx-photo-spin"><span class="spinner-border spinner-border-sm"></span></div>
-                                    @if ($photo || !empty($users['image']))
-                                        <button type="button" wire:click="removePhoto" class="empx-photo-remove" title="Remove photo"><i class="fa fa-times"></i></button>
-                                    @endif
-                                </div>
-                                <div class="empx-photo-meta">
-                                    <div class="empx-photo-title">Profile Photo</div>
-                                    <div class="empx-photo-hint">Square image works best · JPG / PNG / WEBP · max 5MB</div>
-                                    <input type="file" id="employee_photo_input" class="d-none" wire:model="photo" accept="image/png,image/jpeg,image/webp">
-                                    @error('photo')
-                                        <div class="empx-photo-err"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                <div class="empx-panel-body empx-personal">
+                    @php
+                        $previewUrl = $photo
+                            ? $photo->temporaryUrl()
+                            : (! empty($users['image'])
+                                ? asset('storage/' . $users['image'])
+                                : secure_asset('assets/img/profile-photos/1.png'));
+                    @endphp
+                    <div class="empx-photo">
+                        <div class="empx-photo-uploader" wire:loading.class="is-loading" wire:target="photo">
+                            <img src="{{ $previewUrl }}" alt="Employee Photo" class="empx-photo-img">
+                            <label for="employee_photo_input" class="empx-photo-edit" title="Upload photo"><i class="fa fa-camera"></i></label>
+                            <div wire:loading wire:target="photo" class="empx-photo-spin"><span class="spinner-border spinner-border-sm"></span></div>
+                            @if ($photo || !empty($users['image']))
+                                <button type="button" wire:click="removePhoto" class="empx-photo-remove" title="Remove photo"><i class="fa fa-times"></i></button>
+                            @endif
                         </div>
+                        <div class="empx-photo-hint">JPG / PNG / WEBP<br>max 5MB</div>
+                        <input type="file" id="employee_photo_input" class="d-none" wire:model="photo" accept="image/png,image/jpeg,image/webp">
+                        @error('photo')
+                            <div class="empx-photo-err"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="empx-grid">
                         <div class="c4">
                             <label for="code" class="empx-label"><i class="fa fa-barcode"></i> Employee Code</label>
                             <div class="empx-input">
@@ -888,8 +977,11 @@
                             </div>
                         </div>
                         <div class="c8" wire:ignore>
-                            <label for="designation_id" class="empx-label"><i class="fa fa-briefcase"></i> Designation</label>
-                            {{ html()->select('designation_id', [])->value('')->class('select-designation_id')->id('model_designation_id')->placeholder('All') }}
+                            <label for="designation_id" class="empx-label"><i class="fa fa-briefcase"></i> Designation <span class="req">*</span></label>
+                            <div class="empx-input empx-input-select">
+                                <span class="empx-input-ic"><i class="fa fa-briefcase"></i></span>
+                                {{ html()->select('designation_id', [])->value('')->class('select-designation_id')->id('model_designation_id')->placeholder('Select designation') }}
+                            </div>
                         </div>
                         <div class="c4">
                             <label for="order_no" class="empx-label"><i class="fa fa-sort-numeric-asc"></i> Order No</label>
@@ -899,10 +991,10 @@
                             </div>
                         </div>
                         <div class="c6">
-                            <label for="email" class="empx-label"><i class="fa fa-envelope"></i> Email Address <span class="req">*</span></label>
+                            <label for="email" class="empx-label" x-data><i class="fa fa-envelope"></i> Email Address <span class="req" x-show="$wire.allowLogin">*</span></label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-envelope"></i></span>
-                                {{ html()->email('email')->value('')->class('empx-control')->required(true)->attribute('wire:model', 'users.email')->placeholder('example@company.com') }}
+                                {{ html()->email('email')->value('')->class('empx-control')->attribute('wire:model', 'users.email')->attribute('x-data')->attribute('x-bind:required', '$wire.allowLogin')->placeholder('example@company.com') }}
                             </div>
                         </div>
                         <div class="c6">
@@ -915,21 +1007,21 @@
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
-                        <div class="c6">
+                        <div class="c4">
                             <label for="mobile" class="empx-label"><i class="fa fa-phone"></i> Mobile Number</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-phone"></i></span>
                                 {{ html()->input('mobile')->value('')->class('empx-control')->attribute('wire:model', 'users.mobile')->placeholder('Enter mobile number') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c4">
                             <label for="place" class="empx-label"><i class="fa fa-map-marker"></i> Location / Place</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-map-marker"></i></span>
                                 {{ html()->input('place')->value('')->class('empx-control')->attribute('wire:model', 'users.place')->placeholder('Enter location') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c4">
                             <label for="nationality" class="empx-label"><i class="fa fa-flag"></i> Nationality</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-flag"></i></span>
@@ -945,63 +1037,48 @@
                 <div class="empx-panel-head">
                     <span class="empx-panel-ic"><i class="fa fa-money"></i></span>
                     <div>
-                        <div class="empx-panel-title">Compensation Details</div>
-                        <div class="empx-panel-sub">Salary, allowances & limits</div>
+                        <div class="empx-panel-title">Compensation &amp; Dates</div>
+                        <div class="empx-panel-sub">Salary, allowances, limits &amp; key dates</div>
                     </div>
                 </div>
                 <div class="empx-panel-body">
                     <div class="empx-grid">
-                        <div class="c6">
+                        <div class="c3">
                             <label for="salary" class="empx-label"><i class="fa fa-dollar"></i> Basic Salary</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-dollar"></i></span>
                                 {{ html()->number('salary')->value('')->class('empx-control number')->attribute('wire:model', 'users.salary')->placeholder('0.00')->attribute('step', '0.01') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c3">
                             <label for="allowance" class="empx-label"><i class="fa fa-plus-circle"></i> Allowance</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-dollar"></i></span>
                                 {{ html()->number('allowance')->value('')->class('empx-control number')->attribute('wire:model', 'users.allowance')->placeholder('0.00')->attribute('step', '0.01') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c3">
                             <label for="hra" class="empx-label"><i class="fa fa-home"></i> Housing (HRA)</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-dollar"></i></span>
                                 {{ html()->number('hra')->value('')->class('empx-control number')->attribute('wire:model', 'users.hra')->placeholder('0.00')->attribute('step', '0.01') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c3">
                             <label for="max_discount_per_sale" class="empx-label"><i class="fa fa-tag"></i> Max Discount Per Sale</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-tag"></i></span>
                                 {{ html()->number('max_discount_per_sale')->value('')->class('empx-control number')->attribute('wire:model', 'users.max_discount_per_sale')->placeholder('0.00')->attribute('step', '0.01')->attribute('min', '0')->attribute('max', '100') }}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Important Dates -->
-            <div class="empx-panel">
-                <div class="empx-panel-head">
-                    <span class="empx-panel-ic"><i class="fa fa-calendar"></i></span>
-                    <div>
-                        <div class="empx-panel-title">Important Dates</div>
-                        <div class="empx-panel-sub">Birth & joining records</div>
-                    </div>
-                </div>
-                <div class="empx-panel-body">
-                    <div class="empx-grid">
-                        <div class="c6">
+                        <div class="c3">
                             <label for="dob" class="empx-label"><i class="fa fa-birthday-cake"></i> Date of Birth</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-calendar"></i></span>
                                 {{ html()->date('dob')->value('')->class('empx-control')->attribute('wire:model', 'users.dob') }}
                             </div>
                         </div>
-                        <div class="c6">
+                        <div class="c3">
                             <label for="doj" class="empx-label"><i class="fa fa-briefcase"></i> Date of Joining</label>
                             <div class="empx-input">
                                 <span class="empx-input-ic"><i class="fa fa-calendar"></i></span>
@@ -1012,92 +1089,108 @@
                 </div>
             </div>
 
-            <!-- Authentication -->
-            <div class="empx-panel">
-                <div class="empx-panel-head">
-                    <span class="empx-panel-ic"><i class="fa fa-lock"></i></span>
-                    <div>
-                        <div class="empx-panel-title">Authentication</div>
-                        <div class="empx-panel-sub">Login credentials & POS PIN</div>
-                    </div>
-                </div>
-                <div class="empx-panel-body">
-                    <div class="empx-grid">
-                        <div class="c6">
-                            <label for="password" class="empx-label">
-                                <i class="fa fa-key"></i> Password
-                                @if (isset($users['id']))
-                                    <span class="hint">(leave blank to keep current)</span>
-                                @endif
-                            </label>
-                            <div class="empx-input">
-                                <span class="empx-input-ic"><i class="fa fa-lock"></i></span>
-                                {{ html()->password('password')->value('')->class('empx-control')->attribute('wire:model', 'users.password')->placeholder('Enter password') }}
-                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle password">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="c6">
-                            <label for="pin" class="empx-label">
-                                <i class="fa fa-shield"></i> PIN Code
-                                @if (isset($users['id']))
-                                    <span class="hint">(leave blank to keep current)</span>
-                                @endif
-                            </label>
-                            <div class="empx-input">
-                                <span class="empx-input-ic"><i class="fa fa-shield"></i></span>
-                                {{ html()->password('pin')->value('')->class('empx-control')->attribute('wire:model', 'users.pin')->placeholder('Enter PIN') }}
-                                <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle PIN">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Login access -->
+            <div x-data>
+                <label class="empx-switch-row empx-login-row">
+                    <span class="empx-switch-copy">
+                        <span class="empx-switch-title"><i class="fa fa-sign-in"></i> Login access</span>
+                        <span class="empx-switch-sub">Can this employee sign in to the web or mobile app?</span>
+                    </span>
+                    <span class="empx-switch">
+                        <input type="checkbox" wire:model="allowLogin" x-on:change="$event.target.checked && setTimeout(() => $refs.loginPassword?.focus(), 60)">
+                        <span class="empx-switch-track"></span>
+                    </span>
+                </label>
 
-            <!-- Role Assignment -->
-            <div class="empx-panel">
-                <div class="empx-panel-head">
-                    <span class="empx-panel-ic"><i class="fa fa-users"></i></span>
-                    <div>
-                        <div class="empx-panel-title">Role Assignment</div>
-                        <div class="empx-panel-sub">Permissions granted to this employee</div>
+                <div x-show="$wire.allowLogin">
+                    <!-- Authentication -->
+                    <div class="empx-panel">
+                        <div class="empx-panel-head">
+                            <span class="empx-panel-ic"><i class="fa fa-lock"></i></span>
+                            <div>
+                                <div class="empx-panel-title">Authentication</div>
+                                <div class="empx-panel-sub">Login credentials & POS PIN</div>
+                            </div>
+                        </div>
+                        <div class="empx-panel-body">
+                            <div class="empx-grid">
+                                <div class="c6">
+                                    <label for="password" class="empx-label">
+                                        <i class="fa fa-key"></i> Password
+                                        @if (isset($users['id']))
+                                            <span class="hint">(leave blank to keep current)</span>
+                                        @endif
+                                    </label>
+                                    <div class="empx-input">
+                                        <span class="empx-input-ic"><i class="fa fa-lock"></i></span>
+                                        {{ html()->password('password')->value('')->class('empx-control')->attribute('wire:model', 'users.password')->attribute('x-ref', 'loginPassword')->placeholder('Enter password') }}
+                                        <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle password">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="c6">
+                                    <label for="pin" class="empx-label">
+                                        <i class="fa fa-shield"></i> PIN Code
+                                        @if (isset($users['id']))
+                                            <span class="hint">(leave blank to keep current)</span>
+                                        @endif
+                                    </label>
+                                    <div class="empx-input">
+                                        <span class="empx-input-ic"><i class="fa fa-shield"></i></span>
+                                        {{ html()->password('pin')->value('')->class('empx-control')->attribute('wire:model', 'users.pin')->placeholder('Enter PIN') }}
+                                        <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle PIN">
+                                            <i class="fa fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="empx-panel-body">
-                    @if (isset($roles) && count($roles) > 0)
-                        <div class="empx-roles">
-                            @foreach ($roles as $role)
-                                <label class="empx-role">
-                                    <input type="checkbox" id="role-{{ $role->id }}" value="{{ $role->name }}" wire:model="selectedRoles">
-                                    <span class="empx-role-box"><i class="fa fa-check"></i></span>
-                                    <span class="empx-role-name">{{ $role->name }}</span>
+
+                    <!-- Role Assignment -->
+                    <div class="empx-panel">
+                        <div class="empx-panel-head">
+                            <span class="empx-panel-ic"><i class="fa fa-users"></i></span>
+                            <div>
+                                <div class="empx-panel-title">Role Assignment</div>
+                                <div class="empx-panel-sub">Permissions granted to this employee</div>
+                            </div>
+                        </div>
+                        <div class="empx-panel-body">
+                            @if (isset($roles) && count($roles) > 0)
+                                <div class="empx-roles">
+                                    @foreach ($roles as $role)
+                                        <label class="empx-role">
+                                            <input type="checkbox" id="role-{{ $role->id }}" value="{{ $role->name }}" wire:model="selectedRoles">
+                                            <span class="empx-role-box"><i class="fa fa-check"></i></span>
+                                            <span class="empx-role-name">{{ $role->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="empx-empty">
+                                    <i class="fa fa-info-circle"></i>
+                                    No roles are available to assign. Please create roles first.
+                                </div>
+                            @endif
+
+                            @if ($this->canManageAdminFlag())
+                                <label class="empx-switch-row">
+                                    <span class="empx-switch-copy">
+                                        <span class="empx-switch-title"><i class="fa fa-star"></i> Administrator</span>
+                                        <span class="empx-switch-sub">
+                                            Full access across the app, and the mobile app is unrestricted to their own records.
+                                        </span>
+                                    </span>
+                                    <span class="empx-switch">
+                                        <input type="checkbox" wire:model="isAdmin">
+                                        <span class="empx-switch-track"></span>
+                                    </span>
                                 </label>
-                            @endforeach
+                            @endif
                         </div>
-                    @else
-                        <div class="empx-empty">
-                            <i class="fa fa-info-circle"></i>
-                            No roles are available to assign. Please create roles first.
-                        </div>
-                    @endif
-
-                    @if ($this->canManageAdminFlag())
-                        <label class="empx-switch-row">
-                            <span class="empx-switch-copy">
-                                <span class="empx-switch-title"><i class="fa fa-star"></i> Administrator</span>
-                                <span class="empx-switch-sub">
-                                    Full access across the app, and the mobile app is unrestricted to their own records.
-                                </span>
-                            </span>
-                            <span class="empx-switch">
-                                <input type="checkbox" wire:model="isAdmin">
-                                <span class="empx-switch-track"></span>
-                            </span>
-                        </label>
-                    @endif
+                    </div>
                 </div>
             </div>
         </div>

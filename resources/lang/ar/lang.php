@@ -34,6 +34,7 @@ return [
     'visit_us_again' => 'قم بزيارتنا مرة أخرى',
     'net_value' => 'القيمة الصافية',
     'discount' => 'خصم',
+    'you_saved' => 'لقد وفرت :amount :currency في هذه الفاتورة',
     'paid' => 'المدفوع',
     'return' => 'إرجاع',
     // SideBar

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
@@ -29,6 +30,24 @@ class QzTray
     public static function isConfigured(): bool
     {
         return is_readable(self::certificatePath()) && is_readable(self::privateKeyPath());
+    }
+
+    /**
+     * Creates the pair on first use, so a server nobody ran qz:certificate on
+     * still serves a certificate. The lock keeps two concurrent first requests
+     * from writing a certificate and a key that don't belong together.
+     */
+    public static function ensureGenerated(): void
+    {
+        if (self::isConfigured()) {
+            return;
+        }
+
+        Cache::lock('qz-tray:generate', 30)->block(15, function (): void {
+            if (! self::isConfigured()) {
+                self::generate(config('app.name'));
+            }
+        });
     }
 
     public static function certificate(): ?string

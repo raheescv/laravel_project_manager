@@ -13,11 +13,9 @@ class QzTrayController extends Controller
 {
     public function certificate(Request $request)
     {
-        $certificate = QzTray::certificate();
+        QzTray::ensureGenerated();
 
-        abort_if($certificate === null, 404, 'The QZ Tray certificate has not been generated.');
-
-        $response = response($certificate)
+        $response = response(QzTray::certificate())
             ->header('Content-Type', 'text/plain')
             ->header('Cache-Control', 'no-store');
 
@@ -35,7 +33,7 @@ class QzTrayController extends Controller
             'request' => ['required', 'string', 'max:4096'],
         ]);
 
-        abort_unless(QzTray::isConfigured(), 404, 'The QZ Tray certificate has not been generated.');
+        QzTray::ensureGenerated();
 
         return response(QzTray::sign($validated['request']))
             ->header('Content-Type', 'text/plain')

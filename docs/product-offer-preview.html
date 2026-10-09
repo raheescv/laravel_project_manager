@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Offers — preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Product → Offers (new Vue page) — three layout directions on the
+   same live sample. Everything is interactive: filter by category,
+   add/remove products, bulk % discount, per-row offer price / % edit.
+   Saves into existing product_prices (price_type = 'offer',
+   start_date / end_date / status) — one row per product.
+   Icons: Font Awesome 4.3-safe names only.
+   ============================================================ */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1115;color:#e8eaee;-webkit-font-smoothing:antialiased}
+
+.chrome{position:sticky;top:0;z-index:50;background:#15181e;border-bottom:1px solid rgba(255,255,255,.08);padding:12px 16px}
+.chrome-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;max-width:1400px;margin:0 auto}
+.chrome h1{font-size:14px;font-weight:800;margin:0}
+.chrome h1 span{color:#8b93a5;font-weight:600}
+.ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctl-label{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#6f7789}
+.chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#c7cdd9;font:600 12px/1 'Manrope',sans-serif;padding:7px 12px;border-radius:99px;cursor:pointer}
+.chip:hover{background:rgba(255,255,255,.09);color:#fff}
+.chip.on{background:#fff;color:#15181e;border-color:#fff}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px #15181e inset}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 16px 80px}
+.note{font-size:12.5px;line-height:1.65;color:#9aa2b2;max-width:1000px;margin:0 0 16px}
+.note b{color:#e2e6ee}
+.note code{background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;font-size:11.5px;color:#e2e6ee}
+
+/* ---------------- tokens: accent = settings theme colour, light + dark */
+#stage{
+  --ok:#16a34a;--warn:#d97706;--danger:#dc2626;
+  --acc-soft:color-mix(in srgb,var(--acc) 9%,transparent);
+  --acc-tint:color-mix(in srgb,var(--acc) 16%,transparent);
+  --acc-line:color-mix(in srgb,var(--acc) 40%,transparent);
+  --acc-deep:color-mix(in srgb,var(--acc) 82%,#000);
+  --ok-soft:color-mix(in srgb,var(--ok) 12%,transparent);
+  --danger-soft:color-mix(in srgb,var(--danger) 11%,transparent);
+  --warn-soft:color-mix(in srgb,var(--warn) 13%,transparent);
+  background:var(--canvas);color:var(--ink);border-radius:18px;padding:22px 18px;font-size:12.5px;
+  --canvas:#eef1f5;--panel:#fff;--panel2:#f8fafc;--ink:#0f172a;--ink2:#475569;--muted:#8391a7;--line:#e5e9f0;--line-strong:#d3d9e3;--shadow:0 1px 2px rgba(15,23,42,.05),0 12px 32px -18px rgba(15,23,42,.25)
+}
+#stage[data-theme="dark"]{
+  --canvas:#0b0f17;--panel:#131a25;--panel2:#18202d;--ink:#e9eef6;--ink2:#a7b2c4;--muted:#6f7c91;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.14);--shadow:0 12px 32px -18px #000;
+  --ok:#34d399;--danger:#f87171;--warn:#fbbf24
+}
+#stage[data-acc="blue"]{--acc:#2563eb;--on-acc:#fff}
+#stage[data-acc="emerald"]{--acc:#0f766e;--on-acc:#fff}
+#stage[data-acc="plum"]{--acc:#7c3aed;--on-acc:#fff}
+#stage[data-acc="graphite"]{--acc:#334155;--on-acc:#fff}
+#stage[data-theme="dark"][data-acc="graphite"]{--acc:#cbd5e1;--on-acc:#0f172a}
+
+/* ---------------- shared atoms */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid transparent;font:700 12px/1 'Manrope',sans-serif;cursor:pointer;white-space:nowrap;transition:background .15s,transform .1s,border-color .15s;color:var(--ink)}
+.btn:active{transform:scale(.97)}
+.btn-pri{background:var(--acc);color:var(--on-acc)}
+.btn-pri:hover{background:var(--acc-deep)}
+.btn-ghost{background:var(--panel);color:var(--ink2);border-color:var(--line-strong)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--acc-line)}
+.btn-soft{background:var(--acc-soft);color:var(--acc);border-color:var(--acc-line)}
+.btn-danger{background:transparent;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)}
+.btn-sm{height:26px;padding:0 9px;font-size:11px;border-radius:7px}
+.btn-lg{height:38px;padding:0 18px;font-size:13px}
+.icon-btn{width:28px;height:28px;padding:0;border-radius:7px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.inp{height:32px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);border-radius:8px;padding:0 10px;font:600 12.5px 'Manrope',sans-serif;outline:none;min-width:0}
+.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-tint)}
+.inp.num{text-align:right;font-variant-numeric:tabular-nums}
+.inp-group{display:flex;align-items:stretch}
+.inp-group .inp{border-radius:8px 0 0 8px}
+.inp-group .add{display:grid;place-items:center;padding:0 9px;border:1px solid var(--line-strong);border-left:0;border-radius:0 8px 8px 0;background:var(--panel2);color:var(--muted);font-weight:800;font-size:11.5px}
+.inp-group .pre{border-radius:8px 0 0 8px;border-left:1px solid var(--line-strong);border-right:0}
+.inp-group .pre + .inp{border-radius:0 8px 8px 0}
+.seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink2);font:700 11.5px 'Manrope',sans-serif;padding:6px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+#stage[data-theme="dark"] .seg button.on{background:var(--acc-tint);color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--danger-soft);color:var(--danger)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.acc{background:var(--acc-soft);color:var(--acc)}
+.pill.mute{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+.thumb{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:11px;color:#fff;flex:none}
+.pname{display:flex;align-items:center;gap:10px;min-width:0}
+.pname b{display:block;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.chk{width:16px;height:16px;accent-color:var(--acc);cursor:pointer}
+.tnum{font-variant-numeric:tabular-nums}
+s.mrp{color:var(--muted);font-weight:600}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);font-weight:600}
+.empty i{font-size:26px;display:block;margin-bottom:8px;opacity:.6}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;min-width:760px}
+.t th{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--panel2);white-space:nowrap}
+.t td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tr.row:hover td{background:var(--acc-soft)}
+.t tr.row.sel td{background:var(--acc-soft)}
+.t .r{text-align:right}
+.t .c{text-align:center}
+.t .w-price{width:118px}
+.t .w-pct{width:92px}
+.t tr.grp td{background:var(--panel2);padding:7px 10px;border-bottom:1px solid var(--line)}
+.grp-in{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.grp-in .gname{font-weight:800;font-size:12.5px}
+.grp-in .gname span{color:var(--muted);font-weight:700}
+.grp-in .sp{flex:1}
+.grp-in .inp{height:26px;width:62px;font-size:11.5px}
+.grp-in .inp-group .add{padding:0 7px;font-size:10.5px}
+.row-price .inp{width:100%}
+.row-price.below .inp{border-color:var(--danger);color:var(--danger)}
+.row-price.custom .inp{border-color:var(--acc-line);background:var(--acc-soft)}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.kpi{background:var(--panel);padding:11px 16px}
+.kpi span{display:block;font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kpi b{display:block;font-size:17px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi b small{font-size:11px;color:var(--muted);font-weight:700;margin-left:3px}
+.kpi b.bad{color:var(--danger)}
+.kpi b.ok{color:var(--ok)}
+
+/* page header (shared) */
+.ph{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.ph .crumb{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:3px}
+.ph .crumb i{margin:0 5px;font-size:9px}
+.ph h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.ph .sp{flex:1}
+.ph .acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ================= A — Category Ledger ================= */
+.a-hero{padding:14px 16px;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+.fld label{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.fld .inp{width:100%}
+.a-body{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;margin-top:14px;align-items:start}
+.rail{padding:8px;position:sticky;top:70px}
+.rail h6{margin:6px 8px 8px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rail-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;cursor:pointer;font-weight:700;color:var(--ink2);font-size:12px}
+.rail-item:hover{background:var(--panel2);color:var(--ink)}
+.rail-item.on{background:var(--acc-soft);color:var(--acc)}
+.rail-item .n{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);background:var(--panel2);border:1px solid var(--line);padding:1px 7px;border-radius:99px}
+.rail-item.on .n{color:var(--acc);border-color:var(--acc-line);background:var(--panel)}
+.rail-item.sub{padding-left:24px;font-weight:600;font-size:11.5px}
+.rail-item i{width:14px;text-align:center;opacity:.75}
+.a-tool{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.a-tool .search{position:relative;flex:1;min-width:180px}
+.a-tool .search i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.a-tool .search .inp{width:100%;padding-left:30px}
+.bulkbar{position:sticky;bottom:12px;margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--ink);color:var(--panel);box-shadow:0 18px 40px -16px rgba(0,0,0,.5)}
+#stage[data-theme="dark"] .bulkbar{background:#e9eef6;color:#0f172a}
+.bulkbar .cnt{font-weight:800;padding-right:6px}
+.bulkbar .inp{background:transparent;color:inherit;border-color:color-mix(in srgb,currentColor 30%,transparent);height:28px;width:70px}
+.bulkbar .inp-group .add{background:transparent;color:inherit;border-color:color-mix(in srgb,currentColor 30%,transparent);opacity:.8}
+.bulkbar .btn-ghost{background:transparent;color:inherit;border-color:color-mix(in srgb,currentColor 30%,transparent);height:28px}
+.bulkbar .sp{flex:1}
+.addmenu{position:relative}
+.addmenu .menu{position:absolute;right:0;top:36px;z-index:5;width:280px;padding:6px;max-height:360px;overflow:auto}
+.menu .mi{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:7px;cursor:pointer;font-weight:700;font-size:12px}
+.menu .mi:hover{background:var(--acc-soft)}
+.menu .mi small{margin-left:auto;color:var(--muted);font-weight:700}
+.menu .mh{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:8px 9px 4px}
+
+/* ================= B — Guided Steps ================= */
+.steps{display:flex;gap:0;padding:6px;margin-bottom:14px;overflow-x:auto}
+.step{flex:1;display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;min-width:150px}
+.step:hover{background:var(--panel2)}
+.step .no{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:11.5px;border:1.5px solid var(--line-strong);color:var(--muted);flex:none}
+.step b{display:block;font-size:12.5px}
+.step small{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.step.done .no{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.step.on{background:var(--acc-soft)}
+.step.on .no{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.b-pane{padding:18px}
+.b-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:760px}
+.b-grid2 .full{grid-column:1/-1}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tile{border:1.5px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:var(--panel);transition:border-color .15s}
+.tile:hover{border-color:var(--acc-line)}
+.tile.on{border-color:var(--acc);background:var(--acc-soft)}
+.tile.part{border-color:var(--acc-line)}
+.tile .th{display:flex;align-items:center;gap:8px}
+.tile .th .ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--panel2);color:var(--ink2)}
+.tile.on .th .ic{background:var(--acc);color:var(--on-acc)}
+.tile .th b{font-size:13px}
+.tile .th small{display:block;color:var(--muted);font-weight:600;font-size:11px}
+.tile .th .tick{margin-left:auto;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line-strong);display:grid;place-items:center;font-size:11px;color:transparent}
+.tile.on .th .tick{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.tile.part .th .tick{border-color:var(--acc);color:var(--acc)}
+.tile .bar{height:4px;border-radius:99px;background:var(--panel2);margin-top:10px;overflow:hidden}
+.tile .bar i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.bulkcard{display:grid;grid-template-columns:auto auto auto auto 1fr auto;gap:14px;align-items:end;padding:14px;border:1px dashed var(--acc-line);border-radius:12px;background:var(--acc-soft);margin-bottom:14px}
+.bulkcard .fld label{margin-bottom:6px}
+.b-foot{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px solid var(--line);background:var(--panel2);border-radius:0 0 14px 14px}
+.b-foot .sp{flex:1}
+.review{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.rv{border:1px solid var(--line);border-radius:12px;padding:12px}
+.rv h5{margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:8px}
+.rv .line{display:flex;justify-content:space-between;padding:4px 0;color:var(--ink2);font-weight:600}
+.rv .line b{color:var(--ink)}
+
+/* ================= C — Catalog ⇄ Offer split ================= */
+.c-top{padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.c-top .title{display:flex;flex-direction:column;gap:2px;min-width:200px;flex:1}
+.c-top .title input{border:0;background:transparent;color:var(--ink);font:800 17px 'Manrope',sans-serif;outline:none;padding:0;width:100%}
+.c-top .title small{color:var(--muted);font-weight:700}
+.c-top .dates{display:flex;align-items:center;gap:6px}
+.c-top .dates .inp{width:140px}
+.c-split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;margin-top:14px;align-items:start}
+.c-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.c-head h4{margin:0;font-size:13.5px;font-weight:800}
+.c-head .sp{flex:1}
+.catchips{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+.cchip{border:1px solid var(--line-strong);background:var(--panel);color:var(--ink2);font:700 11.5px 'Manrope',sans-serif;padding:6px 10px;border-radius:99px;cursor:pointer;white-space:nowrap}
+.cchip.on{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.clist{max-height:560px;overflow:auto}
+.citem{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line)}
+.citem:hover{background:var(--panel2)}
+.citem .meta{margin-left:auto;text-align:right;font-size:11.5px}
+.citem .meta b{display:block}
+.citem .meta small{color:var(--muted);font-weight:600}
+.citem.in{opacity:.55}
+.c-bulk{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel2);flex-wrap:wrap}
+.c-bulk .inp{height:28px;width:66px}
+.c-bulk .seg button{padding:5px 8px}
+.offitem{display:grid;grid-template-columns:20px minmax(0,1fr) 108px 84px 28px;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line)}
+.offitem.sel{background:var(--acc-soft)}
+.offitem .sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.offitem .inp{height:30px;width:100%}
+.offgrp{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--panel2);border-bottom:1px solid var(--line);font-weight:800;font-size:11.5px;color:var(--ink2)}
+.offgrp span{color:var(--muted)}
+.c-foot{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.c-foot .sp{flex:1}
+
+/* responsive */
+@media (max-width:980px){
+  .a-body,.c-split{grid-template-columns:1fr}
+  .rail{position:static;display:flex;gap:4px;overflow-x:auto}
+  .rail h6{display:none}
+  .rail-item{white-space:nowrap}
+  .rail-item.sub{padding-left:9px}
+  .a-hero{grid-template-columns:1fr 1fr}
+  .a-hero .fld:first-child{grid-column:1/-1}
+  .bulkcard{grid-template-columns:1fr 1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  #stage{padding:14px 10px}
+  .b-grid2{grid-template-columns:1fr}
+  .offitem{grid-template-columns:20px minmax(0,1fr) 90px 28px}
+  .offitem .opct{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div class="chrome-row">
+    <h1>Product → Offers <span>· new Vue page preview</span></h1>
+    <div class="ctl"><span class="ctl-label">Layout</span>
+      <button class="chip" data-chrome="dir" data-v="A">A · Category Ledger</button>
+      <button class="chip" data-chrome="dir" data-v="B">B · Guided Steps</button>
+      <button class="chip" data-chrome="dir" data-v="C">C · Catalog ⇄ Offer</button>
+    </div>
+    <div class="ctl"><span class="ctl-label">Theme</span>
+      <button class="chip" data-chrome="theme" data-v="light">Light</button>
+      <button class="chip" data-chrome="theme" data-v="dark">Dark</button>
+    </div>
+    <div class="ctl"><span class="ctl-label">Accent</span>
+      <button class="sw" data-chrome="acc" data-v="blue" style="background:#2563eb"></button>
+      <button class="sw" data-chrome="acc" data-v="emerald" style="background:#0f766e"></button>
+      <button class="sw" data-chrome="acc" data-v="plum" style="background:#7c3aed"></button>
+      <button class="sw" data-chrome="acc" data-v="graphite" style="background:#334155"></button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <p class="note" id="note"></p>
+  <div id="stage" data-theme="light" data-acc="blue"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- sample data */
+const PALETTE=['#2563eb','#0f766e','#7c3aed','#db2777','#ea580c','#0891b2','#65a30d','#9333ea','#b45309','#475569'];
+const P=[
+ {id:1,code:'SNK-1001',name:'Air Zoom Pegasus 41',main:'Footwear',sub:'Sneakers',brand:'Nike',mrp:520,cost:340,stock:18},
+ {id:2,code:'SNK-1002',name:'Ultraboost Light',main:'Footwear',sub:'Sneakers',brand:'Adidas',mrp:690,cost:455,stock:9},
+ {id:3,code:'SNK-1003',name:'Suede Classic XXI',main:'Footwear',sub:'Sneakers',brand:'Puma',mrp:310,cost:180,stock:24},
+ {id:4,code:'SNK-1004',name:'Samba OG',main:'Footwear',sub:'Sneakers',brand:'Adidas',mrp:420,cost:260,stock:14},
+ {id:5,code:'SNK-1005',name:'Court Vision Low',main:'Footwear',sub:'Sneakers',brand:'Nike',mrp:340,cost:210,stock:31},
+ {id:6,code:'FRM-2001',name:'Oxford Cap-Toe',main:'Footwear',sub:'Formal',brand:'Clarks',mrp:480,cost:300,stock:7},
+ {id:7,code:'FRM-2002',name:'Penny Loafer',main:'Footwear',sub:'Formal',brand:'Clarks',mrp:450,cost:290,stock:5},
+ {id:8,code:'FRM-2003',name:'Derby Plain',main:'Footwear',sub:'Formal',brand:'Bata',mrp:220,cost:120,stock:22},
+ {id:9,code:'SDL-3001',name:'Arabic Sandal Classic',main:'Footwear',sub:'Sandals',brand:'Bata',mrp:160,cost:85,stock:40},
+ {id:10,code:'SDL-3002',name:'Slide Comfort',main:'Footwear',sub:'Sandals',brand:'Puma',mrp:120,cost:62,stock:55},
+ {id:11,code:'TSH-4001',name:'Essential Crew Tee',main:'Apparel',sub:'T-Shirts',brand:'Zara',mrp:89,cost:38,stock:80},
+ {id:12,code:'TSH-4002',name:'Dri-FIT Running Tee',main:'Apparel',sub:'T-Shirts',brand:'Nike',mrp:145,cost:72,stock:36},
+ {id:13,code:'TSH-4003',name:'Oversized Graphic Tee',main:'Apparel',sub:'T-Shirts',brand:'Zara',mrp:119,cost:50,stock:44},
+ {id:14,code:'TSH-4004',name:'Trefoil Tee',main:'Apparel',sub:'T-Shirts',brand:'Adidas',mrp:129,cost:64,stock:28},
+ {id:15,code:'ABY-5001',name:'Crepe Abaya – Black',main:'Apparel',sub:'Abayas',brand:'Local',mrp:650,cost:320,stock:12},
+ {id:16,code:'ABY-5002',name:'Embroidered Abaya',main:'Apparel',sub:'Abayas',brand:'Local',mrp:980,cost:520,stock:6},
+ {id:17,code:'ABY-5003',name:'Linen Open Abaya',main:'Apparel',sub:'Abayas',brand:'Local',mrp:540,cost:270,stock:10},
+ {id:18,code:'BAG-6001',name:'Leather Tote',main:'Accessories',sub:'Bags',brand:'Zara',mrp:299,cost:140,stock:15},
+ {id:19,code:'BAG-6002',name:'Gym Duffel',main:'Accessories',sub:'Bags',brand:'Puma',mrp:179,cost:90,stock:20},
+ {id:20,code:'BAG-6003',name:'Crossbody Mini',main:'Accessories',sub:'Bags',brand:'Zara',mrp:159,cost:70,stock:26},
+ {id:21,code:'WCH-7001',name:'Grant Chronograph',main:'Accessories',sub:'Watches',brand:'Fossil',mrp:850,cost:610,stock:4},
+ {id:22,code:'WCH-7002',name:'G-Shock GA-2100',main:'Accessories',sub:'Watches',brand:'Casio',mrp:520,cost:380,stock:8},
+];
+const MAIN_ICON={Footwear:'fa-tag',Apparel:'fa-shopping-bag',Accessories:'fa-clock-o'};
+const byId=Object.fromEntries(P.map(p=>[p.id,p]));
+const key=p=>p.main+' / '+p.sub;
+const CATS=[...new Set(P.map(key))];
+const MAINS=[...new Set(P.map(p=>p.main))];
+
+/* ---------------------------------------------------------------- state */
+const S={
+  dir:'A',theme:'light',acc:'blue',
+  offer:{name:'Eid Festive Sale',start:'2026-10-15',end:'2026-10-25',status:'active',branch:'All branches'},
+  items:new Map(),        /* product_id -> {price, custom} */
+  sel:new Set(),
+  cat:'all', q:'', ccat:'all',
+  bulk:{mode:'pct',val:15,scope:'all',round:'1'},
+  gval:{}, step:3, menu:false,
+};
+function seed(){
+  const plan={1:20,2:20,3:20,4:20,5:20,11:30,12:30,13:30,14:30,15:15,16:15,17:15,21:10};
+  for(const [id,pct] of Object.entries(plan)){const p=byId[id];S.items.set(+id,{price:rnd(p.mrp*(1-pct/100)),custom:false})}
+  S.items.set(4,{price:349,custom:true});
+  S.items.set(21,{price:599,custom:true}); /* below cost on purpose */
+  for(const c of CATS){S.gval[c]=''}
+}
+
+/* ---------------------------------------------------------------- helpers */
+const money=n=>'QAR '+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const m2=n=>Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rnd(v){const step=+S.bulk.round||0;if(!step)return Math.round(v*100)/100;return Math.max(step,Math.round(v/step)*step)}
+const pctOff=(p,price)=>p.mrp?((p.mrp-price)/p.mrp*100):0;
+const margin=(p,price)=>price?((price-p.cost)/price*100):0;
+const thumb=p=>`<div class="thumb" style="background:${PALETTE[p.id%PALETTE.length]}">${esc(p.brand.slice(0,2).toUpperCase())}</div>`;
+const inOffer=()=>P.filter(p=>S.items.has(p.id));
+function match(p,cat,q){
+  if(cat!=='all'){ if(cat.includes(' / ')){if(key(p)!==cat)return false}else if(p.main!==cat)return false }
+  if(q){const s=q.toLowerCase();if(!(p.name+' '+p.code+' '+p.brand).toLowerCase().includes(s))return false}
+  return true;
+}
+function setPct(id,pct){const p=byId[id];pct=Math.min(100,Math.max(0,+pct||0));S.items.set(id,{price:rnd(p.mrp*(1-pct/100)),custom:true})}
+function setPrice(id,price){price=Math.max(0,+price||0);S.items.set(id,{price:Math.round(price*100)/100,custom:true})}
+function applyTo(ids,mode,val){
+  for(const id of ids){const p=byId[id];let price;
+    if(mode==='pct')price=rnd(p.mrp*(1-Math.min(100,+val||0)/100));
+    else if(mode==='amt')price=rnd(Math.max(0,p.mrp-(+val||0)));
+    else price=Math.max(0,+val||0);
+    S.items.set(id,{price,custom:false})}
+}
+function scopeIds(){
+  if(S.bulk.scope==='selected')return [...S.sel].filter(id=>S.items.has(id));
+  if(S.bulk.scope==='category')return inOffer().filter(p=>match(p,S.cat,'')).map(p=>p.id);
+  return [...S.items.keys()];
+}
+function addProducts(list){for(const p of list){if(!S.items.has(p.id)){S.items.set(p.id,{price:rnd(p.mrp*(1-(+S.bulk.val||0)/100)),custom:false})}}}
+function stats(){
+  const list=inOffer();let mrp=0,off=0,below=0,sumPct=0;
+  for(const p of list){const it=S.items.get(p.id);mrp+=p.mrp;off+=it.price;sumPct+=pctOff(p,it.price);if(it.price<p.cost)below++}
+  return {n:list.length,avg:list.length?sumPct/list.length:0,save:mrp-off,below,cats:new Set(list.map(key)).size};
+}
+const countIn=(cat)=>P.filter(p=>match(p,cat,'')&&S.items.has(p.id)).length;
+const countAll=(cat)=>P.filter(p=>match(p,cat,'')).length;
+const catLabel=c=>c==='all'?'All categories':c;
+
+/* ---------------------------------------------------------------- shared pieces */
+function kpis(){const s=stats();return `<div class="kpis">
+  <div class="kpi"><span>Products on offer</span><b>${s.n}<small>in ${s.cats} categories</small></b></div>
+  <div class="kpi"><span>Average discount</span><b class="ok">${s.avg.toFixed(1)}%</b></div>
+  <div class="kpi"><span>Customer saves (1 each)</span><b>${money(s.save)}</b></div>
+  <div class="kpi"><span>Below cost</span><b class="${s.below?'bad':''}">${s.below}${s.below?'<small>review</small>':''}</b></div></div>`}
+function statusPill(){const o=S.offer;return o.status==='active'?`<span class="pill ok"><span class="dot"></span>Active · ${fmtD(o.start)} → ${fmtD(o.end)}</span>`:`<span class="pill mute"><span class="dot"></span>Inactive</span>`}
+function fmtD(d){const x=new Date(d+'T00:00');return x.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}
+function marginPill(p,price){
+  if(price<p.cost)return `<span class="pill bad"><i class="fa fa-exclamation-triangle"></i>Below cost</span>`;
+  const m=margin(p,price);
+  return m<15?`<span class="pill warn">${m.toFixed(0)}% margin</span>`:`<span class="pill ok">${m.toFixed(0)}% margin</span>`;
+}
+function priceCell(p){const it=S.items.get(p.id);const cls=it.price<p.cost?'below':(it.custom?'custom':'');
+  return `<div class="row-price ${cls}"><input class="inp num" data-price="${p.id}" value="${it.price.toFixed(2)}" inputmode="decimal"></div>`}
+function pctCell(p){const it=S.items.get(p.id);
+  return `<div class="inp-group"><input class="inp num" style="width:58px" data-pct="${p.id}" value="${pctOff(p,it.price).toFixed(1)}" inputmode="decimal"><span class="add">%</span></div>`}
+function seg(name,cur,opts){return `<div class="seg">${opts.map(([v,l])=>`<button data-act="${name}" data-v="${v}" class="${cur===v?'on':''}">${l}</button>`).join('')}</div>`}
+function bulkInput(w){const mode=S.bulk.mode;const suf=mode==='pct'?'%':'QAR';
+  return `<div class="inp-group"><input class="inp num" style="width:${w||74}px" data-bulkval value="${esc(S.bulk.val)}" inputmode="decimal"><span class="add">${suf}</span></div>`}
+function roundSel(){return `<select class="inp" data-round>${[['0','No rounding'],['0.5','Nearest 0.50'],['1','Nearest 1'],['5','Nearest 5']].map(([v,l])=>`<option value="${v}" ${S.bulk.round===v?'selected':''}>${l}</option>`).join('')}</select>`}
+function pageHead(extra){return `<div class="ph"><div><div class="crumb">Product<i class="fa fa-chevron-right"></i>Offers<i class="fa fa-chevron-right"></i>Edit</div><h2>${esc(S.offer.name)||'New offer'}</h2></div><div class="sp"></div><div class="acts">${extra||''}<a class="btn btn-ghost"><i class="fa fa-times"></i>Cancel</a><button class="btn btn-pri" data-act="save"><i class="fa fa-check"></i>Save offer</button></div></div>`}
+
+/* ================================================================ A — Category Ledger */
+function renderA(){
+  const o=S.offer;
+  const rail=[`<h6>Categories in offer</h6>`,
+    `<div class="rail-item ${S.cat==='all'?'on':''}" data-act="cat" data-v="all"><i class="fa fa-th-large"></i>All<span class="n">${S.items.size}</span></div>`];
+  for(const m of MAINS){
+    rail.push(`<div class="rail-item ${S.cat===m?'on':''}" data-act="cat" data-v="${esc(m)}"><i class="fa ${MAIN_ICON[m]}"></i>${m}<span class="n">${countIn(m)}/${countAll(m)}</span></div>`);
+    for(const c of CATS.filter(c=>c.startsWith(m+' / ')))
+      rail.push(`<div class="rail-item sub ${S.cat===c?'on':''}" data-act="cat" data-v="${esc(c)}">${esc(c.split(' / ')[1])}<span class="n">${countIn(c)}/${countAll(c)}</span></div>`);
+  }
+  const list=inOffer().filter(p=>match(p,S.cat,S.q));
+  const groups={};for(const p of list)(groups[key(p)]=groups[key(p)]||[]).push(p);
+  let rows='';
+  for(const [g,ps] of Object.entries(groups)){
+    const allSel=ps.every(p=>S.sel.has(p.id));
+    rows+=`<tr class="grp"><td class="c"><input type="checkbox" class="chk" data-selgroup="${esc(g)}" ${allSel?'checked':''}></td><td colspan="7"><div class="grp-in">
+      <span class="gname">${esc(g)} <span>· ${ps.length} item${ps.length>1?'s':''}</span></span><span class="sp"></span>
+      <span class="eyebrow">Whole group</span>
+      <div class="inp-group"><input class="inp num" data-gval="${esc(g)}" placeholder="0" value="${esc(S.gval[g]||'')}"><span class="add">% off</span></div>
+      <button class="btn btn-soft btn-sm" data-act="gapply" data-v="${esc(g)}">Apply</button>
+      <button class="btn btn-ghost btn-sm" data-act="gremove" data-v="${esc(g)}" title="Remove group"><i class="fa fa-trash-o"></i></button></div></td></tr>`;
+    for(const p of ps){const it=S.items.get(p.id);
+      rows+=`<tr class="row ${S.sel.has(p.id)?'sel':''}"><td class="c"><input type="checkbox" class="chk" data-sel="${p.id}" ${S.sel.has(p.id)?'checked':''}></td>
+      <td><div class="pname">${thumb(p)}<div style="min-width:0"><b>${esc(p.name)}</b><small>${p.code} · ${p.brand} · ${p.stock} in stock</small></div></div></td>
+      <td class="r tnum">${m2(p.mrp)}</td><td class="r tnum" style="color:var(--muted)">${m2(p.cost)}</td>
+      <td class="w-price">${priceCell(p)}</td><td class="w-pct">${pctCell(p)}</td><td>${marginPill(p,it.price)}</td>
+      <td class="c"><button class="btn btn-ghost icon-btn" data-act="remove" data-v="${p.id}" title="Remove"><i class="fa fa-times"></i></button></td></tr>`}
+  }
+  const addMenu=S.menu?`<div class="menu card">
+     <div class="mh">Add a whole category</div>
+     ${CATS.map(c=>{const left=countAll(c)-countIn(c);return `<div class="mi" data-act="addcat" data-v="${esc(c)}"><i class="fa fa-folder-o"></i>${esc(c)}<small>${left?'+'+left:'all in'}</small></div>`}).join('')}
+     <div class="mh">Or a single product</div>
+     ${P.filter(p=>!S.items.has(p.id)).slice(0,6).map(p=>`<div class="mi" data-act="add" data-v="${p.id}"><i class="fa fa-plus"></i>${esc(p.name)}<small>${m2(p.mrp)}</small></div>`).join('')}
+   </div>`:'';
+  const selN=[...S.sel].filter(id=>S.items.has(id)).length;
+  return pageHead()+`
+  <div class="card">
+    <div class="a-hero">
+      <div class="fld"><label>Offer name</label><input class="inp" data-offer="name" value="${esc(o.name)}"></div>
+      <div class="fld"><label>Starts</label><input type="date" class="inp" data-offer="start" value="${o.start}"></div>
+      <div class="fld"><label>Ends</label><input type="date" class="inp" data-offer="end" value="${o.end}"></div>
+      <div class="fld"><label>Status</label>${seg('status',o.status,[['active','Active'],['inactive','Inactive']])}</div>
+    </div>
+    ${kpis()}
+  </div>
+  <div class="a-body">
+    <div class="card rail">${rail.join('')}</div>
+    <div>
+      <div class="card">
+        <div class="a-tool">
+          <div class="search"><i class="fa fa-search"></i><input class="inp" data-q data-focus="q" placeholder="Search name, code, brand…" value="${esc(S.q)}"></div>
+          <span class="eyebrow">Bulk</span>${bulkInput()}
+          ${seg('mode',S.bulk.mode,[['pct','% off'],['amt','Amount off']])}
+          ${roundSel()}
+          <button class="btn btn-pri" data-act="apply" data-scope="${S.cat==='all'?'all':'category'}"><i class="fa fa-bolt"></i>Apply to ${S.cat==='all'?'all':esc(S.cat.split(' / ').pop())}</button>
+          <div class="addmenu"><button class="btn btn-soft" data-act="menu"><i class="fa fa-plus"></i>Add products</button>${addMenu}</div>
+        </div>
+        <div class="tbl-wrap">${list.length?`<table class="t"><thead><tr><th class="c" style="width:36px"><input type="checkbox" class="chk" data-selall ${list.length&&list.every(p=>S.sel.has(p.id))?'checked':''}></th><th>Product</th><th class="r">MRP</th><th class="r">Cost</th><th>Offer price</th><th>Discount</th><th>Margin</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="empty"><i class="fa fa-tags"></i>No products from ${esc(catLabel(S.cat))} in this offer yet.<br><br><button class="btn btn-soft" data-act="addcat" data-v="${esc(S.cat)}"><i class="fa fa-plus"></i>Add all ${esc(catLabel(S.cat))}</button></div>`}</div>
+      </div>
+      ${selN?`<div class="bulkbar"><span class="cnt">${selN} selected</span>
+        <div class="inp-group"><input class="inp num" data-selval value="${esc(S.selval||'')}" placeholder="0"><span class="add">% off</span></div>
+        <button class="btn btn-ghost" data-act="selapply" data-v="pct">Apply %</button>
+        <div class="inp-group"><input class="inp num" data-selprice value="${esc(S.selprice||'')}" placeholder="0.00"><span class="add">QAR</span></div>
+        <button class="btn btn-ghost" data-act="selapply" data-v="price">Set price</button>
+        <span class="sp"></span>
+        <button class="btn btn-ghost" data-act="selremove"><i class="fa fa-trash-o"></i>Remove</button>
+        <button class="btn btn-ghost" data-act="selclear">Clear</button></div>`:''}
+    </div>
+  </div>`;
+}
+
+/* ================================================================ B — Guided Steps */
+function renderB(){
+  const o=S.offer;const s=stats();
+  const st=[['Details',`${fmtD(o.start)} → ${fmtD(o.end)}`],['Products',`${s.n} in ${s.cats} categories`],['Pricing',`avg ${s.avg.toFixed(1)}% off`],['Review',s.below?`${s.below} below cost`:'ready to save']];
+  const steps=`<div class="card steps">${st.map(([t,d],i)=>`<div class="step ${S.step===i+1?'on':(i+1<S.step?'done':'')}" data-act="step" data-v="${i+1}"><span class="no">${i+1<S.step?'<i class="fa fa-check"></i>':i+1}</span><div><b>${t}</b><small>${d}</small></div></div>`).join('')}</div>`;
+  let pane='';
+  if(S.step===1){
+    pane=`<div class="b-grid2">
+      <div class="fld full"><label>Offer name</label><input class="inp" data-offer="name" value="${esc(o.name)}"></div>
+      <div class="fld"><label>Starts</label><input type="date" class="inp" data-offer="start" value="${o.start}"></div>
+      <div class="fld"><label>Ends</label><input type="date" class="inp" data-offer="end" value="${o.end}"></div>
+      <div class="fld"><label>Status</label>${seg('status',o.status,[['active','Active'],['inactive','Inactive']])}</div>
+      <div class="fld"><label>Branch</label><select class="inp"><option>All branches</option><option>Main branch</option></select></div>
+    </div>`;
+  }else if(S.step===2){
+    pane=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap"><span class="eyebrow">Tap a category to add / remove all its products</span><span style="flex:1"></span><span class="pill acc">${s.n} of ${P.length} products</span></div>
+    <div class="tiles">${CATS.map(c=>{const a=countAll(c),n=countIn(c);const cls=n===a?'on':(n?'part':'');const m=c.split(' / ')[0];
+      return `<div class="tile ${cls}" data-act="tile" data-v="${esc(c)}"><div class="th"><span class="ic"><i class="fa ${MAIN_ICON[m]}"></i></span><div><b>${esc(c.split(' / ')[1])}</b><small>${m} · ${n}/${a} products</small></div><span class="tick"><i class="fa ${n===a?'fa-check':'fa-minus'}"></i></span></div><div class="bar"><i style="width:${a?n/a*100:0}%"></i></div></div>`}).join('')}</div>
+    <div style="margin-top:16px" class="eyebrow">Fine-tune individual products</div>
+    <div class="card" style="margin-top:8px;box-shadow:none"><div class="tbl-wrap"><table class="t" style="min-width:560px"><thead><tr><th style="width:36px"></th><th>Product</th><th>Category</th><th class="r">MRP</th></tr></thead><tbody>
+      ${P.filter(p=>match(p,'all',S.q)).slice(0,8).map(p=>`<tr class="row ${S.items.has(p.id)?'sel':''}"><td class="c"><input type="checkbox" class="chk" data-toggle="${p.id}" ${S.items.has(p.id)?'checked':''}></td><td><div class="pname">${thumb(p)}<div><b>${esc(p.name)}</b><small>${p.code} · ${p.brand}</small></div></div></td><td style="color:var(--ink2);font-weight:600">${esc(key(p))}</td><td class="r tnum">${m2(p.mrp)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  }else if(S.step===3){
+    const list=inOffer().filter(p=>match(p,S.cat,''));
+    pane=`<div class="bulkcard">
+      <div class="fld"><label>Discount type</label>${seg('mode',S.bulk.mode,[['pct','% off MRP'],['amt','Amount off'],['fix','Fixed price']])}</div>
+      <div class="fld"><label>Value</label>${bulkInput(86)}</div>
+      <div class="fld"><label>Apply to</label>${seg('scope',S.bulk.scope,[['all','All'],['category','Category'],['selected','Selected ('+[...S.sel].filter(id=>S.items.has(id)).length+')']])}</div>
+      <div class="fld"><label>Round to</label>${roundSel()}</div>
+      <div></div>
+      <button class="btn btn-pri btn-lg" data-act="apply"><i class="fa fa-bolt"></i>Apply to ${scopeIds().length}</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="cchip ${S.cat==='all'?'on':''}" data-act="cat" data-v="all">All · ${S.items.size}</button>
+      ${CATS.filter(c=>countIn(c)).map(c=>`<button class="cchip ${S.cat===c?'on':''}" data-act="cat" data-v="${esc(c)}">${esc(c.split(' / ')[1])} · ${countIn(c)}</button>`).join('')}
+    </div>
+    <div class="card" style="box-shadow:none"><div class="tbl-wrap"><table class="t"><thead><tr><th class="c" style="width:36px"><input type="checkbox" class="chk" data-selall ${list.length&&list.every(p=>S.sel.has(p.id))?'checked':''}></th><th>Product</th><th class="r">MRP</th><th class="r">Cost</th><th>Offer price</th><th>Discount</th><th>Margin</th><th></th></tr></thead><tbody>
+    ${list.map(p=>`<tr class="row ${S.sel.has(p.id)?'sel':''}"><td class="c"><input type="checkbox" class="chk" data-sel="${p.id}" ${S.sel.has(p.id)?'checked':''}></td><td><div class="pname">${thumb(p)}<div style="min-width:0"><b>${esc(p.name)}</b><small>${esc(key(p))} · ${p.brand}</small></div></div></td><td class="r tnum">${m2(p.mrp)}</td><td class="r tnum" style="color:var(--muted)">${m2(p.cost)}</td><td class="w-price">${priceCell(p)}</td><td class="w-pct">${pctCell(p)}</td><td>${marginPill(p,S.items.get(p.id).price)}</td><td class="c"><button class="btn btn-ghost icon-btn" data-act="remove" data-v="${p.id}"><i class="fa fa-times"></i></button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  }else{
+    const groups={};for(const p of inOffer())(groups[key(p)]=groups[key(p)]||[]).push(p);
+    pane=`<div class="review">
+      <div class="rv"><h5><i class="fa fa-calendar"></i>${esc(o.name)}</h5><div class="line">Runs<b>${fmtD(o.start)} → ${fmtD(o.end)}</b></div><div class="line">Status<b>${o.status}</b></div><div class="line">Products<b>${s.n}</b></div><div class="line">Average off<b>${s.avg.toFixed(1)}%</b></div></div>
+      ${Object.entries(groups).map(([g,ps])=>{const avg=ps.reduce((a,p)=>a+pctOff(p,S.items.get(p.id).price),0)/ps.length;const below=ps.filter(p=>S.items.get(p.id).price<p.cost).length;
+        return `<div class="rv"><h5>${esc(g)} ${below?`<span class="pill bad">${below} below cost</span>`:''}</h5><div class="line">Products<b>${ps.length}</b></div><div class="line">Average off<b>${avg.toFixed(1)}%</b></div><div class="line">Price range<b>${m2(Math.min(...ps.map(p=>S.items.get(p.id).price)))} – ${m2(Math.max(...ps.map(p=>S.items.get(p.id).price)))}</b></div></div>`}).join('')}
+    </div>`;
+  }
+  return pageHead(statusPill())+steps+`<div class="card"><div class="b-pane">${pane}</div>
+    <div class="b-foot"><button class="btn btn-ghost" data-act="step" data-v="${Math.max(1,S.step-1)}" ${S.step===1?'disabled':''}><i class="fa fa-arrow-left"></i>Back</button><span class="sp"></span>
+    <span style="color:var(--muted);font-weight:700">${s.n} products · avg ${s.avg.toFixed(1)}% off</span>
+    ${S.step<4?`<button class="btn btn-pri" data-act="step" data-v="${S.step+1}">Next<i class="fa fa-arrow-right"></i></button>`:`<button class="btn btn-pri" data-act="save"><i class="fa fa-check"></i>Save offer</button>`}</div></div>`;
+}
+
+/* ================================================================ C — Catalog ⇄ Offer split */
+function renderC(){
+  const o=S.offer;const s=stats();
+  const cat=S.ccat;
+  const catalog=P.filter(p=>match(p,cat,S.q));
+  const notIn=catalog.filter(p=>!S.items.has(p.id));
+  const off=inOffer();
+  const groups={};for(const p of off)(groups[key(p)]=groups[key(p)]||[]).push(p);
+  const selN=[...S.sel].filter(id=>S.items.has(id)).length;
+  return `<div class="ph"><div><div class="crumb">Product<i class="fa fa-chevron-right"></i>Offers</div></div></div>
+  <div class="card">
+    <div class="c-top">
+      <div class="title"><input data-offer="name" value="${esc(o.name)}" placeholder="Offer name"><small>${statusPill()}</small></div>
+      <div class="dates"><input type="date" class="inp" data-offer="start" value="${o.start}"><i class="fa fa-long-arrow-right" style="color:var(--muted)"></i><input type="date" class="inp" data-offer="end" value="${o.end}"></div>
+      ${seg('status',o.status,[['active','Active'],['inactive','Inactive']])}
+    </div>
+    ${kpis()}
+  </div>
+  <div class="c-split">
+    <div class="card">
+      <div class="c-head"><h4><i class="fa fa-cubes"></i> Catalogue</h4><span class="sp"></span>
+        <div style="position:relative;flex:1;min-width:150px"><i class="fa fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)"></i><input class="inp" style="width:100%;padding-left:30px" data-q data-focus="q" placeholder="Search…" value="${esc(S.q)}"></div></div>
+      <div class="catchips">
+        <button class="cchip ${cat==='all'?'on':''}" data-act="ccat" data-v="all">All</button>
+        ${MAINS.map(m=>`<button class="cchip ${cat===m?'on':''}" data-act="ccat" data-v="${m}">${m}</button>`).join('')}
+        ${CATS.map(c=>`<button class="cchip ${cat===c?'on':''}" data-act="ccat" data-v="${esc(c)}">${esc(c.split(' / ')[1])}</button>`).join('')}
+      </div>
+      <div class="c-bulk"><span style="font-weight:700;color:var(--ink2)">${catalog.length} shown · ${notIn.length} not in offer</span><span style="flex:1"></span>
+        <button class="btn btn-pri btn-sm" data-act="addshown" ${notIn.length?'':'disabled'}><i class="fa fa-plus"></i>Add ${notIn.length} at ${esc(S.bulk.val)}${S.bulk.mode==='pct'?'%':' QAR'} off</button></div>
+      <div class="clist">${catalog.map(p=>{const inn=S.items.has(p.id);return `<div class="citem ${inn?'in':''}">${thumb(p)}<div class="pname" style="min-width:0"><div style="min-width:0"><b>${esc(p.name)}</b><small>${esc(p.sub)} · ${p.brand}</small></div></div>
+        <div class="meta"><b class="tnum">${m2(p.mrp)}</b><small>${p.stock} in stock</small></div>
+        ${inn?`<span class="pill ok"><i class="fa fa-check"></i></span>`:`<button class="btn btn-soft icon-btn" data-act="add" data-v="${p.id}"><i class="fa fa-plus"></i></button>`}</div>`}).join('')||'<div class="empty">Nothing matches.</div>'}</div>
+    </div>
+    <div class="card">
+      <div class="c-head"><h4><i class="fa fa-tags"></i> In this offer</h4><span class="pill acc">${s.n}</span><span class="sp"></span>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;color:var(--ink2)"><input type="checkbox" class="chk" data-selall-offer ${off.length&&off.every(p=>S.sel.has(p.id))?'checked':''}>Select all</label></div>
+      <div class="c-bulk">
+        ${seg('mode',S.bulk.mode,[['pct','% off'],['amt','Amt off'],['fix','Price']])}
+        ${bulkInput(66)}
+        <button class="btn btn-pri btn-sm" data-act="apply" data-scope="${selN?'selected':'all'}"><i class="fa fa-bolt"></i>Apply to ${selN?selN+' selected':'all '+s.n}</button>
+        <span style="flex:1"></span>
+        ${selN?`<button class="btn btn-danger btn-sm" data-act="selremove"><i class="fa fa-trash-o"></i>Remove ${selN}</button>`:''}
+      </div>
+      <div class="clist">${off.length?Object.entries(groups).map(([g,ps])=>`<div class="offgrp"><input type="checkbox" class="chk" data-selgroup="${esc(g)}" ${ps.every(p=>S.sel.has(p.id))?'checked':''}>${esc(g)} <span>· ${ps.length}</span></div>`+
+        ps.map(p=>{const it=S.items.get(p.id);return `<div class="offitem ${S.sel.has(p.id)?'sel':''}"><input type="checkbox" class="chk" data-sel="${p.id}" ${S.sel.has(p.id)?'checked':''}>
+          <div style="min-width:0"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div><div class="sub"><s class="mrp">${m2(p.mrp)}</s> · cost ${m2(p.cost)} ${it.price<p.cost?'<span class="pill bad" style="margin-left:4px">below cost</span>':''}</div></div>
+          ${priceCell(p)}<div class="opct">${pctCell(p)}</div>
+          <button class="btn btn-ghost icon-btn" data-act="remove" data-v="${p.id}"><i class="fa fa-times"></i></button></div>`}).join('')).join(''):'<div class="empty"><i class="fa fa-hand-o-left"></i>Add products from the catalogue.</div>'}</div>
+      <div class="c-foot"><span style="color:var(--muted);font-weight:700">Saves as <code style="font-size:11px">product_prices</code> rows · price_type = offer</span><span class="sp"></span><a class="btn btn-ghost">Cancel</a><button class="btn btn-pri" data-act="save"><i class="fa fa-check"></i>Save offer</button></div>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------- render + events */
+const NOTES={
+ A:`<b>A · Category Ledger</b> — one page. Offer details + KPIs on top, a <b>category rail</b> (count in offer / total) on the left, and a table <b>grouped by category</b> where every group header has its own "% off → Apply". Toolbar bulk applies to all or to the category picked in the rail. Tick rows → a dark bulk bar appears for "Apply % / Set price / Remove". Edit any row's <b>offer price</b> or <b>discount %</b> — they stay in sync; hand-edited rows are tinted, below-cost rows turn red.`,
+ B:`<b>B · Guided Steps</b> — four steps: <b>Details → Products → Pricing → Review</b>. Products step uses category tiles (tap = add/remove the whole category, partial fill shown) plus a fine-tune list. Pricing step has a <b>bulk card</b>: % off MRP / amount off / fixed price, scope All / Category / Selected, rounding. Review summarises each category and flags below-cost items before save.`,
+ C:`<b>C · Catalog ⇄ Offer</b> — split screen. Left: browse the catalogue by main/sub category chips + search, "Add N at 15% off" adds everything shown. Right: the offer basket grouped by category with inline price / % edit and a bulk strip that targets the selection (or all). Best when building offers fast from a large catalogue.`,
+};
+const stage=document.getElementById('stage');
+function render(){
+  const ae=document.activeElement;const fk=ae&&ae.dataset?ae.dataset.focus:null;const cur=fk?ae.selectionStart:null;
+  stage.dataset.theme=S.theme;stage.dataset.acc=S.acc;
+  stage.innerHTML=S.dir==='A'?renderA():S.dir==='B'?renderB():renderC();
+  document.getElementById('note').innerHTML=NOTES[S.dir]+` <br>Route <code>/product/offer</code> (list) + <code>/product/offer/create|edit/{id}</code> → <code>Inertia::render('Product/Offer')</code>, saves to existing <code>product_prices</code> (price_type <code>offer</code>, start/end date, status) — POS already reads it via <code>ProductPrice::offer()</code>.`;
+  document.querySelectorAll('[data-chrome]').forEach(b=>b.classList.toggle('on',S[b.dataset.chrome]===b.dataset.v));
+  if(fk){const el=stage.querySelector(`[data-focus="${fk}"]`);if(el){el.focus();try{el.setSelectionRange(cur,cur)}catch(e){}}}
+}
+document.querySelector('.chrome').addEventListener('click',e=>{const b=e.target.closest('[data-chrome]');if(!b)return;S[b.dataset.chrome]=b.dataset.v;S.menu=false;S.cat='all';render()});
+
+stage.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');
+  if(!b){if(S.menu&&!e.target.closest('.addmenu')){S.menu=false;render()}return}
+  const a=b.dataset.act,v=b.dataset.v;
+  switch(a){
+    case 'cat':S.cat=v;break;
+    case 'ccat':S.ccat=v;break;
+    case 'status':S.offer.status=v;break;
+    case 'mode':S.bulk.mode=v;break;
+    case 'scope':S.bulk.scope=v;break;
+    case 'step':S.step=+v;S.cat='all';break;
+    case 'menu':S.menu=!S.menu;break;
+    case 'add':addProducts([byId[v]]);S.menu=false;break;
+    case 'addcat':addProducts(P.filter(p=>match(p,v,'')));S.menu=false;S.cat=v;break;
+    case 'addshown':addProducts(P.filter(p=>match(p,S.ccat,S.q)));break;
+    case 'tile':{const ps=P.filter(p=>match(p,v,''));if(ps.every(p=>S.items.has(p.id)))ps.forEach(p=>{S.items.delete(p.id);S.sel.delete(p.id)});else addProducts(ps);break}
+    case 'remove':S.items.delete(+v);S.sel.delete(+v);break;
+    case 'gremove':P.filter(p=>key(p)===v).forEach(p=>{S.items.delete(p.id);S.sel.delete(p.id)});break;
+    case 'gapply':applyTo(inOffer().filter(p=>key(p)===v).map(p=>p.id),'pct',S.gval[v]||0);break;
+    case 'apply':{const sc=b.dataset.scope;if(sc){const keep=S.bulk.scope;S.bulk.scope=sc;applyTo(scopeIds(),S.bulk.mode,S.bulk.val);S.bulk.scope=keep}else applyTo(scopeIds(),S.bulk.mode,S.bulk.val);break}
+    case 'selapply':{const ids=[...S.sel].filter(id=>S.items.has(id));if(v==='pct')applyTo(ids,'pct',S.selval||0);else applyTo(ids,'fix',S.selprice||0);break}
+    case 'selremove':[...S.sel].forEach(id=>S.items.delete(id));S.sel.clear();break;
+    case 'selclear':S.sel.clear();break;
+    case 'save':b.innerHTML='<i class="fa fa-check"></i>Saved';return;
+  }
+  render();
+});
+stage.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.q!==undefined){S.q=t.value;render();return}
+  if(t.dataset.gval!==undefined){S.gval[t.dataset.gval]=t.value;return}
+  if(t.dataset.bulkval!==undefined){S.bulk.val=t.value;return}
+  if(t.dataset.selval!==undefined){S.selval=t.value;return}
+  if(t.dataset.selprice!==undefined){S.selprice=t.value;return}
+  if(t.dataset.offer==='name'){S.offer.name=t.value;const h=stage.querySelector('.ph h2');if(h)h.textContent=t.value||'New offer';return}
+});
+stage.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.price){setPrice(+t.dataset.price,t.value);render();return}
+  if(t.dataset.pct){setPct(+t.dataset.pct,t.value);render();return}
+  if(t.dataset.round!==undefined){S.bulk.round=t.value;render();return}
+  if(t.dataset.offer&&t.dataset.offer!=='name'){S.offer[t.dataset.offer]=t.value;render();return}
+  if(t.dataset.sel){const id=+t.dataset.sel;t.checked?S.sel.add(id):S.sel.delete(id);render();return}
+  if(t.dataset.toggle){const id=+t.dataset.toggle;if(t.checked)addProducts([byId[id]]);else{S.items.delete(id);S.sel.delete(id)}render();return}
+  if(t.dataset.selgroup){const ps=inOffer().filter(p=>key(p)===t.dataset.selgroup);ps.forEach(p=>t.checked?S.sel.add(p.id):S.sel.delete(p.id));render();return}
+  if(t.dataset.selall!==undefined){const ps=inOffer().filter(p=>match(p,S.cat,S.dir==='A'?S.q:''));ps.forEach(p=>t.checked?S.sel.add(p.id):S.sel.delete(p.id));render();return}
+  if(t.dataset.selallOffer!==undefined){inOffer().forEach(p=>t.checked?S.sel.add(p.id):S.sel.delete(p.id));render();return}
+});
+stage.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.dataset.price||e.target.dataset.pct))e.target.blur()});
+
+seed();render();
+</script>
+</body>
+</html>

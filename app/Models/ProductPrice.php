@@ -9,6 +9,7 @@ class ProductPrice extends Model
 {
     protected $fillable = [
         'product_id',
+        'product_offer_id',
         'price_type',
         'amount',
         'start_date',
@@ -29,6 +30,12 @@ class ProductPrice extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<ProductOffer, $this> */
+    public function productOffer(): BelongsTo
+    {
+        return $this->belongsTo(ProductOffer::class);
     }
 
     public function scopeActive($q)

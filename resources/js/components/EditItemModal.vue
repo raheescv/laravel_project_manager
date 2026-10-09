@@ -52,6 +52,14 @@
                 <!-- Pricing -->
                 <div class="posx-section">
                     <h4 class="posx-section-title">Pricing</h4>
+                    <div v-if="hasOffer" class="posx-kv">
+                        <span><span class="posx-chip-ok">{{ localItem.offer_label || 'Offer' }}</span></span>
+                        <span class="inline-flex items-center gap-2">
+                            <span class="line-through posx-muted" title="Original price">{{ formatNumber(localItem.unit_price) }}</span>
+                            <span class="posx-amount-ok font-bold" title="Offer price">{{ formatNumber(localItem.unit_price - localItem.offer_unit_discount) }}</span>
+                            <span class="posx-muted text-xs">/{{ localItem.unit_name }}</span>
+                        </span>
+                    </div>
                     <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="posx-label mb-1">Qty</label>
@@ -65,7 +73,7 @@
                                 @input="updateItemField('unit_price', $event.target.value)" />
                         </div>
                         <div>
-                            <label class="posx-label mb-1">Discount</label>
+                            <label class="posx-label mb-1">Discount<span v-if="hasOffer" class="posx-muted"> · {{ formatNumber(localItem.offer_unit_discount) }} × qty</span></label>
                             <input v-model.number="localItem.discount" type="number" min="0" step="1" class="posx-field"
                                 @input="updateItemField('discount', $event.target.value)" />
                         </div>
@@ -132,6 +140,9 @@ export default {
     },
 
     computed: {
+        hasOffer() {
+            return Number(this.localItem.offer_unit_discount) > 0;
+        },
         availableUnits() {
             const units = [];
 
@@ -201,10 +212,16 @@ export default {
             }
 
             this.localItem[field] = processedValue;
+            // A hand-typed discount replaces the automatic offer discount.
+            if (field === 'discount') {
+                this.localItem.offer_unit_discount = 0;
+            }
             this.calculateTotals();
         },
         calculateTotals() {
-            // Calculate amounts
+            if (this.hasOffer) {
+                this.localItem.discount = Math.round(this.localItem.offer_unit_discount * this.localItem.quantity * 100) / 100;
+            }
             this.localItem.gross_amount = this.localItem.unit_price * this.localItem.quantity;
             this.localItem.net_amount = this.localItem.gross_amount - this.localItem.discount;
             this.localItem.tax_amount = this.localItem.net_amount * (this.localItem.tax / 100);
@@ -226,6 +243,9 @@ export default {
 
                 // Recalculate unit_price based on base unit price and new conversion factor
                 this.localItem.unit_price = Math.round(baseUnitPrice * newConversionFactor * 100) / 100;
+                if (this.hasOffer) {
+                    this.localItem.offer_unit_discount = Math.round((this.localItem.base_offer_discount || 0) * newConversionFactor * 100) / 100;
+                }
 
                 // Ensure base_unit_price is set if not already present
                 if (!this.localItem.base_unit_price) {
