@@ -2,6 +2,7 @@
 
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\Audit\UserResolver;
 use Laravel\Sanctum\Sanctum;
 use OwenIt\Auditing\Models\Audit;
 use Tests\Support\PosWorld;
@@ -12,6 +13,7 @@ use Tests\Support\PosWorld;
  * `sanctum` guard too — otherwise every API change reads as "System".
  */
 it('attributes audits of an API request to the token user', function (): void {
+    config(['audit.queue.enable' => false]);
     $world = PosWorld::create();
     Sanctum::actingAs($world->user);
 
@@ -27,4 +29,16 @@ it('attributes audits of an API request to the token user', function (): void {
 
     expect($audit->user_id)->toBe($world->user->id)
         ->and($audit->user_type)->toBe((new User())->getMorphClass());
+});
+
+it('hands the queued audit the token user without its access token', function (): void {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user);
+
+    $resolved = UserResolver::resolve();
+
+    expect($resolved)->toBeInstanceOf(User::class)
+        ->and($resolved->getKey())->toBe($user->getKey())
+        ->and($resolved->currentAccessToken())->toBeNull()
+        ->and(fn () => serialize($resolved))->not->toThrow(Throwable::class);
 });
