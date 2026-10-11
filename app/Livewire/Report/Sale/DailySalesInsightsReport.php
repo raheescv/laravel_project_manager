@@ -8,6 +8,7 @@ use App\Models\SalePayment;
 use App\Models\TailoringOrder;
 use App\Models\TailoringPayment;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -197,7 +198,7 @@ class DailySalesInsightsReport extends Component
             ->get();
 
         // Invoice-day payments: only payments recorded on the same day as the sale/order.
-        $saleInvoicePaymentsQuery = SalePayment::query()
+        $saleInvoicePaymentsQuery = $this->visibleSalePaymentsQuery()
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
@@ -245,7 +246,7 @@ class DailySalesInsightsReport extends Component
             $invoicePaidByPeriodBranch[$key] = ($invoicePaidByPeriodBranch[$key] ?? 0) + (float) $payment->amount;
         }
 
-        $saleInvoicePaymentsByMethodQuery = SalePayment::query()
+        $saleInvoicePaymentsByMethodQuery = $this->visibleSalePaymentsQuery()
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
@@ -293,7 +294,7 @@ class DailySalesInsightsReport extends Component
             ->orderBy('date')
             ->get();
 
-        $salePaymentsQuery = SalePayment::query()
+        $salePaymentsQuery = $this->visibleSalePaymentsQuery()
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
@@ -339,7 +340,7 @@ class DailySalesInsightsReport extends Component
             ->orderBy('date')
             ->get();
 
-        $saleDuePaymentsQuery = SalePayment::query()
+        $saleDuePaymentsQuery = $this->visibleSalePaymentsQuery()
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
@@ -446,6 +447,15 @@ class DailySalesInsightsReport extends Component
             'total' => $total,
             'paymentMethodColumns' => $paymentMethodColumns,
         ]);
+    }
+
+    /**
+     * sale_payments has no tenant_id, so restrict it to sales visible through the
+     * Sale model's tenant, assigned-branch and soft-delete scopes.
+     */
+    private function visibleSalePaymentsQuery(): Builder
+    {
+        return SalePayment::query()->whereIn('sale_payments.sale_id', Sale::query()->select('sales.id'));
     }
 
     private function normalizePaymentMethodName(?string $name): string
