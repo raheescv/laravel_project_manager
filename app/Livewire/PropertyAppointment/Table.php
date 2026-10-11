@@ -4,12 +4,14 @@ namespace App\Livewire\PropertyAppointment;
 
 use App\Actions\PropertyAppointment\CancelAction;
 use App\Actions\PropertyAppointment\DeleteAction;
+use App\Actions\PropertyAppointment\GetAction;
+use App\Exports\PropertyAppointmentExport;
 use App\Models\PropertyAppointment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
@@ -109,28 +111,37 @@ class Table extends Component
         }
     }
 
+    public function exportExcel()
+    {
+        abort_unless(auth()->user()?->can('property appointment.export'), 403);
+
+        if (! $this->rows()->exists()) {
+            $this->dispatch('error', ['message' => 'No data to export.']);
+
+            return;
+        }
+
+        return Excel::download(new PropertyAppointmentExport($this->filters()), 'appointments_'.now()->timestamp.'.xlsx');
+    }
+
+    /** @return array<string, mixed> */
+    private function filters(): array
+    {
+        return [
+            'search' => $this->search,
+            'status' => $this->status,
+            'employee_id' => $this->employee_id,
+            'branch_id' => $this->branch_id,
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'sort_field' => $this->sortField,
+            'sort_direction' => $this->sortDirection,
+        ];
+    }
+
     private function rows()
     {
-        return PropertyAppointment::query()
-            ->with(['customer:id,name,mobile', 'employee:id,name', 'rentOut:id,property_id', 'rentOut.property:id,number'])
-            ->when($this->search, function ($query, $value) {
-                // The reference in the list is derived (VW-<year>-<padded id>), so read
-                // the id out of whatever was typed: "14", "0014" and "VW-2026-0014" all
-                // point at appointment 14. A padded string can never LIKE-match the id.
-                $id = (int) Str::afterLast($value, '-');
-
-                $query->where(function ($query) use ($value, $id) {
-                    $query->whereHas('customer', fn ($q) => $q->where('name', 'like', "%{$value}%"))
-                        ->orWhereHas('rentOut.property', fn ($q) => $q->where('number', 'like', "%{$value}%"))
-                        ->when($id, fn ($q) => $q->orWhere('property_appointments.id', $id));
-                });
-            })
-            ->when($this->status, fn ($query, $value) => $query->where('property_appointments.status', $value))
-            ->when($this->employee_id, fn ($query, $value) => $query->where('property_appointments.employee_id', $value))
-            ->when($this->branch_id, fn ($query, $value) => $query->where('property_appointments.branch_id', $value))
-            ->when($this->from_date, fn ($query, $value) => $query->whereDate('property_appointments.scheduled_at', '>=', $value))
-            ->when($this->to_date, fn ($query, $value) => $query->whereDate('property_appointments.scheduled_at', '<=', $value))
-            ->orderBy($this->sortField, $this->sortDirection);
+        return (new GetAction())->execute($this->filters())['list'];
     }
 
     public function render()
@@ -140,6 +151,7 @@ class Table extends Component
 
         return view('livewire.property-appointment.table', [
             'appointments' => $this->rows()->paginate($this->limit),
+            'pdfUrl' => route('property::sale::appointment_schedule::pdf', array_filter($this->filters())),
             'stats' => [
                 'upcoming' => (clone $base)->upcoming()->count(),
                 'awaiting' => (clone $base)->where('status', 'awaiting')->count(),

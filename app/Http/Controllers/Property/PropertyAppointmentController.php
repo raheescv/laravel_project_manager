@@ -3,24 +3,63 @@
 namespace App\Http\Controllers\Property;
 
 use App\Actions\PropertyAppointment\BookAction;
+use App\Actions\PropertyAppointment\GetAction;
 use App\Enums\RentOut\AgreementType;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\Holiday;
 use App\Models\PropertyAppointment;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\PropertyAppointment\SlotService;
 use App\Services\TenantService;
+use App\Traits\UsesBrowsershot;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class PropertyAppointmentController extends Controller
 {
+    use UsesBrowsershot;
+
     /** Appointments list, sibling to the RentOut Sales appointment list. */
     public function index()
     {
         return view('property.appointment.index');
+    }
+
+    /**
+     * The appointments list as a PDF, streamed inline so it opens in the browser
+     * to read or print before anyone saves it. The list's filters arrive on the
+     * query string and run through the same GetAction as the table, so the PDF
+     * holds exactly the rows on screen — and spells those filters out, so it
+     * still says what it holds once it has left the screen.
+     */
+    public function pdf(Request $request)
+    {
+        $filters = $request->only(['search', 'status', 'employee_id', 'branch_id', 'from_date', 'to_date', 'sort_field', 'sort_direction']);
+
+        $html = view('property.appointment.export-pdf', [
+            'appointments' => (new GetAction())->execute($filters)['list']->get(),
+            'filterLabels' => array_filter([
+                'Date' => ($filters['from_date'] ?? null ?: 'Any').' to '.($filters['to_date'] ?? null ?: 'Any'),
+                'Branch' => ! empty($filters['branch_id']) ? Branch::query()->whereKey($filters['branch_id'])->value('name') : 'All branches',
+                'Employee' => ! empty($filters['employee_id']) ? User::query()->whereKey($filters['employee_id'])->value('name') : 'All employees',
+                'Status' => ! empty($filters['status']) ? (new PropertyAppointment(['status' => $filters['status']]))->statusLabel() : 'All statuses',
+                'Search' => $filters['search'] ?? null,
+            ]),
+        ])->render();
+
+        $pdf = $this->makeBrowsershot($html)
+            ->format('A4')
+            ->landscape()
+            ->margins(10, 10, 10, 10)
+            ->showBackground()
+            ->pdf();
+
+        return response($pdf)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="appointments_'.now()->format('Ymd_His').'.pdf"');
     }
 
     /** All-employees calendar. */

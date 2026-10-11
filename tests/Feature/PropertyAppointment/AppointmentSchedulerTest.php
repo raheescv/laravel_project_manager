@@ -10,6 +10,8 @@ use App\Actions\PropertyAppointment\StatusAction;
 use App\Actions\Settings\EmailTemplate\CreateAction as TemplateCreateAction;
 use App\Actions\Settings\EmailTemplate\CreateDefaultsAction;
 use App\Actions\Settings\EmailTemplate\UpdateAction as TemplateUpdateAction;
+use App\Exports\PropertyAppointmentExport;
+use App\Livewire\PropertyAppointment\Table as AppointmentTable;
 use App\Livewire\RentOut\Tabs\AppointmentTab;
 use App\Models\Account;
 use App\Models\Branch;
@@ -31,6 +33,7 @@ use App\Services\PropertyAppointment\SlotService;
 use App\Services\TenantService;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * The appointment scheduler's one non-negotiable invariant is that an employee can
@@ -1691,4 +1694,71 @@ it('saves a range picked on the calendar straight onto an existing appointment',
 
     expect($appointment->available_from->format('Y-m-d'))->toBe(now()->addDays(2)->format('Y-m-d'))
         ->and($appointment->available_until->format('Y-m-d'))->toBe(now()->addDays(40)->format('Y-m-d'));
+});
+
+it('exports the filtered appointments list to Excel', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.export');
+    $this->freezeTime();
+    Excel::fake();
+
+    $booked = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    (new BookAction())->execute($booked->id, vsFirstSlot($seed['employee']->id), 'staff', $seed['employee']->id);
+    (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id);
+
+    Livewire::test(AppointmentTable::class)
+        ->set('from_date', '')
+        ->set('to_date', '')
+        ->set('status', 'scheduled')
+        ->call('exportExcel');
+
+    Excel::assertDownloaded('appointments_'.now()->timestamp.'.xlsx', function (PropertyAppointmentExport $export) use ($booked) {
+        return $export->query()->pluck('id')->all() === [$booked->id]
+            && $export->map($export->query()->first())[0] === $booked->fresh()->reference_no;
+    });
+});
+
+it('streams the filtered appointments list inline as a PDF', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+    vsGrant($seed['employee'], 'property appointment.export');
+
+    (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id);
+
+    $pdfUrl = Livewire::test(AppointmentTable::class)
+        ->set('from_date', '')
+        ->set('to_date', '')
+        ->set('status', 'awaiting')
+        ->viewData('pdfUrl');
+
+    expect($pdfUrl)->toContain('status=awaiting')->not->toContain('from_date');
+
+    $response = $this->get($pdfUrl)->assertOk();
+
+    expect($response->headers->get('Content-Type'))->toBe('application/pdf')
+        ->and($response->headers->get('Content-Disposition'))->toStartWith('inline;')
+        ->and($response->getContent())->toStartWith('%PDF');
+});
+
+it('refuses appointment exports without the export permission', function () {
+    $seed = vsSeed();
+    $this->actingAs($seed['employee']);
+
+    Livewire::test(AppointmentTable::class)
+        ->call('exportExcel')
+        ->assertForbidden();
+
+    $this->get(route('property::sale::appointment_schedule::pdf'))->assertForbidden();
+});
+
+it('ignores a sort column outside the whitelist', function () {
+    $seed = vsSeed();
+
+    $sql = (new App\Actions\PropertyAppointment\GetAction())
+        ->execute(['sort_field' => 'id; drop table users', 'sort_direction' => 'sideways'])['list']
+        ->toSql();
+
+    expect($sql)->toContain('order by `property_appointments`.`scheduled_at` desc')
+        ->not->toContain('drop table');
 });

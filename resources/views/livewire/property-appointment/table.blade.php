@@ -48,6 +48,16 @@
 
             <div class="flex-grow-1"></div>
 
+            @can('property appointment.export')
+                <button type="button" class="apx-btn apx-btn-soft" wire:click="exportExcel" wire:loading.attr="disabled" wire:target="exportExcel" title="Export to Excel">
+                    <i class="fa fa-file-excel-o" wire:loading.remove wire:target="exportExcel"></i>
+                    <i class="fa fa-spinner fa-spin" wire:loading wire:target="exportExcel"></i> Excel
+                </button>
+                <a href="{{ $pdfUrl }}" target="_blank" class="apx-btn apx-btn-soft" title="Open as PDF">
+                    <i class="fa fa-file-pdf-o"></i> PDF
+                </a>
+            @endcan
+
             @can('property appointment.delete')
                 <button type="button" class="apx-btn apx-btn-danger" wire:click="delete"
                     wire:confirm="Delete the selected appointments?">

@@ -109,6 +109,7 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('', 'index')->name('index')->can('property appointment.view');
                 Route::get('calendar', 'calendar')->name('calendar')->can('property appointment.calendar');
                 Route::get('calendar/data', 'calendarData')->name('calendar.data')->can('property appointment.calendar');
+                Route::get('pdf', 'pdf')->name('pdf')->can('property appointment.export');
             });
 
             Route::controller(RentOutTransactionController::class)->group(function (): void {
