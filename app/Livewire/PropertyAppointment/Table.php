@@ -72,7 +72,7 @@ class Table extends Component
 
     public function cancel($id)
     {
-        abort_unless(auth()->user()?->can('property appointment.edit'), 403);
+        abort_unless(Auth::user()?->can('property appointment.edit'), 403);
         try {
             DB::beginTransaction();
             $response = (new CancelAction())->execute($id, Auth::id(), 'Cancelled from the appointments list');
@@ -89,7 +89,7 @@ class Table extends Component
 
     public function delete()
     {
-        abort_unless(auth()->user()?->can('property appointment.delete'), 403);
+        abort_unless(Auth::user()?->can('property appointment.delete'), 403);
         try {
             DB::beginTransaction();
             if (! count($this->selected)) {
@@ -113,7 +113,7 @@ class Table extends Component
 
     public function exportExcel()
     {
-        abort_unless(auth()->user()?->can('property appointment.export'), 403);
+        abort_unless(Auth::user()?->can('property appointment.export'), 403);
 
         if (! $this->rows()->exists()) {
             $this->dispatch('error', ['message' => 'No data to export.']);

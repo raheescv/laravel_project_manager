@@ -40,6 +40,7 @@
             width: 100%;
             background: #14264a;
             padding: 0;
+            table-layout: fixed;
         }
 
         .topbar td {
@@ -82,6 +83,14 @@
             font-weight: bold;
             letter-spacing: 3px;
             color: #ffffff;
+        }
+
+        .topbar .doc-badge .t-name {
+            font-size: 11px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-top: 4px;
+            word-wrap: break-word;
         }
 
         .topbar .doc-badge .t2 {
@@ -337,26 +346,14 @@
             font-weight: bold;
         }
 
-        .chk-pill {
+        .chk-opt {
             display: inline-block;
-            padding: 2px 9px;
-            border-radius: 9px;
-            font-size: 7.5px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: .3px;
+            margin-right: 16px;
+            white-space: nowrap;
         }
 
-        .chk-pill.ok {
-            background: #e6f4ea;
-            color: #1e7e45;
-            border: 1px solid #bfe3cb;
-        }
-
-        .chk-pill.pending {
-            background: #fdf1dd;
-            color: #9a6b16;
-            border: 1px solid #ecd4a3;
+        .chk-opt .box {
+            vertical-align: middle;
         }
 
         .chk-ref {
@@ -423,7 +420,7 @@
         {{-- Header band --}}
         <table class="topbar">
             <tr>
-                <td style="width:15%;">
+                <td style="width:45%;">
                     @if (!empty($companyLogo))
                         <div class="brand-logo"><img src="{{ $companyLogo }}" alt="Logo"></div>
                     @endif
@@ -437,8 +434,9 @@
                         @endif
                     </div>
                 </td>
-                <td class="doc-badge" style="width:85%;">
-                    <div class="t1">{{ $customer->name }} KYC FORM</div>
+                <td class="doc-badge" style="width:55%;">
+                    <div class="t1">KYC FORM</div>
+                    <div class="t-name">{{ $customer->name }}</div>
                     <div class="t2">Know Your Customer &mdash; Client Record</div>
                 </td>
             </tr>
@@ -573,8 +571,8 @@
                         <tr>
                             <th style="width:6%; text-align:center;">#</th>
                             <th style="width:25%;">Required Document</th>
-                            <th style="width:13%;">Status</th>
-                            <th style="width:44%;">Reference / Remarks</th>
+                            <th style="width:17%;">Submitted</th>
+                            <th style="width:40%;">Reference / Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -590,11 +588,8 @@
                                 <td class="chk-idx">{{ $loop->iteration }}</td>
                                 <td class="chk-name">{{ $doc->name }}</td>
                                 <td>
-                                    @if ($submitted)
-                                        <span class="chk-pill ok">&#10003; Submitted</span>
-                                    @else
-                                        <span class="chk-pill pending">Pending</span>
-                                    @endif
+                                    <span class="chk-opt"><span class="box">{!! $submitted ? '&#10003;' : '' !!}</span>Yes</span>
+                                    <span class="chk-opt"><span class="box">{!! $submitted ? '' : '&#10003;' !!}</span>No</span>
                                 </td>
                                 <td class="chk-ref">
                                     {{ $submitted ? $subLabel : '' }}<span class="chk-muted">{{ $submitted ? '' : '—' }}</span>
