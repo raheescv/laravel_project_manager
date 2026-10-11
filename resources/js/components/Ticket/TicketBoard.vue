@@ -16,7 +16,14 @@
                     <span class="tkx-dot" :style="{ '--c': filters.status ? statusOf(filters.status).color : 'var(--mute)' }"></span>
                     <select v-model="filters.status" aria-label="Status">
                         <option value="">All statuses</option>
-                        <option v-for="s in STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+                        <option v-for="s in statuses" :key="s.key" :value="s.key">{{ s.label }}</option>
+                    </select>
+                </label>
+                <label class="tkx-inp tkx-priority">
+                    <i class="fa" :class="filters.priority ? priorityOf(filters.priority).icon : 'fa-signal'" :style="filters.priority ? { color: priorityOf(filters.priority).color } : null"></i>
+                    <select v-model="filters.priority" aria-label="Priority">
+                        <option value="">Any priority</option>
+                        <option v-for="p in PRIORITIES" :key="p.key" :value="p.key">{{ p.label }}</option>
                     </select>
                 </label>
                 <div class="tkx-inp tkx-range" title="Created between">
@@ -36,6 +43,7 @@
                 <span class="tkx-live" :class="{ on: connected }" :title="connected ? 'Live — changes from other users and devices appear instantly' : 'Offline — reconnecting…'">
                     <span class="tkx-live-dot"></span> {{ connected ? 'Live' : 'Offline' }}
                 </span>
+                <button v-if="permissions.manage" type="button" class="tkx-btn icon" title="Manage board — add, rename or reorder columns" @click="openManager()"><i class="fa fa-cog"></i></button>
                 <button type="button" class="tkx-btn icon" title="Reset filters" @click="resetFilters"><i class="fa fa-refresh" :class="{ 'tkx-spin': loading }"></i></button>
                 <button v-if="permissions.create" type="button" class="tkx-btn pri tkx-new" @click="openCreate()"><i class="fa fa-plus"></i> New ticket</button>
             </div>
@@ -56,7 +64,7 @@
         </div>
 
         <div class="tkx-cols">
-            <div v-for="s in STATUSES" :key="s.key" class="tkx-col" :class="{ 'is-drop': dropTarget === s.key }"
+            <div v-for="s in statuses" :key="s.key" class="tkx-col" :class="{ 'is-drop': dropTarget === s.key }"
                 :style="{ '--c': s.color, '--p': `${share(s.key)}%` }"
                 @dragover.prevent="onDragOver(s.key)" @dragleave="onDragLeave(s.key, $event)" @drop.prevent="onDrop(s.key)">
                 <div class="tkx-col-h">
@@ -81,21 +89,28 @@
                     </template>
                 </div>
             </div>
+            <button v-if="permissions.manage && statuses.length < MAX_COLUMNS" type="button" class="tkx-col-add" @click="openManager(true)">
+                <i class="fa fa-plus"></i><span>Add column</span>
+            </button>
         </div>
 
         <TicketDetail v-if="detail.open" ref="detailPanel" :ticket-id="detail.id" :initial-status="detail.status" :groups="allGroups"
             :permissions="permissions" @close="closeDetail" @changed="reload" />
+        <TicketBoardManager v-if="manager.open" ref="managerPanel" :start-adding="manager.adding" @close="manager.open = false" @changed="reload" />
     </section>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { errorMessage, ticketApi } from './api.js'
 import TicketCard from './TicketCard.vue'
 import TicketDetail from './TicketDetail.vue'
-import { groupColor, NO_GROUP, STATUSES, statusOf } from './ticketMeta.js'
+import { groupColor, NO_GROUP, PRIORITIES, priorityOf, setStatuses, statuses, statusOf } from './ticketMeta.js'
 import { useTicketLive } from './live.js'
+
+/** Column management is opened now and then, so its code loads on first use. */
+const TicketBoardManager = defineAsyncComponent(() => import('./TicketBoardManager.vue'))
 
 defineProps({ permissions: { type: Object, required: true } })
 
@@ -106,11 +121,13 @@ const today = () => {
 }
 const monthStart = () => today().slice(0, 8) + '01'
 const DENSITY_KEY = 'tkx.board.density'
+/** Mirrors TicketStatus::MAX_COLUMNS. */
+const MAX_COLUMNS = 12
 const DENSITIES = [
     { key: 'detailed', label: 'Detailed', icon: 'fa-th-large', hint: 'Cards with group, description, image and activity' },
     { key: 'title', label: 'Title only', icon: 'fa-list', hint: 'One compact line per ticket' },
 ]
-const defaults = () => ({ search: '', status: '', group: '', from_date: monthStart(), to_date: today() })
+const defaults = () => ({ search: '', status: '', priority: '', group: '', from_date: monthStart(), to_date: today() })
 
 const filters = reactive(defaults())
 const columns = ref({})
@@ -122,8 +139,10 @@ const dragging = ref(null)
 const dropTarget = ref(null)
 const searchInput = ref(null)
 const filtersOpen = ref(false)
-const detail = reactive({ open: false, id: null, status: 'open' })
+const detail = reactive({ open: false, id: null, status: '' })
 const detailPanel = ref(null)
+const manager = reactive({ open: false, adding: false })
+const managerPanel = ref(null)
 const density = ref(storedDensity())
 
 /** The card view is a per-device preference; storage can be blocked, so it falls back to the detailed cards. */
@@ -151,7 +170,9 @@ async function reload() {
     loading.value = true
     try {
         const { data } = await ticketApi.board({ ...filters }, controller.signal)
+        setStatuses(data.statuses)
         columns.value = data.columns
+        if (filters.status && !statuses.value.some((s) => s.key === filters.status)) filters.status = ''
         groups.value = data.groups
         allGroups.value = data.all_groups
         loaded.value = true
@@ -170,10 +191,10 @@ watch(() => ({ ...filters }), (next, prev) => {
 
 const activeFilterCount = computed(() => {
     const base = defaults()
-    return ['status', 'from_date', 'to_date'].filter((key) => filters[key] !== base[key]).length
+    return ['status', 'priority', 'from_date', 'to_date'].filter((key) => filters[key] !== base[key]).length
 })
 const groupTotal = computed(() => groups.value.reduce((sum, g) => sum + g.count, 0))
-const visibleTotal = computed(() => STATUSES.reduce((sum, s) => sum + (columns.value[s.key]?.total ?? 0), 0))
+const visibleTotal = computed(() => statuses.value.reduce((sum, s) => sum + (columns.value[s.key]?.total ?? 0), 0))
 const share = (key) => (visibleTotal.value ? Math.round(((columns.value[key]?.total ?? 0) / visibleTotal.value) * 100) : 0)
 const activeGroupMissing = computed(() => filters.group !== '' && !groups.value.some((g) => (g.name ?? NO_GROUP) === filters.group))
 
@@ -182,7 +203,7 @@ function resetFilters() {
 }
 
 function openTicket(id) {
-    Object.assign(detail, { open: true, id, status: 'open' })
+    Object.assign(detail, { open: true, id, status: '' })
     syncTicketParam(id)
 }
 
@@ -199,8 +220,12 @@ function syncTicketParam(id) {
     history.replaceState(history.state, '', url)
 }
 
-function openCreate(status = 'open') {
-    Object.assign(detail, { open: true, id: null, status })
+function openCreate(status = '') {
+    Object.assign(detail, { open: true, id: null, status: status || statuses.value[0]?.key || '' })
+}
+
+function openManager(adding = false) {
+    Object.assign(manager, { open: true, adding })
 }
 
 function onDragOver(key) {
@@ -219,6 +244,7 @@ async function onDrop(key) {
     if (!ticket || ticket.status === key) return
 
     const from = ticket.status
+    if (!columns.value[from] || !columns.value[key]) return reload()
     const snapshot = JSON.parse(JSON.stringify(columns.value))
     columns.value[from].tickets = columns.value[from].tickets.filter((t) => t.id !== ticket.id)
     columns.value[from].total--
@@ -242,6 +268,7 @@ function scheduleLiveReload() {
 
 function onLiveActivity({ action, ticket_id: ticketId }) {
     scheduleLiveReload()
+    if (action === 'columns') managerPanel.value?.refresh()
     if (!detail.open || !ticketId || detail.id !== ticketId) return
     if (action === 'deleted') {
         toast.info(`#${ticketId} was deleted elsewhere.`)
@@ -255,6 +282,7 @@ const { connected } = useTicketLive({
     onActivity: onLiveActivity,
     onResync: () => {
         scheduleLiveReload()
+        managerPanel.value?.refresh()
         detailPanel.value?.refresh()
     },
 })
@@ -289,6 +317,7 @@ defineExpose({ reload })
 .tkx-kbd { font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--mute); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 3px 6px; background: var(--surf-2); }
 .tkx-search:focus-within .tkx-kbd { display: none; }
 .tkx-status { min-width: 150px; }
+.tkx-priority { min-width: 128px; }
 .tkx-range { gap: 6px; }
 .tkx-range input { flex: 0 1 auto; width: 118px; }
 .tkx-range .to { color: var(--mute); }
@@ -316,8 +345,11 @@ defineExpose({ reload })
 .tkx-pill .ct { font-size: 10.5px; color: var(--mute); }
 .tkx-pill.on { background: var(--acc-soft); color: var(--acc-ink); border-color: var(--acc-line); font-weight: 600; }
 .tkx-pill.on .ct { color: inherit; opacity: .75; }
-.tkx-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(270px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 14px; }
-.tkx-col { display: flex; flex-direction: column; min-height: 0; border-radius: var(--r); transition: background .15s, box-shadow .15s; }
+.tkx-cols { flex: 1; min-height: 0; display: flex; gap: 12px; overflow-x: auto; padding-bottom: 14px; }
+.tkx-col-add { flex: 0 0 46px; align-self: flex-start; height: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 1px dashed var(--line); border-radius: 12px; background: transparent; color: var(--mute); cursor: pointer; font-weight: 500; font-size: 12px; transition: color .15s, border-color .15s, background .15s; }
+.tkx-col-add span { writing-mode: vertical-rl; letter-spacing: .4px; }
+.tkx-col-add:hover { color: var(--acc-ink); border-color: var(--acc-line); background: var(--acc-soft); }
+.tkx-col { flex: 1 0 270px; display: flex; flex-direction: column; min-height: 0; border-radius: var(--r); transition: background .15s, box-shadow .15s; }
 .tkx-col.is-drop { background: color-mix(in srgb, var(--c) 8%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
 .tkx-col-h { flex: none; padding: 11px 13px; display: flex; align-items: center; gap: 10px; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 21, 34, .05); margin-bottom: 9px; position: relative; overflow: hidden; }
 .tkx-col-h::after { content: ""; position: absolute; inset: auto 0 0 0; height: 3px; background: linear-gradient(90deg, var(--c) var(--p), var(--surf-2) var(--p)); }
@@ -346,8 +378,11 @@ defineExpose({ reload })
     .tkx-deck.is-open .tkx-deck-end { display: flex; width: 100%; justify-content: space-between; }
     .tkx-deck-end .tkx-new { display: none; }
     .tkx-live { font-size: 11.5px; gap: 6px; }
-    .tkx-status { min-width: 0; }
-    .tkx-cols { grid-template-columns: repeat(4, 84vw); scroll-snap-type: x mandatory; }
+    .tkx-status, .tkx-priority { min-width: 0; }
+    .tkx-deck.is-open .tkx-deck-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .tkx-deck.is-open .tkx-density { grid-column: 1 / -1; }
+    .tkx-cols { scroll-snap-type: x mandatory; }
+    .tkx-col { flex-basis: 84vw; }
     .tkx-col { scroll-snap-align: start; }
     .tkx-col-b { max-height: 70dvh; }
 }

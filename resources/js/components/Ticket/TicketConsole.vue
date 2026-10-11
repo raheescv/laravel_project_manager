@@ -134,6 +134,8 @@ onBeforeUnmount(() => window.removeEventListener('popstate', onPopState))
 .tkx-gtag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; background: color-mix(in srgb, var(--g) 14%, transparent); color: color-mix(in srgb, var(--g), var(--ink) 38%); max-width: 100%; }
 .tkx-gtag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--g); flex: none; }
 .tkx-gtag span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tkx-prio { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 2px 7px 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--c) 15%, transparent); color: color-mix(in srgb, var(--c), var(--ink) 30%); white-space: nowrap; flex: none; letter-spacing: .2px; }
+.tkx-prio i { font-size: 11px; }
 .tkx-av { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 600; color: var(--acc-ink); background: color-mix(in srgb, var(--acc-ink) 16%, var(--surf)); flex: none; }
 .tkx-empty { text-align: center; color: var(--mute); padding: 26px 10px; border: 1px dashed var(--line); border-radius: 12px; font-size: 12px; }
 .tkx-sec { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--mute); font-weight: 600; margin: 20px 0 9px; display: flex; align-items: center; gap: 8px; }

@@ -1,11 +1,40 @@
-export const STATUSES = [
+import { ref } from 'vue'
+
+/**
+ * The tenant's board columns, shared by the board, the detail and the import.
+ * Every board load replaces it, so a column added in Manage board (here or on
+ * another screen, via the live channel) shows up everywhere at once.
+ */
+export const statuses = ref([
     { key: 'open', label: 'Open', icon: 'fa-inbox', color: '#6b93c9' },
     { key: 'in_progress', label: 'In Progress', icon: 'fa-spinner', color: '#c9a35b' },
     { key: 'resolved', label: 'Resolved', icon: 'fa-check-circle', color: '#6aa88a' },
     { key: 'closed', label: 'Closed', icon: 'fa-archive', color: '#929aa6' },
+])
+
+export function setStatuses(list) {
+    if (Array.isArray(list) && list.length) statuses.value = list
+}
+
+export const statusOf = (key) => statuses.value.find((s) => s.key === key) ?? { key, label: key || '—', icon: 'fa-circle-o', color: '#a3abb7' }
+
+/** Colours and icons a column can take — the same muted family as everything else on the board. */
+export const STATUS_COLORS = ['#6b93c9', '#c9a35b', '#6aa88a', '#929aa6', '#9787c4', '#c98ba3', '#c98b74', '#64a3a6', '#93a86a', '#c4736b']
+export const STATUS_ICONS = [
+    'fa-inbox', 'fa-spinner', 'fa-check-circle', 'fa-archive', 'fa-circle-o', 'fa-clock-o', 'fa-pause', 'fa-eye',
+    'fa-search', 'fa-code', 'fa-bug', 'fa-flask', 'fa-wrench', 'fa-comments-o', 'fa-user', 'fa-paper-plane',
+    'fa-truck', 'fa-flag', 'fa-star', 'fa-bolt', 'fa-rocket', 'fa-lock', 'fa-ban', 'fa-times-circle',
 ]
 
-export const statusOf = (key) => STATUSES.find((s) => s.key === key) ?? STATUSES[0]
+/** Mirrors Ticket::priorities(); a ticket may have none. */
+export const PRIORITIES = [
+    { key: 'low', label: 'Low', icon: 'fa-angle-double-down', color: '#929aa6' },
+    { key: 'medium', label: 'Medium', icon: 'fa-minus', color: '#6b93c9' },
+    { key: 'high', label: 'High', icon: 'fa-angle-double-up', color: '#c9a35b' },
+    { key: 'urgent', label: 'Urgent', icon: 'fa-exclamation', color: '#c4736b' },
+]
+
+export const priorityOf = (key) => PRIORITIES.find((p) => p.key === key) ?? null
 
 /** Filter value for tickets without a group — mirrors Ticket::NO_GROUP. */
 export const NO_GROUP = '__none'

@@ -45,6 +45,11 @@ export const ticketApi = {
     addComment: (id, comment) => http.post(`${id}/comment`, { comment }).then(data),
     updateComment: (id, commentId, comment) => http.put(`${id}/comment/${commentId}`, { comment }).then(data),
     deleteComment: (id, commentId) => http.delete(`${id}/comment/${commentId}`).then(data),
+    statuses: () => http.get('statuses').then(data),
+    addStatus: (payload) => http.post('statuses', payload).then(data),
+    updateStatus: (id, payload) => http.put(`statuses/${id}`, payload).then(data),
+    reorderStatuses: (ids) => http.put('statuses/order', { ids }).then(data),
+    deleteStatus: (id, moveTo = null) => http.delete(`statuses/${id}`, { data: { move_to: moveTo } }).then(data),
     importUpload: (file, onProgress) => {
         const form = new FormData()
         form.append('file', file)

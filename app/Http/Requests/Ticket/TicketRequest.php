@@ -22,6 +22,7 @@ class TicketRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in(array_keys(Ticket::statuses()))],
+            'priority' => ['nullable', Rule::in(array_keys(Ticket::priorities()))],
             'group' => ['nullable', 'string', 'max:100'],
             'files' => ['nullable', 'array', 'max:10'],
             'files.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,wmv,mkv,pdf,doc,docx,xls,xlsx', 'max:51200'],

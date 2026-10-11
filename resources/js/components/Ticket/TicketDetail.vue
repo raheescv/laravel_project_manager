@@ -4,7 +4,7 @@
             <header class="tkx-mdl-h">
                 <span class="id">{{ ticket ? `#${ticket.id}` : 'New ticket' }}</span>
                 <div class="tkx-stpick" role="radiogroup" aria-label="Status">
-                    <button v-for="s in STATUSES" :key="s.key" type="button" :class="{ on: currentStatus === s.key }"
+                    <button v-for="s in statuses" :key="s.key" type="button" :class="{ on: currentStatus === s.key }"
                         :disabled="!canChangeStatus || busy" @click="pickStatus(s.key)">
                         <span class="tkx-dot" :style="{ '--c': s.color }"></span>{{ s.label }}
                     </button>
@@ -27,6 +27,14 @@
                         <label class="tkx-label" for="tkx-title">Title</label>
                         <input id="tkx-title" ref="titleInput" v-model="form.title" class="tkx-field tkx-title-input" maxlength="255" placeholder="What needs attention?">
 
+                        <span class="tkx-label mt">Priority</span>
+                        <div class="tkx-seg tkx-priopick" role="radiogroup" aria-label="Priority">
+                            <button type="button" :class="{ on: !form.priority }" :aria-pressed="!form.priority" @click="form.priority = ''"><i class="fa fa-circle-o"></i> None</button>
+                            <button v-for="p in PRIORITIES" :key="p.key" type="button" :class="{ on: form.priority === p.key }" :style="{ '--c': p.color }" :aria-pressed="form.priority === p.key" @click="form.priority = p.key">
+                                <i class="fa" :class="p.icon"></i> {{ p.label }}
+                            </button>
+                        </div>
+
                         <label class="tkx-label mt" for="tkx-group">Group</label>
                         <input id="tkx-group" v-model="form.group" class="tkx-field" list="tkx-group-list" maxlength="100" placeholder="e.g. Sales, Inventory — or leave blank">
                         <datalist id="tkx-group-list"><option v-for="g in groups" :key="g" :value="g" /></datalist>
@@ -46,6 +54,9 @@
                     <template v-else-if="ticket">
                         <h2 class="tkx-mdl-title">{{ ticket.title }}</h2>
                         <div class="tkx-props">
+                            <div class="tkx-prop"><small>Priority</small>
+                                <b><span v-if="priorityOf(ticket.priority)" class="tkx-prio" :style="{ '--c': priorityOf(ticket.priority).color }"><i class="fa" :class="priorityOf(ticket.priority).icon"></i>{{ priorityOf(ticket.priority).label }}</span><span v-else class="muted">—</span></b>
+                            </div>
                             <div class="tkx-prop"><small>Group</small>
                                 <b><span v-if="ticket.group" class="tkx-gtag" :style="{ '--g': groupColor(ticket.group) }"><span>{{ ticket.group }}</span></span><span v-else class="muted">—</span></b>
                             </div>
@@ -123,11 +134,11 @@ import { useToast } from 'vue-toastification'
 import { errorMessage, ticketApi, ticketForm } from './api.js'
 import FileDrop from './FileDrop.vue'
 import LinkifiedText from './LinkifiedText.vue'
-import { formatDate, formatSize, groupColor, initials, relativeTime, STATUSES } from './ticketMeta.js'
+import { formatDate, formatSize, groupColor, initials, PRIORITIES, priorityOf, relativeTime, statuses } from './ticketMeta.js'
 
 const props = defineProps({
     ticketId: { type: Number, default: null },
-    initialStatus: { type: String, default: 'open' },
+    initialStatus: { type: String, default: '' },
     groups: { type: Array, default: () => [] },
     permissions: { type: Object, required: true },
 })
@@ -138,7 +149,7 @@ const ticket = ref(null)
 const loading = ref(!!props.ticketId)
 const editing = ref(!props.ticketId)
 const busy = ref(false)
-const form = reactive({ title: '', description: '', status: props.initialStatus, group: '' })
+const form = reactive({ title: '', description: '', status: props.initialStatus || statuses.value[0]?.key || 'open', priority: '', group: '' })
 const pendingFiles = ref([])
 const quickFiles = ref([])
 const newComment = ref('')
@@ -167,6 +178,7 @@ function fillForm() {
         title: ticket.value.title,
         description: ticket.value.description,
         status: ticket.value.status,
+        priority: ticket.value.priority ?? '',
         group: ticket.value.group ?? '',
     })
 }
@@ -226,7 +238,7 @@ async function uploadQuick(files) {
     busy.value = true
     try {
         const t = ticket.value
-        const response = await ticketApi.update(t.id, ticketForm({ title: t.title, description: t.description, status: t.status, group: t.group ?? '' }, files))
+        const response = await ticketApi.update(t.id, ticketForm({ title: t.title, description: t.description, status: t.status, priority: t.priority ?? '', group: t.group ?? '' }, files))
         ticket.value = response.data
         dirty = true
         toast.success(`${files.length} file${files.length > 1 ? 's' : ''} attached.`)
@@ -382,7 +394,10 @@ onBeforeUnmount(() => {
 .tkx-gsuggest { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tkx-gsuggest .tkx-gtag { border: 1px solid transparent; cursor: pointer; }
 .tkx-gsuggest .tkx-gtag.on { border-color: var(--g); }
-.tkx-props { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.tkx-props { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.tkx-seg.tkx-priopick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.tkx-seg.tkx-priopick button.on[style] { background: color-mix(in srgb, var(--c) 16%, var(--surf)); color: color-mix(in srgb, var(--c), var(--ink) 30%); }
+.tkx-seg.tkx-priopick button[style] i { color: var(--c); }
 .tkx-prop { border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; min-width: 0; }
 .tkx-prop small { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--mute); margin-bottom: 4px; font-weight: 600; }
 .tkx-prop b { color: var(--ink); font-weight: 500; display: flex; align-items: center; gap: 7px; min-width: 0; }
@@ -428,7 +443,6 @@ onBeforeUnmount(() => {
     .tkx-ovl { padding: 0; }
     .tkx-mdl { border-radius: 0; min-height: 100dvh; }
     .tkx-props { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .tkx-prop:last-child { grid-column: 1 / -1; }
     .tkx-mdl-h { gap: 10px; padding: 12px 14px; }
     .tkx-stpick { order: 3; width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
     .tkx-stpick button { flex: 1 0 auto; justify-content: center; }

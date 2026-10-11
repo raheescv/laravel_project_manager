@@ -23,6 +23,14 @@ class Ticket extends Model
 
     public const STATUS_CLOSED = 'closed';
 
+    public const PRIORITY_LOW = 'low';
+
+    public const PRIORITY_MEDIUM = 'medium';
+
+    public const PRIORITY_HIGH = 'high';
+
+    public const PRIORITY_URGENT = 'urgent';
+
     /** Filter value for tickets that have no group. */
     public const NO_GROUP = '__none';
 
@@ -31,6 +39,7 @@ class Ticket extends Model
         'title',
         'description',
         'status',
+        'priority',
         'group',
         'created_by',
         'updated_by',
@@ -41,13 +50,28 @@ class Ticket extends Model
         'updated_by' => 'integer',
     ];
 
+    /**
+     * The current tenant's board columns, key => name, in board order.
+     *
+     * @return array<string, string>
+     */
     public static function statuses(): array
     {
+        return TicketStatus::ordered()->pluck('name', 'key')->all();
+    }
+
+    /**
+     * Priority levels, lowest first. A ticket may have none.
+     *
+     * @return array<string, string>
+     */
+    public static function priorities(): array
+    {
         return [
-            self::STATUS_OPEN => 'Open',
-            self::STATUS_IN_PROGRESS => 'In Progress',
-            self::STATUS_RESOLVED => 'Resolved',
-            self::STATUS_CLOSED => 'Closed',
+            self::PRIORITY_LOW => 'Low',
+            self::PRIORITY_MEDIUM => 'Medium',
+            self::PRIORITY_HIGH => 'High',
+            self::PRIORITY_URGENT => 'Urgent',
         ];
     }
 
@@ -57,6 +81,7 @@ class Ticket extends Model
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status' => ['required', 'in:'.implode(',', array_keys(self::statuses()))],
+            'priority' => ['nullable', 'in:'.implode(',', array_keys(self::priorities()))],
             'group' => ['nullable', 'string', 'max:100'],
         ];
     }
@@ -71,6 +96,7 @@ class Ticket extends Model
                 });
             })
             ->when(! empty($filter['status']), fn (Builder $q): Builder => $q->where('status', $filter['status']))
+            ->when(! empty($filter['priority']), fn (Builder $q): Builder => $q->where('priority', $filter['priority']))
             ->when(($filter['group'] ?? '') === self::NO_GROUP, fn (Builder $q): Builder => $q->whereNull('group'))
             ->when(! in_array($filter['group'] ?? '', ['', self::NO_GROUP], true), fn (Builder $q): Builder => $q->where('group', $filter['group']))
             ->when(self::filterDay($filter['from_date'] ?? null), fn (Builder $q, CarbonImmutable $day): Builder => $q->where('created_at', '>=', $day))

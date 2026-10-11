@@ -3,6 +3,7 @@
 namespace App\Support\Ticket;
 
 use App\Models\Ticket;
+use App\Models\TicketStatus;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -37,7 +38,8 @@ class TicketImportSheet
         return [
             'title' => ['label' => 'Title', 'required' => true, 'hint' => 'Short summary of the issue'],
             'description' => ['label' => 'Description', 'required' => false, 'hint' => 'Full details'],
-            'status' => ['label' => 'Status', 'required' => false, 'hint' => 'Open, In Progress, Resolved or Closed'],
+            'status' => ['label' => 'Status', 'required' => false, 'hint' => 'A board column — '.implode(', ', Ticket::statuses())],
+            'priority' => ['label' => 'Priority', 'required' => false, 'hint' => implode(', ', Ticket::priorities()).' — or blank'],
             'group' => ['label' => 'Group', 'required' => false, 'hint' => 'Any text — e.g. Sales, Inventory'],
             'created_at' => ['label' => 'Created date', 'required' => false, 'hint' => 'Keeps the original date; blank = today'],
         ];
@@ -52,21 +54,49 @@ class TicketImportSheet
             'title' => ['title', 'subject', 'summary', 'issue', 'issues', 'issue description', 'problem title', 'task', 'ticket', 'ticket title', 'name', 'heading'],
             'description' => ['description', 'details', 'detail', 'body', 'notes', 'note', 'remarks', 'message', 'problem'],
             'status' => ['status', 'state', 'stage', 'ticket status', 'progress'],
+            'priority' => ['priority', 'severity', 'urgency', 'importance', 'prio'],
             'group' => ['group', 'category', 'module', 'team', 'department', 'type', 'section', 'area', 'project', 'label'],
             'created_at' => ['created at', 'created', 'created date', 'date', 'reported on', 'reported date', 'opened', 'opened on', 'raised on'],
         ];
     }
 
     /**
+     * Words a tracker sheet uses for a status, mapped onto this tenant's board
+     * columns. A column's own name and key always win; a common word only
+     * counts when the column it points at still exists.
+     *
      * @return array<string, string>
      */
     private static function statusAliases(): array
     {
-        return [
+        $common = [
             'open' => Ticket::STATUS_OPEN, 'new' => Ticket::STATUS_OPEN, 'todo' => Ticket::STATUS_OPEN, 'to do' => Ticket::STATUS_OPEN, 'pending' => Ticket::STATUS_OPEN, 'reopened' => Ticket::STATUS_OPEN,
             'in progress' => Ticket::STATUS_IN_PROGRESS, 'under process' => Ticket::STATUS_IN_PROGRESS, 'processing' => Ticket::STATUS_IN_PROGRESS, 'in process' => Ticket::STATUS_IN_PROGRESS, 'ongoing' => Ticket::STATUS_IN_PROGRESS, 'in_progress' => Ticket::STATUS_IN_PROGRESS, 'progress' => Ticket::STATUS_IN_PROGRESS, 'wip' => Ticket::STATUS_IN_PROGRESS, 'working' => Ticket::STATUS_IN_PROGRESS, 'doing' => Ticket::STATUS_IN_PROGRESS, 'started' => Ticket::STATUS_IN_PROGRESS,
             'resolved' => Ticket::STATUS_RESOLVED, 'done' => Ticket::STATUS_RESOLVED, 'fixed' => Ticket::STATUS_RESOLVED, 'completed' => Ticket::STATUS_RESOLVED, 'complete' => Ticket::STATUS_RESOLVED,
             'closed' => Ticket::STATUS_CLOSED, 'close' => Ticket::STATUS_CLOSED, 'cancelled' => Ticket::STATUS_CLOSED, 'canceled' => Ticket::STATUS_CLOSED, 'archived' => Ticket::STATUS_CLOSED, 'rejected' => Ticket::STATUS_CLOSED,
+        ];
+
+        $statuses = Ticket::statuses();
+        $aliases = array_filter($common, fn (string $key): bool => isset($statuses[$key]));
+        foreach ($statuses as $key => $name) {
+            $aliases[mb_strtolower($name)] = $key;
+            $aliases[$key] = $key;
+            $aliases[str_replace('_', ' ', $key)] = $key;
+        }
+
+        return $aliases;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function priorityAliases(): array
+    {
+        return [
+            'low' => Ticket::PRIORITY_LOW, 'minor' => Ticket::PRIORITY_LOW, 'trivial' => Ticket::PRIORITY_LOW, 'lowest' => Ticket::PRIORITY_LOW, 'p4' => Ticket::PRIORITY_LOW,
+            'medium' => Ticket::PRIORITY_MEDIUM, 'normal' => Ticket::PRIORITY_MEDIUM, 'moderate' => Ticket::PRIORITY_MEDIUM, 'med' => Ticket::PRIORITY_MEDIUM, 'p3' => Ticket::PRIORITY_MEDIUM,
+            'high' => Ticket::PRIORITY_HIGH, 'major' => Ticket::PRIORITY_HIGH, 'important' => Ticket::PRIORITY_HIGH, 'p2' => Ticket::PRIORITY_HIGH,
+            'urgent' => Ticket::PRIORITY_URGENT, 'critical' => Ticket::PRIORITY_URGENT, 'blocker' => Ticket::PRIORITY_URGENT, 'highest' => Ticket::PRIORITY_URGENT, 'emergency' => Ticket::PRIORITY_URGENT, 'p1' => Ticket::PRIORITY_URGENT,
         ];
     }
 
@@ -268,11 +298,13 @@ class TicketImportSheet
      * @param  list<array<int, mixed>>  $rows
      * @param  array<string, int|string|null>  $mappings  Column indexes as posted; request input may carry them as strings.
      * @param  array{default_status?: string, duplicates?: string}  $options
-     * @return list<array{line: int, state: string, issues: list<string>, data: array{title: string, description: string, status: string, group: ?string, created_at: ?string}}>
+     * @return list<array{line: int, state: string, issues: list<string>, data: array{title: string, description: string, status: string, priority: ?string, group: ?string, created_at: ?string}}>
      */
     public static function review(array $rows, array $mappings, array $options = []): array
     {
-        $defaultStatus = array_key_exists($options['default_status'] ?? '', Ticket::statuses()) ? $options['default_status'] : Ticket::STATUS_OPEN;
+        $defaultStatus = array_key_exists($options['default_status'] ?? '', Ticket::statuses()) ? $options['default_status'] : TicketStatus::defaultKey();
+        $statusAliases = self::statusAliases();
+        $priorityAliases = self::priorityAliases();
         $skipDuplicates = ($options['duplicates'] ?? 'skip') === 'skip';
 
         $existingTitles = Ticket::query()->pluck('title')->mapWithKeys(fn ($t): array => [mb_strtolower(trim($t)) => true])->all();
@@ -300,10 +332,16 @@ class TicketImportSheet
             }
 
             $statusText = $cell('status');
-            $status = $statusText === '' ? $defaultStatus : (self::statusAliases()[strtolower($statusText)] ?? null);
+            $status = $statusText === '' ? $defaultStatus : ($statusAliases[mb_strtolower($statusText)] ?? null);
             if ($status === null) {
                 $issues[] = "Unknown status \"{$statusText}\".";
                 $status = $defaultStatus;
+            }
+
+            $priorityText = $cell('priority');
+            $priority = $priorityText === '' ? null : ($priorityAliases[mb_strtolower($priorityText)] ?? null);
+            if ($priorityText !== '' && $priority === null) {
+                $issues[] = "Unknown priority \"{$priorityText}\".";
             }
 
             $group = preg_replace('/\s+/', ' ', $cell('group'));
@@ -338,6 +376,7 @@ class TicketImportSheet
                     'title' => $title,
                     'description' => $description,
                     'status' => $status,
+                    'priority' => $priority,
                     'group' => $group,
                     'created_at' => $createdAt,
                 ],

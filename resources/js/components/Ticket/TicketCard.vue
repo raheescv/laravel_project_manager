@@ -6,6 +6,7 @@
             <div class="tkx-row-main">
                 <div class="tkx-tcard-title">{{ ticket.title }}</div>
                 <div class="tkx-row-sub">
+                    <span v-if="priority" class="tkx-row-prio" :style="{ '--c': priority.color }" :title="`${priority.label} priority`"><i class="fa" :class="priority.icon"></i>{{ priority.label }}</span>
                     <span class="tkx-num">#{{ ticket.id }}</span>
                     <span v-if="ticket.comments_count" :title="`${ticket.comments_count} comments`"><i class="fa fa-comments-o"></i>{{ ticket.comments_count }}</span>
                     <span v-if="ticket.attachments_count" :title="`${ticket.attachments_count} attachments`"><i class="fa fa-paperclip"></i>{{ ticket.attachments_count }}</span>
@@ -15,7 +16,10 @@
             <span class="tkx-av sm" :title="ticket.creator">{{ initials(ticket.creator) }}</span>
         </template>
         <template v-else>
-            <span v-if="ticket.group" class="tkx-gtag"><span>{{ ticket.group }}</span></span>
+            <div v-if="priority || ticket.group" class="tkx-tcard-tags">
+                <span v-if="priority" class="tkx-prio" :style="{ '--c': priority.color }" :title="`${priority.label} priority`"><i class="fa" :class="priority.icon"></i>{{ priority.label }}</span>
+                <span v-if="ticket.group" class="tkx-gtag"><span>{{ ticket.group }}</span></span>
+            </div>
             <div class="tkx-tcard-title">{{ ticket.title }}</div>
             <div v-if="ticket.excerpt" class="tkx-tcard-desc">{{ ticket.excerpt }}</div>
             <img v-if="ticket.cover" :src="ticket.cover" class="tkx-tcard-thumb" alt="" loading="lazy" decoding="async">
@@ -34,7 +38,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatDate, groupColor, initials, relativeTime } from './ticketMeta.js'
+import { formatDate, groupColor, initials, priorityOf, relativeTime } from './ticketMeta.js'
 
 const props = defineProps({
     ticket: { type: Object, required: true },
@@ -44,6 +48,7 @@ const props = defineProps({
 const emit = defineEmits(['open', 'dragstart', 'dragend'])
 
 const color = computed(() => groupColor(props.ticket.group))
+const priority = computed(() => priorityOf(props.ticket.priority))
 
 function onDragStart(event) {
     event.dataTransfer.effectAllowed = 'move'
@@ -57,7 +62,8 @@ function onDragStart(event) {
 .tkx-tcard[draggable="true"] { cursor: grab; }
 .tkx-tcard:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -14px color-mix(in srgb, var(--acc) 55%, transparent); border-color: var(--acc-line); border-inline-start-color: var(--g); }
 .tkx-num { font-size: 11px; color: var(--mute); font-weight: 500; flex: none; }
-.tkx-tcard > .tkx-gtag { margin-bottom: 7px; }
+.tkx-tcard-tags { display: flex; align-items: center; gap: 6px; min-width: 0; margin-bottom: 7px; }
+.tkx-tcard-tags .tkx-gtag { min-width: 0; }
 .tkx-tcard-title { font-weight: 600; color: var(--ink); line-height: 1.35; margin: 0 0 3px; overflow-wrap: anywhere; }
 .tkx-tcard-desc { color: var(--mute); font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tkx-tcard-thumb { display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 8px; margin-top: 9px; background: var(--surf-2); }
@@ -78,5 +84,6 @@ function onDragStart(event) {
 .tkx-row-sub i { margin-inline-end: 3px; }
 .tkx-row-sub .tkx-num { font-size: 10.5px; font-variant-numeric: tabular-nums; }
 .tkx-row-time { margin-inline-start: auto; }
+.tkx-row-prio { color: color-mix(in srgb, var(--c), var(--ink) 25%); font-weight: 600; }
 .tkx-av.sm { width: 22px; height: 22px; font-size: 9px; background: color-mix(in srgb, var(--g) 22%, var(--surf)); color: color-mix(in srgb, var(--g), var(--ink) 35%); box-shadow: 0 0 0 2px var(--surf); }
 </style>

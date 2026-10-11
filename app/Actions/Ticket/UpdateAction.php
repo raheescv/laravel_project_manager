@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class UpdateAction
 {
     /**
-     * @param  array{title?: string, description?: ?string, status?: string, group?: ?string}  $data
+     * @param  array{title?: string, description?: ?string, status?: string, priority?: ?string, group?: ?string}  $data
      * @param  list<UploadedFile>  $files
      * @return array{success: bool, message: string, data?: Ticket}
      */
@@ -22,7 +22,8 @@ class UpdateAction
             $ticket = DB::transaction(function () use ($data, $id, $userId, $files, &$changes): Ticket {
                 $ticket = Ticket::findOrFail($id);
 
-                $data = array_merge($ticket->only(['title', 'description', 'status', 'group']), $data);
+                $data = array_merge($ticket->only(['title', 'description', 'status', 'priority', 'group']), $data);
+                $data['priority'] = ($data['priority'] ?? null) ?: null;
                 $data['group'] = TicketGroupName::normalize($data['group'] ?? null);
                 $data['description'] = $data['description'] ?? '';
                 validationHelper(Ticket::rules($id), $data);
@@ -31,6 +32,7 @@ class UpdateAction
                     'title' => $data['title'],
                     'description' => $data['description'],
                     'status' => $data['status'],
+                    'priority' => $data['priority'],
                     'group' => $data['group'],
                     'updated_by' => $userId,
                 ]);

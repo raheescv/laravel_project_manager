@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\TicketStatus;
 use App\Support\Ticket\TicketImportSheet;
 use Illuminate\Http\UploadedFile;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -21,8 +22,8 @@ beforeEach(function (): void {
 });
 
 it('matches everyday header names to ticket fields', function (): void {
-    expect(TicketImportSheet::guessMappings([0 => 'Subject', 1 => 'Details', 2 => 'State', 3 => 'Module', 4 => 'Reported On', 5 => 'Owner']))
-        ->toBe(['title' => 0, 'description' => 1, 'status' => 2, 'group' => 3, 'created_at' => 4]);
+    expect(TicketImportSheet::guessMappings([0 => 'Subject', 1 => 'Details', 2 => 'State', 3 => 'Module', 4 => 'Reported On', 5 => 'Owner', 6 => 'Severity']))
+        ->toBe(['title' => 0, 'description' => 1, 'status' => 2, 'priority' => 6, 'group' => 3, 'created_at' => 4]);
 
     expect(TicketImportSheet::guessMappings([0 => 'Foo', 1 => 'Bar']))->each->toBeNull();
 });
@@ -150,4 +151,22 @@ it('shortens an over-long title and keeps the full text as the description', fun
 
 it('downloads the template', function (): void {
     $this->get(($this->url)('template'))->assertOk()->assertDownload('ticket_import_template.xlsx');
+});
+
+it('imports priorities and statuses named after the tenant\'s own columns', function (): void {
+    TicketStatus::ordered();
+    TicketStatus::factory()->create(['key' => 'qa_review', 'name' => 'QA Review']);
+    TicketStatus::factory()->create(['key' => 'pending_customer', 'name' => 'Pending']);
+
+    $token = ($this->upload)("Title,Status,Priority\nCheck totals,qa review,Critical\nAwaiting reply,Pending,normal\nLow one,Open,\nOdd one,Open,Whenever\n")->json('data.token');
+    $payload = ['token' => $token, 'mappings' => ['title' => 0, 'status' => 1, 'priority' => 2]];
+
+    $rows = $this->postJson(($this->url)('review'), $payload)->assertOk()->json('data.rows');
+    expect($rows[0]['data'])->toMatchArray(['status' => 'qa_review', 'priority' => 'urgent'])
+        ->and($rows[1]['data'])->toMatchArray(['status' => 'pending_customer', 'priority' => 'medium'])
+        ->and($rows[2]['data'])->toMatchArray(['status' => 'open', 'priority' => null])
+        ->and($rows[3]['issues'])->toBe(['Unknown priority "Whenever".']);
+
+    $this->postJson(($this->url)('commit'), $payload)->assertOk()->assertJsonPath('data.created', 3);
+    expect(Ticket::where('title', 'Check totals')->sole())->status->toBe('qa_review')->priority->toBe('urgent');
 });

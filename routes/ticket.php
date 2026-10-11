@@ -3,6 +3,7 @@
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketImportController;
+use App\Http\Controllers\TicketStatusController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -25,6 +26,14 @@ Route::middleware('auth')->group(function (): void {
                 Route::post('{id}/comment', 'store')->whereNumber('id')->name('store')->can('ticket.comment');
                 Route::put('{id}/comment/{commentId}', 'update')->whereNumber(['id', 'commentId'])->name('update')->can('ticket.comment');
                 Route::delete('{id}/comment/{commentId}', 'destroy')->whereNumber(['id', 'commentId'])->name('destroy')->can('ticket.comment');
+            });
+
+            Route::controller(TicketStatusController::class)->name('status::')->prefix('statuses')->group(function (): void {
+                Route::get('', 'index')->name('index')->can('ticket.manage board');
+                Route::post('', 'store')->name('store')->can('ticket.manage board');
+                Route::put('order', 'reorder')->name('reorder')->can('ticket.manage board');
+                Route::put('{statusId}', 'update')->whereNumber('statusId')->name('update')->can('ticket.manage board');
+                Route::delete('{statusId}', 'destroy')->whereNumber('statusId')->name('destroy')->can('ticket.manage board');
             });
 
             Route::controller(TicketImportController::class)->name('import::')->prefix('import')->group(function (): void {

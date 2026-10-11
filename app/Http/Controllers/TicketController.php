@@ -11,7 +11,9 @@ use App\Events\TicketActivity;
 use App\Http\Requests\Ticket\TicketRequest;
 use App\Http\Resources\Ticket\TicketCardResource;
 use App\Http\Resources\Ticket\TicketResource;
+use App\Http\Resources\Ticket\TicketStatusResource;
 use App\Models\Ticket;
+use App\Models\TicketStatus;
 use App\Notifications\TicketNotification;
 use App\Services\TenantService;
 use App\Traits\ApiResponseTrait;
@@ -60,6 +62,7 @@ class TicketController extends Controller
             'liveChannel' => TicketActivity::channelName((int) app(TenantService::class)->getCurrentTenantId()),
             'permissions' => collect(['create', 'edit', 'delete', 'comment', 'import'])
                 ->mapWithKeys(fn (string $action): array => [$action => $user->can("ticket.{$action}")])
+                ->put('manage', $user->can('ticket.manage board'))
                 ->all(),
         ]);
     }
@@ -69,6 +72,7 @@ class TicketController extends Controller
         $filter = [
             'search' => trim((string) $request->input('search')),
             'status' => (string) $request->input('status'),
+            'priority' => (string) $request->input('priority'),
             'group' => (string) $request->input('group'),
             'from_date' => (string) $request->input('from_date'),
             'to_date' => (string) $request->input('to_date'),
@@ -78,13 +82,14 @@ class TicketController extends Controller
 
         $counts = $filtered()->toBase()->selectRaw('status, COUNT(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
+        $statuses = TicketStatus::ordered();
         $columns = [];
-        foreach (array_keys(Ticket::statuses()) as $status) {
+        foreach ($statuses->pluck('key') as $status) {
             $columns[$status] = [
                 'total' => (int) ($counts[$status] ?? 0),
                 'tickets' => (int) ($counts[$status] ?? 0) === 0 ? [] : TicketCardResource::collection(
                     $filtered()
-                        ->select(['id', 'title', 'status', 'group', 'created_by', 'created_at'])
+                        ->select(['id', 'title', 'status', 'priority', 'group', 'created_by', 'created_at'])
                         ->selectRaw('LEFT(description, ?) as excerpt', [TicketCardResource::EXCERPT_LENGTH + 20])
                         ->where('status', $status)
                         ->withCount(['attachments', 'comments'])
@@ -108,6 +113,7 @@ class TicketController extends Controller
             ->values();
 
         return $this->sendSuccess([
+            'statuses' => TicketStatusResource::collection($statuses)->resolve(),
             'columns' => $columns,
             'groups' => $groups,
             'all_groups' => Ticket::groupNames(),
@@ -146,11 +152,12 @@ class TicketController extends Controller
 
     public function status(int $id, Request $request, UpdateAction $action): JsonResponse
     {
-        $request->validate(['status' => ['required', Rule::in(array_keys(Ticket::statuses()))]]);
+        $statuses = Ticket::statuses();
+        $request->validate(['status' => ['required', Rule::in(array_keys($statuses))]]);
 
         $response = $action->execute(['status' => $request->input('status')], $id, Auth::id());
         if ($response['success']) {
-            $response['message'] = 'Moved to '.Ticket::statuses()[$request->input('status')].'.';
+            $response['message'] = 'Moved to '.$statuses[$request->input('status')].'.';
         }
 
         return $this->respond($response, 'status', $id);

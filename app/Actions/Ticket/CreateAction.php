@@ -4,6 +4,7 @@ namespace App\Actions\Ticket;
 
 use App\Actions\Ticket\Attachment\CreateAction as AttachmentCreateAction;
 use App\Models\Ticket;
+use App\Models\TicketStatus;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class CreateAction
 {
     /**
-     * @param  array{title?: string, description?: ?string, status?: string, group?: ?string, created_at?: mixed}  $data
+     * @param  array{title?: string, description?: ?string, status?: string, priority?: ?string, group?: ?string, created_at?: mixed}  $data
      * @param  list<UploadedFile>  $files
      * @return array{success: bool, message: string, data?: Ticket}
      */
@@ -19,7 +20,8 @@ class CreateAction
     {
         try {
             $ticket = DB::transaction(function () use ($data, $userId, $files): Ticket {
-                $data['status'] = $data['status'] ?? Ticket::STATUS_OPEN;
+                $data['status'] = $data['status'] ?? TicketStatus::defaultKey();
+                $data['priority'] = ($data['priority'] ?? null) ?: null;
                 $data['group'] = TicketGroupName::normalize($data['group'] ?? null);
                 $data['description'] = $data['description'] ?? '';
                 validationHelper(Ticket::rules(), $data);
@@ -28,6 +30,7 @@ class CreateAction
                     'title' => $data['title'],
                     'description' => $data['description'],
                     'status' => $data['status'],
+                    'priority' => $data['priority'],
                     'group' => $data['group'],
                     'created_by' => $userId,
                     'updated_by' => $userId,

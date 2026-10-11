@@ -104,7 +104,7 @@
                     <div class="tkx-card tkx-imp-pad">
                         <span class="tkx-label">Blank status becomes</span>
                         <div class="tkx-seg">
-                            <button v-for="s in STATUSES" :key="s.key" type="button" :class="{ on: options.default_status === s.key }" @click="options.default_status = s.key">
+                            <button v-for="s in statuses" :key="s.key" type="button" :class="{ on: options.default_status === s.key }" @click="options.default_status = s.key">
                                 <span class="tkx-dot" :style="{ '--c': s.color }"></span>{{ s.label }}
                             </button>
                         </div>
@@ -138,7 +138,7 @@
             <div class="tkx-card tkx-rev">
                 <div class="tkx-rev-scroll">
                     <table>
-                        <thead><tr><th>Row</th><th>Result</th><th>Title</th><th>Group</th><th>Status</th><th>Created</th><th>Notes</th></tr></thead>
+                        <thead><tr><th>Row</th><th>Result</th><th>Title</th><th>Group</th><th>Status</th><th>Priority</th><th>Created</th><th>Notes</th></tr></thead>
                         <tbody>
                             <tr v-for="r in pageRows" :key="r.line" :class="r.state">
                                 <td class="ln">{{ r.line }}</td>
@@ -146,10 +146,11 @@
                                 <td class="ti"><b>{{ r.data.title || '—' }}</b><small v-if="r.data.description">{{ r.data.description }}</small></td>
                                 <td><span v-if="r.data.group" class="tkx-gtag" :style="{ '--g': groupColor(r.data.group) }"><span>{{ r.data.group }}</span></span><span v-else class="mute">—</span></td>
                                 <td><span class="tkx-st"><span class="tkx-dot" :style="{ '--c': statusOf(r.data.status).color }"></span>{{ statusOf(r.data.status).label }}</span></td>
+                                <td><span v-if="priorityOf(r.data.priority)" class="tkx-prio" :style="{ '--c': priorityOf(r.data.priority).color }"><i class="fa" :class="priorityOf(r.data.priority).icon"></i>{{ priorityOf(r.data.priority).label }}</span><span v-else class="mute">—</span></td>
                                 <td class="mute">{{ r.data.created_at ? formatDate(r.data.created_at) : 'Today' }}</td>
                                 <td class="is">{{ r.issues.join(' ') }}</td>
                             </tr>
-                            <tr v-if="!pageRows.length"><td colspan="7" class="tkx-empty">No rows in this view.</td></tr>
+                            <tr v-if="!pageRows.length"><td colspan="8" class="tkx-empty">No rows in this view.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -191,10 +192,10 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { errorMessage, ticketApi } from './api.js'
-import { formatDate, groupColor, STATUSES, statusOf } from './ticketMeta.js'
+import { formatDate, groupColor, priorityOf, statuses, statusOf } from './ticketMeta.js'
 
 const emit = defineEmits(['imported', 'open-board'])
 
@@ -222,7 +223,12 @@ const progress = ref(0)
 const fileName = ref('')
 const sheet = ref(null)
 const mappings = reactive({})
-const options = reactive({ default_status: 'open', duplicates: 'skip' })
+const options = reactive({ default_status: statuses.value[0]?.key ?? 'open', duplicates: 'skip' })
+
+/** The board's columns can change while the wizard is open; keep the blank-status choice on one that exists. */
+watch(statuses, (list) => {
+    if (!list.some((s) => s.key === options.default_status)) options.default_status = list[0]?.key ?? 'open'
+})
 const rows = ref([])
 const summary = ref({ total: 0, ready: 0, skip: 0, error: 0 })
 const rowFilter = ref('all')

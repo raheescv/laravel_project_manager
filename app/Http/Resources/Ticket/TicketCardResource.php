@@ -29,6 +29,7 @@ class TicketCardResource extends JsonResource
             'title' => $this->title,
             'excerpt' => Str::limit((string) ($this->excerpt ?? $this->description), self::EXCERPT_LENGTH),
             'status' => $this->status,
+            'priority' => $this->priority,
             'group' => $this->group,
             'comments_count' => (int) $this->comments_count,
             'attachments_count' => (int) $this->attachments_count,
