@@ -213,6 +213,22 @@
     }
     .dvx .s-tab.active { color: var(--acc-d); border-bottom-color: var(--acc); background: var(--sf); }
     .dvx .s-cnt { background: var(--sf-3); color: var(--mut); border-radius: 999px; padding: 0 6px; font-size: 10px; font-weight: 800; }
+    .dvx [x-cloak] { display: none !important; }
+
+    /* Sub-tab strip with a view switch pinned to its right (e.g. Audit report: Timeline | Table) */
+    .dvx .s-subbar { display: flex; align-items: center; gap: 8px; padding-inline-end: 10px; border-top: 1px solid var(--ln-s); border-bottom: 1px solid var(--ln); background: var(--sf-2); }
+    .dvx .s-subbar .s-tabs { flex: 1; min-width: 0; border-bottom: 0; }
+    .dvx .s-seg { display: inline-flex; flex: 0 0 auto; padding: 2px; gap: 2px; border-radius: 8px; background: var(--sf-3); }
+    .dvx .s-seg button {
+        display: inline-flex; align-items: center; gap: 5px; height: 25px; padding: 0 10px; border: 0; border-radius: 6px;
+        background: transparent; color: var(--mut); font-size: 11px; font-weight: 750; cursor: pointer; white-space: nowrap;
+    }
+    .dvx .s-seg button:hover { color: var(--ink); }
+    .dvx .s-seg button.on { background: var(--sf); color: var(--acc-d); box-shadow: 0 1px 2px rgba(16, 24, 40, .08); }
+    @media (max-width: 575.98px) {
+        .dvx .s-subbar { flex-wrap: wrap; padding: 0 0 6px; }
+        .dvx .s-seg { margin-inline-start: 10px; }
+    }
     .dvx .s-pane { padding: 0; }
     .dvx .s-note { padding: 9px 12px; font-size: 12px; color: var(--ink-2); }
 

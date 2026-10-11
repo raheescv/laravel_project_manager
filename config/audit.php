@@ -151,7 +151,7 @@ return [
     |
     */
 
-    'driver' => 'database',
+    'driver' => App\Support\Audit\NormalizedDatabaseDriver::class,
 
     /*
     |--------------------------------------------------------------------------

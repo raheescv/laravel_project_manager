@@ -678,30 +678,48 @@
                 @endif
             @endcan
 
-            <div id="tab-audit-report" class="tab-pane fade" role="tabpanel">
-                <ul class="s-tabs nav" role="tablist" style="border-top:1px solid var(--ln-s)">
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button"><i class="fa fa-file-o"></i>Sale</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button"><i class="fa fa-shopping-cart"></i>Sale items</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button"><i class="fa fa-credit-card"></i>Sale payments</button>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
-                        <x-audit.table :audits="$sale->audits" emptyMessage="No sale audit entries found." />
+            @can('sale.audit view')
+                @php
+                    $saleAudits = $sale->audits;
+                    $saleItemAudits = collect($sale->items)->flatMap->audits;
+                    $salePaymentAudits = collect($sale->payments)->flatMap->audits;
+                @endphp
+                <div id="tab-audit-report" class="tab-pane fade" role="tabpanel"
+                     x-data="{ auditView: (() => { try { return localStorage.getItem('audit-report-view') || 'timeline'; } catch (e) { return 'timeline'; } })() }"
+                     x-init="$watch('auditView', value => { try { localStorage.setItem('audit-report-view', value); } catch (e) {} })">
+                    <div class="s-subbar">
+                        <ul class="s-tabs nav" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="s-tab nav-link active" data-bs-toggle="tab" data-bs-target="#sale-audit" type="button"><i class="fa fa-file-o"></i>Sale <span class="s-cnt">{{ $saleAudits->count() }}</span></button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#sale-items-audit" type="button"><i class="fa fa-shopping-cart"></i>Sale items <span class="s-cnt">{{ $saleItemAudits->count() }}</span></button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#sale-payments-audit" type="button"><i class="fa fa-credit-card"></i>Sale payments <span class="s-cnt">{{ $salePaymentAudits->count() }}</span></button>
+                            </li>
+                        </ul>
+                        <div class="s-seg" role="group" aria-label="Audit view">
+                            <button type="button" :class="{ on: auditView === 'timeline' }" :aria-pressed="auditView === 'timeline'" @click="auditView = 'timeline'"><i class="fa fa-list-ul"></i>Timeline</button>
+                            <button type="button" :class="{ on: auditView === 'table' }" :aria-pressed="auditView === 'table'" @click="auditView = 'table'"><i class="fa fa-table"></i>Table</button>
+                        </div>
                     </div>
-                    <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
-                        <x-audit.table :audits="collect($sale->items)->flatMap->audits" emptyMessage="No sale item audit entries found." />
-                    </div>
-                    <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
-                        <x-audit.table :audits="collect($sale->payments)->flatMap->audits" emptyMessage="No sale payment audit entries found." />
+                    <div class="tab-content">
+                        <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
+                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
+                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
+                        </div>
+                        <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
+                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$saleItemAudits" emptyMessage="No sale item audit entries found." /></div>
+                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$saleItemAudits" :showRecord="true" recordLabel="Item" emptyMessage="No sale item audit entries found." /></div>
+                        </div>
+                        <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
+                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$salePaymentAudits" emptyMessage="No sale payment audit entries found." /></div>
+                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$salePaymentAudits" :showRecord="true" recordLabel="Payment" emptyMessage="No sale payment audit entries found." /></div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endcan
 
             @if (count($inventory_logs))
                 <div id="tab-inventory-log" class="tab-pane fade" role="tabpanel">
