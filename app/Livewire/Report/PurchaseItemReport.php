@@ -49,7 +49,8 @@ class PurchaseItemReport extends Component
 
     public function export()
     {
-        $count = PurchaseItem::join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
+        $count = PurchaseItem::withinCurrentTenant()
+            ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->from_date ?? '', function ($query, $value) {
                 return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
@@ -115,7 +116,8 @@ class PurchaseItemReport extends Component
 
     public function render()
     {
-        $data = PurchaseItem::with('purchase:id,date,invoice_no,branch_id', 'unit:id,name', 'product:id,name,unit_id')->orderBy($this->sortField, $this->sortDirection)
+        $data = PurchaseItem::withinCurrentTenant()
+            ->with('purchase:id,date,invoice_no,branch_id', 'unit:id,name', 'product:id,name,unit_id')->orderBy($this->sortField, $this->sortDirection)
             ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->leftJoin('products', 'products.id', '=', 'purchase_items.product_id')
             ->when($this->search, function ($query, $value) {

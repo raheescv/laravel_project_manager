@@ -21,7 +21,8 @@ class PurchaseItemReportExport implements FromQuery, WithColumnFormatting, WithE
 
     public function query(): Builder
     {
-        $query = PurchaseItem::join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
+        $query = PurchaseItem::withinCurrentTenant()
+            ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
                 return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })

@@ -54,6 +54,15 @@ class PurchaseItem extends Model implements AuditableContracts
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * purchase_items has no tenant_id: narrow to items of purchases visible
+     * through the Purchase model's tenant, assigned-branch and soft-delete scopes.
+     */
+    public function scopeWithinCurrentTenant($query)
+    {
+        return $query->whereIn('purchase_items.purchase_id', Purchase::query()->select('purchases.id'));
+    }
+
     /** @return BelongsTo<Purchase, $this> */
     public function purchase(): BelongsTo
     {

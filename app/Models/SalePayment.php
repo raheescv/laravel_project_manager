@@ -60,6 +60,15 @@ class SalePayment extends Model implements AuditableContracts
         });
     }
 
+    /**
+     * sale_payments has no tenant_id: narrow to payments of sales visible
+     * through the Sale model's tenant, assigned-branch and soft-delete scopes.
+     */
+    public function scopeWithinCurrentTenant($query)
+    {
+        return $query->whereIn('sale_payments.sale_id', Sale::query()->select('sales.id'));
+    }
+
     /** @return BelongsTo<Sale, $this> */
     public function sale(): BelongsTo
     {

@@ -3,6 +3,7 @@
 namespace App\Jobs\Export;
 
 use App\Exports\InventoryProductWiseExport;
+use App\Jobs\Middleware\RunInTenant;
 use App\Models\User;
 use App\Notifications\ExportCompleted;
 use Illuminate\Bus\Queueable;
@@ -22,6 +23,14 @@ class ExportInventoryProductWiseJob implements ShouldQueue
     public $tries = 3;
 
     public function __construct(protected User $user, public array $filters) {}
+
+    /**
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [new RunInTenant($this->user->tenant_id)];
+    }
 
     public function handle()
     {

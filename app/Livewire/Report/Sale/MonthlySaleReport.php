@@ -108,7 +108,7 @@ class MonthlySaleReport extends Component
             ->keyBy('month');
 
         // Get payment data grouped by month
-        $payments = SalePayment::query()
+        $payments = SalePayment::withinCurrentTenant()
             ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
             ->leftJoin('accounts', 'sale_payments.payment_method_id', '=', 'accounts.id')
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))

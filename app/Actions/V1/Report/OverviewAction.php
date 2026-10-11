@@ -197,7 +197,7 @@ class OverviewAction
      */
     private function salePayments(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): Collection
     {
-        $sale = SalePayment::query()
+        $sale = SalePayment::withinCurrentTenant()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
             ->where('sales.status', 'completed')
@@ -238,7 +238,7 @@ class OverviewAction
 
     private function returnPayments(?int $branchId, ?string $from, ?string $to, ?int $createdBy = null): Collection
     {
-        return SaleReturnPayment::query()
+        return SaleReturnPayment::withinCurrentTenant()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
             ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
             ->where('sale_returns.status', 'completed')

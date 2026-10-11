@@ -45,6 +45,15 @@ class SaleReturnPayment extends Model implements AuditableContracts
         return $query->whereBetween('date', [date('Y-m-d', strtotime('-7 days')), date('Y-m-d')]);
     }
 
+    /**
+     * sale_return_payments has no tenant_id: narrow to payments of returns
+     * visible through the SaleReturn model's tenant, branch and soft-delete scopes.
+     */
+    public function scopeWithinCurrentTenant($query)
+    {
+        return $query->whereIn('sale_return_payments.sale_return_id', SaleReturn::query()->select('sale_returns.id'));
+    }
+
     /** @return BelongsTo<SaleReturn, $this> */
     public function saleReturn(): BelongsTo
     {

@@ -3,6 +3,7 @@
 namespace App\Jobs\Export;
 
 use App\Exports\UserExport;
+use App\Jobs\Middleware\RunInTenant;
 use App\Models\User;
 use App\Notifications\ExportCompleted;
 use Illuminate\Bus\Queueable;
@@ -24,6 +25,14 @@ class ExportUserJob implements ShouldQueue
     {
         $this->user = $user;
         $this->filters = $filters;
+    }
+
+    /**
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [new RunInTenant($this->user->tenant_id)];
     }
 
     public function handle()

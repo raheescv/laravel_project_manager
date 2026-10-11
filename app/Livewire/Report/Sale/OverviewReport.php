@@ -220,7 +220,7 @@ class OverviewReport extends Component
 
     private function getSalePaymentsQuery()
     {
-        $salePayments = SalePayment::query()
+        $salePayments = SalePayment::withinCurrentTenant()
             ->join('sales', 'sales.id', '=', 'sale_payments.sale_id')
             ->join('accounts', 'accounts.id', '=', 'sale_payments.payment_method_id')
             ->when($this->branchId, fn ($q) => $q->where('sales.branch_id', $this->branchId))
@@ -269,7 +269,7 @@ class OverviewReport extends Component
 
     private function getSaleReturnPaymentsQuery()
     {
-        return SaleReturnPayment::query()
+        return SaleReturnPayment::withinCurrentTenant()
             ->join('sale_returns', 'sale_returns.id', '=', 'sale_return_payments.sale_return_id')
             ->join('accounts', 'accounts.id', '=', 'sale_return_payments.payment_method_id')
             ->when($this->branchId, fn ($q) => $q->where('sale_returns.branch_id', $this->branchId))
