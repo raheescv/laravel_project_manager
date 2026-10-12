@@ -63,6 +63,13 @@ class UpdateAction
         $stretches = app(SlotService::class)
             ->busyStretches($employeeId, $start->copy()->startOfDay(), $start->copy()->endOfDay(), $this->model->id)[$start->toDateString()] ?? [];
 
+        // With global slots the time is already this appointment's on the one
+        // shared calendar, whoever carries it out — only the new employee's own
+        // time off can stand in the way.
+        if (SlotService::slotsAreGlobal()) {
+            $stretches = array_filter($stretches, fn (array $stretch) => $stretch['reason'] !== 'booked');
+        }
+
         foreach ($stretches as $stretch) {
             $busyStart = $start->copy()->setTimeFromTimeString($stretch['start']);
             $busyEnd = $start->copy()->setTimeFromTimeString($stretch['end']);

@@ -6,7 +6,9 @@ use App\Exceptions\PropertyAppointment\SlotUnavailableException;
 use App\Models\PropertyAppointment;
 use App\Services\PropertyAppointment\SlotService;
 use Carbon\Carbon;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,53 +37,63 @@ class BookAction
                 : $slot->copy()->addMinutes(SlotService::slotLengthMinutes());
             $wasReschedule = false;
 
-            $return = DB::transaction(function () use ($appointmentId, $slot, $end, $bookedBy, $userId, $timezone, &$wasReschedule) {
-                // Lock the row so two requests for the SAME appointment serialise.
-                // Two requests for two DIFFERENT appointments contending for one
-                // slot are not covered by this lock — the unique index below is
-                // what stops them, which is why the insert is still guarded.
-                $model = PropertyAppointment::query()->lockForUpdate()->findOrFail($appointmentId);
+            $book = function () use ($appointmentId, $slot, $end, $bookedBy, $userId, $timezone, &$wasReschedule) {
+                return DB::transaction(function () use ($appointmentId, $slot, $end, $bookedBy, $userId, $timezone, &$wasReschedule) {
+                    // Lock the row so two requests for the SAME appointment serialise.
+                    // Two requests for two DIFFERENT appointments contending for one
+                    // slot are not covered by this lock — the unique index below is
+                    // what stops them (per employee; global slots add a tenant lock
+                    // in serialised()), which is why the insert is still guarded.
+                    $model = PropertyAppointment::query()->lockForUpdate()->findOrFail($appointmentId);
 
-                if (! $model->isLinkUsable()) {
-                    throw new \Exception('This appointment link is no longer valid. Please contact us to arrange your appointment.', 1);
-                }
+                    if (! $model->isLinkUsable()) {
+                        throw new \Exception('This appointment link is no longer valid. Please contact us to arrange your appointment.', 1);
+                    }
 
-                if ($model->status === 'scheduled' && $model->scheduled_at?->equalTo($slot) && $model->endsAt()?->equalTo($end)) {
-                    return ['success' => true, 'message' => 'This appointment is already booked for that time.', 'data' => $model];
-                }
+                    if ($model->status === 'scheduled' && $model->scheduled_at?->equalTo($slot) && $model->endsAt()?->equalTo($end)) {
+                        return ['success' => true, 'message' => 'This appointment is already booked for that time.', 'data' => $model];
+                    }
 
-                // One gate for both ways in: a tapped preset is a window someone
-                // filled in for the customer, so it is checked exactly as a typed
-                // one is — inside the open hours, clear of everything already on
-                // the calendar, and past the notice cut-off.
-                $problem = app(SlotService::class)->windowProblem($model->employee_id, $slot, $end, $model->id, $model->bookingRange());
+                    // One gate for both ways in: a tapped preset is a window someone
+                    // filled in for the customer, so it is checked exactly as a typed
+                    // one is — inside the open hours, clear of everything already on
+                    // the calendar, and past the notice cut-off.
+                    $problem = app(SlotService::class)->windowProblem($model->employee_id, $slot, $end, $model->id, $model->bookingRange());
 
-                if (! $problem['ok']) {
-                    throw new SlotUnavailableException($problem['reason'], $problem['taken'] ? 1 : 0);
-                }
+                    if (! $problem['ok']) {
+                        throw new SlotUnavailableException($problem['reason'], $problem['taken'] ? 1 : 0);
+                    }
 
-                // A CONFIRMED appointment moving to a different time is a
-                // reschedule, and the customer is told. A first booking is not:
-                // nothing they were promised has changed.
-                $wasReschedule = $model->status === 'scheduled' && $model->scheduled_at !== null;
+                    // A CONFIRMED appointment moving to a different time is a
+                    // reschedule, and the customer is told. A first booking is not:
+                    // nothing they were promised has changed.
+                    $wasReschedule = $model->status === 'scheduled' && $model->scheduled_at !== null;
 
-                $model->update([
-                    'scheduled_at' => $slot,
-                    'ends_at' => $end,
-                    'status' => 'scheduled',
-                    'booked_at' => now(),
-                    'booked_by' => $bookedBy,
-                    'customer_timezone' => $timezone,
-                    'cancelled_at' => null,
-                    'cancelled_by' => null,
-                    'cancel_reason' => null,
-                    // The new time deserves its own reminder.
-                    'reminder_sent_at' => null,
-                    'updated_by' => $userId,
-                ]);
+                    $model->update([
+                        'scheduled_at' => $slot,
+                        'ends_at' => $end,
+                        'status' => 'scheduled',
+                        'booked_at' => now(),
+                        'booked_by' => $bookedBy,
+                        'customer_timezone' => $timezone,
+                        'cancelled_at' => null,
+                        'cancelled_by' => null,
+                        'cancel_reason' => null,
+                        // The new time deserves its own reminder.
+                        'reminder_sent_at' => null,
+                        'updated_by' => $userId,
+                    ]);
 
-                return ['success' => true, 'message' => 'Your appointment is confirmed.', 'data' => $model->fresh()];
-            });
+                    return ['success' => true, 'message' => 'Your appointment is confirmed.', 'data' => $model->fresh()];
+                });
+            };
+
+            $return = SlotService::slotsAreGlobal() ? $this->serialised($appointmentId, $book) : $book();
+        } catch (LockTimeoutException) {
+            return [
+                'success' => false,
+                'message' => 'Another booking is being confirmed right now. Please try again in a moment.',
+            ];
         } catch (QueryException $e) {
             // The database rejected the write because another request took this
             // exact slot first. This is the authoritative answer — the check
@@ -110,5 +122,21 @@ class BookAction
         }
 
         return $return;
+    }
+
+    /**
+     * Runs the booking while holding the tenant's slot lock.
+     *
+     * With global slots the unique index cannot help: it is keyed on the
+     * employee, so two customers filed under two employees can both pass the
+     * clash check and both write the same time. Holding one lock per tenant
+     * around the check AND the commit makes the second request see the first
+     * one's booking instead.
+     */
+    private function serialised($appointmentId, callable $book): array
+    {
+        $tenantId = PropertyAppointment::query()->whereKey($appointmentId)->value('tenant_id');
+
+        return Cache::lock('property-appointment:slot:'.$tenantId, 15)->block(10, $book);
     }
 }

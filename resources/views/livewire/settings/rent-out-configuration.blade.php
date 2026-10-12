@@ -36,6 +36,14 @@
             'sub' => 'Income accounts offered as the Category when adding a service on a rent-out. Only the heads mapped here appear in that dropdown, and the service charge is credited to the head picked.',
             'fields' => ['service_categories'],
         ],
+        'appointments' => [
+            'icon' => 'fa-calendar',
+            'title' => 'Appointments',
+            'status' => $appointment_slot_scope === \App\Services\PropertyAppointment\SlotService::SLOT_SCOPE_GLOBAL ? 'Global slot' : 'Individual slot',
+            'ok' => true,
+            'sub' => 'Decides whether a booked appointment date and time is blocked only for the selected employee, or for every customer whichever employee is selected.',
+            'fields' => ['appointment_slot_scope'],
+        ],
         'checklist' => [
             'icon' => 'fa-list-alt',
             'title' => 'Checklist Notes',
@@ -195,6 +203,36 @@
                             </div>
                         </div>
                     @endif
+                </section>
+
+                {{-- ============ APPOINTMENTS ============ --}}
+                <section x-show="tab === 'appointments'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['appointments']])
+
+                    @php
+                        $slotScopes = [
+                            \App\Services\PropertyAppointment\SlotService::SLOT_SCOPE_INDIVIDUAL => ['icon' => 'fa-user', 'label' => 'Individual slot', 'help' => 'Each employee has their own calendar. Two customers can book the same date and time with different employees.'],
+                            \App\Services\PropertyAppointment\SlotService::SLOT_SCOPE_GLOBAL => ['icon' => 'fa-globe', 'label' => 'Global slot', 'help' => 'One calendar for everyone. Once a customer books a date and time, it is blocked for all other customers, whichever employee is selected.'],
+                        ];
+                    @endphp
+
+                    <div class="row g-3">
+                        @foreach ($slotScopes as $scopeValue => $scope)
+                            <div class="col-md-6">
+                                <label class="card shadow-none border rounded-3 p-3 h-100 mb-0 {{ $appointment_slot_scope === $scopeValue ? 'border-primary' : '' }}" for="appointment_slot_scope_{{ $scopeValue }}" role="button">
+                                    <span class="form-check m-0">
+                                        <input type="radio" class="form-check-input" id="appointment_slot_scope_{{ $scopeValue }}" value="{{ $scopeValue }}" wire:model.live="appointment_slot_scope">
+                                        <span class="form-check-label fw-semibold"><i class="fa fa-fw {{ $scope['icon'] }} text-primary me-1"></i>{{ $scope['label'] }}</span>
+                                    </span>
+                                    <span class="form-text d-block mt-1 mb-0">{{ $scope['help'] }}</span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('appointment_slot_scope')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text mt-2 mb-0"><i class="fa fa-info-circle me-1"></i>Applies on save, to new bookings from the customer link and the agreement's Appointments tab.</div>
                 </section>
 
                 {{-- ============ CHECKLIST NOTES ============ --}}

@@ -105,3 +105,24 @@ it('keeps the main navigation expanded on other pages', function (): void {
     expect((string) $this->blade('<x-app-layout>Body</x-app-layout>'))
         ->toContain('class="root mn--max tm--expanded-hd"');
 });
+
+it('switches appointment slots between individual and global', function (): void {
+    expect(App\Services\PropertyAppointment\SlotService::slotScope())->toBe('individual');
+
+    Livewire::test(RentOutConfiguration::class)
+        ->assertSee('Individual slot')
+        ->set('appointment_slot_scope', 'global')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee('Global slot');
+
+    expect(App\Services\PropertyAppointment\SlotService::slotsAreGlobal())->toBeTrue();
+
+    Livewire::test(RentOutConfiguration::class)
+        ->assertSet('appointment_slot_scope', 'global')
+        ->set('appointment_slot_scope', 'sideways')
+        ->call('save')
+        ->assertHasErrors(['appointment_slot_scope' => 'in']);
+
+    expect(App\Services\PropertyAppointment\SlotService::slotsAreGlobal())->toBeTrue();
+});

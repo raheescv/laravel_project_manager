@@ -2,6 +2,7 @@
 
 namespace App\Services\PropertyAppointment;
 
+use App\Models\Configuration;
 use App\Models\Holiday;
 use App\Models\PropertyAppointment;
 use App\Models\PropertyAppointmentAvailability;
@@ -35,6 +36,15 @@ class SlotService
 
     public const SLOT_LENGTH_MINUTES = 120;
 
+    /** Configuration key holding the tenant's slot scope. */
+    public const SLOT_SCOPE_KEY = 'appointment_slot_scope';
+
+    /** Every employee keeps their own calendar: two employees may share a time. */
+    public const SLOT_SCOPE_INDIVIDUAL = 'individual';
+
+    /** One calendar for the whole business: a booked time is gone for everyone. */
+    public const SLOT_SCOPE_GLOBAL = 'global';
+
     /** Holiday lookups already answered this request, keyed by date range. */
     protected array $holidayCache = [];
 
@@ -58,6 +68,26 @@ class SlotService
         $end = $until ? $until->copy() : now()->addDays(self::appointmentWindowDays());
 
         return [$start->startOfDay(), $end->endOfDay()];
+    }
+
+    /**
+     * Whether the tenant books appointments individually or globally.
+     *
+     * Individual is the default and the behaviour every tenant had before the
+     * setting existed. Global is for a business with one person actually doing
+     * the visits: whichever employee the appointment is filed under, a booked
+     * time blocks every other customer.
+     */
+    public static function slotScope(): string
+    {
+        $scope = Configuration::where('key', self::SLOT_SCOPE_KEY)->value('value');
+
+        return $scope === self::SLOT_SCOPE_GLOBAL ? self::SLOT_SCOPE_GLOBAL : self::SLOT_SCOPE_INDIVIDUAL;
+    }
+
+    public static function slotsAreGlobal(): bool
+    {
+        return self::slotScope() === self::SLOT_SCOPE_GLOBAL;
     }
 
     /** How much notice a slot needs before it can be taken. */
@@ -210,7 +240,8 @@ class SlotService
      * Stretches of each day the customer cannot have, keyed by Y-m-d.
      *
      * Two sources, one shape: appointments already on the calendar, and the
-     * employee's time off. Both are half-open [start, end) ranges in HH:MM, so
+     * employee's time off. With global slots the calendar is everyone's, so
+     * another employee's booking blocks the time too; time off stays personal. Both are half-open [start, end) ranges in HH:MM, so
      * a window that ends exactly when a booking starts is fine.
      *
      * @return array<string, array<int, array{start: string, end: string, reason: string}>>
@@ -224,7 +255,7 @@ class SlotService
 
         $appointments = PropertyAppointment::query()
             ->holdingSlot()
-            ->where('employee_id', $employeeId)
+            ->unless(self::slotsAreGlobal(), fn ($query) => $query->where('employee_id', $employeeId))
             ->whereBetween('scheduled_at', [$from, $to])
             ->when($ignoreAppointmentId, fn ($query, $id) => $query->where('id', '!=', $id))
             ->get(['id', 'scheduled_at', 'ends_at']);
@@ -395,15 +426,16 @@ class SlotService
     }
 
     /**
-     * Slots already held on this employee's calendar. Mirrors exactly the
-     * statuses in the active_slot_key generated column, so the UI and the
-     * database constraint can never disagree about what "taken" means.
+     * Slots already held on this employee's calendar — or on anyone's, when the
+     * tenant books globally. Mirrors exactly the statuses in the active_slot_key
+     * generated column, so the UI and the database constraint can never disagree
+     * about what "taken" means.
      */
     protected function takenSlots(int $employeeId, Carbon $from, Carbon $to, ?int $ignoreAppointmentId): Collection
     {
         return PropertyAppointment::query()
             ->holdingSlot()
-            ->where('employee_id', $employeeId)
+            ->unless(self::slotsAreGlobal(), fn ($query) => $query->where('employee_id', $employeeId))
             ->whereBetween('scheduled_at', [$from, $to])
             ->when($ignoreAppointmentId, fn ($query, $id) => $query->where('id', '!=', $id))
             ->pluck('scheduled_at')

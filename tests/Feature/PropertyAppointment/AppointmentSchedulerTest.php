@@ -1762,3 +1762,85 @@ it('ignores a sort column outside the whitelist', function () {
     expect($sql)->toContain('order by `property_appointments`.`scheduled_at` desc')
         ->not->toContain('drop table');
 });
+
+/**
+ * A second employee with the same hours as vsSeed()'s, plus an appointment on
+ * the same agreement filed under them — two customers, two employees.
+ */
+function vsSecondEmployeeSeed(): array
+{
+    $seed = vsWindowSeed();
+
+    $seed['other'] = User::create([
+        'tenant_id' => $seed['tenant']->id, 'name' => 'VS Other Employee', 'type' => 'employee',
+        'email' => 'vs-other'.uniqid().'@example.test', 'password' => bcrypt('secret'),
+    ]);
+
+    foreach (range(0, 6) as $dayOfWeek) {
+        PropertyAppointmentAvailability::create([
+            'tenant_id' => $seed['tenant']->id, 'user_id' => $seed['other']->id, 'day_of_week' => $dayOfWeek,
+            'start_time' => '09:00', 'end_time' => '13:00',
+            'is_active' => true,
+        ]);
+    }
+
+    $seed['otherAppointment'] = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['other']->id], $seed['employee']->id)['data'];
+
+    return $seed;
+}
+
+function vsUseSlotScope(string $scope): void
+{
+    App\Models\Configuration::updateOrCreate(['key' => SlotService::SLOT_SCOPE_KEY], ['value' => $scope]);
+}
+
+it('books slots per employee unless the tenant chose global slots', function () {
+    $seed = vsSecondEmployeeSeed();
+    $slot = $seed['day'].' 09:00:00';
+
+    expect(SlotService::slotScope())->toBe(SlotService::SLOT_SCOPE_INDIVIDUAL)
+        ->and((new BookAction())->execute($seed['appointment']->id, $slot)['success'])->toBeTrue()
+        ->and((new BookAction())->execute($seed['otherAppointment']->id, $slot)['success'])->toBeTrue();
+});
+
+it('blocks a booked time for every employee when slots are global', function () {
+    $seed = vsSecondEmployeeSeed();
+    vsUseSlotScope(SlotService::SLOT_SCOPE_GLOBAL);
+    $slot = $seed['day'].' 09:00:00';
+
+    expect((new BookAction())->execute($seed['appointment']->id, $slot)['success'])->toBeTrue();
+
+    $offered = collect(app(SlotService::class)->availableSlots($seed['other']->id))->flatten(1)->pluck('value');
+    $response = (new BookAction())->execute($seed['otherAppointment']->id, $slot);
+
+    expect($offered)->not->toContain($slot)
+        ->and($response['success'])->toBeFalse()
+        ->and($response['slot_taken'])->toBeTrue()
+        ->and($seed['otherAppointment']->fresh()->scheduled_at)->toBeNull();
+});
+
+it('refuses an overlapping window under another employee when slots are global', function () {
+    $seed = vsSecondEmployeeSeed();
+    vsUseSlotScope(SlotService::SLOT_SCOPE_GLOBAL);
+
+    (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 10:00:00', 'customer', null, null, $seed['day'].' 11:00:00');
+
+    $response = (new BookAction())->execute($seed['otherAppointment']->id, $seed['day'].' 10:30:00', 'customer', null, null, $seed['day'].' 11:30:00');
+    $busy = app(SlotService::class)->busyStretches($seed['other']->id, now(), now()->addDays(3))[$seed['day']] ?? [];
+
+    expect($response['success'])->toBeFalse()
+        ->and($response['slot_taken'])->toBeTrue()
+        ->and($busy)->toContain(['start' => '10:00', 'end' => '11:00', 'reason' => 'booked']);
+});
+
+it('still reassigns a booked appointment to another employee when slots are global', function () {
+    $seed = vsSecondEmployeeSeed();
+    vsUseSlotScope(SlotService::SLOT_SCOPE_GLOBAL);
+
+    (new BookAction())->execute($seed['appointment']->id, $seed['day'].' 09:00:00');
+
+    $response = (new App\Actions\PropertyAppointment\UpdateAction())->execute(['employee_id' => $seed['other']->id], $seed['appointment']->id, $seed['employee']->id);
+
+    expect($response['success'])->toBeTrue()
+        ->and($seed['appointment']->fresh()->employee_id)->toBe($seed['other']->id);
+});
