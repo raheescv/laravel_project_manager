@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Editor Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+  /* ---------- host stand-ins (Nifty + Bootstrap tokens) ---------- */
+  :root{
+    --bs-primary:#2b4380;
+    --ink:#0f1522; --body:#333b49; --muted:#6b7588; --faint:#9aa3b2;
+    --page:#edf1f6; --surface:#fff; --surface-2:#f6f8fb; --line:#e3e8ef; --line-soft:#eef1f5;
+    --shadow:0 1px 2px rgba(16,24,40,.05),0 10px 28px -14px rgba(16,24,40,.18);
+  }
+  [data-bs-theme="dark"]{
+    color-scheme:dark;
+    --ink:#eef1f6; --body:#c4ccd8; --muted:#8b95a5; --faint:#5f6a7a;
+    --page:#1b2027; --surface:#262c33; --surface-2:#20262c; --line:#353d47; --line-soft:#2e353e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--page);font-family:Poppins,system-ui,sans-serif;color:var(--body);font-size:13px;line-height:1.45;overflow-x:hidden}
+  button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+
+  .demo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:9px 16px;background:#0f1522;color:#cfd6e2;font-size:12px}
+  .demo b{color:#fff}
+  .demo .grp{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .demo .lbl{opacity:.55;text-transform:uppercase;letter-spacing:1.2px;font-size:9.5px;margin-inline-end:3px}
+  .demo .opt{border:1px solid rgba(255,255,255,.14);background:transparent;color:#cfd6e2;padding:4px 10px;border-radius:8px;cursor:pointer}
+  .demo .opt.on{background:#fff;color:#0f1522;border-color:#fff;font-weight:600}
+  .demo .sw{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.18);cursor:pointer;padding:0}
+  .demo .sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+  .demo .vnote{flex-basis:100%;opacity:.75;font-size:11.5px}
+  .demo .vnote em{color:#fff;font-style:normal}
+
+  .app{display:grid;grid-template-columns:58px minmax(0,1fr);min-height:100vh}
+  .rail{background:var(--surface);border-inline-end:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:14px}
+  .rail span{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+  .rail span.on{background:color-mix(in srgb,var(--bs-primary) 14%,transparent);color:var(--bs-primary)}
+  .main{min-width:0}
+  .topbar{height:50px;background:var(--bs-primary);display:flex;align-items:center;padding:0 16px;color:#fff;gap:10px;font-size:12px}
+  .topbar .pill{background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px}
+  .wrap{padding:18px;max-width:1440px;margin:0 auto;transition:max-width .3s}
+  .wrap[data-vp="tablet"]{max-width:880px}
+  .wrap[data-vp="phone"]{max-width:400px}
+  @media(max-width:640px){.app{grid-template-columns:1fr}.rail{display:none}.wrap{padding:12px}}
+
+  /* =================================================================
+     .dbx — Dashboard premium system (scoped; accent = theme colour)
+     ================================================================= */
+  .dbx{
+    --acc:var(--bs-primary);
+    --acc-ink:color-mix(in srgb,var(--acc) 80%,#000);
+    --acc-soft:color-mix(in srgb,var(--acc) 9%,var(--surface));
+    --acc-line:color-mix(in srgb,var(--acc) 38%,var(--line));
+    --ok:#2e9a6b; --warn:#c98a14; --bad:#cf5450; --info:#2f8ebf; --slate:#8a94a6;
+    --c1:var(--acc); --c2:#3a9e98; --c3:#d9a13b; --c4:#d27178; --c5:#8a94a6;
+    --r:12px; --gap:14px; --num:Poppins,system-ui,sans-serif;
+    color:var(--body);
+  }
+  [data-bs-theme="dark"] .dbx{
+    --acc-ink:color-mix(in srgb,var(--acc) 45%,#fff);
+    --acc-soft:color-mix(in srgb,var(--acc) 16%,var(--surface));
+    --acc-line:color-mix(in srgb,var(--acc) 50%,var(--line));
+    --ok:#4cc08c; --warn:#e3a93a; --bad:#e9746f; --info:#5bb2df; --c2:#55bdb6; --c3:#e6b45a; --c4:#e48a90;
+  }
+  .dbx .t-acc{--tone:var(--acc)} .dbx .t-ok{--tone:var(--ok)} .dbx .t-warn{--tone:var(--warn)} .dbx .t-bad{--tone:var(--bad)}
+  .dbx .t-info{--tone:var(--info)} .dbx .t-slate{--tone:var(--slate)} .dbx .t-c2{--tone:var(--c2)} .dbx .t-c3{--tone:var(--c3)} .dbx .t-c4{--tone:var(--c4)}
+  .dbx .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  .dbx-page{container:page/inline-size;transition:margin .28s cubic-bezier(.2,.8,.2,1)}
+
+  /* header */
+  .dbx-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;margin-bottom:16px;position:relative}
+  .dbx-greet{flex:1 1 260px;min-width:0;position:relative;z-index:1}
+  .dbx-eyebrow{font-size:11.5px;color:var(--muted);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .dbx-eyebrow .fa{opacity:.7}
+  .dbx-greet h1{margin:2px 0 0;font-size:21px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+  .dbx-greet p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+  .dbx-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+  .dbx-upd{font-size:11.5px;color:var(--muted);margin-inline-end:2px}
+  .dbx.is-editing .dbx-acts{visibility:hidden}
+
+  .dbx-btn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500;font-size:12.5px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+  .dbx-btn:hover{border-color:var(--acc-line)}
+  .dbx-btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+  .dbx-btn.pri:hover{background:color-mix(in srgb,var(--acc) 88%,#000)}
+  .dbx-btn:focus-visible,.dbx-ib:focus-visible,.dbx-grip:focus-visible,.dbx-seg button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  .dbx-ib{width:28px;height:28px;border:0;background:transparent;border-radius:8px;color:var(--muted);cursor:pointer;display:inline-grid;place-items:center;flex:none;transition:background .15s,color .15s}
+  .dbx-ib:hover{background:var(--surface-2);color:var(--ink)}
+  .dbx-ib:disabled{opacity:.35;cursor:default;background:transparent}
+  .dbx-count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--acc);color:#fff;font-size:10.5px;font-weight:600;display:inline-grid;place-items:center}
+  .dbx-count[data-n="0"]{display:none}
+
+  /* editor bar */
+  .dbx-bar{position:sticky;top:8px;z-index:60;display:none;align-items:center;gap:8px;flex-wrap:nowrap;padding:7px 8px 7px 12px;margin:-4px 0 14px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--acc-line);border-radius:14px;box-shadow:var(--shadow)}
+  .dbx.is-editing .dbx-bar{display:flex;animation:dbxDrop .25s cubic-bezier(.2,.8,.2,1)}
+  .dbx-bar-t{display:flex;align-items:center;gap:8px;min-width:0;flex:1;color:var(--ink);white-space:nowrap}
+  .dbx-bar-t .fa{color:var(--acc)}
+  .dbx-bar-h{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-sep{width:1px;height:20px;background:var(--line)}
+  .dbx-save{font-size:11.5px;display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:20px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+  .dbx-save[data-s="saved"]{color:var(--ok)}
+  .dbx-save[data-s="fail"]{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+  .dbx-save button{border:0;background:none;color:inherit;font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
+  @keyframes dbxDrop{from{opacity:0;transform:translateY(-6px)}}
+
+  /* grid */
+  .dbx-gw{container:dbx/inline-size;position:relative}
+  .dbx-grid{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap);z-index:1}
+  .dbx-grid>[data-span="4"]{grid-column:span 4} .dbx-grid>[data-span="6"]{grid-column:span 6}
+  .dbx-grid>[data-span="8"]{grid-column:span 8} .dbx-grid>[data-span="12"]{grid-column:span 12}
+  .dbx-grid>[data-type="divider"]{grid-column:1/-1}
+  .dbx-guides{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap);pointer-events:none;opacity:0;transition:opacity .25s}
+  .dbx-guides i{border-radius:8px;background:color-mix(in srgb,var(--acc) 4%,transparent);outline:1px dashed color-mix(in srgb,var(--acc) 22%,transparent);outline-offset:-1px}
+  .dbx.is-editing .dbx-guides{opacity:1}
+  @container dbx (max-width:959px){
+    .dbx-grid,.dbx-guides{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .dbx-grid>[data-span="4"],.dbx-grid>[data-span="6"]{grid-column:span 3}
+    .dbx-grid>[data-span="8"],.dbx-grid>[data-span="12"]{grid-column:span 6}
+    .dbx-guides i:nth-child(n+7){display:none}
+  }
+  @container dbx (max-width:639px){
+    .dbx-grid{grid-template-columns:minmax(0,1fr)}
+    .dbx-grid>*{grid-column:1/-1 !important}
+    .dbx-guides{display:none}
+  }
+
+  /* widget shell */
+  .dbx-w{container:w/inline-size;position:relative;display:flex;flex-direction:column;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);transition:border-color .2s,box-shadow .2s}
+  .dbx-w.is-collapsed{align-self:start}
+  .dbx-w.is-collapsed .dbx-b{display:none}
+  .dbx-h{display:flex;align-items:center;gap:10px;padding:12px 12px 8px 14px;min-width:0}
+  .dbx-chip{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-ink);flex:none;font-size:13px}
+  .dbx-ht{flex:1;min-width:0}
+  .dbx-ht h3{margin:0;font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-ht p{margin:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-b{padding:2px 14px 14px;flex:1;display:flex;flex-direction:column;min-height:0;transition:opacity .2s,filter .2s}
+  .dbx-b>.dbx-link{margin-top:auto}
+  @container w (max-width:330px){.dbx-h .dbx-tools{display:none}}
+
+  .dbx-seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:2px;flex:none}
+  .dbx-seg button{border:0;background:transparent;color:var(--muted);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer;font-weight:500;line-height:1.4}
+  .dbx-seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.1)}
+  [data-bs-theme="dark"] .dbx-seg button.on{background:var(--line)}
+  .dbx-seg button:disabled{opacity:.3;cursor:not-allowed}
+
+  /* edit chrome */
+  .dbx-edit{display:none;align-items:center;gap:6px;padding:5px 6px;margin:-1px -1px 0;background:var(--acc-soft);border:1px solid var(--acc-line);border-radius:var(--r) var(--r) 0 0;font-size:11.5px}
+  .dbx.is-editing .dbx-w .dbx-edit{display:flex}
+  .dbx.is-editing .dbx-w{border-style:dashed;border-color:var(--acc-line)}
+  .dbx.is-editing .dbx-w:hover{border-style:solid;border-color:var(--acc)}
+  .dbx.is-editing .dbx-w .dbx-b{opacity:.5;filter:saturate(.6);pointer-events:none}
+  .dbx.is-editing .dbx-w .dbx-h .dbx-tools,.dbx.is-editing .dbx-w .dbx-more{pointer-events:none;opacity:.4}
+  .dbx-edit-t{flex:1;min-width:0;font-weight:600;color:var(--acc-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-edit .dbx-seg{background:var(--surface);padding:1px}
+  .dbx-edit .dbx-seg button{padding:1px 7px;font-size:10.5px;font-weight:600}
+  .dbx-edit .dbx-seg button.on{background:var(--acc);color:#fff}
+  .dbx-edit .dbx-ib{width:24px;height:24px}
+  .dbx-grip{width:26px;height:24px;border:0;border-radius:7px;background:var(--surface);color:var(--acc-ink);cursor:grab;touch-action:none;display:grid;place-items:center;flex:none;box-shadow:0 0 0 1px var(--acc-line)}
+  .dbx-grip:active{cursor:grabbing}
+  .dbx-mv{display:none;gap:2px}
+  .dbx.is-c1 .dbx-mv{display:inline-flex}
+  .dbx.is-c1 .dbx-grip,.dbx.is-c1 .dbx-edit .dbx-size{display:none}
+  .dbx-rz{display:none;position:absolute;right:-6px;top:50%;width:11px;height:46px;transform:translateY(-50%);border-radius:7px;background:var(--surface);box-shadow:0 0 0 1px var(--acc-line),var(--shadow);cursor:ew-resize;touch-action:none;z-index:3}
+  .dbx-rz::after{content:"";position:absolute;inset:14px 3px;border-inline:1.5px solid var(--acc-line)}
+  .dbx.is-editing.is-c12 .dbx-w .dbx-rz{display:block}
+  .dbx-rz-hint{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--acc);color:#fff;font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;z-index:4;pointer-events:none}
+  .dbx-w.is-resizing .dbx-rz-hint{display:block}
+  .dbx-w.is-resizing{border-color:var(--acc)!important;border-style:solid!important}
+
+  /* drag + drop */
+  .dbx-layer{position:fixed;inset:0;pointer-events:none;z-index:200}
+  .dbx-w.is-drag,.dbx-div.is-drag{position:absolute;left:0;top:0;margin:0;rotate:.6deg;scale:1.015;opacity:.97;box-shadow:0 26px 50px -18px rgba(15,21,34,.45),0 0 0 1.5px var(--acc);transition:rotate .18s,scale .18s;will-change:transform}
+  .dbx-div.is-drag{background:var(--surface);border-radius:10px;padding:8px 10px}
+  .dbx-w.is-landing,.dbx-div.is-landing{rotate:0deg;scale:1;box-shadow:var(--shadow)}
+  .dbx-ph{border:2px dashed var(--acc);border-radius:var(--r);background:repeating-linear-gradient(135deg,var(--acc-soft) 0 10px,transparent 10px 20px);min-height:44px}
+  .dbx.is-dragging,.dbx.is-dragging *{cursor:grabbing!important}
+  .dbx-w.is-new{animation:dbxPulse 1.4s ease-out}
+  @keyframes dbxPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 55%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+
+  /* dividers */
+  .dbx-div{display:flex;align-items:center;gap:10px;padding:10px 2px 0;min-width:0}
+  .dbx-div:first-child{padding-top:0}
+  .dbx-div .dbx-grip,.dbx-div-x{display:none}
+  .dbx.is-editing .dbx-div .dbx-grip,.dbx.is-editing .dbx-div-x{display:grid}
+  .dbx.is-c1.is-editing .dbx-div .dbx-grip{display:none}
+  .dbx-div-t{margin:0;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);white-space:nowrap;outline:0;min-width:40px}
+  .dbx.is-editing .dbx-div-t{border-bottom:1px dashed var(--acc-line);cursor:text;color:var(--ink)}
+  .dbx.is-editing .dbx-div-t:focus{border-bottom-style:solid;border-color:var(--acc)}
+  .dbx-div-rule{flex:1;height:1px;background:var(--line)}
+
+  /* content atoms */
+  .dbx-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .dbx-kpis[data-n="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dbx-kpis[data-n="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .dbx-kpis[data-n="6"]{grid-template-columns:repeat(6,minmax(0,1fr))}
+  @container w (max-width:820px){.dbx-kpis[data-n="6"]{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @container w (max-width:620px){.dbx-kpis[data-n="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @container w (max-width:420px){.dbx-kpis[data-n="6"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @container w (max-width:300px){.dbx-kpis[data-n="3"],.dbx-kpis[data-n="4"]{grid-template-columns:minmax(0,1fr)}}
+  .dbx-kpi{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;min-width:0;border-radius:10px}
+  .dbx-kpi-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--tone) 13%,transparent);color:var(--tone);flex:none;font-size:13px}
+  .dbx-kpi-b{min-width:0}
+  .dbx-kpi-l{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-kpi-v{font:600 19px/1.25 var(--num);color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+  .dbx-kpis.mini .dbx-kpi-v{font-size:16px}
+  .dbx-kpis.mini .dbx-kpi-ic{width:26px;height:26px;font-size:12px;border-radius:8px}
+  .dbx-kpi-v small,.dbx-big small{font-size:.58em;color:var(--muted);font-weight:500;margin-inline-end:3px;letter-spacing:0}
+  .dbx-kpi-s{font-size:11px;color:var(--muted);margin-top:1px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .dbx-delta{display:inline-flex;gap:3px;align-items:center;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px}
+  .dbx-delta.up{background:color-mix(in srgb,var(--ok) 13%,transparent);color:var(--ok)}
+  .dbx-delta.down{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+  .dbx-big{font:600 24px/1.2 var(--num);color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .dbx-lab{font-size:11px;color:var(--muted)}
+  .dbx-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .dbx-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .dbx-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:color-mix(in srgb,var(--tone,var(--slate)) 13%,transparent);color:color-mix(in srgb,var(--tone,var(--slate)) 78%,var(--ink));white-space:nowrap}
+  .dbx-link{display:inline-flex;gap:5px;align-items:center;margin-top:12px;font-size:12px;font-weight:600;color:var(--acc-ink);text-decoration:none;align-self:flex-start}
+  .dbx-link:hover{text-decoration:underline}
+  .dbx-sub-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600;margin:12px 0 4px}
+  .dbx-sub-h:first-child{margin-top:0}
+  .dbx-alert{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--bad) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--bad) 22%,transparent);margin-bottom:10px;font-size:12.5px;color:var(--ink)}
+  .dbx-alert .fa{color:var(--bad)} .dbx-alert a{margin-inline-start:auto;color:var(--bad);font-weight:600;text-decoration:none;white-space:nowrap}
+  .dbx-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+  .dbx-panel{border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px;background:var(--surface-2);min-width:0}
+  .dbx-track{height:6px;border-radius:6px;background:var(--line-soft);overflow:hidden;display:flex}
+  .dbx-track>i{display:block;height:100%;background:var(--tone,var(--acc));border-radius:inherit;transform-origin:left;animation:dbxGrowX .7s cubic-bezier(.2,.8,.2,1) both}
+  .dbx-track.stack>i{border-radius:0}
+  .dbx-track.lg{height:9px}
+  @keyframes dbxGrowX{from{transform:scaleX(0)}}
+
+  .dbx-meter{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .dbx-meter:last-child{border-bottom:0}
+  .dbx-meter>span:first-child{color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-meter>span:nth-child(2){font-size:12px;font-variant-numeric:tabular-nums;color:var(--body);display:flex;gap:6px;align-items:center}
+  .dbx-meter>.dbx-track{grid-column:1/-1}
+
+  .dbx-li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft);min-width:0}
+  .dbx-li:last-child{border-bottom:0}
+  .dbx-li-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--tone) 13%,transparent);color:var(--tone);flex:none;font-size:12px}
+  .dbx-li-b{flex:1;min-width:0}
+  .dbx-li-b b{display:block;font-weight:500;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-li-b span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .dbx-dot{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;color:var(--ink)}
+  .dbx-dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--tone);flex:none}
+  .dbx-dot b{margin-inline-start:auto;font-weight:600;font-variant-numeric:tabular-nums}
+
+  .dbx-tbl{overflow-x:auto;margin:0 -14px}
+  .dbx-tbl table{width:100%;border-collapse:collapse;font-size:12px}
+  .dbx-tbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:start;padding:7px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .dbx-tbl td{padding:7px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap;color:var(--body)}
+  .dbx-tbl tr:last-child td{border-bottom:0}
+  .dbx-tbl tbody tr:hover td{background:var(--surface-2)}
+  .dbx-tbl .r{text-align:end;font-variant-numeric:tabular-nums}
+  .dbx-tbl td.ink{color:var(--ink);font-weight:500}
+  .dbx-tbl .rank{width:22px;height:22px;border-radius:7px;display:inline-grid;place-items:center;background:var(--surface-2);font-size:11px;font-weight:600;color:var(--muted)}
+  .dbx-tbl tr:nth-child(-n+3) .rank{background:var(--acc-soft);color:var(--acc-ink)}
+
+  /* charts (HTML bars, SVG donut) */
+  .dbx-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:8px}
+  .dbx-leg span{display:inline-flex;align-items:center;gap:5px}
+  .dbx-leg i{width:8px;height:8px;border-radius:2px;background:var(--bc)}
+  .dbx-cols{height:var(--h,170px);display:flex;align-items:flex-end;gap:6px;background-image:linear-gradient(var(--line-soft) 1px,transparent 1px);background-size:100% 25%;border-bottom:1px solid var(--line)}
+  .dbx-col{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100%;min-width:0}
+  .dbx-bv{display:block;flex:1;max-width:28px;height:var(--v);background:var(--bc);border-radius:4px 4px 1px 1px;min-height:2px;transform-origin:bottom;animation:dbxGrow .7s cubic-bezier(.2,.8,.2,1) both;transition:filter .15s}
+  .dbx-bv.grad{background:linear-gradient(to top,color-mix(in srgb,var(--bc) 45%,transparent),var(--bc))}
+  .dbx-bv:hover{filter:brightness(1.12) saturate(1.1)}
+  @keyframes dbxGrow{from{transform:scaleY(0)}}
+  .dbx-xl{display:flex;gap:6px;margin-top:5px}
+  .dbx-xl span{flex:1;text-align:center;font-size:10px;color:var(--faint);min-width:0;overflow:visible;white-space:nowrap}
+  .dbx-donut-w{display:grid;grid-template-columns:128px minmax(0,1fr);gap:16px;align-items:center}
+  @container w (max-width:300px){.dbx-donut-w{grid-template-columns:1fr;justify-items:center}}
+  .dbx-donut{position:relative;width:128px;height:128px}
+  .dbx-donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .dbx-donut circle{fill:none;stroke-width:5.2;transition:stroke-width .15s}
+  .dbx-donut circle[data-tip]:hover{stroke-width:6.4}
+  .dbx-donut-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .dbx-donut-c b{font:600 17px/1.15 var(--num);color:var(--ink);font-variant-numeric:tabular-nums}
+  .dbx-donut-c span{font-size:10.5px;color:var(--muted)}
+  .dbx-dleg{display:flex;flex-direction:column;gap:2px;min-width:0;width:100%}
+  .dbx-dleg div{display:flex;align-items:center;gap:8px;font-size:12px;padding:3px 0;color:var(--ink);min-width:0}
+  .dbx-dleg i{width:9px;height:9px;border-radius:3px;background:var(--bc);flex:none}
+  .dbx-dleg em{font-style:normal;color:var(--muted);margin-inline-start:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* calendar */
+  .dbx-cal-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .dbx-cal-top b{font-size:14px;color:var(--ink);font-weight:600}
+  .dbx-cal-nav{display:inline-flex;gap:2px;margin-inline-start:auto}
+  .dbx-cal-nav .dbx-btn{height:28px;padding:0 10px;font-size:12px}
+  .dbx-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+  .dbx-cal .wd{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);text-align:center;padding-bottom:2px}
+  .dbx-cal .c{min-height:54px;border-radius:9px;background:var(--surface-2);padding:5px 7px;position:relative;font-size:12px;color:var(--body);display:flex;flex-direction:column;gap:3px}
+  .dbx-cal .c.e{background:transparent}
+  .dbx-cal .c.has{background:color-mix(in srgb,var(--tone) 11%,var(--surface));color:var(--ink)}
+  .dbx-cal .c.has::after{content:"";position:absolute;inset-inline-start:7px;bottom:6px;width:16px;height:3px;border-radius:2px;background:var(--tone)}
+  .dbx-cal .c.today{box-shadow:inset 0 0 0 1.5px var(--acc)}
+  .dbx-cal .c.today .n{background:var(--acc);color:#fff;border-radius:6px;padding:0 5px;align-self:flex-start}
+  .dbx-cal .n{font-weight:600;font-variant-numeric:tabular-nums}
+  .dbx-cal .k{position:absolute;top:5px;inset-inline-end:6px;font-size:10px;font-weight:600;color:var(--tone)}
+  .dbx-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .dbx-years .m b{display:block;font-size:11.5px;color:var(--ink);margin-bottom:4px}
+  .dbx-years .dbx-cal{gap:2px}
+  .dbx-years .dbx-cal .c{min-height:16px;padding:0;font-size:9px;border-radius:4px;align-items:center;justify-content:center}
+  .dbx-years .dbx-cal .c::after{display:none}
+  .dbx-years .dbx-cal .c.today .n{padding:0 2px;border-radius:3px}
+  .dbx-week{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:6px;overflow-x:auto}
+  .dbx-week .d{background:var(--surface-2);border-radius:10px;padding:7px;min-height:120px}
+  .dbx-week .d.today{box-shadow:inset 0 0 0 1.5px var(--acc)}
+  .dbx-week .d>b{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .dbx-pk{display:block;background:var(--surface);border-radius:7px;padding:5px 7px;margin-bottom:4px;font-size:11px;border-inline-start:3px solid var(--tone);color:var(--ink)}
+  .dbx-cal-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+  .dbx-cal-leg span{display:inline-flex;gap:5px;align-items:center}
+  .dbx-cal-leg i{width:9px;height:9px;border-radius:3px;background:var(--tone)}
+
+  /* skeletons */
+  .dbx-sk{background:linear-gradient(90deg,var(--line-soft) 25%,color-mix(in srgb,var(--line-soft) 35%,var(--surface)) 50%,var(--line-soft) 75%);background-size:200% 100%;animation:dbxSh 1.15s infinite linear;border-radius:8px}
+  @keyframes dbxSh{to{background-position:-200% 0}}
+  .dbx-skk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .dbx-skk .dbx-sk{height:56px}
+  .dbx-skc{display:flex;align-items:flex-end;gap:8px;height:150px}
+  .dbx-skc .dbx-sk{flex:1}
+  .dbx-skl .dbx-sk{height:14px;margin:11px 0}
+
+  /* overlays */
+  .dbx-lib{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:92vw;background:var(--surface);border-inline-start:1px solid var(--line);box-shadow:-24px 0 48px -24px rgba(0,0,0,.3);transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:150;display:flex;flex-direction:column}
+  .dbx.lib-open .dbx-lib{transform:none}
+  @media(min-width:1200px){.dbx.lib-open .dbx-page{margin-inline-end:350px}}
+  .dbx-lib-h{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+  .dbx-lib-h b{font-size:14px;color:var(--ink);flex:1}
+  .dbx-lib-s{margin:0 14px 8px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;padding:0 10px;height:34px;background:var(--surface-2);color:var(--muted)}
+  .dbx-lib-s input{border:0;background:transparent;outline:0;flex:1;color:var(--ink);min-width:0}
+  .dbx-lib-tip{margin:0 14px 6px;font-size:11px;color:var(--muted)}
+  .dbx-lib-l{flex:1;overflow-y:auto;padding:0 8px 16px}
+  .dbx-lib-g{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:600;padding:12px 6px 4px}
+  .dbx-li2{display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:10px;cursor:grab;touch-action:none;user-select:none}
+  .dbx-li2:hover{background:var(--surface-2)}
+  .dbx-li2:hover .dbx-ib{color:var(--acc);background:var(--acc-soft)}
+  .dbx-sketch{width:54px;height:38px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);flex:none;display:grid;place-items:center}
+  .dbx-sketch svg{width:48px;height:32px}
+  .dbx-sketch svg *{fill:color-mix(in srgb,var(--acc) 40%,transparent)}
+  .dbx-sketch svg .s{fill:none;stroke:color-mix(in srgb,var(--acc) 50%,transparent);stroke-width:4}
+  .dbx-li2-b{flex:1;min-width:0}
+  .dbx-li2-b b{display:block;font-weight:500;color:var(--ink);font-size:12.5px}
+  .dbx-li2-b span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dbx-lib-e{text-align:center;color:var(--muted);padding:40px 20px;font-size:12.5px}
+  .dbx-lib-e .fa{font-size:22px;color:var(--ok);display:block;margin-bottom:8px}
+
+  .dbx-pop{position:fixed;z-index:300;background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:5px;min-width:200px;animation:dbxDrop .15s}
+  .dbx-pop button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--ink);font-size:12.5px;text-align:start}
+  .dbx-pop button:hover{background:var(--surface-2)}
+  .dbx-pop button .fa{width:14px;color:var(--muted)}
+  .dbx-pop hr{border:0;border-top:1px solid var(--line-soft);margin:4px 0}
+
+  .dbx-modal{position:fixed;inset:0;z-index:350;background:rgba(10,14,22,.45);display:grid;place-items:center;padding:16px}
+  .dbx-modal[hidden]{display:none}
+  .dbx-modal>div{background:var(--surface);border-radius:16px;padding:20px;max-width:380px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);animation:dbxDrop .2s}
+  .dbx-modal h4{margin:0 0 6px;color:var(--ink);font-size:15px}
+  .dbx-modal p{margin:0 0 16px;color:var(--muted);font-size:12.5px}
+  .dbx-modal .acts{display:flex;justify-content:flex-end;gap:8px}
+
+  .dbx-toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+  .dbx-toast{pointer-events:auto;background:#141a26;color:#e8ecf3;border-radius:11px;padding:9px 10px 9px 14px;font-size:12.5px;box-shadow:0 14px 30px -10px rgba(0,0,0,.45);display:flex;gap:10px;align-items:center;animation:dbxDrop .2s}
+  .dbx-toast .fa{color:#6fd3a5} .dbx-toast.bad .fa{color:#ff8f8a}
+  .dbx-toast button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:3px 9px;cursor:pointer;font-weight:600;font-size:12px}
+  .dbx-tip{position:fixed;z-index:500;pointer-events:none;background:#141a26;color:#eef1f6;font-size:11.5px;padding:5px 9px;border-radius:7px;white-space:nowrap;box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+  .dbx-tip[hidden]{display:none}
+
+  .dbx-empty{text-align:center;padding:56px 20px;border:2px dashed var(--line);border-radius:16px;color:var(--muted)}
+  .dbx-empty .fa{font-size:28px;color:var(--acc);margin-bottom:10px;display:block}
+  .dbx-empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+  .dbx-empty .dbx-btn{margin-top:14px}
+
+  @container page (max-width:640px){
+    .dbx-btn .tx,.dbx-bar-h,.dbx-upd{display:none}
+    .dbx-bar{flex-wrap:wrap}
+    .dbx-btn{padding:0 10px}
+    .dbx-greet h1{font-size:18px}
+  }
+
+  /* ================= A · Slate Console ================= */
+  .dbx[data-dir="a"] .dbx-w{box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .dbx[data-dir="a"] .dbx-kpis{gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
+  .dbx[data-dir="a"] .dbx-kpi{background:var(--surface);border-radius:0}
+
+  /* ================= B · Soft Card ================= */
+  .dbx[data-dir="b"]{--r:16px}
+  .dbx[data-dir="b"] .dbx-w{border-color:transparent;box-shadow:var(--shadow)}
+  .dbx[data-dir="b"].is-editing .dbx-w{border-color:var(--acc-line)}
+  .dbx[data-dir="b"] .dbx-top{background:linear-gradient(120deg,var(--acc) 0%,color-mix(in srgb,var(--acc) 64%,#0b1020) 100%);color:#fff;border-radius:18px;padding:18px 20px;overflow:hidden;align-items:center}
+  .dbx[data-dir="b"] .dbx-top::before,.dbx[data-dir="b"] .dbx-top::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07)}
+  .dbx[data-dir="b"] .dbx-top::before{width:260px;height:260px;right:-60px;top:-140px}
+  .dbx[data-dir="b"] .dbx-top::after{width:160px;height:160px;right:180px;bottom:-110px}
+  .dbx[data-dir="b"] .dbx-greet h1{color:#fff}
+  .dbx[data-dir="b"] .dbx-greet p,.dbx[data-dir="b"] .dbx-eyebrow,.dbx[data-dir="b"] .dbx-upd{color:rgba(255,255,255,.75)}
+  .dbx[data-dir="b"] .dbx-top .dbx-btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.24);color:#fff}
+  .dbx[data-dir="b"] .dbx-top .dbx-btn.pri{background:#fff;color:color-mix(in srgb,var(--acc) 85%,#000);border-color:#fff}
+  .dbx[data-dir="b"] .dbx-chip{border-radius:50%}
+  .dbx[data-dir="b"] .dbx-kpi{background:color-mix(in srgb,var(--tone) 7%,var(--surface));padding:12px}
+  .dbx[data-dir="b"] .dbx-kpi-ic{border-radius:50%}
+  .dbx[data-dir="b"] .dbx-div-t{text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--ink)}
+  .dbx[data-dir="b"] .dbx-div-rule{background:linear-gradient(90deg,var(--line),transparent)}
+  .dbx[data-dir="b"] .dbx-panel{background:var(--surface-2);border-color:transparent}
+
+  /* ================= C · Editorial ================= */
+  .dbx[data-dir="c"]{--num:Fraunces,Georgia,serif;--r:4px}
+  .dbx[data-dir="c"] .dbx-w{border:0;border-top:2px solid var(--ink);box-shadow:0 1px 0 var(--line)}
+  .dbx[data-dir="c"].is-editing .dbx-w{border:1px dashed var(--acc-line);border-top:2px solid var(--acc)}
+  .dbx[data-dir="c"] .dbx-chip{display:none}
+  .dbx[data-dir="c"] .dbx-ht h3{text-transform:uppercase;letter-spacing:.12em;font-size:11px}
+  .dbx[data-dir="c"] .dbx-kpi{padding:6px 12px 6px 0;border-inline-end:1px solid var(--line-soft);border-radius:0}
+  .dbx[data-dir="c"] .dbx-kpi-ic{background:none;width:auto;height:auto;font-size:12px;margin-top:2px}
+  .dbx[data-dir="c"] .dbx-kpi-v{font-weight:500;font-size:25px}
+  .dbx[data-dir="c"] .dbx-kpis.mini .dbx-kpi-v{font-size:20px}
+  .dbx[data-dir="c"] .dbx-big{font-weight:500;font-size:30px}
+  .dbx[data-dir="c"] .dbx-donut-c b{font-weight:500;font-size:20px}
+  .dbx[data-dir="c"] .dbx-top{border-bottom:2px solid var(--ink);padding-bottom:14px}
+  .dbx[data-dir="c"] .dbx-greet h1{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:30px;letter-spacing:-.02em}
+  .dbx[data-dir="c"] .dbx-eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:10.5px}
+  .dbx[data-dir="c"] .dbx-div{padding-top:18px}
+  .dbx[data-dir="c"] .dbx-div-t{font-family:Fraunces,Georgia,serif;font-weight:500;font-size:21px;text-transform:none;letter-spacing:-.01em;color:var(--ink)}
+  .dbx[data-dir="c"] .dbx-panel{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;padding:10px 0 0}
+  .dbx[data-dir="c"] .dbx-bar{border-radius:4px}
+  .dbx[data-dir="c"] .dbx-cal .c,.dbx[data-dir="c"] .dbx-week .d{border-radius:3px}
+
+  @media (prefers-reduced-motion:reduce){
+    .dbx *,.dbx *::before,.dbx *::after{animation:none!important;transition:none!important}
+    .dbx-w.is-drag{rotate:0deg;scale:1}
+  }
+</style>
+</head>
+<body>
+<div class="demo">
+  <b>Home dashboard · Vue</b>
+  <div class="grp"><span class="lbl">Direction</span>
+    <button class="opt on" data-dir="a">A · Slate Console</button>
+    <button class="opt" data-dir="b">B · Soft Card</button>
+    <button class="opt" data-dir="c">C · Editorial</button>
+  </div>
+  <div class="grp"><span class="lbl">Theme</span><button class="opt on" data-theme="light">Light</button><button class="opt" data-theme="dark">Dark</button></div>
+  <div class="grp"><span class="lbl">Accent</span>
+    <button class="sw on" style="background:#2b4380" data-acc="#2b4380" aria-label="Navy"></button>
+    <button class="sw" style="background:#0f9d8a" data-acc="#0f9d8a" aria-label="Teal"></button>
+    <button class="sw" style="background:#b4572e" data-acc="#b4572e" aria-label="Copper"></button>
+    <button class="sw" style="background:#7048e8" data-acc="#7048e8" aria-label="Violet"></button>
+  </div>
+  <div class="grp"><span class="lbl">Viewport</span><button class="opt on" data-vp="desktop">Desktop</button><button class="opt" data-vp="tablet">Tablet</button><button class="opt" data-vp="phone">Phone</button></div>
+  <div class="grp"><span class="lbl">Save</span><button class="opt on" data-save="ok">Works</button><button class="opt" data-save="fail">Fails</button></div>
+  <div class="grp"><button class="opt" id="resetPreview">Reset preview</button></div>
+  <div class="vnote" id="vnote"></div>
+  <div class="vnote"><em>Try it:</em> press <em>Customize</em>, then drag a card by its <i class="fa fa-arrows"></i> handle, resize with S / M / L / XL or the right-edge handle, hide a card and drag it back in from <em>Add widget</em>, or rename a divider. When a handle has focus, the arrow keys move the card and Shift + ← / → resizes it. Ctrl/⌘ + Z undoes.</div>
+</div>
+
+<div class="app">
+  <aside class="rail"><span class="on"><i class="fa fa-th-large"></i></span><span><i class="fa fa-shopping-cart"></i></span><span><i class="fa fa-key"></i></span><span><i class="fa fa-bar-chart"></i></span><span><i class="fa fa-cog"></i></span></aside>
+  <div class="main">
+    <div class="topbar"><i class="fa fa-bars"></i><span class="pill"><i class="fa fa-code-fork"></i> Branch: Main</span></div>
+    <div class="wrap" id="wrap" data-vp="desktop">
+      <div class="dbx" id="dbx" data-dir="a">
+        <div class="dbx-page">
+          <div class="dbx-top">
+            <div class="dbx-greet">
+              <div class="dbx-eyebrow"><i class="fa fa-calendar-o"></i> Monday, 12 October 2026 <span>·</span> <i class="fa fa-code-fork"></i> Main Branch</div>
+              <h1>Good morning, Rahees</h1>
+              <p>Here's how the business is doing today.</p>
+            </div>
+            <div class="dbx-acts">
+              <span class="dbx-upd" id="upd">Updated just now</span>
+              <button class="dbx-btn" id="btnRefresh" type="button"><i class="fa fa-refresh"></i><span class="tx">Refresh</span></button>
+              <button class="dbx-btn pri" id="btnCustomize" type="button"><i class="fa fa-sliders"></i><span class="tx">Customize</span></button>
+            </div>
+          </div>
+
+          <div class="dbx-bar" role="toolbar" aria-label="Dashboard editor">
+            <span class="dbx-bar-t"><i class="fa fa-th-large"></i><b>Customizing</b><span class="dbx-bar-h">Drag to move · S M L XL to resize · hide what you don't need</span></span>
+                        <button class="dbx-btn" id="btnAdd" type="button"><i class="fa fa-plus"></i><span class="tx">Add widget</span><span class="dbx-count" id="hidCount" data-n="0">0</span></button>
+            <button class="dbx-btn" id="btnDivider" type="button"><i class="fa fa-minus"></i><span class="tx">Add divider</span></button>
+            <span class="dbx-sep"></span>
+            <button class="dbx-ib" id="btnUndo" type="button" title="Undo (Ctrl/⌘ Z)" aria-label="Undo"><i class="fa fa-undo"></i></button>
+            <button class="dbx-ib" id="btnRedo" type="button" title="Redo (Ctrl/⌘ Shift Z)" aria-label="Redo"><i class="fa fa-repeat"></i></button>
+            <button class="dbx-ib" id="btnReset" type="button" title="Reset to default" aria-label="Reset to default"><i class="fa fa-history"></i></button>
+            <span class="dbx-save" id="save" data-s="saved"><i class="fa fa-check"></i> Saved</span>
+            <button class="dbx-btn pri" id="btnDone" type="button"><i class="fa fa-check"></i><span class="tx">Done</span></button>
+          </div>
+
+          <div class="dbx-gw" id="gw">
+            <div class="dbx-guides" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="dbx-grid" id="grid"></div>
+          </div>
+          <div class="dbx-empty" id="empty" hidden>
+            <i class="fa fa-th-large"></i><b>Your dashboard is empty</b>
+            Add the widgets you want to see every day.<br>
+            <button class="dbx-btn pri" id="btnEmptyAdd" type="button"><i class="fa fa-plus"></i> Add widgets</button>
+          </div>
+        </div>
+
+        <aside class="dbx-lib" id="lib" aria-label="Widget library">
+          <div class="dbx-lib-h"><b>Add widgets</b><button class="dbx-ib" id="libClose" type="button" aria-label="Close"><i class="fa fa-times"></i></button></div>
+          <label class="dbx-lib-s"><i class="fa fa-search"></i><input id="libQ" type="search" placeholder="Search widgets"></label>
+          <div class="dbx-lib-tip">Drag a widget onto the dashboard, or click it to add it at the end.</div>
+          <div class="dbx-lib-l" id="libL"></div>
+        </aside>
+        <div class="dbx-layer" id="layer"></div>
+        <div class="dbx-pop" id="pop" hidden></div>
+        <div class="dbx-modal" id="modal" hidden><div role="dialog" aria-modal="true" aria-labelledby="mT">
+          <h4 id="mT">Reset to the default layout?</h4>
+          <p>Your order, widths, hidden widgets and dividers go back to how the dashboard ships. You can undo this.</p>
+          <div class="acts"><button class="dbx-btn" id="mNo" type="button">Cancel</button><button class="dbx-btn pri" id="mYes" type="button">Reset layout</button></div>
+        </div></div>
+        <div class="dbx-toasts" id="toasts"></div>
+        <div class="dbx-tip" id="tip" hidden></div>
+        <div class="sr" aria-live="polite" id="live"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const dbx = $('#dbx'), grid = $('#grid'), gw = $('#gw'), layer = $('#layer'), lib = $('#lib'), pop = $('#pop'), tip = $('#tip');
+const LS = 'dbx-preview-layout-v1';
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- fake-data helpers ---------------- */
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const money = n => `<small>QAR</small>${fmt(n)}`;
+const short = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k' : fmt(n);
+const rng = s => { let h = 1779033703 ^ s.length; for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19 } return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296 } };
+const TODAY = new Date(2026, 9, 12);
+const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const shift = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x };
+const labels = o => {
+  if (o === 'Week') return [...Array(7)].map((_, i) => WD[shift(TODAY, i - 6).getDay()]);
+  if (o === 'Day' || o === 'Days') return [...Array(30)].map((_, i) => { const d = shift(TODAY, i - 29); return d.getDate() + ' ' + MS[d.getMonth()] });
+  if (o === 'Ahead') return [...Array(7)].map((_, i) => { const d = shift(TODAY, i); return d.getDate() + ' ' + MS[d.getMonth()] });
+  if (o === 'Month') return [...Array(12)].map((_, i) => { const d = new Date(2026, 9 - 11 + i, 1); return MS[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2) });
+  return ['2021','2022','2023','2024','2025','2026'];
+};
+
+/* ---------------- content renderers ---------------- */
+const delta = (d, inv, cmp = 'vs previous 7 days') => { const good = inv ? d < 0 : d >= 0; return `<span class="dbx-delta ${good ? 'up' : 'down'}" data-tip="${cmp}"><i class="fa fa-caret-${d >= 0 ? 'up' : 'down'}"></i>${Math.abs(d).toFixed(1)}%</span>` };
+const kpis = (items, mini) => `<div class="dbx-kpis${mini ? ' mini' : ''}" data-n="${items.length}">${items.map(k => `<div class="dbx-kpi t-${k.tone || 'acc'}"><span class="dbx-kpi-ic"><i class="fa fa-${k.ic}"></i></span><div class="dbx-kpi-b"><div class="dbx-kpi-l">${k.l}</div><div class="dbx-kpi-v">${k.v}</div>${k.d != null || k.s ? `<div class="dbx-kpi-s">${k.d != null ? delta(k.d, k.inv, k.cmp) : ''}${k.s || ''}</div>` : ''}</div></div>`).join('')}</div>`;
+const badge = (t, tone = 'slate') => `<span class="dbx-badge t-${tone}">${t}</span>`;
+const track = (p, tone = 'acc', cls = '') => `<div class="dbx-track ${cls} t-${tone}"><i style="width:${Math.max(0, Math.min(100, p))}%"></i></div>`;
+const meters = rows => rows.map(m => `<div class="dbx-meter t-${m.tone || 'acc'}"><span>${m.n}</span><span>${m.v}</span>${track(m.p, m.tone || 'acc')}</div>`).join('');
+const list = rows => rows.map(r => `<div class="dbx-li"><span class="dbx-li-ic t-${r.tone || 'acc'}"><i class="fa fa-${r.ic}"></i></span><div class="dbx-li-b"><b>${r.t}</b><span>${r.s}</span></div>${r.r || ''}</div>`).join('');
+const table = (cols, rows) => `<div class="dbx-tbl"><table><thead><tr>${cols.map(c => `<th class="${c.r ? 'r' : ''}">${c.l}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, i) => `<td class="${cols[i].r ? 'r' : ''} ${cols[i].ink ? 'ink' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const legend = series => `<div class="dbx-leg">${series.map(s => `<span style="--bc:var(--${s.c})"><i></i>${s.n}</span>`).join('')}</div>`;
+function bars(L, series, { h = 170, grad, cur = true, leg } = {}) {
+  const max = Math.max(1, ...series.flatMap(s => s.d)) * 1.1, every = L.length > 14 ? Math.ceil(L.length / 8) : 1;
+  return `${leg ? legend(series) : ''}<div class="dbx-cols" style="--h:${h}px">${L.map((l, i) => `<div class="dbx-col">${series.map(s => `<i class="dbx-bv${grad ? ' grad' : ''}" style="--v:${(s.d[i] / max * 100).toFixed(1)}%;--bc:var(--${s.c});animation-delay:${i * 18}ms" data-tip="${l} · ${s.n}: ${cur ? 'QAR ' : ''}${fmt(s.d[i])}"></i>`).join('')}</div>`).join('')}</div><div class="dbx-xl">${L.map((l, i) => `<span>${i % every === 0 ? l : ''}</span>`).join('')}</div>`;
+}
+function donut(slices, center, sub, cur = true) {
+  const tot = slices.reduce((a, s) => a + s.v, 0); let acc = 0;
+  const arcs = slices.map(s => { const p = s.v / tot * 100, g = slices.length > 1 ? .8 : 0, el = `<circle cx="21" cy="21" r="15.915" style="stroke:var(--${s.c})" stroke-dasharray="${Math.max(0, p - g)} ${100 - p + g}" stroke-dashoffset="${-acc}" data-tip="${s.n}: ${cur ? 'QAR ' : ''}${fmt(s.v)} · ${p.toFixed(1)}%"/>`; acc += p; return el }).join('');
+  return `<div class="dbx-donut-w"><div class="dbx-donut"><svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.915" style="stroke:var(--line-soft)"/>${arcs}</svg><div class="dbx-donut-c"><b>${center}</b><span>${sub}</span></div></div><div class="dbx-dleg">${slices.map(s => `<div style="--bc:var(--${s.c})"><i></i>${s.n}<em>${cur ? short(s.v) : fmt(s.v)} · ${(s.v / tot * 100).toFixed(0)}%</em></div>`).join('')}</div></div>`;
+}
+function calendar(o) {
+  const st = (y, m, d) => { const r = rng(`c${y}-${m}-${d}`)(); return r < .16 ? 'ok' : r < .23 ? 'warn' : r < .36 ? 'info' : '' };
+  const grid = (y, m, mini) => {
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(); let h = mini ? '' : WD.map(w => `<div class="wd">${w.slice(0, mini ? 1 : 3)}</div>`).join('');
+    for (let i = 0; i < first; i++) h += '<div class="c e"></div>';
+    for (let d = 1; d <= days; d++) { const s = st(y, m, d), today = y === 2026 && m === 9 && d === 12, k = s && rng(`k${m}${d}`)() < .3 ? 2 + (d % 2) : 0;
+      h += `<div class="c ${s ? 'has t-' + s : ''} ${today ? 'today' : ''}" ${s ? `data-tip="${d} ${MS[m]} · ${k || 1} package visit${k ? 's' : ''} · ${s === 'ok' ? 'Visited' : s === 'warn' ? 'Rescheduled' : 'Pending'}"` : ''}><span class="n">${d}</span>${!mini && k ? `<span class="k">×${k}</span>` : ''}${!mini && s === 'warn' ? '<span class="k" style="top:auto;bottom:3px"><i class="fa fa-repeat"></i></span>' : ''}</div>` }
+    return `<div class="dbx-cal">${h}</div>`;
+  };
+  const leg = `<div class="dbx-cal-leg"><span class="t-ok"><i></i>Visited</span><span class="t-warn"><i></i>Rescheduled</span><span class="t-info"><i></i>Pending</span><span class="t-acc"><i style="background:none;box-shadow:inset 0 0 0 1.5px var(--acc)"></i>Today</span></div>`;
+  const pk = ['Deep clean · Villa 12','AC service · T2-504','Pest control · Block C','Garden care · Villa 4','Pool service · Villa 9','Window wash · T1'];
+  let title, body;
+  if (o === 'Year') { title = '2026'; body = `<div class="dbx-years">${MS.map((n, m) => `<div class="m"><b>${n}</b>${grid(2026, m, true)}</div>`).join('')}</div>` }
+  else if (o === 'Week') { title = '11 – 17 Oct 2026'; body = `<div class="dbx-week">${[...Array(7)].map((_, i) => { const d = shift(TODAY, i - 1), r = rng('w' + i); return `<div class="d ${i === 1 ? 'today' : ''}"><b>${WD[d.getDay()]} ${d.getDate()}</b>${[...Array(1 + Math.floor(r() * 3))].map(() => { const s = ['ok','warn','info'][Math.floor(r() * 3)]; return `<span class="dbx-pk t-${s}">${pk[Math.floor(r() * pk.length)]}</span>` }).join('')}</div>` }).join('')}</div>` }
+  else if (o === 'Day') { title = 'Monday, 12 Oct 2026'; body = list([{ ic: 'calendar', tone: 'ok', t: 'AC service · Tower 2, 504', s: 'Al-Kuwari Trading · visited 09:40', r: badge('Visited', 'ok') }, { ic: 'calendar', tone: 'warn', t: 'Deep clean · Villa 12', s: 'Noor Hassan · moved from 8 Oct', r: badge('Rescheduled', 'warn') }, { ic: 'calendar', tone: 'info', t: 'Pest control · Block C', s: 'Pearl Residences · due 16:00', r: badge('Pending', 'info') }]) }
+  else { title = 'October 2026'; body = grid(2026, 9) }
+  return `<div class="dbx-cal-top"><b>${title}</b><div class="dbx-cal-nav"><button class="dbx-ib" type="button" aria-label="Previous"><i class="fa fa-angle-left"></i></button><button class="dbx-btn" type="button">Today</button><button class="dbx-ib" type="button" aria-label="Next"><i class="fa fa-angle-right"></i></button></div></div>${body}${leg}`;
+}
+const scale = o => ({ Today: .06, Week: .3, Month: 1, All: 9.4 })[o] || 1;
+const status = s => badge(s, { Pending: 'warn', 'In progress': 'info', Completed: 'ok', Cancelled: 'slate', Approved: 'info', Collected: 'c2', Rejected: 'bad', Requirement: 'slate' }[s]);
+const prio = p => badge(p, { Low: 'slate', Medium: 'info', High: 'warn', Critical: 'bad' }[p]);
+
+/* ---------------- widget catalogue ---------------- */
+// k = skeleton/sketch kind · o = header switcher · od = default option · min = narrowest width (of 12)
+const D = {
+  'business-kpis': { g: 'Sales', t: 'Weekly summary', s: 'Last 7 days · vs the previous 7', ic: 'line-chart', min: 6, k: 'kpi', link: 'Open sales report',
+    r: () => kpis([{ l: 'Weekly sales', v: money(184320), d: 12.4, ic: 'shopping-cart' }, { l: 'Weekly purchase', v: money(96410), d: -4.1, ic: 'truck', tone: 'c2' }, { l: 'Weekly expense', v: money(22870), d: 3.2, inv: 1, ic: 'money', tone: 'c4' }, { l: 'Weekly income', v: money(31540), d: 8.9, ic: 'bank', tone: 'c3' }]) },
+  'inventory': { g: 'Inventory & assets', t: 'Inventory', s: 'Stock value & catalogue', ic: 'cubes', min: 4, k: 'kpi', link: 'Open inventory',
+    r: () => `<div class="dbx-lab">Total stock value</div><div class="dbx-big">${money(1284900)}</div><div style="margin-top:10px">${kpis([{ l: 'Categories', v: 24, ic: 'tags', tone: 'c4' }, { l: 'Products', v: '1,862', ic: 'cube', tone: 'ok' }, { l: 'Services', v: 46, ic: 'wrench', tone: 'c3' }], 1)}</div>` },
+  'asset-kpis': { g: 'Inventory & assets', t: 'Assets', s: 'Depreciation status', ic: 'briefcase', min: 4, k: 'kpi',
+    r: () => kpis([{ l: 'Total assets', v: 312, ic: 'briefcase', s: 'QAR 4.8M book value' }, { l: 'Fully depreciated', v: 41, ic: 'check-circle', tone: 'ok' }, { l: 'Due this month', v: 18, ic: 'clock-o', tone: 'warn' }, { l: 'Disposed', v: 3, ic: 'archive', tone: 'bad', s: 'This month' }], 1) },
+  'asset-groups': { g: 'Inventory & assets', t: 'Assets by group', s: 'Top 6 groups', ic: 'tags', min: 4, k: 'meter',
+    r: () => meters([['IT equipment', 118], ['Furniture', 72], ['Vehicles', 64], ['Machinery', 31], ['Tools', 18], ['Buildings', 9]].map(([n, v]) => ({ n, v: v, p: v / 118 * 100 }))) },
+  'sale-overview': { g: 'Sales', t: 'Sales overview', s: 'Daily sales performance', ic: 'bar-chart', min: 6, k: 'chart', o: ['Day', 'Week', 'Month', 'Year'], od: 'Week', link: 'View sales list',
+    r: o => { const L = labels(o), r = rng('so' + o), b = { Day: 26e3, Week: 28e3, Month: 6.4e5, Year: 7.2e6 }[o]; return bars(L, [{ n: 'Sales', c: 'c1', d: L.map(() => b * (.45 + r() * .65)) }], { h: 168, grad: 1 }) +
+      `<div class="dbx-split"><div><div class="dbx-lab">Today's sales</div><div class="dbx-big">${money(26480)}</div><div class="dbx-row">${badge('Lowest QAR 120')}${badge('Highest QAR 4,850', 'ok')}</div></div><div><div class="dbx-lab" style="margin-bottom:2px">Payment methods</div>${meters([{ n: 'Cash', v: 'QAR 12,710 · 48%', p: 48 }, { n: 'Card', v: 'QAR 9,798 · 37%', p: 37, tone: 'c2' }, { n: 'Credit', v: 'QAR 3,972 · 15%', p: 15, tone: 'c3' }])}</div></div>` } },
+  'top-sale-items': { g: 'Sales', t: "Today's top picks", s: 'Best sellers today', ic: 'star', min: 4, k: 'table',
+    r: () => table([{ l: '#' }, { l: 'Item', ink: 1 }, { l: 'Qty', r: 1 }, { l: 'Amount', r: 1 }], [['Linen shirt · white', 34, 5440], ['Oud perfume 50ml', 21, 6930], ['Abaya classic', 18, 7920], ['Running shoe 42', 15, 4350], ['Leather wallet', 14, 2380], ['Silk scarf', 12, 1980], ['Kids hoodie', 11, 1430], ['Aviator sunglasses', 9, 2610]].map((r, i) => [`<span class="rank">${i + 1}</span>`, r[0], r[1], fmt(r[2])])) },
+  'appointment-chart': { g: 'Appointments', t: 'Appointments', s: 'Completed · pending · cancelled', ic: 'calendar', min: 6, k: 'chart', o: ['Week', 'Month'], od: 'Week', link: 'Open appointments',
+    r: o => { const L = o === 'Week' ? labels('Ahead') : labels('Days'), r = rng('ap' + o); return bars(L, [{ n: 'Completed', c: 'ok', d: L.map(() => Math.round(r() * 9)) }, { n: 'Pending', c: 'warn', d: L.map(() => Math.round(r() * 6)) }, { n: 'Cancelled', c: 'bad', d: L.map(() => Math.round(r() * 2)) }], { h: 190, cur: false, leg: 1 }) } },
+  'upcoming-appointments': { g: 'Appointments', t: 'Upcoming appointments', s: 'Next 7 days', ic: 'clock-o', min: 4, k: 'list', link: 'All appointments',
+    r: () => list([['Deep cleaning', 'Sana', 'Ahmed Al-Thani', 'Today 16:30', 'warn'], ['Hair & beard', 'Imran', 'Omar Siddiqui', 'Tomorrow', 'acc'], ['Property viewing', 'Fatima', 'J. Mathew', 'in 2 days', 'c2'], ['AC maintenance', 'Rahul', 'Villa 12 · Noor', 'in 3 days', 'c3'], ['Consultation', 'Joseph', 'Mariam Khalid', 'in 5 days', 'c4']].map(a => ({ ic: 'calendar', tone: a[4], t: a[0], s: `with ${a[1]} · ${a[2]}`, r: badge(a[3], a[4] === 'warn' ? 'warn' : 'slate') }))) },
+  'income-expense-bar': { g: 'Finance', t: 'Income vs expense', s: 'Last 12 months', ic: 'area-chart', min: 6, k: 'chart', link: 'Open P&L report',
+    r: () => { const L = labels('Month'), r = rng('ie'); return bars(L, [{ n: 'Income', c: 'c2', d: L.map(() => 9e4 + r() * 6e4) }, { n: 'Expense', c: 'c4', d: L.map(() => 5e4 + r() * 5e4) }], { h: 190, leg: 1 }) } },
+  'income-expense-pie': { g: 'Finance', t: 'This month', s: 'Income vs expense · October', ic: 'pie-chart', min: 4, k: 'donut',
+    r: () => donut([{ n: 'Income', v: 31540, c: 'c2' }, { n: 'Expense', v: 22870, c: 'c4' }], '8.7k', 'Net · QAR') },
+  'package-calendar': { g: 'Packages', t: 'Package calendar', s: 'Scheduled package visits', ic: 'calendar-o', min: 8, k: 'cal', o: ['Day', 'Week', 'Month', 'Year'], od: 'Month', link: 'Open packages',
+    r: o => calendar(o) },
+  'lead-status': { g: 'Leads', t: 'Lead pipeline', s: 'All open leads by stage', ic: 'users', min: 6, k: 'kpi', link: 'Open leads',
+    r: () => kpis([{ l: 'Total leads', v: 428, ic: 'users' }, { l: 'New this week', v: 37, ic: 'plus-circle', tone: 'info' }, { l: 'Follow-ups today', v: 12, ic: 'phone', tone: 'warn' }, { l: 'Closed deals', v: 96, ic: 'check-circle', tone: 'ok' }, { l: 'Visits scheduled', v: 18, ic: 'map-marker', tone: 'c2' }, { l: 'Call backs', v: 9, ic: 'bell-o', tone: 'c4' }], 1) },
+  'lead-units': { g: 'Leads', t: 'Available units', s: 'By property group', ic: 'home', min: 4, k: 'table',
+    r: () => table([{ l: 'Property group', ink: 1 }, { l: 'Available', r: 1 }], [['Lusail Marina', 22], ['Al Waab Towers', 14], ['Pearl Residences', 9], ['Msheireb Lofts', 7], ['Old Airport Villas', 5]].map(r => [r[0], badge(r[1], 'ok')])) },
+  'lead-activity': { g: 'Leads', t: 'Recent lead activity', s: 'Last updated leads', ic: 'history', min: 4, k: 'list',
+    r: () => list([['Hamad Al-Marri', 'Visit Scheduled', 'Sana', '12m', 'c2'], ['Priya Nair', 'Follow Up', 'Imran', '40m', 'warn'], ['Khalid Rahman', 'Closed Deal', 'Fatima', '2h', 'ok'], ['Lina Haddad', 'New Lead', 'Rahul', '3h', 'info'], ['George Thomas', 'Call Back', 'Joseph', '5h', 'c4']].map(a => ({ ic: 'user', tone: a[4], t: a[0], s: `${a[2]} · ${a[3]} ago`, r: badge(a[1], a[4]) }))) },
+  'lead-sources': { g: 'Leads', t: 'Leads per source', s: 'All time', ic: 'pie-chart', min: 4, k: 'donut',
+    r: () => donut([{ n: 'Website', v: 163, c: 'c1' }, { n: 'Walk-in', v: 90, c: 'c2' }, { n: 'Referral', v: 73, c: 'c3' }, { n: 'Social', v: 64, c: 'c4' }, { n: 'Broker', v: 38, c: 'c5' }], 428, 'leads', false) },
+  'lead-employees': { g: 'Leads', t: 'Leads per employee', s: 'Assigned leads', ic: 'bar-chart', min: 4, k: 'chart',
+    r: () => bars(['Sana', 'Imran', 'Rahul', 'Fatima', 'Joseph', 'Noor'], [{ n: 'Leads', c: 'c1', d: [92, 81, 74, 68, 59, 54] }], { h: 150, cur: false }) },
+  'property-occupancy': { g: 'Property', t: 'Occupancy', s: 'All buildings', ic: 'building', min: 6, k: 'kpi', link: 'Open units',
+    r: () => `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><div class="dbx-big">86.4%</div><span class="dbx-lab">overall occupancy · 612 occupied, 96 vacant</span></div><div style="margin:8px 0 12px">${track(86.4, 'ok', 'lg')}</div>${kpis([{ l: 'Buildings', v: 18, ic: 'building' }, { l: 'Units', v: 708, ic: 'th' }, { l: 'Occupied', v: 612, ic: 'key', tone: 'ok' }, { l: 'Vacant', v: 96, ic: 'home', tone: 'warn' }], 1)}` },
+  'group-occupancy': { g: 'Property', t: 'Group occupancy', s: 'Occupied of total units', ic: 'th-large', min: 4, k: 'meter',
+    r: () => meters([['Al Waab Towers', 148, 160], ['Pearl Residences', 121, 134], ['Lusail Marina', 96, 140], ['Msheireb Lofts', 74, 82], ['Old Airport Villas', 39, 64]].map(([n, a, t]) => { const p = a / t * 100, tone = p >= 80 ? 'ok' : p >= 60 ? 'warn' : 'bad'; return { n, v: `${a}/${t} ${badge(p.toFixed(0) + '%', tone)}`, p, tone } })) },
+  'availability': { g: 'Property', t: 'Availability snapshot', s: 'Units available for sale', ic: 'th', min: 4, k: 'meter',
+    r: () => meters([['Lusail Marina', 22, 140, 31], ['Al Waab Towers', 14, 160, 12], ['Pearl Residences', 9, 134, 18], ['Msheireb Lofts', 7, 82, 6], ['Old Airport Villas', 5, 64, 3]].map(([n, a, t, s]) => ({ n, v: `${a} available · ${s} sold`, p: a / t * 100 * 3, tone: 'info' }))) },
+  'group-income': { g: 'Property', t: 'Group income', s: 'Rent collection by group', ic: 'money', min: 6, k: 'table', o: ['Today', 'Week', 'Month', 'All'], od: 'Month', link: 'Open rent payments',
+    r: o => { const f = scale(o); return table([{ l: 'Group', ink: 1 }, { l: 'Collected', r: 1 }, { l: 'Pending', r: 1 }, { l: 'Overdue', r: 1 }, { l: 'Rate' }], [['Al Waab Towers', 412e3, 61e3, 18e3], ['Pearl Residences', 318e3, 74e3, 22e3], ['Lusail Marina', 276e3, 98e3, 41e3], ['Msheireb Lofts', 162e3, 39e3, 9e3], ['Old Airport Villas', 72e3, 40e3, 6e3]].map(([n, c, p, od]) => { const rate = c / (c + p) * 100, tone = rate >= 80 ? 'ok' : rate >= 65 ? 'warn' : 'bad'; return [n, fmt(c * f), fmt(p * f), `<span style="color:var(--bad)">${fmt(od * f)}</span>`, `<div style="display:flex;align-items:center;gap:8px;min-width:110px"><div style="flex:1">${track(rate, tone)}</div><b style="font-size:11px">${rate.toFixed(0)}%</b></div>`] })) } },
+  'income-summary': { g: 'Property', t: 'Income summary', s: 'October 2026', ic: 'dollar', min: 4, k: 'kpi',
+    r: () => kpis([{ l: 'Collected', v: money(1240000), ic: 'check', tone: 'ok' }, { l: 'Pending', v: money(312000), ic: 'clock-o', tone: 'warn' }, { l: 'Overdue', v: money(96400), ic: 'exclamation-circle', tone: 'bad' }, { l: 'Collection rate', v: '79.9%', ic: 'line-chart' }], 1) },
+  'maintenance-kpis': { g: 'Maintenance', t: 'Maintenance', s: 'Requests by status', ic: 'wrench', min: 6, k: 'kpi', o: ['Today', 'Week', 'Month', 'All'], od: 'Month', link: 'Open maintenance',
+    r: o => { const f = scale(o), n = v => fmt(Math.max(1, v * f)); return kpis([{ l: 'Total requests', v: n(148), ic: 'wrench' }, { l: 'Pending', v: n(31), ic: 'clock-o', tone: 'warn' }, { l: 'In progress', v: n(22), ic: 'refresh', tone: 'info' }, { l: 'Completed', v: n(95), ic: 'check-circle', tone: 'ok' }]) } },
+  'maintenance-breakdown': { g: 'Maintenance', t: 'Priority & segment', s: 'This month', ic: 'sliders', min: 4, k: 'list',
+    r: () => `<div class="dbx-sub-h">By priority</div>${[['Low', 38, 'slate'], ['Medium', 61, 'info'], ['High', 34, 'warn'], ['Critical', 15, 'bad']].map(([n, v, t]) => `<div class="dbx-dot t-${t}">${n}<b>${v}</b></div>`).join('')}<div class="dbx-sub-h">By segment</div>${[['PPMC', 52, 'acc'], ['Corrective', 71, 'warn'], ['Preparation', 25, 'info']].map(([n, v, t]) => `<div class="dbx-dot t-${t}">${n}<b>${v}</b></div>`).join('')}` },
+  'maintenance-technicians': { g: 'Maintenance', t: 'Top technicians', s: 'Completed of assigned', ic: 'user', min: 4, k: 'meter',
+    r: () => meters([['Ali Hassan', 24, 27], ['Ramesh Kumar', 21, 25], ['John Paul', 17, 22], ['Bilal Ahmed', 14, 19], ['Sajid Khan', 11, 16]].map(([n, a, t]) => ({ n, v: `${a}/${t}`, p: a / t * 100, tone: 'ok' }))) },
+  'maintenance-groups': { g: 'Maintenance', t: 'Requests by group', s: 'This month', ic: 'building', min: 4, k: 'meter',
+    r: () => meters([['Al Waab Towers', 41], ['Pearl Residences', 33], ['Lusail Marina', 29], ['Msheireb Lofts', 21], ['Old Airport Villas', 14], ['Corniche Plaza', 10]].map(([n, v]) => ({ n, v, p: v / 41 * 100 }))) },
+  'maintenance-recent': { g: 'Maintenance', t: 'Recent maintenance requests', s: 'Last 10 requests', ic: 'tasks', min: 6, k: 'table', link: 'All requests',
+    r: () => table([{ l: 'Date' }, { l: 'Property', ink: 1 }, { l: 'Building' }, { l: 'Customer' }, { l: 'Priority' }, { l: 'Status' }], [['12 Oct', 'T2-504', 'Al Waab Towers', 'Ahmed Al-Thani', 'High', 'In progress'], ['12 Oct', 'Villa 12', 'Old Airport Villas', 'Noor Hassan', 'Critical', 'Pending'], ['11 Oct', 'PR-1108', 'Pearl Residences', 'Priya Nair', 'Medium', 'Completed'], ['11 Oct', 'LM-0302', 'Lusail Marina', 'George Thomas', 'Low', 'Completed'], ['10 Oct', 'ML-07', 'Msheireb Lofts', 'Lina Haddad', 'Medium', 'Pending'], ['10 Oct', 'T1-210', 'Al Waab Towers', 'Khalid Rahman', 'High', 'Cancelled']].map(r => [r[0], r[1], r[2], r[3], prio(r[4]), status(r[5])])) },
+  'complaint-kpis': { g: 'Complaints', t: 'Complaints', s: 'Volume & resolution', ic: 'exclamation-triangle', min: 6, k: 'kpi', o: ['Today', 'Week', 'Month', 'All'], od: 'Month', link: 'Open complaints',
+    r: o => { const f = scale(o), n = v => fmt(Math.max(1, v * f)); return `<div class="dbx-alert"><i class="fa fa-exclamation-circle"></i><span><b>4 overdue complaints</b> are past their target resolution time.</span><a href="#" onclick="return false">Review <i class="fa fa-angle-right"></i></a></div>` + kpis([{ l: 'Total complaints', v: n(64), ic: 'inbox', d: -8, inv: 1, cmp: 'vs last month' }, { l: 'Pending', v: n(14), ic: 'clock-o', tone: 'warn', s: '22% of total' }, { l: 'Urgent (critical)', v: n(5), ic: 'bolt', tone: 'bad', s: '8% of total' }, { l: 'Resolved', v: n(45), ic: 'check-circle', tone: 'ok', s: '70% resolution rate' }]) } },
+  'complaint-buildings': { g: 'Complaints', t: 'Complaints by building', s: 'Top 5', ic: 'building', min: 4, k: 'meter',
+    r: () => meters([['Al Waab Tower 2', 14], ['Pearl Block C', 11], ['Lusail Marina 3', 9], ['Msheireb Lofts', 6], ['Corniche Plaza', 4]].map(([n, v]) => ({ n, v, p: v / 14 * 100, tone: 'bad' }))) },
+  'complaint-trend': { g: 'Complaints', t: 'Monthly trend', s: 'New vs resolved · 3 months', ic: 'line-chart', min: 4, k: 'meter',
+    r: () => [['Aug 2026', 58, 52], ['Sep 2026', 71, 60], ['Oct 2026', 64, 45]].map(([m, n, r]) => `<div class="dbx-meter"><span>${m}</span><span>New ${n} · Resolved ${r}</span><div class="dbx-track stack" style="grid-column:1/-1"><i class="t-ok" style="width:${r / n * 100}%;background:var(--ok)"></i><i style="width:${(n - r) / n * 100}%;background:var(--bad)"></i></div></div>`).join('') },
+  'complaint-resolution': { g: 'Complaints', t: 'Resolution time', s: 'Average vs target', ic: 'clock-o', min: 4, k: 'meter',
+    r: () => `<div style="display:flex;align-items:baseline;gap:8px"><div class="dbx-big">2.4</div><span class="dbx-lab">days average resolution</span></div><div style="margin-top:6px">${[['Critical', .4, .5], ['High', 1.6, 1], ['Medium', 2.1, 3], ['Low', 4.2, 5]].map(([n, a, t]) => { const over = a > t; return `<div class="dbx-meter t-${over ? 'bad' : 'ok'}"><span>${n}</span><span><b style="color:var(--${over ? 'bad' : 'ink'})">${a}d</b> / ${t}d target</span>${track(Math.min(100, a / t * 100), over ? 'bad' : 'ok')}</div>` }).join('')}</div>` },
+  'property-financial': { g: 'Property', t: 'Collections', s: 'Expected vs collected · October', ic: 'bank', min: 8, k: 'kpi', o: ['Rental', 'Sale'], od: 'Rental',
+    r: o => { const f = o === 'Sale' ? 2.6 : 1; return kpis([{ l: 'Expected · Oct 2026', v: money(1560000 * f), ic: 'calendar' }, { l: 'Collected', v: money(1246000 * f), ic: 'check', tone: 'ok' }, { l: 'Pending', v: money(314000 * f), ic: 'clock-o', tone: 'bad' }]) +
+      `<div style="margin-top:12px"><div style="display:flex;justify-content:space-between" class="dbx-lab"><span>Collection progress · October</span><b style="color:var(--ink)">79.9%</b></div><div style="margin-top:5px">${track(79.9, 'ok', 'lg')}</div></div><div class="dbx-panels"><div class="dbx-panel"><div class="dbx-lab">Overdue payments</div><div class="dbx-big" style="font-size:20px;color:var(--bad)">${money(96400 * f)}</div><div class="dbx-row">${badge('11 overdue payments', 'bad')}</div></div><div class="dbx-panel"><div class="dbx-lab">Cheques</div><div style="display:flex;justify-content:space-between;font-size:12px;margin:4px 0 6px"><span>Cleared <b style="color:var(--ink)">42</b> · QAR 610k</span><span>Uncleared <b style="color:var(--ink)">17</b> · 238k</span></div><div class="dbx-track stack"><i style="width:72%;background:var(--ok)"></i><i style="width:28%;background:var(--warn)"></i></div></div><div class="dbx-panel"><div class="dbx-lab">Security deposits held</div><div class="dbx-big" style="font-size:20px">${money(1020000 * f)}</div><div class="dbx-row">${badge('184 active deposits', 'info')}</div></div></div>` } },
+  'supply-status': { g: 'Supply', t: 'Supply requests', s: 'By status', ic: 'truck', min: 6, k: 'kpi', link: 'Open supply requests',
+    r: () => kpis([{ l: 'Requirement', v: 12, ic: 'file-text-o', tone: 'slate' }, { l: 'Approved', v: 8, ic: 'check', tone: 'info' }, { l: 'Final approved', v: 5, ic: 'check-circle', tone: 'acc' }, { l: 'Collected', v: 4, ic: 'truck', tone: 'c2' }, { l: 'Completed', v: 61, ic: 'flag', tone: 'ok' }, { l: 'Rejected', v: 3, ic: 'times', tone: 'bad' }], 1) },
+  'supply-summary': { g: 'Supply', t: 'Supply value', s: 'Financial summary', ic: 'money', min: 4, k: 'kpi',
+    r: () => `<div class="dbx-lab">Total supply value</div><div class="dbx-big">${money(428900)}</div><div style="margin-top:8px">${meters([{ n: 'Completed value', v: 'QAR 281,350', p: 65.6, tone: 'ok' }, { n: 'Completion rate', v: '61 of 93 · 65.6%', p: 65.6, tone: 'c2' }])}</div>` },
+  'supply-recent': { g: 'Supply', t: 'Recent supply requests', s: 'Last 5', ic: 'file-text-o', min: 6, k: 'table',
+    r: () => table([{ l: 'Order #', ink: 1 }, { l: 'Date' }, { l: 'Property' }, { l: 'Type' }, { l: 'Amount', r: 1 }, { l: 'Status' }], [['SR-0931', '12 Oct', 'T2-504', 'Plumbing', 1840, 'Approved'], ['SR-0930', '11 Oct', 'Villa 12', 'Electrical', 3260, 'Requirement'], ['SR-0929', '10 Oct', 'PR-1108', 'Painting', 7400, 'Completed'], ['SR-0928', '09 Oct', 'LM-0302', 'Furniture', 12900, 'Collected'], ['SR-0927', '08 Oct', 'ML-07', 'AC parts', 2150, 'Rejected']].map(r => [r[0], r[1], r[2], r[3], fmt(r[4]), status(r[5])])) },
+  'rent-kpis': { g: 'Rent out', t: 'Lease expiry', s: 'Agreements ending soon', ic: 'calendar', min: 6, k: 'kpi', link: 'Open rent out',
+    r: () => kpis([{ l: 'Expiring · 90 days', v: 42, ic: 'calendar' }, { l: 'This month', v: 9, ic: 'calendar-o', tone: 'warn' }, { l: 'Next 30 days', v: 14, ic: 'clock-o', tone: 'info' }, { l: 'Expired', v: 6, ic: 'exclamation-circle', tone: 'bad' }]) },
+  'rent-upcoming': { g: 'Rent out', t: 'Upcoming end dates', s: '42 agreements in 90 days', ic: 'calendar', min: 6, k: 'table',
+    r: () => table([{ l: 'Agreement', ink: 1 }, { l: 'Property' }, { l: 'Customer' }, { l: 'Rent', r: 1 }, { l: 'Ends' }, { l: 'Left', r: 1 }], [['RO-1182', 'T2-504', 'Ahmed Al-Thani', 9500, '15 Oct', 3], ['RO-1094', 'PR-1108', 'Priya Nair', 7200, '19 Oct', 7], ['RO-1201', 'LM-0302', 'G. Thomas', 11800, '28 Oct', 16], ['RO-0977', 'Villa 12', 'Noor Hassan', 18500, '06 Nov', 25], ['RO-1150', 'ML-07', 'Lina Haddad', 6400, '30 Nov', 49]].map(r => [r[0], r[1], r[2], fmt(r[3]), r[4], badge(r[5] + 'd', r[5] <= 7 ? 'bad' : r[5] <= 30 ? 'warn' : 'info')])) },
+  'rent-expired': { g: 'Rent out', t: 'Expired agreements', s: '6 not renewed', ic: 'exclamation-circle', min: 6, k: 'table',
+    r: () => table([{ l: 'Agreement', ink: 1 }, { l: 'Property' }, { l: 'Customer' }, { l: 'Rent', r: 1 }, { l: 'Ended' }, { l: 'Overdue', r: 1 }], [['RO-0912', 'T1-210', 'Khalid Rahman', 8800, '09 Oct', 3], ['RO-0864', 'PR-0904', 'Omar Siddiqui', 6900, '30 Sep', 12], ['RO-0790', 'LM-0110', 'Mariam Khalid', 10400, '14 Sep', 28], ['RO-0731', 'Villa 4', 'J. Mathew', 16000, '31 Aug', 42]].map(r => [r[0], r[1], r[2], fmt(r[3]), r[4], badge(r[5] + 'd', 'bad')])) },
+};
+const SPAN = { 'business-kpis': 12, inventory: 4, 'asset-kpis': 4, 'asset-groups': 4, 'sale-overview': 8, 'top-sale-items': 4, 'appointment-chart': 8, 'upcoming-appointments': 4, 'income-expense-bar': 8, 'income-expense-pie': 4, 'package-calendar': 12, 'lead-status': 8, 'lead-units': 4, 'lead-activity': 4, 'lead-sources': 4, 'lead-employees': 4, 'property-occupancy': 12, 'group-occupancy': 6, availability: 6, 'group-income': 8, 'income-summary': 4, 'maintenance-kpis': 12, 'maintenance-breakdown': 4, 'maintenance-technicians': 4, 'maintenance-groups': 4, 'maintenance-recent': 12, 'complaint-kpis': 12, 'complaint-buildings': 4, 'complaint-trend': 4, 'complaint-resolution': 4, 'property-financial': 12, 'supply-status': 12, 'supply-summary': 4, 'supply-recent': 8, 'rent-kpis': 12, 'rent-upcoming': 6, 'rent-expired': 6 };
+const DEFAULT = [
+  'Business overview', 'business-kpis', 'inventory', 'asset-kpis', 'asset-groups',
+  'Sales performance', 'sale-overview', 'top-sale-items',
+  'Appointments', 'appointment-chart', 'upcoming-appointments',
+  'Finance', 'income-expense-bar', 'income-expense-pie',
+  'Packages', 'package-calendar',
+  'Property leads', 'lead-status', 'lead-units', 'lead-activity', 'lead-sources', 'lead-employees',
+  'Property overview', 'property-occupancy', 'group-occupancy', 'availability', 'group-income', 'income-summary',
+  'Maintenance', 'maintenance-kpis', 'maintenance-breakdown', 'maintenance-technicians', 'maintenance-groups', 'maintenance-recent',
+  'Complaints', 'complaint-kpis', 'complaint-buildings', 'complaint-trend', 'complaint-resolution',
+  'Property financials', 'property-financial',
+  'Supply requests', 'supply-status', 'supply-summary', 'supply-recent',
+  'Rent out expiry', 'rent-kpis', 'rent-upcoming', 'rent-expired',
+].map((x, i) => D[x] ? { id: x, key: x, span: SPAN[x], collapsed: false } : { type: 'divider', id: 'd' + i, title: x });
+const SIZES = [[4, 'S'], [6, 'M'], [8, 'L'], [12, 'XL']], SZ = Object.fromEntries(SIZES);
+const SK = {
+  kpi: '<svg viewBox="0 0 54 38"><rect x="3" y="9" width="15" height="20" rx="3"/><rect x="20" y="9" width="15" height="20" rx="3"/><rect x="37" y="9" width="14" height="20" rx="3"/></svg>',
+  chart: '<svg viewBox="0 0 54 38"><rect x="6" y="19" width="6" height="14" rx="1.5"/><rect x="15" y="10" width="6" height="23" rx="1.5"/><rect x="24" y="15" width="6" height="18" rx="1.5"/><rect x="33" y="5" width="6" height="28" rx="1.5"/><rect x="42" y="13" width="6" height="20" rx="1.5"/></svg>',
+  table: '<svg viewBox="0 0 54 38"><rect x="5" y="6" width="44" height="4" rx="2"/><rect x="5" y="14" width="44" height="3" rx="1.5" opacity=".6"/><rect x="5" y="21" width="44" height="3" rx="1.5" opacity=".6"/><rect x="5" y="28" width="44" height="3" rx="1.5" opacity=".6"/></svg>',
+  list: '<svg viewBox="0 0 54 38"><circle cx="9" cy="9" r="4"/><rect x="16" y="7" width="32" height="4" rx="2" opacity=".6"/><circle cx="9" cy="19" r="4"/><rect x="16" y="17" width="26" height="4" rx="2" opacity=".6"/><circle cx="9" cy="29" r="4"/><rect x="16" y="27" width="30" height="4" rx="2" opacity=".6"/></svg>',
+  meter: '<svg viewBox="0 0 54 38"><rect x="5" y="7" width="40" height="4" rx="2"/><rect x="5" y="17" width="30" height="4" rx="2"/><rect x="5" y="27" width="20" height="4" rx="2"/></svg>',
+  donut: '<svg viewBox="0 0 54 38"><circle class="s" cx="27" cy="19" r="11"/></svg>',
+  cal: '<svg viewBox="0 0 54 38">' + [...Array(18)].map((_, i) => `<rect x="${5 + (i % 6) * 7.5}" y="${6 + Math.floor(i / 6) * 9}" width="5.5" height="6" rx="1.5" opacity="${[2, 7, 11, 15].includes(i) ? 1 : .45}"/>`).join('') + '</svg>',
+};
+const skel = k => k === 'chart' ? `<div class="dbx-skc">${[40, 70, 55, 85, 60, 75, 45].map(h => `<i class="dbx-sk" style="height:${h}%"></i>`).join('')}</div>`
+  : k === 'kpi' ? `<div class="dbx-skk">${'<i class="dbx-sk"></i>'.repeat(4)}</div>`
+  : k === 'donut' ? '<div style="display:flex;gap:16px;align-items:center"><i class="dbx-sk" style="width:120px;height:120px;border-radius:50%"></i><div class="dbx-skl" style="flex:1"><i class="dbx-sk"></i><i class="dbx-sk" style="width:70%"></i></div></div>'
+  : k === 'cal' ? `<div class="dbx-cal">${'<i class="dbx-sk" style="height:54px"></i>'.repeat(14)}</div>`
+  : `<div class="dbx-skl">${[100, 86, 94, 70, 90].map(w => `<i class="dbx-sk" style="width:${w}%"></i>`).join('')}</div>`;
+
+/* ---------------- state + persistence ---------------- */
+const clone = x => JSON.parse(JSON.stringify(x));
+const loadSaved = () => { try { const v = JSON.parse(localStorage.getItem(LS)); return Array.isArray(v) ? v.filter(x => x.type === 'divider' || D[x.key]) : null } catch (e) { return null } };
+const state = { layout: loadSaved() || clone(DEFAULT) };
+const hist = { u: [], r: [] };
+const els = new Map(), loaded = new WeakSet(), opts = {};
+let editing = false, cols = 12, failSave = false, updatedAt = Date.now();
+const find = id => state.layout.find(x => x.id === id), idx = id => state.layout.findIndex(x => x.id === id);
+const nameOf = it => it.key ? D[it.key].t : `Divider "${it.title}"`;
+const say = m => { const l = $('#live'); l.textContent = ''; requestAnimationFrame(() => l.textContent = m) };
+
+function commit(mut, msg, anim = true) {
+  const before = JSON.stringify(state.layout); mut(state.layout);
+  if (JSON.stringify(state.layout) === before) return false;
+  hist.u.push(before); if (hist.u.length > 100) hist.u.shift(); hist.r = [];
+  render(anim); queueSave(); if (msg) say(msg); return true;
+}
+function travel(from, to, label) {
+  if (!from.length) return; to.push(JSON.stringify(state.layout)); state.layout = JSON.parse(from.pop());
+  render(); queueSave(); say(label);
+}
+const undo = () => travel(hist.u, hist.r, 'Undone'), redo = () => travel(hist.r, hist.u, 'Redone');
+
+let saveT;
+function queueSave() { setSave('saving'); clearTimeout(saveT); saveT = setTimeout(() => setTimeout(() => {
+  if (failSave) { setSave('fail'); toast("Couldn't save your layout. Your changes are kept on this page.", { bad: 1, action: 'Retry', fn: queueSave }); return }
+  try { localStorage.setItem(LS, JSON.stringify(state.layout)) } catch (e) {} setSave('saved');
+}, 380), 600) }
+function setSave(s) { const p = $('#save'); p.dataset.s = s; p.innerHTML = s === 'saving' ? '<i class="fa fa-refresh fa-spin"></i> Saving…' : s === 'saved' ? '<i class="fa fa-check"></i> Saved' : '<i class="fa fa-exclamation-circle"></i> Not saved <button type="button">Retry</button>'; const b = $('button', p); if (b) b.onclick = queueSave }
+
+/* ---------------- rendering ---------------- */
+function create(it) {
+  let el;
+  const mv = `<span class="dbx-mv"><button class="dbx-ib" type="button" data-act="up" aria-label="Move up"><i class="fa fa-chevron-up"></i></button><button class="dbx-ib" type="button" data-act="down" aria-label="Move down"><i class="fa fa-chevron-down"></i></button></span>`;
+  if (it.type === 'divider') {
+    el = document.createElement('div'); el.className = 'dbx-div'; el.dataset.type = 'divider'; el.dataset.id = it.id;
+    el.innerHTML = `<button class="dbx-grip" type="button" aria-label="Move divider. Arrow keys move it." title="Drag to move"><i class="fa fa-arrows"></i></button>${mv}<h2 class="dbx-div-t" spellcheck="false"></h2><span class="dbx-div-rule"></span><button class="dbx-ib dbx-div-x" type="button" data-act="remove" aria-label="Remove divider" title="Remove divider"><i class="fa fa-times"></i></button>`;
+  } else {
+    const d = D[it.key], cur = opts[it.key] || d.od;
+    el = document.createElement('section'); el.className = 'dbx-w'; el.dataset.id = it.id; el.dataset.key = it.key; el.setAttribute('aria-label', d.t);
+    el.innerHTML = `<div class="dbx-edit"><button class="dbx-grip" type="button" aria-label="Move ${d.t}. Arrow keys move it, Shift plus left or right resizes it." title="Drag to move · arrow keys work too"><i class="fa fa-arrows"></i></button>${mv}<span class="dbx-edit-t">${d.t}</span><div class="dbx-seg dbx-size" role="group" aria-label="Width">${SIZES.map(([v, l]) => `<button type="button" data-size="${v}" ${v < d.min ? 'disabled' : ''} title="${l} · ${v} of 12 columns">${l}</button>`).join('')}</div><button class="dbx-ib" type="button" data-act="collapse" aria-label="Collapse"><i class="fa fa-compress"></i></button><button class="dbx-ib" type="button" data-act="hide" aria-label="Hide ${d.t}" title="Hide"><i class="fa fa-eye-slash"></i></button></div>` +
+      `<header class="dbx-h"><span class="dbx-chip"><i class="fa fa-${d.ic}"></i></span><div class="dbx-ht"><h3>${d.t}</h3><p>${d.s}</p></div>${d.o ? `<div class="dbx-seg dbx-tools">${d.o.map(o => `<button type="button" data-opt="${o}" class="${o === cur ? 'on' : ''}">${o}</button>`).join('')}</div>` : ''}<button class="dbx-ib dbx-more" type="button" data-act="menu" aria-label="${d.t} options"><i class="fa fa-ellipsis-h"></i></button></header>` +
+      `<div class="dbx-b"></div><span class="dbx-rz" title="Drag to resize"></span><span class="dbx-rz-hint"></span>`;
+    io.observe(el);
+  }
+  els.set(it.id, el); return el;
+}
+function sync(el, it) {
+  if (it.type === 'divider') { const h = $('.dbx-div-t', el); if (document.activeElement !== h) h.textContent = it.title; h.contentEditable = editing ? 'true' : 'false'; return }
+  el.dataset.span = it.span; el.classList.toggle('is-collapsed', !!it.collapsed);
+  $$('.dbx-size button', el).forEach(b => b.classList.toggle('on', +b.dataset.size === it.span));
+  const c = $('[data-act="collapse"]', el); c.innerHTML = `<i class="fa fa-${it.collapsed ? 'expand' : 'compress'}"></i>`; c.title = it.collapsed ? 'Expand' : 'Collapse';
+  if (!it.collapsed && el._seen && !loaded.has(el)) load(el);
+}
+function render(anim = true) {
+  const run = () => {
+    const ids = new Set(state.layout.map(x => x.id));
+    [...grid.children].forEach(c => { if (!ids.has(c.dataset.id)) c.remove() });
+    state.layout.forEach((it, i) => { const el = els.get(it.id) || create(it); sync(el, it); const at = grid.children[i]; if (at !== el) grid.insertBefore(el, at || null) });
+  };
+  anim ? flip(run) : run();
+  const vis = new Set(state.layout.map(x => x.key)), hidden = Object.keys(D).filter(k => !vis.has(k));
+  const c = $('#hidCount'); c.textContent = hidden.length; c.dataset.n = hidden.length;
+  $('#btnUndo').disabled = !hist.u.length; $('#btnRedo').disabled = !hist.r.length;
+  $('#empty').hidden = state.layout.some(x => x.key);
+  renderLib(hidden);
+}
+function flip(fn) {
+  const kids = [...grid.children], first = new Map(kids.map(k => [k, k.getBoundingClientRect()]));
+  fn();
+  if (reduced()) return;
+  [...grid.children].forEach(k => {
+    const a = first.get(k); if (!a) return; const b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (!dx && !dy) return;
+    k.style.transition = 'none'; k.style.transform = `translate(${dx}px,${dy}px)`; k._fl = true; k.offsetWidth;
+    k.style.transition = 'transform .26s cubic-bezier(.2,.8,.2,1)'; k.style.transform = '';
+    clearTimeout(k._ft); k._ft = setTimeout(() => { k._fl = false; k.style.transition = '' }, 280);
+  });
+}
+function load(el) {
+  const key = el.dataset.key, d = D[key], b = $('.dbx-b', el);
+  loaded.add(el); b.innerHTML = skel(d.k); clearTimeout(el._lt);
+  el._lt = setTimeout(() => { b.innerHTML = d.r(opts[key] || d.od) + (d.link ? `<a class="dbx-link" href="#" data-act="open">${d.link} <i class="fa fa-angle-right"></i></a>` : '') }, 300 + Math.random() * 650);
+}
+const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; const el = e.target, it = find(el.dataset.id); el._seen = true; if (it && !it.collapsed && !loaded.has(el)) load(el) }), { rootMargin: '120px' });
+
+/* ---------------- library ---------------- */
+function renderLib(hidden) {
+  const q = $('#libQ').value.trim().toLowerCase(), groups = {};
+  hidden.filter(k => !q || (D[k].t + ' ' + D[k].s + ' ' + D[k].g).toLowerCase().includes(q)).forEach(k => (groups[D[k].g] ||= []).push(k));
+  const L = $('#libL');
+  if (!hidden.length) { L.innerHTML = '<div class="dbx-lib-e"><i class="fa fa-check-circle"></i>Every widget is already on your dashboard.<br>Hide one to see it here.</div>'; return }
+  if (!Object.keys(groups).length) { L.innerHTML = `<div class="dbx-lib-e">No widgets match "${q}".</div>`; return }
+  L.innerHTML = Object.entries(groups).map(([g, ks]) => `<div class="dbx-lib-g">${g}</div>` + ks.map(k => `<div class="dbx-li2" data-lib="${k}" tabindex="0" role="button" aria-label="Add ${D[k].t}"><span class="dbx-sketch">${SK[D[k].k]}</span><div class="dbx-li2-b"><b>${D[k].t}</b><span>${D[k].s} · ${SZ[SPAN[k]]}</span></div><span class="dbx-ib" data-add="${k}" title="Add to dashboard"><i class="fa fa-plus"></i></span></div>`).join('')).join('');
+}
+function addWidget(key, quiet) {
+  const it = { id: key, key, span: SPAN[key], collapsed: false };
+  commit(L => L.push(it), `${D[key].t} added at the end`);
+  const el = els.get(key); el.classList.remove('is-new'); el.offsetWidth; el.classList.add('is-new');
+  if (!quiet) el.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+}
+const openLib = () => { dbx.classList.add('lib-open'); setTimeout(() => $('#libQ').focus({ preventScroll: true }), 50) };
+const closeLib = () => dbx.classList.remove('lib-open');
+
+/* ---------------- actions ---------------- */
+function setSize(id, s) { const it = find(id); if (!it || s < D[it.key].min) return; commit(L => { L[idx(id)].span = s }, `${D[it.key].t} set to ${SZ[s]} width`) }
+function moveBy(id, dir) {
+  const i = idx(id), j = i + dir; if (j < 0 || j >= state.layout.length) return;
+  const it = find(id); commit(L => { const [x] = L.splice(i, 1); L.splice(j, 0, x) }, `${nameOf(it)} moved to position ${j + 1} of ${state.layout.length}`);
+}
+function hide(id) {
+  const it = find(id); commit(L => L.splice(idx(id), 1), `${nameOf(it)} hidden`);
+  if (!editing) toast(`${D[it.key].t} hidden. Add it back from Customize.`, { action: 'Undo', fn: undo });
+}
+function toggleCollapse(id) { const it = find(id); commit(L => { const x = L[idx(id)]; x.collapsed = !x.collapsed }, `${D[it.key].t} ${it.collapsed ? 'expanded' : 'collapsed'}`) }
+function addDivider() {
+  const id = 'd' + Date.now(); commit(L => L.push({ type: 'divider', id, title: 'New section' }), 'Divider added at the end');
+  const h = $('.dbx-div-t', els.get(id)); h.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+  setTimeout(() => { h.focus(); const r = document.createRange(); r.selectNodeContents(h); const s = getSelection(); s.removeAllRanges(); s.addRange(r) }, 250);
+}
+function setEditing(on) {
+  editing = on; dbx.classList.toggle('is-editing', on); closeMenu();
+  $$('.dbx-div-t').forEach(h => h.contentEditable = on ? 'true' : 'false');
+  if (on) say('Customizing. Drag a handle, or focus it and use the arrow keys.');
+  else { closeLib(); toast('Layout saved') }
+}
+function refreshAll() {
+  let n = 0; $$('.dbx-w', grid).forEach(el => { const it = find(el.dataset.id); if (it && !it.collapsed && el._seen) setTimeout(() => load(el), n++ * 60) });
+  updatedAt = Date.now(); tickUpdated();
+}
+function tickUpdated() { const m = Math.floor((Date.now() - updatedAt) / 60000); $('#upd').textContent = m < 1 ? 'Updated just now' : `Updated ${m} min ago` }
+setInterval(tickUpdated, 15000);
+
+/* ---------------- drag engine ---------------- */
+let drag = null;
+function beginDrag(e, el, fromLib) {
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || 14;
+  let r;
+  if (fromLib) {
+    const eff = cols === 12 ? +el.dataset.span : cols === 6 ? (+el.dataset.span <= 6 ? 3 : 6) : 1, colW = (grid.clientWidth - gap * (cols - 1)) / cols;
+    el.classList.add('is-drag'); el.style.width = (eff * colW + (eff - 1) * gap) + 'px'; layer.appendChild(el);
+    r = el.getBoundingClientRect(); r = { left: e.clientX - 40, top: e.clientY - 18, width: r.width, height: r.height };
+  } else r = el.getBoundingClientRect();
+  const ph = document.createElement('div'); ph.className = 'dbx-ph'; ph.dataset.span = el.dataset.span || 12; if (el.dataset.type) ph.dataset.type = el.dataset.type;
+  ph.style.height = Math.min(r.height, 420) + 'px';
+  const next = fromLib ? null : el.nextElementSibling;
+  if (fromLib) grid.appendChild(ph); else { grid.insertBefore(ph, el); el.classList.add('is-drag'); el.style.width = r.width + 'px'; layer.appendChild(el) }
+  drag = { el, ph, fromLib, next, ox: e.clientX - r.left, oy: e.clientY - r.top, x: e.clientX, y: e.clientY, dirty: true };
+  place(); dbx.classList.add('is-dragging'); document.body.style.userSelect = 'none';
+  addEventListener('pointermove', onMove); addEventListener('pointerup', onUp); addEventListener('pointercancel', onCancel); addEventListener('keydown', onEsc, true);
+  if (fromLib && innerWidth < 1200) closeLib();
+  tick();
+}
+const place = () => { drag.el.style.transform = `translate3d(${drag.x - drag.ox}px,${drag.y - drag.oy}px,0)` };
+function onMove(e) { if (!drag) return; drag.x = e.clientX; drag.y = e.clientY; place(); drag.dirty = true }
+function tick() {
+  if (!drag) return;
+  const m = 80; let dy = 0;
+  if (drag.y < m) dy = -Math.ceil((m - drag.y) / 4); else if (drag.y > innerHeight - m) dy = Math.ceil((drag.y - innerHeight + m) / 4);
+  if (dy) { scrollBy(0, dy); drag.dirty = true }
+  if (drag.dirty) { drag.dirty = false; retarget() }
+  drag.raf = requestAnimationFrame(tick);
+}
+function retarget() {
+  const { x, y, ph } = drag, kids = [...grid.children].filter(c => c !== ph);
+  let ref, hit = false;
+  for (const k of kids) {
+    if (k._fl) continue; const r = k.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      const wide = r.width > grid.clientWidth * .75, before = wide ? y < r.top + r.height / 2 : x < r.left + r.width / 2;
+      ref = before ? k : k.nextElementSibling; hit = true; break;
+    }
+  }
+  if (!hit) {
+    const g = grid.getBoundingClientRect(); if (x < g.left - 60 || x > g.right + 60) return;
+    const last = kids[kids.length - 1]; if (!last || y > last.getBoundingClientRect().bottom) ref = null; else return;
+  }
+  if (ref === ph || ph.nextElementSibling === ref) return;
+  flip(() => grid.insertBefore(ph, ref));
+}
+const onUp = e => finish(!(drag && drag.fromLib && dbx.classList.contains('lib-open') && e.clientX > lib.getBoundingClientRect().left));
+const onCancel = () => finish(false);
+const onEsc = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false) } };
+function finish(ok) {
+  const d = drag; if (!d) return; drag = null; cancelAnimationFrame(d.raf);
+  removeEventListener('pointermove', onMove); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onCancel); removeEventListener('keydown', onEsc, true);
+  dbx.classList.remove('is-dragging'); document.body.style.userSelect = '';
+  if (!ok && d.fromLib) { d.ph.remove(); d.el.remove(); d.el.classList.remove('is-drag'); d.el.style.cssText = ''; say('Cancelled'); return }
+  if (!ok) flip(() => grid.insertBefore(d.ph, d.next && d.next.parentNode === grid ? d.next : null));
+  const el = d.el, land = () => {
+    el.classList.remove('is-drag', 'is-landing'); el.style.cssText = ''; grid.insertBefore(el, d.ph); d.ph.remove();
+    if (ok) {
+      const order = [...grid.children].map(c => c.dataset.id), id = el.dataset.id;
+      const changed = commit(L => { if (d.fromLib) L.push({ id, key: el.dataset.key, span: +el.dataset.span, collapsed: false }); L.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)) },
+        `${el.dataset.key ? D[el.dataset.key].t : 'Divider'} ${d.fromLib ? 'added at' : 'moved to'} position ${order.indexOf(id) + 1}`, false);
+      if (d.fromLib) { el.classList.add('is-new'); if (!loaded.has(el)) load(el) }
+      if (!changed) say('Not moved');
+    } else say('Move cancelled');
+    $('.dbx-grip', el)?.focus({ preventScroll: true });
+  };
+  if (reduced()) return land();
+  const r = d.ph.getBoundingClientRect();
+  el.classList.add('is-landing'); el.style.transition = 'transform .2s cubic-bezier(.2,.8,.2,1),width .2s,rotate .2s,scale .2s';
+  el.style.transform = `translate3d(${r.left}px,${r.top}px,0)`; el.style.width = r.width + 'px';
+  setTimeout(land, 200);
+}
+
+/* pointer starts: grip, resize edge, library item */
+grid.addEventListener('pointerdown', e => {
+  if (!editing || e.button > 0) return;
+  const g = e.target.closest('.dbx-grip');
+  if (g && cols > 1) { e.preventDefault(); beginDrag(e, g.closest('[data-id]'), false); return }
+  const h = e.target.closest('.dbx-rz'); if (!h || cols !== 12) return;
+  e.preventDefault();
+  const el = h.closest('.dbx-w'), id = el.dataset.id, it = find(id), d = D[it.key], r = el.getBoundingClientRect();
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || 14, colW = (grid.clientWidth + gap) / 12, allowed = [4, 6, 8, 12].filter(s => s >= d.min), hint = $('.dbx-rz-hint', el);
+  let cur = it.span; el.classList.add('is-resizing'); hint.textContent = `${SZ[cur]} · ${cur} / 12`;
+  const mv = ev => { const n = (r.width + ev.clientX - e.clientX + gap) / colW, s = allowed.reduce((a, b) => Math.abs(b - n) < Math.abs(a - n) ? b : a); hint.textContent = `${SZ[s]} · ${s} / 12`; if (s !== cur) { cur = s; flip(() => { el.dataset.span = s }) } };
+  const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); el.classList.remove('is-resizing'); if (cur !== it.span) setSize(id, cur); else sync(el, it) };
+  addEventListener('pointermove', mv); addEventListener('pointerup', up);
+});
+$('#libL').addEventListener('pointerdown', e => {
+  const item = e.target.closest('[data-lib]'); if (!item || e.button > 0) return;
+  const key = item.dataset.lib, sx = e.clientX, sy = e.clientY; let started = false;
+  const mv = ev => { if (started || cols === 1 || Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return; started = true; cleanup();
+    const el = els.get(key) || create({ id: key, key, span: SPAN[key] }); el.dataset.span = SPAN[key]; el.classList.remove('is-collapsed');
+    if (!loaded.has(el)) load(el); beginDrag(ev, el, true) };
+  const up = () => { cleanup(); if (!started) addWidget(key) };
+  const cleanup = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up) };
+  addEventListener('pointermove', mv); addEventListener('pointerup', up);
+});
+$('#libL').addEventListener('keydown', e => { const item = e.target.closest('[data-lib]'); if (item && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); addWidget(item.dataset.lib) } });
+$('#libQ').addEventListener('input', () => render(false));
+
+/* keyboard: move / resize from a focused grip; undo/redo */
+grid.addEventListener('keydown', e => {
+  const g = e.target.closest('.dbx-grip'); if (!g || !editing) return;
+  const id = g.closest('[data-id]').dataset.id, it = find(id);
+  if (e.shiftKey && it.key && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    e.preventDefault(); const a = [4, 6, 8, 12].filter(s => s >= D[it.key].min), i = a.indexOf(it.span);
+    setSize(id, a[Math.max(0, Math.min(a.length - 1, i + (e.key === 'ArrowRight' ? 1 : -1)))]); return;
+  }
+  const dir = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
+  if (dir) { e.preventDefault(); moveBy(id, dir); $('.dbx-grip', els.get(id)).focus({ preventScroll: true }); els.get(id).scrollIntoView({ block: 'nearest' }) }
+});
+addEventListener('keydown', e => {
+  if (!editing || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' || e.target.isContentEditable || e.target.matches('input,textarea')) return;
+  e.preventDefault(); e.shiftKey ? redo() : undo();
+});
+
+/* divider titles */
+grid.addEventListener('keydown', e => { if (e.target.classList.contains('dbx-div-t') && e.key === 'Enter') { e.preventDefault(); e.target.blur() } });
+grid.addEventListener('focusout', e => {
+  const h = e.target; if (!h.classList || !h.classList.contains('dbx-div-t')) return;
+  const id = h.closest('[data-id]').dataset.id, t = h.textContent.trim().slice(0, 60) || 'Untitled section';
+  h.textContent = t; commit(L => { L[idx(id)].title = t }, `Divider renamed to ${t}`, false);
+});
+
+/* clicks */
+dbx.addEventListener('click', e => {
+  const b = e.target.closest('button,[data-act]'); if (!b || b.closest('#libL,#pop,.demo')) return;
+  const w = b.closest('#grid [data-id]'), id = w && w.dataset.id;
+  if (b.dataset.opt) { opts[w.dataset.key] = b.dataset.opt; $$('.dbx-tools button', w).forEach(x => x.classList.toggle('on', x === b)); load(w); return }
+  if (b.dataset.size) return setSize(id, +b.dataset.size);
+  switch (b.dataset.act) {
+    case 'collapse': return toggleCollapse(id);
+    case 'hide': return hide(id);
+    case 'remove': return commit(L => L.splice(idx(id), 1), 'Divider removed');
+    case 'up': return moveBy(id, -1);
+    case 'down': return moveBy(id, 1);
+    case 'menu': return openMenu(b, id);
+    case 'open': e.preventDefault(); return toast(`Opens ${D[w.dataset.key].link.toLowerCase()}`);
+  }
+});
+$('#btnCustomize').onclick = () => setEditing(true);
+$('#btnDone').onclick = () => setEditing(false);
+$('#btnRefresh').onclick = refreshAll;
+$('#btnAdd').onclick = () => dbx.classList.contains('lib-open') ? closeLib() : openLib();
+$('#libClose').onclick = closeLib;
+$('#btnDivider').onclick = addDivider;
+$('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
+$('#btnEmptyAdd').onclick = () => { setEditing(true); openLib() };
+$('#btnReset').onclick = () => { $('#modal').hidden = false; $('#mYes').focus() };
+$('#mNo').onclick = () => { $('#modal').hidden = true };
+$('#mYes').onclick = () => { $('#modal').hidden = true; if (commit(L => L.splice(0, L.length, ...clone(DEFAULT)), 'Layout reset to default')) toast('Layout reset to default', { action: 'Undo', fn: undo }) };
+
+/* widget ⋯ menu */
+function openMenu(btn, id) {
+  const it = find(id), d = D[it.key];
+  pop.innerHTML = `<button type="button" data-m="refresh"><i class="fa fa-refresh"></i>Refresh</button><button type="button" data-m="collapse"><i class="fa fa-${it.collapsed ? 'expand' : 'compress'}"></i>${it.collapsed ? 'Expand' : 'Collapse'}</button><button type="button" data-m="hide"><i class="fa fa-eye-slash"></i>Hide from dashboard</button>${d.link ? `<hr><button type="button" data-m="open"><i class="fa fa-external-link"></i>${d.link}</button>` : ''}`;
+  const r = btn.getBoundingClientRect(); pop.hidden = false; pop.dataset.id = id;
+  pop.style.top = Math.min(r.bottom + 6, innerHeight - pop.offsetHeight - 8) + 'px'; pop.style.left = Math.max(8, r.right - pop.offsetWidth) + 'px';
+  $('button', pop).focus();
+}
+const closeMenu = () => { pop.hidden = true };
+pop.addEventListener('click', e => {
+  const b = e.target.closest('[data-m]'); if (!b) return; const id = pop.dataset.id; closeMenu();
+  ({ refresh: () => load(els.get(id)), collapse: () => toggleCollapse(id), hide: () => hide(id), open: () => toast(`Opens ${D[find(id).key].link.toLowerCase()}`) })[b.dataset.m]();
+});
+document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('[data-act="menu"]')) closeMenu() });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (!pop.hidden) closeMenu(); else if (!$('#modal').hidden) $('#modal').hidden = true; else if (dbx.classList.contains('lib-open')) closeLib() } });
+addEventListener('scroll', closeMenu, { passive: true });
+
+/* toasts + tooltips */
+function toast(msg, { bad, action, fn } = {}) {
+  const t = document.createElement('div'); t.className = 'dbx-toast' + (bad ? ' bad' : '');
+  t.innerHTML = `<i class="fa fa-${bad ? 'exclamation-circle' : 'check-circle'}"></i><span>${msg}</span>${action ? `<button type="button">${action}</button>` : ''}`;
+  if (action) $('button', t).onclick = () => { fn(); t.remove() };
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4200);
+}
+document.addEventListener('mouseover', e => { const t = e.target.closest('.dbx [data-tip]'); if (!t || drag) return; tip.textContent = t.dataset.tip; tip.hidden = false });
+document.addEventListener('mousemove', e => { if (tip.hidden) return; const w = tip.offsetWidth; tip.style.left = Math.min(innerWidth - w - 8, Math.max(8, e.clientX - w / 2)) + 'px'; tip.style.top = (e.clientY - 36) + 'px' });
+document.addEventListener('mouseout', e => { if (e.target.closest('.dbx [data-tip]')) tip.hidden = true });
+
+/* columns follow the grid's own width (container queries do the CSS side) */
+new ResizeObserver(() => {
+  const w = gw.clientWidth; cols = w >= 960 ? 12 : w >= 640 ? 6 : 1;
+  dbx.classList.toggle('is-c12', cols === 12); dbx.classList.toggle('is-c1', cols === 1);
+}).observe(gw);
+
+/* ---------------- demo bar ---------------- */
+const NOTES = {
+  a: '<em>A · Slate Console</em>: neutral hairline cards. The accent only appears in icon chips and the data, and KPI tiles are split by thin rules. The quietest option, and it feels most like a professional tool.',
+  b: '<em>B · Soft Card</em>: an accent-gradient header band, borderless cards on soft shadows, and tinted KPI tiles with round icon chips. The warmest option, and it feels most like a premium app.',
+  c: '<em>C · Editorial</em>: serif figures (Fraunces), large serif section dividers, and cards that sit on a strong top rule. It reads like a business report.',
+};
+const setDir = d => { dbx.dataset.dir = d; $('#vnote').innerHTML = NOTES[d]; $$('.opt[data-dir]').forEach(b => b.classList.toggle('on', b.dataset.dir === d)) };
+$$('.opt[data-dir]').forEach(b => b.onclick = () => setDir(b.dataset.dir));
+$$('.opt[data-theme]').forEach(b => b.onclick = () => { document.documentElement.dataset.bsTheme = b.dataset.theme; $$('.opt[data-theme]').forEach(x => x.classList.toggle('on', x === b)) });
+$$('.sw').forEach(b => b.onclick = () => { document.documentElement.style.setProperty('--bs-primary', b.dataset.acc); $$('.sw').forEach(x => x.classList.toggle('on', x === b)) });
+$$('.opt[data-vp]').forEach(b => b.onclick = () => { $('#wrap').dataset.vp = b.dataset.vp; $$('.opt[data-vp]').forEach(x => x.classList.toggle('on', x === b)) });
+$$('.opt[data-save]').forEach(b => b.onclick = () => { failSave = b.dataset.save === 'fail'; $$('.opt[data-save]').forEach(x => x.classList.toggle('on', x === b)) });
+$('#resetPreview').onclick = () => { try { localStorage.removeItem(LS) } catch (e) {} location.reload() };
+
+setDir('a');
+render(false);
+})();
+</script>
+</body>
+</html>

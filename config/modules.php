@@ -212,6 +212,7 @@ return [
         'core' => [
             'label' => 'System Administration',
             'permissions' => [
+                'dashboard',
                 'user',
                 'role',
                 'branch',

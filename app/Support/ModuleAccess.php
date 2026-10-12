@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\Configuration;
+use Closure;
+use Illuminate\Support\Str;
 
 /**
  * Which feature modules (config/modules.php) the current tenant runs.
@@ -48,6 +50,42 @@ final class ModuleAccess
     public static function school(): bool
     {
         return self::enabled(self::SCHOOL);
+    }
+
+    /**
+     * Permission groups and exact names owned by the modules of one system.
+     *
+     * @return array{0: array<int, string>, 1: array<int, string>}
+     */
+    public static function systemPermissions(string $system): array
+    {
+        $groups = [];
+        $exact = [];
+        foreach (config("modules.systems.{$system}", []) as $module) {
+            foreach (config("modules.modules.{$module}.permissions", []) as $permission) {
+                str_contains($permission, '.') ? $exact[] = $permission : $groups[] = $permission;
+            }
+        }
+
+        return [$groups, $exact];
+    }
+
+    /**
+     * Whether a permission belongs to the tenant's system: the rule Settings →
+     * Roles uses to choose which abilities it lists. A permission a role still
+     * holds from another system can't be seen or unticked there, so it must not
+     * switch anything on either. Build once and reuse: it reads the active
+     * system a single time.
+     *
+     * @return Closure(string): bool
+     */
+    public static function permissionFilter(): Closure
+    {
+        $system = self::activeSystem();
+        [$groups, $exact] = $system ? self::systemPermissions($system) : self::disabledOptInPermissions();
+        $listed = fn (string $permission): bool => in_array($permission, $exact, true) || in_array(Str::before($permission, '.'), $groups, true);
+
+        return $system ? $listed : fn (string $permission): bool => ! $listed($permission);
     }
 
     /**

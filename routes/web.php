@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FamilyTreeController;
 use App\Http\Controllers\GrnController;
 use App\Http\Controllers\HealthController;
@@ -31,6 +32,10 @@ Route::post('/scan/search', [PublicScanController::class, 'search'])->name('scan
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::name('dashboard::')->prefix('dashboard')->controller(DashboardController::class)->group(function (): void {
+        Route::get('widgets/{key}', 'widget')->name('widget')->where('key', '[a-z0-9-]+');
+        Route::put('layout', 'saveLayout')->name('layout.save')->can('dashboard.customize');
+    });
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

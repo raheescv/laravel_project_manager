@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'dashboard' => ['customize'],
     'account' => ['create', 'view', 'edit', 'delete', 'export'],
     'account category' => ['create', 'view', 'edit', 'delete', 'export'],
     'account note' => ['create', 'view', 'edit', 'delete'],

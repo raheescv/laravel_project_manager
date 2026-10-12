@@ -217,22 +217,6 @@ class Permissions extends Component
 
     private function resolveAllowedPermissions(string $activeModule): array
     {
-        $systemModules = config("modules.systems.{$activeModule}", []);
-        $moduleDefs = config('modules.modules', []);
-
-        $allowedGroups = [];
-        $allowedExact = [];
-
-        foreach ($systemModules as $moduleKey) {
-            foreach ($moduleDefs[$moduleKey]['permissions'] ?? [] as $perm) {
-                if (str_contains($perm, '.')) {
-                    $allowedExact[] = $perm;
-                } else {
-                    $allowedGroups[] = $perm;
-                }
-            }
-        }
-
-        return [$allowedGroups, $allowedExact];
+        return ModuleAccess::systemPermissions($activeModule);
     }
 }
