@@ -158,7 +158,7 @@
             <table class="header-top">
                 <tr>
                     <td>
-                        <div class="eyebrow">RentOut &middot; Sale</div>
+                        <div class="eyebrow">Sale</div>
                         <div class="title">Appointments</div>
                     </td>
                     <td class="meta">

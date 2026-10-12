@@ -4,7 +4,7 @@
     <div class="apx-hero mb-3">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-                <span class="apx-pill"><i class="fa fa-list-ul"></i> RentOut &middot; Sale</span>
+                <span class="apx-pill"><i class="fa fa-list-ul"></i> Sale</span>
                 <h1 class="apx-hero-title mt-2 text-white">Appointments</h1>
                 <div class="apx-hero-meta mt-1">Customer-scheduled property appointments for sale agreements</div>
             </div>
