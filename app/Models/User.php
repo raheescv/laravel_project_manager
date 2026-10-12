@@ -130,6 +130,37 @@ class User extends Authenticatable implements AuditableContracts
     }
 
     /**
+     * The employees on this employee's team — whose leads they see on top of
+     * their own when they lack 'property lead.view all'.
+     *
+     * @return HasMany<EmployeeTeam, $this>
+     */
+    public function teams(): HasMany
+    {
+        return $this->hasMany(EmployeeTeam::class, 'employee_id');
+    }
+
+    /**
+     * Whether this account is limited to its own and its team's leads. Mirrors
+     * seesOnlyOwnRecords(): admins and back-office 'user' accounts see every
+     * lead, and an employee is opened up by the 'property lead.view all' grant.
+     */
+    public function seesOnlyTeamLeads(): bool
+    {
+        return $this->seesOnlyOwnRecords() && ! $this->can('property lead.view all');
+    }
+
+    /**
+     * The salesmen whose leads this account may see: itself plus its team.
+     *
+     * @return list<int>
+     */
+    public function leadVisibleUserIds(): array
+    {
+        return once(fn () => $this->teams()->pluck('team_member_id')->push($this->id)->map(fn ($id) => (int) $id)->unique()->values()->all());
+    }
+
+    /**
      * Stock handed over to this employee and not yet returned or sold.
      *
      * @return HasMany<Inventory, $this>

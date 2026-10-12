@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\LeadVisibilityScope;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -59,6 +60,8 @@ class PropertyLead extends Model implements AuditableContracts
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new LeadVisibilityScope());
+
         // A first assignment on create is not a reassignment; any later change of salesman is.
         static::updating(function (self $lead): void {
             if ($lead->isDirty('assigned_to') && filled($lead->getOriginal('assigned_to'))) {

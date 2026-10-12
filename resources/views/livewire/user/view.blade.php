@@ -14,6 +14,7 @@
         ['key' => 'profile', 'icon' => 'fa-user', 'label' => 'Profile', 'count' => null, 'show' => true],
         ['key' => 'access', 'icon' => 'fa-shield', 'label' => 'Access', 'count' => count($role_names) ?: null, 'show' => true],
         ['key' => 'notifications', 'icon' => 'fa-bell-o', 'label' => 'Notifications', 'count' => $notificationsOn ?: null, 'show' => true],
+        ['key' => 'team', 'icon' => 'fa-users', 'label' => 'Team', 'count' => null, 'show' => $isEmployee],
         ['key' => 'inventory', 'icon' => 'fa-cubes', 'label' => 'Inventory', 'count' => null, 'show' => $isEmployee],
         [
             'key' => 'schedule',
@@ -1183,6 +1184,22 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- ─────────────  TEAM  ───────────── --}}
+                @if ($isEmployee)
+                    <div id="uvx-tab-team" role="tabpanel"
+                        class="tab-pane fade @if ($selected_tab === 'team') show active @endif">
+                        @if (isset($loaded_tabs['team']))
+                            @livewire('user.employee-team', ['userId' => $user->id], key('employee-team-' . $user->id))
+                        @else
+                            <div class="uvx-panel">
+                                <div class="uvx-pb text-center py-4" style="color:var(--text-3)">
+                                    <i class="fa fa-circle-o-notch fa-spin me-2"></i> Loading team…
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
 
                 {{-- ─────────────  INVENTORY  ───────────── --}}
                 @if ($isEmployee)

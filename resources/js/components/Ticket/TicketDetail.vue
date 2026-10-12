@@ -70,12 +70,13 @@
                     <template v-if="ticket">
                         <div class="tkx-sec">Attachments <span class="n">{{ ticket.attachments.length }}</span></div>
                         <div v-if="ticket.attachments.length" class="tkx-files">
-                            <div v-for="a in ticket.attachments" :key="a.id" class="tkx-file">
-                                <a :href="a.url" target="_blank" rel="noopener" class="thumb">
+                            <div v-for="(a, i) in ticket.attachments" :key="a.id" class="tkx-file">
+                                <button type="button" class="thumb" :title="`View ${a.name}`" @click="galleryAt = i">
                                     <img v-if="a.is_image" :src="a.url" :alt="a.name" loading="lazy" decoding="async">
                                     <video v-else-if="a.is_video" :src="a.url" muted preload="metadata"></video>
                                     <i v-else class="fa" :class="fileIcon(a)"></i>
-                                </a>
+                                    <span class="zoom"><i class="fa" :class="a.is_video ? 'fa-play' : 'fa-expand'"></i></span>
+                                </button>
                                 <div class="n" :title="a.name">{{ a.name }}</div>
                                 <div class="s">{{ formatSize(a.size) }}</div>
                                 <button v-if="permissions.edit" type="button" class="rm" title="Remove" @click="removeAttachment(a)"><i class="fa fa-trash-o"></i></button>
@@ -125,6 +126,9 @@
                 <button v-else type="button" class="tkx-btn" @click="close">Close</button>
             </footer>
         </div>
+
+        <TicketGallery v-if="galleryAt !== null && ticket?.attachments.length" :items="ticket.attachments" :start="galleryAt"
+            :can-remove="permissions.edit" @close="galleryAt = null" @remove="removeAttachment" />
     </div>
 </template>
 
@@ -134,6 +138,7 @@ import { useToast } from 'vue-toastification'
 import { errorMessage, ticketApi, ticketForm } from './api.js'
 import FileDrop from './FileDrop.vue'
 import LinkifiedText from './LinkifiedText.vue'
+import TicketGallery from './TicketGallery.vue'
 import { formatDate, formatSize, groupColor, initials, PRIORITIES, priorityOf, relativeTime, statuses } from './ticketMeta.js'
 
 const props = defineProps({
@@ -156,6 +161,7 @@ const newComment = ref('')
 const editingComment = ref(null)
 const editingText = ref('')
 const titleInput = ref(null)
+const galleryAt = ref(null)
 let dirty = false
 
 const currentStatus = computed(() => (editing.value ? form.status : ticket.value?.status))
@@ -354,7 +360,7 @@ function close() {
 }
 
 function onKey(event) {
-    if (event.key === 'Escape' && !busy.value) close()
+    if (event.key === 'Escape' && !busy.value && galleryAt.value === null) close()
 }
 
 onMounted(() => {
@@ -409,8 +415,14 @@ onBeforeUnmount(() => {
 .tkx-sec.first { margin-top: 0; }
 .tkx-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px; }
 .tkx-file { position: relative; border: 1px solid var(--line); border-radius: 11px; overflow: hidden; background: var(--surf); }
-.tkx-file .thumb { overflow: hidden; display: grid; place-items: center; height: 84px; background: var(--surf-2); color: var(--mute); font-size: 24px; }
-.tkx-file .thumb img, .tkx-file .thumb video { width: 100%; height: 84px; object-fit: cover; }
+.tkx-file .thumb { position: relative; width: 100%; border: 0; padding: 0; cursor: zoom-in; overflow: hidden; display: grid; place-items: center; height: 84px; background: var(--surf-2); color: var(--mute); font-size: 24px; }
+.tkx-file .thumb img, .tkx-file .thumb video { width: 100%; height: 84px; object-fit: cover; transition: transform .25s ease; }
+.tkx-file .thumb .zoom { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 14, 22, .38); color: #fff; font-size: 15px; opacity: 0; transition: opacity .15s; }
+.tkx-file .thumb .zoom i { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); backdrop-filter: blur(4px); }
+.tkx-file:hover .thumb .zoom, .tkx-file .thumb:focus-visible .zoom { opacity: 1; }
+.tkx-file:hover .thumb img, .tkx-file:hover .thumb video { transform: scale(1.04); }
+.tkx-file .thumb:focus-visible { outline: 2px solid var(--acc); outline-offset: -2px; }
+.tkx-file .rm { z-index: 1; }
 .tkx-file .n { padding: 6px 9px 0; font-size: 11.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tkx-file .s { padding: 0 9px 6px; font-size: 10.5px; color: var(--mute); }
 .tkx-file .rm { position: absolute; top: 6px; right: 6px; border: 0; width: 26px; height: 26px; border-radius: 7px; background: rgba(0, 0, 0, .55); color: #fff; cursor: pointer; opacity: 0; transition: opacity .15s; }

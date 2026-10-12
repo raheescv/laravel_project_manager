@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Configuration;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * The editable lead dropdowns: sources and statuses, each with sub options
@@ -91,16 +92,20 @@ class LeadOptions
 
     /**
      * Who the lead screens offer under "Assigned to": active employees of the chosen
-     * designations, or every user while none are chosen.
+     * designations, or every user while none are chosen. A salesman limited to
+     * their team's leads is offered only themselves and their team.
      *
      * @return array<int, string>
      */
     public static function assignees(): array
     {
         $designationIds = self::assigneeDesignationIds();
+        $viewer = Auth::user();
+        $teamOnly = $viewer instanceof User && $viewer->seesOnlyTeamLeads();
 
         return User::query()
-            ->when($designationIds, fn ($query) => $query->where('type', 'employee')->whereIn('designation_id', $designationIds)->active())
+            ->when($designationIds && ! $teamOnly, fn ($query) => $query->where('type', 'employee')->whereIn('designation_id', $designationIds)->active())
+            ->when($teamOnly, fn ($query) => $query->whereIn('id', $viewer->leadVisibleUserIds()))
             ->orderBy('name')
             ->pluck('name', 'id')
             ->all();

@@ -7,6 +7,7 @@ use App\Actions\Property\PropertyLead\TransferAction;
 use App\Actions\Property\PropertyLead\UpdateAction;
 use App\Models\Country;
 use App\Models\PropertyLead;
+use App\Models\Scopes\LeadVisibilityScope;
 use App\Support\LeadAuditTrail;
 use App\Support\LeadPipeline;
 use Illuminate\Support\Facades\Auth;
@@ -72,7 +73,7 @@ class Page extends Component
             $this->notes = is_array($remarks) ? $remarks : (json_decode($remarks ?? '[]', true) ?: []);
         } else {
             $this->formData = [
-                'name' => 'New Lead - '.(PropertyLead::withTrashed()->count() + 1),
+                'name' => 'New Lead - '.(PropertyLead::withoutGlobalScope(LeadVisibilityScope::class)->withTrashed()->count() + 1),
                 'mobile' => '',
                 'branch_id' => session('branch_id'),
                 'email' => '',

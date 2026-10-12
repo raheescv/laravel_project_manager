@@ -176,6 +176,7 @@ class MigratePropertyDataCommand extends Command
             $this->migrateDesignations();
             $this->migrateUsers();
             $this->assignUserRoles();
+            $this->migrateEmployeeTeams();
             $this->migrateAccountHeads();
             $this->migrateServiceHeads();
             $this->migrateCustomers();
@@ -735,6 +736,46 @@ class MigratePropertyDataCommand extends Command
         }
 
         $this->info("Assigned roles to {$assigned} user(s)/employee(s).");
+    }
+
+    /** accounts' employee_teams: which employees' leads a team lead sees besides their own. */
+    private function migrateEmployeeTeams(): void
+    {
+        if (! $this->tableExists('employee_teams')) {
+            $this->warn('Source employee_teams table not found - skipping.');
+
+            return;
+        }
+
+        $rows = DB::connection('mysql2')->table('employee_teams')->orderBy('id')->get();
+
+        $this->migrateTable(
+            'employee teams',
+            $rows,
+            'employee_teams',
+            fn ($row) => $this->employeeTeamRow($row),
+            ['tenant_id', 'employee_id', 'team_member_id'],
+        );
+    }
+
+    /** Both sides are accounts employees.id; they land in users under new ids. */
+    private function employeeTeamRow(object $row): ?array
+    {
+        $map = $this->employeeUserMap();
+        $employeeId = $map['emp_'.$row->employee_id] ?? null;
+        $memberId = $map['emp_'.$row->team_member_id] ?? null;
+
+        if ($employeeId === null || $memberId === null || $employeeId === $memberId) {
+            return null;
+        }
+
+        return [
+            'tenant_id' => $this->tenantId,
+            'employee_id' => (int) $employeeId,
+            'team_member_id' => (int) $memberId,
+            'created_at' => $row->created_at ?? now(),
+            'updated_at' => $row->updated_at ?? now(),
+        ];
     }
 
     private function migrateAccountHeads(): void
@@ -1813,6 +1854,7 @@ class MigratePropertyDataCommand extends Command
     private function employeeUserMap(): array
     {
         return $this->employeeUserMap ??= DB::table('users')
+            ->where('tenant_id', $this->tenantId)
             ->where('second_reference_no', 'like', 'emp\\_%')
             ->pluck('id', 'second_reference_no')
             ->all();

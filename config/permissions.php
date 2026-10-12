@@ -188,6 +188,8 @@ return [
     'property lead' => [
         'create',
         'view',
+        // Without it a non-admin employee sees only their own and their team's leads.
+        'view all',
         'edit',
         'delete',
         'download',

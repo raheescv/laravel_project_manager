@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\PropertyLead;
+use App\Models\Scopes\LeadVisibilityScope;
 use App\Support\LeadOptions;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -256,7 +257,7 @@ class LeadDropdownOptions extends Component
     {
         $values = $this->list === 'statuses' ? LeadOptions::statuses() : LeadOptions::sources();
         $column = $this->config('column');
-        $usage = PropertyLead::query()
+        $usage = PropertyLead::withoutGlobalScope(LeadVisibilityScope::class)
             ->selectRaw("TRIM({$column}) as value, count(*) as total")
             ->groupByRaw("TRIM({$column})")
             ->pluck('total', 'value')
@@ -312,7 +313,7 @@ class LeadDropdownOptions extends Component
     {
         $column = $this->config('column');
 
-        return PropertyLead::query()->whereRaw("LOWER(TRIM({$column})) = ?", [mb_strtolower($value)]);
+        return PropertyLead::withoutGlobalScope(LeadVisibilityScope::class)->whereRaw("LOWER(TRIM({$column})) = ?", [mb_strtolower($value)]);
     }
 
     private function authorizeAccess(): void
