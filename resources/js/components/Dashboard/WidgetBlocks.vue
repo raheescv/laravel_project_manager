@@ -19,11 +19,13 @@ const clamp = (value) => Math.max(0, Math.min(100, Number(value) || 0))
 function axis(series) {
     const high = Math.max(0, ...series.flatMap((s) => s.values))
     if (!high) return { top: 4, ticks: [0, 1, 2, 3, 4] }
+    const whole = series.every((s) => s.values.every((v) => Number.isInteger(v)))
     let best = null
     for (const count of [4, 5, 6]) {
         const raw = high / count
         const power = 10 ** Math.floor(Math.log10(raw))
-        const step = [1, 2, 2.5, 5, 10].find((n) => n * power >= raw) * power
+        const steps = [1, 2, 2.5, 5, 10].map((n) => n * power).filter((step) => !whole || Number.isInteger(step))
+        const step = steps.find((candidate) => candidate >= raw) ?? Math.ceil(raw)
         if (!best || step * count < best.top) best = { top: step * count, step, count }
     }
     return { top: best.top, ticks: Array.from({ length: best.count + 1 }, (_, i) => i * best.step) }
@@ -115,6 +117,20 @@ function cell(value, column) {
         <div v-else-if="b.type === 'highlight'" class="dbx-hl" :class="'t-' + b.tone">
             <b><small v-if="fmt.parts(b.value, b.format).prefix">{{ fmt.parts(b.value, b.format).prefix }}</small>{{ fmt.parts(b.value, b.format).text }}</b>
             <span>{{ b.label }}</span>
+        </div>
+
+        <!-- Titled summary cards (Collections: overdue · cheques · security) -->
+        <div v-else-if="b.type === 'summary-cards'" class="dbx-sc">
+            <div v-for="c in b.items" :key="c.title" class="dbx-sc-c">
+                <div class="dbx-sc-h"><i class="fa" :class="['fa-' + c.icon, 't-' + c.tone]"></i>{{ c.title }}</div>
+                <div class="dbx-sc-boxes">
+                    <div v-for="box in c.boxes" :key="box.label" class="dbx-sc-box" :class="'t-' + box.tone">
+                        <b :style="ink(box.tone)">{{ fmt.text(box.value, box.format) }}</b><span>{{ box.label }}</span>
+                    </div>
+                </div>
+                <div v-if="c.stack" class="dbx-track stack lg"><i v-for="(part, i) in c.stack" :key="i" :style="{ width: clamp(part.percent) + '%', background: `var(--${part.tone})` }"></i></div>
+                <span v-if="c.badge" class="dbx-sc-badge" :class="'t-' + c.badge.tone"><i class="fa fa-file-text-o"></i>{{ c.badge.text }}</span>
+            </div>
         </div>
 
         <!-- Label / value rows -->

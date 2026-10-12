@@ -19,7 +19,7 @@ const props = defineProps({
     refreshToken: { type: Number, default: 0 },
     resizeHint: { type: String, default: '' },
 })
-const emit = defineEmits(['size', 'collapse', 'hide', 'move', 'grip', 'resize', 'menu', 'keymove', 'keysize'])
+const emit = defineEmits(['size', 'tall', 'collapse', 'hide', 'move', 'grip', 'resize', 'menu', 'keymove', 'keysize'])
 
 const SIZES = [
     { value: 4, label: 'S' },
@@ -110,6 +110,8 @@ defineExpose({ reload: () => load({ quiet: true }) })
                 <button v-for="s in SIZES" :key="s.value" type="button" :class="{ on: s.value === span }" :disabled="s.value < def.minSpan"
                     :title="`${s.label} · ${s.value} of 12 columns`" @click="emit('size', s.value)">{{ s.label }}</button>
             </div>
+            <button class="dbx-ib dbx-tall" :class="{ on: item.tall }" type="button" :aria-pressed="!!item.tall" aria-label="Expand to two rows tall"
+                :title="item.tall ? 'Expanded: two rows tall, shows everything — click to shrink back' : 'Expand to two rows tall'" @click="emit('tall')"><i class="fa fa-arrows-v"></i></button>
             <button class="dbx-ib" type="button" :aria-label="item.collapsed ? 'Expand' : 'Collapse'" :title="item.collapsed ? 'Expand' : 'Collapse'" @click="emit('collapse')">
                 <i class="fa" :class="item.collapsed ? 'fa-expand' : 'fa-compress'"></i>
             </button>

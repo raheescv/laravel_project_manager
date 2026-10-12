@@ -49,6 +49,19 @@ final class Blocks
     }
 
     /**
+     * Titled summary cards side by side: an icon title, one or two tinted
+     * boxes (centred figure, label under it), then an optional split bar and a
+     * badge. Each item: `{title, icon, tone, boxes: [{value, format, label, tone}], stack?, badge?}`.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return array<string, mixed>
+     */
+    public static function summaryCards(array $items): array
+    {
+        return ['type' => 'summary-cards', 'items' => $items];
+    }
+
+    /**
      * Plain label / value rows; a row's `tone` colours its value.
      *
      * @param  list<array{label: string, value: float|int, format: string, tone?: string}>  $rows

@@ -29,6 +29,7 @@ class SaveDashboardLayoutRequest extends FormRequest
             'layout.*.span' => ['required_with:layout.*.key', 'nullable', 'integer', Rule::in(WidgetRegistry::SPANS)],
             'layout.*.collapsed' => ['nullable', 'boolean'],
             'layout.*.row' => ['nullable', 'boolean'],
+            'layout.*.tall' => ['nullable', 'boolean'],
             'layout.*.id' => ['required_if:layout.*.type,divider', 'nullable', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/', 'distinct'],
             'layout.*.title' => ['required_if:layout.*.type,divider', 'nullable', 'string', 'max:60'],
         ];
@@ -72,7 +73,7 @@ class SaveDashboardLayoutRequest extends FormRequest
     {
         return collect($this->validated('layout'))->map(fn (array $item): array => ($item['type'] ?? null) === 'divider'
             ? ['type' => 'divider', 'id' => $item['id'], 'title' => trim($item['title'])]
-            : ['key' => $item['key'], 'span' => (int) $item['span'], 'collapsed' => (bool) ($item['collapsed'] ?? false)] + (empty($item['row']) ? [] : ['row' => true])
+            : ['key' => $item['key'], 'span' => (int) $item['span'], 'collapsed' => (bool) ($item['collapsed'] ?? false)] + (empty($item['row']) ? [] : ['row' => true]) + (empty($item['tall']) ? [] : ['tall' => true])
         )->values()->all();
     }
 }

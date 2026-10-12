@@ -224,3 +224,17 @@ it('ignores widget permissions that belong to a system the tenant does not run',
     Configuration::updateOrCreate(['tenant_id' => $this->world->tenant->id, 'key' => 'active_module'], ['value' => 'POS Module']);
     expect(collect($this->get($this->world->url('/'))->viewData('dashboard')['catalogue'])->pluck('key'))->toContain('business-kpis')->not->toContain('property-occupancy');
 });
+
+it('lays out the lead section like before: tiles and units beside a tall activity feed', function (): void {
+    ($this->grant)('property lead.view', 'property lead.dashboard status count', 'property lead.dashboard recent activities', 'property lead.dashboard source pie chart', 'property lead.dashboard employee bar chart', 'dashboard.customize');
+
+    $layout = collect($this->get($this->world->url('/'))->viewData('dashboard')['layout'])->whereNotNull('key')->values();
+
+    expect($layout->pluck('key')->all())->toBe(['lead-status', 'lead-activity', 'lead-units', 'lead-sources', 'lead-employees'])
+        ->and($layout->pluck('span')->all())->toBe([8, 4, 8, 6, 6])
+        ->and($layout->firstWhere('key', 'lead-activity'))->toMatchArray(['tall' => true]);
+
+    ($this->saveLayout)([['key' => 'lead-status', 'span' => 8, 'tall' => true], ['key' => 'lead-activity', 'span' => 4]])->assertOk()
+        ->assertJsonPath('layout.0.tall', true)->assertJsonMissingPath('layout.1.tall');
+    ($this->saveLayout)([['key' => 'lead-status', 'span' => 8, 'tall' => 'yes']])->assertJsonValidationErrors(['layout.0.tall']);
+});

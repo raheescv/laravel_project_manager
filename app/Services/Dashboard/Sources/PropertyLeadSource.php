@@ -26,10 +26,10 @@ class PropertyLeadSource extends DashboardSource
     {
         return [
             new WidgetDefinition('lead-status', 'Leads', 'Lead pipeline', 'Leads by stage', 'users', 'kpi', 8, 6, ['property lead.view', 'property lead.dashboard status count']),
-            new WidgetDefinition('lead-units', 'Leads', 'Available units', 'By property group', 'home', 'table', 4, 4, ['property lead.view', 'property lead.dashboard status count']),
-            new WidgetDefinition('lead-activity', 'Leads', 'Recent lead activity', 'Last updated leads', 'history', 'list', 4, 4, ['property lead.view', 'property lead.dashboard recent activities']),
-            new WidgetDefinition('lead-sources', 'Leads', 'Leads per source', 'All leads', 'pie-chart', 'donut', 8, 6, ['property lead.view', 'property lead.dashboard source pie chart']),
-            new WidgetDefinition('lead-employees', 'Leads', 'Leads per employee', 'Top 15 by assigned leads', 'bar-chart', 'chart', 12, 6, ['property lead.view', 'property lead.dashboard employee bar chart']),
+            new WidgetDefinition('lead-units', 'Leads', 'Available units', 'By property group', 'home', 'table', 8, 4, ['property lead.view', 'property lead.dashboard status count']),
+            new WidgetDefinition('lead-activity', 'Leads', 'Recent lead activity', 'Last updated leads', 'history', 'list', 4, 4, ['property lead.view', 'property lead.dashboard recent activities'], tall: true),
+            new WidgetDefinition('lead-sources', 'Leads', 'Leads per source', 'All leads', 'pie-chart', 'donut', 6, 6, ['property lead.view', 'property lead.dashboard source pie chart']),
+            new WidgetDefinition('lead-employees', 'Leads', 'Leads per employee', 'Top 15 by assigned leads', 'bar-chart', 'chart', 6, 6, ['property lead.view', 'property lead.dashboard employee bar chart']),
         ];
     }
 

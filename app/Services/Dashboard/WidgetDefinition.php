@@ -9,7 +9,8 @@ use Closure;
 /**
  * Everything the dashboard needs to know about one widget before its data
  * loads: what it is called, how wide it starts, how narrow it may go, which
- * header switcher it has, and which permissions (all of them) unlock it.
+ * header switcher it has, whether it starts two rows tall, and which
+ * permissions (all of them) unlock it.
  */
 final class WidgetDefinition
 {
@@ -29,6 +30,7 @@ final class WidgetDefinition
         public readonly array $permissions,
         public readonly array $options = [],
         public readonly ?string $defaultOption = null,
+        public readonly bool $tall = false,
     ) {}
 
     /**
@@ -61,7 +63,7 @@ final class WidgetDefinition
     }
 
     /**
-     * @return array{key: string, group: string, title: string, subtitle: string, icon: string, kind: string, span: int, minSpan: int, options: list<array{value: string, label: string}>, defaultOption: ?string}
+     * @return array{key: string, group: string, title: string, subtitle: string, icon: string, kind: string, span: int, minSpan: int, tall: bool, options: list<array{value: string, label: string}>, defaultOption: ?string}
      */
     public function toArray(): array
     {
@@ -74,6 +76,7 @@ final class WidgetDefinition
             'kind' => $this->kind,
             'span' => $this->span,
             'minSpan' => $this->minSpan,
+            'tall' => $this->tall,
             'options' => collect($this->options)->map(fn (string $label, string $value): array => ['value' => $value, 'label' => $label])->values()->all(),
             'defaultOption' => $this->defaultOption,
         ];

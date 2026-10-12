@@ -6,7 +6,7 @@
  * edge, collapse, hide, re-add from the library, and add / rename dividers.
  * Every change is undoable and autosaved to the user's layout.
  */
-import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import DashboardWidget from './DashboardWidget.vue'
 import WidgetLibrary from './WidgetLibrary.vue'
@@ -67,37 +67,110 @@ const updatedLabel = computed(() => {
     return minutes < 1 ? 'Updated just now' : `Updated ${minutes} min ago`
 })
 
-/* ---------------- FLIP: animate whatever moved in the grid ---------------- */
-function snapshot() {
-    const rects = new Map()
-    for (const el of grid.value?.children ?? []) if (!el.classList.contains('is-drag')) rects.set(el.dataset.id, el.getBoundingClientRect())
-    return rects
+/* ---------------- layout engine ----------------
+ * Cards keep their own (natural) height; nothing stretches to match a
+ * neighbour. Cards flow left to right in rows on 12 columns (6 on tablets, 1
+ * on phones); a row starts below the cards above it, except beside an
+ * expanded (`tall`) card, which runs down the side while the next row tucks in
+ * next to it. While customizing, free space at the end of each row and a strip
+ * between rows become drop zones; they are gone again after Done.
+ */
+const SLOT_ROW = 54
+const slots = ref([])
+const hotSlot = ref(-1)
+const ready = ref(false)
+let model = []
+let layoutFrame = 0
+
+const scheduleLayout = () => {
+    if (!layoutFrame) layoutFrame = requestAnimationFrame(() => { layoutFrame = 0; relayout() })
 }
-function play(first) {
-    if (reduced()) return
-    for (const el of grid.value?.children ?? []) {
-        if (el.classList.contains('is-drag')) continue
-        const before = first.get(el.dataset.id)
-        if (!before) continue
-        const after = el.getBoundingClientRect()
-        const dx = before.left - after.left
-        const dy = before.top - after.top
-        if (!dx && !dy) continue
-        el.style.transition = 'none'
-        el.style.transform = `translate(${dx}px, ${dy}px)`
-        el._fl = true
-        el.getBoundingClientRect()
-        el.style.transition = 'transform .26s cubic-bezier(.2,.8,.2,1)'
-        el.style.transform = ''
-        clearTimeout(el._ft)
-        el._ft = setTimeout(() => { el._fl = false; el.style.transition = '' }, 280)
+
+function relayout() {
+    const g = grid.value
+    if (!g) return
+    const n = cols.value
+    const gp = gap()
+    const colWidth = (g.clientWidth - gp * (n - 1)) / n
+    const left = (column) => column * (colWidth + gp)
+    const widthOf = (span) => span * colWidth + (span - 1) * gp
+    const effective = (span) => (n === 12 ? span : n === 6 ? (span <= 6 ? 3 : 6) : 1)
+    const zones = editing.value && n > 1
+
+    const items = [...g.children].filter((el) => el.dataset.id && !el.classList.contains('is-drag')).map((el) => {
+        const divider = el.dataset.type === 'divider'
+        const w = divider ? n : Math.min(n, effective(+el.dataset.span || 12))
+        el.style.width = `${widthOf(w)}px`
+        return { el, id: el.dataset.id, w, divider, tall: n === 12 && el.hasAttribute('data-tall'), pin: el.hasAttribute('data-row') }
+    })
+    items.forEach((item) => { item.h = item.el.offsetHeight })
+
+    let y = 0
+    let row = []
+    let carry = []
+    let placed = 0
+    const zonesOut = []
+    const blocked = (from, to) => carry.some((c) => from < c.to && to > c.from)
+    const freeFrom = (from) => { let to = from; while (to < n && !blocked(to, to + 1)) to++; return to }
+    const findX = (from, w) => { for (let x = from; x + w <= n; x++) if (!blocked(x, x + w)) return x; return null }
+    const clearCarry = () => { y = Math.max(y, ...carry.map((c) => c.bottom + gp)); carry = [] }
+
+    const closeRow = () => {
+        if (!row.length) return
+        const top = row[0].y
+        const flat = row.filter((item) => !item.tall)
+        const bottom = Math.max(...(flat.length ? flat : row).map((item) => item.y + item.h))
+        if (zones) {
+            const last = row[row.length - 1]
+            const from = last.x + last.w
+            const to = freeFrom(from)
+            if (to > from) zonesOut.push({ index: placed, newRow: false, left: left(from), top, width: widthOf(to - from), height: Math.max(80, bottom - top) })
+        }
+        const expired = carry.map((c) => c.bottom)
+        carry = row.filter((item) => item.tall).map((item) => ({ from: item.x, to: item.x + item.w, bottom: item.y + item.h }))
+        y = Math.max(bottom, ...expired.filter((b) => b > bottom)) + gp
+        if (zones) {
+            const from = findX(0, 1) ?? 0
+            zonesOut.push({ index: placed, newRow: true, left: left(from), top: y, width: widthOf(freeFrom(from) - from), height: SLOT_ROW })
+            y += SLOT_ROW + gp
+        }
+        row = []
     }
+
+    for (const item of items) {
+        if (item.divider) {
+            closeRow()
+            clearCarry()
+            item.x = 0
+            item.y = y
+            y += item.h + gp
+        } else {
+            if (item.pin && row.length) closeRow()
+            const from = row.length ? row[row.length - 1].x + row[row.length - 1].w : 0
+            let x = findX(from, item.w)
+            if (x === null) { closeRow(); x = findX(0, item.w) }
+            if (x === null) { clearCarry(); x = 0 }
+            item.x = x
+            item.y = row.length ? row[0].y : y
+            row.push(item)
+        }
+        if (item.id !== '__ph') placed++
+        item.el.style.left = `${left(item.x)}px`
+        item.el.style.top = `${item.y}px`
+    }
+    closeRow()
+    clearCarry()
+
+    model = items.map((item) => ({ id: item.id, left: left(item.x), top: item.y, width: widthOf(item.w), height: item.h }))
+    slots.value = zonesOut
+    g.style.height = `${Math.max(0, y - gp)}px`
+    if (!ready.value) requestAnimationFrame(() => { ready.value = true })
 }
+
 async function animate(mutate) {
-    const first = snapshot()
     const result = mutate()
     await nextTick()
-    play(first)
+    scheduleLayout()
     return result
 }
 
@@ -130,6 +203,15 @@ function stepSize(key, dir) {
     const at = allowed.indexOf(item.span)
     setSize(key, allowed[Math.max(0, Math.min(allowed.length - 1, at + dir))])
 }
+function toggleTall(key) {
+    const item = layout.value[indexOf(layout.value, key)]
+    animate(() => commit((next) => {
+        const target = next[indexOf(next, key)]
+        if (target.tall) delete target.tall
+        else target.tall = true
+    }))
+    say(`${catalogue[key].title} ${item.tall ? 'now one row tall' : 'now two rows tall'}`)
+}
 function toggleCollapse(key) {
     const item = layout.value[indexOf(layout.value, key)]
     animate(() => commit((next) => { next[indexOf(next, key)].collapsed = !item.collapsed }))
@@ -154,7 +236,7 @@ async function move(id, dir) {
 }
 async function addWidget(key, at = null) {
     const def = catalogue[key]
-    await animate(() => commit((next) => next.splice(at ?? next.length, 0, { key, span: def.span, collapsed: false })))
+    await animate(() => commit((next) => next.splice(at ?? next.length, 0, { key, span: def.span, collapsed: false, ...(def.tall ? { tall: true } : {}) })))
     say(`${def.title} added`)
     flash(key)
 }
@@ -244,7 +326,7 @@ async function startDrag(event, item, fromLib = false) {
     const rect = el ? el.getBoundingClientRect() : { left: event.clientX - 40, top: event.clientY - 18, width: widthFor(item.span), height: 180 }
     const index = fromLib ? layout.value.length : indexOf(layout.value, id)
     drag.value = {
-        id, item, index, origin: index, fromLib,
+        id, item, index, origin: index, fromLib, newRow: false, originRow: !!item.row,
         span: item.span ?? 12, divider: item.type === 'divider',
         width: rect.width, height: Math.min(rect.height, 420),
         ox: event.clientX - rect.left, oy: event.clientY - rect.top, x: event.clientX, y: event.clientY, dirty: true,
@@ -283,26 +365,31 @@ function tick() {
 }
 function retarget() {
     const d = drag.value
-    const kids = [...grid.value.children].filter((el) => !el.classList.contains('is-drag') && el.dataset.id !== '__ph')
+    const g = grid.value.getBoundingClientRect()
+    const x = d.x - g.left
+    const y = d.y - g.top
+    const inside = (r) => x >= r.left && x <= r.left + r.width && y >= r.top && y <= r.top + r.height
     let target = null
-    for (const el of kids) {
-        if (el._fl) continue
-        const r = el.getBoundingClientRect()
-        if (d.x < r.left || d.x > r.right || d.y < r.top || d.y > r.bottom) continue
-        const wide = r.width > grid.value.clientWidth * 0.75
-        const before = wide ? d.y < r.top + r.height / 2 : d.x < r.left + r.width / 2
-        const at = indexOf(others.value, el.dataset.id)
-        target = before ? at : at + 1
-        break
+    let newRow = false
+    const zone = slots.value.findIndex(inside)
+    hotSlot.value = zone
+    if (zone >= 0) {
+        target = slots.value[zone].index
+        newRow = slots.value[zone].newRow
+    } else {
+        const hit = model.find((r) => r.id !== '__ph' && inside(r))
+        if (hit) {
+            const wide = hit.width > grid.value.clientWidth * 0.75
+            const before = wide ? y < hit.top + hit.height / 2 : x < hit.left + hit.width / 2
+            const at = indexOf(others.value, hit.id)
+            target = before ? at : at + 1
+        } else {
+            if (x < -60 || x > g.width + 60) return
+            if (y <= Math.max(0, ...model.filter((r) => r.id !== '__ph').map((r) => r.top + r.height))) return
+            target = others.value.length
+        }
     }
-    if (target === null) {
-        const g = grid.value.getBoundingClientRect()
-        if (d.x < g.left - 60 || d.x > g.right + 60) return
-        const last = kids[kids.length - 1]
-        if (last && d.y <= last.getBoundingClientRect().bottom) return
-        target = others.value.length
-    }
-    if (target !== d.index) animate(() => { d.index = target })
+    if (target !== d.index || newRow !== d.newRow) animate(() => { d.index = target; d.newRow = newRow })
 }
 const overLibrary = (event) => libraryOpen.value && event.clientX > (document.querySelector('.dbx-lib')?.getBoundingClientRect().left ?? Infinity)
 const onDragUp = (event) => finishDrag(!(drag.value?.fromLib && overLibrary(event)))
@@ -328,7 +415,8 @@ async function finishDrag(ok) {
         drag.value = null
         return say('Cancelled')
     }
-    if (!ok && d.index !== d.origin) await animate(() => { d.index = d.origin })
+    hotSlot.value = -1
+    if (!ok && (d.index !== d.origin || d.newRow !== d.originRow)) await animate(() => { d.index = d.origin; d.newRow = d.originRow })
 
     const el = grid.value.querySelector('.is-drag')
     const placeholder = grid.value.querySelector('.dbx-ph')
@@ -355,7 +443,8 @@ async function finishDrag(ok) {
         const at = indexOf(next, id)
         if (at >= 0) next.splice(at, 1)
         const placed = clone(item)
-        delete placed.row
+        if (d.newRow) placed.row = true
+        else delete placed.row
         next.splice(index, 0, placed)
     })
     say(changed ? `${titleOf(item)} ${d.fromLib ? 'added at' : 'moved to'} position ${index + 1}` : 'Not moved')
@@ -371,7 +460,7 @@ function onLibraryPress(event, def) {
     const onMove = (e) => {
         if (cols.value === 1 || Math.hypot(e.clientX - startX, e.clientY - startY) < 6) return
         cleanup()
-        startDrag(e, { key: def.key, span: def.span, collapsed: false }, true)
+        startDrag(e, { key: def.key, span: def.span, collapsed: false, ...(def.tall ? { tall: true } : {}) }, true)
     }
     const onUp = () => { cleanup(); addWidget(def.key) }
     const cleanup = () => {
@@ -447,15 +536,26 @@ function onTipMove(event) {
 }
 const closeMenu = () => { menu.value = null }
 
+watch([entries, editing, cols, () => drag.value?.newRow], () => nextTick(scheduleLayout))
+
 let resizeObserver = null
+let itemObserver = null
+let childObserver = null
 let clockTimer = 0
 let autoRefresh = 0
 onMounted(() => {
     resizeObserver = new ResizeObserver(() => {
         const width = gw.value.clientWidth
         cols.value = width >= 960 ? 12 : width >= 640 ? 6 : 1
+        scheduleLayout()
     })
     resizeObserver.observe(gw.value)
+    itemObserver = new ResizeObserver(scheduleLayout)
+    const observeChildren = () => [...grid.value.children].forEach((el) => itemObserver.observe(el))
+    childObserver = new MutationObserver(() => { observeChildren(); scheduleLayout() })
+    childObserver.observe(grid.value, { childList: true })
+    observeChildren()
+    relayout()
     window.addEventListener('keydown', onKeydown)
     window.addEventListener('pointerdown', onPointerDown)
     window.addEventListener('scroll', closeMenu, { passive: true })
@@ -464,6 +564,9 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
     resizeObserver?.disconnect()
+    itemObserver?.disconnect()
+    childObserver?.disconnect()
+    cancelAnimationFrame(layoutFrame)
     window.removeEventListener('keydown', onKeydown)
     window.removeEventListener('pointerdown', onPointerDown)
     window.removeEventListener('scroll', closeMenu)
@@ -510,9 +613,15 @@ onBeforeUnmount(() => {
 
             <div ref="gw" class="dbx-gw">
                 <div class="dbx-guides" aria-hidden="true"><i v-for="n in 12" :key="n"></i></div>
-                <div ref="grid" class="dbx-grid">
+                <div v-if="editing && slots.length" class="dbx-zones" aria-hidden="true">
+                    <div v-for="(zone, i) in slots" :key="i" class="dbx-zone" :class="{ hot: drag && hotSlot === i, strip: zone.newRow }"
+                        :style="{ left: zone.left + 'px', top: zone.top + 'px', width: zone.width + 'px', height: zone.height + 'px' }">
+                        <i class="fa fa-plus"></i><span>{{ zone.newRow ? 'Drop here for a new row' : 'Drop here' }}</span>
+                    </div>
+                </div>
+                <div ref="grid" class="dbx-grid" :class="{ 'is-ready': ready }">
                     <template v-for="entry in entries" :key="entry.id">
-                        <div v-if="entry.placeholder" class="dbx-ph" data-id="__ph" :data-span="drag.span" :data-type="drag.divider ? 'divider' : null" :style="{ height: drag.height + 'px' }"></div>
+                        <div v-if="entry.placeholder" class="dbx-ph" data-id="__ph" :data-span="drag.span" :data-type="drag.divider ? 'divider' : null" :data-row="drag.newRow ? '' : null" :style="{ height: drag.height + 'px' }"></div>
 
                         <div v-else-if="entry.item.type === 'divider'" class="dbx-div" :class="{ 'is-drag': entry.dragging }" data-type="divider" :data-id="entry.id" :style="entry.dragging ? { width: drag.width + 'px' } : null">
                             <template v-if="editing">
@@ -529,11 +638,11 @@ onBeforeUnmount(() => {
                             <button v-if="editing" class="dbx-ib dbx-div-x" type="button" aria-label="Remove section divider" title="Remove divider" @click="removeDivider(entry.id)"><i class="fa fa-times"></i></button>
                         </div>
 
-                        <DashboardWidget v-else :ref="(el) => { if (el) widgetRefs[entry.id] = el }" :def="catalogue[entry.item.key]" :item="entry.item" :span="spanOf(entry.item)" :data-row="rowOf(entry.item) ? '' : null" :api="api"
+                        <DashboardWidget v-else :ref="(el) => { if (el) widgetRefs[entry.id] = el }" :def="catalogue[entry.item.key]" :item="entry.item" :span="spanOf(entry.item)" :data-row="rowOf(entry.item) ? '' : null" :data-tall="entry.item.tall && !entry.item.collapsed ? '' : null" :api="api"
                             :editing="editing" :can-customize="canCustomize" :refresh-token="refreshToken"
                             :resize-hint="resizing?.key === entry.item.key ? `${SIZE_LABEL[resizing.span]} · ${resizing.span} / 12` : ''"
                             :class="{ 'is-drag': entry.dragging, 'is-resizing': resizing?.key === entry.item.key }" :style="entry.dragging ? { width: drag.width + 'px' } : null"
-                            @size="setSize(entry.item.key, $event)" @collapse="toggleCollapse(entry.item.key)" @hide="hide(entry.item.key)" @move="move(entry.id, $event)"
+                            @size="setSize(entry.item.key, $event)" @tall="toggleTall(entry.item.key)" @collapse="toggleCollapse(entry.item.key)" @hide="hide(entry.item.key)" @move="move(entry.id, $event)"
                             @keymove="move(entry.id, $event)" @keysize="stepSize(entry.item.key, $event)" @grip="startDrag($event, entry.item)" @resize="startResize($event, entry.item)"
                             @menu="openMenu(entry.item.key, $event)" />
                     </template>

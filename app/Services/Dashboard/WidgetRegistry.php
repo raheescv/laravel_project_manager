@@ -21,8 +21,8 @@ use App\Support\ModuleAccess;
 
 /**
  * The home dashboard's widget catalogue and each user's saved arrangement of
- * it. A layout is an ordered list of widgets (`{key, span, collapsed, row?}`,
- * `row` pinning the widget to the start of a grid row) and
+ * it. A layout is an ordered list of widgets (`{key, span, collapsed, row?, tall?}`,
+ * `row` pinning the widget to the start of a grid row, `tall` spanning two rows) and
  * section dividers (`{type: divider, id, title}`), stored per user under the
  * `dashboard.layout` preference.
  */
@@ -60,7 +60,7 @@ class WidgetRegistry
         'Appointments' => ['appointment-chart', 'upcoming-appointments'],
         'Finance' => ['income-expense-bar', 'income-expense-pie'],
         'Packages' => ['package-calendar'],
-        'Property leads' => ['lead-status', 'lead-activity', 'lead-sources', 'lead-units', 'lead-employees'],
+        'Property leads' => ['lead-status', 'lead-activity', 'lead-units', 'lead-sources', 'lead-employees'],
         'Property overview' => ['property-occupancy', 'group-occupancy', 'availability', 'group-income', 'income-summary'],
         'Maintenance' => ['maintenance-kpis', 'maintenance-breakdown', 'maintenance-technicians', 'maintenance-groups', 'maintenance-recent'],
         'Complaints' => ['complaint-kpis', 'complaint-buildings', 'complaint-trend', 'complaint-resolution'],
@@ -130,7 +130,7 @@ class WidgetRegistry
         foreach (self::DEFAULT_SECTIONS as $title => $keys) {
             $layout[] = ['type' => 'divider', 'id' => 'section-'.++$index, 'title' => $title];
             foreach ($keys as $key) {
-                $layout[] = ['key' => $key, 'span' => $this->all()[$key]->span, 'collapsed' => false];
+                $layout[] = $this->freshItem($this->all()[$key]);
             }
         }
 
@@ -164,13 +164,14 @@ class WidgetRegistry
             }
             $placed[$key] = true;
             $layout[] = ['key' => $key, 'span' => $this->clampSpan((int) ($item['span'] ?? 0), $visible[$key]), 'collapsed' => (bool) ($item['collapsed'] ?? false)]
-                + (empty($item['row']) ? [] : ['row' => true]);
+                + (empty($item['row']) ? [] : ['row' => true])
+                + (empty($item['tall']) ? [] : ['tall' => true]);
         }
 
         $seen = is_array($saved) ? (array) UserPreference::getValue(self::PREFERENCE_KEY.'.seen', [], $user->id) : [];
         foreach ($visible as $key => $definition) {
             if (! isset($placed[$key]) && ! in_array($key, $seen, true)) {
-                $layout[] = ['key' => $key, 'span' => $definition->span, 'collapsed' => false];
+                $layout[] = $this->freshItem($definition);
             }
         }
 
@@ -187,6 +188,16 @@ class WidgetRegistry
     {
         UserPreference::setValue(self::PREFERENCE_KEY, array_values($layout), $user->id);
         UserPreference::setValue(self::PREFERENCE_KEY.'.seen', array_keys($this->visibleTo($user)), $user->id);
+    }
+
+    /**
+     * A widget as it first lands on a dashboard.
+     *
+     * @return array<string, mixed>
+     */
+    protected function freshItem(WidgetDefinition $definition): array
+    {
+        return ['key' => $definition->key, 'span' => $definition->span, 'collapsed' => false] + ($definition->tall ? ['tall' => true] : []);
     }
 
     protected function clampSpan(int $span, WidgetDefinition $definition): int

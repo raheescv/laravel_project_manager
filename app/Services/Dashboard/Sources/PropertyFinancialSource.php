@@ -57,10 +57,25 @@ class PropertyFinancialSource extends DashboardSource
                 Blocks::kpi('Pending', $expected - $collected, 'clock-o', 'bad', 'money'),
             ]),
             Blocks::progress('Collection progress · '.now()->format('F'), $rate, $this->rateTone($rate)),
-            Blocks::panels([
-                ['label' => 'Overdue payments', 'value' => $overdueAmount, 'format' => 'money', 'tone' => 'bad', 'badge' => ['text' => $overdueCount.' overdue '.str('payment')->plural($overdueCount), 'tone' => 'bad']],
-                ['label' => 'Cheques', 'note' => "Cleared {$clearedCount} · Uncleared {$unclearedCount}", 'value' => $cleared + $uncleared, 'format' => 'money', 'stack' => [['percent' => $clearedShare, 'tone' => 'ok'], ['percent' => ($cleared + $uncleared) > 0 ? 100 - $clearedShare : 0, 'tone' => 'warn']]],
-                ['label' => 'Security deposits held', 'value' => (float) (clone $securities)->sum('amount'), 'format' => 'money', 'badge' => ['text' => (clone $securities)->count().' active deposits', 'tone' => 'info']],
+            Blocks::summaryCards([
+                [
+                    'title' => 'Overdue payments', 'icon' => 'exclamation-circle', 'tone' => 'bad',
+                    'boxes' => [['value' => $overdueAmount, 'format' => 'money', 'label' => 'Total overdue amount', 'tone' => 'bad']],
+                    'badge' => ['text' => $overdueCount.' overdue '.str('payment')->plural($overdueCount), 'tone' => 'bad'],
+                ],
+                [
+                    'title' => 'Cheque management', 'icon' => 'money', 'tone' => 'info',
+                    'boxes' => [
+                        ['value' => $cleared, 'format' => 'money', 'label' => "Cleared ({$clearedCount})", 'tone' => 'ok'],
+                        ['value' => $uncleared, 'format' => 'money', 'label' => "Uncleared ({$unclearedCount})", 'tone' => 'warn'],
+                    ],
+                    'stack' => [['percent' => $clearedShare, 'tone' => 'ok'], ['percent' => ($cleared + $uncleared) > 0 ? 100 - $clearedShare : 0, 'tone' => 'warn']],
+                ],
+                [
+                    'title' => 'Security deposits', 'icon' => 'shield', 'tone' => 'acc',
+                    'boxes' => [['value' => (float) (clone $securities)->sum('amount'), 'format' => 'money', 'label' => 'Total security held', 'tone' => 'acc']],
+                    'badge' => ['text' => (clone $securities)->count().' active deposits', 'tone' => 'acc'],
+                ],
             ]),
         ]];
     }

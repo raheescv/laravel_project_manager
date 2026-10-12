@@ -82,29 +82,28 @@
 
 /* ---------- grid ---------- */
 .dbx-gw { container: dbx / inline-size; position: relative; }
-.dbx-grid { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap); z-index: 1; }
-.dbx-grid > [data-span="4"] { grid-column: span 4; } .dbx-grid > [data-span="6"] { grid-column: span 6; }
-.dbx-grid > [data-span="8"] { grid-column: span 8; } .dbx-grid > [data-span="12"] { grid-column: span 12; }
-.dbx-grid > [data-type="divider"] { grid-column: 1 / -1; }
-/* A widget pinned to the start of its row (set when it is resized) keeps the row it was on. */
-.dbx-grid > [data-row][data-span="4"] { grid-column: 1 / span 4; } .dbx-grid > [data-row][data-span="6"] { grid-column: 1 / span 6; }
-.dbx-grid > [data-row][data-span="8"] { grid-column: 1 / span 8; } .dbx-grid > [data-row][data-span="12"] { grid-column: 1 / span 12; }
+.dbx-grid { position: relative; gap: var(--gap); z-index: 1; }
+/* Cards are placed by the layout engine in Dashboard.vue (left / top / width); --gap above is read from here. */
+.dbx-grid:not(.is-ready) { visibility: hidden; }
+.dbx-grid > [data-id] { position: absolute; left: 0; top: 0; transition: left .28s cubic-bezier(.2, .8, .2, 1), top .28s cubic-bezier(.2, .8, .2, 1); }
+.dbx-grid:not(.is-ready) > [data-id] { transition: none; }
 .dbx-guides { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap); pointer-events: none; opacity: 0; transition: opacity .25s; }
 .dbx-guides i { border-radius: 8px; background: color-mix(in srgb, var(--acc) 4%, transparent); outline: 1px dashed color-mix(in srgb, var(--acc) 22%, transparent); outline-offset: -1px; }
 .dbx.is-editing .dbx-guides { opacity: 1; }
 @container dbx (max-width: 959px) {
-    .dbx-grid, .dbx-guides { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-    .dbx-grid > [data-span="4"], .dbx-grid > [data-span="6"] { grid-column: span 3; }
-    .dbx-grid > [data-span="8"], .dbx-grid > [data-span="12"] { grid-column: span 6; }
-    .dbx-grid > [data-row][data-span="4"], .dbx-grid > [data-row][data-span="6"] { grid-column: 1 / span 3; }
-    .dbx-grid > [data-row][data-span="8"], .dbx-grid > [data-row][data-span="12"] { grid-column: 1 / span 6; }
+    .dbx-guides { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .dbx-guides i:nth-child(n+7) { display: none; }
 }
-@container dbx (max-width: 639px) {
-    .dbx-grid { grid-template-columns: minmax(0, 1fr); }
-    .dbx-grid > * { grid-column: 1 / -1 !important; }
-    .dbx-guides { display: none; }
-}
+@container dbx (max-width: 639px) { .dbx-guides { display: none; } }
+
+/* drop zones (customizing only): free space at the end of a row, and a strip between rows */
+.dbx-zones { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.dbx-zone { position: absolute; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed color-mix(in srgb, var(--acc) 35%, transparent); border-radius: 12px;
+    color: color-mix(in srgb, var(--acc) 55%, var(--muted)); font-size: 11.5px; font-weight: 500; background: color-mix(in srgb, var(--acc) 3%, transparent);
+    transition: background .15s, border-color .15s, color .15s, top .28s cubic-bezier(.2, .8, .2, 1), left .28s cubic-bezier(.2, .8, .2, 1); }
+.dbx-zone.strip { border-radius: 10px; }
+.dbx-zone .fa { font-size: 11px; }
+.dbx-zone.hot { border-style: solid; border-color: var(--acc); background: var(--acc-soft); color: var(--acc-ink); }
 
 /* ---------- widget shell ---------- */
 .dbx-w { container: w / inline-size; position: relative; display: flex; flex-direction: column; min-width: 0; background: var(--surface); border: 1px solid transparent; border-radius: var(--r); box-shadow: var(--shadow); transition: border-color .2s, box-shadow .2s; }
@@ -142,6 +141,8 @@
 .dbx-edit .dbx-seg button { padding: 1px 7px; font-size: 10.5px; font-weight: 600; }
 .dbx-edit .dbx-seg button.on { background: var(--acc); color: #fff; }
 .dbx-edit .dbx-ib { width: 24px; height: 24px; }
+.dbx-edit .dbx-tall.on { background: var(--acc); color: #fff; }
+.dbx:not(.is-c12) .dbx-tall { display: none; }
 .dbx-grip { width: 26px; height: 24px; border: 0; border-radius: 7px; background: var(--surface); color: var(--acc-ink); cursor: grab; touch-action: none; display: grid; place-items: center; flex: none; box-shadow: 0 0 0 1px var(--acc-line); padding: 0; }
 .dbx-grip:active { cursor: grabbing; }
 .dbx-mv { display: none; gap: 2px; }
@@ -154,7 +155,7 @@
 .dbx-w.is-resizing { border-color: var(--acc) !important; border-style: solid !important; }
 
 /* ---------- drag + drop ---------- */
-.dbx-grid > .is-drag { position: absolute; left: 0; top: 0; grid-column: auto !important; z-index: 40; margin: 0; rotate: .6deg; scale: 1.015; opacity: .97; pointer-events: none;
+.dbx-grid > .is-drag { position: absolute; left: 0 !important; top: 0 !important; z-index: 40; margin: 0; rotate: .6deg; scale: 1.015; opacity: .97; pointer-events: none;
     box-shadow: 0 26px 50px -18px rgba(15, 21, 34, .45), 0 0 0 1.5px var(--acc) !important; transition: rotate .18s, scale .18s; will-change: transform; }
 .dbx-div.is-drag { background: var(--surface); border-radius: 10px; padding: 8px 10px; }
 .dbx-grid > .is-landing { rotate: 0deg; scale: 1; }
@@ -318,6 +319,21 @@ a.dbx-li:hover .dbx-li-b b { color: var(--acc-ink); }
 .dbx-facts > div + div { border-top: 1px solid var(--line-soft); }
 .dbx-facts span { color: var(--muted); }
 .dbx-facts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* titled summary cards (Collections widget only) */
+.dbx-sc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.dbx-sc-c { border: 1px solid var(--line-soft); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; align-items: stretch; min-width: 0; }
+.dbx-sc-h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.dbx-sc-h .fa { color: var(--tone); font-size: 14px; }
+.dbx-sc-boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.dbx-sc-box { border-radius: 12px; padding: 14px 10px; text-align: center; background: color-mix(in srgb, var(--tone) 10%, var(--surface)); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dbx-sc-box b { font-size: 18px; font-weight: 600; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dbx-sc-box span { font-size: 12px; color: var(--muted); }
+.dbx-sc-c > .dbx-track { margin-top: -2px; }
+.dbx-sc-badge { align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
+    background: color-mix(in srgb, var(--tone) 12%, var(--surface)); color: color-mix(in srgb, var(--tone) 80%, var(--ink)); }
+
+.dbx-sc-h .fa.t-acc, .dbx-sc-badge.t-acc { color: var(--acc-ink); }
 
 /* ---------- calendar ---------- */
 .dbx-cal-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
