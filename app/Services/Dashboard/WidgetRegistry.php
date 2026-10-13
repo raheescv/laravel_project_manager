@@ -69,7 +69,7 @@ class WidgetRegistry
         'Property financials' => ['property-financial'],
         'Supply requests' => ['supply-status', 'supply-summary', 'supply-recent'],
         'Rent out expiry' => ['rent-kpis', 'rent-upcoming', 'rent-expired'],
-        'Agreements' => ['contract-kpis', 'contract-attention', 'contract-vendors', 'contract-due', 'contract-ending', 'contract-securities'],
+        'Agreements' => ['contract-dashboard'],
     ];
 
     /** @var array<string, WidgetDefinition>|null */

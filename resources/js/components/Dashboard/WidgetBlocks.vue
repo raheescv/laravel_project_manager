@@ -4,8 +4,11 @@
  * App\Services\Dashboard\Blocks. One renderer per block type, so a new widget
  * needs no front-end work. `split` nests blocks in columns.
  */
-import { inject } from 'vue'
+import { defineAsyncComponent, inject } from 'vue'
 import CalendarBlock from './CalendarBlock.vue'
+
+/** The Agreement Module's dashboard section; loaded (with its stylesheet) only when that widget is on the page. */
+const ContractDashboardBlock = defineAsyncComponent(() => import('../ProjectContract/dashboard/ContractDashboardBlock.vue'))
 
 defineProps({ blocks: { type: Array, required: true } })
 const emit = defineEmits(['navigate'])
@@ -287,5 +290,7 @@ function cell(value, column) {
         </div>
 
         <CalendarBlock v-else-if="b.type === 'calendar'" :block="b" @navigate="emit('navigate', $event)" />
+
+        <ContractDashboardBlock v-else-if="b.type === 'contract-dashboard'" :block="b" />
     </template>
 </template>

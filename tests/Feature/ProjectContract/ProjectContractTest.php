@@ -348,15 +348,17 @@ it('reports pending and paid payments and fills the main dashboard widgets', fun
 
     $widget = fn (string $key, array $query = []) => $this->getJson($this->world->url("/dashboard/widgets/{$key}").($query ? '?'.http_build_query($query) : ''))->assertOk();
 
-    $kpis = collect($widget('contract-kpis', ['option' => 'all'])->json('blocks.0.items'))->keyBy('label');
-    expect($kpis['Committed']['value'])->toEqual(100000)
-        ->and($kpis['Paid']['value'])->toEqual(5000)
-        ->and($kpis['Balance']['value'])->toEqual(95000);
-
-    $attention = collect($widget('contract-attention')->json('blocks'))->firstWhere('type', 'kpis');
-    expect(collect($attention['items'])->firstWhere('label', 'Overdue amount')['value'])->toEqual(15000);
-    expect($widget('contract-vendors', ['option' => 'all'])->json('blocks.0.rows.0.label'))->toBe('Gulf Steel Contracting');
-    expect($widget('contract-due')->json('blocks.0.rows'))->toHaveCount(2);
+    $block = $widget('contract-dashboard', ['option' => 'all'])->json('blocks.0');
+    expect($block['type'])->toBe('contract-dashboard')
+        ->and($block['cards']['committed'])->toEqual(100000)
+        ->and($block['cards']['paid'])->toEqual(5000)
+        ->and($block['cards']['balance'])->toEqual(95000)
+        ->and($block['overdue']['amount'])->toEqual(15000)
+        ->and($block['overdue']['count'])->toBe(1)
+        ->and($block['stats']['active'])->toBe(1)
+        ->and($block['vendors'][0]['name'])->toBe('Gulf Steel Contracting')
+        ->and($block['tables']['due_terms'])->toHaveCount(2)
+        ->and($block['urls']['view'])->toContain('/project-contract/view/__ID__');
 });
 
 it('prints the contract statement with its terms and payments', function (): void {
