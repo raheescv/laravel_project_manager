@@ -29,7 +29,7 @@ it('creates a vendor with the full details from the modal', function (): void {
         ->set('accounts.mobile', '55512345')
         ->set('accounts.cr_number', 'CR 128844')
         ->set('accounts.nationality', 'Qatar')
-        ->set('accounts.position_nature_of_business', 'Steel fabrication')
+        ->set('accounts.passport_no', 'P998877')
         ->call('save')
         ->assertHasNoErrors()
         ->assertDispatched('success');
@@ -40,7 +40,8 @@ it('creates a vendor with the full details from the modal', function (): void {
         ->and($vendor->vendor_type)->toBe('subcontractor')
         ->and($vendor->whatsapp_mobile)->toBe('55512345')
         ->and($vendor->cr_number)->toBe('CR 128844')
-        ->and($vendor->position_nature_of_business)->toBe('Steel fabrication');
+        ->and($vendor->passport_no)->toBe('P998877')
+        ->and($vendor->nationality)->toBe('Qatar');
 });
 
 it('loads a vendor into the modal for editing and saves the changes', function (): void {

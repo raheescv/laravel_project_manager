@@ -33,7 +33,6 @@ class VendorRequest extends FormRequest
             ],
             'alias_name' => ['nullable', 'string', 'max:100'],
             'vendor_type' => ['nullable', Rule::enum(VendorType::class)],
-            'dob' => ['nullable', 'date', 'before:today'],
             'credit_period_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
             'cr_number' => ['nullable', 'string', 'max:50'],
             'tax_no' => ['nullable', 'string', 'max:50'],
@@ -50,11 +49,6 @@ class VendorRequest extends FormRequest
             'occupation' => ['nullable', 'string', 'max:100'],
             'nationality' => ['nullable', 'string', 'max:100'],
             'company' => ['nullable', 'string', 'max:150'],
-            'marital_status' => ['nullable', 'string', 'max:30'],
-            'residential_address' => ['nullable', 'string', 'max:1000'],
-            'position_nature_of_business' => ['nullable', 'string', 'max:150'],
-            'monthly_income' => ['nullable', 'numeric', 'min:0'],
-            'employer_address' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -68,7 +62,6 @@ class VendorRequest extends FormRequest
             'name.unique' => 'A vendor with this name already exists.',
             'mobile.required' => 'Enter the vendor mobile number.',
             'email.email' => 'Enter a valid email address.',
-            'dob.before' => 'The date of birth must be in the past.',
         ];
     }
 }

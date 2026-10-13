@@ -24,7 +24,7 @@
                 </div>
             </component>
             <button v-if="collapsible && section.key === 'contact' && !expanded" type="button" class="pvm-more mb-2" @click="expanded = true">
-                <i class="fa fa-angle-down"></i> More details <span class="pa-sub">Personal and business details, optional</span>
+                <i class="fa fa-angle-down"></i> More details <span class="pa-sub">ID, passport and nationality, optional</span>
             </button>
         </template>
     </div>
@@ -47,7 +47,6 @@ const expanded = ref(!props.collapsible)
 
 const nationalities = ['Qatar', 'Saudi Arabia', 'United Arab Emirates', 'Kuwait', 'Bahrain', 'Oman', 'Egypt', 'Jordan', 'Lebanon', 'Syria', 'Sudan', 'India', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Philippines', 'Indonesia', 'United Kingdom', 'United States', 'Other']
     .map((name) => ({ value: name, label: name }))
-const maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'].map((name) => ({ value: name, label: name }))
 
 const sections = computed(() => [
     {
@@ -56,7 +55,6 @@ const sections = computed(() => [
             { key: 'name', label: 'Name', icon: 'fa-user text-secondary', required: true, placeholder: 'Vendor or company name' },
             { key: 'alias_name', label: 'Name (Arabic)', icon: 'fa-language text-secondary', placeholder: 'الاسم بالعربية', rtl: true },
             { key: 'vendor_type', label: 'Vendor Type', icon: 'fa-tag text-primary', options: options.vendor_types, placeholder: 'Select type' },
-            { key: 'dob', label: 'Date Of Birth', icon: 'fa-birthday-cake text-secondary', type: 'date', help: 'Individuals only' },
             { key: 'credit_period_days', label: 'Credit Period (days)', icon: 'fa-clock-o text-secondary', type: 'number', placeholder: 'e.g. 30', inputmode: 'numeric' },
             { key: 'cr_number', label: 'CR No.', icon: 'fa-file-text-o text-secondary', placeholder: 'Commercial registration number' },
             { key: 'tax_no', label: 'Tax No.', icon: 'fa-file-text-o text-secondary', placeholder: 'Tax registration number' },
@@ -83,16 +81,6 @@ const sections = computed(() => [
             { key: 'occupation', label: 'Occupation', icon: 'fa-briefcase text-secondary', placeholder: 'Enter occupation' },
             { key: 'nationality', label: 'Nationality', icon: 'fa-flag text-secondary', options: nationalities, placeholder: 'Select nationality' },
             { key: 'company', label: 'Company', icon: 'fa-building-o text-secondary', placeholder: 'Enter company name' },
-            { key: 'marital_status', label: 'Marital Status', icon: 'fa-users text-secondary', options: maritalStatuses, placeholder: 'Select marital status' },
-            { key: 'residential_address', label: 'Residential Address', icon: 'fa-home text-secondary', textarea: true, wide: true, placeholder: 'Enter residential address' },
-        ],
-    },
-    {
-        key: 'business', title: 'Employment / Business Details', icon: 'fa-suitcase text-info',
-        fields: [
-            { key: 'position_nature_of_business', label: 'Position / Nature Of Business', icon: 'fa-suitcase text-secondary', placeholder: 'e.g. Steel fabrication contractor' },
-            { key: 'monthly_income', label: 'Monthly Income', icon: 'fa-money text-secondary', type: 'number', placeholder: '0.00', inputmode: 'decimal' },
-            { key: 'employer_address', label: 'Employer / Business Address', icon: 'fa-map-marker text-danger', textarea: true, wide: true, placeholder: 'Enter employer or business address' },
         ],
     },
 ])

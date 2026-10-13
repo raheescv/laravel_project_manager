@@ -34,8 +34,8 @@ const saving = ref(false)
 const loading = ref(false)
 const formKey = ref(0)
 
-/** Personal and business details start open when an edited vendor already has some. */
-const expanded = computed(() => !!props.vendorId && ['id_no', 'passport_no', 'occupation', 'nationality', 'company', 'marital_status', 'residential_address', 'position_nature_of_business', 'monthly_income', 'employer_address'].some((key) => model[key]))
+/** Personal details start open when an edited vendor already has some. */
+const expanded = computed(() => !!props.vendorId && ['id_no', 'id_expiry_date', 'passport_no', 'occupation', 'nationality', 'company'].some((key) => model[key]))
 
 watch(() => props.open, async (isOpen) => {
     if (!isOpen) return

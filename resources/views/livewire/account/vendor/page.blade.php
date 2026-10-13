@@ -9,7 +9,6 @@
             $field('name', 'Name *', 'fa-user', ['placeholder' => 'Vendor or company name']),
             $field('alias_name', 'Name (Arabic)', 'fa-language', ['placeholder' => 'الاسم بالعربية', 'dir' => 'rtl']),
             $field('vendor_type', 'Vendor Type', 'fa-tag', ['select' => $vendorTypes, 'placeholder' => 'Select type']),
-            $field('dob', 'Date Of Birth', 'fa-birthday-cake', ['type' => 'date']),
             $field('credit_period_days', 'Credit Period (days)', 'fa-clock-o', ['type' => 'number', 'placeholder' => 'e.g. 30, 60, 90']),
             $field('cr_number', 'CR No.', 'fa-file-text-o', ['placeholder' => 'Commercial registration number']),
             $field('tax_no', 'Tax No.', 'fa-file-text-o', ['placeholder' => 'Tax registration number']),
@@ -30,13 +29,6 @@
             $field('occupation', 'Occupation', 'fa-briefcase'),
             $field('nationality', 'Nationality', 'fa-flag', ['select' => array_combine($nationalities, $nationalities), 'placeholder' => 'Select nationality']),
             $field('company', 'Company', 'fa-building-o'),
-            $field('marital_status', 'Marital Status', 'fa-users', ['select' => ['Single' => 'Single', 'Married' => 'Married', 'Divorced' => 'Divorced', 'Widowed' => 'Widowed'], 'placeholder' => 'Select marital status']),
-            $field('residential_address', 'Residential Address', 'fa-home', ['textarea' => true]),
-        ]],
-        'business' => ['title' => 'Employment / Business Details', 'icon' => 'fa-suitcase text-info', 'more' => true, 'fields' => [
-            $field('position_nature_of_business', 'Position / Nature Of Business', 'fa-suitcase'),
-            $field('monthly_income', 'Monthly Income', 'fa-money', ['type' => 'number']),
-            $field('employer_address', 'Employer / Business Address', 'fa-map-marker', ['textarea' => true]),
         ]],
     ];
 @endphp
@@ -90,7 +82,7 @@
                 </div>
                 @if ($sectionKey === 'contact' && ! $showMore)
                     <button type="button" class="btn btn-light border w-100 text-start small" wire:click="$set('showMore', true)">
-                        <i class="fa fa-angle-down me-1"></i> More details <span class="text-muted">· personal and business details, optional</span>
+                        <i class="fa fa-angle-down me-1"></i> More details <span class="text-muted">· ID, passport and nationality, optional</span>
                     </button>
                 @endif
             @endforeach

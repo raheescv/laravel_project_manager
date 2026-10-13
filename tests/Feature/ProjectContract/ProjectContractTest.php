@@ -315,7 +315,7 @@ it('posts cash security, tracks guarantees without a journal, and settles throug
 it('creates, lists and protects vendors', function (): void {
     $id = $this->postJson(($this->api)('/vendors'), [
         'name' => 'Al Noor Electromech', 'alias_name' => 'النور', 'vendor_type' => 'subcontractor', 'mobile' => '55102030',
-        'email' => 'info@alnoor.qa', 'cr_number' => 'CR 99012', 'nationality' => 'Qatar', 'position_nature_of_business' => 'MEP contractor',
+        'email' => 'info@alnoor.qa', 'cr_number' => 'CR 99012', 'nationality' => 'Qatar',
     ])->assertCreated()->json('data.id');
 
     $this->assertDatabaseHas('accounts', ['id' => $id, 'model' => 'Vendor', 'account_type' => 'liability', 'alias_name' => 'النور', 'vendor_type' => 'subcontractor', 'whatsapp_mobile' => '55102030']);

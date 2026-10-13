@@ -21,7 +21,7 @@ class Page extends Component
 
     public $table_id;
 
-    /** Personal and business details are folded away until asked for. */
+    /** Personal details (ID, passport, nationality…) are folded away until asked for. */
     public bool $showMore = false;
 
     public function create($name = null, $mobile = null, $place = null)
@@ -72,7 +72,7 @@ class Page extends Component
             $this->accounts = collect(SaveAction::FIELDS)
                 ->mapWithKeys(fn (string $field): array => [$field => $account->{$field} instanceof \DateTimeInterface ? $account->{$field}->format('Y-m-d') : ($account->{$field} ?? '')])
                 ->all() + ['account_type' => $account->account_type, 'model' => 'Vendor'];
-            $this->showMore = collect(['id_no', 'passport_no', 'occupation', 'nationality', 'company', 'marital_status', 'residential_address', 'position_nature_of_business', 'monthly_income', 'employer_address'])
+            $this->showMore = collect(['id_no', 'id_expiry_date', 'passport_no', 'occupation', 'nationality', 'company'])
                 ->contains(fn (string $field): bool => filled($this->accounts[$field]));
         }
         $this->dispatch('SelectDropDownValues', $this->accounts);
@@ -86,7 +86,6 @@ class Page extends Component
             'accounts.name' => ['required', 'max:100'],
             'accounts.alias_name' => ['nullable', 'max:100'],
             'accounts.vendor_type' => ['nullable', \Illuminate\Validation\Rule::enum(VendorType::class)],
-            'accounts.dob' => ['nullable', 'date', 'before:today'],
             'accounts.credit_period_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
             'accounts.cr_number' => ['nullable', 'max:50'],
             'accounts.tax_no' => ['nullable', 'max:50'],
@@ -103,11 +102,6 @@ class Page extends Component
             'accounts.occupation' => ['nullable', 'max:100'],
             'accounts.nationality' => ['nullable', 'max:100'],
             'accounts.company' => ['nullable', 'max:150'],
-            'accounts.marital_status' => ['nullable', 'max:30'],
-            'accounts.residential_address' => ['nullable', 'max:1000'],
-            'accounts.position_nature_of_business' => ['nullable', 'max:150'],
-            'accounts.monthly_income' => ['nullable', 'numeric', 'min:0'],
-            'accounts.employer_address' => ['nullable', 'max:1000'],
         ];
     }
 
