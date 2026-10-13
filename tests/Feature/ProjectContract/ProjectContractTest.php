@@ -390,6 +390,23 @@ it('prints the contract statement with its terms and payments', function (): voi
         expect($html)->toContain($title)->toContain($payment->voucher_no)->toContain('Gulf Steel Contracting')->toContain('Mobilisation 20%');
         $this->get($this->world->url("/print/project-contract/payment-{$kind}/{$payment->id}"))->assertOk()->assertHeader('Content-Type', 'application/pdf');
     }
+    $this->get($this->world->url("/print/project-contract/voucher/{$contract->id}"))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+    // A term prints as an invoice for its amount, and as a receipt / voucher for what was paid on it.
+    $term = $contract->terms()->firstOrFail();
+    foreach (['invoice', 'receipt', 'voucher'] as $kind) {
+        $this->get($this->world->url("/print/project-contract/term/{$kind}/{$term->id}"))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    }
+    $unpaid = $contract->terms()->create(['branch_id' => $contract->branch_id, 'label' => 'Later term', 'due_date' => '2027-01-01', 'amount' => 5000, 'created_by' => 1, 'updated_by' => 1]);
+    $this->get($this->world->url("/print/project-contract/term/invoice/{$unpaid->id}"))->assertOk();
+    $this->get($this->world->url("/print/project-contract/term/receipt/{$unpaid->id}"))->assertNotFound();
+
+    $html = view('print.project-contract.term', [
+        'term' => $term, 'contract' => $contract, 'kind' => 'invoice',
+        'allocations' => $term->allocations()->with('payment.paymentMethod')->get(),
+        'companyName' => 'Acme', 'companyAddress' => '', 'companyPhone' => '', 'companyEmail' => '', 'companyLogo' => null,
+    ])->render();
+    expect($html)->toContain('Invoice')->toContain('Amount Due')->toContain('20,000.00')->toContain('Paid So Far');
 });
 
 it('keeps another tenant\'s contracts out of reach', function (): void {

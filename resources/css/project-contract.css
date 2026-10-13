@@ -54,6 +54,10 @@
 .pax .btn-icon:hover { background: var(--pa-head); border-color: var(--pa-line); color: var(--pa-ink); }
 .pax .btn-icon.danger:hover { color: var(--pa-bad); }
 .pax .btn-icon:disabled { opacity: .45; }
+/* Print buttons on table rows: small labelled pills, kept on one line. */
+.pax .pa-prints { display: inline-flex; gap: .25rem; margin-right: .35rem; vertical-align: middle; }
+.pax .pa-prints .btn { padding: .12rem .45rem; font-size: .7rem; line-height: 1.4; }
+.pax .pa-prints .btn i { margin-right: .2rem; color: var(--pa-muted); }
 .pax .form-control, .pax .form-select { font-size: .8125rem; border-radius: 8px; border-color: var(--pa-line); padding: .38rem .6rem; background-color: var(--pa-surface); color: var(--pa-ink); }
 .pax .form-control:focus, .pax .form-select:focus { border-color: rgba(var(--pa-accent-rgb), .6); box-shadow: 0 0 0 3px rgba(var(--pa-accent-rgb), .14); }
 .pax .form-label { font-weight: 600; font-size: .75rem; margin-bottom: .2rem; color: var(--pa-ink); }

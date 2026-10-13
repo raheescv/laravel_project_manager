@@ -26,10 +26,16 @@
                         <td class="num" :class="{ 'text-success-emphasis': row.kind === 'payment' && !row.reversed }">{{ row.amount !== null ? money(row.amount) : '—' }}</td>
                         <td class="num">{{ money(row.balance) }}</td>
                         <td class="text-end text-nowrap">
-                            <template v-if="row.kind === 'payment'">
-                                <a class="btn-icon" :href="urlFor(context.urls, 'receipt', row.id)" target="_blank" rel="noopener" title="Print payment receipt"><i class="fa fa-print"></i></a>
-                                <a class="btn-icon" :href="urlFor(context.urls, 'voucher', row.id)" target="_blank" rel="noopener" title="Print payment voucher"><i class="fa fa-file-text-o"></i></a>
-                            </template>
+                            <span class="pa-prints">
+                                <template v-if="row.key === 'open'">
+                                    <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'contractVoucher', contract.id)" target="_blank" rel="noopener" title="Contract voucher"><i class="fa fa-file-text-o"></i> Voucher</a>
+                                    <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'statement', contract.id)" target="_blank" rel="noopener" title="Contract statement"><i class="fa fa-list-alt"></i> Statement</a>
+                                </template>
+                                <template v-else-if="row.kind === 'payment'">
+                                    <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'receipt', row.id)" target="_blank" rel="noopener" title="Payment receipt"><i class="fa fa-print"></i> Receipt</a>
+                                    <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'voucher', row.id)" target="_blank" rel="noopener" title="Payment voucher"><i class="fa fa-print"></i> Voucher</a>
+                                </template>
+                            </span>
                             <button v-if="row.kind === 'payment' && !row.reversed && can.payment_reverse" class="btn-icon danger" title="Reverse payment" @click="reverse(row)"><i class="fa fa-undo"></i></button>
                         </td>
                     </tr>

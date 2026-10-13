@@ -104,8 +104,10 @@
                                 <td>{{ row.vendor }}</td><td>{{ row.terms }}</td><td>{{ row.method }}</td><td class="pa-sub">{{ row.reference || '—' }}</td>
                                 <td class="num fw-semibold text-success-emphasis">{{ money(row.amount) }}</td>
                                 <td class="text-end text-nowrap no-print">
-                                    <a class="btn-icon" :href="urlFor(context.urls, 'receipt', row.id)" target="_blank" rel="noopener" title="Print payment receipt"><i class="fa fa-print"></i></a>
-                                    <a class="btn-icon" :href="urlFor(context.urls, 'voucher', row.id)" target="_blank" rel="noopener" title="Print payment voucher"><i class="fa fa-file-text-o"></i></a>
+                                    <span class="pa-prints">
+                                        <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'receipt', row.id)" target="_blank" rel="noopener" title="Payment receipt"><i class="fa fa-print"></i> Receipt</a>
+                                        <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'voucher', row.id)" target="_blank" rel="noopener" title="Payment voucher"><i class="fa fa-print"></i> Voucher</a>
+                                    </span>
                                 </td>
                             </tr>
                         </tbody>

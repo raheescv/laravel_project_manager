@@ -52,7 +52,14 @@
                             <td class="num fw-semibold">{{ money(term.balance) }}</td>
                             <td><span class="pa-pill" :class="term.overdue ? 'overdue' : term.status">{{ term.overdue ? 'Overdue' : termLabels[term.status] }}</span></td>
                             <td class="text-end text-nowrap">
-                                <button v-if="can.payment && term.balance > 0 && contract.status === 'active'" class="btn btn-quiet btn-sm" @click="emit('open', 'pay', { termIds: [term.id] })">Pay</button>
+                                <span class="pa-prints">
+                                    <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'termInvoice', term.id)" target="_blank" rel="noopener" :title="`Invoice for ${money(term.amount)}`"><i class="fa fa-file-text-o"></i> Invoice</a>
+                                    <template v-if="term.paid > 0">
+                                        <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'termReceipt', term.id)" target="_blank" rel="noopener" :title="`Receipt for ${money(term.paid)} paid`"><i class="fa fa-print"></i> Receipt</a>
+                                        <a class="btn btn-quiet btn-sm" :href="urlFor(context.urls, 'termVoucher', term.id)" target="_blank" rel="noopener" :title="`Voucher for ${money(term.paid)} paid`"><i class="fa fa-print"></i> Voucher</a>
+                                    </template>
+                                </span>
+                                <button v-if="can.payment && term.balance > 0 && contract.status === 'active'" class="btn btn-primary btn-sm" @click="emit('open', 'pay', { termIds: [term.id] })">Pay</button>
                                 <template v-if="can.term && contract.status === 'active'">
                                     <button class="btn-icon" title="Edit term" @click="emit('open', 'term', { term })"><i class="fa fa-pencil"></i></button>
                                     <button class="btn-icon danger" :title="term.has_payments ? 'Has payments' : 'Delete term'" :disabled="term.has_payments" @click="remove(term)"><i class="fa" :class="term.has_payments ? 'fa-lock' : 'fa-trash-o'"></i></button>
@@ -72,11 +79,12 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { contractApi } from '../api.js'
-import { confirmAction } from '../common/useContractContext.js'
+import { confirmAction, urlFor, useContext } from '../common/useContractContext.js'
 import { date, dueText, money, whole } from '../format.js'
 
 const props = defineProps({ contract: { type: Object, required: true }, can: { type: Object, required: true } })
 const emit = defineEmits(['open', 'run'])
+const context = useContext()
 
 const termLabels = { pending: 'Pending', partial: 'Partial', paid: 'Paid' }
 const selected = ref([])

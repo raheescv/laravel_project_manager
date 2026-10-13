@@ -12,10 +12,11 @@ use App\Models\Configuration;
 use App\Models\Journal;
 use App\Models\ProjectContract;
 use App\Models\ProjectContractPayment;
-use App\Support\ProjectContract\ApprovalGate;
+use App\Models\ProjectContractPaymentTerm;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
+use App\Support\ProjectContract\ApprovalGate;
 use App\Support\RentOutConfig;
 use App\Traits\RendersEscPosReceipts;
 use App\Traits\UsesBrowsershot;
@@ -223,6 +224,31 @@ class PrintController extends Controller
         );
 
         return $this->browsershotPdf('print.project-contract.contract-voucher', $data, 'contract_'.$contract->reference_no.'.pdf');
+    }
+
+    /**
+     * One payment term as an invoice (the amount due) or as the receipt /
+     * voucher for what has been paid on it so far, across all its payments.
+     */
+    public function projectContractTermDocument(string $kind, int $id)
+    {
+        $term = ProjectContractPaymentTerm::with(['contract.vendor', 'contract.branch'])->whereHas('contract')->findOrFail($id);
+        $contract = $term->contract;
+        $allocations = $term->allocations()
+            ->whereHas('payment', fn ($query) => $query->where('status', ProjectContractPayment::STATUS_POSTED))
+            ->with('payment.paymentMethod')
+            ->get()
+            ->sortBy(fn ($allocation) => $allocation->payment->date)
+            ->values();
+
+        abort_if($kind !== 'invoice' && $allocations->isEmpty(), 404, 'Nothing has been paid on this term yet.');
+
+        $data = array_merge(
+            compact('term', 'contract', 'allocations', 'kind'),
+            $this->getCompanyInfo()
+        );
+
+        return $this->browsershotPdf('print.project-contract.term', $data, "{$kind}_{$contract->reference_no}_T{$term->id}.pdf");
     }
 
     /** The receipt the vendor signs for one contract payment. */
