@@ -5,6 +5,7 @@
         'POS Module' => ['icon' => 'fa-shopping-cart', 'tone' => '#2f6fd6'],
         'School Module' => ['icon' => 'fa-graduation-cap', 'tone' => '#d4931c'],
         'Issues Module' => ['icon' => 'fa-life-ring', 'tone' => '#d94848'],
+        'Agreement Module' => ['icon' => 'fa-file-text-o', 'tone' => '#3d6fb6'],
     ];
     $lookFor = fn (string $system): array => $systemLooks[$system] ?? ['icon' => 'fa-cubes', 'tone' => 'var(--bs-primary)'];
     $labelFor = fn (string $key): string => $moduleLabels[$key] ?? Str::headline($key);

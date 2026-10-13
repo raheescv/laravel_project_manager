@@ -8,6 +8,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Services\Dashboard\WidgetRegistry;
+use App\Support\ModuleAccess;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
@@ -61,6 +63,17 @@ it('sends only the widgets the user may see, and no editor without dashboard.cus
 it('loads every widget without errors', function (string $key): void {
     ($this->grantAllWidgets)();
     $definition = app(WidgetRegistry::class)->find($key);
+
+    // A widget of an opt-in module (Agreements) exists only for tenants whose
+    // system runs that module, so switch to the first such system.
+    if (! $definition->isVisibleTo($this->world->user)) {
+        $system = collect(config('modules.systems'))->keys()->first(function (string $system) use ($definition): bool {
+            [$groups, $exact] = ModuleAccess::systemPermissions($system);
+
+            return collect($definition->permissions)->every(fn (string $permission): bool => in_array($permission, $exact, true) || in_array(Str::before($permission, '.'), $groups, true));
+        });
+        Configuration::create(['tenant_id' => $this->world->tenant->id, 'key' => 'active_module', 'value' => $system]);
+    }
 
     foreach ($definition->options ?: [null => null] as $option => $label) {
         $response = ($this->widget)($key, array_filter(['option' => $option]))->assertOk();

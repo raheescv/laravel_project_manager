@@ -106,6 +106,14 @@ return [
             'reports_accounting',
         ],
 
+        'Agreement Module' => [
+            'core',
+            'agreement',
+            'accounting',
+            'hr_management',
+            'reports_accounting',
+        ],
+
     ],
 
     /*
@@ -176,6 +184,18 @@ return [
                 ['icon' => 'fa-credit-card', 'title' => 'Wallets', 'caption' => 'Student cards'],
                 ['icon' => 'fa-cutlery', 'title' => 'Canteen', 'caption' => 'Menus & pre-orders'],
                 ['icon' => 'fa-users', 'title' => 'Parents', 'caption' => 'Portal & top-ups'],
+            ],
+        ],
+
+        'Agreement Module' => [
+            'headline' => 'Keep every contract',
+            'highlight' => 'on terms and on time.',
+            'lede' => 'Vendor contracts, payment terms, security and approvals — paid and tracked in one place.',
+            'tagline' => 'Your contracts are ready.',
+            'features' => [
+                ['icon' => 'fa-file-text-o', 'title' => 'Contracts', 'caption' => 'Terms & extensions'],
+                ['icon' => 'fa-shield', 'title' => 'Security', 'caption' => 'Bonds & deposits'],
+                ['icon' => 'fa-gavel', 'title' => 'Approvals', 'caption' => 'Level by level'],
             ],
         ],
 
@@ -320,6 +340,18 @@ return [
                 // report module — without this the role screen filters them out.
                 'report.student wallet',
                 'report.student recharge',
+            ],
+        ],
+
+        // ── Agreement ─────────────────────────────────────────────────────────
+        // Project contracts with vendors: terms, payments, security, approvals.
+        // Opt-in (see ModuleAccess::OPT_IN): only tenants running a system that
+        // lists it see the sidebar entry and the routes.
+        'agreement' => [
+            'label' => 'Agreements (Project Contracts)',
+            'permissions' => [
+                'project contract',
+                'vendor',
             ],
         ],
 

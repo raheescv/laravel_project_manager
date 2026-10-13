@@ -10,6 +10,7 @@ use App\Services\Dashboard\Sources\ComplaintSource;
 use App\Services\Dashboard\Sources\IncomeExpenseSource;
 use App\Services\Dashboard\Sources\MaintenanceSource;
 use App\Services\Dashboard\Sources\PackageCalendarSource;
+use App\Services\Dashboard\Sources\ProjectContractSource;
 use App\Services\Dashboard\Sources\PropertyFinancialSource;
 use App\Services\Dashboard\Sources\PropertyLeadSource;
 use App\Services\Dashboard\Sources\PropertyOverviewSource;
@@ -47,6 +48,7 @@ class WidgetRegistry
         PropertyFinancialSource::class,
         SupplyRequestSource::class,
         RentOutExpirySource::class,
+        ProjectContractSource::class,
     ];
 
     /**
@@ -67,6 +69,7 @@ class WidgetRegistry
         'Property financials' => ['property-financial'],
         'Supply requests' => ['supply-status', 'supply-summary', 'supply-recent'],
         'Rent out expiry' => ['rent-kpis', 'rent-upcoming', 'rent-expired'],
+        'Agreements' => ['contract-kpis', 'contract-attention', 'contract-vendors', 'contract-due', 'contract-ending', 'contract-securities'],
     ];
 
     /** @var array<string, WidgetDefinition>|null */

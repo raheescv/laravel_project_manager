@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/tailoring.php',
             __DIR__.'/../routes/property.php',
             __DIR__.'/../routes/student.php',
+            __DIR__.'/../routes/project_contract.php',
         ],
         api: [
             __DIR__.'/../routes/api.php',

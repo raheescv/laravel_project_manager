@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Account\Vendor;
 
-use App\Actions\Account\CreateAction;
-use App\Actions\Account\UpdateAction;
+use App\Actions\Account\Vendor\SaveAction;
+use App\Enums\Account\VendorType;
 use App\Models\Account;
-use App\Models\AccountCategory;
 use Faker\Factory;
 use Livewire\Component;
 
@@ -21,6 +20,9 @@ class Page extends Component
     public $parents;
 
     public $table_id;
+
+    /** Personal and business details are folded away until asked for. */
+    public bool $showMore = false;
 
     public function create($name = null, $mobile = null, $place = null)
     {
@@ -57,21 +59,21 @@ class Page extends Component
                 $mobile = rand(90000000, 99999999);
                 $email = $faker->email;
             }
-            $vendorsMaster = AccountCategory::firstOrCreate(['tenant_id' => 1, 'name' => 'Vendors']);
-            $account_category_id = $vendorsMaster->id;
-            $this->accounts = [
+            $this->accounts = array_fill_keys(SaveAction::FIELDS, '') + [
                 'account_type' => $account_type,
-                'name' => $name,
-                'mobile' => $mobile,
-                'email' => $email,
                 'model' => 'Vendor',
-                'account_category_id' => $account_category_id,
-                'place' => '',
-                'credit_period_days' => null,
             ];
+            $this->accounts['name'] = $name;
+            $this->accounts['mobile'] = $mobile;
+            $this->accounts['email'] = $email;
+            $this->showMore = false;
         } else {
             $account = Account::find($this->table_id);
-            $this->accounts = $account->toArray();
+            $this->accounts = collect(SaveAction::FIELDS)
+                ->mapWithKeys(fn (string $field): array => [$field => $account->{$field} instanceof \DateTimeInterface ? $account->{$field}->format('Y-m-d') : ($account->{$field} ?? '')])
+                ->all() + ['account_type' => $account->account_type, 'model' => 'Vendor'];
+            $this->showMore = collect(['id_no', 'passport_no', 'occupation', 'nationality', 'company', 'marital_status', 'residential_address', 'position_nature_of_business', 'monthly_income', 'employer_address'])
+                ->contains(fn (string $field): bool => filled($this->accounts[$field]));
         }
         $this->dispatch('SelectDropDownValues', $this->accounts);
     }
@@ -82,10 +84,30 @@ class Page extends Component
     {
         return [
             'accounts.name' => ['required', 'max:100'],
-            'accounts.email' => ['email', 'max:50'],
+            'accounts.alias_name' => ['nullable', 'max:100'],
+            'accounts.vendor_type' => ['nullable', \Illuminate\Validation\Rule::enum(VendorType::class)],
+            'accounts.dob' => ['nullable', 'date', 'before:today'],
+            'accounts.credit_period_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
+            'accounts.cr_number' => ['nullable', 'max:50'],
+            'accounts.tax_no' => ['nullable', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
+            'accounts.whatsapp_mobile' => ['nullable', 'max:15'],
+            'accounts.emergency_contact_no' => ['nullable', 'max:20'],
+            'accounts.email' => ['nullable', 'email', 'max:50'],
+            'accounts.po_box' => ['nullable', 'max:30'],
+            'accounts.contact_person' => ['nullable', 'max:100'],
             'accounts.place' => ['nullable', 'max:100'],
-            'accounts.credit_period_days' => ['nullable', 'integer', 'min:0'],
+            'accounts.id_no' => ['nullable', 'max:50'],
+            'accounts.id_expiry_date' => ['nullable', 'date'],
+            'accounts.passport_no' => ['nullable', 'max:50'],
+            'accounts.occupation' => ['nullable', 'max:100'],
+            'accounts.nationality' => ['nullable', 'max:100'],
+            'accounts.company' => ['nullable', 'max:150'],
+            'accounts.marital_status' => ['nullable', 'max:30'],
+            'accounts.residential_address' => ['nullable', 'max:1000'],
+            'accounts.position_nature_of_business' => ['nullable', 'max:150'],
+            'accounts.monthly_income' => ['nullable', 'numeric', 'min:0'],
+            'accounts.employer_address' => ['nullable', 'max:1000'],
         ];
     }
 
@@ -113,9 +135,9 @@ class Page extends Component
         $this->validate();
         try {
             if (! $this->table_id) {
-                $response = (new CreateAction())->execute($this->accounts);
+                $response = (new SaveAction())->execute($this->accounts);
             } else {
-                $response = (new UpdateAction())->execute($this->accounts, $this->table_id);
+                $response = (new SaveAction())->execute($this->accounts, $this->table_id);
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

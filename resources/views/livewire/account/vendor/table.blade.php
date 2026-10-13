@@ -51,9 +51,11 @@
                             <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="id" />
                         </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="name" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="vendor_type" label="type" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mobile" label="mobile" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="email" label="email" /> </th>
                         <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="place" label="place" /> </th>
+                        <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cr_number" label="CR / tax no." /> </th>
                         <th class="text-end"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="credit_period_days" label="credit period days" /> </th>
                         <th class="text-end"> Action </th>
                     </tr>
@@ -65,14 +67,24 @@
                                 <input type="checkbox" value="{{ $item->id }}" wire:model.live="selected" />
                                 {{ $item->id }}
                             </td>
-                            <td>{{ $item->name }}</td>
+                            <td>
+                                {{ $item->name }}
+                                @if ($item->alias_name)
+                                    <div class="small text-muted" dir="rtl">{{ $item->alias_name }}</div>
+                                @endif
+                            </td>
+                            <td>{{ \App\Enums\Account\VendorType::tryFrom((string) $item->vendor_type)?->label() ?? '-' }}</td>
                             <td>{{ $item->mobile }}</td>
                             <td>{{ $item->email }}</td>
                             <td>{{ $item->place }}</td>
+                            <td>{{ $item->cr_number ?: ($item->tax_no ?: '-') }}</td>
                             <td class="text-end">{{ $item->credit_period_days ?? '-' }}</td>
                             <td class="text-end">
                                 @can('vendor.edit')
-                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit"></i>
+                                    <i table_id="{{ $item->id }}" class="demo-psi-pencil fs-5 me-2 pointer edit" title="Edit vendor"></i>
+                                @endcan
+                                @can('vendor.delete')
+                                    <i class="fa fa-trash-o fs-5 pointer text-danger" title="Delete vendor" wire:click="deleteOne({{ $item->id }})" wire:confirm="Delete {{ $item->name }}? Vendors with contracts or ledger entries are kept."></i>
                                 @endcan
                             </td>
                         </tr>

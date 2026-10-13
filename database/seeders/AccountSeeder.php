@@ -82,6 +82,12 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Tax Amount', 'slug' => 'tax_amount', 'account_type' => 'liability', 'description' => 'Sales and purchase tax liabilities', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $provisionForTaxationGroup->id];
         $data[] = ['name' => 'Security Deposit', 'slug' => 'security_deposit', 'account_type' => 'liability', 'description' => 'Refundable security deposits collected from tenants', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentLiabilityMaster->id];
 
+        // Project contract security (App\Support\ProjectContract\SystemAccounts creates these on first use for older tenants)
+        $data[] = ['name' => 'Vendor Security Deposit', 'slug' => 'vendor_security_deposit', 'account_type' => 'liability', 'description' => 'Refundable security deposits received from vendors on project contracts', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentLiabilityMaster->id];
+        $data[] = ['name' => 'Security Deposit Paid', 'slug' => 'security_deposit_paid', 'account_type' => 'asset', 'description' => 'Refundable security deposits paid to vendors on project contracts', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentAssetMaster->id];
+        $data[] = ['name' => 'Forfeited Deposits', 'slug' => 'forfeited_deposits', 'account_type' => 'income', 'description' => 'Vendor security deposits and guarantees kept after a breach', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectIncomeMaster->id];
+        $data[] = ['name' => 'Security Deposit Loss', 'slug' => 'security_deposit_loss', 'account_type' => 'expense', 'description' => 'Security deposits paid to vendors that were not refunded', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
+
         // Process existing accounts first
         foreach ($data as $value) {
             $value['tenant_id'] = $this->tenantId;

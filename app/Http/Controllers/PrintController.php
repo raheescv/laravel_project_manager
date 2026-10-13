@@ -10,6 +10,9 @@ use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Journal;
+use App\Models\ProjectContract;
+use App\Models\ProjectContractPayment;
+use App\Support\ProjectContract\ApprovalGate;
 use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
@@ -154,6 +157,99 @@ class PrintController extends Controller
         );
 
         return $this->browsershotPdf('print.rentout.statement', $data, 'rentout_statement.pdf');
+    }
+
+    /**
+     * A vendor statement for one project contract, laid out like the rent-out
+     * statement: payment terms are what falls due (debit), posted payments what
+     * was paid (credit). Reversed payments are left out, as they never stood.
+     */
+    public function projectContractStatement(int $id, ?string $fromDate = null, ?string $toDate = null)
+    {
+        $contract = ProjectContract::with(['vendor', 'branch', 'terms', 'payments.paymentMethod', 'payments.allocations.term'])->findOrFail($id);
+
+        $entries = collect();
+        foreach ($contract->terms as $term) {
+            $entries->push([
+                'date' => $term->due_date,
+                'description' => $term->label,
+                'payment_mode' => 'Term due',
+                'cheque_no' => '',
+                'debit' => (float) $term->amount,
+                'credit' => 0,
+                'remark' => $term->remarks ?? '',
+            ]);
+        }
+        foreach ($contract->payments->where('status', ProjectContractPayment::STATUS_POSTED) as $payment) {
+            $entries->push([
+                'date' => $payment->date,
+                'description' => $payment->voucher_no.' · '.$payment->allocations->map(fn ($allocation) => $allocation->term?->label)->filter()->implode(', '),
+                'payment_mode' => $payment->paymentMethod?->name ?? '',
+                'cheque_no' => $payment->cheque_no ?? '',
+                'debit' => 0,
+                'credit' => (float) $payment->amount,
+                'remark' => trim(implode(' · ', array_filter([$payment->reference, $payment->remarks]))),
+            ]);
+        }
+
+        if ($fromDate && $toDate) {
+            $entries = $entries->filter(fn (array $entry): bool => Carbon::parse($entry['date'])->betweenIncluded($fromDate, $toDate));
+        }
+
+        $entries = $entries->sortBy(fn (array $entry): string => Carbon::parse($entry['date'])->format('Y-m-d').($entry['credit'] > 0 ? '1' : '0'))->values();
+
+        $data = array_merge(
+            compact('contract', 'entries', 'fromDate', 'toDate'),
+            ['paidTotal' => $contract->paidTotal()],
+            $this->getCompanyInfo()
+        );
+
+        return $this->browsershotPdf('print.project-contract.statement', $data, 'contract_statement_'.$contract->reference_no.'.pdf');
+    }
+
+    /**
+     * The contract itself as a one-page voucher: what was agreed with the
+     * vendor, for how much and how long, and who approved it.
+     */
+    public function projectContractVoucher(int $id)
+    {
+        $contract = ProjectContract::with(['vendor', 'branch', 'creator', 'terms', 'extensions' => fn ($query) => $query->where('status', 'approved')->orderBy('id')])->findOrFail($id);
+        $approvals = ApprovalGate::round($contract);
+
+        $data = array_merge(
+            compact('contract', 'approvals'),
+            ['paidTotal' => $contract->paidTotal()],
+            $this->getCompanyInfo()
+        );
+
+        return $this->browsershotPdf('print.project-contract.contract-voucher', $data, 'contract_'.$contract->reference_no.'.pdf');
+    }
+
+    /** The receipt the vendor signs for one contract payment. */
+    public function projectContractPaymentReceipt(int $id)
+    {
+        return $this->projectContractPaymentDocument($id, 'receipt');
+    }
+
+    /** The accounts voucher for one contract payment. */
+    public function projectContractPaymentVoucher(int $id)
+    {
+        return $this->projectContractPaymentDocument($id, 'voucher');
+    }
+
+    private function projectContractPaymentDocument(int $id, string $kind)
+    {
+        $payment = ProjectContractPayment::with(['paymentMethod', 'creator', 'allocations.term', 'contract.vendor', 'contract.branch'])
+            ->whereHas('contract')
+            ->findOrFail($id);
+        $contract = $payment->contract;
+
+        $data = array_merge(
+            compact('payment', 'contract', 'kind'),
+            $this->getCompanyInfo()
+        );
+
+        return $this->browsershotPdf('print.project-contract.payment', $data, "{$kind}_{$payment->voucher_no}.pdf");
     }
 
     public function rentoutUtilitiesStatement($id, $fromDate = null, $toDate = null)

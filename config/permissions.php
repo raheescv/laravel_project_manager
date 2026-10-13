@@ -333,4 +333,8 @@ return [
 
     // Task Management Module
     'task-management' => ['view', 'create', 'edit', 'delete', 'add-note'],
+
+    // Agreement Module — project contracts with vendors. 'term' adds and edits
+    // payment terms; 'payment reverse' posts the contra journal for a payment.
+    'project contract' => ['create', 'view', 'edit', 'delete', 'approve', 'term', 'payment', 'payment reverse', 'extend', 'security', 'document', 'note', 'report', 'dashboard'],
 ];

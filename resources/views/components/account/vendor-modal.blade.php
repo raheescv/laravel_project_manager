@@ -1,5 +1,5 @@
 <div class="modal" id="VendorModal" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             @livewire('account.vendor.page')
         </div>

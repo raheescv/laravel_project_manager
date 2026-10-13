@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Account\Vendor;
 
-use App\Actions\Account\DeleteAction;
+use App\Actions\Account\Vendor\DeleteAction;
 use App\Exports\AccountExport;
 use App\Jobs\Export\ExportAccountJob;
 use App\Models\Account;
@@ -33,6 +33,20 @@ class Table extends Component
     protected $listeners = [
         'Vendor-Refresh-Component' => '$refresh',
     ];
+
+    /** One vendor, from its row; blocked when the vendor has contracts or ledger entries. */
+    public function deleteOne(int $id): void
+    {
+        abort_unless(auth()->user()?->can('vendor.delete'), 403);
+        $response = (new DeleteAction())->execute($id);
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+        $this->selected = array_values(array_diff($this->selected, [$id]));
+        $this->dispatch('success', ['message' => 'Vendor deleted.']);
+    }
 
     public function delete()
     {
@@ -112,8 +126,10 @@ class Table extends Component
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
                     $q->where('accounts.name', 'like', "%{$value}%")
+                        ->orWhere('accounts.alias_name', 'like', "%{$value}%")
                         ->orWhere('accounts.mobile', 'like', "%{$value}%")
-                        ->orWhere('accounts.email', 'like', "%{$value}%");
+                        ->orWhere('accounts.email', 'like', "%{$value}%")
+                        ->orWhere('accounts.cr_number', 'like', "%{$value}%");
                 });
             })
             ->where('account_type', 'liability')

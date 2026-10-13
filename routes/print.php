@@ -21,6 +21,12 @@ Route::middleware('auth')->group(function (): void {
             Route::get('payment-voucher/{id}', 'rentOutPaymentVoucher')->name('payment-voucher');
             Route::get('checklist/{id}', 'rentOutChecklist')->name('checklist')->can('rent out checklist.print');
         });
+        Route::name('project_contract::')->prefix('project-contract')->group(function (): void {
+            Route::get('statement/{id}/{fromDate?}/{toDate?}', 'projectContractStatement')->whereNumber('id')->name('statement')->can('project contract.view');
+            Route::get('payment-receipt/{id}', 'projectContractPaymentReceipt')->whereNumber('id')->name('payment-receipt')->can('project contract.view');
+            Route::get('payment-voucher/{id}', 'projectContractPaymentVoucher')->whereNumber('id')->name('payment-voucher')->can('project contract.view');
+            Route::get('voucher/{id}', 'projectContractVoucher')->whereNumber('id')->name('voucher')->can('project contract.view');
+        });
         Route::name('purchase_vendor::')->prefix('purchase-vendor')->group(function (): void {
             Route::get('statement/{id}/{fromDate?}/{toDate?}', 'purchaseVendorStatement')->name('statement')->can('vendor.print');
             Route::get('payment-voucher/{vendorId}/{journalId}', 'purchaseVendorPaymentVoucher')->name('payment-voucher')->can('vendor.print');

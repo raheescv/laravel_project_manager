@@ -19,6 +19,7 @@ export default defineConfig({
                 'resources/js/ticket-console.js',
                 'resources/js/dashboard.js',
                 'resources/js/product-offer.js',
+                'resources/js/project-contract.js',
                 'resources/js/login-page.js'
             ],
             refresh: true,

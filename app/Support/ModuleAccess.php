@@ -25,8 +25,11 @@ final class ModuleAccess
 
     public const EMPLOYEE_COMMISSION = 'employee_commission';
 
+    /** Project contracts with vendors (the Agreement Module). */
+    public const AGREEMENT = 'agreement';
+
     /** Modules that are off unless the active system includes them. */
-    public const OPT_IN = [self::SCHOOL];
+    public const OPT_IN = [self::SCHOOL, self::AGREEMENT];
 
     public static function activeSystem(): ?string
     {
@@ -50,6 +53,12 @@ final class ModuleAccess
     public static function school(): bool
     {
         return self::enabled(self::SCHOOL);
+    }
+
+    /** Project contracts with vendors. */
+    public static function agreement(): bool
+    {
+        return self::enabled(self::AGREEMENT);
     }
 
     /**

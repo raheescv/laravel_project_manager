@@ -65,6 +65,7 @@ class Account extends Model implements AuditableContracts
         'mobile',
         'whatsapp_mobile',
         'model',
+        'vendor_type',
         'email',
         'place',
 

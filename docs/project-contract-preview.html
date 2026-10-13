@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Contract Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Project Contract (new Vue module) — static preview, step 0.
+   Bootstrap 5 + a thin scoped ".pax" layer that only reads --bs-* and
+   --pa-* tokens, so it ports straight into the Vue components.
+   Accent = settings theme colour (--pa-accent). FA 4.3-safe icons only.
+   Layout: page header band → KPI strip → main column (tabs) + details rail.
+   ============================================================ */
+:root, [data-bs-theme="light"] {
+  /* eye-friendly: calm blue accent, warm off-white grounds, soft ink (no pure black/white) */
+  --pa-accent: #3d6fb6;
+  --pa-accent-rgb: 61, 111, 182;
+  --pa-accent-soft: #edf2f9;
+  --pa-ground: #f2f3f1;
+  --pa-surface: #fcfcfb;
+  --pa-line: #e2e4e6;
+  --pa-ink: #2b303a;
+  --pa-muted: #6b7280;
+  --pa-head: #f6f7f5;
+  --pa-ok: #468c64;   --pa-ok-rgb: 70, 140, 100;
+  --pa-bad: #c45c56;  --pa-bad-rgb: 196, 92, 86;
+  --pa-warn: #d19a3e; --pa-warn-rgb: 209, 154, 62;
+}
+[data-bs-theme="dark"] {
+  --pa-accent: #8aaedc;
+  --pa-accent-rgb: 138, 174, 220;
+  --pa-accent-soft: #1f2a3a;
+  --pa-ground: #14171c;
+  --pa-surface: #1b1f26;
+  --pa-line: #2a303a;
+  --pa-ink: #d9dde4;
+  --pa-muted: #929aa8;
+  --pa-head: #20252d;
+  --pa-ok: #72b48d;   --pa-ok-rgb: 114, 180, 141;
+  --pa-bad: #df8a84;  --pa-bad-rgb: 223, 138, 132;
+  --pa-warn: #e0b86a; --pa-warn-rgb: 224, 184, 106;
+}
+.pax {
+  --bs-primary: var(--pa-accent);
+  --bs-primary-rgb: var(--pa-accent-rgb);
+  --bs-body-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --bs-border-color: var(--pa-line);
+  --bs-body-bg: var(--pa-surface);
+  --bs-body-color: var(--pa-ink);
+  --bs-secondary-color: var(--pa-muted);
+  --bs-link-color-rgb: var(--pa-accent-rgb);
+  --bs-link-hover-color-rgb: var(--pa-accent-rgb);
+  --bs-success: var(--pa-ok); --bs-success-rgb: var(--pa-ok-rgb);
+  --bs-danger: var(--pa-bad); --bs-danger-rgb: var(--pa-bad-rgb);
+  --bs-warning: var(--pa-warn); --bs-warning-rgb: var(--pa-warn-rgb);
+  line-height: 1.55;
+  font-family: var(--bs-body-font-family);
+  font-size: .875rem;
+  color: var(--pa-ink);
+  background: var(--pa-ground);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body { background: var(--pa-ground); color: var(--pa-ink); }
+.pax .btn { font-size: .8125rem; font-weight: 500; border-radius: 8px; padding: .45rem .85rem; }
+.pax .btn-sm { padding: .3rem .6rem; font-size: .78rem; }
+.pax .btn-primary { --bs-btn-bg: var(--pa-accent); --bs-btn-border-color: var(--pa-accent); --bs-btn-hover-bg: var(--pa-accent); --bs-btn-hover-border-color: var(--pa-accent); --bs-btn-active-bg: var(--pa-accent); --bs-btn-disabled-bg: var(--pa-accent); --bs-btn-disabled-border-color: var(--pa-accent); }
+.pax .btn-primary:hover { filter: brightness(1.08); }
+.pax .btn-outline-primary { --bs-btn-color: var(--pa-accent); --bs-btn-border-color: rgba(var(--pa-accent-rgb), .45); --bs-btn-hover-bg: var(--pa-accent); --bs-btn-hover-border-color: var(--pa-accent); --bs-btn-active-bg: var(--pa-accent); }
+.pax .btn-quiet { background: var(--pa-surface); border: 1px solid var(--pa-line); color: var(--pa-ink); }
+.pax .btn-quiet:hover { background: var(--pa-head); border-color: var(--pa-line); color: var(--pa-ink); }
+.pax .btn-icon { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 7px; color: var(--pa-muted); background: transparent; border: 1px solid transparent; }
+.pax .btn-icon:hover { background: var(--pa-head); border-color: var(--pa-line); color: var(--pa-ink); }
+.pax .btn-icon.danger:hover { color: var(--bs-danger); }
+.pax .form-control, .pax .form-select { font-size: .875rem; border-radius: 8px; border-color: var(--pa-line); padding: .5rem .75rem; background-color: var(--pa-surface); color: var(--pa-ink); }
+.pax .form-control:focus, .pax .form-select:focus { border-color: rgba(var(--pa-accent-rgb), .6); box-shadow: 0 0 0 3px rgba(var(--pa-accent-rgb), .14); }
+.pax .form-label { font-weight: 500; font-size: .8125rem; margin-bottom: .35rem; }
+.pax .form-text { font-size: .75rem; color: var(--pa-muted); }
+.pax .input-group-text { background: var(--pa-head); border-color: var(--pa-line); color: var(--pa-muted); font-size: .8125rem; border-radius: 8px; }
+.pax .form-check-input:checked { background-color: var(--pa-accent); border-color: var(--pa-accent); }
+
+/* ---------- surfaces */
+.pa-card { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: 14px; box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px -12px rgba(16, 24, 40, .10); }
+.pa-card-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--pa-line); }
+.pa-card-head h6 { margin: 0; font-size: .875rem; font-weight: 600; }
+.pa-card-body { padding: 1.1rem; }
+.pa-eyebrow { font-size: .6875rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--pa-muted); }
+.pa-num { font-variant-numeric: tabular-nums; }
+.text-muted-pa { color: var(--pa-muted) !important; }
+
+/* ---------- page header band */
+.pa-header { position: relative; background:
+    radial-gradient(900px 220px at 85% -40%, rgba(var(--pa-accent-rgb), .16), transparent 70%),
+    radial-gradient(600px 200px at 0% 120%, rgba(var(--pa-accent-rgb), .07), transparent 70%),
+    var(--pa-surface);
+  border-bottom: 1px solid var(--pa-line); }
+.pa-header::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--pa-accent), rgba(var(--pa-accent-rgb), .25)); }
+.pa-crumbs { font-size: .78rem; color: var(--pa-muted); }
+.pa-crumbs a { color: var(--pa-muted); text-decoration: none; }
+.pa-crumbs a:hover { color: var(--pa-accent); }
+.pa-title { font-size: 1.375rem; font-weight: 700; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+.pa-meta { display: flex; flex-wrap: wrap; gap: .35rem 1.1rem; color: var(--pa-muted); font-size: .8125rem; }
+.pa-meta i { width: 14px; text-align: center; margin-right: .3rem; opacity: .8; }
+
+/* ---------- status pills */
+.pa-pill { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 600; padding: .2rem .55rem; border-radius: 999px; line-height: 1.4; white-space: nowrap; }
+.pa-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pa-pill.no-dot::before { display: none; }
+.pa-pill.active, .pa-pill.paid { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.pa-pill.partial, .pa-pill.draft { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.pa-pill.pending, .pa-pill.completed { background: var(--bs-secondary-bg-subtle); color: var(--bs-secondary-text-emphasis); }
+.pa-pill.overdue, .pa-pill.cancelled { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.pa-pill.info { background: var(--pa-accent-soft); color: var(--pa-accent); }
+
+/* ---------- avatar initials */
+.pa-avatar { width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; background: var(--pa-accent-soft); color: var(--pa-accent); flex: none; }
+.pa-avatar.lg { width: 48px; height: 48px; font-size: .95rem; border-radius: 12px; }
+.pa-avatar.brand { background: linear-gradient(135deg, var(--pa-accent), rgba(var(--pa-accent-rgb), .65)); color: #fff; box-shadow: 0 6px 16px -6px rgba(var(--pa-accent-rgb), .6); }
+.pa-kpi .top { display: flex; align-items: center; gap: .5rem; }
+.pa-kpi .ki { width: 26px; height: 26px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; background: var(--pa-accent-soft); color: var(--pa-accent); }
+.pa-kpi .ki.ok { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.pa-kpi .ki.bad { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.pa-kpi .ki.neutral { background: var(--pa-head); color: var(--pa-muted); border: 1px solid var(--pa-line); }
+.pa-ring { display: flex; align-items: center; gap: .75rem; padding: .5rem .9rem .5rem .5rem; border: 1px solid var(--pa-line); border-radius: 14px; background: var(--pa-surface); }
+.pa-ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+.pa-ring .track { fill: none; stroke: var(--pa-head); stroke-width: 6; }
+.pa-ring .paid-arc { fill: none; stroke: var(--bs-success); stroke-width: 6; stroke-linecap: round; }
+.pa-ring .sched-arc { fill: none; stroke: var(--pa-accent); stroke-width: 6; stroke-linecap: round; opacity: .55; }
+.pa-ring .pct { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.pa-avatar.round { border-radius: 50%; }
+
+/* ---------- KPI strip */
+.pa-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pa-kpi { padding: 1rem 1.15rem; border-left: 1px solid var(--pa-line); min-width: 0; }
+.pa-kpi:first-child { border-left: 0; }
+.pa-kpi .val { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; margin-top: .2rem; font-variant-numeric: tabular-nums; }
+.pa-kpi .val small { font-size: .75rem; font-weight: 500; color: var(--pa-muted); margin-right: .2rem; }
+.pa-kpi .sub { font-size: .75rem; color: var(--pa-muted); margin-top: .15rem; }
+.pa-kpi.alert-cell .val { color: var(--bs-danger-text-emphasis); }
+@media (max-width: 767.98px) {
+  .pa-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pa-kpi:nth-child(3) { border-left: 0; }
+  .pa-kpi:nth-child(n+3) { border-top: 1px solid var(--pa-line); }
+}
+
+/* ---------- bars */
+.pa-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--pa-head); box-shadow: inset 0 0 0 1px var(--pa-line); }
+.pa-bar.thin { height: 4px; }
+.pa-bar > span { display: block; height: 100%; }
+.pa-bar .paid { background: var(--bs-success); }
+.pa-bar .sched { background: var(--pa-accent); }
+.pa-bar .new { background: rgba(var(--pa-accent-rgb), .45); }
+.pa-bar .over { background: var(--bs-danger); }
+.pa-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; font-size: .78rem; color: var(--pa-muted); }
+.pa-legend b { color: var(--pa-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pa-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .4rem; vertical-align: 1px; }
+
+/* ---------- tables */
+.pa-table { margin: 0; --bs-table-bg: transparent; --bs-table-hover-bg: var(--pa-head); }
+.pa-table > :not(caption) > * > * { padding: .7rem 1.1rem; border-bottom-color: var(--pa-line); color: var(--pa-ink); }
+.pa-table thead th { background: var(--pa-head); font-size: .6875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--pa-muted); white-space: nowrap; }
+.pa-table tfoot td { background: var(--pa-head); font-weight: 600; border-bottom: 0; }
+.pa-table td.num, .pa-table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pa-table tbody tr.is-overdue td:first-child { box-shadow: inset 3px 0 0 var(--bs-danger); }
+.pa-table tbody tr.is-selected { --bs-table-bg: var(--pa-accent-soft); }
+.pa-table tbody tr.is-muted td { color: var(--pa-muted); }
+.pa-table .row-link { cursor: pointer; }
+.pa-sub { font-size: .75rem; color: var(--pa-muted); }
+
+/* ---------- tabs */
+.pa-tabs { display: flex; gap: 1.5rem; padding: 0 1.1rem; border-bottom: 1px solid var(--pa-line); overflow-x: auto; scrollbar-width: none; }
+.pa-tabs::-webkit-scrollbar { display: none; }
+.pa-tabs .nav-link { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: .85rem 0 .75rem; font-weight: 500; font-size: .8125rem; color: var(--pa-muted); white-space: nowrap; background: none; }
+.pa-tabs .nav-link:hover { color: var(--pa-ink); }
+.pa-tabs .nav-link.active { color: var(--pa-ink); border-bottom-color: var(--pa-accent); font-weight: 600; }
+.pa-tabs .count { display: inline-block; min-width: 18px; padding: 0 .35rem; margin-left: .35rem; border-radius: 999px; background: var(--pa-head); border: 1px solid var(--pa-line); font-size: .6875rem; text-align: center; color: var(--pa-muted); font-variant-numeric: tabular-nums; }
+.pa-tabs .nav-link.active .count { background: var(--pa-accent-soft); border-color: transparent; color: var(--pa-accent); }
+
+/* ---------- segmented control */
+.pa-seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--pa-head); border: 1px solid var(--pa-line); border-radius: 9px; }
+.pa-seg button { border: 0; background: transparent; padding: .3rem .7rem; font-size: .78rem; font-weight: 500; border-radius: 6px; color: var(--pa-muted); }
+.pa-seg button.on { background: var(--pa-surface); color: var(--pa-ink); box-shadow: 0 1px 2px rgba(16, 24, 40, .08); }
+
+/* ---------- definition list (rail) */
+.pa-dl { display: grid; grid-template-columns: auto 1fr; gap: .55rem 1rem; margin: 0; font-size: .8125rem; }
+.pa-dl dt { color: var(--pa-muted); font-weight: 400; }
+.pa-dl dd { margin: 0; text-align: right; font-weight: 500; min-width: 0; }
+.pa-dl dd .was { display: block; font-size: .72rem; color: var(--pa-muted); font-weight: 400; }
+
+/* ---------- timeline */
+.pa-timeline { position: relative; padding-left: 1.75rem; }
+.pa-timeline::before { content: ""; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 2px; background: var(--pa-line); }
+.pa-tl-item { position: relative; padding-bottom: 1.5rem; }
+.pa-tl-item:last-child { padding-bottom: 0; }
+.pa-tl-dot { position: absolute; left: -1.75rem; top: 0; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; background: var(--pa-surface); border: 2px solid var(--pa-line); color: var(--pa-muted); }
+.pa-tl-dot.accent { border-color: var(--pa-accent); color: var(--pa-accent); background: var(--pa-accent-soft); }
+.pa-diff { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.pa-diff span { background: var(--pa-head); border: 1px solid var(--pa-line); border-radius: 8px; padding: .35rem .6rem; font-size: .78rem; }
+.pa-diff s { color: var(--pa-muted); margin-right: .25rem; }
+
+/* ---------- files */
+.pa-drop { border: 1.5px dashed var(--pa-line); border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--pa-muted); background: var(--pa-head); }
+.pa-drop .ico { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--pa-surface); border: 1px solid var(--pa-line); color: var(--pa-accent); font-size: 1.1rem; margin-bottom: .5rem; }
+.pa-files { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .75rem; }
+.pa-file { display: flex; align-items: center; gap: .75rem; padding: .75rem; border: 1px solid var(--pa-line); border-radius: 10px; min-width: 0; }
+.pa-file .fi { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex: none; }
+.pa-file .fi.pdf { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.pa-file .fi.xls { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.pa-file .name { font-weight: 600; font-size: .8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- notes */
+.pa-note { display: flex; gap: .75rem; padding: 1rem 0; border-top: 1px solid var(--pa-line); }
+.pa-note:first-child { border-top: 0; }
+.pa-note .body { min-width: 0; flex: 1; }
+
+/* ---------- form sections */
+.pa-section { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.5rem; padding: 1.4rem 1.25rem; border-top: 1px solid var(--pa-line); }
+.pa-section:first-child { border-top: 0; }
+.pa-section h6 { font-size: .875rem; font-weight: 600; margin: 0 0 .25rem; }
+.pa-section p { font-size: .78rem; color: var(--pa-muted); margin: 0; }
+@media (max-width: 767.98px) { .pa-section { grid-template-columns: 1fr; gap: .9rem; } }
+.pa-sticky { position: sticky; top: calc(64px + env(safe-area-inset-top, 0px)); }
+
+/* ---------- selection bar */
+.pa-selbar { display: flex; align-items: center; gap: .75rem; padding: .6rem 1.1rem; background: var(--pa-accent-soft); border-bottom: 1px solid var(--pa-line); font-size: .8125rem; }
+
+/* ---------- modals */
+.pax .modal-content, .modal .modal-content { border: 1px solid var(--pa-line); border-radius: 14px; background: var(--pa-surface); color: var(--pa-ink); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: .875rem; box-shadow: 0 20px 50px rgba(16, 24, 40, .18); }
+.modal .modal-header { border-bottom: 1px solid var(--pa-line); padding: 1rem 1.25rem; align-items: flex-start; }
+.modal .modal-body { padding: 1.25rem; }
+.modal .modal-footer { border-top: 1px solid var(--pa-line); padding: .85rem 1.25rem; background: var(--pa-head); border-radius: 0 0 14px 14px; }
+.pa-modal-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--pa-accent-soft); color: var(--pa-accent); flex: none; margin-right: .75rem; }
+.pa-modal-icon.success { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.modal .modal-title { font-size: 1rem; font-weight: 600; }
+.pa-chip { border: 1px solid var(--pa-line); background: var(--pa-surface); color: var(--pa-ink); border-radius: 999px; padding: .25rem .7rem; font-size: .75rem; font-weight: 500; }
+.pa-chip:hover { border-color: rgba(var(--pa-accent-rgb), .5); color: var(--pa-accent); }
+.pa-method { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+.pa-method label { border: 1px solid var(--pa-line); border-radius: 10px; padding: .6rem; text-align: center; cursor: pointer; font-weight: 500; font-size: .8125rem; }
+.pa-method label i { display: block; font-size: 1rem; margin-bottom: .25rem; color: var(--pa-muted); }
+.pa-method input:checked + label { border-color: var(--pa-accent); background: var(--pa-accent-soft); color: var(--pa-accent); box-shadow: 0 0 0 1px var(--pa-accent); }
+.pa-method input:checked + label i { color: var(--pa-accent); }
+.pa-callout { display: flex; gap: .6rem; padding: .7rem .85rem; border-radius: 10px; font-size: .8125rem; }
+.pa-callout.warn { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.pa-callout.info { background: var(--pa-head); border: 1px solid var(--pa-line); color: var(--pa-muted); }
+
+/* ---------- create form: matches the RentOut sale form (section cards + icon input groups) */
+.paf-card { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: 12px; box-shadow: 0 1px 3px rgba(16, 24, 40, .05); }
+.paf-head { display: flex; align-items: center; gap: .75rem; padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--pa-line); }
+.paf-head > i { font-size: 1.25rem; width: 22px; text-align: center; }
+.paf-head h5 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--pa-ink); }
+.paf-body { padding: 1.4rem 1.5rem 1.6rem; }
+.paf-sub { display: flex; align-items: center; gap: .5rem; font-weight: 600; color: var(--pa-ink); padding-bottom: .6rem; margin-bottom: 1.1rem; border-bottom: 1px dashed var(--pa-line); }
+.paf .form-label { font-weight: 600; color: var(--pa-ink); }
+.paf .input-group-text { width: 42px; justify-content: center; background: var(--pa-head); }
+.paf .input-group > .form-control[readonly] { background: var(--pa-head); }
+.paf-duration { height: 100%; background: var(--pa-head); border-left: 4px solid var(--bs-success); border-radius: 8px; padding: .8rem 1.1rem; display: flex; flex-direction: column; justify-content: center; gap: .35rem; }
+.paf-drow { display: flex; justify-content: space-between; align-items: center; }
+.paf-badge { min-width: 34px; text-align: center; padding: .2rem .55rem; border-radius: 6px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.paf-route { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.1rem; }
+.paf-route-step { display: flex; align-items: center; gap: .65rem; padding: .6rem .9rem; border: 1px solid var(--pa-line); border-radius: 10px; background: var(--pa-head); }
+.paf-route-step .n { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .78rem; background: var(--pa-accent-soft); color: var(--pa-accent); flex: none; }
+.paf-route-step.done .n { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.paf-route-step.skipped { opacity: .45; }
+.paf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .9rem 1.5rem; position: sticky; bottom: calc(.75rem + env(safe-area-inset-bottom, 0px)); z-index: 5; box-shadow: 0 8px 24px -10px rgba(16, 24, 40, .25); }
+
+/* ---------- dashboard: same building blocks as the Property Management Dashboard */
+.pad-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.pad-title { min-width: 0; }
+.pad-title h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.01em; margin: 0; color: var(--pa-ink); }
+.pad-title h1 i { color: var(--pa-muted); font-size: 1.05rem; margin-right: .5rem; }
+.pad-title p { color: var(--pa-muted); margin: .1rem 0 0; font-size: .8125rem; }
+.pad-pill { display: inline-flex; gap: 3px; padding: 3px; border-radius: 999px; background: var(--pa-surface); border: 1px solid var(--pa-line); box-shadow: 0 2px 8px rgba(16, 24, 40, .06); }
+.pad-pill button { border: 0; background: transparent; padding: .3rem .85rem; font-size: .8125rem; border-radius: 999px; font-weight: 600; color: var(--pa-muted); }
+.pad-pill button.on { background: linear-gradient(135deg, var(--pa-accent), rgba(var(--pa-accent-rgb), .8)); color: #fff; box-shadow: 0 4px 12px -4px rgba(var(--pa-accent-rgb), .6); }
+.pad-grad { border-radius: 12px; overflow: hidden; background: var(--pa-surface); border: 1px solid var(--pa-line); box-shadow: 0 2px 8px rgba(16, 24, 40, .05); height: 100%; display: flex; flex-direction: column; }
+.pad-grad .top { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .8rem 1rem; color: #fff; flex: 1; }
+.pad-grad .top > i { font-size: 1.35rem; opacity: .9; }
+.pad-grad .num { font-size: 1.2rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.2; text-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+.pad-grad .lbl { font-size: .8125rem; font-weight: 600; text-align: right; opacity: .95; }
+.pad-grad .bottom { display: flex; justify-content: space-between; align-items: center; padding: .45rem 1rem; font-size: .78rem; color: var(--pa-ink); font-weight: 500; text-decoration: none; }
+.pad-grad .bottom:hover { background: var(--pa-head); }
+.pad-grad .bottom i { color: var(--pa-muted); }
+.pad-grad.plain .top { color: var(--pa-ink); border-bottom: 1px solid var(--pa-line); }
+.pad-grad.plain .top > i { color: var(--bs-success); }
+.g-green  { background: linear-gradient(120deg, #4f8f68, #79ad8a); }
+.g-sky    { background: linear-gradient(120deg, #4a7fb2, #6aa1c4); }
+.g-rose   { background: linear-gradient(120deg, #a8667f, #c08378); }
+.g-indigo { background: linear-gradient(120deg, #5a659f, #776a9c); }
+.pad-rate { text-align: center; padding: .8rem 1rem .9rem; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.pad-rate .pct { font-size: 1.15rem; font-weight: 700; color: var(--pa-ink); font-variant-numeric: tabular-nums; }
+.pad-rate .progress { height: 10px; border-radius: 999px; background: var(--pa-head); box-shadow: inset 0 0 0 1px var(--pa-line); margin-top: .55rem; }
+.pad-alert { border-radius: 12px; overflow: hidden; background: var(--pa-surface); border: 1px solid var(--pa-line); box-shadow: 0 2px 8px rgba(16, 24, 40, .05); }
+.pad-alert .head { display: flex; align-items: center; gap: .6rem; padding: .55rem 1rem; color: #fff; background: linear-gradient(120deg, #b85a55, #c97a6d); }
+.pad-alert .head i { font-size: 1.05rem; }
+.pad-alert .head h5 { margin: 0; font-weight: 600; font-size: .9rem; }
+.pad-alert .head .badge { margin-left: auto; background: rgba(80, 30, 28, .35); font-variant-numeric: tabular-nums; }
+.pad-tile { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: .75rem; align-items: center; text-align: left; padding: .65rem .9rem; border-radius: 10px; background: var(--pa-surface); border: 1px solid var(--pa-line); box-shadow: 0 2px 8px rgba(16, 24, 40, .07); height: 100%; }
+.pad-tile i { grid-row: span 2; font-size: 1.3rem; width: 26px; text-align: center; }
+.pad-tile .n { font-size: 1.05rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.pad-tile .t { color: var(--pa-muted); font-size: .75rem; }
+.pad-sec { border-radius: 12px; overflow: hidden; background: var(--pa-surface); border: 1px solid var(--pa-line); box-shadow: 0 2px 10px rgba(16, 24, 40, .06); }
+.pad-sec > .head { display: flex; align-items: center; gap: .6rem; padding: .6rem 1rem; background: var(--pa-head); border-bottom: 1px solid var(--pa-line); }
+.pad-sec > .head i { font-size: 1rem; color: var(--pa-accent); }
+.pad-sec > .head h5 { margin: 0; font-weight: 600; font-size: .9rem; }
+.pad-sec > .body { padding: 1rem; }
+.pad-stat { text-align: center; padding: .6rem .5rem; border-radius: 10px; background: var(--pa-head); border: 1px solid var(--pa-line); box-shadow: 0 2px 6px rgba(16, 24, 40, .06); }
+.pad-stat .n { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.pad-stat .t { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--pa-muted); margin-top: .2rem; }
+.pad-occ .progress { height: 18px; border-radius: 6px; background: var(--pa-head); box-shadow: inset 0 0 0 1px var(--pa-line); }
+.pad-occ .progress-bar { font-weight: 600; font-size: .72rem; }
+.pad-vendor { position: relative; padding: .75rem 1rem .85rem; border-radius: 10px; background: var(--pa-surface); border: 1px solid var(--pa-line); border-left: 5px solid var(--bs-warning); box-shadow: 0 2px 10px rgba(16, 24, 40, .07); height: 100%; }
+.pad-vendor.mid { border-left-color: var(--pa-accent); }
+.pad-vendor.high { border-left-color: var(--bs-success); }
+.pad-vendor .name { color: var(--pa-accent); font-weight: 600; font-size: .875rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pad-vendor .pct { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--bs-warning-text-emphasis); }
+.pad-vendor.mid .pct { color: var(--pa-accent); }
+.pad-vendor.high .pct { color: var(--bs-success-text-emphasis); }
+.pad-vendor .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); text-align: center; margin: .45rem 0 .55rem; }
+.pad-vendor .cols .n { font-size: .875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pad-vendor .cols .t { font-size: .64rem; letter-spacing: .05em; text-transform: uppercase; color: var(--pa-muted); }
+.pad-vendor .progress { height: 6px; border-radius: 999px; background: var(--pa-head); box-shadow: inset 0 0 0 1px var(--pa-line); }
+.pad-tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--pa-line); overflow-x: auto; scrollbar-width: none; }
+.pad-tabs::-webkit-scrollbar { display: none; }
+.pad-tabs .nav-link { border: 0; border-radius: 0; background: none; padding: .55rem .9rem; font-weight: 600; font-size: .8125rem; color: var(--pa-ink); white-space: nowrap; border-bottom: 3px solid transparent; }
+.pad-tabs .nav-link i { margin-right: .4rem; color: var(--pa-muted); }
+.pad-tabs .nav-link.active { color: var(--bs-success-text-emphasis); border-bottom-color: var(--bs-success); background: var(--pa-head); }
+.pad-tools { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; margin: .75rem 0 .5rem; }
+.pad-tools .btn-group .btn { background: var(--pa-head); border: 1px solid var(--pa-line); color: var(--pa-ink); }
+.pad-tools .btn-group .btn:hover { background: var(--pa-surface); }
+.pad-pager { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; justify-content: space-between; margin-top: .6rem; font-size: .8125rem; }
+.pad-pager .pagination { margin: 0; --bs-pagination-color: var(--pa-ink); --bs-pagination-bg: var(--pa-surface); --bs-pagination-border-color: var(--pa-line); --bs-pagination-active-bg: var(--pa-head); --bs-pagination-active-color: var(--pa-ink); --bs-pagination-active-border-color: var(--pa-line); --bs-pagination-hover-bg: var(--pa-head); }
+
+#screen-dash .form-label { font-size: .75rem; margin-bottom: .2rem; }
+#screen-dash .form-control, #screen-dash .form-select { padding: .35rem .6rem; font-size: .8125rem; }
+#screen-dash .pa-table > :not(caption) > * > * { padding: .45rem .8rem; font-size: .8125rem; }
+
+/* ---------- contract details: polished period + payment inputs */
+.paf-dur { display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .7rem; border-radius: 999px; font-size: .78rem; font-weight: 600; background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); font-variant-numeric: tabular-nums; }
+.paf-dur.bad { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.paf-presets { display: flex; flex-wrap: wrap; gap: .4rem; }
+.paf-presets button { flex: 1 1 auto; border: 1px solid var(--pa-line); background: var(--pa-surface); color: var(--pa-ink); border-radius: 8px; padding: .5rem .7rem; font-size: .8125rem; font-weight: 500; }
+.paf-presets button:hover { border-color: rgba(var(--pa-accent-rgb), .5); color: var(--pa-accent); }
+.paf-presets button.on { border-color: var(--pa-accent); background: var(--pa-accent-soft); color: var(--pa-accent); }
+.paf .paf-amount .input-group-text { width: auto; padding: 0 .9rem; font-weight: 700; color: var(--pa-ink); }
+.paf .paf-amount .form-control { font-size: 1.05rem; font-weight: 600; }
+.paf-stepper .btn { width: 42px; background: var(--pa-head); border: 1px solid var(--pa-line); color: var(--pa-muted); }
+.paf-stepper .btn:hover { color: var(--pa-accent); background: var(--pa-accent-soft); }
+.paf-stepper .form-control { font-weight: 600; -moz-appearance: textfield; }
+.paf-stepper .form-control::-webkit-outer-spin-button, .paf-stepper .form-control::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.paf-hint-link { border: 0; background: none; padding: 0; color: var(--pa-accent); font-weight: 600; font-size: inherit; }
+.paf-freq { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .5rem; }
+@media (max-width: 991.98px) { .paf-freq { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.paf-freq label { display: flex; align-items: center; justify-content: center; gap: .45rem; padding: .65rem .5rem; border: 1px solid var(--pa-line); border-radius: 10px; cursor: pointer; font-weight: 500; font-size: .8125rem; background: var(--pa-surface); color: var(--pa-ink); text-align: center; }
+.paf-freq label i { color: var(--pa-muted); }
+.paf-freq label:hover { border-color: rgba(var(--pa-accent-rgb), .5); }
+.paf-freq input:checked + label { border-color: var(--pa-accent); background: var(--pa-accent-soft); color: var(--pa-accent); box-shadow: 0 0 0 1px var(--pa-accent); font-weight: 600; }
+.paf-freq input:checked + label i { color: var(--pa-accent); }
+.paf-freq input:focus-visible + label { outline: 2px solid var(--pa-accent); outline-offset: 2px; }
+.paf-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: .85rem 1.5rem; border-top: 1px solid var(--pa-line); background: var(--pa-head); border-radius: 0 0 12px 12px; font-size: .8125rem; color: var(--pa-ink); }
+.paf-summary > i { color: var(--pa-accent); }
+
+/* ---------- contract view: info cards like the RentOut sale view */
+.pvx-card { height: 100%; background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(16, 24, 40, .05); }
+.pvx-head { display: flex; align-items: center; gap: .55rem; padding: .55rem .9rem; color: #fff; font-weight: 600; font-size: .875rem; min-height: 42px; }
+.pvx-head-btn { border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .14); color: #fff; border-radius: 6px; padding: .15rem .5rem; font-size: .75rem; font-weight: 500; }
+.pvx-head-btn:hover { background: rgba(255, 255, 255, .28); }
+.pvx-head-tag { font-size: .72rem; font-weight: 600; background: rgba(255, 255, 255, .18); padding: .15rem .55rem; border-radius: 999px; }
+.pvx-head > i { font-size: .95rem; opacity: .95; }
+.pvx-head.blue  { background: linear-gradient(120deg, #3f68a3, #5784bd); }
+.pvx-head.teal  { background: linear-gradient(120deg, #3c7f88, #5a9ba0); }
+.pvx-head.green { background: linear-gradient(120deg, #4b8158, #6b9f72); }
+.pvx-rows { margin: 0; padding: .15rem .9rem .2rem; font-size: .8125rem; }
+.pvx-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: .75rem; align-items: baseline; padding: .42rem 0; border-bottom: 1px solid var(--pa-line); }
+.pvx-row:last-child { border-bottom: 0; }
+.pvx-row dt { margin: 0; font-weight: 500; color: var(--pa-muted); }
+.pvx-row dd { margin: 0; color: var(--pa-ink); min-width: 0; overflow-wrap: anywhere; }
+.pvx-note { font-size: .72rem; color: var(--pa-accent); margin-top: .05rem; }
+.pvx-accent { color: var(--pa-accent) !important; font-weight: 600; }
+.pvx-teal { color: #3c7f88; font-weight: 600; }
+[data-bs-theme="dark"] .pvx-teal { color: #7fc0c4; }
+.pvx-print { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); border: 1px solid rgba(var(--pa-ok-rgb), .35); }
+.pvx-print:hover { background: var(--pa-ok); color: #fff; }
+.pvx-box { background: var(--pa-head); border: 1px solid var(--pa-line); border-radius: 8px; padding: .55rem .7rem; margin: .1rem .9rem .75rem; }
+.pvx-box-title { display: flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .78rem; margin-bottom: .4rem; }
+.pvx-box-title > i { color: var(--pa-muted); }
+.pvx-levels { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; font-size: .75rem; }
+.pvx-levels .lv { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--pa-line); background: var(--pa-surface); font-weight: 500; }
+.pvx-levels .lv.done i { color: var(--pa-ok); }
+.pvx-levels .lv.wait { border-color: rgba(var(--pa-accent-rgb), .45); color: var(--pa-accent); }
+.pvx-warn { display: flex; align-items: center; gap: .6rem; padding: .5rem .6rem .5rem 1rem; border-radius: 12px; font-size: .8125rem; background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); border: 1px solid rgba(var(--pa-warn-rgb), .35); }
+.pvx-warn span { flex: 1; min-width: 0; }
+.pvx-warn-btn { flex: none; border: 1px solid rgba(var(--pa-warn-rgb), .55); background: var(--pa-surface); color: var(--bs-warning-text-emphasis); border-radius: 7px; padding: .2rem .6rem; font-size: .75rem; font-weight: 600; }
+.pvx-warn-btn:hover { background: var(--pa-warn); color: #fff; }
+.pvx-notes { display: grid; gap: .75rem; }
+.pvx-box h6 { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: .9rem; margin: 0 0 .8rem; color: var(--pa-ink); }
+.pvx-box h6 > i { color: var(--pa-muted); }
+.pvx-fin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; text-align: center; }
+.pvx-fin small { display: block; color: var(--pa-muted); font-size: .7rem; }
+.pvx-fin .v { font-weight: 600; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.pvx-mini { width: 100%; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.pvx-mini th { font-weight: 600; color: var(--pa-muted); padding: .2rem .3rem; border-bottom: 1px solid var(--pa-line); }
+.pvx-mini td { padding: .28rem .3rem; border-bottom: 1px solid var(--pa-line); font-weight: 500; }
+.pvx-mini tr.tot td { border-bottom: 0; font-weight: 700; }
+.pvx-mini .num { text-align: right; white-space: nowrap; }
+.pvx-remarks { display: flex; align-items: baseline; gap: .9rem; padding: .55rem .6rem .55rem 1rem; background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: 12px; box-shadow: 0 2px 8px rgba(16, 24, 40, .05); font-size: .8125rem; }
+.pvx-remarks .lbl { flex: none; font-weight: 600; color: var(--pa-muted); white-space: nowrap; }
+.pvx-remarks .lbl i { margin-right: .3rem; }
+.pvx-remarks p { flex: 1; min-width: 0; margin: 0; color: var(--pa-ink); }
+.pvx-remarks .btn-icon { align-self: center; flex: none; }
+@media (max-width: 575.98px) { .pvx-remarks { flex-wrap: wrap; } .pvx-remarks p { flex-basis: 100%; order: 3; } .pvx-remarks .btn-icon { margin-left: auto; } }
+.pvx-manage { overflow: hidden; }
+.pvx-title { font-size: 1.15rem; }
+#screen-view .pa-tabs .nav-link { padding: .6rem 0 .5rem; }
+#screen-view .pa-table > :not(caption) > * > * { padding: .5rem .9rem; }
+#screen-view .pa-card-body { padding: .85rem .95rem; }
+.pvx-manage-head { display: flex; align-items: center; gap: .6rem; padding: .6rem 1rem; background: var(--pa-head); border-bottom: 1px solid var(--pa-line); }
+.pvx-manage-head i { font-size: 1rem; color: var(--pa-muted); }
+.pvx-manage-head h5 { margin: 0; font-weight: 600; font-size: .9rem; }
+
+/* ---------- reports: Report-Studio style (filter rail + compact summary + table) */
+#screen-reports[data-report="pending"] .only-paid, #screen-reports[data-report="paid"] .only-pend { display: none !important; }
+.rpx-bar { padding: .7rem .9rem; display: grid; gap: .6rem; }
+.rpx-fields { display: grid; grid-template-columns: 150px 150px minmax(0, 1.4fr) minmax(0, 1.6fr) minmax(0, 1fr); gap: .6rem; }
+@media (max-width: 991.98px) { .rpx-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rpx-fields .f.wide { grid-column: span 2; } }
+.rpx-fields .f { min-width: 0; }
+.rpx-bar .form-control-sm, .rpx-bar .form-select-sm { font-size: .8125rem; }
+.rpx-lbl { display: block; font-size: .68rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--pa-muted); margin-bottom: .2rem; }
+.rpx-chiprow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding-top: .55rem; border-top: 1px dashed var(--pa-line); }
+.rpx-chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.rpx-chips button { border: 1px solid var(--pa-line); background: var(--pa-surface); color: var(--pa-ink); border-radius: 999px; padding: .2rem .65rem; font-size: .75rem; font-weight: 500; }
+.rpx-chips button:hover { border-color: rgba(var(--pa-accent-rgb), .5); }
+.rpx-chips button.on { background: var(--pa-accent-soft); border-color: var(--pa-accent); color: var(--pa-accent); font-weight: 600; }
+.rpx-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+@media (max-width: 767.98px) { .rpx-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rpx-sum .s { background: var(--pa-surface); border: 1px solid var(--pa-line); border-left: 3px solid var(--pa-accent); border-radius: 10px; padding: .55rem .8rem; min-width: 0; }
+.rpx-sum .s.bad { border-left-color: var(--pa-bad); }
+.rpx-sum .s.warn { border-left-color: var(--pa-warn); }
+.rpx-sum .s.ok { border-left-color: var(--pa-ok); }
+.rpx-sum .l { font-size: .7rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--pa-muted); }
+.rpx-sum .v { font-size: 1.05rem; font-weight: 700; margin: .1rem 0; }
+.rpx-sum .s.bad .v { color: var(--bs-danger-text-emphasis); }
+.rpx-aging { display: flex; height: 12px; border-radius: 999px; overflow: hidden; gap: 2px; background: var(--pa-head); }
+.rpx-aging span { display: block; height: 100%; }
+.rpx-aging-legend { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; margin-top: .55rem; font-size: .75rem; color: var(--pa-muted); }
+.rpx-aging-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .35rem; vertical-align: 0; }
+.rpx-aging-legend b { color: var(--pa-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rpx-months { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; align-items: end; height: 120px; }
+.rpx-months > div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: .2rem; font-size: .72rem; }
+.rpx-months .bar { width: 100%; max-width: 56px; border-radius: 6px 6px 2px 2px; background: var(--pa-ok); opacity: .85; min-height: 3px; }
+.rpx-months .bar.empty { background: var(--pa-line); }
+.rpx-months b { font-variant-numeric: tabular-nums; font-weight: 600; }
+.rpx-months small { color: var(--pa-muted); }
+.rpx-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .55rem .9rem; border-bottom: 1px solid var(--pa-line); font-size: .8125rem; }
+#screen-reports .pa-table > :not(caption) > * > * { padding: .5rem .8rem; font-size: .8125rem; }
+
+/* ---------- vendors */
+.pvm-more { display: flex; align-items: center; gap: .5rem; width: 100%; border: 1px dashed var(--pa-line); background: var(--pa-head); color: var(--pa-ink); border-radius: 10px; padding: .55rem .8rem; font-weight: 600; font-size: .8125rem; text-align: left; }
+.pvm-more i { transition: transform .15s; color: var(--pa-muted); }
+.pvm-more[aria-expanded="true"] i { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .pvm-more i { transition: none; } }
+.paf textarea.form-control { min-height: 64px; }
+
+/* ---------- vendors: compact */
+#screen-vendor-form .paf, #vendorModal .paf { --pvc: 1; }
+#screen-vendor-form .paf.d-grid { gap: .6rem !important; }
+#screen-vendor-form .paf-head { padding: .5rem .9rem; gap: .5rem; }
+#screen-vendor-form .paf-head > i { font-size: .95rem; width: 16px; }
+#screen-vendor-form .paf-head h5 { font-size: .875rem; font-weight: 600; }
+#screen-vendor-form .paf-body { padding: .7rem .9rem .85rem; }
+#screen-vendor-form .paf-actions { padding: .55rem .9rem; }
+#vendorModal .modal-body { padding: .9rem 1rem; }
+#vendorModal .paf-sub { font-size: .8125rem; padding-bottom: .35rem; margin-bottom: .6rem; }
+#screen-vendor-form .form-label, #vendorModal .form-label { font-size: .75rem; font-weight: 600; margin-bottom: .2rem; }
+#screen-vendor-form .form-control, #screen-vendor-form .form-select, #vendorModal .form-control, #vendorModal .form-select { padding: .32rem .55rem; font-size: .8125rem; }
+#screen-vendor-form .input-group-text, #vendorModal .input-group-text { width: 32px; font-size: .78rem; padding: 0; }
+#screen-vendor-form .form-text, #vendorModal .form-text { font-size: .7rem; margin-top: .15rem; }
+#screen-vendor-form textarea.form-control, #vendorModal textarea.form-control { min-height: 34px; }
+#vendorModal .pvm-more { padding: .4rem .7rem; }
+#screen-vendors .pa-table > :not(caption) > * > * { padding: .42rem .8rem; font-size: .8125rem; }
+#screen-vendors .pa-avatar { width: 26px; height: 26px; font-size: .65rem; border-radius: 7px; }
+#screen-vendors .rpx-bar { padding: .5rem .75rem; }
+
+/* ---------- new contract form: compact */
+#screen-form .paf-card { border-radius: 10px; }
+#screen-form .paf-head { padding: .5rem .9rem; gap: .5rem; }
+#screen-form .paf-head > i { font-size: .95rem; width: 16px; }
+#screen-form .paf-head h5 { font-size: .875rem; font-weight: 600; }
+#screen-form .paf-body { padding: .7rem .9rem .85rem; }
+#screen-form .paf-sub { font-size: .8125rem; padding-bottom: .35rem; margin-bottom: .6rem; }
+#screen-form .form-label { font-size: .75rem; font-weight: 600; margin-bottom: .2rem; }
+#screen-form .form-control, #screen-form .form-select { padding: .32rem .55rem; font-size: .8125rem; }
+#screen-form .input-group-text { width: 32px; font-size: .78rem; padding: 0; }
+#screen-form .paf-amount .input-group-text { width: auto; padding: 0 .6rem; font-size: .75rem; }
+#screen-form .paf-amount .form-control { font-size: .875rem; }
+#screen-form .form-text { font-size: .7rem; margin-top: .15rem; }
+#screen-form .paf-dur { font-size: .7rem; padding: .12rem .55rem; }
+#screen-form .paf-presets { gap: .3rem; }
+#screen-form .paf-presets button { padding: .32rem .45rem; font-size: .75rem; border-radius: 7px; }
+#screen-form .paf-stepper .btn { width: 30px; padding: 0; font-size: .7rem; }
+#screen-form .paf-freq { gap: .3rem; }
+#screen-form .paf-freq label { padding: .38rem .25rem; font-size: .75rem; gap: .3rem; border-radius: 8px; }
+#screen-form .paf-freq label i { font-size: .72rem; }
+@media (min-width: 1200px) and (max-width: 1399.98px) { #screen-form .paf-freq label i { display: none; } }
+#screen-form .paf-summary { padding: .45rem .9rem; font-size: .75rem; border-radius: 0 0 10px 10px; }
+#screen-form .paf-route { gap: .4rem .6rem; }
+#screen-form .paf-route-step { padding: .3rem .6rem; gap: .45rem; border-radius: 8px; font-size: .78rem; }
+#screen-form .paf-route-step .n { width: 22px; height: 22px; font-size: .68rem; }
+#screen-form .paf-route-step .pa-sub { font-size: .7rem; }
+#screen-form .paf-actions { padding: .5rem .9rem; }
+#screen-form .paf-actions .btn { padding: .32rem .75rem; font-size: .78rem; }
+
+/* ---------- approvals */
+.pa-banner { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem; padding: .9rem 1.1rem; border-radius: 14px; border: 1px solid rgba(var(--pa-accent-rgb), .3); background: linear-gradient(90deg, var(--pa-accent-soft), var(--pa-surface)); }
+.pa-banner .bi { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--pa-accent); color: #fff; flex: none; box-shadow: 0 0 0 5px rgba(var(--pa-accent-rgb), .15); }
+.pa-steps { list-style: none; margin: 0; padding: 0; }
+.pa-step { position: relative; display: flex; gap: .75rem; padding-bottom: 1.1rem; }
+.pa-step:last-child { padding-bottom: 0; }
+.pa-step:not(:last-child)::after { content: ""; position: absolute; left: 13px; top: 30px; bottom: 4px; width: 2px; background: var(--pa-line); }
+.pa-step.done:not(:last-child)::after { background: var(--bs-success); opacity: .5; }
+.pa-step .sd { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; flex: none; background: var(--pa-head); border: 1.5px solid var(--pa-line); color: var(--pa-muted); }
+.pa-step.done .sd { background: var(--bs-success); border-color: var(--bs-success); color: #fff; }
+.pa-step.current .sd { background: var(--pa-accent-soft); border-color: var(--pa-accent); color: var(--pa-accent); box-shadow: 0 0 0 4px rgba(var(--pa-accent-rgb), .12); }
+.pa-step.rejected .sd { background: var(--bs-danger); border-color: var(--bs-danger); color: #fff; }
+.pa-step .sb { min-width: 0; font-size: .8125rem; }
+.pa-step .quote { margin-top: .35rem; padding: .4rem .6rem; border-radius: 8px; background: var(--pa-head); border: 1px solid var(--pa-line); color: var(--pa-muted); font-size: .78rem; }
+.pa-level { display: grid; grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1fr) auto; gap: .9rem; align-items: center; padding: 1rem 1.1rem; border-top: 1px solid var(--pa-line); }
+.pa-level:first-child { border-top: 0; }
+.pa-level .lv { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--pa-accent-soft); color: var(--pa-accent); }
+@media (max-width: 767.98px) { .pa-level { grid-template-columns: auto minmax(0, 1fr); } .pa-level > :nth-child(n+3) { grid-column: 2; } }
+.pa-switch-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .9rem 1.1rem; border-top: 1px solid var(--pa-line); }
+.pa-switch-row:first-child { border-top: 0; }
+.pa-switch-row .form-check-input { width: 2.4em; height: 1.3em; margin: 0; flex: none; }
+.pa-decide { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.pa-decide label { border: 1px solid var(--pa-line); border-radius: 10px; padding: .7rem; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: .5rem; justify-content: center; }
+.pa-decide input#d-approve:checked + label { border-color: var(--bs-success); background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); box-shadow: 0 0 0 1px var(--bs-success); }
+.pa-decide input#d-reject:checked + label { border-color: var(--bs-danger); background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); box-shadow: 0 0 0 1px var(--bs-danger); }
+body.state-pending .only-approved, body:not(.state-pending) .only-pending { display: none !important; }
+.pa-decide input#s-return:checked + label { border-color: var(--pa-accent); background: var(--pa-accent-soft); color: var(--pa-accent); box-shadow: 0 0 0 1px var(--pa-accent); }
+.pa-decide input#s-forfeit:checked + label { border-color: var(--bs-danger); background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); box-shadow: 0 0 0 1px var(--bs-danger); }
+
+/* ---------- security */
+.pa-sec-sum { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--pa-line); }
+.pa-sec-sum > div { padding: .85rem 1.1rem; border-left: 1px solid var(--pa-line); min-width: 0; }
+.pa-sec-sum > div:first-child { border-left: 0; }
+.pa-sec-sum .v { font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 767.98px) { .pa-sec-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pa-sec-sum > div:nth-child(3) { border-left: 0; } .pa-sec-sum > div:nth-child(n+3) { border-top: 1px solid var(--pa-line); } }
+.pa-sec { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .9rem 1rem; padding: 1.1rem; border-top: 1px solid var(--pa-line); align-items: start; }
+.pa-sec:first-child { border-top: 0; }
+.pa-sec .si { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; background: var(--pa-accent-soft); color: var(--pa-accent); }
+.pa-sec .si.cash { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.pa-sec .si.muted { background: var(--pa-head); color: var(--pa-muted); border: 1px solid var(--pa-line); }
+.pa-sec .amt { font-weight: 700; font-size: 1rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.pa-sec .facts { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; font-size: .78rem; color: var(--pa-muted); margin-top: .3rem; }
+.pa-sec .facts i { margin-right: .3rem; }
+.pa-sec .acts { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.pa-validity { margin-top: .6rem; max-width: 420px; }
+.pa-validity .pa-bar { height: 6px; }
+.pa-validity .ends { display: flex; justify-content: space-between; font-size: .72rem; color: var(--pa-muted); margin-top: .3rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 575.98px) { .pa-sec { grid-template-columns: auto minmax(0, 1fr); } .pa-sec .amt { grid-column: 2; text-align: left; } }
+
+/* ---------- preview chrome (not part of the design) */
+.preview-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 1030; background: #0f131a; color: #c9d1de; font-family: 'Inter', sans-serif; font-size: .78rem; }
+.preview-bar .inner { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; padding: .5rem 1rem; }
+.preview-bar .seg { display: inline-flex; flex-wrap: wrap; gap: 2px; background: #1b212b; border-radius: 8px; padding: 3px; }
+.preview-bar .seg button { border: 0; background: transparent; color: #9aa4b5; padding: .3rem .7rem; border-radius: 6px; font-size: .75rem; font-weight: 500; }
+.preview-bar .seg button.on { background: #2b3342; color: #fff; }
+.preview-bar .tag { font-weight: 600; color: #fff; letter-spacing: .02em; }
+.screen { display: none; }
+.screen.active { display: block; }
+@media (prefers-reduced-motion: reduce) { .modal.fade .modal-dialog { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="preview-bar">
+  <div class="inner">
+    <span class="tag"><i class="fa fa-eye"></i> Preview</span>
+    <div class="seg" role="group">
+      <button data-screen="dash">Dashboard</button>
+      <button data-screen="list">Contracts</button>
+      <button data-screen="reports">Reports</button>
+      <button data-screen="vendors">Vendors</button>
+      <button data-screen="form">New contract</button>
+      <button data-screen="view" class="on">Contract view</button>
+      <button data-bs-toggle="modal" data-bs-target="#termModal">Add term</button>
+      <button data-bs-toggle="modal" data-bs-target="#payModal">Pay</button>
+      <button data-bs-toggle="modal" data-bs-target="#extendModal">Extend</button>
+      <button data-bs-toggle="modal" data-bs-target="#securityModal">Add security</button>
+      <button data-bs-toggle="modal" data-bs-target="#approveModal">Approve</button>
+    </div>
+    <div class="seg" id="stateSeg" title="Contract state shown in the view">
+      <button data-state="pending">Pending approval</button>
+      <button data-state="approved" class="on">Approved</button>
+    </div>
+    <div class="seg ms-auto"><button id="themeToggle"><i class="fa fa-adjust"></i> Light / Dark</button></div>
+  </div>
+</div>
+
+<div class="pax">
+
+<!-- ================================================================ DASHBOARD -->
+<section class="screen" id="screen-dash">
+  <div class="container-xl py-3 d-grid gap-3">
+
+    <div class="pad-top">
+      <div class="pad-title">
+        <h1><i class="fa fa-briefcase"></i>Project Contract Dashboard</h1>
+        <p>Vendor commitments, payments and security at a glance</p>
+      </div>
+      <div class="pad-pill" id="padPeriod"><button class="on"><i class="fa fa-calendar me-1"></i> This Year</button><button><i class="fa fa-history me-1"></i> All Time</button></div>
+    </div>
+
+    <!-- money cards -->
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="pad-grad"><div class="top g-green"><i class="fa fa-money"></i><div><div class="num">1,240,500.00</div><div class="lbl">Committed</div></div></div>
+          <a href="#" class="bottom" data-screen="list">View Details <i class="fa fa-arrow-circle-right"></i></a></div>
+      </div>
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="pad-grad"><div class="top g-sky"><i class="fa fa-check-circle"></i><div><div class="num">612,000.00</div><div class="lbl">Paid</div></div></div>
+          <a href="#" class="bottom">49.3% of Total <i class="fa fa-arrow-circle-right"></i></a></div>
+      </div>
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="pad-grad"><div class="top g-rose"><i class="fa fa-clock-o"></i><div><div class="num">628,500.00</div><div class="lbl">Balance</div></div></div>
+          <a href="#" class="bottom">50.7% Remaining <i class="fa fa-arrow-circle-right"></i></a></div>
+      </div>
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="pad-grad"><div class="top g-indigo"><i class="fa fa-shield"></i><div><div class="num">96,000.00</div><div class="lbl">Security Held</div></div></div>
+          <a href="#" class="bottom">2 guarantees expiring <i class="fa fa-arrow-circle-right"></i></a></div>
+      </div>
+    </div>
+
+    <!-- approval + rates -->
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="pad-grad plain"><div class="top"><i class="fa fa-gavel" style="color:var(--pa-accent)"></i><div><div class="num">2</div><div class="lbl">Pending Approval</div></div></div>
+          <a href="#" class="bottom" data-screen="list">1 waiting for you <i class="fa fa-arrow-circle-right"></i></a></div>
+      </div>
+      <div class="col-12 col-md-6 col-xl-5">
+        <div class="pa-card pad-rate">
+          <div class="pct">49.3%</div><div class="text-muted-pa">Payment Rate</div>
+          <div class="progress"><div class="progress-bar bg-success" style="width:49.3%"></div></div>
+        </div>
+      </div>
+      <div class="col-12 col-xl-4">
+        <div class="pa-card pad-rate">
+          <div class="pct">71.0%</div><div class="text-muted-pa">Scheduled into Terms</div>
+          <div class="progress"><div class="progress-bar" style="width:71%;background:var(--pa-accent)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- overdue alert -->
+    <div class="pad-alert">
+      <div class="head"><i class="fa fa-exclamation-triangle"></i><h5>Overdue Payment Alert</h5><span class="badge rounded-pill">3</span></div>
+      <div class="pa-card-body p-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-4"><div class="pad-tile"><i class="fa fa-clock-o text-danger"></i><div class="n text-danger-emphasis">3</div><div class="t">Overdue Terms</div></div></div>
+          <div class="col-12 col-md-4"><div class="pad-tile"><i class="fa fa-money text-danger"></i><div class="n text-danger-emphasis">47,500.00</div><div class="t">Overdue Amount</div></div></div>
+          <div class="col-12 col-md-4"><div class="pad-tile"><i class="fa fa-calculator" style="color:var(--pa-accent)"></i><div class="n" style="color:var(--pa-accent)">7.6%</div><div class="t">Of Balance</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- statistics overview -->
+    <div class="pad-sec">
+      <div class="head"><i class="fa fa-bar-chart"></i><h5>Contract Statistics Overview</h5></div>
+      <div class="body">
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-xl-3"><div class="pad-stat"><div class="n" style="color:var(--pa-accent)">19</div><div class="t">Total Contracts</div></div></div>
+          <div class="col-6 col-xl-3"><div class="pad-stat"><div class="n text-success-emphasis">6</div><div class="t">Active</div></div></div>
+          <div class="col-6 col-xl-3"><div class="pad-stat"><div class="n text-warning-emphasis">2</div><div class="t">Pending Approval</div></div></div>
+          <div class="col-6 col-xl-3"><div class="pad-stat"><div class="n text-danger-emphasis">3</div><div class="t">Ending in 60 Days</div></div></div>
+        </div>
+        <div class="pad-occ">
+          <div class="fw-semibold mb-2" style="font-size:.85rem">Overall Payment Progress</div>
+          <div class="progress"><div class="progress-bar progress-bar-striped" style="width:49.3%;background-color:var(--pa-accent)">49.3% Paid</div></div>
+          <div class="pa-sub mt-2"><b class="text-body">612,000</b> paid, <b class="text-body">628,500</b> outstanding out of <b class="text-body">1,240,500</b> committed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- vendor-wise -->
+    <div class="pad-sec">
+      <div class="head"><i class="fa fa-truck"></i><h5>Vendor-wise Payment Progress</h5></div>
+      <div class="body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6 col-xl-4"><div class="pad-vendor high">
+            <div class="d-flex justify-content-between gap-2"><span class="name">Brightline Signs</span><span class="pct">100%</span></div>
+            <div class="cols"><div><div class="n">1</div><div class="t">Contracts</div></div><div><div class="n">18,500</div><div class="t">Committed</div></div><div><div class="n text-success-emphasis">18,500</div><div class="t">Paid</div></div></div>
+            <div class="progress"><div class="progress-bar bg-success" style="width:100%"></div></div></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div class="pad-vendor mid">
+            <div class="d-flex justify-content-between gap-2"><span class="name">Al Noor Electromech</span><span class="pct">66.7%</span></div>
+            <div class="cols"><div><div class="n">2</div><div class="t">Contracts</div></div><div><div class="n">420,000</div><div class="t">Committed</div></div><div><div class="n text-success-emphasis">280,000</div><div class="t">Paid</div></div></div>
+            <div class="progress"><div class="progress-bar" style="width:66.7%;background:var(--pa-accent)"></div></div></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div class="pad-vendor mid">
+            <div class="d-flex justify-content-between gap-2"><span class="name">CoolAir Systems</span><span class="pct">50.0%</span></div>
+            <div class="cols"><div><div class="n">1</div><div class="t">Contracts</div></div><div><div class="n">340,000</div><div class="t">Committed</div></div><div><div class="n text-success-emphasis">170,000</div><div class="t">Paid</div></div></div>
+            <div class="progress"><div class="progress-bar" style="width:50%;background:var(--pa-accent)"></div></div></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div class="pad-vendor">
+            <div class="d-flex justify-content-between gap-2"><span class="name">Doha Interiors</span><span class="pct">37.6%</span></div>
+            <div class="cols"><div><div class="n">1</div><div class="t">Contracts</div></div><div><div class="n">278,000</div><div class="t">Committed</div></div><div><div class="n text-success-emphasis">104,500</div><div class="t">Paid</div></div></div>
+            <div class="progress"><div class="progress-bar bg-warning" style="width:37.6%"></div></div></div></div>
+          <div class="col-12 col-md-6 col-xl-4"><div class="pad-vendor">
+            <div class="d-flex justify-content-between gap-2"><span class="name">Gulf Steel Contracting</span><span class="pct">21.2%</span></div>
+            <div class="cols"><div><div class="n">2</div><div class="t">Contracts</div></div><div><div class="n">184,000</div><div class="t">Committed</div></div><div><div class="n text-success-emphasis">39,000</div><div class="t">Paid</div></div></div>
+            <div class="progress"><div class="progress-bar bg-warning" style="width:21.2%"></div></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- tabbed reports -->
+    <div class="pa-card p-3">
+      <ul class="nav pad-tabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dt-ending">Upcoming End Date Contracts</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dt-due"><i class="fa fa-clock-o"></i>Upcoming Due Terms</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dt-sec"><i class="fa fa-shield"></i>Expiring Securities</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#dt-expired"><i class="fa fa-file-text-o"></i>Expired Contracts</button></li>
+      </ul>
+
+      <div class="row g-2 mt-1">
+        <div class="col-6 col-lg-3"><label class="form-label" for="dt-vendor">Vendor</label><select id="dt-vendor" class="form-select"><option>All vendors</option><option>Gulf Steel Contracting W.L.L.</option><option>CoolAir Systems</option></select></div>
+        <div class="col-6 col-lg-3"><label class="form-label" for="dt-project">Project</label><input id="dt-project" class="form-control" placeholder="Search project"></div>
+        <div class="col-6 col-lg-3"><label class="form-label" for="dt-from">From Date</label><input id="dt-from" type="date" class="form-control" value="2026-12-01"></div>
+        <div class="col-6 col-lg-3"><label class="form-label" for="dt-to">To Date</label><input id="dt-to" type="date" class="form-control" value="2027-02-28"></div>
+      </div>
+
+      <div class="pad-tools">
+        <div class="btn-group flex-wrap"><button class="btn btn-sm">Column visibility</button><button class="btn btn-sm">PDF</button><button class="btn btn-sm">Excel</button><button class="btn btn-sm">Show 10 rows</button></div>
+        <div class="d-flex align-items-center gap-2"><label class="fw-semibold" for="dt-search">Search:</label><input id="dt-search" class="form-control form-control-sm" style="width:200px"></div>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="dt-ending">
+          <div class="table-responsive pa-card" style="box-shadow:none">
+            <table class="table pa-table table-hover align-middle">
+              <thead><tr><th>Start Date</th><th>End Date</th><th>Project</th><th>Vendor</th><th class="num">Contract</th><th class="num">Scheduled</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="pa-num">10-03-2026</td><td class="pa-num">31-12-2026</td><td><a href="#" data-screen="view">Office Fit-out Phase 2</a></td><td>Doha Interiors</td><td class="num">96,000.00</td><td class="num">96,000.00</td><td class="num">72,000.00</td><td class="num">24,000.00</td><td><span class="pa-pill active">Active</span></td></tr>
+                <tr><td class="pa-num">01-11-2026</td><td class="pa-num">31-01-2027</td><td><a href="#" data-screen="view">Warehouse Racking</a></td><td>Gulf Steel Contracting</td><td class="num">64,000.00</td><td class="num">0.00</td><td class="num">0.00</td><td class="num">64,000.00</td><td><span class="pa-pill draft">Pending approval</span></td></tr>
+                <tr><td class="pa-num">15-04-2026</td><td class="pa-num">15-02-2027</td><td><a href="#" data-screen="view">Substation Upgrade</a></td><td>Al Noor Electromech</td><td class="num">180,000.00</td><td class="num">180,000.00</td><td class="num">150,000.00</td><td class="num">30,000.00</td><td><span class="pa-pill active">Active</span></td></tr>
+              </tbody>
+              <tfoot><tr><td colspan="4" class="text-end">Total</td><td class="num">340,000.00</td><td class="num">276,000.00</td><td class="num">222,000.00</td><td class="num">118,000.00</td><td></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="dt-due">
+          <div class="table-responsive pa-card" style="box-shadow:none">
+            <table class="table pa-table table-hover align-middle">
+              <thead><tr><th>Due Date</th><th>Term</th><th>Project</th><th>Vendor</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr class="is-overdue"><td class="pa-num">15-11-2026</td><td>Structural works 30%</td><td><a href="#" data-screen="view">Al Wakra Villa Fit-out</a></td><td>Gulf Steel Contracting</td><td class="num">36,000.00</td><td class="num">15,000.00</td><td class="num">21,000.00</td><td><span class="pa-pill overdue">Overdue</span></td></tr>
+                <tr><td class="pa-num">20-12-2026</td><td>Ducting 25%</td><td><a href="#">Lusail Tower B — HVAC</a></td><td>CoolAir Systems</td><td class="num">85,000.00</td><td class="num">0.00</td><td class="num">85,000.00</td><td><span class="pa-pill pending">Pending</span></td></tr>
+                <tr><td class="pa-num">20-01-2027</td><td>MEP rough-in 15%</td><td><a href="#" data-screen="view">Al Wakra Villa Fit-out</a></td><td>Gulf Steel Contracting</td><td class="num">18,000.00</td><td class="num">0.00</td><td class="num">18,000.00</td><td><span class="pa-pill pending">Pending</span></td></tr>
+              </tbody>
+              <tfoot><tr><td colspan="4" class="text-end">Total</td><td class="num">139,000.00</td><td class="num">15,000.00</td><td class="num">124,000.00</td><td></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="dt-sec">
+          <div class="table-responsive pa-card" style="box-shadow:none">
+            <table class="table pa-table table-hover align-middle">
+              <thead><tr><th>Valid Until</th><th>Security</th><th>Reference</th><th>Project</th><th>Vendor</th><th class="num">Amount</th><th>Contract Ends</th></tr></thead>
+              <tbody>
+                <tr class="is-overdue"><td class="pa-num">31-12-2026</td><td>Performance bond</td><td>QNB · BG/2026/4471</td><td><a href="#" data-screen="view">Al Wakra Villa Fit-out</a></td><td>Gulf Steel Contracting</td><td class="num">12,000.00</td><td class="pa-num">31-08-2027</td></tr>
+                <tr><td class="pa-num">15-02-2027</td><td>Advance payment guarantee</td><td>CBQ · APG/0931</td><td><a href="#">Substation Upgrade</a></td><td>Al Noor Electromech</td><td class="num">18,000.00</td><td class="pa-num">15-02-2027</td></tr>
+              </tbody>
+              <tfoot><tr><td colspan="5" class="text-end">Total</td><td class="num">30,000.00</td><td></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="dt-expired">
+          <div class="table-responsive pa-card" style="box-shadow:none">
+            <table class="table pa-table table-hover align-middle">
+              <thead><tr><th>Start Date</th><th>End Date</th><th>Project</th><th>Vendor</th><th class="num">Contract</th><th class="num">Paid</th><th class="num">Balance</th><th>Security Held</th></tr></thead>
+              <tbody>
+                <tr><td class="pa-num">01-02-2026</td><td class="pa-num">30-09-2026</td><td><a href="#">Car Park Shading</a></td><td>Doha Interiors</td><td class="num">42,000.00</td><td class="num">32,500.00</td><td class="num">9,500.00</td><td><span class="pa-pill partial">4,200.00</span></td></tr>
+              </tbody>
+              <tfoot><tr><td colspan="4" class="text-end">Total</td><td class="num">42,000.00</td><td class="num">32,500.00</td><td class="num">9,500.00</td><td></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pad-pager">
+        <span class="text-muted-pa">Showing 1 to 3 of 3 entries</span>
+        <ul class="pagination pagination-sm"><li class="page-item disabled"><a class="page-link" href="#">Previous</a></li><li class="page-item active"><a class="page-link" href="#">1</a></li><li class="page-item disabled"><a class="page-link" href="#">Next</a></li></ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================================ REPORTS -->
+<section class="screen" id="screen-reports" data-report="pending">
+  <div class="pa-header">
+    <div class="container-xl py-3">
+      <div class="pa-crumbs mb-2"><a href="#" data-screen="dash">Project Contracts</a> <i class="fa fa-angle-right mx-1"></i> Reports</div>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <h1 class="pa-title me-auto" style="font-size:1.2rem">Payment Reports</h1>
+        <div class="pa-seg" id="rptSwitch">
+          <button class="on" data-r="pending"><i class="fa fa-clock-o me-1"></i> Pending Payments</button>
+          <button data-r="paid"><i class="fa fa-check-circle me-1"></i> Paid Payments</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-xl py-3">
+    <div class="d-grid gap-3">
+      <!-- filter bar -->
+      <div class="pa-card rpx-bar">
+        <div class="rpx-fields">
+          <div class="f"><label class="rpx-lbl" for="r-from"><span class="only-pend">Due from</span><span class="only-paid">Paid from</span></label><input type="date" class="form-control form-control-sm" id="r-from" value="2026-09-01"></div>
+          <div class="f"><label class="rpx-lbl" for="r-to">To</label><input type="date" class="form-control form-control-sm" id="r-to" value="2027-02-28"></div>
+          <div class="f wide"><label class="rpx-lbl" for="r-vendor">Vendor</label><select id="r-vendor" class="form-select form-select-sm"><option>All vendors</option><option>Al Noor Electromech</option><option>CoolAir Systems</option><option>Doha Interiors</option><option>Gulf Steel Contracting</option></select></div>
+          <div class="f wide"><label class="rpx-lbl" for="r-contract">Contract</label><select id="r-contract" class="form-select form-select-sm"><option>All contracts</option><option>PC-0007 · Al Wakra Villa Fit-out</option><option>PC-0006 · Lusail Tower B — HVAC</option><option>PC-0003 · Substation Upgrade</option><option>PC-0002 · Office Fit-out Phase 2</option></select></div>
+          <div class="f"><label class="rpx-lbl" for="r-branch">Branch</label><select id="r-branch" class="form-select form-select-sm"><option>All branches</option><option>Doha Main</option><option>Lusail</option></select></div>
+        </div>
+        <div class="rpx-chiprow">
+          <span class="rpx-lbl mb-0 only-pend">Status</span>
+          <div class="rpx-chips only-pend" id="pendChips">
+            <button class="on" data-k="all">All</button><button data-k="overdue">Overdue</button><button data-k="soon">Due in 30 days</button><button data-k="later">Later</button>
+          </div>
+          <span class="rpx-lbl mb-0 only-paid">Method</span>
+          <div class="rpx-chips only-paid" id="paidChips">
+            <button class="on" data-m="all">All</button><button data-m="bank">Bank</button><button data-m="cheque">Cheque</button><button data-m="cash">Cash</button>
+          </div>
+          <button class="btn btn-quiet btn-sm ms-auto" id="rptReset"><i class="fa fa-undo me-1"></i>Reset</button>
+        </div>
+      </div>
+
+      <!-- report body -->
+      <div class="d-grid gap-3" style="min-width:0">
+
+        <!-- PENDING -->
+        <div class="only-pend d-grid gap-3">
+          <div class="rpx-sum">
+            <div class="s"><div class="l">Total pending</div><div class="v pa-num">180,500.00</div><div class="pa-sub">6 terms · 4 contracts</div></div>
+            <div class="s bad"><div class="l">Overdue</div><div class="v pa-num">47,500.00</div><div class="pa-sub">3 terms</div></div>
+            <div class="s warn"><div class="l">Due in 30 days</div><div class="v pa-num">85,000.00</div><div class="pa-sub">1 term</div></div>
+            <div class="s"><div class="l">Later</div><div class="v pa-num">48,000.00</div><div class="pa-sub">2 terms</div></div>
+          </div>
+          <div class="pa-card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-semibold" style="font-size:.8125rem">Ageing of pending balance</span><span class="pa-sub">as of 10-12-2026</span></div>
+            <div class="rpx-aging">
+              <span style="flex:133000;background:var(--pa-accent)" title="Not yet due 133,000"></span>
+              <span style="flex:29000;background:var(--pa-warn)" title="1–30 days 29,000"></span>
+              <span style="flex:18500;background:var(--pa-bad)" title="31–60 days 18,500"></span>
+            </div>
+            <div class="rpx-aging-legend">
+              <span><i style="background:var(--pa-accent)"></i>Not yet due <b>133,000</b></span>
+              <span><i style="background:var(--pa-warn)"></i>1–30 days <b>29,000</b></span>
+              <span><i style="background:var(--pa-bad)"></i>31–60 days <b>18,500</b></span>
+              <span><i style="background:var(--pa-line)"></i>61–90 days <b>0</b></span>
+              <span><i style="background:var(--pa-line)"></i>Over 90 days <b>0</b></span>
+            </div>
+          </div>
+          <div class="pa-card">
+            <div class="rpx-tools"><span class="fw-semibold">Pending payments</span><span class="pa-sub" id="pendCount">6 terms</span>
+              <div class="ms-auto d-flex flex-wrap gap-1"><button class="btn btn-quiet btn-sm"><i class="fa fa-file-excel-o me-1"></i>Excel</button><button class="btn btn-quiet btn-sm"><i class="fa fa-file-pdf-o me-1"></i>PDF</button><button class="btn btn-quiet btn-sm"><i class="fa fa-print me-1"></i>Print</button></div></div>
+            <div class="table-responsive">
+              <table class="table pa-table table-hover align-middle" id="pendTable">
+                <thead><tr><th>Due date</th><th>Contract</th><th>Vendor</th><th>Term</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr data-k="overdue" data-amount="24000" data-paid="5500" data-bal="18500" class="is-overdue"><td class="pa-num">25-10-2026<div class="pa-sub text-danger-emphasis">46 days overdue</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0002</a><div class="pa-sub">Office Fit-out Phase 2</div></td><td>Doha Interiors</td><td>Joinery 25%</td><td class="num">24,000.00</td><td class="num">5,500.00</td><td class="num fw-semibold">18,500.00</td><td><span class="pa-pill overdue">Overdue</span></td></tr>
+                <tr data-k="overdue" data-amount="36000" data-paid="15000" data-bal="21000" class="is-overdue"><td class="pa-num">15-11-2026<div class="pa-sub text-danger-emphasis">25 days overdue</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0007</a><div class="pa-sub">Al Wakra Villa Fit-out</div></td><td>Gulf Steel Contracting</td><td>Structural works 30%</td><td class="num">36,000.00</td><td class="num">15,000.00</td><td class="num fw-semibold">21,000.00</td><td><span class="pa-pill overdue">Overdue</span></td></tr>
+                <tr data-k="overdue" data-amount="8000" data-paid="0" data-bal="8000" class="is-overdue"><td class="pa-num">01-12-2026<div class="pa-sub text-danger-emphasis">9 days overdue</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0003</a><div class="pa-sub">Substation Upgrade</div></td><td>Al Noor Electromech</td><td>Testing &amp; commissioning</td><td class="num">8,000.00</td><td class="num">0.00</td><td class="num fw-semibold">8,000.00</td><td><span class="pa-pill overdue">Overdue</span></td></tr>
+                <tr data-k="soon" data-amount="85000" data-paid="0" data-bal="85000"><td class="pa-num">20-12-2026<div class="pa-sub">in 10 days</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0006</a><div class="pa-sub">Lusail Tower B — HVAC</div></td><td>CoolAir Systems</td><td>Ducting 25%</td><td class="num">85,000.00</td><td class="num">0.00</td><td class="num fw-semibold">85,000.00</td><td><span class="pa-pill partial">Due soon</span></td></tr>
+                <tr data-k="later" data-amount="18000" data-paid="0" data-bal="18000"><td class="pa-num">20-01-2027<div class="pa-sub">in 41 days</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0007</a><div class="pa-sub">Al Wakra Villa Fit-out</div></td><td>Gulf Steel Contracting</td><td>MEP rough-in 15%</td><td class="num">18,000.00</td><td class="num">0.00</td><td class="num fw-semibold">18,000.00</td><td><span class="pa-pill pending">Upcoming</span></td></tr>
+                <tr data-k="later" data-amount="30000" data-paid="0" data-bal="30000"><td class="pa-num">15-02-2027<div class="pa-sub">in 67 days</div></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0003</a><div class="pa-sub">Substation Upgrade</div></td><td>Al Noor Electromech</td><td>Final handover 10%</td><td class="num">30,000.00</td><td class="num">0.00</td><td class="num fw-semibold">30,000.00</td><td><span class="pa-pill pending">Upcoming</span></td></tr>
+                </tbody>
+                <tfoot><tr><td colspan="4">Total</td><td class="num" id="pendAmt">201,000.00</td><td class="num" id="pendPaid">20,500.00</td><td class="num" id="pendBal">180,500.00</td><td></td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAID -->
+        <div class="only-paid d-grid gap-3">
+          <div class="rpx-sum">
+            <div class="s ok"><div class="l">Total paid</div><div class="v pa-num">364,500.00</div><div class="pa-sub">5 payments · 4 contracts</div></div>
+            <div class="s"><div class="l">Bank transfer</div><div class="v pa-num">194,000.00</div><div class="pa-sub">2 payments</div></div>
+            <div class="s"><div class="l">Cheque</div><div class="v pa-num">165,000.00</div><div class="pa-sub">2 payments</div></div>
+            <div class="s"><div class="l">Cash</div><div class="v pa-num">5,500.00</div><div class="pa-sub">1 payment</div></div>
+          </div>
+          <div class="pa-card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-semibold" style="font-size:.8125rem">Paid by month</span><span class="pa-sub">01-09-2026 – 10-12-2026</span></div>
+            <div class="rpx-months">
+              <div><span class="bar" style="height:13%"></span><b>24,000</b><small>Sep</small></div>
+              <div><span class="bar" style="height:100%"></span><b>170,000</b><small>Oct</small></div>
+              <div><span class="bar" style="height:100%"></span><b>170,500</b><small>Nov</small></div>
+              <div><span class="bar empty" style="height:2%"></span><b>0</b><small>Dec</small></div>
+            </div>
+          </div>
+          <div class="pa-card">
+            <div class="rpx-tools"><span class="fw-semibold">Paid payments</span><span class="pa-sub" id="paidCount">5 payments</span>
+              <div class="ms-auto d-flex flex-wrap gap-1"><button class="btn btn-quiet btn-sm"><i class="fa fa-file-excel-o me-1"></i>Excel</button><button class="btn btn-quiet btn-sm"><i class="fa fa-file-pdf-o me-1"></i>PDF</button><button class="btn btn-quiet btn-sm"><i class="fa fa-print me-1"></i>Print</button></div></div>
+            <div class="table-responsive">
+              <table class="table pa-table table-hover align-middle" id="paidTable">
+                <thead><tr><th>Date</th><th>Voucher</th><th>Contract</th><th>Vendor</th><th>Term</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+                <tbody>
+                <tr data-m="bank" data-amount="24000"><td class="pa-num">04-09-2026</td><td><a href="#" class="fw-semibold">PV-1021</a></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0007</a><div class="pa-sub">Al Wakra Villa Fit-out</div></td><td>Gulf Steel Contracting</td><td>Mobilisation 20%</td><td><i class="fa fa-bank text-muted-pa me-1"></i>Bank transfer</td><td class="pa-sub">QNB ref 88231</td><td class="num fw-semibold text-success-emphasis">24,000.00</td></tr>
+                <tr data-m="bank" data-amount="170000"><td class="pa-num">12-10-2026</td><td><a href="#" class="fw-semibold">PV-1050</a></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0006</a><div class="pa-sub">Lusail Tower B — HVAC</div></td><td>CoolAir Systems</td><td>Advance 50%</td><td><i class="fa fa-bank text-muted-pa me-1"></i>Bank transfer</td><td class="pa-sub">CBQ ref 55120</td><td class="num fw-semibold text-success-emphasis">170,000.00</td></tr>
+                <tr data-m="cash" data-amount="5500"><td class="pa-num">02-11-2026</td><td><a href="#" class="fw-semibold">PV-1071</a></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0002</a><div class="pa-sub">Office Fit-out Phase 2</div></td><td>Doha Interiors</td><td>Joinery 25% (part)</td><td><i class="fa fa-money text-muted-pa me-1"></i>Cash</td><td class="pa-sub">Receipt 3341</td><td class="num fw-semibold text-success-emphasis">5,500.00</td></tr>
+                <tr data-m="cheque" data-amount="15000"><td class="pa-num">18-11-2026</td><td><a href="#" class="fw-semibold">PV-1088</a></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0007</a><div class="pa-sub">Al Wakra Villa Fit-out</div></td><td>Gulf Steel Contracting</td><td>Structural works 30% (part)</td><td><i class="fa fa-credit-card text-muted-pa me-1"></i>Cheque</td><td class="pa-sub">#004512 · CBQ</td><td class="num fw-semibold text-success-emphasis">15,000.00</td></tr>
+                <tr data-m="cheque" data-amount="150000"><td class="pa-num">20-11-2026</td><td><a href="#" class="fw-semibold">PV-1092</a></td><td><a href="#" data-screen="view" class="fw-semibold">PC-0003</a><div class="pa-sub">Substation Upgrade</div></td><td>Al Noor Electromech</td><td>Equipment supply 50%</td><td><i class="fa fa-credit-card text-muted-pa me-1"></i>Cheque</td><td class="pa-sub">#007781 · QIB</td><td class="num fw-semibold text-success-emphasis">150,000.00</td></tr>
+                </tbody>
+                <tfoot><tr><td colspan="7">Total</td><td class="num" id="paidAmt">364,500.00</td></tr></tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ VENDORS -->
+<section class="screen" id="screen-vendors">
+  <div class="pa-header">
+    <div class="container-xl py-3">
+      <div class="pa-crumbs mb-2"><a href="#" data-screen="list">Project Contracts</a> <i class="fa fa-angle-right mx-1"></i> Vendors</div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <h1 class="pa-title me-auto" style="font-size:1.2rem">Vendors</h1>
+        <button class="btn btn-quiet btn-sm"><i class="fa fa-file-excel-o me-1"></i>Export</button>
+        <button class="btn btn-primary btn-sm" data-screen="vendor-form" data-vendor-mode="new"><i class="fa fa-plus me-1"></i> New vendor</button>
+      </div>
+    </div>
+  </div>
+  <div class="container-xl py-3 d-grid gap-2">
+    <div class="pa-card rpx-bar">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="input-group input-group-sm" style="max-width:320px"><span class="input-group-text"><i class="fa fa-search"></i></span><input class="form-control" id="vendorSearch" placeholder="Search name, mobile, CR no."></div>
+        <div class="rpx-chips" id="vendorType"><button class="on" data-t="all">All</button><button data-t="Company">Company</button><button data-t="Subcontractor">Subcontractor</button><button data-t="Supplier">Supplier</button><button data-t="Individual">Individual</button></div>
+        <span class="pa-sub ms-auto" id="vendorCount">5 vendors</span>
+      </div>
+    </div>
+    <div class="pa-card">
+      <div class="table-responsive">
+        <table class="table pa-table table-hover align-middle" id="vendorTable">
+          <thead><tr><th>Vendor</th><th>Type</th><th>Mobile</th><th>Email</th><th>CR / Tax No.</th><th class="num">Contracts</th><th class="num">Committed</th><th class="num">Balance</th><th></th></tr></thead>
+          <tbody>
+            <tr data-t="Company"><td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">GS</span><div><div class="fw-semibold">Gulf Steel Contracting W.L.L.</div><div class="pa-sub" dir="rtl">الخليج للمقاولات الحديدية</div></div></div></td><td>Company</td><td class="pa-num">0097444556677</td><td>accounts@gulfsteel.qa</td><td>CR 128844</td><td class="num">2</td><td class="num">184,000.00</td><td class="num">145,000.00</td><td class="text-end text-nowrap"><button class="btn-icon" data-screen="vendor-form" data-vendor-mode="edit" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="Gulf Steel Contracting W.L.L." data-contracts="2" title="Delete"><i class="fa fa-trash-o"></i></button></td></tr>
+            <tr data-t="Subcontractor"><td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">AN</span><div><div class="fw-semibold">Al Noor Electromech</div><div class="pa-sub" dir="rtl">النور للأعمال الكهروميكانيكية</div></div></div></td><td>Subcontractor</td><td class="pa-num">0097455102030</td><td>info@alnoor-em.qa</td><td>CR 99012</td><td class="num">2</td><td class="num">420,000.00</td><td class="num">140,000.00</td><td class="text-end text-nowrap"><button class="btn-icon" data-screen="vendor-form" data-vendor-mode="edit" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="Al Noor Electromech" data-contracts="2" title="Delete"><i class="fa fa-trash-o"></i></button></td></tr>
+            <tr data-t="Company"><td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">CA</span><div><div class="fw-semibold">CoolAir Systems</div><div class="pa-sub">—</div></div></div></td><td>Company</td><td class="pa-num">0097433120099</td><td>projects@coolair.qa</td><td>CR 47731</td><td class="num">1</td><td class="num">340,000.00</td><td class="num">170,000.00</td><td class="text-end text-nowrap"><button class="btn-icon" data-screen="vendor-form" data-vendor-mode="edit" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="CoolAir Systems" data-contracts="1" title="Delete"><i class="fa fa-trash-o"></i></button></td></tr>
+            <tr data-t="Supplier"><td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">DI</span><div><div class="fw-semibold">Doha Interiors</div><div class="pa-sub" dir="rtl">الدوحة للديكور</div></div></div></td><td>Supplier</td><td class="pa-num">0097466778899</td><td>sales@dohainteriors.qa</td><td>CR 60218</td><td class="num">1</td><td class="num">278,000.00</td><td class="num">173,500.00</td><td class="text-end text-nowrap"><button class="btn-icon" data-screen="vendor-form" data-vendor-mode="edit" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="Doha Interiors" data-contracts="1" title="Delete"><i class="fa fa-trash-o"></i></button></td></tr>
+            <tr data-t="Individual"><td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">YK</span><div><div class="fw-semibold">Yousef Khalil (Surveyor)</div><div class="pa-sub" dir="rtl">يوسف خليل</div></div></div></td><td>Individual</td><td class="pa-num">0097450011223</td><td>—</td><td>—</td><td class="num">0</td><td class="num">0.00</td><td class="num">0.00</td><td class="text-end text-nowrap"><button class="btn-icon" data-screen="vendor-form" data-vendor-mode="edit" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="Yousef Khalil (Surveyor)" data-contracts="0" title="Delete"><i class="fa fa-trash-o"></i></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top pa-sub"><span>Showing 1–5 of 5</span><div class="d-flex gap-1"><button class="btn btn-quiet btn-sm" disabled><i class="fa fa-angle-left"></i></button><button class="btn btn-quiet btn-sm" disabled><i class="fa fa-angle-right"></i></button></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ VENDOR FORM -->
+<section class="screen" id="screen-vendor-form">
+  <div class="pa-header">
+    <div class="container-xl py-3">
+      <div class="pa-crumbs mb-2"><a href="#" data-screen="vendors">Vendors</a> <i class="fa fa-angle-right mx-1"></i> <span id="vfCrumb">New</span></div>
+      <h1 class="pa-title" style="font-size:1.2rem" id="vfTitle">New vendor</h1>
+    </div>
+  </div>
+  <div class="container-xl py-3">
+    <div class="paf d-grid gap-3">
+      <section class="paf-card"><div class="paf-head"><i class="fa fa-info-circle text-primary"></i><h5>Basic Information</h5></div><div class="paf-body"><div class="row g-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-name">Name *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-user text-secondary"></i></span><input id="v-name" type="text" class="form-control" placeholder="Vendor or company name" value="Gulf Steel Contracting W.L.L."></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-name_ar">Name (Arabic)</label><div class="input-group"><span class="input-group-text"><i class="fa fa-language text-secondary"></i></span><input id="v-name_ar" type="text" class="form-control" placeholder="الاسم بالعربية" value="الخليج للمقاولات الحديدية" dir="rtl"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-type">Vendor Type</label><div class="input-group"><span class="input-group-text"><i class="fa fa-tag text-primary"></i></span><select id="v-type" class="form-select"><option>Company</option><option>Individual</option><option>Subcontractor</option><option>Supplier</option></select></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-dob">Date Of Birth</label><div class="input-group"><span class="input-group-text"><i class="fa fa-birthday-cake text-secondary"></i></span><input id="v-dob" type="date" class="form-control" placeholder=""></div><div class="form-text">Individuals only</div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-credit">Credit Period (days)</label><div class="input-group"><span class="input-group-text"><i class="fa fa-clock-o text-secondary"></i></span><input id="v-credit" type="number" class="form-control" placeholder="e.g. 30" value="30" min="0"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-tax">Tax / CR No.</label><div class="input-group"><span class="input-group-text"><i class="fa fa-file-text-o text-secondary"></i></span><input id="v-tax" type="text" class="form-control" placeholder="Commercial registration or tax number" value="CR 128844"></div></div>
+      </div></div></section>
+      <section class="paf-card"><div class="paf-head"><i class="fa fa-phone-square text-primary"></i><h5>Contact Information</h5></div><div class="paf-body"><div class="row g-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-mobile">Mobile *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-mobile text-secondary"></i></span><input id="v-mobile" type="tel" class="form-control" placeholder="e.g. 0097455512345" value="0097444556677"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-whatsapp">WhatsApp</label><div class="input-group"><span class="input-group-text"><i class="fa fa-whatsapp text-success"></i></span><input id="v-whatsapp" type="tel" class="form-control" placeholder="Same as mobile if blank" value="0097444556677"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-emergency">Emergency Contact No</label><div class="input-group"><span class="input-group-text"><i class="fa fa-phone text-secondary"></i></span><input id="v-emergency" type="tel" class="form-control" placeholder="Enter emergency contact number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-email">Email</label><div class="input-group"><span class="input-group-text"><i class="fa fa-envelope-o text-secondary"></i></span><input id="v-email" type="email" class="form-control" placeholder="name@company.com" value="accounts@gulfsteel.qa"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-pobox">P.O. Box</label><div class="input-group"><span class="input-group-text"><i class="fa fa-inbox text-secondary"></i></span><input id="v-pobox" type="text" class="form-control" placeholder="Enter P.O. Box number" value="22140"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-contact">Contact Person</label><div class="input-group"><span class="input-group-text"><i class="fa fa-user-plus text-secondary"></i></span><input id="v-contact" type="text" class="form-control" placeholder="Who to call at the vendor" value="Imran Sheikh"></div></div>
+      </div></div></section>
+      <section class="paf-card"><div class="paf-head"><i class="fa fa-user text-secondary"></i><h5>Personal Details</h5><span class="pa-sub ms-auto d-none d-md-inline">For individual vendors and the signing person</span></div><div class="paf-body"><div class="row g-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-idno">ID Number</label><div class="input-group"><span class="input-group-text"><i class="fa fa-credit-card text-secondary"></i></span><input id="v-idno" type="text" class="form-control" placeholder="Enter v-idno number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-idexp">ID Expiry Date</label><div class="input-group"><span class="input-group-text"><i class="fa fa-calendar text-danger"></i></span><input id="v-idexp" type="date" class="form-control" placeholder=""></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-passport">Passport No</label><div class="input-group"><span class="input-group-text"><i class="fa fa-book text-secondary"></i></span><input id="v-passport" type="text" class="form-control" placeholder="Enter passport number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-occupation">Occupation</label><div class="input-group"><span class="input-group-text"><i class="fa fa-briefcase text-secondary"></i></span><input id="v-occupation" type="text" class="form-control" placeholder="Enter occupation"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-nationality">Nationality</label><div class="input-group"><span class="input-group-text"><i class="fa fa-flag text-secondary"></i></span><select id="v-nationality" class="form-select"><option value="">Select nationality</option><option>Qatar</option><option>India</option><option>Egypt</option><option>Jordan</option><option>Philippines</option><option>Pakistan</option><option>United Kingdom</option></select></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-company">Company</label><div class="input-group"><span class="input-group-text"><i class="fa fa-building-o text-secondary"></i></span><input id="v-company" type="text" class="form-control" placeholder="Enter company name"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-marital">Marital Status</label><div class="input-group"><span class="input-group-text"><i class="fa fa-users text-secondary"></i></span><select id="v-marital" class="form-select"><option value="">Select marital status</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select></div></div>
+<div class="col-12"><label class="form-label" for="v-address">Residential Address</label><div class="input-group"><span class="input-group-text"><i class="fa fa-home text-secondary"></i></span><textarea id="v-address" class="form-control" rows="1" placeholder="Enter residential address"></textarea></div></div>
+      </div></div></section>
+      <section class="paf-card"><div class="paf-head"><i class="fa fa-suitcase text-info"></i><h5>Employment / Business Details</h5></div><div class="paf-body"><div class="row g-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-position">Position / Nature Of Business</label><div class="input-group"><span class="input-group-text"><i class="fa fa-suitcase text-secondary"></i></span><input id="v-position" type="text" class="form-control" placeholder="e.g. Steel fabrication contractor"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="v-income">Monthly Income</label><div class="input-group"><span class="input-group-text"><i class="fa fa-money text-secondary"></i></span><input id="v-income" type="text" class="form-control" placeholder="0.00" inputmode="decimal"></div></div>
+<div class="col-12"><label class="form-label" for="v-empaddr">Employer / Business Address</label><div class="input-group"><span class="input-group-text"><i class="fa fa-map-marker text-danger"></i></span><textarea id="v-empaddr" class="form-control" rows="1" placeholder="Enter employer or business address"></textarea></div></div>
+      </div></div></section>
+      <div class="paf-card paf-actions">
+        <button class="btn btn-quiet" data-screen="vendors"><i class="fa fa-arrow-left me-1"></i> Back</button>
+        <div class="d-flex flex-wrap gap-2 ms-auto">
+          <button class="btn btn-quiet text-danger" id="vfDelete" data-bs-toggle="modal" data-bs-target="#vendorDelete" data-name="Gulf Steel Contracting W.L.L." data-contracts="2" hidden><i class="fa fa-trash-o me-1"></i> Delete</button>
+          <button class="btn btn-primary" data-screen="vendors"><i class="fa fa-save me-1"></i> Save vendor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ LIST -->
+<section class="screen" id="screen-list">
+  <div class="pa-header">
+    <div class="container-xl py-4">
+      <div class="pa-crumbs mb-2"><a href="#">Purchase</a> <i class="fa fa-angle-right mx-1"></i> Project Contracts</div>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="me-auto">
+          <h1 class="pa-title">Project Contracts</h1>
+          <div class="text-muted-pa mt-1">Contracts with vendors, their payment terms and what is still owed.</div>
+        </div>
+        <button class="btn btn-quiet" data-screen="dash"><i class="fa fa-bar-chart me-1"></i> Dashboard</button>
+        <button class="btn btn-quiet" data-screen="reports"><i class="fa fa-file-text-o me-1"></i> Reports</button>
+        <button class="btn btn-quiet" data-screen="vendors"><i class="fa fa-truck me-1"></i> Vendors</button>
+        <button class="btn btn-quiet"><i class="fa fa-download me-1"></i> Export</button>
+        <button class="btn btn-primary" data-screen="form"><i class="fa fa-plus me-1"></i> New contract</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-xl py-4 d-grid gap-4">
+    <div class="pa-card pa-kpis">
+      <div class="pa-kpi"><div class="top"><span class="ki"><i class="fa fa-briefcase"></i></span><span class="pa-eyebrow">Active contracts</span></div><div class="val">6</div><div class="sub"><a href="#">2 awaiting approval</a> · 11 completed</div></div>
+      <div class="pa-kpi"><div class="top"><span class="ki neutral"><i class="fa fa-file-text-o"></i></span><span class="pa-eyebrow">Committed</span></div><div class="val"><small>QAR</small>1,240,500</div><div class="sub">across active contracts</div></div>
+      <div class="pa-kpi"><div class="top"><span class="ki ok"><i class="fa fa-check"></i></span><span class="pa-eyebrow">Paid to date</span></div><div class="val"><small>QAR</small>612,000</div><div class="pa-bar thin mt-2"><span class="paid" style="width:49%"></span></div></div>
+      <div class="pa-kpi alert-cell"><div class="top"><span class="ki bad"><i class="fa fa-exclamation"></i></span><span class="pa-eyebrow">Overdue</span></div><div class="val"><small>QAR</small>21,000</div><div class="sub">1 term · 58,000 due in 30 days</div></div>
+    </div>
+
+    <div class="pa-card">
+      <div class="pa-card-head flex-wrap">
+        <div class="pa-seg">
+          <button class="on">All <span class="text-muted-pa">19</span></button><button>Pending approval <span class="text-muted-pa">2</span></button><button>Active</button><button>Draft</button><button>Completed</button>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <div class="input-group" style="width:240px"><span class="input-group-text border-end-0"><i class="fa fa-search"></i></span><input class="form-control border-start-0 ps-0" placeholder="Search project or vendor"></div>
+          <select class="form-select" style="width:210px"><option>All vendors</option><option>Gulf Steel Contracting W.L.L.</option><option>CoolAir Systems</option></select>
+          <button class="btn btn-quiet"><i class="fa fa-calendar me-1"></i> 2026</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table pa-table table-hover align-middle">
+          <thead><tr><th>Project</th><th>Vendor</th><th>Period</th><th class="num">Contract</th><th style="width:180px">Paid</th><th>Next due</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr class="row-link is-overdue" data-screen="view">
+              <td><div class="fw-semibold">Al Wakra Villa Fit-out</div><div class="pa-sub">PC-0007</div></td>
+              <td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">GS</span><span>Gulf Steel Contracting</span></div></td>
+              <td class="pa-num">01 Sep 26 – 31 Aug 27</td>
+              <td class="num">120,000.00</td>
+              <td><div class="d-flex justify-content-between pa-sub mb-1"><span class="pa-num">39,000</span><span>33%</span></div><div class="pa-bar thin"><span class="paid" style="width:33%"></span></div></td>
+              <td><div class="pa-num">15 Nov 26</div><div class="pa-sub text-danger-emphasis">25 days overdue</div></td>
+              <td><span class="pa-pill active">Active</span></td>
+            </tr>
+            <tr class="row-link">
+              <td><div class="fw-semibold">Lusail Tower B — HVAC</div><div class="pa-sub">PC-0006</div></td>
+              <td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">CA</span><span>CoolAir Systems</span></div></td>
+              <td class="pa-num">01 Jun 26 – 31 Mar 27</td>
+              <td class="num">340,000.00</td>
+              <td><div class="d-flex justify-content-between pa-sub mb-1"><span class="pa-num">170,000</span><span>50%</span></div><div class="pa-bar thin"><span class="paid" style="width:50%"></span></div></td>
+              <td><div class="pa-num">20 Dec 26</div><div class="pa-sub">in 10 days</div></td>
+              <td><span class="pa-pill active">Active</span></td>
+            </tr>
+            <tr class="row-link">
+              <td><div class="fw-semibold">Warehouse Racking</div><div class="pa-sub">PC-0004</div></td>
+              <td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">GS</span><span>Gulf Steel Contracting</span></div></td>
+              <td class="pa-num">01 Nov 26 – 31 Jan 27</td>
+              <td class="num">64,000.00</td>
+              <td><div class="d-flex justify-content-between pa-sub mb-1"><span class="pa-num">0</span><span>0%</span></div><div class="pa-bar thin"><span class="paid" style="width:0"></span></div></td>
+              <td><span class="pa-sub">No terms yet</span></td>
+              <td><span class="pa-pill draft">Pending approval</span><div class="pa-sub mt-1">Level 1 of 2</div></td>
+            </tr>
+            <tr class="row-link">
+              <td><div class="fw-semibold">Office Signage Refresh</div><div class="pa-sub">PC-0005</div></td>
+              <td><div class="d-flex align-items-center gap-2"><span class="pa-avatar">BS</span><span>Brightline Signs</span></div></td>
+              <td class="pa-num">10 Mar 26 – 30 Apr 26</td>
+              <td class="num">18,500.00</td>
+              <td><div class="d-flex justify-content-between pa-sub mb-1"><span class="pa-num">18,500</span><span>100%</span></div><div class="pa-bar thin"><span class="paid" style="width:100%"></span></div></td>
+              <td><span class="pa-sub">—</span></td>
+              <td><span class="pa-pill completed">Completed</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top pa-sub">
+        <span>Showing 1–4 of 19</span>
+        <div class="d-flex gap-1"><button class="btn btn-quiet btn-sm" disabled><i class="fa fa-angle-left"></i></button><button class="btn btn-quiet btn-sm"><i class="fa fa-angle-right"></i></button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ CREATE FORM -->
+<section class="screen" id="screen-form">
+  <div class="pa-header">
+    <div class="container-xl py-3">
+      <div class="pa-crumbs mb-2"><a href="#" data-screen="list">Project Contracts</a> <i class="fa fa-angle-right mx-1"></i> New</div>
+      <h1 class="pa-title" style="font-size:1.2rem">New project contract</h1>
+    </div>
+  </div>
+
+  <div class="container-xl py-3">
+    <div class="paf d-grid gap-2">
+
+      <!-- Project & Vendor -->
+      <section class="paf-card">
+        <div class="paf-head"><i class="fa fa-building-o text-secondary"></i><h5>Project &amp; Vendor Details</h5></div>
+        <div class="paf-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="f-project">Project Name *</label>
+              <div class="input-group"><span class="input-group-text"><i class="fa fa-briefcase text-primary"></i></span><input id="f-project" class="form-control" value="Al Wakra Villa Fit-out" placeholder="Enter project name"></div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="f-vendor">Vendor *</label>
+              <div class="input-group"><span class="input-group-text"><i class="fa fa-truck text-danger"></i></span>
+                <select id="f-vendor" class="form-select"><option>Gulf Steel Contracting W.L.L.</option><option>CoolAir Systems</option><option>Brightline Signs</option></select>
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#vendorModal"><i class="fa fa-plus me-1"></i> New</button>
+              </div>
+              <div class="form-text" id="vendorHint">Vendor accounts only · current balance QAR 0.00</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contract Details -->
+      <section class="paf-card">
+        <div class="paf-head"><i class="fa fa-tag text-primary"></i><h5>Contract Details</h5></div>
+        <div class="paf-body">
+
+          <div class="paf-sub">
+            <i class="fa fa-calendar text-success"></i> Contract Period
+            <span class="paf-dur ms-auto" id="durPill"><i class="fa fa-clock-o"></i><span id="durText">10 months · 302 days</span></span>
+          </div>
+          <div class="row g-2 mb-3 align-items-start">
+            <div class="col-12 col-md-6 col-xl-4">
+              <label class="form-label" for="f-start">Start Date *</label>
+              <div class="input-group"><span class="input-group-text"><i class="fa fa-calendar-o text-secondary"></i></span><input id="f-start" type="date" class="form-control" value="2026-09-01"></div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-4">
+              <label class="form-label" for="f-end">End Date *</label>
+              <div class="input-group has-validation"><span class="input-group-text"><i class="fa fa-calendar text-danger"></i></span><input id="f-end" type="date" class="form-control" value="2027-06-30"><div class="invalid-feedback">End date must be after the start date.</div></div>
+            </div>
+            <div class="col-12 col-xl-4">
+              <div class="form-label">Quick set</div>
+              <div class="paf-presets" id="presets">
+                <button type="button" data-months="3">3 months</button>
+                <button type="button" data-months="6">6 months</button>
+                <button type="button" data-months="12">1 year</button>
+                <button type="button" data-months="24">2 years</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="paf-sub"><i class="fa fa-money text-success"></i> Payment Information</div>
+          <div class="row g-2">
+            <div class="col-12 col-md-6 col-xl-3">
+              <label class="form-label" for="f-amount">Contract Amount *</label>
+              <div class="input-group paf-amount"><span class="input-group-text">QAR</span><input id="f-amount" class="form-control text-end pa-num" inputmode="decimal" value="100,000.00"></div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-2">
+              <label class="form-label" for="f-terms">No. Of Terms *</label>
+              <div class="input-group paf-stepper">
+                <button type="button" class="btn" id="termsDown" aria-label="Fewer terms"><i class="fa fa-minus"></i></button>
+                <input id="f-terms" type="number" min="1" class="form-control text-center pa-num" value="5">
+                <button type="button" class="btn" id="termsUp" aria-label="More terms"><i class="fa fa-plus"></i></button>
+              </div>
+              <div class="form-text" id="termsHint">Planned only.</div>
+            </div>
+            <div class="col-12 col-xl-7">
+              <div class="form-label">Payment Frequency *</div>
+              <div class="paf-freq" id="freq" role="radiogroup" aria-label="Payment frequency">
+                <input type="radio" class="btn-check" name="freq" id="fq-m" value="1"><label for="fq-m"><i class="fa fa-calendar-o"></i>Monthly</label>
+                <input type="radio" class="btn-check" name="freq" id="fq-q" value="3"><label for="fq-q"><i class="fa fa-th-large"></i>Quarterly</label>
+                <input type="radio" class="btn-check" name="freq" id="fq-h" value="6"><label for="fq-h"><i class="fa fa-adjust"></i>Half-Yearly</label>
+                <input type="radio" class="btn-check" name="freq" id="fq-y" value="12"><label for="fq-y"><i class="fa fa-circle-o"></i>Yearly</label>
+                <input type="radio" class="btn-check" name="freq" id="fq-ms" value="ms" checked><label for="fq-ms"><i class="fa fa-flag-o"></i>Milestone</label>
+                <input type="radio" class="btn-check" name="freq" id="fq-1" value="once"><label for="fq-1"><i class="fa fa-check"></i>One-time</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="paf-summary" id="formSummary">
+          <i class="fa fa-info-circle"></i>
+          <span id="summaryText">QAR 100,000.00 over 10 months, paid in 5 milestone terms.</span>
+          <span class="pa-pill info no-dot ms-auto" id="summaryRoute">Needs 2 approvals</span>
+        </div>
+      </section>
+
+      <!-- Approval route -->
+      <section class="paf-card">
+        <div class="paf-head"><i class="fa fa-gavel text-primary"></i><h5>Approval Route</h5></div>
+        <div class="paf-body">
+          <div class="paf-route">
+            <div class="paf-route-step"><span class="n">1</span><div><div class="fw-semibold">Project Manager</div><div class="pa-sub">All contracts</div></div></div>
+            <i class="fa fa-long-arrow-right text-muted-pa d-none d-md-inline"></i>
+            <div class="paf-route-step" id="route-l2"><span class="n">2</span><div><div class="fw-semibold">Admin</div><div class="pa-sub">Amount above QAR 50,000</div></div></div>
+            <i class="fa fa-long-arrow-right text-muted-pa d-none d-md-inline"></i>
+            <div class="paf-route-step done"><span class="n"><i class="fa fa-check"></i></span><div><div class="fw-semibold">Active</div><div class="pa-sub">Terms &amp; payments unlock</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="paf-card paf-actions">
+        <button class="btn btn-quiet" data-screen="list"><i class="fa fa-arrow-left me-1"></i> Back</button>
+        <div class="d-flex flex-wrap gap-2 ms-auto">
+          <button class="btn btn-outline-primary"><i class="fa fa-save me-1"></i> Save as Draft</button>
+          <button class="btn btn-primary" data-screen="view" data-go-state="pending"><i class="fa fa-paper-plane me-1"></i> Submit for Approval</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ CONTRACT VIEW -->
+<section class="screen active" id="screen-view">
+  <div class="pa-header">
+    <div class="container-xl py-3">
+      <div class="pa-crumbs mb-2"><a href="#" data-screen="list">Project Contracts</a> <i class="fa fa-angle-right mx-1"></i> PC-0007</div>
+      <div class="d-flex flex-wrap align-items-start gap-3">
+        <div class="me-auto" style="min-width:0">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <h1 class="pa-title pvx-title">Al Wakra Villa Fit-out</h1>
+            <span class="pa-pill active only-approved">Active</span>
+            <span class="pa-pill info no-dot only-approved"><i class="fa fa-history"></i> Extended once</span>
+            <span class="pa-pill draft only-pending">Pending approval · level 2 of 2</span>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-self-center">
+          <button class="btn btn-quiet only-approved" data-bs-toggle="modal" data-bs-target="#extendModal"><i class="fa fa-history me-1"></i> Extend</button>
+          <button class="btn btn-quiet only-approved" data-bs-toggle="modal" data-bs-target="#termModal"><i class="fa fa-plus me-1"></i> Add term</button>
+          <button class="btn btn-primary only-approved" data-bs-toggle="modal" data-bs-target="#payModal"><i class="fa fa-money me-1"></i> Record payment</button>
+          <button class="btn btn-quiet only-pending" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="reject"><i class="fa fa-times me-1"></i> Reject</button>
+          <button class="btn btn-success only-pending" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="approve"><i class="fa fa-check me-1"></i> Approve</button>
+          <div class="dropdown">
+            <button class="btn btn-quiet px-2" data-bs-toggle="dropdown" aria-label="More"><i class="fa fa-ellipsis-v"></i></button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+              <li><a class="dropdown-item" href="#" data-screen="form"><i class="fa fa-pencil fa-fw me-1"></i> Edit contract</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fa fa-print fa-fw me-1"></i> Print</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fa fa-check-circle fa-fw me-1"></i> Mark completed</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#"><i class="fa fa-ban fa-fw me-1"></i> Cancel contract</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-xl py-3 d-grid gap-3">
+    <div class="pa-banner only-pending">
+      <span class="bi"><i class="fa fa-gavel"></i></span>
+      <div class="me-auto" style="min-width:0">
+        <div class="fw-semibold">Waiting for your approval</div>
+        <div class="pa-sub">Level 2 · Admin — needed because the amount is above QAR 50,000. Aisha approved level 1 on 01 Sep. Terms and payments unlock once approved.</div>
+      </div>
+      <button class="btn btn-quiet" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="reject">Reject</button>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="approve"><i class="fa fa-check me-1"></i> Approve</button>
+    </div>
+    <div class="row g-3 pvx">
+      <!-- Project & Vendor -->
+      <div class="col-12 col-md-6 col-xl-4">
+        <div class="pvx-card">
+          <div class="pvx-head blue"><i class="fa fa-briefcase"></i>Project &amp; Vendor<button class="pvx-head-btn ms-auto" data-screen="form" title="Edit contract"><i class="fa fa-pencil"></i></button></div>
+          <dl class="pvx-rows">
+            <div class="pvx-row"><dt>Reference No</dt><dd>PC-0007 <span class="pa-sub">· Rahees, 01-09-2026</span></dd></div>
+            <div class="pvx-row"><dt>Project</dt><dd>Al Wakra Villa Fit-out</dd></div>
+            <div class="pvx-row"><dt>Vendor</dt><dd><a href="#">Gulf Steel Contracting W.L.L.</a></dd></div>
+            <div class="pvx-row"><dt>Branch</dt><dd>Doha Main</dd></div>
+          </dl>
+          <div class="pvx-box">
+            <div class="pvx-box-title"><i class="fa fa-gavel"></i> Approval <span class="pa-pill paid only-approved ms-auto">Approved</span><span class="pa-pill draft only-pending ms-auto">1 of 2</span></div>
+            <div class="pvx-levels">
+              <span class="lv done"><i class="fa fa-check"></i> L1 · Aisha Khan</span>
+              <i class="fa fa-angle-right text-muted-pa"></i>
+              <span class="lv done only-approved"><i class="fa fa-check"></i> L2 · Rahees</span>
+              <span class="lv wait only-pending"><i class="fa fa-clock-o"></i> L2 · Admin</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contract details -->
+      <div class="col-12 col-md-6 col-xl-4">
+        <div class="pvx-card">
+          <div class="pvx-head teal"><i class="fa fa-file-text-o"></i>Contract Details<button class="pvx-head-btn ms-auto" title="Print vendor statement"><i class="fa fa-print"></i> Statement</button></div>
+          <dl class="pvx-rows">
+            <div class="pvx-row"><dt>Period</dt><dd class="pa-num">01-09-2026 → 31-08-2027<div class="pvx-note">12 months · 264 days left</div></dd></div>
+            <div class="pvx-row"><dt>Frequency</dt><dd>Milestone <span class="pa-sub">· 3 of 6 terms scheduled</span></dd></div>
+            <div class="pvx-row"><dt>Contract Amount</dt><dd class="pa-num"><span class="pvx-accent">120,000.00</span> <span class="pa-sub">· was 100,000</span></dd></div>
+            <div class="pvx-row"><dt>Security Held</dt><dd class="pa-num pvx-teal">18,000.00</dd></div>
+          </dl>
+          <div class="pvx-box">
+            <div class="pvx-fin">
+              <div><small>Contract</small><div class="v">120,000.00</div></div>
+              <div><small>Paid</small><div class="v text-success-emphasis only-approved">39,000.00</div><div class="v only-pending">0.00</div></div>
+              <div><small>Balance</small><div class="v pvx-accent only-approved">81,000.00</div><div class="v pvx-accent only-pending">120,000.00</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment information -->
+      <div class="col-12 col-md-12 col-xl-4">
+        <div class="pvx-card">
+          <div class="pvx-head green"><i class="fa fa-money"></i>Payment Information<span class="pvx-head-tag ms-auto only-approved">1 of 3 terms paid</span></div>
+          <dl class="pvx-rows only-approved">
+            <div class="pvx-row"><dt>Next Due</dt><dd class="pa-num">15-11-2026 · 21,000.00 <span class="pa-pill overdue ms-1">Overdue</span></dd></div>
+            <div class="pvx-row"><dt>Last Payment</dt><dd class="pa-num">18-11-2026 · 15,000.00 <span class="pa-sub">· Cheque</span></dd></div>
+          </dl>
+          <div class="pvx-box only-approved">
+            <table class="pvx-mini">
+              <thead><tr><th>Type</th><th class="num">Paid</th><th class="num">Pending</th></tr></thead>
+              <tbody>
+                <tr><td>Scheduled terms</td><td class="num pvx-accent">39,000.00</td><td class="num text-danger-emphasis">39,000.00</td></tr>
+                <tr><td>Not yet scheduled</td><td class="num">—</td><td class="num text-danger-emphasis">42,000.00</td></tr>
+                <tr class="tot"><td>Total</td><td class="num pvx-accent">39,000.00</td><td class="num text-danger-emphasis">81,000.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="text-center px-3 py-4 only-pending">
+            <i class="fa fa-lock fa-lg text-muted-pa"></i>
+            <div class="fw-semibold mt-2">Payments unlock after approval</div>
+            <div class="pa-sub">Terms and payments open once level 2 approves.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pvx-notes">
+      <div class="pvx-remarks">
+        <span class="lbl"><i class="fa fa-comment-o"></i> Remarks</span>
+        <p>Structural steel, mezzanine and MEP rough-in for villa 14. 5% retention released on handover.</p>
+        <button class="btn-icon" data-screen="form" title="Edit remarks"><i class="fa fa-pencil"></i></button>
+      </div>
+      <div class="pvx-warn only-approved">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span>Performance bond expires 31-12-2026. Ask the vendor to renew it.</span>
+        <button class="pvx-warn-btn" data-bs-toggle="modal" data-bs-target="#securityModal" data-renew="1">Record renewal</button>
+      </div>
+    </div>
+
+    <div class="pa-card pvx-manage">
+      <div class="pvx-manage-head"><i class="fa fa-folder-open"></i><h5>Management Sections</h5></div>
+          <ul class="nav pa-tabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-terms">Payment terms<span class="count">3</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tx">Transactions<span class="count">2</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-sec">Security<span class="count">3</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ext">Extensions<span class="count">2</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-docs">Documents<span class="count">3</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-notes">Notes<span class="count">2</span></button></li>
+          </ul>
+
+          <div class="tab-content">
+            <!-- Payment terms -->
+            <div class="tab-pane fade show active" id="tab-terms">
+              <div class="pa-card-body text-center py-5 only-pending">
+                <div class="pa-drop d-inline-block border-0 bg-transparent p-0"><div class="ico"><i class="fa fa-lock"></i></div></div>
+                <div class="fw-semibold mt-1">Payment terms unlock after approval</div>
+                <div class="pa-sub mx-auto" style="max-width:380px">QAR 120,000 over 6 planned terms. Once level 2 approves, you can add terms and record payments here.</div>
+              </div>
+              <div class="only-approved">
+              <div class="pa-card-body border-bottom">
+                <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-2">
+                  <div>
+                    <div class="fw-semibold">3 of 6 terms scheduled</div>
+                    <div class="pa-sub pa-num">QAR 78,000 of 120,000 allocated to terms</div>
+                  </div>
+                  <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#termModal"><i class="fa fa-plus me-1"></i> Add term</button>
+                </div>
+                <div class="pa-bar mb-2"><span class="paid" style="width:32.5%"></span><span class="sched" style="width:32.5%"></span></div>
+                <div class="pa-legend">
+                  <span><i class="pa-swatch bg-success"></i>Paid <b>39,000</b></span>
+                  <span><i class="pa-swatch" style="background:var(--pa-accent)"></i>Scheduled, unpaid <b>39,000</b></span>
+                  <span><i class="pa-swatch" style="background:var(--pa-line)"></i>Not yet scheduled <b>42,000</b></span>
+                </div>
+              </div>
+
+              <div class="pa-selbar" id="selBar" hidden>
+                <span><b id="selCount">1</b> selected · <b class="pa-num" id="selSum">21,000.00</b></span>
+                <button class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#payModal"><i class="fa fa-money me-1"></i> Pay selected</button>
+                <button class="btn btn-quiet btn-sm" id="selClear">Clear</button>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table pa-table table-hover align-middle">
+                  <thead><tr><th style="width:1%"><input class="form-check-input" type="checkbox" id="selAll" aria-label="Select all"></th><th>Term</th><th>Due date</th><th class="num">Amount</th><th class="num">Paid</th><th class="num">Balance</th><th>Status</th><th></th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><input class="form-check-input" type="checkbox" disabled aria-label="Paid"></td>
+                      <td><div class="fw-semibold">Mobilisation 20%</div><div class="pa-sub">Advance on signing</div></td>
+                      <td class="pa-num">05 Sep 2026</td>
+                      <td class="num">24,000.00</td><td class="num text-success-emphasis">24,000.00</td><td class="num">0.00</td>
+                      <td><span class="pa-pill paid">Paid</span></td>
+                      <td class="text-end text-nowrap"><span class="btn-icon" title="Locked — has payments"><i class="fa fa-lock"></i></span></td>
+                    </tr>
+                    <tr class="is-overdue">
+                      <td><input class="form-check-input term-check" type="checkbox" data-balance="21000" aria-label="Select"></td>
+                      <td><div class="fw-semibold">Structural works 30%</div><div class="pa-sub">On steel frame completion</div></td>
+                      <td><div class="pa-num">15 Nov 2026</div><div class="pa-sub text-danger-emphasis">25 days overdue</div></td>
+                      <td class="num">36,000.00</td><td class="num text-success-emphasis">15,000.00</td><td class="num fw-semibold">21,000.00</td>
+                      <td><span class="pa-pill partial">Partial</span></td>
+                      <td class="text-end text-nowrap"><button class="btn btn-quiet btn-sm" data-bs-toggle="modal" data-bs-target="#payModal">Pay</button></td>
+                    </tr>
+                    <tr>
+                      <td><input class="form-check-input term-check" type="checkbox" data-balance="18000" aria-label="Select"></td>
+                      <td><div class="fw-semibold">MEP rough-in 15%</div><div class="pa-sub">Inspection sign-off required</div></td>
+                      <td><div class="pa-num">20 Jan 2027</div><div class="pa-sub">in 41 days</div></td>
+                      <td class="num">18,000.00</td><td class="num">0.00</td><td class="num fw-semibold">18,000.00</td>
+                      <td><span class="pa-pill pending">Pending</span></td>
+                      <td class="text-end text-nowrap">
+                        <button class="btn btn-quiet btn-sm" data-bs-toggle="modal" data-bs-target="#payModal">Pay</button>
+                        <button class="btn-icon" title="Edit"><i class="fa fa-pencil"></i></button>
+                        <button class="btn-icon danger" title="Delete"><i class="fa fa-trash-o"></i></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot><tr><td></td><td colspan="2">Total · 3 terms</td><td class="num">78,000.00</td><td class="num">39,000.00</td><td class="num">39,000.00</td><td colspan="2"></td></tr></tfoot>
+                </table>
+              </div>
+              </div>
+            </div>
+
+            <!-- Transactions -->
+            <div class="tab-pane fade" id="tab-tx">
+              <div class="pa-card-body border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="pa-seg" id="txSeg"><button class="on" data-f="all">All</button><button data-f="pay">Payments</button><button data-f="ext">Contract changes</button></div>
+                <span class="pa-sub"><i class="fa fa-book me-1"></i>Each payment posts Dr Vendor / Cr payment method</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table pa-table table-hover align-middle">
+                  <thead><tr><th>Date</th><th>Reference</th><th>Description</th><th>Method</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead>
+                  <tbody>
+                    <tr class="is-muted" data-k="ext"><td class="pa-num">01 Sep 2026</td><td>—</td><td>Contract opened</td><td>—</td><td class="num">—</td><td class="num">100,000.00</td><td></td></tr>
+                    <tr data-k="pay"><td class="pa-num">04 Sep 2026</td><td><a href="#" class="fw-semibold">PV-1021</a></td><td><div>Mobilisation 20%</div><div class="pa-sub">QNB ref 88231</div></td><td><i class="fa fa-bank text-muted-pa me-1"></i>Bank transfer</td><td class="num text-success-emphasis">24,000.00</td><td class="num">76,000.00</td><td class="text-end"><button class="btn-icon danger" title="Delete and reverse journal"><i class="fa fa-undo"></i></button></td></tr>
+                    <tr class="is-muted" data-k="ext"><td class="pa-num">02 Oct 2026</td><td>EXT-1</td><td>Extension · amount +20,000.00</td><td>—</td><td class="num">—</td><td class="num">96,000.00</td><td></td></tr>
+                    <tr data-k="pay"><td class="pa-num">18 Nov 2026</td><td><a href="#" class="fw-semibold">PV-1088</a></td><td><div>Structural works 30%</div><div class="pa-sub">Part payment</div></td><td><i class="fa fa-credit-card text-muted-pa me-1"></i>Cheque <span class="pa-sub">#004512 · CBQ</span></td><td class="num text-success-emphasis">15,000.00</td><td class="num">81,000.00</td><td class="text-end"><button class="btn-icon danger" title="Delete and reverse journal"><i class="fa fa-undo"></i></button></td></tr>
+                  </tbody>
+                  <tfoot><tr><td colspan="4">Paid to date</td><td class="num">39,000.00</td><td class="num">81,000.00</td><td></td></tr></tfoot>
+                </table>
+              </div>
+            </div>
+
+            <!-- Security -->
+            <div class="tab-pane fade" id="tab-sec">
+              <div class="pa-sec-sum">
+                <div><div class="pa-eyebrow">Required</div><div class="v">18,000.00</div><div class="pa-sub">15% of 120,000</div></div>
+                <div><div class="pa-eyebrow">Held</div><div class="v text-success-emphasis">18,000.00</div><div class="pa-sub">Fully secured</div></div>
+                <div><div class="pa-eyebrow">Returned</div><div class="v">6,000.00</div><div class="pa-sub">1 cheque</div></div>
+                <div><div class="pa-eyebrow">Forfeited</div><div class="v">0.00</div><div class="pa-sub">—</div></div>
+              </div>
+              <div class="pa-card-body border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="pa-seg" id="secSeg"><button class="on" data-f="all">All</button><button data-f="held">Held</button><button data-f="closed">Returned / forfeited</button></div>
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#securityModal"><i class="fa fa-plus me-1"></i> Add security</button>
+              </div>
+
+              <div id="secList">
+                <div class="pa-sec" data-k="held">
+                  <span class="si"><i class="fa fa-shield"></i></span>
+                  <div style="min-width:0">
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold">Performance bond</span><span class="pa-pill active">Held</span><span class="pa-pill overdue no-dot"><i class="fa fa-exclamation-triangle"></i> Expires in 21 days</span></div>
+                    <div class="facts"><span><i class="fa fa-bank"></i>Bank guarantee · QNB</span><span><i class="fa fa-tag"></i>BG/2026/4471</span><span><i class="fa fa-arrow-down"></i>Received from vendor</span></div>
+                    <div class="pa-validity">
+                      <div class="pa-bar"><span class="sched" style="width:82%"></span></div>
+                      <div class="ends"><span>Valid from 01 Sep 2026</span><span class="text-danger-emphasis">until 31 Dec 2026 · contract ends 31 Aug 2027</span></div>
+                    </div>
+                  </div>
+                  <div class="amt">12,000.00<div class="pa-sub fw-normal">10%</div></div>
+                  <div class="acts">
+                    <span class="pa-sub me-auto"><i class="fa fa-book me-1"></i>Tracked only · no journal until encashed</span>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#securityModal" data-renew="1"><i class="fa fa-refresh me-1"></i> Record renewal</button>
+                    <button class="btn btn-quiet btn-sm" data-bs-toggle="modal" data-bs-target="#settleModal" data-settle="return">Return</button>
+                    <button class="btn btn-quiet btn-sm text-danger" data-bs-toggle="modal" data-bs-target="#settleModal" data-settle="forfeit">Encash</button>
+                  </div>
+                </div>
+
+                <div class="pa-sec" data-k="held">
+                  <span class="si cash"><i class="fa fa-money"></i></span>
+                  <div style="min-width:0">
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold">Cash security deposit</span><span class="pa-pill active">Held</span></div>
+                    <div class="facts"><span><i class="fa fa-calendar"></i>Received 04 Sep 2026</span><span><i class="fa fa-bank"></i>Bank transfer · QNB ref 88240</span><span><i class="fa fa-arrow-down"></i>Received from vendor</span></div>
+                  </div>
+                  <div class="amt">6,000.00<div class="pa-sub fw-normal">5%</div></div>
+                  <div class="acts">
+                    <span class="pa-sub me-auto"><i class="fa fa-book me-1"></i><a href="#">JV-2210</a> · Dr Bank / Cr Vendor Security Deposit</span>
+                    <button class="btn btn-quiet btn-sm" data-bs-toggle="modal" data-bs-target="#settleModal" data-settle="return">Return</button>
+                    <button class="btn btn-quiet btn-sm text-danger" data-bs-toggle="modal" data-bs-target="#settleModal" data-settle="forfeit">Forfeit</button>
+                  </div>
+                </div>
+
+                <div class="pa-sec" data-k="closed">
+                  <span class="si muted"><i class="fa fa-credit-card"></i></span>
+                  <div style="min-width:0">
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold text-muted-pa">Security cheque</span><span class="pa-pill completed">Returned</span></div>
+                    <div class="facts"><span><i class="fa fa-credit-card"></i>CBQ · #883210 · dated 31 Aug 2027</span><span><i class="fa fa-undo"></i>Returned 04 Sep 2026 · replaced by the cash deposit</span></div>
+                  </div>
+                  <div class="amt text-muted-pa">6,000.00</div>
+                  <div class="acts"><span class="pa-sub"><i class="fa fa-book me-1"></i>Never deposited · no journal</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extensions -->
+            <div class="tab-pane fade" id="tab-ext">
+              <div class="pa-card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div class="pa-sub">Every change to the period, amount or planned terms is kept here.</div>
+                  <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#extendModal"><i class="fa fa-history me-1"></i> Extend</button>
+                </div>
+                <div class="pa-timeline">
+                  <div class="pa-tl-item">
+                    <span class="pa-tl-dot accent"><i class="fa fa-clock-o"></i></span>
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold">Extension 2</span><span class="pa-pill draft">Pending approval · level 1 of 2</span><span class="pa-sub">08 Dec 2026 · Rahees</span></div>
+                    <div class="mt-1">Landscaping added after client walkthrough.</div>
+                    <div class="pa-diff">
+                      <span>End date <s>31 Aug 2027</s><b>31 Oct 2027</b></span>
+                      <span>Amount <s>120,000</s><b>135,000</b></span>
+                      <span>Planned terms <s>6</s><b>7</b></span>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                      <span class="pa-sub"><i class="fa fa-info-circle me-1"></i>Changes take effect after every level approves.</span>
+                      <button class="btn btn-quiet btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="reject">Reject</button>
+                      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#approveModal" data-decision="approve">Approve</button>
+                    </div>
+                  </div>
+                  <div class="pa-tl-item">
+                    <span class="pa-tl-dot accent"><i class="fa fa-history"></i></span>
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold">Extension 1</span><span class="pa-pill paid">Approved</span><span class="pa-sub">02 Oct 2026 · Rahees · approved by Aisha, Rahees</span></div>
+                    <div class="mt-1">Scope added: boundary wall and gate.</div>
+                    <div class="pa-diff">
+                      <span>End date <s>30 Jun 2027</s><b>31 Aug 2027</b></span>
+                      <span>Amount <s>100,000</s><b>120,000</b></span>
+                      <span>Planned terms <s>5</s><b>6</b></span>
+                    </div>
+                    <a href="#" class="d-inline-block mt-2 pa-sub"><i class="fa fa-file-pdf-o me-1"></i>addendum-01.pdf</a>
+                  </div>
+                  <div class="pa-tl-item">
+                    <span class="pa-tl-dot"><i class="fa fa-check"></i></span>
+                    <div class="d-flex flex-wrap align-items-center gap-2"><span class="fw-semibold">Contract signed</span><span class="pa-sub">01 Sep 2026 · Rahees</span></div>
+                    <div class="pa-sub mt-1 pa-num">01 Sep 2026 – 30 Jun 2027 · QAR 100,000 · 5 planned terms</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="tab-pane fade" id="tab-docs">
+              <div class="pa-card-body d-grid gap-3">
+                <div class="pa-drop">
+                  <div class="ico"><i class="fa fa-cloud-upload"></i></div>
+                  <div class="fw-semibold" style="color:var(--pa-ink)">Drop files to upload</div>
+                  <div class="pa-sub mb-2">or <a href="#">browse</a> · PDF, images, Excel up to 10 MB</div>
+                  <select class="form-select form-select-sm d-inline-block w-auto" aria-label="Document type"><option>Document type</option><option>Signed contract</option><option>BOQ</option><option>Addendum</option><option>Vendor invoice</option></select>
+                </div>
+                <div class="pa-files">
+                  <div class="pa-file"><span class="fi pdf"><i class="fa fa-file-pdf-o"></i></span><div class="flex-grow-1" style="min-width:0"><div class="name">signed-contract.pdf</div><div class="pa-sub">Signed contract · 1.2 MB</div></div><button class="btn-icon" title="View"><i class="fa fa-eye"></i></button><button class="btn-icon" title="Download"><i class="fa fa-download"></i></button></div>
+                  <div class="pa-file"><span class="fi xls"><i class="fa fa-file-excel-o"></i></span><div class="flex-grow-1" style="min-width:0"><div class="name">boq-v3.xlsx</div><div class="pa-sub">BOQ · 84 KB</div></div><button class="btn-icon" title="Download"><i class="fa fa-download"></i></button><button class="btn-icon danger" title="Delete"><i class="fa fa-trash-o"></i></button></div>
+                  <div class="pa-file"><span class="fi pdf"><i class="fa fa-file-pdf-o"></i></span><div class="flex-grow-1" style="min-width:0"><div class="name">addendum-01.pdf</div><div class="pa-sub">Addendum · Extension 1</div></div><button class="btn-icon" title="View"><i class="fa fa-eye"></i></button><button class="btn-icon" title="Download"><i class="fa fa-download"></i></button></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="tab-pane fade" id="tab-notes">
+              <div class="pa-card-body">
+                <div class="d-flex gap-3 mb-2">
+                  <span class="pa-avatar round">RA</span>
+                  <div class="flex-grow-1">
+                    <textarea id="noteInput" class="form-control mb-2" rows="2" placeholder="Write a note for the team"></textarea>
+                    <div class="text-end"><button class="btn btn-primary btn-sm">Add note</button></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="pa-note">
+                    <span class="pa-avatar round">RA</span>
+                    <div class="body">
+                      <div class="d-flex align-items-center gap-2"><span class="fw-semibold">Rahees</span><span class="pa-sub">19 Nov 2026, 10:42</span><span class="ms-auto"><button class="btn-icon" title="Edit"><i class="fa fa-pencil"></i></button><button class="btn-icon danger" title="Delete"><i class="fa fa-trash-o"></i></button></span></div>
+                      <div class="mt-1">Vendor agreed to take the remaining 21,000 for structural works after the inspection on 25 Nov.</div>
+                    </div>
+                  </div>
+                  <div class="pa-note">
+                    <span class="pa-avatar round">AK</span>
+                    <div class="body">
+                      <div class="d-flex align-items-center gap-2"><span class="fw-semibold">Aisha</span><span class="pa-sub">02 Oct 2026, 15:10</span></div>
+                      <div class="mt-1">Boundary wall added to scope. See extension 1.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ APPROVE / REJECT MODAL -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="apTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-gavel"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="apTitle">Review contract</h5><div class="pa-sub">Level 2 · Admin · Al Wakra Villa Fit-out</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div class="p-3 rounded-3" style="background:var(--pa-head);border:1px solid var(--pa-line)">
+          <dl class="pa-dl">
+            <dt>Vendor</dt><dd>Gulf Steel Contracting W.L.L.</dd>
+            <dt>Period</dt><dd class="pa-num">01 Sep 2026 – 31 Aug 2027</dd>
+            <dt>Amount</dt><dd class="pa-num">QAR 120,000.00</dd>
+            <dt>Terms</dt><dd>6 · Milestone</dd>
+            <dt>Level 1</dt><dd>Approved by Aisha Khan</dd>
+          </dl>
+        </div>
+        <div class="pa-decide">
+          <div><input type="radio" class="btn-check" name="decision" id="d-approve" checked><label for="d-approve"><i class="fa fa-check"></i> Approve</label></div>
+          <div><input type="radio" class="btn-check" name="decision" id="d-reject"><label for="d-reject"><i class="fa fa-times"></i> Reject</label></div>
+        </div>
+        <div>
+          <label class="form-label" for="d-comment">Comment <span class="text-danger" id="d-req" hidden>*</span></label>
+          <textarea id="d-comment" class="form-control" rows="3" placeholder="Optional for approval"></textarea>
+          <div class="form-text" id="d-help">This is the last level. Approving makes the contract Active.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-success" id="d-submit" data-bs-dismiss="modal"><i class="fa fa-check me-1"></i> Approve</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ ADD SECURITY MODAL -->
+<div class="modal fade" id="securityModal" tabindex="-1" aria-labelledby="secTitle">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-shield"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="secTitle">Add security</h5><div class="pa-sub">Al Wakra Villa Fit-out · 18,000 required · 18,000 held</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="pa-seg" id="secDir"><button class="on" data-dir="in">Received from vendor</button><button data-dir="out">Paid to vendor</button></div>
+          <span class="pa-sub" id="secDirHelp">The vendor lodges this with you. You return it at the end.</span>
+        </div>
+        <div>
+          <div class="form-label">Form of security</div>
+          <div class="pa-method" id="secType">
+            <div><input type="radio" class="btn-check" name="st" id="st-bg" value="bg" checked><label for="st-bg"><i class="fa fa-shield"></i>Bank guarantee</label></div>
+            <div><input type="radio" class="btn-check" name="st" id="st-cash" value="cash"><label for="st-cash"><i class="fa fa-money"></i>Cash deposit</label></div>
+            <div><input type="radio" class="btn-check" name="st" id="st-chq" value="chq"><label for="st-chq"><i class="fa fa-credit-card"></i>Cheque</label></div>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-12 col-md-6"><label class="form-label" for="s-purpose">Purpose</label><select id="s-purpose" class="form-select"><option>Performance bond</option><option>Advance payment guarantee</option><option>Retention security</option><option>General security deposit</option></select></div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="s-amount">Amount <span class="text-danger">*</span></label>
+            <div class="input-group"><span class="input-group-text">QAR</span><input id="s-amount" class="form-control text-end pa-num" value="12,000.00"><span class="input-group-text">10%</span></div>
+          </div>
+          <div class="col-12 col-md-6 sec-f" data-for="bg chq"><label class="form-label" for="s-bank">Bank <span class="text-danger">*</span></label><input id="s-bank" class="form-control" value="QNB"></div>
+          <div class="col-12 col-md-6 sec-f" data-for="bg chq"><label class="form-label" for="s-ref" id="s-ref-label">Guarantee no. <span class="text-danger">*</span></label><input id="s-ref" class="form-control" value="BG/2027/0112"></div>
+          <div class="col-6 col-md-6 sec-f" data-for="bg"><label class="form-label" for="s-from">Valid from</label><input id="s-from" type="date" class="form-control" value="2027-01-01"></div>
+          <div class="col-6 col-md-6 sec-f" data-for="bg"><label class="form-label" for="s-to">Valid until <span class="text-danger">*</span></label><input id="s-to" type="date" class="form-control" value="2027-09-30"><div class="form-text">Ends 30 days after the contract</div></div>
+          <div class="col-12 col-md-6 sec-f" data-for="chq"><label class="form-label" for="s-chqdate">Cheque date</label><input id="s-chqdate" type="date" class="form-control" value="2027-08-31"></div>
+          <div class="col-12 col-md-6 sec-f" data-for="cash"><label class="form-label" for="s-method">Payment method <span class="text-danger">*</span></label><select id="s-method" class="form-select"><option>Bank · QNB current</option><option>Cash in hand</option></select></div>
+          <div class="col-12 col-md-6 sec-f" data-for="cash"><label class="form-label" for="s-date">Date</label><input id="s-date" type="date" class="form-control" value="2026-12-10"></div>
+          <div class="col-12"><label class="form-label" for="s-file">Scan of the document</label><input id="s-file" type="file" class="form-control"></div>
+        </div>
+        <div class="pa-callout info" id="secBook"><i class="fa fa-book mt-1"></i><span>Tracked only. No journal is posted unless the guarantee is encashed.</span></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" data-bs-dismiss="modal">Save security</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ RETURN / FORFEIT MODAL -->
+<div class="modal fade" id="settleModal" tabindex="-1" aria-labelledby="setTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-shield"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="setTitle">Close security</h5><div class="pa-sub">Cash security deposit · QAR 6,000.00 held</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div class="pa-decide">
+          <div><input type="radio" class="btn-check" name="settle" id="s-return" checked><label for="s-return"><i class="fa fa-undo"></i> Return to vendor</label></div>
+          <div><input type="radio" class="btn-check" name="settle" id="s-forfeit"><label for="s-forfeit"><i class="fa fa-ban"></i> Forfeit</label></div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label" for="st-date">Date</label><input id="st-date" type="date" class="form-control" value="2026-12-10"></div>
+          <div class="col-6"><label class="form-label" for="st-amount">Amount</label><input id="st-amount" class="form-control text-end pa-num" value="6,000.00"><div class="form-text">Part amounts allowed</div></div>
+          <div class="col-12 st-return"><label class="form-label" for="st-method">Paid back from</label><select id="st-method" class="form-select"><option>Bank · QNB current</option><option>Cash in hand</option></select></div>
+          <div class="col-12"><label class="form-label" for="st-reason">Reason <span class="text-danger st-forfeit">*</span></label><textarea id="st-reason" class="form-control" rows="2" placeholder="Work handed over, defects period ended"></textarea></div>
+        </div>
+        <div class="pa-callout info" id="stBook"><i class="fa fa-book mt-1"></i><span>Posts <b>Dr</b> Vendor Security Deposit / <b>Cr</b> Bank · QAR 6,000.00</span></div>
+        <div class="pa-sub"><i class="fa fa-gavel me-1"></i>Needs Admin approval before it posts.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="st-submit" data-bs-dismiss="modal">Submit for approval</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ QUICK VENDOR MODAL -->
+<div class="modal fade" id="vendorModal" tabindex="-1" aria-labelledby="vmTitle">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-truck"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="vmTitle">New vendor</h5><div class="pa-sub">Saved to Vendors and selected on this contract</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body paf">
+        <div class="paf-sub"><i class="fa fa-info-circle text-primary"></i> Basic Information</div>
+        <div class="row g-2 mb-3">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-name">Name *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-user text-secondary"></i></span><input id="vm-name" type="text" class="form-control" placeholder="Vendor or company name"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-name_ar">Name (Arabic)</label><div class="input-group"><span class="input-group-text"><i class="fa fa-language text-secondary"></i></span><input id="vm-name_ar" type="text" class="form-control" placeholder="الاسم بالعربية" dir="rtl"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-type">Vendor Type</label><div class="input-group"><span class="input-group-text"><i class="fa fa-tag text-primary"></i></span><select id="vm-type" class="form-select"><option>Company</option><option>Individual</option><option>Subcontractor</option><option>Supplier</option></select></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-dob">Date Of Birth</label><div class="input-group"><span class="input-group-text"><i class="fa fa-birthday-cake text-secondary"></i></span><input id="vm-dob" type="date" class="form-control" placeholder=""></div><div class="form-text">Individuals only</div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-credit">Credit Period (days)</label><div class="input-group"><span class="input-group-text"><i class="fa fa-clock-o text-secondary"></i></span><input id="vm-credit" type="number" class="form-control" placeholder="e.g. 30" min="0"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-tax">Tax / CR No.</label><div class="input-group"><span class="input-group-text"><i class="fa fa-file-text-o text-secondary"></i></span><input id="vm-tax" type="text" class="form-control" placeholder="Commercial registration or tax number"></div></div>
+        </div>
+        <div class="paf-sub"><i class="fa fa-phone-square text-primary"></i> Contact Information</div>
+        <div class="row g-2 mb-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-mobile">Mobile *</label><div class="input-group"><span class="input-group-text"><i class="fa fa-mobile text-secondary"></i></span><input id="vm-mobile" type="tel" class="form-control" placeholder="e.g. 0097455512345"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-whatsapp">WhatsApp</label><div class="input-group"><span class="input-group-text"><i class="fa fa-whatsapp text-success"></i></span><input id="vm-whatsapp" type="tel" class="form-control" placeholder="Same as mobile if blank"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-emergency">Emergency Contact No</label><div class="input-group"><span class="input-group-text"><i class="fa fa-phone text-secondary"></i></span><input id="vm-emergency" type="tel" class="form-control" placeholder="Enter emergency contact number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-email">Email</label><div class="input-group"><span class="input-group-text"><i class="fa fa-envelope-o text-secondary"></i></span><input id="vm-email" type="email" class="form-control" placeholder="name@company.com"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-pobox">P.O. Box</label><div class="input-group"><span class="input-group-text"><i class="fa fa-inbox text-secondary"></i></span><input id="vm-pobox" type="text" class="form-control" placeholder="Enter P.O. Box number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-contact">Contact Person</label><div class="input-group"><span class="input-group-text"><i class="fa fa-user-plus text-secondary"></i></span><input id="vm-contact" type="text" class="form-control" placeholder="Who to call at the vendor"></div></div>
+        </div>
+        <button class="pvm-more" type="button" data-bs-toggle="collapse" data-bs-target="#vmMore" aria-expanded="false" aria-controls="vmMore"><i class="fa fa-angle-down"></i> More details <span class="pa-sub">Personal and business details, optional</span></button>
+        <div class="collapse" id="vmMore">
+          <div class="paf-sub mt-3"><i class="fa fa-user text-secondary"></i> Personal Details</div>
+          <div class="row g-2 mb-3">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-idno">ID Number</label><div class="input-group"><span class="input-group-text"><i class="fa fa-credit-card text-secondary"></i></span><input id="vm-idno" type="text" class="form-control" placeholder="Enter vm-idno number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-idexp">ID Expiry Date</label><div class="input-group"><span class="input-group-text"><i class="fa fa-calendar text-danger"></i></span><input id="vm-idexp" type="date" class="form-control" placeholder=""></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-passport">Passport No</label><div class="input-group"><span class="input-group-text"><i class="fa fa-book text-secondary"></i></span><input id="vm-passport" type="text" class="form-control" placeholder="Enter passport number"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-occupation">Occupation</label><div class="input-group"><span class="input-group-text"><i class="fa fa-briefcase text-secondary"></i></span><input id="vm-occupation" type="text" class="form-control" placeholder="Enter occupation"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-nationality">Nationality</label><div class="input-group"><span class="input-group-text"><i class="fa fa-flag text-secondary"></i></span><select id="vm-nationality" class="form-select"><option value="">Select nationality</option><option>Qatar</option><option>India</option><option>Egypt</option><option>Jordan</option><option>Philippines</option><option>Pakistan</option><option>United Kingdom</option></select></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-company">Company</label><div class="input-group"><span class="input-group-text"><i class="fa fa-building-o text-secondary"></i></span><input id="vm-company" type="text" class="form-control" placeholder="Enter company name"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-marital">Marital Status</label><div class="input-group"><span class="input-group-text"><i class="fa fa-users text-secondary"></i></span><select id="vm-marital" class="form-select"><option value="">Select marital status</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select></div></div>
+<div class="col-12"><label class="form-label" for="vm-address">Residential Address</label><div class="input-group"><span class="input-group-text"><i class="fa fa-home text-secondary"></i></span><textarea id="vm-address" class="form-control" rows="1" placeholder="Enter residential address"></textarea></div></div>
+          </div>
+          <div class="paf-sub"><i class="fa fa-suitcase text-info"></i> Employment / Business Details</div>
+          <div class="row g-2">
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-position">Position / Nature Of Business</label><div class="input-group"><span class="input-group-text"><i class="fa fa-suitcase text-secondary"></i></span><input id="vm-position" type="text" class="form-control" placeholder="e.g. Steel fabrication contractor"></div></div>
+<div class="col-12 col-sm-6 col-xl-4"><label class="form-label" for="vm-income">Monthly Income</label><div class="input-group"><span class="input-group-text"><i class="fa fa-money text-secondary"></i></span><input id="vm-income" type="text" class="form-control" placeholder="0.00" inputmode="decimal"></div></div>
+<div class="col-12"><label class="form-label" for="vm-empaddr">Employer / Business Address</label><div class="input-group"><span class="input-group-text"><i class="fa fa-map-marker text-danger"></i></span><textarea id="vm-empaddr" class="form-control" rows="1" placeholder="Enter employer or business address"></textarea></div></div>
+          </div>
+        </div>
+        <div class="invalid-feedback d-block mt-3" id="vmError" hidden>Enter the vendor name and mobile to save.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="vmSave"><i class="fa fa-check me-1"></i> Save and select</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ VENDOR DELETE -->
+<div class="modal fade" id="vendorDelete" tabindex="-1" aria-labelledby="vdTitle">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body text-center p-4">
+        <div class="pa-modal-icon mx-auto mb-3" style="margin-right:auto!important;background:var(--bs-danger-bg-subtle);color:var(--bs-danger-text-emphasis)"><i class="fa fa-trash-o"></i></div>
+        <h5 class="modal-title mb-1" id="vdTitle">Delete vendor?</h5>
+        <div class="pa-sub" id="vdText">This removes the vendor permanently.</div>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" id="vdConfirm" data-bs-dismiss="modal">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ ADD TERM MODAL -->
+<div class="modal fade" id="termModal" tabindex="-1" aria-labelledby="termTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-plus"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="termTitle">Add payment term</h5><div class="pa-sub">Al Wakra Villa Fit-out · term 4 of 6</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div><label class="form-label" for="t-label">Label <span class="text-danger">*</span></label><input id="t-label" class="form-control" value="Finishing works 25%"></div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label" for="t-due">Due date <span class="text-danger">*</span></label><input id="t-due" type="date" class="form-control" value="2027-04-15"></div>
+          <div class="col-6">
+            <label class="form-label" for="termAmount">Amount <span class="text-danger">*</span></label>
+            <div class="input-group"><input class="form-control text-end pa-num" id="termAmount" value="30000"><span class="input-group-text pa-num" id="termPct">25%</span></div>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="pa-sub">Quick fill</span>
+          <button class="pa-chip" data-pct="10">10%</button>
+          <button class="pa-chip" data-pct="15">15%</button>
+          <button class="pa-chip" data-pct="25">25%</button>
+          <button class="pa-chip" data-fill="rest">Remaining 42,000</button>
+        </div>
+        <div><label class="form-label" for="t-remarks">Remarks</label><textarea id="t-remarks" class="form-control" rows="2" placeholder="Optional"></textarea></div>
+
+        <div class="p-3 rounded-3" style="background:var(--pa-head);border:1px solid var(--pa-line)">
+          <div class="d-flex justify-content-between mb-2"><span class="pa-sub">Allocated after this term</span><span class="fw-semibold pa-num" id="meterText">108,000 of 120,000</span></div>
+          <div class="pa-bar mb-2"><span class="sched" style="width:65%"></span><span class="new" id="meterNew" style="width:25%"></span></div>
+          <div class="pa-sub" id="meterSub">12,000 left to schedule</div>
+        </div>
+        <div class="pa-callout warn" id="overWarn" hidden>
+          <i class="fa fa-exclamation-triangle mt-1"></i>
+          <div>This term goes <b id="overBy">0</b> over the contract amount. Extend the contract to raise the amount first.
+            <div class="mt-2"><button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#extendModal">Extend contract</button></div></div>
+        </div>
+        <div class="pa-callout info" id="countWarn" hidden><i class="fa fa-info-circle mt-1"></i><span>This is more terms than the 6 planned. You can still save it.</span></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-outline-primary">Save and add another</button>
+        <button class="btn btn-primary" id="termSave">Save term</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ PAY MODAL -->
+<div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon success"><i class="fa fa-money"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="payTitle">Record payment</h5><div class="pa-sub">To Gulf Steel Contracting W.L.L.</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div class="d-flex justify-content-between align-items-center p-3 rounded-3" style="background:var(--pa-head);border:1px solid var(--pa-line)">
+          <div><div class="fw-semibold">Structural works 30%</div><div class="pa-sub text-danger-emphasis">Due 15 Nov 2026 · overdue</div></div>
+          <div class="text-end"><div class="pa-sub">Balance</div><div class="fw-semibold pa-num">21,000.00</div></div>
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label" for="p-date">Payment date</label><input id="p-date" type="date" class="form-control" value="2026-12-10"></div>
+          <div class="col-6"><label class="form-label" for="p-amount">Amount</label><input id="p-amount" class="form-control text-end pa-num" value="21,000.00"><div class="form-text">Part payment allowed</div></div>
+        </div>
+        <div>
+          <div class="form-label">Payment method</div>
+          <div class="pa-method">
+            <div><input type="radio" class="btn-check" name="pm" id="pm1"><label for="pm1"><i class="fa fa-money"></i>Cash</label></div>
+            <div><input type="radio" class="btn-check" name="pm" id="pm2" checked><label for="pm2"><i class="fa fa-bank"></i>Bank</label></div>
+            <div><input type="radio" class="btn-check" name="pm" id="pm3"><label for="pm3"><i class="fa fa-credit-card"></i>Cheque</label></div>
+          </div>
+        </div>
+        <div><label class="form-label" for="p-remark">Reference</label><input id="p-remark" class="form-control" placeholder="Transfer ref, voucher note"></div>
+        <div class="pa-callout info"><i class="fa fa-book mt-1"></i><span>Posts <b>Dr</b> Gulf Steel Contracting / <b>Cr</b> Bank · QAR 21,000.00</span></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Record payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ EXTEND MODAL -->
+<div class="modal fade" id="extendModal" tabindex="-1" aria-labelledby="extTitle">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="pa-modal-icon"><i class="fa fa-history"></i></div>
+        <div class="me-auto"><h5 class="modal-title" id="extTitle">Extend contract</h5><div class="pa-sub">Changes are kept in the extension history</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-grid gap-3">
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label" for="e-new">New end date</label><input id="e-new" type="date" class="form-control" value="2027-10-31"><div class="form-text">Currently 31 Aug 2027</div></div>
+          <div class="col-6"><label class="form-label" for="e-amount">Additional amount</label><div class="input-group"><span class="input-group-text">+</span><input id="e-amount" class="form-control text-end pa-num" value="15,000.00"></div><div class="form-text pa-num">120,000 → 135,000</div></div>
+          <div class="col-6"><label class="form-label" for="e-terms">Additional terms</label><input id="e-terms" type="number" class="form-control" value="1"><div class="form-text">6 → 7 planned</div></div>
+          <div class="col-6"><label class="form-label" for="e-file">Addendum</label><input id="e-file" type="file" class="form-control"></div>
+          <div class="col-12"><label class="form-label" for="e-reason">Reason <span class="text-danger">*</span></label><textarea id="e-reason" class="form-control" rows="2" placeholder="What changed and who approved it"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-quiet" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary">Extend contract</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  var contractAmount = 120000, allocated = 78000, scheduledTerms = 3, plannedTerms = 6;
+  function fmt(n) { return Math.round(n).toLocaleString('en-US'); }
+  function money(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.toggle('active', s.id === 'screen-' + name); });
+    document.querySelectorAll('.preview-bar [data-screen]').forEach(function (b) { b.classList.toggle('on', b.dataset.screen === name); });
+    window.scrollTo(0, 0);
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-screen]');
+    if (el) { e.preventDefault(); showScreen(el.dataset.screen); }
+  });
+
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var html = document.documentElement;
+    html.dataset.bsTheme = html.dataset.bsTheme === 'dark' ? 'light' : 'dark';
+  });
+
+  var amountInput = document.getElementById('termAmount');
+  function updateMeter() {
+    var amount = parseFloat(String(amountInput.value).replace(/,/g, '')) || 0;
+    var after = allocated + amount, over = after - contractAmount;
+    document.getElementById('termPct').textContent = (amount / contractAmount * 100).toFixed(1).replace(/\.0$/, '') + '%';
+    document.getElementById('meterText').textContent = fmt(after) + ' of ' + fmt(contractAmount);
+    var bar = document.getElementById('meterNew');
+    bar.style.width = Math.min(amount, Math.max(contractAmount - allocated, 0)) / contractAmount * 100 + '%';
+    bar.className = over > 0 ? 'over' : 'new';
+    document.getElementById('meterSub').textContent = over > 0 ? fmt(over) + ' over the contract amount' : fmt(contractAmount - after) + ' left to schedule';
+    document.getElementById('overWarn').hidden = over <= 0;
+    document.getElementById('overBy').textContent = 'QAR ' + fmt(over);
+    document.getElementById('termSave').disabled = over > 0;
+    document.getElementById('countWarn').hidden = scheduledTerms + 1 <= plannedTerms;
+  }
+  amountInput.addEventListener('input', updateMeter);
+  document.querySelectorAll('#termModal [data-pct]').forEach(function (b) {
+    b.addEventListener('click', function () { amountInput.value = contractAmount * b.dataset.pct / 100; updateMeter(); });
+  });
+  document.querySelector('#termModal [data-fill="rest"]').addEventListener('click', function () { amountInput.value = contractAmount - allocated; updateMeter(); });
+  updateMeter();
+
+  var checks = Array.prototype.slice.call(document.querySelectorAll('.term-check'));
+  function updateSelection() {
+    var picked = checks.filter(function (c) { return c.checked; });
+    checks.forEach(function (c) { c.closest('tr').classList.toggle('is-selected', c.checked); });
+    document.getElementById('selBar').hidden = picked.length === 0;
+    document.getElementById('selCount').textContent = picked.length;
+    document.getElementById('selSum').textContent = money(picked.reduce(function (s, c) { return s + Number(c.dataset.balance); }, 0));
+    document.getElementById('selAll').checked = picked.length === checks.length;
+  }
+  checks.forEach(function (c) { c.addEventListener('change', updateSelection); });
+  document.getElementById('selAll').addEventListener('change', function () { var on = this.checked; checks.forEach(function (c) { c.checked = on; }); updateSelection(); });
+  document.getElementById('selClear').addEventListener('click', function () { checks.forEach(function (c) { c.checked = false; }); updateSelection(); });
+
+  function setState(state) {
+    document.body.classList.toggle('state-pending', state === 'pending');
+    document.querySelectorAll('#stateSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.state === state); });
+  }
+  document.querySelectorAll('#stateSeg button').forEach(function (b) {
+    b.addEventListener('click', function () { setState(b.dataset.state); showScreen('view'); });
+  });
+  document.addEventListener('click', function (e) {
+    var go = e.target.closest('[data-go-state]');
+    if (go) { setState(go.dataset.goState); }
+  });
+
+  var approve = document.getElementById('d-approve'), reject = document.getElementById('d-reject');
+  function syncDecision() {
+    var rejecting = reject.checked, submit = document.getElementById('d-submit');
+    submit.className = 'btn ' + (rejecting ? 'btn-danger' : 'btn-success');
+    submit.innerHTML = rejecting ? '<i class="fa fa-times me-1"></i> Reject' : '<i class="fa fa-check me-1"></i> Approve';
+    document.getElementById('d-req').hidden = !rejecting;
+    document.getElementById('d-comment').placeholder = rejecting ? 'Tell the submitter what to change' : 'Optional for approval';
+    document.getElementById('d-help').textContent = rejecting ? 'The contract goes back to Draft with your reason.' : 'This is the last level. Approving makes the contract Active.';
+  }
+  approve.addEventListener('change', syncDecision);
+  reject.addEventListener('change', syncDecision);
+  document.getElementById('approveModal').addEventListener('show.bs.modal', function (e) {
+    var decision = e.relatedTarget && e.relatedTarget.dataset.decision;
+    (decision === 'reject' ? reject : approve).checked = true;
+    syncDecision();
+  });
+  document.getElementById('d-submit').addEventListener('click', function () { if (approve.checked) { setState('approved'); } });
+
+  function num(v) { return parseFloat(String(v).replace(/,/g, '')) || 0; }
+  var termsTouched = false;
+  function parseDate(id) { var v = document.getElementById(id).value; return v ? new Date(v + 'T00:00:00') : null; }
+  function isoDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function niceDate(d) { return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); }
+  function contractMonths(start, end) {
+    var after = new Date(end); after.setDate(after.getDate() + 1);
+    return Math.max(0, (after.getFullYear() - start.getFullYear()) * 12 + after.getMonth() - start.getMonth() + (after.getDate() < start.getDate() ? -1 : 0));
+  }
+  function suggestedTerms(months) {
+    var f = document.querySelector('#freq input:checked').value;
+    if (f === 'ms') { return null; }
+    if (f === 'once') { return 1; }
+    return Math.max(1, Math.ceil(months / Number(f)));
+  }
+  function syncForm() {
+    var start = parseDate('f-start'), end = parseDate('f-end'), endInput = document.getElementById('f-end');
+    var valid = start && end && end > start;
+    endInput.classList.toggle('is-invalid', !!(start && end && !valid));
+    var months = valid ? contractMonths(start, end) : 0, days = valid ? Math.round((end - start) / 86400000) : 0;
+    document.getElementById('durPill').classList.toggle('bad', !valid);
+    document.getElementById('durText').textContent = valid ? months + (months === 1 ? ' month' : ' months') + ' · ' + days + ' days' : 'Check the dates';
+
+    var suggestion = valid ? suggestedTerms(months) : null, termsInput = document.getElementById('f-terms'), hint = document.getElementById('termsHint');
+    if (suggestion && !termsTouched) { termsInput.value = suggestion; }
+    var terms = Math.max(1, Number(termsInput.value) || 1);
+    if (suggestion && Number(termsInput.value) !== suggestion) {
+      hint.innerHTML = 'Suggested ' + suggestion + ' · <button type="button" class="paf-hint-link" id="useSuggestion">Use</button>';
+      document.getElementById('useSuggestion').addEventListener('click', function () { termsTouched = false; syncForm(); });
+    } else {
+      hint.textContent = 'Planned only.';
+    }
+
+    var amount = num(document.getElementById('f-amount').value);
+    var freqLabel = document.querySelector('#freq input:checked + label').textContent.trim().toLowerCase();
+    var how = freqLabel === 'one-time' ? 'paid in one payment' : 'paid in ' + terms + ' ' + freqLabel + (terms === 1 ? ' term' : ' terms');
+    document.getElementById('summaryText').textContent = valid
+      ? 'QAR ' + money(amount) + ' from ' + niceDate(start) + ' to ' + niceDate(end) + ', ' + how + '.'
+      : 'Set a valid contract period to see the summary.';
+    var approvals = amount > 50000 ? 2 : 1;
+    document.getElementById('summaryRoute').textContent = 'Needs ' + approvals + (approvals === 1 ? ' approval' : ' approvals');
+    document.getElementById('route-l2').classList.toggle('skipped', amount <= 50000);
+    document.querySelectorAll('#presets button').forEach(function (b) {
+      b.classList.toggle('on', valid && contractMonths(start, end) === Number(b.dataset.months) && end.getDate() === new Date(start.getFullYear(), start.getMonth() + Number(b.dataset.months), start.getDate() - 1).getDate());
+    });
+  }
+  ['f-start', 'f-end'].forEach(function (id) { document.getElementById(id).addEventListener('input', syncForm); });
+  var amountField = document.getElementById('f-amount');
+  amountField.addEventListener('input', syncForm);
+  amountField.addEventListener('focus', function () { var v = num(amountField.value); amountField.value = v ? String(v) : ''; amountField.select(); });
+  amountField.addEventListener('blur', function () { amountField.value = money(num(amountField.value)); syncForm(); });
+  document.querySelectorAll('#freq input').forEach(function (r) { r.addEventListener('change', function () { termsTouched = false; syncForm(); }); });
+  document.getElementById('f-terms').addEventListener('input', function () { termsTouched = true; syncForm(); });
+  function stepTerms(delta) { var t = document.getElementById('f-terms'); t.value = Math.max(1, (Number(t.value) || 1) + delta); termsTouched = true; syncForm(); }
+  document.getElementById('termsDown').addEventListener('click', function () { stepTerms(-1); });
+  document.getElementById('termsUp').addEventListener('click', function () { stepTerms(1); });
+  document.querySelectorAll('#presets button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var s = parseDate('f-start'); if (!s) { return; }
+      var e = new Date(s.getFullYear(), s.getMonth() + Number(b.dataset.months), s.getDate() - 1);
+      document.getElementById('f-end').value = isoDate(e);
+      syncForm();
+    });
+  });
+  syncForm();
+
+  document.querySelectorAll('#padPeriod button').forEach(function (b) {
+    b.addEventListener('click', function () { document.querySelectorAll('#padPeriod button').forEach(function (x) { x.classList.toggle('on', x === b); }); });
+  });
+
+  var rptScreen = document.getElementById('screen-reports');
+  document.querySelectorAll('#rptSwitch button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#rptSwitch button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      rptScreen.dataset.report = b.dataset.r;
+    });
+  });
+  function filterRows(chipsId, tableId, attr, totals, countId, noun) {
+    var active = document.querySelector('#' + chipsId + ' button.on').dataset[attr];
+    var sums = {}, shown = 0;
+    totals.forEach(function (t) { sums[t.key] = 0; });
+    document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function (r) {
+      var visible = active === 'all' || r.dataset[attr] === active;
+      r.hidden = !visible;
+      if (visible) { shown++; totals.forEach(function (t) { sums[t.key] += Number(r.dataset[t.key]); }); }
+    });
+    totals.forEach(function (t) { document.getElementById(t.id).textContent = money(sums[t.key]); });
+    document.getElementById(countId).textContent = shown + ' ' + noun + (shown === 1 ? '' : 's');
+  }
+  function wireChips(chipsId, run) {
+    document.querySelectorAll('#' + chipsId + ' button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('#' + chipsId + ' button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        run();
+      });
+    });
+  }
+  function runPending() { filterRows('pendChips', 'pendTable', 'k', [{ key: 'amount', id: 'pendAmt' }, { key: 'paid', id: 'pendPaid' }, { key: 'bal', id: 'pendBal' }], 'pendCount', 'term'); }
+  function runPaid() { filterRows('paidChips', 'paidTable', 'm', [{ key: 'amount', id: 'paidAmt' }], 'paidCount', 'payment'); }
+  wireChips('pendChips', runPending);
+  wireChips('paidChips', runPaid);
+  document.getElementById('rptReset').addEventListener('click', function () {
+    ['pendChips', 'paidChips'].forEach(function (id) { document.querySelectorAll('#' + id + ' button').forEach(function (x, i) { x.classList.toggle('on', i === 0); }); });
+    runPending(); runPaid();
+  });
+
+  function vendorFilter() {
+    var q = document.getElementById('vendorSearch').value.trim().toLowerCase();
+    var t = document.querySelector('#vendorType button.on').dataset.t, shown = 0;
+    document.querySelectorAll('#vendorTable tbody tr').forEach(function (r) {
+      var ok = (t === 'all' || r.dataset.t === t) && (!q || r.textContent.toLowerCase().indexOf(q) !== -1);
+      r.hidden = !ok; if (ok) { shown++; }
+    });
+    document.getElementById('vendorCount').textContent = shown + (shown === 1 ? ' vendor' : ' vendors');
+  }
+  document.getElementById('vendorSearch').addEventListener('input', vendorFilter);
+  document.querySelectorAll('#vendorType button').forEach(function (b) {
+    b.addEventListener('click', function () { document.querySelectorAll('#vendorType button').forEach(function (x) { x.classList.toggle('on', x === b); }); vendorFilter(); });
+  });
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-vendor-mode]');
+    if (!el) { return; }
+    var editing = el.dataset.vendorMode === 'edit';
+    document.getElementById('vfTitle').textContent = editing ? 'Edit vendor' : 'New vendor';
+    document.getElementById('vfCrumb').textContent = editing ? 'Gulf Steel Contracting W.L.L.' : 'New';
+    document.getElementById('vfDelete').hidden = !editing;
+    document.querySelectorAll('#screen-vendor-form input, #screen-vendor-form textarea').forEach(function (f) { if (!editing && f.type !== 'date') { f.dataset.keep = f.dataset.keep || f.value; f.value = ''; } else if (editing && f.dataset.keep !== undefined) { f.value = f.dataset.keep; } });
+  });
+  document.getElementById('vendorDelete').addEventListener('show.bs.modal', function (e) {
+    var src = e.relatedTarget || {}, name = (src.dataset && src.dataset.name) || 'this vendor', used = Number((src.dataset && src.dataset.contracts) || 0);
+    var btn = document.getElementById('vdConfirm');
+    document.getElementById('vdTitle').textContent = used ? 'Can\'t delete vendor' : 'Delete vendor?';
+    document.getElementById('vdText').textContent = used
+      ? name + ' has ' + used + (used === 1 ? ' contract' : ' contracts') + ' and ledger entries. Close or move them first.'
+      : name + ' will be removed permanently.';
+    btn.hidden = !!used;
+  });
+  document.getElementById('vmSave').addEventListener('click', function () {
+    var name = document.getElementById('vm-name').value.trim(), mobile = document.getElementById('vm-mobile').value.trim();
+    var err = document.getElementById('vmError');
+    document.getElementById('vm-name').classList.toggle('is-invalid', !name);
+    document.getElementById('vm-mobile').classList.toggle('is-invalid', !mobile);
+    if (!name || !mobile) { err.hidden = false; return; }
+    err.hidden = true;
+    var select = document.getElementById('f-vendor'), opt = document.createElement('option');
+    opt.textContent = name; select.appendChild(opt); select.value = name;
+    document.getElementById('vendorHint').innerHTML = '<span class="text-success-emphasis"><i class="fa fa-check me-1"></i>Vendor created and selected</span>';
+    bootstrap.Modal.getInstance(document.getElementById('vendorModal')).hide();
+    document.querySelectorAll('#vendorModal input, #vendorModal textarea').forEach(function (f) { f.value = ''; f.classList.remove('is-invalid'); });
+  });
+
+  document.querySelectorAll('#screen-vendor-form textarea, #vendorModal textarea').forEach(function (t) {
+    t.addEventListener('input', function () { t.style.height = 'auto'; t.style.height = t.scrollHeight + 2 + 'px'; });
+  });
+
+  var secDir = 'in';
+  function secTypeValue() { return document.querySelector('#secType input:checked').value; }
+  function syncSecurity() {
+    var type = secTypeValue();
+    document.querySelectorAll('#securityModal .sec-f').forEach(function (f) { f.hidden = f.dataset.for.split(' ').indexOf(type) === -1; });
+    document.getElementById('s-ref-label').innerHTML = (type === 'chq' ? 'Cheque no.' : 'Guarantee no.') + ' <span class="text-danger">*</span>';
+    document.getElementById('secDirHelp').textContent = secDir === 'in' ? 'The vendor lodges this with you. You return it at the end.' : 'You lodge this with the vendor. They refund it at the end.';
+    var book = document.querySelector('#secBook span');
+    if (type === 'cash') {
+      book.innerHTML = secDir === 'in'
+        ? 'Posts <b>Dr</b> Bank / <b>Cr</b> Vendor Security Deposit (liability)'
+        : 'Posts <b>Dr</b> Security Deposit Paid (asset) / <b>Cr</b> Bank';
+    } else {
+      book.textContent = 'Tracked only. No journal is posted unless the ' + (type === 'chq' ? 'cheque is deposited.' : 'guarantee is encashed.');
+    }
+  }
+  document.querySelectorAll('#secType input').forEach(function (r) { r.addEventListener('change', syncSecurity); });
+  document.querySelectorAll('#secDir button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      secDir = b.dataset.dir;
+      document.querySelectorAll('#secDir button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      syncSecurity();
+    });
+  });
+  document.getElementById('securityModal').addEventListener('show.bs.modal', function (e) {
+    var renew = e.relatedTarget && e.relatedTarget.dataset.renew;
+    document.getElementById('secTitle').textContent = renew ? 'Record renewal' : 'Add security';
+    document.getElementById('st-bg').checked = true;
+    syncSecurity();
+  });
+  syncSecurity();
+
+  var sReturn = document.getElementById('s-return'), sForfeit = document.getElementById('s-forfeit');
+  function syncSettle() {
+    var forfeiting = sForfeit.checked;
+    document.querySelectorAll('#settleModal .st-return').forEach(function (el) { el.hidden = forfeiting; });
+    document.querySelectorAll('#settleModal .st-forfeit').forEach(function (el) { el.hidden = !forfeiting; });
+    document.getElementById('st-reason').placeholder = forfeiting ? 'Breach, delay penalty or defects not fixed' : 'Work handed over, defects period ended';
+    document.querySelector('#stBook span').innerHTML = forfeiting
+      ? 'Posts <b>Dr</b> Vendor Security Deposit / <b>Cr</b> Forfeited Deposits (income) · QAR 6,000.00'
+      : 'Posts <b>Dr</b> Vendor Security Deposit / <b>Cr</b> Bank · QAR 6,000.00';
+    document.getElementById('st-submit').className = 'btn ' + (forfeiting ? 'btn-danger' : 'btn-primary');
+  }
+  sReturn.addEventListener('change', syncSettle);
+  sForfeit.addEventListener('change', syncSettle);
+  document.getElementById('settleModal').addEventListener('show.bs.modal', function (e) {
+    var mode = e.relatedTarget && e.relatedTarget.dataset.settle;
+    (mode === 'forfeit' ? sForfeit : sReturn).checked = true;
+    syncSettle();
+  });
+
+  document.querySelectorAll('#secSeg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#secSeg button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.querySelectorAll('#secList .pa-sec').forEach(function (r) { r.hidden = b.dataset.f !== 'all' && r.dataset.k !== b.dataset.f; });
+    });
+  });
+
+  document.querySelectorAll('#txSeg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#txSeg button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.querySelectorAll('#tab-tx tbody tr').forEach(function (r) { r.hidden = b.dataset.f !== 'all' && r.dataset.k !== b.dataset.f; });
+    });
+  });
+})();
+</script>
+</body>
+</html>

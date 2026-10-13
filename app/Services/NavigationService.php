@@ -85,6 +85,13 @@ class NavigationService
                 'children' => ['Add Student', 'Students', 'Canteen Menu', 'Wallet Report', 'Online Recharges'],
             ],
             [
+                'id' => 'project-contracts',
+                'label' => 'Agreements',
+                'icon' => 'fa fa-file-text-o',
+                'visible' => true,
+                'children' => ['New Contract', 'Contracts', 'Pending Payments', 'Paid Payments'],
+            ],
+            [
                 'id' => 'sale',
                 'label' => 'Sale',
                 'icon' => 'fa fa-shopping-cart',
@@ -283,6 +290,7 @@ class NavigationService
             'appointments' => ['sales', 'saloon'],
             'tailoring' => ['tailoring'],
             'students' => ['school'],
+            'project-contracts' => ['agreement'],
             'sale' => ['sales'],
             'day-session' => ['sales'],
             'purchase' => ['simple_purchase_management'],
