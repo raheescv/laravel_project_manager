@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Contract Prompt</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --ink: #1d2330; --muted: #5d6676; --line: #e3e6eb;
+    --accent: #2f6fde; --accent-soft: #e8f0fd; --code: #f1f3f6; --warn: #b26a00; --warn-soft: #fff4e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b; --card: #1a1f27; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2a313c;
+      --accent: #6c9cf0; --accent-soft: #1d2a40; --code: #222833; --warn: #f0b45a; --warn-soft: #2d2416;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151b; --card: #1a1f27; --ink: #e6e9ef; --muted: #9aa3b2; --line: #2a313c;
+    --accent: #6c9cf0; --accent-soft: #1d2a40; --code: #222833; --warn: #f0b45a; --warn-soft: #2d2416;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .top h1 { margin: 0 0 4px; font-size: 22px; }
+  .top p { margin: 0; color: var(--muted); }
+  .btn { border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 9px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+  .btn.copied { background: transparent; color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px 32px; }
+  @media (max-width: 600px) { .card { padding: 20px 16px; } }
+  h2 { font-size: 16px; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 14px; margin: 18px 0 6px; }
+  ul, ol { padding-left: 22px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  code { background: var(--code); padding: 1px 6px; border-radius: 4px; font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-word; }
+  .table-scroll { overflow-x: auto; margin: 8px 0 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); font-weight: 600; }
+  .note { background: var(--accent-soft); border-left: 3px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
+  .ask { background: var(--warn-soft); border-left: 3px solid var(--warn); padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Project Contract: build prompt</h1>
+      <p>Vendor-linked project contracts in Vue, about half the same as the RentOut sale agreement. Copy the prompt and paste it into a new session.</p>
+    </div>
+    <button class="btn" id="copy">Copy prompt</button>
+  </div>
+
+  <div class="card" id="prompt">
+<h2>Goal</h2>
+<p>Build a new <strong>Project Contract</strong> module. A project contract is made with a <strong>vendor</strong> (an <code>accounts</code> row where <code>model = 'Vendor'</code>, see <code>Account::scopeVendor()</code>). The domain is about 50% the same as the RentOut <em>sale</em> agreement (<code>App\Models\RentOut</code> with <code>agreement_type</code> = sale), so reuse its ideas. Do not reuse its UI. This module is built <strong>entirely in Vue 3</strong>, not Livewire.</p>
+
+<p><strong>Step 0 (do this first):</strong> before writing any app code, build a static preview at <code>docs/project-contract-preview.html</code> with plain HTML, Bootstrap-theme styling and FA 4.3 icons. It must show (1) the Create Contract form, (2) the contract view with its tabs, and (3) the Add Payment Term modal. Stop there and let me review it. After I approve, implement the steps below.</p>
+
+<h2>1. Contract header (create / edit form)</h2>
+<div class="table-scroll"><table>
+<tr><th>Field</th><th>Column</th><th>Rules</th></tr>
+<tr><td>Project name</td><td><code>project_name</code> string</td><td>required, max 255</td></tr>
+<tr><td>Vendor</td><td><code>account_id</code> FK → accounts</td><td>required, must be a Vendor account in the current tenant. Searchable select; reuse <code>SearchableSelect.vue</code></td></tr>
+<tr><td>Start date</td><td><code>start_date</code> date</td><td>required</td></tr>
+<tr><td>End date</td><td><code>end_date</code> date</td><td>required, after_or_equal start_date</td></tr>
+<tr><td>No. of terms</td><td><code>no_of_terms</code> unsigned int</td><td>required, min 1. This is a <em>planned</em> count only. It does not generate terms.</td></tr>
+<tr><td>Payment frequency</td><td><code>payment_frequency</code> string</td><td>required. Options: Monthly, Quarterly, Half-Yearly, Yearly, Milestone, One-time. Use an enum; check <code>app/Enums/RentOut/</code> for the style.</td></tr>
+<tr><td>Contract amount</td><td><code>contract_amount</code> decimal(16,2)</td><td>required, gt 0</td></tr>
+<tr><td>Remarks</td><td><code>remark</code> text</td><td>nullable</td></tr>
+</table></div>
+<p>System columns: <code>tenant_id</code>, <code>branch_id</code>, <code>status</code> (Draft / Pending approval / Active / Rejected / Completed / Cancelled), <code>created_by</code>, <code>updated_by</code>, timestamps and soft deletes. Use the <code>BelongsToTenant</code> trait and branch scoping (see the multi-tenancy skill).</p>
+
+<h2>2. Payment terms: flexible, not generated</h2>
+<p>This is the main difference from rentals. RentOut creates a fixed schedule from rent × frequency (see <code>MultiplePaymentTermModal</code>). Project contracts do <strong>not</strong> work that way. The user adds <strong>one term at a time</strong>, whenever the project plan calls for it, and each term can have any amount and due date.</p>
+<ul>
+  <li>Table <code>project_contract_payment_terms</code>: <code>project_contract_id</code>, <code>label</code> (e.g. "Mobilisation 20%"), <code>due_date</code>, <code>amount</code>, <code>paid</code>, <code>balance</code>, <code>status</code> (pending / partial / paid), <code>remarks</code>, <code>created_by</code>, tenant and branch columns. Model it on <code>RentOutPaymentTerm</code>.</li>
+  <li>Add, edit and delete one term at a time. Editing or deleting a term that has payments is blocked.</li>
+  <li>Show a <strong>plan meter</strong> on the Terms tab: "<em>3 of 6 terms scheduled · QAR 45,000 of 120,000 allocated · 75,000 unallocated</em>".</li>
+  <li>If the scheduled term total would go above the contract amount, show a warning and require an extension (section 4) to increase the amount. Do not silently allow it.</li>
+  <li>If the number of terms goes above <code>no_of_terms</code>, show a soft warning only.</li>
+</ul>
+
+<h2>3. Payments and transactions</h2>
+<ul>
+  <li>Pay one term, or several selected terms (same idea as <code>PaySelectedModal</code>). Fields: date, amount (part payment allowed), payment method, cheque no./date/bank for cheques, remark.</li>
+  <li>Table <code>project_contract_transactions</code>, modelled on <code>RentOutTransaction</code>: date, debit/credit, <code>account_id</code>, <code>source</code>/<code>source_id</code>, <code>model</code>/<code>model_id</code> (the term), <code>journal_id</code>, <code>journal_entry_id</code>, <code>payment_type</code>, cheque fields, <code>voucher_no</code>, remark, created_by.</li>
+  <li>Accounting: every payment posts a balanced journal through <code>App\Actions\Journal\CreateAction</code>. Use <strong>Dr Vendor / Cr Payment Method</strong>, because we are paying the vendor. Deleting a payment reverses its journal and restores the term's paid and balance. Follow the <code>accounting-journals</code> skill.</li>
+  <li>Transactions tab: a ledger list with a running balance plus totals for Contract · Paid · Outstanding.</li>
+</ul>
+
+<h2>4. Contract extensions</h2>
+<ul>
+  <li>Table <code>project_contract_extends</code>, modelled on <code>RentOutExtend</code>: <code>old_end_date</code>, <code>new_end_date</code>, <code>additional_amount</code> (can be 0), <code>additional_terms</code> (can be 0), <code>reason</code>, optional document, created_by.</li>
+  <li>An extension updates the header's <code>end_date</code>, <code>contract_amount</code> and <code>no_of_terms</code> in one DB transaction. The original values stay in the extension history.</li>
+  <li>The Extensions tab shows a timeline of every extension.</li>
+</ul>
+
+<h2>5. Documents and notes</h2>
+<ul>
+  <li><code>project_contract_documents</code> (modelled on <code>RentOutDocument</code>): document type, name, file path, uploaded_by. Multi-file drag-drop upload; reuse the idea in <code>components/Ticket/FileDrop.vue</code>. Preview images and PDFs, plus download and delete.</li>
+  <li><code>project_contract_notes</code> (modelled on <code>RentOutNote</code>): note text, created_by, timestamps. Shown as a feed, newest first, with edit and delete for the author.</li>
+</ul>
+
+<h2>6. Security deposit</h2>
+<p>Model it on <code>RentOutSecurity</code> and <code>App\Actions\RentOut\Security\SyncAccountingAction</code>. Use the same approach: on every save, reverse the existing journals and post them again, inside a DB transaction, so running it twice gives the same result.</p>
+<ul>
+  <li>Table <code>project_contract_securities</code>: <code>direction</code> (received from vendor, the default / paid to vendor), <code>form</code> (bank guarantee / cash / cheque), <code>purpose</code> (performance bond, advance payment guarantee, retention security, general), <code>amount</code>, <code>account_id</code> (payment method, cash only), <code>bank_name</code>, <code>reference_no</code> (guarantee or cheque no.), <code>valid_from</code>, <code>valid_until</code>, <code>cheque_date</code>, <code>received_date</code>, <code>status</code> (held / returned / forfeited, plus partial returns), <code>settled_date</code>, <code>settled_amount</code>, <code>reason</code>, document path, <code>renewed_from_id</code> (a renewal links to the guarantee it replaces), created_by.</li>
+  <li><strong>Accounting depends on the form:</strong>
+    <ul>
+      <li>Cash received from the vendor → <strong>Dr Payment method / Cr Vendor Security Deposit</strong> (a new locked liability account, slug <code>vendor_security_deposit</code>, added in AccountSeeder and a migration for every tenant).</li>
+      <li>Returned → Dr Vendor Security Deposit / Cr Payment method.</li>
+      <li>Forfeited → Dr Vendor Security Deposit / Cr Forfeited Deposits (income).</li>
+      <li>Cash paid to the vendor goes through an asset account instead (<code>security_deposit_paid</code>).</li>
+      <li>Bank guarantees and undeposited cheques are <strong>tracked only, with no journal</strong>, until they are encashed.</li>
+    </ul></li>
+  <li><strong>Security tab:</strong> totals for Required / Held / Returned / Forfeited, filters for All / Held / Returned or forfeited, and one card per security showing its validity as a bar. Actions: Return, Forfeit or Encash, and Record renewal for guarantees.</li>
+  <li><strong>Expiry alerts:</strong> warn when a guarantee expires before the contract end date, or within 30 days. Show this on the card, in the details panel and in a daily notification.</li>
+  <li>Return and forfeit can be partial. Forfeit needs a reason. Both go through approval when the "Returning or forfeiting security" approval toggle is on.</li>
+  <li>A contract cannot be marked Completed while any security is still Held.</li>
+</ul>
+
+<h2>7. Vendors (list, create, edit, delete)</h2>
+<p>Vendors already exist as <code>accounts</code> rows with <code>model = 'Vendor'</code>. There is an existing Livewire page at <code>App\Livewire\Account\Vendor\Page</code>/<code>Table</code> (route <code>account::vendor::index</code>) that only edits name, mobile, email, place and credit period. <strong>Do not create a new table.</strong> Build the Vue vendor screens inside this module on top of the same <code>accounts</code> rows, and write through the existing <code>App\Actions\Account\CreateAction</code> / <code>UpdateAction</code> / <code>DeleteAction</code> with <code>model = 'Vendor'</code>. Every field below is already a column on <code>accounts</code>, the same ones the customer KYC form uses.</p>
+<ul>
+  <li><strong>Vendor form</strong>, with the same sections as the customer form and icon-prefixed inputs, <strong>compact</strong>: three fields per row on wide screens (two on tablets, one on phones), small labels and inputs, slim section headers, and one-line textareas that grow as you type. The vendor list uses dense rows too.
+    <ul>
+      <li><em>Basic Information:</em> Name* (<code>name</code>), Name (Arabic) (<code>alias_name</code>, RTL), Vendor Type (Company / Individual / Subcontractor / Supplier, a new small enum or config list), Date Of Birth (<code>dob</code>), Credit Period (days) (<code>credit_period_days</code>), Tax / CR No. (<code>cr_number</code> / <code>tax_no</code>).</li>
+      <li><em>Contact Information:</em> Mobile* (<code>mobile</code>), WhatsApp (<code>whatsapp_mobile</code>), Emergency Contact No (<code>emergency_contact_no</code>), Email (<code>email</code>), P.O. Box (<code>po_box</code>), Contact Person (<code>contact_person</code>).</li>
+      <li><em>Personal Details:</em> ID Number (<code>id_no</code>), ID Expiry Date (<code>id_expiry_date</code>), Passport No (<code>passport_no</code>), Occupation (<code>occupation</code>), Nationality (<code>nationality</code>, searchable), Company (<code>company</code>), Marital Status (<code>marital_status</code>), Residential Address (<code>residential_address</code>).</li>
+      <li><em>Employment / Business Details:</em> Position / Nature Of Business (<code>position_nature_of_business</code>), Monthly Income (<code>monthly_income</code>), Employer / Business Address (<code>employer_address</code>).</li>
+    </ul>
+    Validate with a Form Request: name required (max 100), mobile required (max 15), email format, and a unique name per tenant among vendors.</li>
+  <li><strong>Vendor list:</strong> search (name, Arabic name, mobile, CR no.), Vendor Type filter buttons, and columns Vendor (initials badge + Arabic name), Type, Mobile, Email, CR / Tax No., Contracts, Committed and Balance (from the ledger, not a stored column). Edit and Delete on each row, plus export.</li>
+  <li><strong>Delete:</strong> blocked when the vendor has contracts or journal entries. Show "Can't delete vendor: it has N contracts and ledger entries" instead of a delete button. Otherwise confirm before deleting.</li>
+  <li><strong>Create from the contract form:</strong> a <em>+ New</em> button beside the Vendor select opens a quick-create modal using the same VendorForm component. Basic and Contact are shown; Personal and Employment sit under a "More details" section that opens on click. "Save and select" creates the vendor, adds it to the Vendor select, selects it, and shows "Vendor created and selected".</li>
+  <li>Permissions: reuse the existing <code>vendor.view|create|edit|delete</code>.</li>
+</ul>
+
+<h2>8. Admin approval levels</h2>
+<ul>
+  <li><strong>Levels (no settings screen).</strong> Level 1 is the Project Manager role and always applies. Level 2 is the Admin role when the amount is above QAR 50,000. Keep them in one place, a per-tenant <code>Configuration</code> JSON seeded with these defaults, so they can change later without code changes. Do not build a screen for them.</li>
+  <li><strong>What needs approval:</strong> new contracts, extensions, edits to the vendor, dates or amount of an active contract, and returning or forfeiting security.</li>
+  <li>Polymorphic table <code>project_contract_approvals</code>: <code>approvable_type</code>/<code>approvable_id</code> (the contract or an extension), <code>level</code>, <code>approver_role</code>, <code>status</code> (pending / approved / rejected), <code>acted_by</code>, <code>acted_at</code>, <code>comment</code>. On submit, create one row per level that applies, using the levels and amount at that moment.</li>
+  <li><strong>Flow:</strong> Save as draft, or Submit for approval. Each level is approved in order. When the last level approves, the contract becomes Active, or the extension's changes are applied. A rejection must have a comment and sends the contract back to Draft. Resubmitting starts again at level 1.</li>
+  <li><strong>Rules that always apply:</strong> nobody can approve their own submission, each level must be a different person, and one approval per level is enough. Notify the approvers when something reaches their level. Terms, payments and extensions are locked until the contract is Active.</li>
+  <li><strong>UI:</strong> a banner on the view ("Waiting for your approval · Level 2 · Admin") with Approve and Reject buttons, shown only to whoever can act. An approval timeline in the details panel. An Approve/Reject modal that requires a comment when rejecting. A "Pending approval" filter on the list.</li>
+  <li>Permission <code>project contract.approve</code>, plus matching on the approver's role or user for the current level.</li>
+</ul>
+
+<h2>9. Screens (all Vue)</h2>
+<ol>
+  <li><strong>Dashboard</strong>: built from the same blocks as the Property Management Dashboard, but <strong>compact</strong>. The title and the This Year / All Time switch share one row. Use short cards, overdue tiles laid out horizontally (icon beside the number), slim section headers, small stat tiles and vendor cards, and tight tabs, filters and table padding.
+    <ul>
+      <li>Four gradient cards, each with a footer link: Committed, Paid (% of total), Balance (% remaining), Security Held (guarantees expiring).</li>
+      <li>A Pending Approval card, plus progress cards for Payment Rate and Scheduled into Terms.</li>
+      <li>A red Overdue Payment Alert with three tiles: overdue terms, overdue amount, and that amount as a % of the balance.</li>
+      <li>Contract Statistics Overview: Total, Active, Pending Approval and Ending in 60 Days, with a striped overall payment-progress bar.</li>
+      <li>Vendor-wise Payment Progress cards. The left edge is yellow below 40%, accent colour from 40–80% and green from 80%.</li>
+      <li>Tabbed tables: Upcoming End Date Contracts · Upcoming Due Terms · Expiring Securities · Expired Contracts. Each has vendor, project and date filters, column visibility, PDF/Excel export, search, totals and pagination.</li>
+      <li>Return all numbers from one JSON endpoint, already scoped to the tenant and branch.</li>
+    </ul></li>
+  <li><strong>Reports</strong>: one <em>Payment Reports</em> screen with a Pending Payments / Paid Payments switch, Each report has <strong>one filter bar across the top</strong>: date range, vendor, contract and branch inputs, with the status or method buttons and a Reset button on a second line. Below it, full width, come compact summary cards and a table with totals, plus Excel, PDF and Print. The backend has one JSON endpoint per report, with queued Excel/PDF exports that follow the existing export pattern.
+    <ul>
+      <li><strong>Pending Payments</strong> lists every term with a balance.
+        <ul>
+          <li>Filters: due-date range, vendor, contract, branch, and status buttons (All / Overdue / Due in 30 days / Later).</li>
+          <li>Summary cards: Total pending, Overdue, Due in 30 days, Later.</li>
+          <li>An ageing bar: Not yet due · 1–30 · 31–60 · 61–90 · Over 90 days.</li>
+          <li>Columns: Due date (with "N days overdue" / "in N days"), Contract (reference and project), Vendor, Term, Amount, Paid, Balance and Status. Totals recalculate when the filters change.</li>
+        </ul></li>
+      <li><strong>Paid Payments</strong> lists every recorded payment.
+        <ul>
+          <li>Filters: payment-date range, vendor, contract, branch, and method buttons (All / Bank / Cheque / Cash).</li>
+          <li>Summary cards: Total paid, and totals by method.</li>
+          <li>A paid-by-month bar chart.</li>
+          <li>Columns: Date, Voucher (links to its journal), Contract, Vendor, Term, Method, Reference and Amount, with a totals row.</li>
+        </ul></li>
+      <li>Permission <code>project contract.report</code>.</li>
+    </ul></li>
+  <li><strong>List</strong>: filters for vendor, status, date range and search. Columns: project, vendor, period, contract amount, paid, balance, next due, status. Paginated and sortable.</li>
+  <li><strong>Create / Edit</strong>: the header form from section 1, laid out like the RentOut sale form but <strong>compact</strong>: slim section headers, small labels and inputs, and Contract Amount, No. Of Terms and Payment Frequency together on one row on wide screens. Full-width section cards with an icon header (Project &amp; Vendor Details · Contract Details · Approval Route), and inputs with icon prefixes.
+    <ul>
+      <li><strong>Contract Period:</strong> Start and End date, plus Quick set buttons (3 months, 6 months, 1 year, 2 years) that fill in the end date. Duration shows as a small live label in the section header ("10 months · 302 days"). It turns red, and the end date shows an inline error, when the end date is not after the start date.</li>
+      <li><strong>Payment Information:</strong>
+        <ul>
+          <li>Contract Amount has a QAR prefix and is formatted with thousand separators when you leave the field. Clicking into it shows the raw number for editing.</li>
+          <li>No. Of Terms is a −/+ stepper. It suggests a count from the period and frequency (Monthly gives one per month, Quarterly one per 3 months, and so on; One-time gives 1; Milestone gives no suggestion). It fills in the suggestion until the user changes the number, then offers "Use N" instead.</li>
+          <li>Payment Frequency is a row of tap buttons, not a dropdown.</li>
+        </ul></li>
+      <li>A summary line under the card reads, for example, "QAR 100,000.00 from 01 Sep 2026 to 30 Jun 2027, paid in 5 milestone terms", with a "Needs N approvals" badge.</li>
+      <li>A sticky action bar has Back, Save as Draft and Submit for Approval. After saving, redirect to the view.</li>
+    </ul></li>
+  <li><strong>View</strong>: laid out like the RentOut sale view, but <strong>compact</strong>.
+    <ul>
+      <li>A slim header with the title, status badges and actions: Record payment, Add term, Extend and More. When the contract is pending, the actions are Approve and Reject instead, with the approval banner.</li>
+      <li>Three info cards with short coloured headers and tight label/value rows (labels in muted grey, about 0.8rem text):
+        <ol>
+          <li><strong>Project &amp; Vendor</strong> (edit button in the header): Reference No (with the creator and date), Project, Vendor and Branch, plus an Approval box with the levels as one line of badges (L1 · name ✓ › L2 · name ✓).</li>
+          <li><strong>Contract Details</strong> (Statement print button in the header): Period (start → end, with "12 months · N days left"), Frequency (with "X of Y terms scheduled"), Contract Amount (with the value before any extension) and Security Held, plus a one-line Contract / Paid / Balance summary.</li>
+          <li><strong>Payment Information</strong> (header badge "X of Y terms paid"): Next Due (with an overdue badge) and Last Payment (with its method), and a small Type / Paid / Pending table. While the contract is pending approval, it shows a locked message instead.</li>
+        </ol></li>
+      <li><strong>Under the three cards</strong> there are two full-width rows, one below the other. First, <strong>Remarks</strong>, which has a muted label, the text filling the space, and an edit button. Second, its own row, the <strong>guarantee-expiry warning</strong> ("Performance bond expires 31-12-2026. Ask the vendor to renew it.") is an amber strip with a "Record renewal" button. Show it only when a guarantee expires before the contract end date or within 30 days.</li>
+      <li>Below the cards, a <strong>Management Sections</strong> card with a slim header holds the tabs: <em>Payment Terms · Transactions · Security · Extensions · Documents · Notes</em>. Use tighter table and tab padding than the rest of the app, and load each tab's data lazily, the first time it is opened.</li>
+    </ul></li>
+</ol>
+
+<h2>10. Architecture: follow the Ticket console pattern</h2>
+<ul>
+  <li>Vue mount: copy the <code>resources/js/ticket-console.js</code> approach. Add an entry file such as <code>resources/js/project-contract.js</code> that uses <code>mountVueApp(...)</code> from <code>utils/createVueApp.js</code>, and register it in <code>vite.config.js</code>. Components go in <code>resources/js/components/ProjectContract/</code>, with an <code>api.js</code> like <code>components/Ticket/api.js</code>.</li>
+  <li>Blade host pages (like <code>resources/views/ticket/index.blade.php</code>) render only the mount <code>div</code>, initial props and <code>@vite</code>.</li>
+  <li>Backend: a controller that returns JSON, like <code>TicketController</code>, with Form Requests for every write. All write logic goes in <code>app/Actions/ProjectContract/</code> (Create, Update, Delete, PaymentTerm/*, Payment/*, Extend, Document/*, Note/*). Follow the <code>action-layer</code> skill.</li>
+  <li>Routes: put them in their own route file with <code>project-contract::</code> name prefixes and <code>->can()</code> on every route.</li>
+  <li>Permissions: add to <code>config/permissions.php</code> and the seeder: <code>project contract.view|create|edit|delete|payment|extend|security|document|note|approve|report</code>. Add a sidebar entry behind <code>@can</code>.</li>
+  <li>Styling: <strong>Bootstrap theme classes only</strong>, theme variables, light and dark mode. Use an <strong>eye-friendly palette</strong> (copy the tokens from the preview): a calm blue accent, warm off-white backgrounds instead of pure white, soft dark-grey text instead of black, muted green/red/amber for statuses, and low-saturation dashboard gradients. Use <strong>Font Awesome 4.3</strong> icons only. Use toastr for success and error messages and SweetAlert for delete confirmations.</li>
+</ul>
+
+<h2>11. Tests</h2>
+<p>Write Pest feature tests for: creating the contract with validation (vendor must be a Vendor account), adding a term and blocking it when it goes over the contract amount, partial and full payments that update term status and post balanced journals, payment deletion that reverses its journal, an extension that updates the header and keeps history, security deposits (cash posts and reverses balanced journals, guarantees post nothing, partial return, forfeit to income, Completed blocked while security is held), vendor CRUD (create with every detail field, the Arabic name kept, delete blocked when contracts or ledger entries exist, quick-create from the contract form selects the new vendor), the approval chain (levels chosen by amount, applied in order, self-approval blocked, rejection returns the contract to Draft, terms locked until Active), tenant isolation, and permission 403s. Run only those tests with <code>php artisan test --compact --filter=ProjectContract</code>, then run <code>vendor/bin/pint --dirty --format agent</code>.</p>
+
+<div class="ask">
+<strong>Ask me before building if any of these are unclear:</strong>
+<ul>
+  <li>Can the term total go above the contract amount without an extension, or should it be a hard block?</li>
+  <li>Should vendor retention or advance payments be handled now, or later?</li>
+  <li>Do contracts need a print or PDF (Browsershot), and a vendor statement?</li>
+  <li>Should a project contract link to an existing project or property record, or is <code>project_name</code> free text?</li>
+</ul>
+</div>
+  </div>
+</div>
+<script>
+  document.getElementById('copy').addEventListener('click', function () {
+    var button = this;
+    navigator.clipboard.writeText(document.getElementById('prompt').innerText).then(function () {
+      button.textContent = 'Copied ✓';
+      button.classList.add('copied');
+      setTimeout(function () { button.textContent = 'Copy prompt'; button.classList.remove('copied'); }, 1800);
+    });
+  });
+</script>
+</body>
+</html>

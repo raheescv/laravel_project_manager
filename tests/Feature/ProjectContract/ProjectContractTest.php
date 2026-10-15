@@ -358,7 +358,25 @@ it('reports pending and paid payments and fills the main dashboard widgets', fun
         ->and($block['stats']['active'])->toBe(1)
         ->and($block['vendors'][0]['name'])->toBe('Gulf Steel Contracting')
         ->and($block['tables']['due_terms'])->toHaveCount(2)
+        ->and($block['tables']['due_terms'][0]['id'])->toBe($overdueId)
         ->and($block['urls']['view'])->toContain('/project-contract/view/__ID__');
+});
+
+it('lists expiring securities and the security still held on expired contracts', function (): void {
+    $contract = ($this->activeContract)();
+    $securityId = $this->postJson(($this->api)("/contracts/{$contract->id}/securities"), [
+        'direction' => 'received', 'form' => 'bank_guarantee', 'purpose' => 'performance_bond', 'amount' => 12000,
+        'bank_name' => 'QNB', 'reference_no' => 'BG/2026/4471', 'valid_from' => today()->subMonth()->toDateString(), 'valid_until' => today()->addDays(10)->toDateString(),
+    ])->assertSuccessful()->json('data.securities.0.id');
+    $contract->update(['end_date' => today()->subDay()]);
+
+    $block = $this->getJson($this->world->url('/dashboard/widgets/contract-dashboard?option=all'))->assertOk()->json('blocks.0');
+
+    expect($block['tables']['securities'])->toHaveCount(1)
+        ->and($block['tables']['securities'][0]['id'])->toBe($securityId)
+        ->and($block['cards']['expiring_securities'])->toBe(1)
+        ->and($block['tables']['expired'][0]['id'])->toBe($contract->id)
+        ->and($block['tables']['expired'][0]['security_held'])->toEqual(12000);
 });
 
 it('prints the contract statement with its terms and payments', function (): void {

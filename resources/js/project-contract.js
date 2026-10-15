@@ -1,4 +1,5 @@
 import '../css/project-contract.css'
+import '../css/project-contract-page.css'
 import ProjectContractApp from './components/ProjectContract/ProjectContractApp.vue'
 import { mountVueApp } from './utils/createVueApp.js'
 

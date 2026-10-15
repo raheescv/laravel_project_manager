@@ -75,6 +75,7 @@ class ProjectContractSource extends DashboardSource
 
         $securities = ProjectContractSecurity::with(['settlements', 'contract:id,end_date'])->whereIn('project_contract_id', $contractIds)->get();
         $all = ProjectContract::query()->when($scope === 'year', fn (Builder $query) => $this->inYear($query));
+        $tables = $this->tables();
 
         return [
             'cards' => [
@@ -82,7 +83,7 @@ class ProjectContractSource extends DashboardSource
                 'paid' => round($paid, 2),
                 'balance' => $balance,
                 'security_held' => round($securities->filter(fn (ProjectContractSecurity $security): bool => $security->direction === SecurityDirection::Received)->sum(fn (ProjectContractSecurity $security): float => $security->heldAmount()), 2),
-                'expiring_securities' => $securities->filter(fn (ProjectContractSecurity $security): bool => $security->expiresSoon())->count(),
+                'expiring_securities' => count($tables['securities']),
                 'pending_approval' => (clone $all)->where('status', ContractStatus::PendingApproval)->count(),
                 'waiting_for_me' => $this->waitingForUser(),
                 'payment_rate' => $this->percentage($paid, $committed),
@@ -100,7 +101,7 @@ class ProjectContractSource extends DashboardSource
                 'ending_soon' => ProjectContract::where('status', ContractStatus::Active)->whereBetween('end_date', [today(), today()->addDays(60)])->count(),
             ],
             'vendors' => $this->vendors($scope),
-            'tables' => $this->tables(),
+            'tables' => $tables,
             'today' => today()->toDateString(),
             'urls' => $this->urls(),
         ];
@@ -116,6 +117,7 @@ class ProjectContractSource extends DashboardSource
 
         return ProjectContractApproval::query()
             ->where('status', ProjectContractApproval::PENDING)
+            ->where('approvable_type', ProjectContract::class)
             ->whereHas('contract')
             ->get()
             ->groupBy(fn (ProjectContractApproval $approval): string => $approval->approvable_type.'#'.$approval->approvable_id)
@@ -172,13 +174,20 @@ class ProjectContractSource extends DashboardSource
             'ending' => $withTotals(ProjectContract::query()->whereIn('status', [ContractStatus::Active, ContractStatus::PendingApproval]))
                 ->where('end_date', '>=', today())->orderBy('end_date')->limit(self::TABLE_LIMIT)->get()->map($row)->values()->all(),
             'expired' => $withTotals(ProjectContract::query()->where('status', ContractStatus::Active))
-                ->where('end_date', '<', today())->orderByDesc('end_date')->limit(self::TABLE_LIMIT)->get()->map($row)->values()->all(),
+                ->with('securities.settlements')
+                ->where('end_date', '<', today())->orderByDesc('end_date')->limit(self::TABLE_LIMIT)->get()
+                ->map(fn (ProjectContract $contract): array => $row($contract) + [
+                    'security_held' => round($contract->securities
+                        ->filter(fn (ProjectContractSecurity $security): bool => $security->direction === SecurityDirection::Received)
+                        ->sum(fn (ProjectContractSecurity $security): float => $security->heldAmount()), 2),
+                ])->values()->all(),
             'due_terms' => ProjectContractPaymentTerm::query()
                 ->with('contract.vendor:id,name')
                 ->whereHas('contract', fn (Builder $query) => $query->where('status', ContractStatus::Active))
                 ->where('balance', '>', 0)
                 ->orderBy('due_date')->limit(self::TABLE_LIMIT)->get()
                 ->map(fn (ProjectContractPaymentTerm $term): array => [
+                    'id' => $term->id,
                     'contract_id' => $term->project_contract_id,
                     'reference_no' => $term->contract->reference_no,
                     'project_name' => $term->contract->project_name,
@@ -194,9 +203,11 @@ class ProjectContractSource extends DashboardSource
                 ->with(['contract.vendor:id,name', 'settlements'])
                 ->whereHas('contract', fn (Builder $query) => $query->whereIn('status', [ContractStatus::Active, ContractStatus::PendingApproval]))
                 ->whereNotNull('valid_until')
-                ->orderBy('valid_until')->limit(self::TABLE_LIMIT)->get()
+                ->orderBy('valid_until')->get()
                 ->filter(fn (ProjectContractSecurity $security): bool => $security->expiresSoon())
+                ->take(self::TABLE_LIMIT)
                 ->map(fn (ProjectContractSecurity $security): array => [
+                    'id' => $security->id,
                     'contract_id' => $security->project_contract_id,
                     'reference_no' => $security->contract->reference_no,
                     'project_name' => $security->contract->project_name,

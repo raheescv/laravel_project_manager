@@ -1,0 +1,5 @@
+/* Printing a project-contract page (statement tables, reports): hide the app chrome.
+   Loaded only by resources/js/project-contract.js, never by the home dashboard. */
+@media print {
+  .mainnav, .header, .content__header, footer { display: none !important; }
+}
