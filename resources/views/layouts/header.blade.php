@@ -514,7 +514,7 @@
                                 <span class="visually-hidden">unread messages</span>
                             </span>
                             <span class="badge badge-super rounded-pill bg-danger p-1">
-                                {{ auth()->user()->unreadNotifications()->count() }}
+                                <span data-live-unread>{{ auth()->user()->unreadNotifications()->count() }}</span>
                                 <span class="visually-hidden">unread messages</span>
                             </span>
                         </span>

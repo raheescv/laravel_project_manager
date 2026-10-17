@@ -330,45 +330,7 @@
             });
         });
     </script>
-    @auth
-    @if(auth()->user()->is_browser_notification_enabled)
-    <script>
-        (function () {
-            var pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
-                cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}'
-            });
-
-            var channel = pusher.subscribe('user-notification-channel-{{ auth()->id() }}');
-
-            channel.bind('user-notification-event-{{ auth()->id() }}', function (data) {
-                // Toast notification
-                toastr.info(data.content, data.title, {
-                    closeButton: true,
-                    progressBar: true,
-                    timeOut: 7000,
-                    onclick: data.link ? function () { window.location.href = data.link; } : null,
-                });
-
-                // Desktop notification (if permission granted)
-                if (window.Notification && Notification.permission === 'granted') {
-                    var n = new Notification(data.title, { body: data.content, icon: '/favicon.png' });
-                    if (data.link) {
-                        n.onclick = function () { window.open(data.link, '_blank'); };
-                    }
-                }
-            });
-
-            // Request desktop notification permission on first interaction
-            if (window.Notification && Notification.permission === 'default') {
-                document.addEventListener('click', function requestOnce() {
-                    Notification.requestPermission();
-                    document.removeEventListener('click', requestOnce);
-                }, { once: true });
-            }
-        })();
-    </script>
-    @endif
-    @endauth
+    <x-live-notifications />
     <script>
         // $("#root").setClass("root mn--max tm--expanded-hd");
     </script>

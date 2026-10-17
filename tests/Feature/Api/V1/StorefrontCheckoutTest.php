@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\NotificationCreatedEvent;
+use App\Jobs\OnlineSaleNotificationJob;
 use App\Livewire\Sale\OnlinePayments;
 use App\Livewire\Sale\View as SaleView;
 use App\Models\Account;
@@ -456,7 +457,60 @@ it('notifies the shop once when an online order is paid', function (): void {
         ->and($data['model_id'])->toBe($sale->id);
 
     Event::assertDispatchedTimes(NotificationCreatedEvent::class, 1);
-    Event::assertDispatched(NotificationCreatedEvent::class, fn (NotificationCreatedEvent $event) => $event->userId === $this->world->user->id);
+    Event::assertDispatched(NotificationCreatedEvent::class, fn (NotificationCreatedEvent $event) => $event->userId === $this->world->user->id
+        && $event->kind === NotificationCreatedEvent::KIND_ONLINE_ORDER
+        && $event->meta['sale_id'] === $sale->id
+        && $event->meta['invoice_no'] === $sale->invoice_no
+        && $event->meta['customer'] === 'Aisha Khan'
+        && $event->meta['amount'] === 'QAR 500.00'
+        && $event->meta['fulfilment'] === 'Pickup'
+        && $event->meta['items'] > 0);
+});
+
+it('never announces a sale rung up in the shop as an online order', function (): void {
+    Event::fake([NotificationCreatedEvent::class]);
+    storefrontFakeTap('CAPTURED');
+
+    $reference = $this->postJson($this->world->url('/api/v1/storefront/checkout'), storefrontCheckoutPayload($this->world))->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $sale = Sale::withoutGlobalScopes()->sole();
+    $sale->update(['source' => 'pos']);
+    DB::table('notifications')->delete();
+    Event::fake([NotificationCreatedEvent::class]);
+
+    (new OnlineSaleNotificationJob((int) $this->world->tenant->id, (int) $sale->id, route('sale::view', $sale->id, false)))->handle();
+
+    expect(DB::table('notifications')->count())->toBe(0);
+    Event::assertNotDispatched(NotificationCreatedEvent::class);
+});
+
+it('subscribes the page to the user\'s private alert channel only when browser alerts are on', function (): void {
+    $this->world->user->update(['is_browser_notification_enabled' => true]);
+    $this->actingAs($this->world->user);
+
+    $this->blade('<x-live-notifications />')
+        ->assertSee(NotificationCreatedEvent::channelFor($this->world->user->id))
+        ->assertSee('online_order')
+        ->assertDontSee('user-notification-channel-'.$this->world->user->id);
+
+    $this->world->user->update(['is_browser_notification_enabled' => false]);
+
+    expect(trim((string) $this->blade('<x-live-notifications />')))->toBe('');
+});
+
+it('sends live alerts on a channel that is private to the user and to this environment', function (): void {
+    $channel = NotificationCreatedEvent::channelFor(7);
+
+    expect($channel)->toStartWith('user-notification-')
+        ->and($channel)->not->toBe('user-notification-channel-7')
+        ->and(NotificationCreatedEvent::channelFor(7))->toBe($channel)
+        ->and(NotificationCreatedEvent::channelFor(8))->not->toBe($channel)
+        ->and((new NotificationCreatedEvent(7, 'Title', 'Body'))->broadcastOn()->name)->toBe($channel);
+
+    config(['app.key' => 'base64:'.base64_encode(str_repeat('x', 32))]);
+
+    expect(NotificationCreatedEvent::channelFor(7))->not->toBe($channel);
 });
 
 it('sends no notification when the payment does not go through', function (): void {

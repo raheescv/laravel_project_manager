@@ -39,6 +39,7 @@
     {{-- <script src="{{ https_asset('assets/js/demo-purpose-only.js') }}"></script> --}}
 
     <x-qz-print />
+    <x-live-notifications />
     @stack('scripts')
 
 </body>
