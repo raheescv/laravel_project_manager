@@ -97,6 +97,7 @@ class Page extends Component
                 'barcode' => $barcode,
                 'is_selling' => true,
                 'is_favorite' => false,
+                'priority' => 0,
                 'hsn_code' => '',
                 'tax' => 0,
                 'cost' => $cost,
@@ -199,6 +200,7 @@ class Page extends Component
             'products.department_id' => ['required'],
             'products.main_category_id' => ['required'],
             'products.cost' => ['required'],
+            'products.priority' => ['nullable', 'integer', 'min:0'],
             // 'products.barcode' => ['required_if:products.type,product'],
             'images.*' => 'mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:3100',
             'angles_360.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,bmp,webp,svg|max:10240',
@@ -295,6 +297,7 @@ class Page extends Component
         $this->validate();
         try {
             DB::beginTransaction();
+            $this->products['priority'] = (int) ($this->products['priority'] ?? 0);
             $this->products['images'] = $this->images;
             $this->products['angles_360'] = $this->angles_360;
             $this->products['degree'] = $this->degree;

@@ -56,8 +56,6 @@
 
             /* skin-driven accents (overridden per [data-nav-skin]) — defaults = Standard */
             --ln-ring: #111827;
-            --ln-logo-shadow: none;
-            --ln-logo-shadow-hover: 0 4px 10px -6px rgba(17, 24, 39, 0.4);
             --ln-active-chip: #2563eb;
             --ln-active-chip-ink: #ffffff;
             --ln-glow: none;
@@ -104,8 +102,6 @@
             --ln-danger-border: rgba(248, 113, 113, 0.28);
 
             --ln-ring: #e5e7eb;
-            --ln-logo-shadow: none;
-            --ln-logo-shadow-hover: 0 4px 12px -6px rgba(229, 231, 235, 0.35);
             --ln-active-chip: #3b82f6;
             --ln-active-chip-ink: #ffffff;
             --ln-glow: none;
@@ -149,8 +145,6 @@
             --ln-danger-bg: rgba(239, 68, 68, 0.10);
             --ln-danger-border: rgba(239, 68, 68, 0.22);
             --ln-ring: #111114;
-            --ln-logo-shadow: 0 4px 10px -6px rgba(17, 17, 20, 0.5);
-            --ln-logo-shadow-hover: 0 6px 14px -8px rgba(17, 17, 20, 0.55);
             --ln-active-chip: #4f46e5;
             --ln-active-chip-ink: #ffffff;
             --ln-glow: none;
@@ -187,8 +181,6 @@
             --ln-danger-bg: rgba(248, 113, 113, 0.12);
             --ln-danger-border: rgba(248, 113, 113, 0.28);
             --ln-ring: #fafafa;
-            --ln-logo-shadow: none;
-            --ln-logo-shadow-hover: none;
             --ln-active-chip: #a5b4fc;
             --ln-active-chip-ink: #0b0b0e;
             --ln-glow: none;
@@ -225,8 +217,6 @@
             --ln-danger-bg: rgba(192, 98, 58, 0.12);
             --ln-danger-border: rgba(192, 98, 58, 0.26);
             --ln-ring: linear-gradient(135deg, #ecd49a, #c2a05a, #8a6d2f);
-            --ln-logo-shadow: 0 6px 14px -8px rgba(168, 125, 54, 0.85);
-            --ln-logo-shadow-hover: 0 9px 18px -10px rgba(168, 125, 54, 0.9);
             --ln-active-chip: linear-gradient(135deg, #d2ab5e, #a87d36);
             --ln-active-chip-ink: #ffffff;
             --ln-glow: 0 5px 14px -5px rgba(168, 125, 54, 0.55);
@@ -263,8 +253,6 @@
             --ln-danger-bg: rgba(232, 149, 106, 0.14);
             --ln-danger-border: rgba(232, 149, 106, 0.3);
             --ln-ring: linear-gradient(135deg, #f1dca8, #d6b678, #a87d36);
-            --ln-logo-shadow: 0 6px 16px -8px rgba(214, 182, 120, 0.8);
-            --ln-logo-shadow-hover: 0 9px 18px -10px rgba(214, 182, 120, 0.85);
             --ln-active-chip: linear-gradient(135deg, #e7cf94, #c2a05a);
             --ln-active-chip-ink: #2b2419;
             --ln-glow: 0 6px 18px -5px rgba(214, 182, 120, 0.6);
@@ -296,83 +284,10 @@
         }
         .luminous-nav .scrollable-content::-webkit-scrollbar-thumb:hover { background: var(--ln-scrollbar-hover); }
 
-        /* ============================ BRAND CARD ============================ */
-        .luminous-nav .mainnav__widget {
-            margin: 0.5rem 0.55rem 0.5rem !important;
-            padding: 0.45rem 0.5rem !important;
-            background: var(--ln-surface);
-            border: 1px solid var(--ln-border);
-            border-radius: 12px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .luminous-nav .mainnav__widget::before { content: none; }
-        .luminous-nav .mainnav__widget:hover {
-            border-color: var(--ln-border-strong);
-            box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.4);
-        }
-
-        .luminous-nav .mainnav__brand {
-            display: flex;
-            align-items: center;
-            gap: 0.55rem;
-            text-decoration: none;
-            color: inherit;
-            padding: 0;
-        }
-        .luminous-nav .mainnav__brand:hover { color: inherit; text-decoration: none; }
-
-        .luminous-nav .mainnav__brand-circle {
-            width: 36px;
-            height: 36px;
-            flex: 0 0 auto;
-            border-radius: 10px;
-            padding: 2px;
-            background: var(--ln-ring);
-            box-shadow: var(--ln-logo-shadow);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .luminous-nav .mainnav__brand-circle img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 4px;
-            display: block;
-        }
-        .luminous-nav .mainnav__brand:hover .mainnav__brand-circle {
-            transform: translateY(-1px);
-            box-shadow: var(--ln-logo-shadow-hover);
-        }
-
-        .luminous-nav .mainnav__brand-text {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            line-height: 1.1;
-        }
-        .luminous-nav .mainnav__brand-name {
-            font-size: 0.84rem;
-            font-weight: 800;
-            letter-spacing: -0.01em;
-            color: var(--ln-text-strong);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .luminous-nav .mainnav__brand-tag {
-            margin-top: 0.08rem;
-            font-size: 0.58rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--ln-text-dim);
-        }
-
         .luminous-nav .mininav-toggle { position: relative; }
+
+        /* breathing room under the header now the brand lives up there */
+        .luminous-nav .mainnav__top-content { padding-top: 0.6rem !important; }
 
         /* ============================ MENU ITEMS ============================= */
         .luminous-nav .mainnav__menu {
@@ -472,13 +387,14 @@
            An expanded parent and its children read as ONE tinted block. That
            grouping is what replaces the old dashed connector line and node dots.
            Bootstrap toggles .show on .mininav-content, so :has() is the reliable
-           "is open" signal. Every has-sub item carries the padding and the
-           negative inline margin at rest, so opening only fades in a background
-           and a border — rows never shift sideways.
+           "is open" signal. Every top-level item carries the padding and the
+           negative inline margin at rest, so all rows share one pitch and
+           opening only fades in a background and a border — rows never shift
+           sideways.
            Scoped to __top-content so the Logout group at the bottom is untouched,
            and switched off in the collapsed rail (submenu is a popover there).
            ====================================================================== */
-        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub {
+        .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item {
             margin: 0.06rem -3px;
             padding: 3px;
             border: 1px solid transparent;
@@ -625,21 +541,23 @@
         }
 
         /* ============================ BOTTOM / LOGOUT ============================= */
+        /* inline padding = Nifty's top-content gutter + the 1px row border, so the
+           Logout chip sits in the same icon column as the menu above it */
         .luminous-nav .mainnav__bottom-content {
             border-top: 1px solid var(--ln-divider) !important;
-            padding: 0.5rem 0.45rem 0.6rem !important;
+            padding: 0.5rem calc(0.75rem + 1px) 0.6rem !important;
             position: relative;
         }
 
         .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.32rem 0.45rem !important;
-            border-radius: 9px;
+            gap: 0.55rem;
+            padding: 0.34rem 0.5rem !important;
+            border-radius: 11px;
             color: var(--ln-text) !important;
             font-size: 0.78rem;
-            font-weight: 600;
+            font-weight: 500;
             min-width: 0;
             transition: background 0.18s, color 0.18s;
         }
@@ -655,17 +573,17 @@
             color: var(--ln-danger) !important;
         }
         .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle > .fa {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             background: var(--ln-chip-bg);
             border: 1px solid var(--ln-chip-border);
-            border-radius: 7px;
+            border-radius: 8px;
             color: var(--ln-danger);
-            font-size: 0.72rem !important;
+            font-size: 0.74rem !important;
             line-height: 1 !important;
             margin: 0 !important;
             transition: background 0.18s, border-color 0.18s, color 0.18s;
@@ -703,7 +621,7 @@
         }
 
         /* collapsed rail — no group panel; the submenu flies out as a popover */
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item.has-sub {
+        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__top-content .mainnav__menu > .nav-item {
             background: transparent !important;
             border-color: transparent !important;
             margin: 0 !important;
@@ -727,17 +645,6 @@
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__menu > .nav-item > .nav-link > .fa,
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__menu > .nav-item > .nav-link > i.fa { margin: 0 !important; }
         :where(.mn--min, .mn--min-min) .luminous-nav .nav-item.has-sub > .nav-link::after { display: none !important; }
-
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__widget {
-            padding: 0 !important;
-            margin: 0.5rem 0.45rem 0.6rem !important;
-            background: transparent;
-            border: 0;
-            box-shadow: none !important;
-        }
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand { justify-content: center; padding: 0; width: 100%; }
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-circle { width: 38px; height: 38px; }
-        :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__brand-text { display: none !important; }
 
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle,
         :where(.mn--min, .mn--min-min) .luminous-nav .mainnav__bottom-content .nav-link.mininav-toggle:hover {
@@ -781,9 +688,6 @@
                 padding-bottom: max(0.6rem, env(safe-area-inset-bottom)) !important;
             }
 
-            .luminous-nav .mainnav__widget { margin: 0.6rem 0.6rem 0.55rem !important; padding: 0.55rem 0.6rem !important; }
-            .luminous-nav .mainnav__brand-circle { width: 40px; height: 40px; }
-            .luminous-nav .mainnav__brand-name { font-size: 0.92rem; }
             .luminous-nav .mainnav__menu { padding: 0 0.55rem; }
 
             .luminous-nav .mainnav__menu > .nav-item > .nav-link,
@@ -812,7 +716,6 @@
             .root.mn--max,
             .root.mn--min { --nf-mainnav-max-width: min(82vw, 16.5rem); }
             .luminous-nav .mainnav__menu > .nav-item > .nav-link { font-size: 0.83rem; }
-            .luminous-nav .mainnav__brand-name { font-size: 0.9rem; }
             .luminous-nav .mininav-content .nav-item > .nav-link { font-size: 0.79rem; }
         }
 
@@ -826,19 +729,6 @@
 
     <div class="mainnav__inner">
         <div class="pb-5 mainnav__top-content scrollable-content">
-            <div id="_dm-mainnavProfile" class="mainnav__widget hv-outline-parent">
-                <a href="{{ route('dashboard') }}" class="mainnav__brand mininav-toggle hv-oc"
-                    aria-label="{{ config('app.name', 'Astra') }} — go to dashboard">
-                    <span class="mainnav__brand-circle">
-                        <img src="{{ tenant_cache('logo', asset('assets/img/logo.svg')) }}"
-                            alt="{{ config('app.name', 'Astra') }} logo">
-                    </span>
-                    <span class="mainnav__brand-text">
-                        <span class="mainnav__brand-name">{{ config('app.name', 'Astra') }}</span>
-                        <span class="mainnav__brand-tag">Workspace</span>
-                    </span>
-                </a>
-            </div>
 
             {{-- Dynamic navigation: ordered and filtered by user preferences --}}
             @php

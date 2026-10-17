@@ -18,7 +18,9 @@ class GetProductsAction
             $isFavorite = ($filters['category_id'] ?? null) === 'favorite';
 
             $query = $this->baseQuery($filters, $branchId)
-                ->when($isFavorite, fn ($q) => $q->where('products.is_favorite', true));
+                ->when($isFavorite, fn ($q) => $q->where('products.is_favorite', true))
+                ->orderByDesc('products.priority')
+                ->orderBy('products.name');
 
             $total = (clone $query)->count();
 

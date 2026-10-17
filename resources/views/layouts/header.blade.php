@@ -39,6 +39,45 @@
             padding-top: 0.5rem;
         }
 
+        .header-brand-logo {
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #ffffff;
+            padding: 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px -6px rgba(15, 23, 42, 0.45);
+        }
+
+        .header-brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 7px;
+        }
+
+        .header__brand .brand-title {
+            margin-inline: 0.65rem 0;
+        }
+
+        @media (min-width: 992px) {
+            .mn--max .header__brand {
+                padding-inline-start: calc(1.7rem - 5px);
+            }
+
+            .mn--min .header__brand .brand-title {
+                display: none !important;
+            }
+
+            .mn--min .header-brand-logo {
+                width: min(38px, calc(var(--nf-mainnav-min-width) - 0.75rem));
+                height: min(38px, calc(var(--nf-mainnav-min-width) - 0.75rem));
+            }
+        }
+
         @media (max-width: 767.98px) {
             .header-mega-grid {
                 grid-template-columns: 1fr;
@@ -49,6 +88,9 @@
         <!-- Brand -->
         <div class="header__brand">
             <div class="brand-wrap">
+                <a href="{{ route('dashboard') }}" class="brand-img header-brand-logo stretched-link" aria-label="{{ config('app.name', 'Astra') }} — go to dashboard">
+                    <img src="{{ tenant_cache('logo', asset('assets/img/logo.svg')) }}" alt="{{ config('app.name', 'Astra') }} logo">
+                </a>
                 <div class="brand-title d-none d-sm-block">{{ config('app.name', 'Astra') }}</div>
             </div>
         </div>

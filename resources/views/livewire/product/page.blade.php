@@ -175,6 +175,15 @@
                                     </label>
                                     {{ html()->select('unit_id', $units)->value('')->class('tomSelect border-primary-subtle shadow-sm')->placeholder('Select your unit')->id('unit_id')->attribute('wire:model', 'products.unit_id') }}
                                 </div>
+                                @if ($isProduct || $isService)
+                                    <div class="col-md-4">
+                                        <label for="priority" class="form-label fw-medium">
+                                            <i class="fa fa-sort-numeric-desc text-primary me-1 small"></i>
+                                            POS Priority
+                                        </label>
+                                        {{ html()->number('priority')->value('')->attribute('min', 0)->attribute('step', 1)->class('form-control border-secondary-subtle shadow-sm')->placeholder('0')->id('priority')->attribute('wire:model', 'products.priority')->attribute('title', 'Higher numbers are listed first on the POS screen') }}
+                                    </div>
+                                @endif
                                 @if ($isProduct || $isFixedAsset)
                                     <div class="col-md-4" wire:ignore>
                                         <label for="unit_id" class="form-label fw-medium">
