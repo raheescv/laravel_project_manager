@@ -5,6 +5,7 @@ use App\Models\Configuration;
 use App\Models\Country;
 use App\Services\TenantService;
 use App\Support\TenantCache;
+use App\Support\UniqueNoCounters;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -1008,7 +1009,6 @@ if (! function_exists('getNextUniqueNumber')) {
     function getNextUniqueNumber($segment = 'Sale', $branchId = null)
     {
         $branchCode = currentBranchCode($branchId);
-        $country_id = tenant_cache('country_id', Country::QATAR);
 
         // Get tenant_id from session or TenantService (e.g. when running inside a job)
         $tenantId = session('tenant_id') ?? app(TenantService::class)->getCurrentTenantId();
@@ -1016,17 +1016,7 @@ if (! function_exists('getNextUniqueNumber')) {
             throw new \Exception('Tenant ID is required to generate unique number');
         }
 
-        if ($country_id == Country::INDIA) {
-            $year = now()->format('y').'/'.now()->addYear()->format('y');
-            if (now()->lt(now()->copy()->month(3)->day(31))) {
-                $year = now()->subYear()->format('y').'/'.now()->format('y');
-            }
-        } else {
-            $year = now()->format('y');
-            if ($segment == 'Barcode') {
-                $year = 1;
-            }
-        }
+        $year = UniqueNoCounters::year($segment);
 
         DB::statement('SET @out_unique_no = 0;');
         $yearEscaped = DB::getPdo()->quote($year);

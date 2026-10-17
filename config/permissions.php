@@ -20,7 +20,7 @@ return [
     'employee commission' => ['create', 'view', 'edit', 'delete'],
     'role' => ['create', 'view', 'edit', 'delete', 'permissions'],
     'branch' => ['create', 'view', 'edit', 'delete'],
-    'product' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'ai image generation'],
+    'product' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'ai image generation', 'audit view'],
     'asset' => ['create', 'view', 'edit', 'delete', 'import', 'export', 'dispose', 'post depreciation', 'view accounting', 'dashboard overview'],
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'combo offer' => ['create', 'view', 'edit', 'delete'],

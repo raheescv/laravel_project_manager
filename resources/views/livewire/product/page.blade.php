@@ -846,6 +846,17 @@
                                                         </button>
                                                     </li>
                                                 @endif
+                                                @if (isset($table_id) && auth()->user()->can('product.audit view'))
+                                                    <li class="nav-item" role="presentation">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Audit') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Audit')" data-bs-target="#tabAudit"
+                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-history text-secondary"></i>
+                                                            Audit
+                                                        </button>
+                                                    </li>
+                                                @endif
                                             </ul>
                                             <div class="tab-content">
                                                 @if (isset($table_id))
@@ -1403,6 +1414,13 @@
                                                         class="tab-pane fade @if ($selectedTab == 'RawMaterials') active show @endif"
                                                         role="tabpanel">
                                                         @livewire('product.raw-materials', ['product_id' => $table_id], key('raw-materials-' . $table_id))
+                                                    </div>
+                                                @endif
+                                                @if (isset($table_id) && auth()->user()->can('product.audit view'))
+                                                    <div id="tabAudit"
+                                                        class="tab-pane fade @if ($selectedTab == 'Audit') active show @endif"
+                                                        role="tabpanel">
+                                                        @livewire('product.audit', ['product_id' => $table_id], key('product-audit-' . $table_id))
                                                     </div>
                                                 @endif
                                             </div>
