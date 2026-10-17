@@ -1,5 +1,5 @@
-{{-- Checklist tab "Walkthrough Split" (.clx). Every colour comes from the Bootstrap theme
-     tokens, so it follows the settings colour and dark mode. Touch targets are 44px; the
+{{-- Checklist tab "Walkthrough Split" (.clx). Every colour comes from the RentOut view's
+     .rvx surface tokens or the Bootstrap theme, so it follows the settings colour and dark mode. Touch targets are 44px; the
      layout answers to the tab's own width (container queries), not the window's. --}}
 <style>
     /* The tabs card clips its rounded corners with overflow:hidden, which would also stop
@@ -14,10 +14,10 @@
         --clx-brand-line: color-mix(in srgb, var(--clx-brand) 30%, var(--bs-border-color));
         --clx-ok: var(--bs-success);
         --clx-no: var(--bs-danger);
-        --clx-line: var(--bs-border-color);
+        --clx-line: var(--border, var(--bs-border-color));
         --clx-muted: var(--bs-secondary-color);
-        --clx-soft: var(--bs-tertiary-bg);
-        --clx-card: var(--bs-body-bg);
+        --clx-soft: var(--surface-2, var(--bs-tertiary-bg));
+        --clx-card: var(--surface, var(--bs-body-bg));
         --clx-r: 14px;
         --clx-tap: 44px;
         container-type: inline-size;
@@ -988,6 +988,14 @@
         }
 
         .clx .clx-item-ctl > .clx-in {
+            flex-basis: 100%;
+        }
+
+        .clx .clx-item-top {
+            flex-wrap: wrap;
+        }
+
+        .clx .clx-item-name {
             flex-basis: 100%;
         }
 

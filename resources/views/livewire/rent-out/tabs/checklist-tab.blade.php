@@ -39,7 +39,7 @@
                 @if ($showMoveOut)
                     <div class="clx-seg mt-2">
                         @foreach ($phases as $key => $label)
-                            <button type="button" :class="{ 'on': phase === '{{ $key }}' }" x-on:click="phase = '{{ $key }}'">
+                            <button type="button" @class(['on' => $phase === $key]) :class="{ 'on': phase === '{{ $key }}' }" x-on:click="phase = '{{ $key }}'">
                                 <i class="fa {{ $key === 'move_in' ? 'fa-sign-in' : 'fa-sign-out' }}"></i>{{ $label }}
                                 <span class="clx-seg-n">{{ $checkedFor($key) }}/{{ count($lines) }}</span>
                             </button>
@@ -136,7 +136,7 @@
         <div class="clx-split">
             <nav class="clx-nav">
                 @foreach ($rooms as $room)
-                    <button type="button" class="clx-nav-item" :class="{ 'on': room === @js($room['name']) }" x-on:click="room = @js($room['name'])"
+                    <button type="button" @class(['clx-nav-item', 'on' => $room['name'] === $this->room]) :class="{ 'on': room === @js($room['name']) }" x-on:click="room = @js($room['name'])"
                         wire:key="room-nav-{{ $loop->index }}-{{ $room['name'] }}">
                         @foreach ($phases as $key => $label)
                             <span class="clx-ring" data-only="{{ $key }}" style="--v: {{ $percent($room['checked'][$key], count($room['rows'])) }}">{{ $room['checked'][$key] }}</span>
