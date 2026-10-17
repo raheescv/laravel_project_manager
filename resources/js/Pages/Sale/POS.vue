@@ -25,7 +25,19 @@
 
                                 <!-- Ticket context: which sale day this books into -->
                                 <div class="posx-ctx">
-                                    <div v-if="daySession"
+                                    <!-- POS Without Day Session: the cashier dates the sale -->
+                                    <label v-if="dateEditable" :title="saleDateTitle"
+                                        :class="['posx-session posx-date', isBackdated ? 'is-warn' : '']">
+                                        <i :class="isBackdated ? 'fa fa-history' : 'fa fa-calendar'"></i>
+                                        <span class="posx-session-key">Date</span>
+                                        <input v-model="form.date" type="date" :max="today" required
+                                            class="posx-date-input" aria-label="Sale date" @change="normalizeSaleDate">
+                                        <button v-if="isBackdated" type="button" class="posx-date-reset"
+                                            title="Back to today" @click.prevent="form.date = today">
+                                            <i class="fa fa-undo"></i>
+                                        </button>
+                                    </label>
+                                    <div v-else-if="daySession"
                                         :title="daySessionTitle || ('Session: ' + daySession.label)"
                                         :class="['posx-session', daySession.is_today ? '' : 'is-warn']">
                                         <i :class="daySession.is_today ? 'fa fa-calendar-o' : 'fa fa-exclamation-triangle'"></i>
@@ -406,6 +418,17 @@ export default {
             type: Object,
             default: null
         },
+        // Sale Settings → POS Without Day Session: show a date picker instead
+        // of the session chip. Off for a sale already filed under a session.
+        dateEditable: {
+            type: Boolean,
+            default: false
+        },
+        // Today in the business timezone — the picker's default and its max.
+        today: {
+            type: String,
+            default: () => new Date().toISOString().split('T')[0]
+        },
         // POS colour preset from Settings → Sale Settings (`pos_color_preset`):
         // 'theme' follows the app theme colour, the rest are fixed palettes.
         colorPreset: {
@@ -489,7 +512,7 @@ export default {
         // Form data
         const form = useForm({
             id: null,
-            date: new Date().toISOString().split('T')[0],
+            date: props.saleData.date || props.today,
             employee_id: props.saleData.employee_id || '',
             sale_type: 'normal',
             account_id: defaultCustomerId,
@@ -601,6 +624,20 @@ export default {
                 ? `Today's day session (${opened}) — sales are dated ${props.daySession.date}`
                 : `The open day session is from ${props.daySession.label} (${opened}) — sales are dated ${props.daySession.date}, not today`
         })
+
+        // A picked date before today files the sale under that earlier day.
+        const isBackdated = computed(() => props.dateEditable && !!form.date && form.date < props.today)
+
+        const saleDateTitle = computed(() => isBackdated.value
+            ? `Backdated — this sale is dated ${form.date}, not today`
+            : 'Sale date — this POS runs without a day session')
+
+        // A cleared or future date falls back to today.
+        const normalizeSaleDate = () => {
+            if (!form.date || form.date > props.today) {
+                form.date = props.today
+            }
+        }
 
         const cartItemsByEmployee = computed(() => {
             const grouped = {}
@@ -1397,11 +1434,15 @@ export default {
 
         // Helper function to clear form for new sale
         const startNewSale = () => {
+            // A picked date carries over to the next ticket, so a backdated
+            // batch can be rung up without re-picking it each time.
+            const pickedDate = props.dateEditable && !form.id ? form.date : null
+
             // Reset form to default values
             form.reset()
             form.items = {}
             form.comboOffers = []
-            form.date = new Date().toISOString().split('T')[0]
+            form.date = pickedDate || props.today
             form.employee_id = ''
             form.sale_type = 'normal'
             form.account_id = defaultCustomerId
@@ -1630,6 +1671,9 @@ export default {
             totalQuantity,
             discountPercentage,
             daySessionTitle,
+            isBackdated,
+            saleDateTitle,
+            normalizeSaleDate,
             cartItemsByEmployee,
             formattedCustomers,
 

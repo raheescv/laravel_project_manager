@@ -79,6 +79,7 @@
                     @include('livewire.settings.partials.sale-toggle', $yesNo('branch_wise_employee_list', 'Branch Wise Employee List', 'The POS employee list shows only staff of the current branch.'))
                     @include('livewire.settings.partials.sale-toggle', $yesNo('auto_open_day_sessions_enabled', 'Auto Open Day Sessions', 'Open every branch at the opening time in <a href="'.route('settings::working_day::index').'" target="_blank">Working Day</a> with 0 opening amount. Holidays and already-open branches are skipped.'))
                     @include('livewire.settings.partials.sale-toggle', $yesNo('auto_close_day_sessions_enabled', 'Auto Close Day Sessions', 'Close all open sessions at midnight, closing amount = expected amount.'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('pos_skip_day_session', 'POS Without Day Session', 'The POS opens without an open day session and shows a date picker for each sale&rsquo;s date. These sales stay out of the day session cash count.'))
                 </div>
             </div>
         </section>

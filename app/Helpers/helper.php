@@ -874,6 +874,18 @@ if (! function_exists('saleRoundOffEnabled')) {
         return (Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes') === 'yes';
     }
 }
+if (! function_exists('posSkipsDaySession')) {
+    /**
+     * Whether the POS runs without a day session (Settings → Sale Configuration
+     * → POS Without Day Session): the screen opens with no session open, the
+     * cashier picks each sale's date, and those sales stay out of the day
+     * session and its cash count. Off unless the business has switched it on.
+     */
+    function posSkipsDaySession(): bool
+    {
+        return (Configuration::where('key', 'pos_skip_day_session')->value('value') ?? 'no') === 'yes';
+    }
+}
 if (! function_exists('packageFrequency')) {
     function packageFrequency()
     {

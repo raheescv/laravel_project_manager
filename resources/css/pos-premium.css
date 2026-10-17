@@ -1260,6 +1260,66 @@ html.dark .posx[data-pos-preset="indigo"] {
     color: var(--pos-warn);
 }
 
+/* POS Without Day Session: the session chip becomes a date picker pill */
+.posx .posx-date {
+    margin: 0;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.posx .posx-date:hover {
+    border-color: var(--pos-pri-line);
+}
+
+.posx .posx-date:focus-within {
+    border-color: var(--pos-pri);
+    box-shadow: 0 0 0 3px var(--pos-pri-ring);
+}
+
+.posx .posx-date-input {
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+[data-bs-theme="dark"] .posx .posx-date-input,
+html.dark .posx .posx-date-input {
+    color-scheme: dark;
+}
+
+.posx .posx-date-input::-webkit-calendar-picker-indicator {
+    margin-inline-start: 2px;
+    opacity: .55;
+    cursor: pointer;
+}
+
+.posx .posx-date-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-inline-start: 1px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: var(--pos-ico-micro);
+    cursor: pointer;
+}
+
+.posx .posx-date-reset:hover {
+    background: var(--pos-warn-soft);
+}
+
 /* -------------------------------------------------------------- buttons */
 .posx .posx-btn {
     display: inline-flex;

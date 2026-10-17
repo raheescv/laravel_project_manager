@@ -106,12 +106,30 @@ class POSController extends Controller
 
     public function submitSale(Request $request)
     {
+        // Without day sessions the sale takes the date the cashier picked, so
+        // that date has to be real and not in the future.
+        $skipsDaySession = posSkipsDaySession();
+        if ($skipsDaySession) {
+            $request->validate(
+                ['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']],
+                ['date.before_or_equal' => 'The sale date cannot be in the future.']
+            );
+        }
+
         try {
             $user_id = Auth::id();
             DB::beginTransaction();
 
             $saleData = $request->all();
             $table_id = $saleData['id'] ?? null;
+
+            // A sale already filed under a day session keeps that session's date.
+            if ($skipsDaySession && $table_id) {
+                $sessionDate = Sale::whereKey($table_id)->whereNotNull('sale_day_session_id')->value('date');
+                if ($sessionDate) {
+                    $saleData['date'] = $sessionDate;
+                }
+            }
             if ($saleData['status'] == 'completed') {
                 if ($table_id) {
                     $response = $this->removePayment($table_id);
@@ -167,7 +185,10 @@ class POSController extends Controller
                 'success' => true,
                 'message' => 'Sale submitted successfully',
                 'sale_id' => $sale->id,
-                'redirect' => route('sale::pos'),
+                // A backdated batch stays on its date for the next ticket.
+                'redirect' => $skipsDaySession && $sale->date !== today()->toDateString()
+                    ? route('sale::pos', ['date' => $sale->date])
+                    : route('sale::pos'),
             ]);
         } catch (\Exception $e) {
             DB::rollback();

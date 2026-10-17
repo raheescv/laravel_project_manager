@@ -292,7 +292,19 @@ class SaleController extends Controller
         // a day left open overnight files this morning's sales under yesterday.
         // An existing ticket keeps its own session; a new one uses the open one,
         // which the sale::pos route guarantees exists (RequireOpenDaySession).
-        $session = ($sale ?? null)?->saleDaySession ?: SaleDaySession::getOpenSessionForBranch(session('branch_id'));
+        //
+        // Without day sessions (posSkipsDaySession()) a new ticket has no session:
+        // the cashier picks its date instead, starting from today or from the
+        // date a backdated batch is being rung up under (?date=).
+        $skipsDaySession = posSkipsDaySession();
+        $session = ($sale ?? null)?->saleDaySession ?: ($skipsDaySession ? null : SaleDaySession::getOpenSessionForBranch(session('branch_id')));
+        $today = today()->toDateString();
+        $dateEditable = $skipsDaySession && ! $session;
+        if ($dateEditable && empty($saleData['id'])) {
+            $requestedDate = request()->query('date');
+            $isValidDate = validator(['date' => $requestedDate], ['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']])->passes();
+            $saleData['date'] = $isValidDate ? $requestedDate : $today;
+        }
 
         $data = [
             'categories' => $categories,
@@ -310,6 +322,10 @@ class SaleController extends Controller
                 'opened_at' => $session->opened_at->format('h:i A'),
                 'is_today' => $session->opened_at->isToday(),
             ] : null,
+            // POS Without Day Session: the header shows a date picker (capped at
+            // today) instead of the session chip.
+            'dateEditable' => $dateEditable,
+            'today' => $today,
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultCustomer' => $defaultCustomer,

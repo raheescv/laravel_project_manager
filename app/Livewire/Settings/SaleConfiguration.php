@@ -47,6 +47,9 @@ class SaleConfiguration extends Component
     /** Open every branch's day session at the Settings → Working Day opening time. */
     public $auto_open_day_sessions_enabled;
 
+    /** Run the POS without a day session, dating each sale from a picker — see posSkipsDaySession(). */
+    public $pos_skip_day_session;
+
     public $sale_item_row_mode;
 
     public $prevent_out_of_stock_sales;
@@ -87,6 +90,7 @@ class SaleConfiguration extends Component
         $this->branch_wise_employee_list = Configuration::where('key', 'branch_wise_employee_list')->value('value') ?? 'no';
         $this->auto_close_day_sessions_enabled = Configuration::where('key', 'auto_close_day_sessions_enabled')->value('value') ?? 'no';
         $this->auto_open_day_sessions_enabled = Configuration::where('key', 'auto_open_day_sessions_enabled')->value('value') ?? 'no';
+        $this->pos_skip_day_session = Configuration::where('key', 'pos_skip_day_session')->value('value') ?? 'no';
         $this->sale_item_row_mode = Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge';
         $this->prevent_out_of_stock_sales = Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes';
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
@@ -119,6 +123,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'branch_wise_employee_list'], ['value' => $this->branch_wise_employee_list]);
         Configuration::updateOrCreate(['key' => 'auto_close_day_sessions_enabled'], ['value' => $this->auto_close_day_sessions_enabled]);
         Configuration::updateOrCreate(['key' => 'auto_open_day_sessions_enabled'], ['value' => $this->auto_open_day_sessions_enabled === 'yes' ? 'yes' : 'no']);
+        Configuration::updateOrCreate(['key' => 'pos_skip_day_session'], ['value' => $this->pos_skip_day_session === 'yes' ? 'yes' : 'no']);
         Configuration::updateOrCreate(['key' => 'sale_item_row_mode'], ['value' => $this->sale_item_row_mode]);
         Configuration::updateOrCreate(['key' => 'prevent_out_of_stock_sales'], ['value' => $this->prevent_out_of_stock_sales]);
         Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);

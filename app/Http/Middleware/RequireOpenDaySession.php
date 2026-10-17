@@ -9,7 +9,12 @@ use Illuminate\Http\Request;
 
 class RequireOpenDaySession
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * @param  string|null  $context  'pos' lets the POS through without an open
+     *                                session when posSkipsDaySession() is on; a
+     *                                branch is still required.
+     */
+    public function handle(Request $request, Closure $next, ?string $context = null)
     {
         // Check if the user has a default branch set
         if (! session('branch_id')) {
@@ -18,6 +23,10 @@ class RequireOpenDaySession
 
             return redirect()->route('sale::day-management')
                 ->with('error', 'Please set a default branch before proceeding.');
+        }
+
+        if ($context === 'pos' && posSkipsDaySession()) {
+            return $next($request);
         }
 
         // Check if the branch has an open day session

@@ -115,6 +115,12 @@ class Sale extends Model implements AuditableContracts
                 return;
             }
 
+            // A POS run without day sessions keeps the date the cashier picked
+            // and stays out of the session, even when one happens to be open.
+            if ($sale->source === 'pos' && posSkipsDaySession()) {
+                return;
+            }
+
             // Check if sale needs to be associated with an open day session
             if ($sale->branch_id) {
                 // If no sale_day_session_id is provided, find the open session for the branch
