@@ -34,9 +34,9 @@ class PropertyFinancialDashboard extends Component
 
     public int $securityCount = 0;
 
-    public string $agreementType = 'rental';
+    public string $agreementType = 'lease';
 
-    public function mount(string $agreementType = 'rental'): void
+    public function mount(string $agreementType = 'lease'): void
     {
         $this->agreementType = $agreementType;
         $this->loadDashboardData();

@@ -25,11 +25,14 @@ use App\Support\ModuleAccess;
  * it. A layout is an ordered list of widgets (`{key, span, collapsed, row?, tall?}`,
  * `row` pinning the widget to the start of a grid row, `tall` spanning two rows) and
  * section dividers (`{type: divider, id, title}`), stored per user under the
- * `dashboard.layout` preference.
+ * `dashboard.layout` preference. The header switcher a user last picked on each
+ * widget is remembered under `dashboard.options` and becomes its default.
  */
 class WidgetRegistry
 {
     public const PREFERENCE_KEY = 'dashboard.layout';
+
+    public const OPTIONS_KEY = 'dashboard.options';
 
     public const SPANS = [4, 6, 8, 12];
 
@@ -110,6 +113,34 @@ class WidgetRegistry
         $inSystem = ModuleAccess::permissionFilter();
 
         return array_filter($this->all(), fn (WidgetDefinition $definition): bool => $definition->isVisibleTo($user, $inSystem));
+    }
+
+    /**
+     * The widgets the user may see, each opening on the switcher option they
+     * last picked (falling back to the widget's own default).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function catalogueFor(User $user): array
+    {
+        $chosen = (array) UserPreference::getValue(self::OPTIONS_KEY, [], $user->id);
+
+        return array_values(array_map(function (WidgetDefinition $definition) use ($chosen): array {
+            $widget = $definition->toArray();
+            $widget['defaultOption'] = $definition->resolveOption($chosen[$definition->key] ?? null);
+
+            return $widget;
+        }, $this->visibleTo($user)));
+    }
+
+    /**
+     * Remember the switcher option the user picked on a widget.
+     */
+    public function saveOption(User $user, string $key, string $option): void
+    {
+        $chosen = (array) UserPreference::getValue(self::OPTIONS_KEY, [], $user->id);
+        $chosen[$key] = $option;
+        UserPreference::setValue(self::OPTIONS_KEY, $chosen, $user->id);
     }
 
     /**

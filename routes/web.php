@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::name('dashboard::')->prefix('dashboard')->controller(DashboardController::class)->group(function (): void {
         Route::get('widgets/{key}', 'widget')->name('widget')->where('key', '[a-z0-9-]+');
+        Route::put('widgets/{key}/option', 'saveOption')->name('option.save')->where('key', '[a-z0-9-]+');
         Route::put('layout', 'saveLayout')->name('layout.save')->can('dashboard.customize');
     });
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

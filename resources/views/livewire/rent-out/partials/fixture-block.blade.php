@@ -1,115 +1,73 @@
-{{-- Fixture Comments for one area of the unit. Rendered under that area's item rows on
-     the Checklist tab. Expects: $a (index into $fixtureAreas), $area, $statusOptions and
+{{-- Fixture Comments for one area of the unit, shown under that room's items on the
+     Checklist tab. Expects: $a (index into $fixtureAreas), $area, $statusOptions and
      $canRemoveArea (false for areas the checklist items put there — removing one of those
      is pointless, it reappears on the next reload). --}}
 @php
-    $counts = collect($area['entries'])->groupBy(fn($e) => $e['status'] ?: 'pending')->map->count();
+    use App\Enums\RentOut\FixtureStatus;
+
+    $counts = collect($area['entries'])->groupBy(fn ($e) => $e['status'] ?: FixtureStatus::Pending->value)->map->count();
 @endphp
-<div class="cl-fx" wire:key="fx-area-{{ $a }}-{{ $area['category'] }}">
-    <div class="cl-fx-head">
-        <span class="cl-fx-title">
-            <i class="fa fa-wrench me-2 opacity-75"></i>Fixture Comments — {{ $area['category'] }}
-            <span class="cl-fx-ar">ملاحظات التشطيبات</span>
-        </span>
-        @if (count($area['entries']))
-            <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ count($area['entries']) }}
-                {{ Str::plural('entry', count($area['entries'])) }}</span>
-        @endif
-        <span class="flex-grow-1"></span>
+<div class="clx-fx" wire:key="fx-area-{{ $a }}-{{ $area['category'] }}">
+    <div class="clx-fx-head">
+        <i class="fa fa-wrench clx-brand"></i>
+        <span>Fixture comments <span class="clx-ar">ملاحظات التشطيبات</span></span>
+        <span class="clx-grow"></span>
         @foreach ($statusOptions as $value => $label)
             @if (($counts[$value] ?? 0) > 0)
-                <span class="badge rounded-pill bg-{{ \App\Enums\RentOut\FixtureStatus::from($value)->color() }}-subtle
-                    text-{{ \App\Enums\RentOut\FixtureStatus::from($value)->color() }}-emphasis">
-                    {{ $counts[$value] }} {{ $label }}
-                </span>
+                <span class="clx-pill is-{{ FixtureStatus::from($value)->color() }}">{{ $counts[$value] }} {{ $label }}</span>
             @endif
         @endforeach
         @if ($area['signature_url'])
-            <span class="badge rounded-pill bg-success-subtle text-success-emphasis" title="Signed {{ $area['owner_signed_at'] }}">
-                <i class="fa fa-check me-1"></i>Owner accepted
-            </span>
+            <span class="clx-pill is-success" title="Signed {{ $area['owner_signed_at'] }}"><i class="fa fa-check"></i> Owner accepted</span>
         @endif
         @if ($canRemoveArea)
-            <button type="button" class="btn btn-sm cl-trash" wire:click="removeFixtureArea({{ $a }})"
-                wire:confirm="Remove the {{ $area['category'] }} fixture block and its entries?" title="Remove area">
-                <i class="fa fa-trash"></i>
+            <button type="button" class="clx-icon-btn" wire:click="removeFixtureArea({{ $a }})"
+                wire:confirm="Remove the {{ $area['category'] }} area and its fixture comments?" title="Remove area">
+                <i class="fa fa-trash-o"></i>
             </button>
         @endif
     </div>
 
     @forelse ($area['entries'] as $e => $entry)
-        <div class="cl-fx-entry" wire:key="fx-entry-{{ $a }}-{{ $e }}-{{ $entry['id'] ?? 'new' }}">
+        <div class="clx-fx-entry" wire:key="fx-entry-{{ $a }}-{{ $e }}-{{ $entry['id'] ?? 'new' }}">
             @foreach (['before' => 'Before', 'after' => 'After'] as $which => $label)
-                @php $url = $entry[$which . '_image_url'] ?? null; @endphp
-                <div class="cl-fx-photo-cell">
-                    <span class="cl-fx-lbl">{{ $label }}</span>
-                    <div class="cl-fx-photo {{ $url ? '' : 'is-empty' }}">
-                        @if ($url)
-                            <img src="{{ $url }}" class="zoomable" data-img="{{ $url }}" alt="{{ $label }}"
-                                style="cursor:zoom-in;" title="Click to enlarge">
-                        @else
-                            <i class="fa fa-picture-o"></i>
-                        @endif
-                        <label class="cl-fx-btn" title="{{ $url ? 'Replace photo' : 'Upload photo' }}">
-                            <i class="fa fa-camera"></i>
-                            <input type="file" class="d-none" accept="image/*"
-                                wire:model="newFixtureImages.{{ $a }}.{{ $e }}.{{ $which }}">
-                        </label>
-                        @if ($url)
-                            <button type="button" class="cl-fx-btn cl-fx-btn-del" title="Remove photo"
-                                wire:click="removeFixtureImage({{ $a }}, {{ $e }}, '{{ $which }}')">
-                                <i class="fa fa-times"></i>
-                            </button>
-                        @endif
-                    </div>
-                    <div wire:loading wire:target="newFixtureImages.{{ $a }}.{{ $e }}.{{ $which }}" class="small text-muted">
-                        <i class="fa fa-spinner fa-spin"></i>
-                    </div>
-                </div>
+                <x-rent-out.checklist.photo class="clx-fx-photo" :label="$label" :url="$entry[$which.'_image_url'] ?? null"
+                    model="newFixtureImages.{{ $a }}.{{ $e }}.{{ $which }}"
+                    remove="removeFixtureImage({{ $a }}, {{ $e }}, '{{ $which }}')" />
             @endforeach
 
-            <div class="cl-fx-cmt">
-                <span class="cl-fx-lbl">Comments</span>
-                <textarea class="form-control form-control-sm cl-inp" rows="3" placeholder="Tiles need to fit, switch to replace, paint damage…"
-                    wire:model.blur="fixtureAreas.{{ $a }}.entries.{{ $e }}.comments"></textarea>
-            </div>
+            <textarea class="clx-in clx-fx-comment" rows="3" placeholder="What needs fixing — tiles to refit, a switch to replace, paint damage…"
+                wire:model.blur="fixtureAreas.{{ $a }}.entries.{{ $e }}.comments"></textarea>
 
-            <div class="cl-fx-status">
-                <span class="cl-fx-lbl">Status</span>
-                <select class="form-select form-select-sm cl-inp" wire:model.live="fixtureAreas.{{ $a }}.entries.{{ $e }}.status">
+            <div class="clx-fx-status">
+                <span class="clx-lbl">Status</span>
+                <div class="clx-chips">
                     @foreach ($statusOptions as $value => $label)
-                        <option value="{{ $value }}">{{ $label }}</option>
+                        <button type="button" @class(['clx-chip', 'is-'.FixtureStatus::from($value)->color() => $entry['status'] === $value])
+                            wire:click="$set('fixtureAreas.{{ $a }}.entries.{{ $e }}.status', '{{ $value }}')">{{ $label }}</button>
                     @endforeach
-                </select>
-            </div>
-
-            <div class="cl-fx-date">
-                <span class="cl-fx-lbl">Completed</span>
-                <input type="date" class="form-control form-control-sm cl-inp"
-                    wire:model.blur="fixtureAreas.{{ $a }}.entries.{{ $e }}.completed_date">
-            </div>
-
-            <div class="cl-fx-del">
-                <button type="button" class="btn btn-sm cl-trash" wire:click="removeFixtureEntry({{ $a }}, {{ $e }})"
-                    title="Remove entry">
-                    <i class="fa fa-trash"></i>
-                </button>
+                </div>
+                <span class="clx-lbl mt-1">Completion date</span>
+                <div class="d-flex gap-2">
+                    <input type="date" class="clx-in" wire:model.blur="fixtureAreas.{{ $a }}.entries.{{ $e }}.completed_date">
+                    <button type="button" class="clx-icon-btn" wire:click="removeFixtureEntry({{ $a }}, {{ $e }})"
+                        wire:confirm="Remove this fixture comment and its photos?" title="Remove entry">
+                        <i class="fa fa-trash-o"></i>
+                    </button>
+                </div>
             </div>
         </div>
     @empty
-        <div class="cl-fx-empty">No fixture comments recorded for this area.</div>
+        <div class="clx-fx-empty">Nothing to fix in this area yet.</div>
     @endforelse
 
-    <div class="cl-fx-foot">
-        <button type="button" class="btn btn-sm cl-fx-add" wire:click="addFixtureEntry({{ $a }})">
-            <i class="fa fa-plus me-1"></i>Add entry
-        </button>
-        <span class="flex-grow-1"></span>
+    <div class="clx-fx-foot">
+        <button type="button" class="clx-btn" wire:click="addFixtureEntry({{ $a }})"><i class="fa fa-plus"></i> Add entry</button>
+        <span class="clx-grow"></span>
         @if ($area['signature_url'])
-            <span class="small text-success"><i class="fa fa-pencil-square-o me-1"></i>Signed by
-                {{ $area['owner_name'] ?: 'owner' }} · {{ $area['owner_signed_at'] }}</span>
+            <span class="text-success"><i class="fa fa-pencil-square-o me-1"></i>Signed by {{ $area['owner_name'] ?: 'owner' }} · {{ $area['owner_signed_at'] }}</span>
         @else
-            <span class="small text-muted">Owner signs this area on the checklist print page</span>
+            <span>The owner signs this area on the hand-over page</span>
         @endif
     </div>
 </div>

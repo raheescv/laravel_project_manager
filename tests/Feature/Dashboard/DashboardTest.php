@@ -251,3 +251,34 @@ it('lays out the lead section like before: tiles and units beside a tall activit
         ->assertJsonPath('layout.0.tall', true)->assertJsonMissingPath('layout.1.tall');
     ($this->saveLayout)([['key' => 'lead-status', 'span' => 8, 'tall' => 'yes']])->assertJsonValidationErrors(['layout.0.tall']);
 });
+
+it('opens the collections widget on Sale, labelled Sale not Lease', function (): void {
+    ($this->grant)('property dashboard.financial overview');
+
+    $widget = collect($this->get($this->world->url('/'))->viewData('dashboard')['catalogue'])->firstWhere('key', 'property-financial');
+
+    expect($widget['defaultOption'])->toBe('lease')
+        ->and($widget['options'])->toBe([['value' => 'lease', 'label' => 'Sale'], ['value' => 'rental', 'label' => 'Rental']]);
+});
+
+it('remembers the switcher option a user last picked as that widget default, per user', function (): void {
+    ($this->grant)('property dashboard.financial overview');
+    $catalogueOption = fn (): ?string => collect($this->get($this->world->url('/'))->viewData('dashboard')['catalogue'])->firstWhere('key', 'property-financial')['defaultOption'];
+
+    $this->putJson($this->world->url('/dashboard/widgets/property-financial/option'), ['option' => 'rental'])->assertOk()->assertJsonPath('option', 'rental');
+    expect($catalogueOption())->toBe('rental');
+
+    $this->putJson($this->world->url('/dashboard/widgets/property-financial/option'), ['option' => 'lease'])->assertOk();
+    expect($catalogueOption())->toBe('lease');
+
+    $colleague = User::factory()->create(['tenant_id' => $this->world->tenant->id, 'default_branch_id' => $this->world->branch->id]);
+    expect(UserPreference::getValue(WidgetRegistry::OPTIONS_KEY, null, $colleague->id))->toBeNull();
+});
+
+it('refuses to remember an unknown option, a hidden widget or an unknown one', function (): void {
+    ($this->grant)('property dashboard.financial overview');
+
+    $this->putJson($this->world->url('/dashboard/widgets/property-financial/option'), ['option' => 'weekly'])->assertJsonValidationErrors(['option']);
+    $this->putJson($this->world->url('/dashboard/widgets/lead-status/option'), ['option' => 'lease'])->assertForbidden();
+    $this->putJson($this->world->url('/dashboard/widgets/no-such-widget/option'), ['option' => 'lease'])->assertNotFound();
+});

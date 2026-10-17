@@ -2,11 +2,14 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Actions\RentOut\Checklist\Fixture\RemovePhotoAction as RemoveFixturePhotoAction;
+use App\Actions\RentOut\Checklist\Fixture\SavePhotoAction as SaveFixturePhotoAction;
 use App\Actions\RentOut\Checklist\Line\RemovePhotoAction;
 use App\Actions\RentOut\Checklist\Line\SavePhotoAction;
 use App\Actions\RentOut\Checklist\SaveAction;
 use App\Actions\RentOut\Checklist\SaveFixtureAction;
 use App\Actions\RentOut\Checklist\SealAction;
+use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\ChecklistPhase;
 use App\Enums\RentOut\ChecklistSignatoryRole;
 use App\Enums\RentOut\FixtureStatus;
@@ -14,9 +17,10 @@ use App\Models\Checklist;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
 use App\Models\RentOutFixtureArea;
+use App\Support\ChecklistPhoto;
 use App\Support\RentOutChecklistState;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -75,9 +79,11 @@ class ChecklistTab extends Component
     /** Free-text box for adding an area that has no checklist items of its own. */
     public ?string $newAreaCategory = null;
 
-    public array $selected = [];
+    /** The room open in the walkthrough — switched on the device, kept valid by render(). */
+    public ?string $room = null;
 
-    public bool $selectAll = false;
+    /** The hand-over phase being worked: move_in, or move_out on a rental. */
+    public string $phase = 'move_in';
 
     public function mount($rentOutId)
     {
@@ -129,8 +135,6 @@ class ChecklistTab extends Component
         ])->values()->toArray();
 
         $this->newImages = [];
-        $this->selected = [];
-        $this->selectAll = false;
 
         $this->loadFixtures();
     }
@@ -209,11 +213,7 @@ class ChecklistTab extends Component
 
         // The entry owns its photos — drop the files with it rather than orphaning them.
         $entry = $this->fixtureAreas[$areaIndex]['entries'][$entryIndex];
-        foreach (['before_image_path', 'after_image_path'] as $field) {
-            if (! empty($entry[$field]) && Storage::disk('public')->exists($entry[$field])) {
-                Storage::disk('public')->delete($entry[$field]);
-            }
-        }
+        ChecklistPhoto::delete($entry['before_image_path'] ?? null, $entry['after_image_path'] ?? null);
 
         array_splice($this->fixtureAreas[$areaIndex]['entries'], $entryIndex, 1);
         unset($this->newFixtureImages[$areaIndex]);
@@ -230,24 +230,23 @@ class ChecklistTab extends Component
             return;
         }
 
-        $this->validate([
-            "newFixtureImages.$key" => 'image|max:2048',
-        ], [
-            "newFixtureImages.$key.image" => 'The file must be an image',
-            "newFixtureImages.$key.max" => 'The image size must not exceed 2MB',
-        ]);
-
         $field = $which.'_image_path';
-        $old = $this->fixtureAreas[$a]['entries'][$e][$field] ?? null;
-        if ($old && Storage::disk('public')->exists($old)) {
-            Storage::disk('public')->delete($old);
-        }
+        $entryId = $this->fixtureAreas[$a]['entries'][$e]['id'] ?? null;
 
-        $path = $value->store('rent-out-fixtures/'.$this->rentOutId, 'public');
-        $this->fixtureAreas[$a]['entries'][$e][$field] = $path;
-        $this->fixtureAreas[$a]['entries'][$e][$which.'_image_url'] = asset('storage/'.$path);
-
+        $path = $this->storePickedPhoto(
+            "newFixtureImages.$key",
+            $value,
+            'rent-out-fixtures/'.$this->rentOutId,
+            $this->fixtureAreas[$a]['entries'][$e][$field] ?? null,
+            $entryId ? fn () => (new SaveFixturePhotoAction())->execute($entryId, $which, $value) : null,
+            $field,
+        );
         unset($this->newFixtureImages[$a][$e][$which]);
+
+        if ($path) {
+            $this->fixtureAreas[$a]['entries'][$e][$field] = $path;
+            $this->fixtureAreas[$a]['entries'][$e][$which.'_image_url'] = asset('storage/'.$path);
+        }
     }
 
     public function removeFixtureImage($areaIndex, $entryIndex, $which): void
@@ -257,9 +256,14 @@ class ChecklistTab extends Component
         }
 
         $field = $which.'_image_path';
-        $path = $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$field] ?? null;
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        $entryId = $this->fixtureAreas[$areaIndex]['entries'][$entryIndex]['id'] ?? null;
+
+        $removed = $this->removePickedPhoto(
+            $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$field] ?? null,
+            $entryId ? fn () => (new RemoveFixturePhotoAction())->execute($entryId, $which) : null,
+        );
+        if (! $removed) {
+            return;
         }
 
         $this->fixtureAreas[$areaIndex]['entries'][$entryIndex][$field] = null;
@@ -295,6 +299,7 @@ class ChecklistTab extends Component
         ];
 
         $this->addFixtureEntry(count($this->fixtureAreas) - 1);
+        $this->room = $category;
     }
 
     /**
@@ -308,11 +313,7 @@ class ChecklistTab extends Component
         }
 
         foreach ($this->fixtureAreas[$areaIndex]['entries'] as $entry) {
-            foreach (['before_image_path', 'after_image_path'] as $field) {
-                if (! empty($entry[$field]) && Storage::disk('public')->exists($entry[$field])) {
-                    Storage::disk('public')->delete($entry[$field]);
-                }
-            }
+            ChecklistPhoto::delete($entry['before_image_path'] ?? null, $entry['after_image_path'] ?? null);
         }
 
         array_splice($this->fixtureAreas, $areaIndex, 1);
@@ -338,24 +339,87 @@ class ChecklistTab extends Component
             return;
         }
 
-        $this->validate([
-            "newImages.$index" => 'image|max:2048',
-        ], [
-            "newImages.$index.image" => 'The file must be an image',
-            "newImages.$index.max" => 'The image size must not exceed 2MB',
-        ]);
+        $lineId = $this->lines[$index]['id'] ?? null;
 
-        // Replace the line's previous own image, if any.
-        $old = $this->lines[$index]['image_path'] ?? null;
-        if ($old && Storage::disk('public')->exists($old)) {
-            Storage::disk('public')->delete($old);
+        $path = $this->storePickedPhoto(
+            "newImages.$index",
+            $value,
+            'rent-out-checklist/'.$this->rentOutId,
+            $this->lines[$index]['image_path'] ?? null,
+            $lineId ? fn () => (new SavePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveIn, $value) : null,
+            'image_path',
+        );
+        unset($this->newImages[$index]);
+
+        if ($path) {
+            $this->lines[$index]['image_path'] = $path;
+            $this->lines[$index]['resolved_image_url'] = asset('storage/'.$path);
+        }
+    }
+
+    /**
+     * The one path every picked photo takes. A row already on file takes it straight
+     * away through $persist (a photo action), so it survives without "Save Checklist";
+     * a row not saved yet holds it until then. Any failure is raised as a toast — the
+     * camera buttons have nowhere to print an inline error, which is how a rejected
+     * photo used to vanish without a word.
+     *
+     * @param  (callable(): array{success: bool, message: string, data?: mixed})|null  $persist
+     * @return string|null the stored path, or null when nothing was stored
+     */
+    protected function storePickedPhoto(string $key, $photo, string $directory, ?string $old, ?callable $persist, string $column): ?string
+    {
+        try {
+            $this->validate([$key => ChecklistPhoto::rules()], ChecklistPhoto::messages($key));
+        } catch (ValidationException $e) {
+            $this->dispatch('error', ['message' => collect($e->errors())->flatten()->first()]);
+
+            return null;
         }
 
-        $path = $value->store('rent-out-checklist/'.$this->rentOutId, 'public');
-        $this->lines[$index]['image_path'] = $path;
-        $this->lines[$index]['resolved_image_url'] = asset('storage/'.$path);
+        if ($persist) {
+            $response = $persist();
+            if (! $response['success']) {
+                $this->dispatch('error', ['message' => $response['message']]);
 
-        unset($this->newImages[$index]);
+                return null;
+            }
+            $path = $response['data']->{$column};
+        } else {
+            try {
+                $path = ChecklistPhoto::replace($photo, $directory, $old);
+            } catch (\Throwable $th) {
+                $this->dispatch('error', ['message' => $th->getMessage()]);
+
+                return null;
+            }
+        }
+
+        $this->dispatch('success', ['message' => 'Photo saved']);
+
+        return $path;
+    }
+
+    /**
+     * Drop a photo: a row on file loses it now through $persist (the file is going, so
+     * the row must stop pointing at it); a row not saved yet just loses the file.
+     *
+     * @param  (callable(): array{success: bool, message: string})|null  $persist
+     */
+    protected function removePickedPhoto(?string $path, ?callable $persist): bool
+    {
+        if (! $persist) {
+            ChecklistPhoto::delete($path);
+
+            return true;
+        }
+
+        $response = $persist();
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+        }
+
+        return $response['success'];
     }
 
     /** A move-out photo was picked — store it on the line right away. */
@@ -369,23 +433,19 @@ class ChecklistTab extends Component
             return;
         }
 
-        $this->validate([
-            "newMoveOutImages.$index" => 'image|max:8192',
-        ], [
-            "newMoveOutImages.$index.image" => 'The file must be an image',
-            "newMoveOutImages.$index.max" => 'The image size must not exceed 8MB',
-        ]);
-
-        $response = (new SavePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut, $value);
+        $path = $this->storePickedPhoto(
+            "newMoveOutImages.$index",
+            $value,
+            'rent-out-checklist/'.$this->rentOutId,
+            null,
+            fn () => (new SavePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut, $value),
+            'move_out_image_path',
+        );
         unset($this->newMoveOutImages[$index]);
 
-        if (! $response['success']) {
-            $this->dispatch('error', ['message' => $response['message']]);
-
-            return;
+        if ($path) {
+            $this->lines[$index]['move_out_image_url'] = asset('storage/'.$path);
         }
-
-        $this->lines[$index]['move_out_image_url'] = asset('storage/'.$response['data']->move_out_image_path);
     }
 
     public function removeMoveOutImage($index): void
@@ -396,14 +456,9 @@ class ChecklistTab extends Component
             return;
         }
 
-        $response = (new RemovePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut);
-        if (! $response['success']) {
-            $this->dispatch('error', ['message' => $response['message']]);
-
-            return;
+        if ($this->removePickedPhoto(null, fn () => (new RemovePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveOut))) {
+            $this->lines[$index]['move_out_image_url'] = null;
         }
-
-        $this->lines[$index]['move_out_image_url'] = null;
     }
 
     /**
@@ -481,27 +536,19 @@ class ChecklistTab extends Component
             return;
         }
 
-        $own = $this->lines[$index]['image_path'] ?? null;
-        if ($own && Storage::disk('public')->exists($own)) {
-            Storage::disk('public')->delete($own);
+        $lineId = $this->lines[$index]['id'] ?? null;
+
+        $removed = $this->removePickedPhoto(
+            $this->lines[$index]['image_path'] ?? null,
+            $lineId ? fn () => (new RemovePhotoAction())->execute($this->rentOutId, $lineId, ChecklistPhase::MoveIn) : null,
+        );
+        if (! $removed) {
+            return;
         }
 
         $this->lines[$index]['image_path'] = null;
         $this->lines[$index]['resolved_image_url'] = $this->lines[$index]['master_image_url'] ?? null;
         unset($this->newImages[$index]);
-    }
-
-    protected function selectedIndexes(): array
-    {
-        return array_values(array_filter(
-            array_map('intval', $this->selected),
-            fn ($i) => isset($this->lines[$i])
-        ));
-    }
-
-    public function updatedSelectAll($value): void
-    {
-        $this->selected = $value ? array_map('strval', array_keys($this->lines)) : [];
     }
 
     /** Move-In is binary: present (ok) or not. */
@@ -513,43 +560,38 @@ class ChecklistTab extends Component
         $this->lines[$index]['move_in_status'] = ($this->lines[$index]['move_in_status'] ?? null) === 'ok' ? null : 'ok';
     }
 
-    /** Move-Out is 3-state: blank -> good (ok) -> damaged (not_ok) -> blank. */
-    public function cycleStatus($index, $phase): void
+    /** Move-Out is good (ok) or damaged (not_ok); tapping the chosen one again clears it. */
+    public function setMoveOut($index, $status): void
     {
-        $key = $phase === 'move_in' ? 'move_in_status' : 'move_out_status';
-        if (! isset($this->lines[$index])) {
+        if (! isset($this->lines[$index]) || ! in_array($status, ['ok', 'not_ok'], true)) {
             return;
         }
-        $current = $this->lines[$index][$key] ?? null;
-        $this->lines[$index][$key] = ($current === null || $current === '')
-            ? 'ok'
-            : ($current === 'ok' ? 'not_ok' : null);
+        $this->lines[$index]['move_out_status'] = ($this->lines[$index]['move_out_status'] ?? null) === $status ? null : $status;
     }
 
-    public function bulkMoveIn($present): void
+    /**
+     * "All present" / "All good" for one room. A move-out never overrides an item
+     * already marked damaged — the same rule as the technician app's mark-ok.
+     */
+    public function markRoom($category, $phase): void
     {
-        foreach ($this->selectedIndexes() as $i) {
-            $this->lines[$i]['move_in_status'] = $present ? 'ok' : null;
+        foreach ($this->lines as $i => $line) {
+            if (($line['category'] ?: 'Others') !== $category) {
+                continue;
+            }
+            if ($phase === ChecklistPhase::MoveIn->value) {
+                $this->lines[$i]['move_in_status'] = 'ok';
+            } elseif (($line['move_out_status'] ?? null) !== 'not_ok') {
+                $this->lines[$i]['move_out_status'] = 'ok';
+            }
         }
     }
 
-    public function bulkMoveOut($status): void
+    public function stepQty($index, $step): void
     {
-        $status = in_array($status, ['ok', 'not_ok'], true) ? $status : null;
-        foreach ($this->selectedIndexes() as $i) {
-            $this->lines[$i]['move_out_status'] = $status;
+        if (isset($this->lines[$index])) {
+            $this->lines[$index]['qty'] = max(0, (int) ($this->lines[$index]['qty'] ?? 0) + (int) $step);
         }
-    }
-
-    public function deleteSelected(): void
-    {
-        $idx = $this->selectedIndexes();
-        rsort($idx);
-        foreach ($idx as $i) {
-            array_splice($this->lines, $i, 1);
-        }
-        $this->selected = [];
-        $this->selectAll = false;
     }
 
     public function removeLine($index): void
@@ -653,20 +695,35 @@ class ChecklistTab extends Component
 
     public function render()
     {
-        $grouped = [];
+        // One room per category the items sit in, then any area added by hand (it has
+        // no items, so only its Fixture Comments put it on screen).
+        $rooms = [];
         foreach ($this->lines as $i => $line) {
             $category = $line['category'] ?: 'Others';
-            $grouped[$category][] = ['i' => $i, 'line' => $line];
+            $rooms[$category]['rows'][] = ['i' => $i, 'line' => $line];
+        }
+        foreach ($this->fixtureAreas as $a => $area) {
+            $rooms[$area['category']]['fixture'] = $a;
+        }
+        $rooms = collect($rooms)->map(fn ($room, $name) => [
+            'name' => (string) $name,
+            'rows' => $room['rows'] ?? [],
+            'fixture' => $room['fixture'] ?? null,
+            'checked' => [
+                'move_in' => collect($room['rows'] ?? [])->filter(fn ($r) => filled($r['line']['move_in_status']))->count(),
+                'move_out' => collect($room['rows'] ?? [])->filter(fn ($r) => filled($r['line']['move_out_status']))->count(),
+            ],
+        ])->values()->all();
+
+        $names = array_column($rooms, 'name');
+        if (! in_array($this->room, $names, true)) {
+            $this->room = $names[0] ?? null;
+        }
+        if ($this->agreement_type != AgreementType::Rental) {
+            $this->phase = ChecklistPhase::MoveIn->value;
         }
 
         $damageTotal = array_sum(array_map(fn ($l) => (float) ($l['damage_cost'] ?? 0), $this->lines));
-
-        // Where each area's block lives in $fixtureAreas, so the item table can drop it
-        // in under the matching category without searching the array in the view.
-        $fixtureIndex = [];
-        foreach ($this->fixtureAreas as $i => $area) {
-            $fixtureIndex[$area['category']] = $i;
-        }
 
         // Areas the user can still add by hand: master categories not already on show.
         $shown = array_map(fn ($a) => mb_strtolower((string) $a['category']), $this->fixtureAreas);
@@ -682,9 +739,8 @@ class ChecklistTab extends Component
             ->all();
 
         return view('livewire.rent-out.tabs.checklist-tab', [
-            'grouped' => $grouped,
+            'rooms' => $rooms,
             'damageTotal' => $damageTotal,
-            'fixtureIndex' => $fixtureIndex,
             'availableCategories' => $availableCategories,
             'statusOptions' => FixtureStatus::options(),
             'handover' => $this->handoverStatus(),

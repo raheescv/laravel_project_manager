@@ -3,8 +3,8 @@
 namespace App\Actions\RentOut\Checklist\Fixture;
 
 use App\Models\RentOutFixtureEntry;
+use App\Support\ChecklistPhoto;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Store the before or after photo of a Fixture Comments entry, replacing the
@@ -22,12 +22,7 @@ class SavePhotoAction
             $entry = RentOutFixtureEntry::with('area')->findOrFail($entryId);
             $column = $which.'_image_path';
 
-            $path = $photo->store('rent-out-fixtures/'.$entry->area->rent_out_id, 'public');
-
-            $old = $entry->{$column};
-            if ($old && $old !== $path && Storage::disk('public')->exists($old)) {
-                Storage::disk('public')->delete($old);
-            }
+            $path = ChecklistPhoto::replace($photo, 'rent-out-fixtures/'.$entry->area->rent_out_id, $entry->{$column});
 
             $entry->update([$column => $path]);
 

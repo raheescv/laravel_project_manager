@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Dashboard\WidgetDefinition;
 use App\Services\Dashboard\WidgetRegistry;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,7 +15,7 @@ class HomeController extends Controller
 
         return view('dashboard', [
             'dashboard' => [
-                'catalogue' => array_values(array_map(fn (WidgetDefinition $definition): array => $definition->toArray(), $registry->visibleTo($user))),
+                'catalogue' => $registry->catalogueFor($user),
                 'layout' => $registry->layoutFor($user),
                 'defaultLayout' => $registry->defaultLayout(),
                 'canCustomize' => $user->can('dashboard.customize'),
@@ -26,6 +25,7 @@ class HomeController extends Controller
                 'urls' => [
                     'widget' => route('dashboard::widget', ['key' => '__KEY__']),
                     'layout' => route('dashboard::layout.save'),
+                    'option' => route('dashboard::option.save', ['key' => '__KEY__']),
                 ],
             ],
         ]);

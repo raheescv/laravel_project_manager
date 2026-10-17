@@ -3,6 +3,7 @@
 namespace App\Http\Requests\V1\Technician\Checklist;
 
 use App\Enums\RentOut\ChecklistPhase;
+use App\Support\ChecklistPhoto;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -55,6 +56,6 @@ abstract class ChecklistRequest extends FormRequest
     /** A photo straight off a phone camera. */
     protected function photoRules(): array
     {
-        return ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,heic,heif', 'max:8192'];
+        return ['required', ...ChecklistPhoto::rules()];
     }
 }

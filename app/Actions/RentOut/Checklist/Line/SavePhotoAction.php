@@ -4,8 +4,8 @@ namespace App\Actions\RentOut\Checklist\Line;
 
 use App\Enums\RentOut\ChecklistPhase;
 use App\Models\RentOutChecklistLine;
+use App\Support\ChecklistPhoto;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Store the photo taken of a checklist item for one phase, replacing that phase's
@@ -19,12 +19,7 @@ class SavePhotoAction
             $line = RentOutChecklistLine::where('rent_out_id', $rentOutId)->findOrFail($lineId);
             $column = $phase->imageColumn();
 
-            $path = $photo->store('rent-out-checklist/'.$line->rent_out_id, 'public');
-
-            $old = $line->{$column};
-            if ($old && $old !== $path && Storage::disk('public')->exists($old)) {
-                Storage::disk('public')->delete($old);
-            }
+            $path = ChecklistPhoto::replace($photo, 'rent-out-checklist/'.$line->rent_out_id, $line->{$column});
 
             $line->update([$column => $path]);
 

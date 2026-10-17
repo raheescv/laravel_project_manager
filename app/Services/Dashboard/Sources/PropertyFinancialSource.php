@@ -14,7 +14,7 @@ use App\Services\Dashboard\WidgetDefinition;
 
 /**
  * This month's expected vs collected rent, overdue terms, cheques and
- * security deposits for occupied agreements, rental or lease.
+ * security deposits for occupied agreements, sale (lease) or rental.
  * Ported from the Livewire `dashboard.property-financial-dashboard` component.
  */
 class PropertyFinancialSource extends DashboardSource
@@ -22,7 +22,7 @@ class PropertyFinancialSource extends DashboardSource
     public function widgets(): array
     {
         return [
-            new WidgetDefinition('property-financial', 'Property', 'Collections', 'Expected vs collected this month', 'bank', 'kpi', 12, 8, ['property dashboard.financial overview'], ['rental' => 'Rental', 'lease' => 'Lease'], 'rental'),
+            new WidgetDefinition('property-financial', 'Property', 'Collections', 'Expected vs collected this month', 'bank', 'kpi', 12, 8, ['property dashboard.financial overview'], ['lease' => 'Sale', 'rental' => 'Rental'], 'lease'),
         ];
     }
 

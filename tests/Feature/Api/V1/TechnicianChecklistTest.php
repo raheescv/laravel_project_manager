@@ -11,6 +11,8 @@ use App\Models\PropertyType;
 use App\Models\RentOut;
 use App\Models\RentOutChecklistLine;
 use App\Models\RentOutChecklistSignature;
+use App\Models\RentOutFixtureArea;
+use App\Models\RentOutFixtureEntry;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -320,7 +322,7 @@ it('shows the app’s move-out photo on the web checklist tab', function (): voi
 
     Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
         ->assertSeeHtml('storage/rent-out-checklist/fridge-out.jpg')
-        ->assertSeeHtml('title="Move-out photo"');
+        ->assertSeeHtml('alt="Move-out"');
 });
 
 it('treats a lease as one hand-over with no move-out', function (): void {
@@ -484,4 +486,126 @@ it('renders the PDF and the sign page from one document, move-out photo included
     } finally {
         @unlink($absolute);
     }
+});
+
+it('saves an item photo on the web tab straight away, upright and scaled down', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+
+    $tab = Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
+        ->set('newImages.0', UploadedFile::fake()->image('fridge.png', 3000, 1500))
+        ->assertHasNoErrors()
+        ->assertDispatched('success');
+
+    $path = $this->fridge->fresh()->image_path;
+    expect($path)->toStartWith("rent-out-checklist/{$this->rentOut->id}/")->toEndWith('.jpg');
+    Storage::disk('public')->assertExists($path);
+    expect(getimagesizefromstring(Storage::disk('public')->get($path)))
+        ->{0}->toBe(2000)
+        ->{1}->toBe(1000);
+
+    $tab->call('removeLineImage', 0);
+    expect($this->fridge->fresh()->image_path)->toBeNull();
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('turns a rejected web upload into an error toast', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+
+    Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
+        ->set('newImages.0', UploadedFile::fake()->create('lease.pdf', 100, 'application/pdf'))
+        ->assertDispatched('error', fn ($name, $params) => str_contains($params[0]['message'], 'JPG, PNG, WEBP or HEIC'));
+
+    expect($this->fridge->fresh()->image_path)->toBeNull()
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
+
+it('accepts an iPhone HEIC photo and stores it as a JPEG', function (): void {
+    if (! class_exists(Imagick::class) || ! Imagick::queryFormats('HEIC')) {
+        $this->markTestSkipped('Imagick cannot write HEIC here.');
+    }
+
+    $heic = new Imagick();
+    $heic->newImage(800, 600, 'skyblue');
+    $heic->setImageFormat('heic');
+    try {
+        $blob = $heic->getImageBlob();
+    } catch (ImagickException) {
+        $this->markTestSkipped('No HEIC encoder installed.');
+    }
+
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+
+    Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
+        ->set('newMoveOutImages.0', UploadedFile::fake()->createWithContent('IMG_6855.heic', $blob))
+        ->assertDispatched('success');
+
+    $path = $this->fridge->fresh()->move_out_image_path;
+    expect($path)->toEndWith('.jpg')
+        ->and(getimagesizefromstring(Storage::disk('public')->get($path))['mime'])->toBe('image/jpeg');
+});
+
+it('saves and removes a fixture photo on a saved entry straight away', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+    $area = RentOutFixtureArea::create(['tenant_id' => $this->rentOut->tenant_id, 'rent_out_id' => $this->rentOut->id, 'category' => 'Kitchen', 'sort_order' => 1]);
+    $entry = RentOutFixtureEntry::create(['tenant_id' => $this->rentOut->tenant_id, 'rent_out_fixture_area_id' => $area->id, 'status' => 'pending', 'sort_order' => 1]);
+
+    $tab = Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id]);
+    $a = collect($tab->get('fixtureAreas'))->search(fn ($area) => $area['category'] === 'Kitchen');
+
+    $tab->set("newFixtureImages.{$a}.0.before", UploadedFile::fake()->image('before.jpg'))
+        ->assertDispatched('success');
+
+    $path = $entry->fresh()->before_image_path;
+    expect($path)->toStartWith("rent-out-fixtures/{$this->rentOut->id}/");
+    Storage::disk('public')->assertExists($path);
+
+    $tab->call('removeFixtureImage', $a, 0, 'before');
+    expect($entry->fresh()->before_image_path)->toBeNull();
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('walks the web tab room by room, marking a whole room at once', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+
+    $tab = Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
+        ->assertSet('room', 'Kitchen')
+        ->assertSet('phase', 'move_in')
+        ->assertSeeHtml('wire:click="setMoveOut(')
+        ->call('markRoom', 'Kitchen', 'move_in')
+        ->call('setMoveOut', 1, 'not_ok')
+        ->call('markRoom', 'Kitchen', 'move_out')
+        ->call('stepQty', 0, 1)
+        ->call('stepQty', 2, -5);
+
+    expect(collect($tab->get('lines'))->map(fn ($l) => [$l['move_in_status'], $l['move_out_status'], $l['qty']])->all())->toBe([
+        ['ok', 'ok', 2],
+        ['ok', 'not_ok', 1],
+        [null, null, 0],
+    ]);
+
+    $tab->call('setMoveOut', 1, 'not_ok');
+    expect($tab->get('lines')[1]['move_out_status'])->toBeNull();
+
+    // A hand-added area opens straight away; removing it falls back to the first room.
+    $tab->set('room', 'Living Room')
+        ->call('addFixtureArea', 'Balcony')
+        ->assertSet('room', 'Balcony')
+        ->call('removeFixtureArea', collect($tab->get('fixtureAreas'))->search(fn ($a) => $a['category'] === 'Balcony'))
+        ->assertSet('room', 'Kitchen');
+});
+
+it('works a lease as one hand-over phase on the web tab', function (): void {
+    $this->rentOut->update(['agreement_type' => 'lease']);
+    $this->actingAs($this->me);
+
+    Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id])
+        ->set('phase', 'move_out')
+        ->assertSet('phase', 'move_in')
+        ->assertDontSeeHtml('wire:click="setMoveOut(')
+        ->assertSee('Handover Terms');
 });

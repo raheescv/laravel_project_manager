@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist Tab Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- harness (stands in for the app's Bootstrap theme tokens) ---------- */
+:root{
+  --bs-primary:#2563eb; --bs-body-bg:#ffffff; --bs-body-color:#1f2733; --bs-secondary-color:#6b7480;
+  --bs-tertiary-bg:#f5f7fa; --bs-border-color:#e3e7ec; --page:#eef1f5;
+  --bs-success:#16a34a; --bs-danger:#dc2626; --bs-warning:#d97706;
+}
+[data-bs-theme="dark"]{
+  --bs-body-bg:#1a1f27; --bs-body-color:#e5e9ef; --bs-secondary-color:#929bab;
+  --bs-tertiary-bg:#222833; --bs-border-color:#2f3642; --page:#11151b;
+  --bs-success:#22c55e; --bs-danger:#f87171; --bs-warning:#fbbf24;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--bs-body-color);font:14px/1.5 Poppins,system-ui,sans-serif;transition:background .2s,color .2s}
+button,input,select,textarea{font:inherit;color:inherit}
+.bar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:.6rem 1rem;
+  background:var(--bs-body-bg);border-bottom:1px solid var(--bs-border-color)}
+.bar h1{font-size:.9rem;margin:0 .75rem 0 0;font-weight:700}
+.bar .sp{flex:1}
+.hb{border:1px solid var(--bs-border-color);background:var(--bs-body-bg);border-radius:8px;padding:.35rem .75rem;font-size:.78rem;cursor:pointer}
+.hb.on{background:var(--bs-primary);border-color:var(--bs-primary);color:#fff}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--bs-body-bg);box-shadow:0 0 0 1px var(--bs-border-color);cursor:pointer}
+.frame{margin:1rem auto 4rem;padding:0 1rem;transition:max-width .25s}
+.frame.w-desk{max-width:1280px}.frame.w-tab{max-width:834px}.frame.w-phone{max-width:400px}
+.note{font-size:.8rem;color:var(--bs-secondary-color);margin:.25rem 0 .85rem}
+.note b{color:var(--bs-body-color)}
+.tabcard{background:var(--bs-body-bg);border:1px solid var(--bs-border-color);border-radius:14px;overflow:hidden}
+.tabnav{display:flex;gap:1.25rem;padding:0 1rem;border-bottom:1px solid var(--bs-border-color);font-size:.8rem;color:var(--bs-secondary-color);overflow:auto}
+.tabnav span{padding:.7rem 0;white-space:nowrap}.tabnav .on{color:var(--bs-primary);border-bottom:2px solid var(--bs-primary);font-weight:600}
+.tabbody{padding:1rem}
+
+/* ================= .clx — shared design system for all three directions ================= */
+.clx{
+  --brand:var(--bs-primary);
+  --brand-soft:color-mix(in srgb,var(--brand) 10%,transparent);
+  --brand-line:color-mix(in srgb,var(--brand) 28%,var(--bs-border-color));
+  --ok:var(--bs-success);--ok-soft:color-mix(in srgb,var(--ok) 13%,transparent);
+  --no:var(--bs-danger);--no-soft:color-mix(in srgb,var(--no) 12%,transparent);
+  --warn:var(--bs-warning);--warn-soft:color-mix(in srgb,var(--warn) 14%,transparent);
+  --line:var(--bs-border-color);--muted:var(--bs-secondary-color);--soft:var(--bs-tertiary-bg);--card:var(--bs-body-bg);
+  --r:14px;--tap:44px;
+}
+.clx *{-webkit-tap-highlight-color:transparent}
+.clx .lbl{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+
+/* hero: phase switch + progress + signatures */
+.clx-hero{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;padding:1rem 1.1rem;border-radius:var(--r);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 9%,var(--card)),var(--card) 70%);border:1px solid var(--brand-line);margin-bottom:.9rem}
+.clx-hero h3{margin:0;font-size:1.05rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.clx-hero .meta{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.clx-actions{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
+.clx-btn{min-height:40px;padding:0 .9rem;border-radius:10px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;font-weight:500;cursor:pointer;white-space:nowrap}
+.clx-btn:hover{border-color:var(--brand);color:var(--brand)}
+.clx-btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.clx-btn.pri:hover{filter:brightness(1.07);color:#fff}
+.clx-btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+
+.clx-seg{display:inline-flex;padding:4px;border-radius:12px;background:var(--soft);border:1px solid var(--line);gap:2px}
+.clx-seg button{min-height:38px;padding:0 1rem;border:0;border-radius:9px;background:transparent;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:.45rem}
+.clx-seg button.on{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.08),0 0 0 1px var(--brand-line)}
+.clx-seg .n{font-size:.7rem;background:var(--brand-soft);color:var(--brand);border-radius:20px;padding:0 .45rem}
+
+.clx-phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.7rem;margin-bottom:.9rem}
+.clx-phase{border:1px solid var(--line);border-radius:var(--r);padding:.85rem .95rem;background:var(--card)}
+.clx-phase .top{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.55rem}
+.clx-phase .t{font-weight:600;font-size:.85rem;display:flex;gap:.45rem;align-items:center}
+.clx-pill{border-radius:20px;padding:.15rem .6rem;font-size:.7rem;font-weight:600;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap}
+.clx-pill.ok{background:var(--ok-soft);color:var(--ok)}.clx-pill.warn{background:var(--warn-soft);color:var(--warn)}
+.clx-pill.mut{background:var(--soft);color:var(--muted);border:1px solid var(--line)}.clx-pill.no{background:var(--no-soft);color:var(--no)}
+.clx-meter{height:6px;border-radius:6px;background:var(--soft);overflow:hidden;margin:.15rem 0 .65rem}
+.clx-meter i{display:block;height:100%;background:var(--ok);border-radius:6px}
+.clx-sigs{display:flex;gap:.4rem;flex-wrap:wrap}
+.clx-sig{display:flex;align-items:center;gap:.45rem;padding:.3rem .6rem .3rem .3rem;border-radius:30px;border:1px solid var(--line);font-size:.74rem}
+.clx-sig .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.7rem;background:var(--soft);color:var(--muted)}
+.clx-sig.on{border-color:color-mix(in srgb,var(--ok) 35%,var(--line))}.clx-sig.on .av{background:var(--ok);color:#fff}
+
+.clx-people{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.9rem}
+.clx-field{display:flex;flex-direction:column;gap:.25rem}
+.clx-in{min-height:var(--tap);border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0 .75rem;font-size:.85rem;width:100%}
+.clx-in:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+textarea.clx-in{padding:.6rem .75rem;min-height:64px;resize:vertical}
+
+/* status controls — big, thumb-sized */
+.clx-tick{width:var(--tap);height:var(--tap);border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:color-mix(in srgb,var(--muted) 50%,transparent);display:grid;place-items:center;font-size:16px;cursor:pointer;transition:.15s;flex:none}
+.clx-tick.on{background:var(--ok);border-color:var(--ok);color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--ok) 30%,transparent)}
+.clx-tri{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;flex:none}
+.clx-tri button{min-width:var(--tap);height:var(--tap);border:0;background:var(--card);color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:0 .7rem}
+.clx-tri button+button{border-left:1px solid var(--line)}
+.clx-tri button.g.on{background:var(--ok);color:#fff}.clx-tri button.d.on{background:var(--no);color:#fff}
+
+/* photo tile with upload progress */
+.clx-photo{position:relative;width:72px;height:72px;border-radius:12px;overflow:hidden;flex:none;border:1.5px dashed var(--line);background:var(--soft);display:grid;place-items:center;color:var(--muted);cursor:pointer}
+.clx-photo.has{border-style:solid;border-color:var(--line)}
+.clx-photo img{width:100%;height:100%;object-fit:cover}
+.clx-photo .cap{position:absolute;inset:auto 4px 4px auto;width:26px;height:26px;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:12px}
+.clx-photo .m{position:absolute;top:4px;left:4px;font-size:9px;font-weight:700;background:rgba(0,0,0,.55);color:#fff;border-radius:5px;padding:0 4px}
+.clx-photo .empty{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:600}
+.clx-photo .empty i{font-size:18px}
+.clx-photo .prog{position:absolute;inset:0;background:color-mix(in srgb,var(--card) 70%,transparent);display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--brand)}
+.clx-photo .prog::after{content:"";position:absolute;left:6px;right:6px;bottom:6px;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--brand) var(--p),var(--line) var(--p))}
+.clx-photo.lg{width:100%;height:auto;aspect-ratio:4/3}
+
+.clx-qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;height:36px}
+.clx-qty button{width:32px;height:100%;border:0;background:var(--soft);cursor:pointer;color:var(--muted)}
+.clx-qty span{min-width:30px;text-align:center;font-weight:600;font-size:.82rem}
+.clx-x{width:36px;height:36px;border-radius:10px;border:0;background:transparent;color:color-mix(in srgb,var(--muted) 70%,transparent);cursor:pointer;flex:none}
+.clx-x:hover{background:var(--no-soft);color:var(--no)}
+
+/* rooms rail */
+.clx-rooms{display:flex;gap:.5rem;overflow-x:auto;padding:.1rem .1rem .6rem;margin-bottom:.4rem;scrollbar-width:thin}
+.clx-room{flex:none;display:flex;align-items:center;gap:.55rem;min-height:48px;padding:.35rem .85rem .35rem .4rem;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:.8rem;font-weight:600}
+.clx-room.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.ring{--v:0;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:.62rem;font-weight:700;color:var(--bs-body-color);
+  background:radial-gradient(closest-side,var(--card) 76%,transparent 78%),conic-gradient(var(--ok) calc(var(--v)*1%),var(--line) 0)}
+
+/* sticky save dock */
+.clx-dock{position:sticky;bottom:0;z-index:5;margin:1rem -1rem -1rem;padding:.7rem 1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+  background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.clx-dock .sum{font-size:.8rem;color:var(--muted);display:flex;gap:1rem;flex-wrap:wrap}
+.clx-dock .sum b{color:var(--bs-body-color)}.clx-dock .sp{flex:1}
+.clx-dirty{display:inline-flex;align-items:center;gap:.35rem;color:var(--warn);font-weight:600;font-size:.76rem}
+.clx-dirty::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--warn)}
+
+/* fixture comments */
+.clx-fx{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:.7rem}
+.clx-fx-h{display:flex;align-items:center;gap:.5rem;padding:.6rem .85rem;background:var(--soft);border-bottom:1px solid var(--line);font-size:.8rem;font-weight:600;flex-wrap:wrap}
+.clx-fx-h .ar{font-weight:400;color:var(--muted)}.clx-fx-h .sp{flex:1}
+.clx-fx-e{display:grid;grid-template-columns:auto auto 1fr 170px;gap:.75rem;padding:.8rem .85rem;align-items:start;border-bottom:1px solid var(--line)}
+.clx-fx-e:last-of-type{border-bottom:0}
+.clx-fx-f{display:flex;gap:.5rem;padding:.55rem .85rem;align-items:center;font-size:.76rem;color:var(--muted);flex-wrap:wrap}
+.clx-status{display:flex;flex-direction:column;gap:.35rem}
+.clx-chips{display:flex;gap:.3rem;flex-wrap:wrap}
+.clx-chip{min-height:34px;padding:0 .7rem;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:.72rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.clx-chip.on.pend{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.clx-chip.on.prog{background:var(--brand-soft);border-color:transparent;color:var(--brand)}
+.clx-chip.on.done{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+
+/* ---------------- A · Room Cards ---------------- */
+.dA .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:.7rem}
+.dA .card{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:.8rem;display:flex;flex-direction:column;gap:.7rem;transition:.15s}
+.dA .card.done{border-color:color-mix(in srgb,var(--ok) 35%,var(--line))}
+.dA .card.bad{border-color:color-mix(in srgb,var(--no) 45%,var(--line));background:linear-gradient(var(--no-soft),var(--card) 40%)}
+.dA .row1{display:flex;gap:.75rem;align-items:flex-start}
+.dA .nm{font-weight:600;font-size:.88rem;line-height:1.3}
+.dA .sub{display:flex;gap:.5rem;align-items:center;margin-top:.4rem}
+.dA .row2{display:flex;gap:.6rem;align-items:center}
+.dA .row2 .clx-in{min-height:40px;font-size:.8rem}
+.dA .room-h{display:flex;align-items:center;gap:.6rem;margin:1.1rem 0 .55rem;font-weight:700;font-size:.9rem}
+.dA .room-h .sp{flex:1}
+
+/* ---------------- B · Inspection Sheet ---------------- */
+.dB .sheet{border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dB .hd,.dB .ln{display:grid;grid-template-columns:28px 76px minmax(160px,1.3fr) 92px minmax(150px,1fr) var(--extra,0px) 40px;gap:.75rem;align-items:center;padding:.55rem .85rem}
+.dB.mo .hd,.dB.mo .ln{--extra:110px}
+.dB .hd{background:var(--soft);border-bottom:1px solid var(--line)}
+.dB .cat{display:flex;align-items:center;gap:.6rem;padding:.55rem .85rem;background:color-mix(in srgb,var(--brand) 6%,var(--card));border-bottom:1px solid var(--line);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0}
+.dB .cat .sp{flex:1}.dB .cat button{text-transform:none;letter-spacing:0}
+.dB .ln{border-bottom:1px solid var(--line);min-height:76px}
+.dB .ln:hover{background:color-mix(in srgb,var(--brand) 3%,transparent)}
+.dB .ln.bad{box-shadow:inset 3px 0 0 var(--no)}
+.dB .nm{font-weight:600;font-size:.86rem}.dB .nm small{display:block;font-weight:400;color:var(--muted);font-size:.72rem;margin-top:.15rem}
+.dB .cb{width:20px;height:20px;accent-color:var(--brand)}
+.dB .sel{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.55rem .85rem;background:var(--brand-soft);border-radius:12px;margin-bottom:.6rem;font-size:.8rem}
+.dB .ln .clx-in{min-height:40px;font-size:.8rem}
+
+/* ---------------- C · Walkthrough Split ---------------- */
+.dC .split{display:grid;grid-template-columns:230px 1fr;gap:1rem;align-items:start}
+.dC .nav{position:sticky;top:64px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.dC .nav .r{display:flex;align-items:center;gap:.6rem;padding:.6rem .7rem;min-height:56px;border-bottom:1px solid var(--line);cursor:pointer;font-size:.82rem;font-weight:600}
+.dC .nav .r:last-child{border-bottom:0}
+.dC .nav .r.on{background:var(--brand-soft);color:var(--brand);box-shadow:inset 3px 0 0 var(--brand)}
+.dC .nav .r small{display:block;font-weight:400;color:var(--muted);font-size:.7rem}
+.dC .nav .r .tail{margin-left:auto}
+.dC .pane-h{display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem;flex-wrap:wrap}
+.dC .pane-h h4{margin:0;font-size:1rem;font-weight:700}.dC .pane-h .sp{flex:1}
+.dC .it{display:grid;grid-template-columns:88px 1fr;gap:.85rem;padding:.8rem;border:1px solid var(--line);border-radius:var(--r);margin-bottom:.6rem;background:var(--card)}
+.dC .it.bad{border-color:color-mix(in srgb,var(--no) 45%,var(--line))}
+.dC .it .clx-photo{width:88px;height:88px}
+.dC .it .top{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+.dC .it .nm{font-weight:600;font-size:.9rem}
+.dC .it .ctl{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.55rem}
+.dC .it .ctl .clx-in{flex:1;min-width:160px;min-height:42px;font-size:.8rem}
+.dC .roomsel{display:none}
+
+/* ---------------- responsive: tablet + phone ---------------- */
+.w-tab .clx-people,.w-phone .clx-people{grid-template-columns:1fr 1fr}
+.w-tab .dB .hd{display:none}
+.w-tab .dB .ln,.w-phone .dB .ln{grid-template-columns:28px 76px 1fr auto;grid-template-areas:"c p n s" "c p m m" ". . x x"}
+.w-tab .dB .ln>*:nth-child(1),.w-phone .dB .ln>*:nth-child(1){grid-area:c}
+.w-tab .dB .ln>*:nth-child(2),.w-phone .dB .ln>*:nth-child(2){grid-area:p}
+.w-tab .dB .ln>*:nth-child(3),.w-phone .dB .ln>*:nth-child(3){grid-area:n}
+.w-tab .dB .ln>*:nth-child(4),.w-phone .dB .ln>*:nth-child(4){grid-area:s;justify-self:end}
+.w-tab .dB .ln>*:nth-child(5),.w-phone .dB .ln>*:nth-child(5){grid-area:m}
+.w-tab .dB .ln>*:nth-child(6),.w-phone .dB .ln>*:nth-child(6){grid-area:x}
+.w-tab .dB .ln>*:nth-child(7),.w-phone .dB .ln>*:nth-child(7){display:none}
+.w-phone .dB .hd{display:none}
+.w-tab .dC .split{grid-template-columns:190px 1fr}
+.w-phone .dC .split{grid-template-columns:1fr}.w-phone .dC .nav{display:none}.w-phone .dC .roomsel{display:flex}
+.w-phone .clx-hero{grid-template-columns:1fr}.w-phone .clx-actions{justify-content:flex-start}
+.w-phone .clx-people{grid-template-columns:1fr}
+.w-phone .dA .grid{grid-template-columns:1fr}
+.w-tab .clx-fx-e,.w-phone .clx-fx-e{grid-template-columns:auto auto 1fr}
+.w-tab .clx-fx-e .clx-status,.w-phone .clx-fx-e .clx-status{grid-column:1/-1}
+.w-phone .clx-fx-e{grid-template-columns:1fr 1fr}.w-phone .clx-fx-e .cm{grid-column:1/-1}
+.w-phone .clx-fx-e .clx-photo{width:100%;height:auto;aspect-ratio:4/3}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1><i class="fa fa-check-square-o"></i> Checklist tab</h1>
+  <button class="hb dir on" data-d="A">A · Room Cards</button>
+  <button class="hb dir" data-d="B">B · Inspection Sheet</button>
+  <button class="hb dir" data-d="C">C · Walkthrough Split</button>
+  <span class="sp"></span>
+  <button class="hb wid" data-w="desk"><i class="fa fa-desktop"></i> Desktop</button>
+  <button class="hb wid on" data-w="tab"><i class="fa fa-tablet"></i> iPad</button>
+  <button class="hb wid" data-w="phone"><i class="fa fa-mobile"></i> Phone</button>
+  <button class="hb" id="agr">Rental</button>
+  <span class="sw" style="background:#2563eb" data-c="#2563eb"></span>
+  <span class="sw" style="background:#0f766e" data-c="#0f766e"></span>
+  <span class="sw" style="background:#9a3412" data-c="#9a3412"></span>
+  <button class="hb" id="theme"><i class="fa fa-moon-o"></i></button>
+</div>
+
+<div class="frame w-tab" id="frame">
+  <p class="note" id="note"></p>
+  <div class="tabcard">
+    <div class="tabnav"><span>Overview</span><span>Payments</span><span>Documents</span><span class="on">Checklist</span><span>Complaints</span><span>Audit</span></div>
+    <div class="tabbody"><div class="clx" id="app"></div></div>
+  </div>
+</div>
+
+<script>
+const IMG = s => `https://picsum.photos/seed/${s}/240/240`;
+const S = {
+  dir:'A', rental:true, phase:'in', room:0, dirty:false, uploading:null,
+  rooms:[
+    {name:'Kitchen', items:[
+      {n:'Refrigerator — Samsung double door',q:1,img:IMG('fridge'),own:true,in:true,inC:'Working, light scratch on left door',out:'ok',outC:'',dmg:0,outImg:IMG('fridge2')},
+      {n:'Cooker hood',q:1,img:IMG('hood'),own:false,in:true,inC:'',out:'not_ok',outC:'Filter missing, grease build-up',dmg:150,outImg:null},
+      {n:'Dining chairs',q:6,img:null,in:false,inC:'',out:null,outC:'',dmg:0,outImg:null},
+      {n:'Microwave oven',q:1,img:IMG('micro'),own:false,in:true,inC:'',out:null,outC:'',dmg:0,outImg:null},
+    ], fx:[{b:IMG('tiles'),a:null,c:'Two splashback tiles loose behind the sink',s:'prog',d:''}]},
+    {name:'Living Room', items:[
+      {n:'Three-seat sofa (grey fabric)',q:1,img:IMG('sofa'),own:true,in:true,inC:'',out:'ok',outC:'',dmg:0,outImg:null},
+      {n:'Coffee table',q:1,img:IMG('table'),own:false,in:true,inC:'',out:null,outC:'',dmg:0,outImg:null},
+      {n:'Curtains with rail',q:2,img:null,in:false,inC:'',out:null,outC:'',dmg:0,outImg:null},
+    ], fx:[]},
+    {name:'Master Bedroom', items:[
+      {n:'King bed with mattress',q:1,img:IMG('bed'),own:false,in:false,inC:'',out:null,outC:'',dmg:0,outImg:null},
+      {n:'Wardrobe — 4 door',q:1,img:null,in:false,inC:'',out:null,outC:'',dmg:0,outImg:null},
+    ], fx:[]},
+  ],
+};
+const NOTES = {
+  A:'<b>A · Room Cards</b> — a room rail with progress rings on top, each item is a touch card (big photo, stepper, one-tap status). Phase switch shows only Move-In <i>or</i> Move-Out controls, so nothing scrolls sideways on an iPad.',
+  B:'<b>B · Inspection Sheet</b> — keeps the familiar table on desktop (taller rows, bigger targets, sticky room headers with "all good"), and folds each row into a two-line card on iPad. Closest to today\'s screen.',
+  C:'<b>C · Walkthrough Split</b> — walk the unit room by room: rooms list on the left (counts + progress), the chosen room\'s items on the right, Fixture Comments under them. Best for a technician standing in the room.',
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const all = () => S.rooms.flatMap(r => r.items);
+const checked = (items, ph) => items.filter(i => ph === 'in' ? i.in : i.out).length;
+const pct = (items, ph = S.phase) => items.length ? Math.round(checked(items, ph) / items.length * 100) : 0;
+const damage = () => all().reduce((t, i) => t + (+i.dmg || 0), 0);
+
+function photo(src, key, opts = {}) {
+  const up = S.uploading === key;
+  return `<label class="clx-photo ${src ? 'has' : ''} ${opts.lg ? 'lg' : ''}" data-up="${key}" title="${src ? 'Tap to replace' : 'Tap to take a photo'}">
+    ${src ? `<img src="${src}" alt="">${opts.master ? '<span class="m">MASTER</span>' : ''}<span class="cap"><i class="fa fa-camera"></i></span>`
+          : `<span class="empty"><i class="fa fa-camera"></i>${opts.label || 'Photo'}</span>`}
+    ${up ? `<span class="prog" style="--p:${S.p}%">${S.p}%</span>` : ''}
+  </label>`;
+}
+function status(it, ri, ii) {
+  if (S.phase === 'in') return `<button class="clx-tick ${it.in ? 'on' : ''}" data-act="in" data-r="${ri}" data-i="${ii}" title="Present"><i class="fa fa-check"></i></button>`;
+  return `<span class="clx-tri"><button class="g ${it.out === 'ok' ? 'on' : ''}" data-act="out" data-v="ok" data-r="${ri}" data-i="${ii}"><i class="fa fa-check"></i> Good</button><button class="d ${it.out === 'not_ok' ? 'on' : ''}" data-act="out" data-v="not_ok" data-r="${ri}" data-i="${ii}"><i class="fa fa-times"></i> Damaged</button></span>`;
+}
+const cmt = (it, ri, ii) => `<input class="clx-in" placeholder="${S.phase === 'in' ? 'Move-in comment…' : 'Move-out comment…'}" value="${esc(S.phase === 'in' ? it.inC : it.outC)}" data-cm="${ri}.${ii}">`;
+const qty = it => `<span class="clx-qty"><button><i class="fa fa-minus"></i></button><span>${it.q}</span><button><i class="fa fa-plus"></i></button></span>`;
+const dmg = it => S.phase === 'out' && S.rental ? `<input class="clx-in" style="max-width:110px;text-align:right;${it.dmg ? 'color:var(--no);font-weight:600' : ''}" value="${it.dmg ? it.dmg.toFixed(2) : ''}" placeholder="Damage 0.00">` : '';
+const itemPhoto = (it, ri, ii) => S.phase === 'in' ? photo(it.img, `i${ri}.${ii}`, {master: it.img && !it.own}) : photo(it.outImg, `o${ri}.${ii}`, {label: 'Move-out'});
+
+function hero() {
+  const items = all();
+  const phases = S.rental ? [['in', 'Move-In'], ['out', 'Move-Out']] : [['in', 'Hand-over']];
+  return `
+  <div class="clx-hero">
+    <div>
+      <h3><i class="fa fa-check-square-o" style="color:var(--brand)"></i> Hand-over checklist</h3>
+      <div class="meta">Unit 1204 · Porto Arabia · ${items.length} items in ${S.rooms.length} rooms${S.rental ? ` · Damage <b style="color:var(--no)">QAR ${damage().toFixed(2)}</b>` : ''}</div>
+      ${S.rental ? `<div class="clx-seg" style="margin-top:.7rem">${phases.map(([k, l]) => `<button class="${S.phase === k ? 'on' : ''}" data-phase="${k}"><i class="fa ${k === 'in' ? 'fa-sign-in' : 'fa-sign-out'}"></i>${l}<span class="n">${checked(items, k)}/${items.length}</span></button>`).join('')}</div>` : ''}
+    </div>
+    <div class="clx-actions">
+      <button class="clx-btn"><i class="fa fa-file-pdf-o"></i> PDF</button>
+      <button class="clx-btn"><i class="fa fa-pencil-square-o"></i> Sign hand-over</button>
+      <button class="clx-btn pri"><i class="fa fa-plus"></i> Add items</button>
+    </div>
+  </div>
+  <div class="clx-phases">${phases.map(([k, l]) => {
+    const signed = k === 'in' ? 3 : 1, p = pct(items, k);
+    return `<div class="clx-phase"><div class="top"><span class="t"><i class="fa fa-key" style="color:var(--brand)"></i>${S.rental ? l + ' hand-over' : 'Hand-over'}</span>
+      ${k === 'in' ? '<span class="clx-pill warn"><i class="fa fa-unlock"></i> Ready to seal</span>' : `<span class="clx-pill mut">${signed}/3 signed</span>`}</div>
+      <div style="display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted)"><span>Items checked</span><b style="color:var(--bs-body-color)">${checked(items, k)}/${items.length}</b></div>
+      <div class="clx-meter"><i style="width:${p}%"></i></div>
+      <div class="clx-sigs">${['Facility coord.', 'Lessee', 'Leasing coord.'].map((r, i) => `<span class="clx-sig ${i < signed ? 'on' : ''}"><span class="av"><i class="fa ${i < signed ? 'fa-check' : 'fa-pencil'}"></i></span>${r}</span>`).join('')}</div>
+      ${k === 'in' ? '<div style="margin-top:.7rem;display:flex;justify-content:flex-end"><button class="clx-btn ok"><i class="fa fa-lock"></i> Seal move-in</button></div>' : ''}
+    </div>`;
+  }).join('')}</div>
+  <div class="clx-people">
+    <div class="clx-field"><span class="lbl">${S.rental ? 'Actual move-in' : 'Inspection date'}</span><input class="clx-in" type="date" value="2026-10-01"></div>
+    <div class="clx-field"><span class="lbl">${S.rental ? 'Actual move-out' : 'Hand-over date'}</span><input class="clx-in" type="date"></div>
+    <div class="clx-field"><span class="lbl">Facility coordinator</span><select class="clx-in"><option>Rahees C V</option></select></div>
+    <div class="clx-field"><span class="lbl">Leasing coordinator</span><select class="clx-in"><option>Sara Mathew</option></select></div>
+  </div>`;
+}
+function fixtures(room, ri) {
+  const chip = (e, k, l) => `<button class="clx-chip ${e.s === k ? 'on ' + k : ''}">${l}</button>`;
+  return `<div class="clx-fx"><div class="clx-fx-h"><i class="fa fa-wrench" style="color:var(--brand)"></i>Fixture comments — ${esc(room.name)} <span class="ar">ملاحظات التشطيبات</span><span class="sp"></span>
+    ${room.fx.length ? `<span class="clx-pill warn">${room.fx.length} open</span>` : ''}</div>
+    ${room.fx.map((e, ei) => `<div class="clx-fx-e">${photo(e.b, `fb${ri}.${ei}`, {label: 'Before'})}${photo(e.a, `fa${ri}.${ei}`, {label: 'After'})}
+      <div class="cm"><textarea class="clx-in" placeholder="What needs fixing…">${esc(e.c)}</textarea></div>
+      <div class="clx-status"><span class="lbl">Status</span><div class="clx-chips">${chip(e, 'pend', 'Pending')}${chip(e, 'prog', 'In progress')}${chip(e, 'done', 'Completed')}</div><input class="clx-in" type="date" style="min-height:38px;font-size:.78rem"></div></div>`).join('')}
+    <div class="clx-fx-f"><button class="clx-btn" style="min-height:36px"><i class="fa fa-plus"></i> Add entry</button><span class="sp" style="flex:1"></span>Owner signs this area on the hand-over page</div></div>`;
+}
+function dock() {
+  const items = all();
+  return `<div class="clx-dock"><div class="sum"><span><b>${checked(items, S.phase)}/${items.length}</b> ${S.phase === 'in' ? 'present' : 'inspected'}</span>${S.rental ? `<span>Damage <b style="color:var(--no)">QAR ${damage().toFixed(2)}</b></span>` : ''}</div>
+    ${S.dirty ? '<span class="clx-dirty">Unsaved changes</span>' : '<span class="clx-pill ok"><i class="fa fa-check"></i> Photos save instantly</span>'}<span class="sp"></span>
+    <button class="clx-btn pri" style="min-height:44px;padding:0 1.3rem"><i class="fa fa-floppy-o"></i> Save checklist</button></div>`;
+}
+function remarks() {
+  return `<div class="clx-field" style="margin-top:1rem"><span class="lbl">${S.phase === 'in' ? 'Move-in' : 'Move-out'} remarks</span><textarea class="clx-in" placeholder="Remarks…"></textarea></div>`;
+}
+
+/* A · Room Cards */
+function viewA() {
+  const rooms = S.rooms.map((r, ri) => `
+    <div class="room-h" id="room${ri}"><i class="fa fa-folder-open-o" style="color:var(--brand)"></i>${esc(r.name)}<span class="clx-pill mut">${r.items.length}</span><span class="sp"></span>
+      <button class="clx-btn" style="min-height:36px" data-all="${ri}"><i class="fa fa-check-circle-o"></i> All ${S.phase === 'in' ? 'present' : 'good'}</button></div>
+    <div class="grid">${r.items.map((it, ii) => `
+      <div class="card ${S.phase === 'out' && it.out === 'not_ok' ? 'bad' : (S.phase === 'in' ? it.in : it.out) ? 'done' : ''}">
+        <div class="row1">${itemPhoto(it, ri, ii)}
+          <div style="flex:1;min-width:0"><div class="nm">${esc(it.n)}</div><div class="sub">${qty(it)}</div></div>
+          <button class="clx-x" title="Remove"><i class="fa fa-trash-o"></i></button></div>
+        <div class="row2">${status(it, ri, ii)}${cmt(it, ri, ii)}${dmg(it)}</div>
+      </div>`).join('')}</div>${fixtures(r, ri)}`).join('');
+  const rail = `<div class="clx-rooms">${S.rooms.map((r, ri) => `<a class="clx-room ${ri === S.room ? 'on' : ''}" data-room="${ri}" href="#room${ri}"><span class="ring" style="--v:${pct(r.items)}">${pct(r.items)}%</span>${esc(r.name)}</a>`).join('')}
+    <span class="clx-room" style="border-style:dashed;color:var(--muted)"><i class="fa fa-plus-circle"></i> Add area</span></div>`;
+  return `<div class="dA">${hero()}${rail}${rooms}${remarks()}${dock()}</div>`;
+}
+
+/* B · Inspection Sheet */
+function viewB() {
+  const head = `<div class="hd lbl"><span><input type="checkbox" class="cb"></span><span>Photo</span><span>Item</span><span style="text-align:center">${S.phase === 'in' ? 'Present' : 'Condition'}</span><span>Comments</span>${S.phase === 'out' ? '<span style="text-align:right">Damage</span>' : '<span></span>'}<span></span></div>`;
+  const body = S.rooms.map((r, ri) => `<div class="cat"><i class="fa fa-folder-open-o" style="color:var(--brand)"></i>${esc(r.name)}<span class="clx-pill mut">${checked(r.items, S.phase)}/${r.items.length}</span><span class="sp"></span><button class="clx-btn" style="min-height:32px;font-size:.72rem" data-all="${ri}"><i class="fa fa-check-circle-o"></i> All ${S.phase === 'in' ? 'present' : 'good'}</button></div>
+    ${r.items.map((it, ii) => `<div class="ln ${S.phase === 'out' && it.out === 'not_ok' ? 'bad' : ''}"><span><input type="checkbox" class="cb" ${ri === 0 && ii < 2 ? 'checked' : ''}></span>${itemPhoto(it, ri, ii)}
+      <span class="nm">${esc(it.n)}<small>Qty ${it.q}</small></span><span style="display:flex;justify-content:center">${status(it, ri, ii)}</span>${cmt(it, ri, ii)}<span>${dmg(it)}</span><button class="clx-x"><i class="fa fa-trash-o"></i></button></div>`).join('')}
+    <div style="padding:0 .85rem .85rem;border-bottom:1px solid var(--line)">${fixtures(r, ri)}</div>`).join('');
+  const sel = `<div class="sel"><b>2 selected</b><span style="color:var(--muted)">·</span><button class="clx-btn ok" style="min-height:36px"><i class="fa fa-check"></i> ${S.phase === 'in' ? 'Present' : 'Good'}</button>${S.phase === 'out' ? '<button class="clx-btn" style="min-height:36px;color:var(--no)"><i class="fa fa-times"></i> Damaged</button>' : ''}<button class="clx-btn" style="min-height:36px">Clear</button><span style="flex:1"></span><button class="clx-btn" style="min-height:36px;color:var(--no)"><i class="fa fa-trash-o"></i> Delete</button></div>`;
+  return `<div class="dB ${S.phase === 'out' ? 'mo' : ''}">${hero()}${sel}<div class="sheet">${head}${body}</div>${remarks()}${dock()}</div>`;
+}
+
+/* C · Walkthrough Split */
+function viewC() {
+  const r = S.rooms[S.room], ri = S.room;
+  const nav = `<div class="nav">${S.rooms.map((x, i) => `<div class="r ${i === S.room ? 'on' : ''}" data-room="${i}"><span class="ring" style="--v:${pct(x.items)}">${checked(x.items, S.phase)}</span><span>${esc(x.name)}<small>${x.items.length} items${x.fx.length ? ` · ${x.fx.length} fixture` : ''}</small></span><i class="fa fa-angle-right tail"></i></div>`).join('')}
+    <div class="r" style="color:var(--muted)"><i class="fa fa-plus-circle" style="width:36px;text-align:center"></i>Add area</div></div>`;
+  const sel = `<div class="roomsel" style="margin-bottom:.7rem"><select class="clx-in">${S.rooms.map((x, i) => `<option ${i === S.room ? 'selected' : ''}>${esc(x.name)} — ${checked(x.items, S.phase)}/${x.items.length}</option>`).join('')}</select></div>`;
+  const pane = `<div>${sel}<div class="pane-h"><h4>${esc(r.name)}</h4><span class="clx-pill mut">${checked(r.items, S.phase)}/${r.items.length} ${S.phase === 'in' ? 'present' : 'inspected'}</span><span class="sp"></span>
+      <button class="clx-btn" data-all="${ri}"><i class="fa fa-check-circle-o"></i> All ${S.phase === 'in' ? 'present' : 'good'}</button></div>
+    ${r.items.map((it, ii) => `<div class="it ${S.phase === 'out' && it.out === 'not_ok' ? 'bad' : ''}">${itemPhoto(it, ri, ii)}
+      <div><div class="top"><span class="nm">${esc(it.n)}</span><span style="display:flex;gap:.4rem;align-items:center">${qty(it)}<button class="clx-x"><i class="fa fa-trash-o"></i></button></span></div>
+      <div class="ctl">${status(it, ri, ii)}${cmt(it, ri, ii)}${dmg(it)}</div></div></div>`).join('')}
+    ${fixtures(r, ri)}
+    <div style="display:flex;justify-content:space-between;margin-top:.9rem">
+      <button class="clx-btn" data-room="${Math.max(0, ri - 1)}" ${ri === 0 ? 'disabled style="opacity:.4"' : ''}><i class="fa fa-arrow-left"></i> Previous room</button>
+      <button class="clx-btn pri" data-room="${Math.min(S.rooms.length - 1, ri + 1)}" ${ri === S.rooms.length - 1 ? 'disabled style="opacity:.4"' : ''}>Next room <i class="fa fa-arrow-right"></i></button></div></div>`;
+  return `<div class="dC">${hero()}<div class="split">${nav}${pane}</div>${remarks()}${dock()}</div>`;
+}
+
+function render() {
+  $('#app').innerHTML = ({A: viewA, B: viewB, C: viewC})[S.dir]();
+  $('#note').innerHTML = NOTES[S.dir] + ' Tap a photo tile to see the upload progress.';
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-d],[data-w],[data-c],[data-phase],[data-act],[data-room],[data-all],[data-up],#theme,#agr');
+  if (!t) return;
+  if (t.dataset.d) { S.dir = t.dataset.d; document.querySelectorAll('.dir').forEach(b => b.classList.toggle('on', b === t)); S.room = 0; }
+  else if (t.dataset.w) { $('#frame').className = 'frame w-' + t.dataset.w; document.querySelectorAll('.wid').forEach(b => b.classList.toggle('on', b === t)); }
+  else if (t.dataset.c) { document.documentElement.style.setProperty('--bs-primary', t.dataset.c); }
+  else if (t.id === 'theme') { const d = document.documentElement; d.dataset.bsTheme = d.dataset.bsTheme === 'dark' ? 'light' : 'dark'; }
+  else if (t.id === 'agr') { S.rental = !S.rental; S.phase = 'in'; t.textContent = S.rental ? 'Rental' : 'Lease / Sale'; }
+  else if (t.dataset.phase) { S.phase = t.dataset.phase; }
+  else if (t.dataset.act) { const it = S.rooms[t.dataset.r].items[t.dataset.i]; if (t.dataset.act === 'in') it.in = !it.in; else it.out = it.out === t.dataset.v ? null : t.dataset.v; S.dirty = true; }
+  else if (t.dataset.all) { S.rooms[t.dataset.all].items.forEach(it => S.phase === 'in' ? it.in = true : (it.out = it.out || 'ok')); S.dirty = true; }
+  else if (t.dataset.room !== undefined && S.dir === 'C') { S.room = +t.dataset.room; }
+  else if (t.dataset.room !== undefined) { S.room = +t.dataset.room; }
+  else if (t.dataset.up) {
+    e.preventDefault(); if (S.uploading) return; S.uploading = t.dataset.up; S.p = 0;
+    const tick = setInterval(() => { S.p = Math.min(100, S.p + 9); render(); if (S.p >= 100) { clearInterval(tick); const [k, rest] = [S.uploading[0], S.uploading.replace(/^f?[a-z]/, '')]; const [ri, ii] = rest.split('.').map(Number);
+      const src = IMG('up' + Date.now()); if (k === 'i') Object.assign(S.rooms[ri].items[ii], {img: src, own: true}); else if (k === 'o') S.rooms[ri].items[ii].outImg = src;
+      else if (S.uploading.startsWith('fb')) S.rooms[ri].fx[ii].b = src; else if (S.uploading.startsWith('fa')) S.rooms[ri].fx[ii].a = src; S.uploading = null; render(); } }, 90);
+    return;
+  }
+  render();
+});
+document.addEventListener('input', () => { if (!S.dirty) { S.dirty = true; } });
+render();
+</script>
+</body>
+</html>

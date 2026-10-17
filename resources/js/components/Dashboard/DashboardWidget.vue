@@ -56,12 +56,13 @@ async function load({ quiet = false } = {}) {
 const loaded = () => payload.value !== null || loading.value || error.value
 const ensureLoaded = () => { if (seen && !props.item.collapsed && !loaded()) load() }
 
-/** Switch the header option. The current content stays (dimmed) until the new payload arrives, so a tall widget never collapses and jumps the page. */
+/** Switch the header option and remember it as this widget's default. The current content stays (dimmed) until the new payload arrives, so a tall widget never collapses and jumps the page. */
 function choose(value) {
     if (value === option.value) return
     option.value = value
     params.value = {}
     load({ quiet: true })
+    props.api.saveOption(props.def.key, value).catch(() => {})
 }
 
 function navigate(date) {

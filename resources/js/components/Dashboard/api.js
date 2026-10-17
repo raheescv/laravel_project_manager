@@ -25,5 +25,6 @@ export function dashboardApi(urls) {
     return {
         widget: (key, params, signal) => http.get(urls.widget.replace('__KEY__', key), { params, signal }).then(data),
         saveLayout: (layout) => http.put(urls.layout, { layout }).then(data),
+        saveOption: (key, option) => http.put(urls.option.replace('__KEY__', key), { option }).then(data),
     }
 }

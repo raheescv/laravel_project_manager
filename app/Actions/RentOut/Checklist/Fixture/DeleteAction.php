@@ -3,7 +3,7 @@
 namespace App\Actions\RentOut\Checklist\Fixture;
 
 use App\Models\RentOutFixtureEntry;
-use Illuminate\Support\Facades\Storage;
+use App\Support\ChecklistPhoto;
 
 /**
  * Remove one Fixture Comments entry along with its before/after photos, as the
@@ -16,11 +16,7 @@ class DeleteAction
         try {
             $entry = RentOutFixtureEntry::findOrFail($entryId);
 
-            foreach (['before_image_path', 'after_image_path'] as $column) {
-                if ($entry->{$column} && Storage::disk('public')->exists($entry->{$column})) {
-                    Storage::disk('public')->delete($entry->{$column});
-                }
-            }
+            ChecklistPhoto::delete($entry->before_image_path, $entry->after_image_path);
 
             $entry->delete();
 
