@@ -155,22 +155,20 @@
                 <tr class="cat"><td colspan="{{ $colCount }}">{{ $category ?: 'Others' }}</td></tr>
                 @foreach ($lines as $line)
                     @php $sn++; $img = $imgSrc($line); @endphp
-                    <tr>
-                        <td class="c">{{ $sn }}</td>
-                        <td class="c">{{ $line->qty }}</td>
-                        <td class="c">@if ($img)<img src="{{ $img }}" class="zoomable" data-img="{{ $img }}" style="width:30px; height:30px; object-fit:cover;" alt="">@endif</td>
-                        <td>{{ $line->item?->name }}</td>
-                        <td class="c">@if ($line->move_in_status?->value === 'ok')<span class="ok">✓</span>@endif</td>
-                        <td>{{ $line->move_in_comment }}</td>
+                    {{-- The it-* classes and data-label let the sign page fold a row into a
+                         card on a tablet or phone; the PDF ignores them. --}}
+                    <tr class="it-row">
+                        <td class="c it-sn">{{ $sn }}</td>
+                        <td class="c" data-label="Qty">{{ $line->qty }}</td>
+                        <td class="c it-img">@if ($img)<img src="{{ $img }}" class="zoomable" data-img="{{ $img }}" style="width:30px; height:30px; object-fit:cover;" alt="">@endif</td>
+                        <td class="it-name">{{ $line->item?->name }}</td>
+                        <td class="c" data-label="Move-In">@if ($line->move_in_status?->value === 'ok')<span class="ok">✓</span>@endif</td>
+                        <td data-label="{{ $showMoveOut ? 'Move-In Note' : 'Comments' }}">{{ $line->move_in_comment }}</td>
                         @if ($showMoveOut)
                             @php $outImg = $imageSrc($line->move_out_image_path); @endphp
-                            <td class="c">
-                                @if ($line->move_out_status?->value === 'ok')<span class="ok">✓</span>
-                                @elseif ($line->move_out_status?->value === 'not_ok')<span class="no">✗</span>@endif
-                                @if ($outImg)<img src="{{ $outImg }}" class="mo-img zoomable" data-img="{{ $outImg }}" alt="Move-out photo">@endif
-                            </td>
-                            <td>{{ $line->move_out_comment }}</td>
-                            <td class="r">{{ $line->damage_cost > 0 ? number_format((float) $line->damage_cost, 2) : '' }}</td>
+                            <td class="c" data-label="Move-Out">@if ($line->move_out_status?->value === 'ok')<span class="ok">✓</span>@elseif ($line->move_out_status?->value === 'not_ok')<span class="no">✗</span>@endif{{-- no gap: an unmarked, photo-less cell must stay :empty --}}@if ($outImg)<img src="{{ $outImg }}" class="mo-img zoomable" data-img="{{ $outImg }}" alt="Move-out photo">@endif</td>
+                            <td data-label="Move-Out Note">{{ $line->move_out_comment }}</td>
+                            <td class="r" data-label="Damage">{{ $line->damage_cost > 0 ? number_format((float) $line->damage_cost, 2) : '' }}</td>
                         @endif
                     </tr>
                 @endforeach

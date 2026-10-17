@@ -22,17 +22,17 @@
                     $after = $imageSrc($entry->after_image_path);
                     $status = $entry->status ?? \App\Enums\RentOut\FixtureStatus::Pending;
                 @endphp
-                <tr>
-                    <td class="c">{{ $n + 1 }}</td>
-                    <td class="c">
+                <tr class="fx-entry">
+                    <td class="c fx-n">{{ $n + 1 }}</td>
+                    <td class="c fx-photo" data-label="Before">
                         @if ($before)<img src="{{ $before }}" class="fx-img zoomable" data-img="{{ $before }}" alt="">@else<span class="fx-noimg">—</span>@endif
                     </td>
-                    <td class="c">
+                    <td class="c fx-photo" data-label="After">
                         @if ($after)<img src="{{ $after }}" class="fx-img zoomable" data-img="{{ $after }}" alt="">@else<span class="fx-noimg">—</span>@endif
                     </td>
-                    <td>{{ $entry->comments }}</td>
-                    <td class="c" style="color:{{ $status->printColor() }}; font-weight:bold;">{{ $status->label() }}</td>
-                    <td class="c">{{ $entry->completed_date?->format('d M Y') ?: '—' }}</td>
+                    <td class="fx-cmt" data-label="Comments">{{ $entry->comments }}</td>
+                    <td class="c" data-label="Status" style="color:{{ $status->printColor() }}; font-weight:bold;">{{ $status->label() }}</td>
+                    <td class="c" data-label="Completed">{{ $entry->completed_date?->format('d M Y') ?: '—' }}</td>
                 </tr>
             @endforeach
             <tr class="fx-sign">
