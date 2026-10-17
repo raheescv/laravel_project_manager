@@ -209,7 +209,7 @@
                                 </div>
                                 <div class="clx-item-body">
                                     <div class="clx-item-top">
-                                        <span class="clx-item-name">{{ $line['name'] }}</span>
+                                        <span class="clx-item-name">{{ $line['name'] ?: 'Item no longer in the master list' }}</span>
                                         <span class="clx-qty" title="Quantity">
                                             <button type="button" wire:click="stepQty({{ $i }}, -1)" aria-label="Less"><i class="fa fa-minus"></i></button>
                                             <input type="number" min="0" inputmode="numeric" wire:model.blur="lines.{{ $i }}.qty">

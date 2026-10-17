@@ -609,3 +609,15 @@ it('works a lease as one hand-over phase on the web tab', function (): void {
         ->assertDontSeeHtml('wire:click="setMoveOut(')
         ->assertSee('Handover Terms');
 });
+
+it('keeps item names and rooms after the master item is deleted', function (): void {
+    $this->actingAs($this->me);
+    $this->fridge->item->delete();
+
+    $tab = Livewire::test(ChecklistTab::class, ['rentOutId' => $this->rentOut->id]);
+
+    expect($tab->get('lines')[0])
+        ->name->toStartWith('Refrigerator')
+        ->category->toBe('Kitchen');
+    $tab->assertSee('Refrigerator');
+});

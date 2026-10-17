@@ -118,8 +118,8 @@ class ChecklistTab extends Component
         $this->lines = $lines->map(fn ($l) => [
             'id' => $l->id,
             'checklist_id' => $l->checklist_id,
-            'category' => $l->item?->category,
-            'name' => $l->item?->name,
+            'category' => $l->category,
+            'name' => $l->name,
             'image_path' => $l->image_path,
             'master_image_url' => $l->item?->image_path ? asset('storage/'.$l->item->image_path) : null,
             'resolved_image_url' => $l->resolved_image_url,

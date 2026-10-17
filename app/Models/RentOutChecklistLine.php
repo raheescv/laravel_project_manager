@@ -40,10 +40,16 @@ class RentOutChecklistLine extends Model implements AuditableContracts
         return $this->belongsTo(RentOut::class, 'rent_out_id');
     }
 
-    /** @return BelongsTo<Checklist, $this> */
+    /**
+     * The master checklist item. Deleted masters are included: a hand-over already
+     * recorded must keep its item names after the master list is cleaned up or
+     * re-imported, or every line falls into "Others" with a blank name.
+     *
+     * @return BelongsTo<Checklist, $this>
+     */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Checklist::class, 'checklist_id');
+        return $this->belongsTo(Checklist::class, 'checklist_id')->withTrashed();
     }
 
     /** Item name comes from the master checklist record (2NF). */
