@@ -190,11 +190,13 @@
             border-bottom: none;
         }
 
-        .text-right {
+        .text-right,
+        th.text-right {
             text-align: right;
         }
 
-        .text-center {
+        .text-center,
+        th.text-center {
             text-align: center;
         }
 
