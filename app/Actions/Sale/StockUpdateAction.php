@@ -94,6 +94,10 @@ class StockUpdateAction
                 $inventory['quantity'] += $quantity;
                 $inventory['remarks'] = 'Sale Adjustment Reversal'.$suffix.':'.$sale->invoice_no;
                 break;
+            case 'delete':
+                $inventory['quantity'] += $quantity;
+                $inventory['remarks'] = 'Sale Deleted'.$suffix.':'.$sale->invoice_no;
+                break;
             case 'delete_item':
                 $inventory['quantity'] += $quantity;
                 $inventory['remarks'] = 'Sale Item Delete'.$suffix.':'.$sale->invoice_no;
