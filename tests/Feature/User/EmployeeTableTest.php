@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\User\Employee\Table;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\UserHasBranch;
 use Livewire\Livewire;
@@ -83,4 +84,18 @@ it('maps sort presets and remembers the view mode', function (): void {
 
     expect(session('employees.table.view'))->toBe('grid');
     Livewire::test(Table::class)->assertSet('view', 'grid');
+});
+
+it('lists only roles that hold an employee, keeping the selected one', function (): void {
+    $staffed = Role::create(['name' => 'Rail Staffed', 'guard_name' => 'web', 'tenant_id' => $this->world->tenant->id]);
+    $vacant = Role::create(['name' => 'Rail Vacant', 'guard_name' => 'web', 'tenant_id' => $this->world->tenant->id]);
+    rosterEmployee($this->world, 'Role Holder', [$this->world->branch->id])->assignRole($staffed);
+
+    $component = Livewire::test(Table::class);
+    expect($component->viewData('roles')->pluck('id')->all())
+        ->toContain($staffed->id)
+        ->not->toContain($vacant->id);
+
+    $component->call('setRole', $vacant->id);
+    expect($component->viewData('roles')->pluck('id')->all())->toContain($vacant->id);
 });

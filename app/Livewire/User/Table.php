@@ -5,6 +5,7 @@ namespace App\Livewire\User;
 use App\Models\Designation;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -144,6 +145,21 @@ class Table extends Component
             ->toArray();
     }
 
+    /**
+     * Roles worth showing on the rail: those that currently hold a user, plus
+     * the selected one so the active facet never disappears.
+     *
+     * @param  array<int, int>  $roleCounts
+     */
+    protected function availableRoles(array $roleCounts): Collection
+    {
+        return Role::forCurrentTenant()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->filter(fn (Role $role): bool => ($roleCounts[$role->id] ?? 0) > 0 || (int) $this->role_id === $role->id)
+            ->values();
+    }
+
     /** Users per designation, keyed by designation id. */
     protected function designationCounts(): array
     {
@@ -168,13 +184,13 @@ class Table extends Component
             ->pluck('total', 'is_active')
             ->toArray();
 
+        $roleCounts = $this->roleCounts();
+
         return view('livewire.user.table', [
             'data' => $data,
-            'roles' => Role::forCurrentTenant()
-                ->orderBy('name')
-                ->get(['id', 'name']),
+            'roles' => $this->availableRoles($roleCounts),
             'designations' => Designation::orderBy('order_no')->orderBy('name')->get(['id', 'name']),
-            'roleCounts' => $this->roleCounts(),
+            'roleCounts' => $roleCounts,
             'designationCounts' => $this->designationCounts(),
             'statusCounts' => [
                 'active' => (int) ($statusCounts[1] ?? 0),
