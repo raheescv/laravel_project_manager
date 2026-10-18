@@ -6,6 +6,7 @@ use App\Exports\Templates\ProductImportTemplate;
 use App\Imports\LimitedRowImport;
 use App\Jobs\Product\ImportProductImagesFromDropboxJob;
 use App\Jobs\Product\ImportProductJob;
+use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Unit;
@@ -84,6 +85,69 @@ class Import extends Component
         'image' => 'Image URL(s)',
     ];
 
+    /** @var array<int, array{name: string, code: ?string}> branch id => branch, one stock column each */
+    public array $stockBranches = [];
+
+    public function mount(): void
+    {
+        $currentBranchId = (int) session('branch_id');
+        $this->stockBranches = Branch::query()
+            ->orderByRaw('id = ? desc', [$currentBranchId])
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->mapWithKeys(fn (Branch $branch) => [$branch->id => ['name' => $branch->name, 'code' => $branch->code]])
+            ->all();
+
+        $branchFields = [];
+        foreach ($this->stockBranches as $branchId => $branch) {
+            $suffix = $branchId === $currentBranchId ? ' (current)' : '';
+            $branchFields['stock_branch_'.$branchId] = 'Stock — '.$branch['name'].$suffix;
+        }
+
+        $position = array_search('stock', array_keys($this->availableFields), true);
+        $this->availableFields = array_slice($this->availableFields, 0, $position, true)
+            + $branchFields
+            + array_slice($this->availableFields, $position + 1, null, true);
+    }
+
+    /**
+     * Names of the branches whose stock column is mapped; each gets a draft purchase.
+     *
+     * @return array<int, string>
+     */
+    public function mappedStockBranchNames(): array
+    {
+        return collect($this->stockBranches)
+            ->filter(fn ($branch, $branchId) => ! empty($this->mappings['stock_branch_'.$branchId] ?? ''))
+            ->pluck('name')
+            ->all();
+    }
+
+    /**
+     * Header variants that auto-map to each branch's stock field. The current branch also
+     * claims the plain stock headers, so single-branch sheets keep working.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function getBranchStockAliases(): array
+    {
+        $currentBranchId = (int) session('branch_id');
+        $aliases = [];
+        foreach ($this->stockBranches as $branchId => $branch) {
+            $labels = array_filter([$branch['name'], $branch['code']]);
+            $variants = ['stock_branch_'.$branchId];
+            foreach ($labels as $label) {
+                array_push($variants, 'stock '.$label, $label.' stock', 'qty '.$label, $label.' qty', 'quantity '.$label, $label.' quantity', $label);
+            }
+            if ($branchId === $currentBranchId) {
+                array_push($variants, 'stock', 'openingstock', 'opening stock', 'quantity');
+            }
+            $aliases['stock_branch_'.$branchId] = $variants;
+        }
+
+        return $aliases;
+    }
+
     /**
      * Allowed Excel header variants per internal field (normalized for comparison).
      * Used for accurate mapping so e.g. "name" does not match "arabic_name".
@@ -110,7 +174,6 @@ class Import extends Component
             'model' => ['model'],
             'pattern' => ['pattern'],
             'description' => ['description'],
-            'stock' => ['stock', 'openingstock', 'opening stock', 'quantity'],
             'is_selling' => ['is_selling', 'isselling', 'is selling'],
             'is_favorite' => ['is_favorite', 'isfavorite', 'is favorite'],
             'part_no' => ['part_no', 'partno', 'part no'],
@@ -141,7 +204,7 @@ class Import extends Component
         $headings = (new HeadingRowImport())->toArray(Storage::disk('public')->path($this->filePath));
         $this->headers = $headings[0][0] ?? [];
 
-        $aliases = $this->getHeaderAliases();
+        $aliases = $this->getHeaderAliases() + $this->getBranchStockAliases();
 
         // Auto-map only when header exactly matches an allowed alias for that field
         foreach ($this->availableFields as $field => $label) {
@@ -183,7 +246,7 @@ class Import extends Component
 
     public function sample()
     {
-        return Excel::download(new ProductImportTemplate(), 'product_import_template.xlsx');
+        return Excel::download(new ProductImportTemplate(array_column($this->stockBranches, 'name')), 'product_import_template.xlsx');
     }
 
     public function save()

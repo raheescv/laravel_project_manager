@@ -29,7 +29,7 @@ class Table extends Component
 
     public $to_date = '';
 
-    public $status = 'draft';
+    public $status = '';
 
     public $limit = 10;
 
@@ -51,10 +51,11 @@ class Table extends Component
 
     public function mount()
     {
-        $this->purchase_visible_column = json_decode(Configuration::where('key', 'purchase_visible_column')->value('value'), true);
+        $this->purchase_visible_column = ColumnVisibility::visibleColumns();
         $this->from_date = date('Y-m-d');
         $this->to_date = date('Y-m-d');
-        $this->status = Configuration::where('key', 'default_status')->value('value');
+        // $this->status = Configuration::where('key', 'default_status')->value('value');
+        $this->status = '';
     }
 
     public function delete()

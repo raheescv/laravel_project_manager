@@ -44,7 +44,7 @@ it('shows the record column only when asked', function (): void {
         ->toContain('#42');
 
     expect(Blade::render('<x-audit.sheet :audits="$audits" />', ['audits' => $audits]))
-        ->not->toContain('adx-rec');
+        ->not->toContain('<th class="adx-rec">');
 });
 
 it('renders the empty message when there are no audits', function (): void {

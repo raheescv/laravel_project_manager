@@ -117,6 +117,7 @@ class VendorAging extends Component
         return Purchase::query()
             ->join('accounts', 'purchases.account_id', '=', 'accounts.id')
             ->where('purchases.status', 'completed')
+            ->excludingOpeningStock()
             ->where('purchases.balance', '>', 0) // Only show purchases with outstanding balance
             ->when($this->branch_id, fn ($q, $value) => $q->where('purchases.branch_id', $value))
             ->when($this->vendor_id, fn ($q, $value) => $q->where('purchases.account_id', $value))

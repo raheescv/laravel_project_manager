@@ -67,7 +67,7 @@ class CreateAction
                 $model->update(['code' => $model->barcode]);
             }
             $openingStock = $data['type'] === 'service' ? 0 : max(0, (float) ($data['opening_stock'] ?? 0));
-            Inventory::selfCreateByProduct($model, $user_id, $openingStock);
+            Inventory::selfCreateByProduct($model, $user_id, $openingStock, session('branch_id', 1));
             if ($data['type'] === 'asset') {
                 $scheduleResponse = (new GenerateDepreciationScheduleAction())->execute($model->fresh(), $user_id);
                 if (! $scheduleResponse['success']) {

@@ -6,6 +6,7 @@ use App\Enums\Purchase\PurchaseStatus;
 use App\Models\Models\Views\Ledger;
 use App\Models\Scopes\AssignedBranchScope;
 use App\Models\Scopes\CurrentBranchScope;
+use App\Support\OpeningStock;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -174,14 +175,21 @@ class Purchase extends Model implements AuditableContracts
      * Bills that are posted to the ledger and can therefore be settled: a direct
      * purchase ends up 'completed', an LPO bill ends up 'accepted' once approved.
      * Draft/pending/rejected/cancelled/reversed bills still carry a balance
-     * (it is a generated column) but owe the vendor nothing.
+     * (it is a generated column) but owe the vendor nothing. Opening-stock
+     * purchases owe nobody either, so they are left out.
      */
     public function scopePayable($query)
     {
         return $query->whereIn('purchases.status', [
             PurchaseStatus::COMPLETED->value,
             PurchaseStatus::ACCEPTED->value,
-        ]);
+        ])->excludingOpeningStock();
+    }
+
+    /** Leaves out opening-stock purchases: once completed they count as purchases, but there is no vendor to pay. */
+    public function scopeExcludingOpeningStock($query)
+    {
+        return $query->when(OpeningStock::existingAccountId(), fn ($query, $accountId) => $query->where('purchases.account_id', '!=', $accountId));
     }
 
     public function scopeDecisionRejected($query)

@@ -39,3 +39,31 @@ it('creates a zero-stock inventory row in the branch for a new service', functio
     expect($inventory)->not->toBeNull()
         ->and((float) $inventory->quantity)->toBe(0.0);
 });
+
+it('puts a new product\'s opening stock in the session branch, not branch id 1', function (): void {
+    $second = $this->world->addBranch('Doha Branch', 'DB');
+    TenantCache::forget('branches');
+    session(['branch_id' => $second->id]);
+
+    $response = (new CreateAction())->execute([
+        'type' => 'product',
+        'name' => 'Doha Opening Product',
+        'cost' => 12,
+        'barcode_number' => '11223344',
+        'unit_id' => $this->world->product->unit_id,
+        'department_id' => $this->world->product->department_id,
+        'main_category_id' => $this->world->product->main_category_id,
+        'mrp' => 30,
+        'opening_stock' => 5,
+    ], $this->world->user->id);
+
+    expect($response['success'])->toBeTrue($response['message']);
+
+    $quantities = Inventory::query()
+        ->where('product_id', $response['data']->id)
+        ->pluck('quantity', 'branch_id')
+        ->map(fn ($quantity) => (float) $quantity)
+        ->all();
+
+    expect($quantities)->toEqual([$this->world->branch->id => 0.0, $second->id => 5.0]);
+});

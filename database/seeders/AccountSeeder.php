@@ -27,6 +27,7 @@ class AccountSeeder extends Seeder
         $indirectIncomeMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Indirect Income']);
         $directExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Direct Expense']);
         $indirectExpenseMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Indirect Expense']);
+        $equityMaster = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Equity']);
 
         // Create Groups under Current Asset
         $cashGroup = AccountCategory::firstOrCreate(['tenant_id' => $this->tenantId, 'name' => 'Cash', 'parent_id' => $currentAssetMaster->id]);
@@ -87,6 +88,9 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Security Deposit Paid', 'slug' => 'security_deposit_paid', 'account_type' => 'asset', 'description' => 'Refundable security deposits paid to vendors on project contracts', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentAssetMaster->id];
         $data[] = ['name' => 'Forfeited Deposits', 'slug' => 'forfeited_deposits', 'account_type' => 'income', 'description' => 'Vendor security deposits and guarantees kept after a breach', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectIncomeMaster->id];
         $data[] = ['name' => 'Security Deposit Loss', 'slug' => 'security_deposit_loss', 'account_type' => 'expense', 'description' => 'Security deposits paid to vendors that were not refunded', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
+
+        // Equity accounts (App\Support\OpeningStock creates this on first use for older tenants)
+        $data[] = ['name' => 'Opening Stock', 'slug' => 'opening_stock', 'account_type' => 'equity', 'description' => 'Value of stock on hand when the books were opened', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $equityMaster->id];
 
         // Process existing accounts first
         foreach ($data as $value) {

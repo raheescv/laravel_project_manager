@@ -2,12 +2,52 @@
 
 namespace App\Exports\Templates;
 
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class ProductImportTemplate implements FromArray, WithHeadings
 {
+    /**
+     * @param  array<int, string>  $branchNames  one stock column per branch; empty keeps the single `stock` column
+     */
+    public function __construct(private array $branchNames = []) {}
+
     public function array(): array
+    {
+        return array_map(fn (array $row) => $this->expandStock($row, $row['stock']), $this->rows());
+    }
+
+    public function headings(): array
+    {
+        return array_keys($this->expandStock(array_flip($this->baseHeadings()), null));
+    }
+
+    /**
+     * Swaps the `stock` key for one `stock_<branch>` key per branch, keeping its position.
+     */
+    private function expandStock(array $row, ?string $quantity): array
+    {
+        if (count($this->branchNames) < 2) {
+            return $row;
+        }
+
+        $expanded = [];
+        foreach ($row as $key => $value) {
+            if ($key !== 'stock') {
+                $expanded[$key] = $value;
+
+                continue;
+            }
+            foreach ($this->branchNames as $branchName) {
+                $expanded['stock_'.Str::snake(Str::lower($branchName))] = $quantity;
+            }
+        }
+
+        return $expanded;
+    }
+
+    private function rows(): array
     {
         return [
             [
@@ -75,7 +115,7 @@ class ProductImportTemplate implements FromArray, WithHeadings
         ];
     }
 
-    public function headings(): array
+    private function baseHeadings(): array
     {
         return [
             'name',

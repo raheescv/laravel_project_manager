@@ -685,7 +685,7 @@
                     $salePaymentAudits = collect($sale->payments)->flatMap->audits;
                 @endphp
                 <div id="tab-audit-report" class="tab-pane fade" role="tabpanel"
-                     x-data="{ auditView: (() => { try { return localStorage.getItem('audit-report-view') || 'timeline'; } catch (e) { return 'timeline'; } })() }"
+                     x-data="{ auditView: (() => { try { return localStorage.getItem('audit-report-view') || 'table'; } catch (e) { return 'table'; } })() }"
                      x-init="$watch('auditView', value => { try { localStorage.setItem('audit-report-view', value); } catch (e) {} })">
                     <div class="s-subbar">
                         <ul class="s-tabs nav" role="tablist">
@@ -700,22 +700,22 @@
                             </li>
                         </ul>
                         <div class="s-seg" role="group" aria-label="Audit view">
-                            <button type="button" :class="{ on: auditView === 'timeline' }" :aria-pressed="auditView === 'timeline'" @click="auditView = 'timeline'"><i class="fa fa-list-ul"></i>Timeline</button>
                             <button type="button" :class="{ on: auditView === 'table' }" :aria-pressed="auditView === 'table'" @click="auditView = 'table'"><i class="fa fa-table"></i>Table</button>
+                            <button type="button" :class="{ on: auditView === 'timeline' }" :aria-pressed="auditView === 'timeline'" @click="auditView = 'timeline'"><i class="fa fa-list-ul"></i>Timeline</button>
                         </div>
                     </div>
                     <div class="tab-content">
                         <div id="sale-audit" class="tab-pane fade show active" role="tabpanel">
-                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
-                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
+                            <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
+                            <div x-show="auditView === 'table'"><x-audit.sheet :audits="$saleAudits" emptyMessage="No sale audit entries found." /></div>
                         </div>
                         <div id="sale-items-audit" class="tab-pane fade" role="tabpanel">
-                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$saleItemAudits" emptyMessage="No sale item audit entries found." /></div>
-                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$saleItemAudits" :showRecord="true" recordLabel="Item" emptyMessage="No sale item audit entries found." /></div>
+                            <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$saleItemAudits" emptyMessage="No sale item audit entries found." /></div>
+                            <div x-show="auditView === 'table'"><x-audit.sheet :audits="$saleItemAudits" :showRecord="true" recordLabel="Item" emptyMessage="No sale item audit entries found." /></div>
                         </div>
                         <div id="sale-payments-audit" class="tab-pane fade" role="tabpanel">
-                            <div x-show="auditView === 'timeline'"><x-audit.table :audits="$salePaymentAudits" emptyMessage="No sale payment audit entries found." /></div>
-                            <div x-show="auditView === 'table'" x-cloak><x-audit.sheet :audits="$salePaymentAudits" :showRecord="true" recordLabel="Payment" emptyMessage="No sale payment audit entries found." /></div>
+                            <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$salePaymentAudits" emptyMessage="No sale payment audit entries found." /></div>
+                            <div x-show="auditView === 'table'"><x-audit.sheet :audits="$salePaymentAudits" :showRecord="true" recordLabel="Payment" emptyMessage="No sale payment audit entries found." /></div>
                         </div>
                     </div>
                 </div>

@@ -26,7 +26,7 @@ it('renders the timeline and table views inside the one audit report tab', funct
     Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->findOrFail($saleId)->id])
         ->assertSee('data-bs-target="#tab-audit-report"', false)
         ->assertDontSee('Audit table')
-        ->assertSeeInOrder(['Timeline', 'Table'])
+        ->assertSeeInOrder(['Table', 'Timeline'])
         ->assertSee('x-show="auditView === \'timeline\'"', false)
         ->assertSee('x-show="auditView === \'table\'"', false)
         ->assertSee('class="adx"', false);

@@ -88,7 +88,7 @@ class ImportProductJob implements ShouldQueue
         Excel::import($rowCounter, $file);
         $totalRows = max($rowCounter->getCount(), 1);
 
-        Excel::import(new ProductImport(
+        $import = new ProductImport(
             $this->user_id,
             $totalRows,
             $this->branchId,
@@ -97,7 +97,9 @@ class ImportProductJob implements ShouldQueue
             $this->moduleLabel,
             $this->tenantId,
             $this->duplicateStrategy
-        ), $file);
+        );
+        Excel::import($import, $file);
+        $import->createOpeningStockDrafts();
 
         // Clean up the file after import
         // @phpstan-ignore if.alwaysTrue (PHPStan remembers the earlier file_exists() check; the import may have removed the file since)

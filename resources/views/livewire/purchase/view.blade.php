@@ -422,30 +422,46 @@
                 </div>
             @endif
 
-            <div id="tab-audit-report" class="tab-pane fade {{ $purchase->journals->isEmpty() ? 'active show' : '' }}" role="tabpanel">
-                <ul class="s-tabs nav" role="tablist" style="border-top:1px solid var(--ln-s)">
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link active" data-bs-toggle="tab" data-bs-target="#purchase-audit" type="button"><i class="fa fa-file-o"></i>Purchase</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#purchase-items-audit" type="button"><i class="fa fa-shopping-cart"></i>Purchase items</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#purchase-payments-audit" type="button"><i class="fa fa-credit-card"></i>Purchase payments</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#product-cost-audit" type="button"><i class="fa fa-cube"></i>Product cost</button>
-                    </li>
-                </ul>
+            @php
+                $purchaseAudits = $purchase->audits;
+                $purchaseItemAudits = $purchase->items->flatMap->audits;
+                $purchasePaymentAudits = $purchase->payments->flatMap->audits;
+            @endphp
+            <div id="tab-audit-report" class="tab-pane fade {{ $purchase->journals->isEmpty() ? 'active show' : '' }}" role="tabpanel"
+                 x-data="{ auditView: (() => { try { return localStorage.getItem('audit-report-view') || 'table'; } catch (e) { return 'table'; } })() }"
+                 x-init="$watch('auditView', value => { try { localStorage.setItem('audit-report-view', value); } catch (e) {} })">
+                <div class="s-subbar">
+                    <ul class="s-tabs nav" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="s-tab nav-link active" data-bs-toggle="tab" data-bs-target="#purchase-audit" type="button"><i class="fa fa-file-o"></i>Purchase <span class="s-cnt">{{ $purchaseAudits->count() }}</span></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#purchase-items-audit" type="button"><i class="fa fa-shopping-cart"></i>Purchase items <span class="s-cnt">{{ $purchaseItemAudits->count() }}</span></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#purchase-payments-audit" type="button"><i class="fa fa-credit-card"></i>Purchase payments <span class="s-cnt">{{ $purchasePaymentAudits->count() }}</span></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="s-tab nav-link" data-bs-toggle="tab" data-bs-target="#product-cost-audit" type="button"><i class="fa fa-cube"></i>Product cost <span class="s-cnt">{{ $productCostAudits->count() }}</span></button>
+                        </li>
+                    </ul>
+                    <div class="s-seg" role="group" aria-label="Audit view">
+                        <button type="button" :class="{ on: auditView === 'table' }" :aria-pressed="auditView === 'table'" @click="auditView = 'table'"><i class="fa fa-table"></i>Table</button>
+                        <button type="button" :class="{ on: auditView === 'timeline' }" :aria-pressed="auditView === 'timeline'" @click="auditView = 'timeline'"><i class="fa fa-list-ul"></i>Timeline</button>
+                    </div>
+                </div>
                 <div class="tab-content">
                     <div id="purchase-audit" class="tab-pane fade show active" role="tabpanel">
-                        <x-audit.table :audits="$purchase->audits" emptyMessage="No purchase audit entries found." />
+                        <div x-show="auditView === 'table'"><x-audit.sheet :audits="$purchaseAudits" emptyMessage="No purchase audit entries found." /></div>
+                        <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$purchaseAudits" emptyMessage="No purchase audit entries found." /></div>
                     </div>
                     <div id="purchase-items-audit" class="tab-pane fade" role="tabpanel">
-                        <x-audit.table :audits="$purchase->items->flatMap->audits" emptyMessage="No purchase item audit entries found." />
+                        <div x-show="auditView === 'table'"><x-audit.sheet :audits="$purchaseItemAudits" :showRecord="true" recordLabel="Item" emptyMessage="No purchase item audit entries found." /></div>
+                        <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$purchaseItemAudits" emptyMessage="No purchase item audit entries found." /></div>
                     </div>
                     <div id="purchase-payments-audit" class="tab-pane fade" role="tabpanel">
-                        <x-audit.table :audits="$purchase->payments->flatMap->audits" emptyMessage="No purchase payment audit entries found." />
+                        <div x-show="auditView === 'table'"><x-audit.sheet :audits="$purchasePaymentAudits" :showRecord="true" recordLabel="Payment" emptyMessage="No purchase payment audit entries found." /></div>
+                        <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$purchasePaymentAudits" emptyMessage="No purchase payment audit entries found." /></div>
                     </div>
                     <div id="product-cost-audit" class="tab-pane fade" role="tabpanel">
                         <div class="s-tw">

@@ -426,6 +426,19 @@
                     </span>
                 </div>
 
+                @php $stockBranchNames = collect($this->mappedStockBranchNames()); @endphp
+                <div class="alert alert-secondary mt-2 mb-0 small d-flex align-items-center">
+                    <i class="fa fa-building-o me-2 fs-5"></i>
+                    <span>
+                        @if ($stockBranchNames->isNotEmpty())
+                            Stock for <strong>{{ $stockBranchNames->join(', ', ' and ') }}</strong>{{ $duplicateStrategy === 'update' ? ' (new and existing products)' : ' (new products)' }} is saved as one <strong>draft purchase per branch</strong> against the <em>Opening Stock</em> account. The import does not change stock: it is added only when you complete each draft under Purchases.
+                            Blank or zero cells are left out.
+                        @else
+                            No branch stock column is mapped &mdash; new products open with zero stock in every branch.
+                        @endif
+                    </span>
+                </div>
+
                 <div class="d-flex justify-content-center gap-2 mt-3">
                     <button class="btn btn-outline-secondary px-4" wire:click="goToStep(2)">
                         <i class="fa fa-arrow-left me-1"></i> Back to Mapping
@@ -445,6 +458,17 @@
                     <h4 class="fw-bold">Import in Progress</h4>
                     <p class="text-muted mb-4">Processing your products in the background. You can leave this page.</p>
 
+                    @if ($this->mappedStockBranchNames())
+                        <div class="alert alert-warning text-start mx-auto mb-4 small d-flex gap-2" style="max-width: 560px;">
+                            <i class="fa fa-exclamation-triangle fs-5"></i>
+                            <div>
+                                <strong>Stock is not added yet.</strong>
+                                A draft purchase named <strong>OPENING-&lt;branch&gt;-&hellip;</strong> is created for each branch with stock in your file.
+                                Open <strong>Purchases</strong>, filter by <strong>Draft</strong>, then review and complete each one &mdash; the stock is added only when you complete it.
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="progress mx-auto shadow-sm mb-2" style="height: 24px; max-width: 500px; border-radius: 12px;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="progress-bar" role="progressbar" style="width: 0%"
                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
@@ -454,6 +478,11 @@
                         <a href="{{ route('product::index') }}" class="btn btn-outline-primary px-4">
                             Go to Product List
                         </a>
+                        @can('purchase.view')
+                            <a href="{{ route('purchase::index') }}" class="btn btn-outline-warning px-4 ms-2">
+                                <i class="fa fa-file-text-o me-1"></i> Go to Purchases
+                            </a>
+                        @endcan
                     </div>
                 </div>
             @endif
