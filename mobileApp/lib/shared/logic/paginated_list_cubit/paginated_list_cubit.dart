@@ -17,6 +17,7 @@ class PageResult {
     this.lastPage = 1,
     this.total = 0,
     this.totalPaid = 0,
+    this.summary = const {},
   });
 
   final List<Map<String, dynamic>> rows;
@@ -28,6 +29,10 @@ class PageResult {
 
   /// Summed `paid` across the whole filtered set, where the endpoint reports it.
   final double totalPaid;
+
+  /// Any further whole-set figures the endpoint reports (e.g. `balance`,
+  /// `quantity`), keyed by the screen that reads them.
+  final Map<String, num> summary;
 }
 
 typedef PageFetcher = Future<PageResult> Function(int page);
@@ -75,6 +80,7 @@ class PaginatedListCubit extends Cubit<PaginatedListState> {
         lastPage: res.lastPage,
         total: res.total,
         totalPaid: res.totalPaid,
+        summary: res.summary,
         loadingMore: false,
       ));
     } on ApiException catch (e) {
@@ -112,6 +118,7 @@ class PaginatedListCubit extends Cubit<PaginatedListState> {
         lastPage: res.lastPage,
         total: res.total,
         totalPaid: res.totalPaid,
+        summary: res.summary,
       ));
     } catch (_) {
       // Keep what we have; the next scroll retries the same page.

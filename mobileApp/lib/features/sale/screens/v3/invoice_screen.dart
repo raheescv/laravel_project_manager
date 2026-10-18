@@ -36,8 +36,12 @@ part 'invoice_receipt_sections.dart';
 /// icon avatars, a summary card and a payment/customer card. Everything is
 /// palette-driven so each [AstraSkin] re-skins it.
 class InvoiceScreen extends StatelessWidget {
-  const InvoiceScreen({super.key, required this.sale, this.onClose});
+  const InvoiceScreen({super.key, required this.sale, this.onClose, this.highlightItemId});
   final Sale sale;
+
+  /// The sale line to pick out — set when the invoice was opened from a row on
+  /// the Sales list's Items tab, so the line that was tapped is the one that reads.
+  final int? highlightItemId;
 
   /// When set, this screen is embedded in a tablet master–detail pane rather
   /// than pushed as its own route: the header shows a "clear selection" button
@@ -281,7 +285,17 @@ class InvoiceScreen extends StatelessWidget {
     return Column(
       children: [
         for (int i = 0; i < lines.length; i++) ...[
-          _lineRow(p, lines[i]),
+          if (highlightItemId != null && lines[i].itemId == highlightItemId)
+            Container(
+              decoration: BoxDecoration(
+                color: p.goldTint,
+                border: Border(left: BorderSide(color: p.goldText, width: 3)),
+              ),
+              padding: const EdgeInsets.only(left: 8),
+              child: _lineRow(p, lines[i]),
+            )
+          else
+            _lineRow(p, lines[i]),
           if (i != lines.length - 1) Container(height: 1, color: p.hairline),
         ],
       ],

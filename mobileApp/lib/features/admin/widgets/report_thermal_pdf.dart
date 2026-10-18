@@ -96,7 +96,7 @@ Future<Uint8List> buildBreakdownThermalPdf(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
           ..._masthead(data, brand, r, range),
-          ..._breakdown(data, brand, r),
+          ...(data.kind == ReportExportKind.commission ? _commission(data, brand, r) : _breakdown(data, brand, r)),
           ..._footer(brand, r, printed),
         ],
       ),
@@ -458,6 +458,58 @@ List<pw.Widget> _breakdown(ReportExport d, ReportPdfBrand b, _Roll r) {
         ),
     },
     if (kind == ReportExportKind.stylists && lines.any((l) => _isMe(l.id, b)))
+      _note('Highlighted: ${b.preparedBy}, who printed this report.', r),
+    if (d.truncated)
+      _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them.', r),
+  ];
+}
+
+// ---- Staff Commission --------------------------------------------------------
+
+/// The commission lines on the roll. There is no room for a Staff column, so
+/// each product carries who earned it and the rate on a second line.
+List<pw.Widget> _commission(ReportExport d, ReportPdfBrand b, _Roll r) {
+  const heading = 'COMMISSION BREAKDOWN';
+  final lines = d.lines;
+  if (lines.isEmpty) return [_band(heading, r), _note('No commission in this period.', r)];
+  final oneStaff = d.staffCount <= 1;
+  String detail(ReportExportLine l) {
+    final rate = l.rate == 0 ? 'no rate' : pctLabel(l.rate);
+    return oneStaff ? rate : '${l.staff} · $rate';
+  }
+
+  return [
+    if (d.staffName.isNotEmpty) ...[pw.SizedBox(height: r.s(3)), _centred('Staff: ${d.staffName}', r.s(8), bold: true)],
+    pw.SizedBox(height: r.s(4)),
+    _tiles([('STAFF', '${d.staffCount}'), ('NET SALES', _amt(d.totalNet)), ('COMMISSION', _amt(d.totalAmount))], r),
+    _band(heading, r, note: d.truncated ? 'Top ${lines.length} of ${d.lineCount}' : _count(lines.length, 'line')),
+    _table(
+      r,
+      [
+        const _Col('#', 0.45),
+        const _Col('Product', 2.8),
+        const _Col('Qty', 0.8, right: true),
+        if (r.wide) const _Col('Net', 1.5, right: true),
+        const _Col('Comm.', 1.5, right: true),
+      ],
+      [
+        for (var i = 0; i < lines.length; i++)
+          [
+            '${i + 1}',
+            '${lines[i].name}\n${detail(lines[i])}',
+            qtyLabel(lines[i].quantity),
+            if (r.wide) _amt(lines[i].net),
+            lines[i].amount == 0 ? '-' : _amt(lines[i].amount),
+          ],
+      ],
+      total: ['', 'Total', qtyLabel(d.totalQuantity), if (r.wide) _amt(d.totalNet), _amt(d.totalAmount)],
+      highlight: {
+        if (!oneStaff)
+          for (var i = 0; i < lines.length; i++)
+            if (_isMe(lines[i].id, b)) i,
+      },
+    ),
+    if (!oneStaff && lines.any((l) => _isMe(l.id, b)))
       _note('Highlighted: ${b.preparedBy}, who printed this report.', r),
     if (d.truncated)
       _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them.', r),

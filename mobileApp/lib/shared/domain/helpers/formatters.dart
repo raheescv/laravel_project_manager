@@ -107,6 +107,13 @@ String qtyLabel(num v) {
   return s;
 }
 
+/// A percentage with no trailing zeros, e.g. `12%`, `7.5%`, `0.25%` — the
+/// commission rate as it was set, to the server's two places.
+String pctLabel(num v) {
+  final s = v.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+  return '${s.isEmpty ? '0' : s}%';
+}
+
 /// Round to 2 decimals the way the server's `decimal(16,2)` columns do.
 ///
 /// Every money column in the Laravel schema is `decimal(16,2)`, and the sale

@@ -14,6 +14,7 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/admin/screens/v3/report_preview_screen.dart';
 import 'package:invo/features/admin/widgets/report_sort_sheet.dart';
 import 'package:invo/features/admin/widgets/report_picker_sheet.dart';
+import 'package:invo/features/admin/widgets/report_staff_sheet.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
@@ -34,7 +35,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   /// The two reports this page holds: 0 = Sales Overview (performance,
   /// payments, per-day trend), 1 = Breakdown (By Item / By Category / By Staff
-  /// ranking).
+  /// ranking, and the Commission lines).
   /// The date range is shared, so it stays on top of both.
   int _tab = 0;
 
@@ -254,9 +255,16 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return switch (context.read<AdminCubit>().reportType) {
       'itemwise' => ExportReport.items,
       'categorywise' => ExportReport.categories,
+      'commission' => ExportReport.commission,
       _ => ExportReport.staff,
     };
   }
+
+  /// Whether the signed-in account reads every staff member's figures. A
+  /// rank-and-file employee reads only their own — the server pins every
+  /// report to them — so the commission report drops its staff filter and
+  /// column for them.
+  bool get _seesAllRecords => context.read<AuthCubit>().user?.seesAllRecords ?? true;
 
   Widget _restricted() => const Center(
         child: Padding(
@@ -760,6 +768,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
   static const double _colShare = 122;
   static const double _colAmount = 128;
 
+  /// The commission table's Net sales and Rate columns.
+  static const double _colNet = 110;
+  static const double _colRate = 64;
+
   /// The Breakdown report: one quiet toolbar (which breakdown, item type, and
   /// the sort — which opens the filter sheet), the filters in force as chips,
   /// then the ranked ledger table closed by a grand-total bar.
@@ -791,16 +803,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  /// Which breakdown · which item type · the sort. One line on tablet; two on
-  /// phone, where the breakdown segments take the full width.
+  /// Which breakdown · which item type (or, on Commission, whose) · the sort.
+  /// One line on tablet; two on phone, where the breakdown segments take the
+  /// full width under shorter labels.
   Widget _breakdownToolbar(AdminCubit admin) {
     final wide = context.isTablet;
     final segments = _sunkGroup(expand: !wide, children: [
-      _breakdownSegment(admin, 'By Item', 'itemwise', Icons.inventory_2_rounded, compact: !wide),
-      _breakdownSegment(admin, 'By Category', 'categorywise', Icons.category_rounded, compact: !wide),
-      _breakdownSegment(admin, 'By Staff', 'employeewise', Icons.people_alt_rounded, compact: !wide),
+      _breakdownSegment(admin, wide ? 'By Item' : 'Item', 'itemwise', Icons.inventory_2_rounded, compact: !wide),
+      _breakdownSegment(admin, wide ? 'By Category' : 'Category', 'categorywise', Icons.category_rounded,
+          compact: !wide),
+      _breakdownSegment(admin, wide ? 'By Staff' : 'Staff', 'employeewise', Icons.people_alt_rounded,
+          compact: !wide),
+      _breakdownSegment(admin, 'Commission', 'commission', Icons.percent_rounded, compact: !wide),
     ]);
-    final type = AdminCubit.ranksProducts(admin.reportType) ? _typeGroup(admin, expand: !wide) : null;
+    final commission = AdminCubit.isCommission(admin.reportType);
+    final type = AdminCubit.ranksProducts(admin.reportType)
+        ? _typeGroup(admin, expand: !wide)
+        : commission
+            ? (_seesAllRecords ? _staffButton(admin) : _pill('Only your sales', context.astra.primary.withValues(alpha: 0.12), context.astra.primary))
+            : null;
 
     if (wide) {
       // A big screen needs no filter button: the column heads sort, the type
@@ -827,7 +848,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
-            if (type != null) ...[Expanded(child: type), const SizedBox(width: 8)],
+            // The self-scoped pill is a label, not a control, so it keeps its
+            // own width rather than stretching like the type and staff ones.
+            if (type != null) ...[
+              commission && !_seesAllRecords ? type : Expanded(child: type),
+              const SizedBox(width: 8),
+            ],
+            if (commission && !_seesAllRecords) const Spacer(),
             _sortButton(admin),
           ],
         ),
@@ -852,20 +879,71 @@ class _ReportsScreenState extends State<ReportsScreen> {
         padding: EdgeInsets.symmetric(vertical: 7, horizontal: compact ? 6 : 14),
         alignment: Alignment.center,
         decoration: _thumb(active),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(label,
+        // Four segments share a phone's width, so a long label shrinks a
+        // touch rather than losing its end to an ellipsis.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
+              SizedBox(width: compact ? 4 : 6),
+              Text(label,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: ui(
                       size: 11.5,
                       weight: active ? FontWeight.w800 : FontWeight.w600,
                       color: active ? p.primary : p.textSecondary)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Whose commission the report shows — everyone, or the one staff member
+  /// picked from the sheet.
+  Widget _staffButton(AdminCubit admin) {
+    final p = context.astra;
+    final name = admin.commissionStaffName;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        unawaited(showReportStaffPicker(context));
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        decoration: BoxDecoration(
+          color: p.cardSolid,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: p.hairline),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.badge_outlined, size: 14, color: p.textSecondary),
+            const SizedBox(width: 7),
+            // One run, so a long name gives way before the label does — the
+            // phone shares this row with the sort button.
+            Flexible(
+              child: Text.rich(
+                TextSpan(
+                  text: 'Staff · ',
+                  style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary),
+                  children: [
+                    TextSpan(
+                        text: name.isEmpty ? 'All' : name,
+                        style: ui(size: 11.5, weight: FontWeight.w800, color: p.ink)),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+            const SizedBox(width: 3),
+            Icon(Icons.expand_more_rounded, size: 15, color: p.primary),
           ],
         ),
       ),
@@ -955,7 +1033,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       admin.rangePreset != 'today' ||
       admin.sortKey != 'amount' ||
       admin.sortAscending ||
-      admin.itemProductType != null;
+      admin.itemProductType != null ||
+      admin.commissionStaffId != null;
 
   /// What the list is filtered to, as chips you can take off one at a time —
   /// so the figures below are never a mystery.
@@ -978,6 +1057,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           if (admin.itemProductType != null)
             _filterChip(admin.itemProductType == 'product' ? 'Products only' : 'Services only',
                 () => admin.setItemProductType(null)),
+          if (admin.commissionStaffId != null)
+            _filterChip('Staff · ${admin.commissionStaffName}', () => admin.setCommissionStaff(null)),
           _resetChip(admin),
         ],
       ),
@@ -1052,6 +1133,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       );
     }
 
+    if (AdminCubit.isCommission(admin.reportType)) return _commissionTable(admin);
+
     final isStaff = !AdminCubit.ranksProducts(admin.reportType);
     final maxAmount = admin.reportRows.fold<double>(0, (a, r) => r.amount > a ? r.amount : a);
     // One trailing slot for the load-more footer while further pages remain.
@@ -1106,43 +1189,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _ => 'Staff',
     };
 
-    Widget cell(String label, String sortKey, {double? width, bool right = false}) {
-      final active = admin.sortKey == sortKey;
-      final text = Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (active) ...[
-            Icon(admin.sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                size: 11, color: p.primary),
-            const SizedBox(width: 3),
-          ],
-          Flexible(
-            child: Text(label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: ui(
-                    size: 9.5,
-                    weight: FontWeight.w800,
-                    color: active ? p.primary : p.textMuted,
-                    letterSpacing: 0.9)),
-          ),
-        ],
-      );
-      final cellChild = Align(
-        alignment: right ? Alignment.centerRight : Alignment.centerLeft,
-        child: text,
-      );
-      final sized = width == null ? cellChild : SizedBox(width: width, child: cellChild);
-      if (!wide) return sized;
-      return GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          admin.setSort(sortKey);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: sized,
-      );
-    }
+    Widget cell(String label, String sortKey, {double? width, bool right = false}) =>
+        _headCell(admin, label, sortKey, wide: wide, width: width, right: right);
 
     return Container(
       padding: EdgeInsets.fromLTRB(wide ? 18 : 13, 11, wide ? 18 : 13, 11),
@@ -1184,6 +1232,49 @@ class _ReportsScreenState extends State<ReportsScreen> {
               right: true),
         ],
       ),
+    );
+  }
+
+  /// One column head. On a big screen a head with a [sortKey] is also its
+  /// sort: tap it to rank the list by that column, tap the live one to flip the
+  /// direction. The live column is tinted and carries the arrow.
+  Widget _headCell(AdminCubit admin, String label, String? sortKey,
+      {required bool wide, double? width, bool right = false}) {
+    final p = context.astra;
+    final active = sortKey != null && admin.sortKey == sortKey;
+    final text = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (active) ...[
+          Icon(admin.sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+              size: 11, color: p.primary),
+          const SizedBox(width: 3),
+        ],
+        Flexible(
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(
+                  size: 9.5,
+                  weight: FontWeight.w800,
+                  color: active ? p.primary : p.textMuted,
+                  letterSpacing: 0.9)),
+        ),
+      ],
+    );
+    final cellChild = Align(
+      alignment: right ? Alignment.centerRight : Alignment.centerLeft,
+      child: text,
+    );
+    final sized = width == null ? cellChild : SizedBox(width: width, child: cellChild);
+    if (!wide || sortKey == null) return sized;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        admin.setSort(sortKey);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: sized,
     );
   }
 
@@ -1398,6 +1489,280 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     child: Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
                   ),
                 ),
+              ],
+            ),
+    );
+  }
+
+  // ---- Commission (staff × product lines) ---------------------------------
+
+  /// The commission report: one line per staff member × product, net of
+  /// returns, at the rate set for that pair — the web Employee Report's Sales
+  /// Details table. Ranked by commission; a big screen re-ranks from the heads.
+  Widget _commissionTable(AdminCubit admin) {
+    // A Staff column only while the lines can belong to more than one person:
+    // a self-scoped employee, or a list narrowed to one name, would repeat it
+    // down every row.
+    final showStaff = _seesAllRecords && admin.commissionStaffId == null;
+    final meId = context.select<AuthCubit, String?>((c) => c.state.user?.id) ?? '';
+    final extra = admin.reportHasMore ? 1 : 0;
+
+    return LayoutBuilder(
+      builder: (context, box) {
+        final wide = box.maxWidth >= 560;
+        return Column(
+          children: [
+            _commissionHead(admin, wide: wide, showStaff: showStaff),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollCtl,
+                padding: EdgeInsets.zero,
+                itemCount: admin.reportRows.length + extra,
+                itemBuilder: (_, i) {
+                  if (i == admin.reportRows.length) return _loadMoreFooter(admin);
+                  final r = admin.reportRows[i];
+                  return _commissionRow(r,
+                      wide: wide, showStaff: showStaff, isMe: showStaff && meId.isNotEmpty && r.id == meId);
+                },
+              ),
+            ),
+            _commissionFoot(admin, wide: wide, showStaff: showStaff),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _commissionHead(AdminCubit admin, {required bool wide, required bool showStaff}) {
+    final p = context.astra;
+    Widget cell(String label, String? sortKey, {double? width, bool right = false}) =>
+        _headCell(admin, label, sortKey, wide: wide, width: width, right: right);
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, 11, wide ? 18 : 13, 11),
+      decoration: BoxDecoration(
+        color: _softFill,
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      child: Row(
+        children: [
+          if (wide && showStaff) ...[
+            Expanded(child: cell('STAFF', null)),
+            const SizedBox(width: _colGap),
+          ],
+          Expanded(child: cell('PRODUCT', 'name')),
+          if (wide) ...[
+            const SizedBox(width: _colGap),
+            cell('QTY', 'quantity', width: _colQty, right: true),
+            const SizedBox(width: _colGap),
+            cell('NET SALES', 'net', width: _colNet, right: true),
+            const SizedBox(width: _colGap),
+            cell('RATE', null, width: _colRate, right: true),
+          ],
+          const SizedBox(width: _colGap),
+          cell(wide ? _withCurrency('COMMISSION') : 'COMMISSION', 'amount',
+              width: wide ? _colAmount : 96, right: true),
+        ],
+      ),
+    );
+  }
+
+  /// The rate set for a staff member × product pair, as a small gold chip; a
+  /// dash where none is set, so a line that earns nothing says why.
+  Widget _rateChip(double rate) {
+    final p = context.astra;
+    final none = rate == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: none ? _softFill : p.accent.withValues(alpha: p.isDark ? 0.2 : 0.16),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(none ? '—' : pctLabel(rate),
+          style: ui(size: 10.5, weight: FontWeight.w800, color: none ? p.textMuted : p.goldText)),
+    );
+  }
+
+  Widget _commissionRow(ReportRow r, {required bool wide, required bool showStaff, bool isMe = false}) {
+    final p = context.astra;
+    final zero = r.amount == 0;
+
+    final product = Text(r.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: ui(size: 12.5, weight: zero ? FontWeight.w600 : FontWeight.w800, color: zero ? p.textSecondary : p.ink));
+
+    final commission = Text(zero ? '—' : Money.plain(r.amount),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: ui(
+            size: 13,
+            weight: zero ? FontWeight.w600 : FontWeight.w800,
+            color: zero ? p.textMuted : p.primaryDark));
+
+    Widget figure(String text) => Text(text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary));
+
+    final Widget body;
+    if (wide) {
+      body = Row(
+        children: [
+          if (showStaff) ...[
+            Expanded(child: _staffCell(r.staff, isMe: isMe)),
+            const SizedBox(width: _colGap),
+          ],
+          Expanded(child: product),
+          const SizedBox(width: _colGap),
+          SizedBox(width: _colQty, child: figure(qtyLabel(r.quantity))),
+          const SizedBox(width: _colGap),
+          SizedBox(width: _colNet, child: figure(Money.plain(r.net))),
+          const SizedBox(width: _colGap),
+          SizedBox(width: _colRate, child: Align(alignment: Alignment.centerRight, child: _rateChip(r.rate))),
+          const SizedBox(width: _colGap),
+          SizedBox(width: _colAmount, child: commission),
+        ],
+      );
+    } else {
+      // The phone keeps product and commission on the line; who, how many and
+      // the sum behind it ride in the caption.
+      final caption = [
+        if (showStaff) r.staff,
+        '${qtyLabel(r.quantity)} sold',
+        '${Money.plain(r.net)} × ${r.rate == 0 ? 'no rate' : pctLabel(r.rate)}',
+      ].join(' · ');
+      body = Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: product),
+                    if (isMe) ...[const SizedBox(width: 6), const YouBadge()],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(width: _colGap),
+          SizedBox(width: 96, child: commission),
+        ],
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, wide ? 11 : 9, wide ? 18 : 13, wide ? 11 : 9),
+      decoration: BoxDecoration(
+        color: isMe ? p.primary.withValues(alpha: p.isDark ? 0.16 : 0.07) : null,
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      child: body,
+    );
+  }
+
+  /// Who earned a line: their initials on a small brand tile, then the name.
+  Widget _staffCell(String name, {bool isMe = false}) {
+    final p = context.astra;
+    final initials = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(2).map((w) => w[0]).join();
+    return Row(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(gradient: p.primaryGradient, borderRadius: BorderRadius.circular(8)),
+          child: Text(initials.toUpperCase(), style: ui(size: 9.5, weight: FontWeight.w800, color: Colors.white)),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ui(size: 12, weight: FontWeight.w700, color: p.ink)),
+        ),
+        if (isMe) ...[const SizedBox(width: 6), const YouBadge()],
+      ],
+    );
+  }
+
+  /// The grand-total bar on the table's own grid: quantity under Qty, net sales
+  /// under Net sales, the blended rate under Rate, commission under Commission.
+  Widget _commissionFoot(AdminCubit admin, {required bool wide, required bool showStaff}) {
+    final p = context.astra;
+    final count = admin.reportRowCount;
+    final lines = admin.reportRows.length < count
+        ? '${admin.reportRows.length} of $count lines'
+        : '$count line${count == 1 ? '' : 's'}';
+    final loaded = showStaff && admin.reportStaffCount > 0 ? '$lines · ${admin.reportStaffCount} staff' : lines;
+    final total = FittedBox(
+      alignment: Alignment.centerRight,
+      fit: BoxFit.scaleDown,
+      child: Text(admin.reportTotalText, style: serif(size: 17, color: p.primaryDark)),
+    );
+    final title = [
+      Text('Grand total', style: ui(size: 12, weight: FontWeight.w800, color: p.ink)),
+      const SizedBox(width: 10),
+      Flexible(
+        child: FittedBox(
+          alignment: Alignment.centerLeft,
+          fit: BoxFit.scaleDown,
+          child: _pill(loaded, p.tint, p.textSecondary),
+        ),
+      ),
+    ];
+    final net = admin.reportNetTotal;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(wide ? 18 : 13, 12, wide ? 18 : 13, 13),
+      decoration: BoxDecoration(
+        color: _softFill,
+        border: Border(top: BorderSide(color: p.hairline)),
+      ),
+      child: wide
+          ? Row(
+              children: [
+                Expanded(child: Row(children: title)),
+                const SizedBox(width: _colGap),
+                SizedBox(
+                  width: _colQty,
+                  child: Text(admin.reportQuantityText,
+                      textAlign: TextAlign.right,
+                      style: ui(size: 12, weight: FontWeight.w800, color: p.textSecondary)),
+                ),
+                const SizedBox(width: _colGap),
+                SizedBox(
+                  width: _colNet,
+                  child: Text(Money.plain(net),
+                      textAlign: TextAlign.right,
+                      style: ui(size: 12, weight: FontWeight.w800, color: p.textSecondary)),
+                ),
+                const SizedBox(width: _colGap),
+                SizedBox(
+                  width: _colRate,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _rateChip(net > 0 ? admin.reportTotal / net * 100 : 0),
+                  ),
+                ),
+                const SizedBox(width: _colGap),
+                SizedBox(width: _colAmount, child: total),
+              ],
+            )
+          : Row(
+              children: [
+                ...title,
+                const SizedBox(width: 10),
+                Expanded(child: total),
               ],
             ),
     );

@@ -236,6 +236,21 @@ class _RecordingSaleRepository implements SaleRepository {
   Future<void> deleteSale(String id) async {}
 
   @override
+  Future<SaleItemsPage> saleItems({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    int? createdById,
+    int page = 1,
+    int perPage = 30,
+  }) =>
+      throw UnimplementedError();
+
+  @override
   Future<Sale> saleById(String id) => throw UnimplementedError();
 
   @override

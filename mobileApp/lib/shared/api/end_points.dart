@@ -34,6 +34,8 @@ class EndPoints {
 
   // ---- Sales ----
   static const String sale = '/sale';
+  /// Every sold line, one row each — the Items tab of the Sales list.
+  static const String saleItems = '/sale/items';
   static String saleById(String id) => '/sale/$id';
   static String saleReceipt(String id) => '/sale/$id/receipt';
 

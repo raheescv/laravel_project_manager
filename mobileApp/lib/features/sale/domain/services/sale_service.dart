@@ -54,6 +54,46 @@ class SaleService implements SaleRepository {
       rows: list.map((e) => Map<String, dynamic>.from(e)).toList(),
       total: asNum(summary['invoices'] ?? pag['total'] ?? list.length).toInt(),
       totalPaid: asNum(summary['total_paid']).toDouble(),
+      totalBalance: asNum(summary['total_balance']).toDouble(),
+      currentPage: asNum(pag['current_page'] ?? 1).toInt(),
+      lastPage: asNum(pag['last_page'] ?? 1).toInt(),
+    );
+  }
+
+  @override
+  Future<SaleItemsPage> saleItems({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    int? createdById,
+    int page = 1,
+    int perPage = 30,
+  }) async {
+    final data = await _http.get(EndPoints.saleItems, query: {
+      if (status != null) 'status': status,
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (paymentMethodId != null) 'payment_method_id': paymentMethodId,
+      if (createdById != null) 'created_by': createdById,
+      if (fromDate != null) 'from_date': fromDate,
+      if (toDate != null) 'to_date': toDate,
+      'sort_by': sortBy,
+      'sort_direction': sortDirection,
+      'page': page,
+      'per_page': perPage,
+    });
+    final list = (data is Map ? data['data'] : data) as List? ?? const [];
+    final summary = (data is Map ? data['summary'] : null) as Map? ?? const {};
+    final pag = (data is Map ? data['pagination'] : null) as Map? ?? const {};
+    return SaleItemsPage(
+      rows: list.map((e) => Map<String, dynamic>.from(e)).toList(),
+      lines: asNum(summary['lines'] ?? pag['total'] ?? list.length).toInt(),
+      quantity: asNum(summary['quantity']).toDouble(),
+      discount: asNum(summary['discount']).toDouble(),
+      total: asNum(summary['total']).toDouble(),
       currentPage: asNum(pag['current_page'] ?? 1).toInt(),
       lastPage: asNum(pag['last_page'] ?? 1).toInt(),
     );

@@ -114,8 +114,11 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
         path: Routes.invoice,
         redirect: (_, state) => state.extra is Sale ? null : Routes.sales,
-        builder: (_, state) =>
-            TabletRailScaffold(activeTab: 1, child: InvoiceScreen(sale: state.extra as Sale)),
+        // `?line=` picks out the sale line an Items-tab row was opened from.
+        builder: (_, state) => TabletRailScaffold(
+            activeTab: 1,
+            child: InvoiceScreen(
+                sale: state.extra as Sale, highlightItemId: int.tryParse(state.uri.queryParameters['line'] ?? ''))),
       ),
       GoRoute(path: Routes.sales, builder: (_, __) => const SalesListScreen()),
       GoRoute(

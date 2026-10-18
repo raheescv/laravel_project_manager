@@ -9,12 +9,16 @@ class SalesPage extends Equatable {
     required this.rows,
     required this.total,
     required this.totalPaid,
+    this.totalBalance = 0,
     this.currentPage = 1,
     this.lastPage = 1,
   });
   final List<Map<String, dynamic>> rows;
   final int total;
   final double totalPaid;
+
+  /// Still owed across the whole filtered set — the list's "Due" figure.
+  final double totalBalance;
   final int currentPage;
   final int lastPage;
 
@@ -26,9 +30,34 @@ class SalesPage extends Equatable {
         rows,
         total,
         totalPaid,
+        totalBalance,
         currentPage,
         lastPage,
       ];
+}
+
+/// One page of `GET /sale/items` — every sold line on its own row, with sums
+/// across the whole filtered set (not just this page).
+class SaleItemsPage extends Equatable {
+  const SaleItemsPage({
+    required this.rows,
+    required this.lines,
+    this.quantity = 0,
+    this.discount = 0,
+    this.total = 0,
+    this.currentPage = 1,
+    this.lastPage = 1,
+  });
+  final List<Map<String, dynamic>> rows;
+  final int lines;
+  final double quantity;
+  final double discount;
+  final double total;
+  final int currentPage;
+  final int lastPage;
+
+  @override
+  List<Object?> get props => [rows, lines, quantity, discount, total, currentPage, lastPage];
 }
 
 // ---- Sale (SaleResource) ----

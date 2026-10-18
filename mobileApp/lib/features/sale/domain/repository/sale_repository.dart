@@ -26,6 +26,20 @@ abstract class SaleRepository {
     int perPage,
   });
 
+  /// Every sold line, one row each, under the same filters as [sales].
+  Future<SaleItemsPage> saleItems({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy,
+    String sortDirection,
+    int? createdById,
+    int page,
+    int perPage,
+  });
+
   Future<Sale> saleById(String id);
 
   Future<Uint8List> saleReceiptPdf(String id);

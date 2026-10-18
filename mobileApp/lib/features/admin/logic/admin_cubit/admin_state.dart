@@ -3,7 +3,7 @@ part of 'admin_cubit.dart';
 /// State for [AdminCubit] — the §5 shape.
 ///
 /// Covers three independently-loaded areas: the dashboard KPIs, the paginated
-/// report (item-wise / category-wise / employee-wise) and the sales overview. They share the
+/// report (item-wise / category-wise / employee-wise / commission) and the sales overview. They share the
 /// date range but nothing else, so each carries its own loading/error pair.
 class AdminState extends Equatable {
   const AdminState({
@@ -26,9 +26,13 @@ class AdminState extends Equatable {
     this.sortKey = 'amount',
     this.sortAscending = false,
     this.itemProductType,
+    this.commissionStaffId,
+    this.commissionStaffName = '',
     this.reportRows = const [],
     this.reportTotal = 0,
     this.reportQuantityTotal = 0,
+    this.reportNetTotal = 0,
+    this.reportStaffCount = 0,
     this.reportRowCount = 0,
     this.reportPage = 1,
     this.reportLastPage = 1,
@@ -68,12 +72,24 @@ class AdminState extends Equatable {
   /// means everywhere else in the app.
   final bool sortAscending;
   final String? itemProductType;
+
+  /// The one staff member the commission report is narrowed to; null for
+  /// everyone. Only an account that sees every record can set it — the server
+  /// pins a rank-and-file employee to themselves whatever is sent.
+  final int? commissionStaffId;
+  final String commissionStaffName;
   final List<ReportRow> reportRows;
   final double reportTotal;
 
   /// Units across the whole range — the Qty column's total. Zero on the staff
   /// breakdown, whose summary carries revenue alone.
   final double reportQuantityTotal;
+
+  /// Net sales across the commission report — its Net sales column's total.
+  final double reportNetTotal;
+
+  /// Staff members the commission report covers.
+  final int reportStaffCount;
   final int reportRowCount;
   final int reportPage;
   final int reportLastPage;
@@ -104,9 +120,13 @@ class AdminState extends Equatable {
     String? sortKey,
     bool? sortAscending,
     String? itemProductType,
+    int? commissionStaffId,
+    String? commissionStaffName,
     List<ReportRow>? reportRows,
     double? reportTotal,
     double? reportQuantityTotal,
+    double? reportNetTotal,
+    int? reportStaffCount,
     int? reportRowCount,
     int? reportPage,
     int? reportLastPage,
@@ -119,6 +139,7 @@ class AdminState extends Equatable {
     bool clearReportError = false,
     bool clearOverviewError = false,
     bool clearItemProductType = false,
+    bool clearCommissionStaff = false,
   }) =>
       AdminState(
         startDate: startDate ?? this.startDate,
@@ -139,9 +160,14 @@ class AdminState extends Equatable {
         sortAscending: sortAscending ?? this.sortAscending,
         itemProductType:
             clearItemProductType ? null : (itemProductType ?? this.itemProductType),
+        commissionStaffId: clearCommissionStaff ? null : (commissionStaffId ?? this.commissionStaffId),
+        commissionStaffName:
+            clearCommissionStaff ? '' : (commissionStaffName ?? this.commissionStaffName),
         reportRows: reportRows ?? this.reportRows,
         reportTotal: reportTotal ?? this.reportTotal,
         reportQuantityTotal: reportQuantityTotal ?? this.reportQuantityTotal,
+        reportNetTotal: reportNetTotal ?? this.reportNetTotal,
+        reportStaffCount: reportStaffCount ?? this.reportStaffCount,
         reportRowCount: reportRowCount ?? this.reportRowCount,
         reportPage: reportPage ?? this.reportPage,
         reportLastPage: reportLastPage ?? this.reportLastPage,
@@ -159,7 +185,8 @@ class AdminState extends Equatable {
         loading, errorMessage, dashboard, topStylists, topStylistsDate,
         trendPoints, trendLabels,
         reportLoading, reportLoadingMore, reportError, reportType, sortKey,
-        sortAscending, itemProductType, reportRows, reportTotal, reportRowCount, reportPage,
+        sortAscending, itemProductType, commissionStaffId, commissionStaffName, reportRows,
+        reportTotal, reportQuantityTotal, reportNetTotal, reportStaffCount, reportRowCount, reportPage,
         reportLastPage, reportTrendPoints, reportTrendLabels,
         overviewLoading, overviewError, overview,
       ];

@@ -22,10 +22,13 @@ class ReportRow extends Equatable {
       required this.value,
       this.amount = 0,
       this.quantity = 0,
-      this.bills = 0});
+      this.bills = 0,
+      this.staff = '',
+      this.net = 0,
+      this.rate = 0});
 
-  /// The staff member's user id on a staff row, so a screen can pick out the
-  /// signed-in person; '' on item and category rows.
+  /// The staff member's user id on a staff or commission row, so a screen can
+  /// pick out the signed-in person; '' on item and category rows.
   final String id;
   final String title;
   final String subtitle;
@@ -39,8 +42,18 @@ class ReportRow extends Equatable {
   /// Distinct bills the row appears on — the ledger table's Bills column.
   final int bills;
 
+  /// Who earned a commission row; '' on every other breakdown. A commission
+  /// row's [title] is the product and its [amount] the commission.
+  final String staff;
+
+  /// Net sales (sales − returns) a commission row was worked out on.
+  final double net;
+
+  /// The commission % set for the row's staff member × product pair.
+  final double rate;
+
   @override
-  List<Object?> get props => [id, title, subtitle, value, amount, quantity, bills];
+  List<Object?> get props => [id, title, subtitle, value, amount, quantity, bills, staff, net, rate];
 }
 
 /// The loaded breakdown for one report type, held so the By Item / By Category /
@@ -137,6 +150,7 @@ class AdminCubit extends Cubit<AdminState> {
   ///  * date range, branch — every entry (every figure is range-scoped)
   ///  * Rank By, Type      — the `itemwise` and `categorywise` entries; neither
   ///                         is sent with `employeewise`, so By Staff stands.
+  ///  * Staff             — the `commission` entry, the one request it rides on.
   final Map<String, _ReportCache> _reportCache = {};
 
   /// Date range the per-day trend was fetched for. The trend depends on the
@@ -167,6 +181,10 @@ class AdminCubit extends Cubit<AdminState> {
   List<ReportRow> get reportRows => state.reportRows;
   double get reportTotal => state.reportTotal;
   double get reportQuantityTotal => state.reportQuantityTotal;
+  double get reportNetTotal => state.reportNetTotal;
+  int get reportStaffCount => state.reportStaffCount;
+  int? get commissionStaffId => state.commissionStaffId;
+  String get commissionStaffName => state.commissionStaffName;
   int get reportRowCount => state.reportRowCount;
   bool get reportHasMore => state.reportHasMore;
   DateTime get startDate => state.startDate;
@@ -377,7 +395,8 @@ class AdminCubit extends Cubit<AdminState> {
     }
   }
 
-  /// Switch the breakdown between By Item, By Category and By Staff. Each side
+  /// Switch the breakdown between By Item, By Category, By Staff and
+  /// Commission. Each side
   /// is held in [_reportCache] for as long as the filters behind it hold, so the
   /// toggle is instant — the API is hit again only for a side that hasn't been
   /// loaded under the current Rank By / Type / date / branch selection.
@@ -385,6 +404,16 @@ class AdminCubit extends Cubit<AdminState> {
     // Re-tapping the active segment is a no-op, unless its load failed — then
     // it's the only retry the user has.
     if (state.reportType == type && state.reportError == null) return;
+    // Net sales is a commission-only sort and Bills means nothing on a
+    // commission line, so a sort the next breakdown doesn't carry goes back to
+    // the default — rather than the server quietly ranking by something else
+    // while the head arrows a column that isn't there.
+    if (!sortsBy(type, state.sortKey)) {
+      _reportCache.clear();
+      emit(state.copyWith(sortKey: 'amount', sortAscending: false));
+      unawaited(loadReports(type: type));
+      return;
+    }
     final cached = _reportCache[type];
     if (cached == null) {
       unawaited(loadReports(type: type));
@@ -565,6 +594,24 @@ class AdminCubit extends Cubit<AdminState> {
           lineCount: data.total,
           totalAmount: asNum(data.summary['total_revenue']).toDouble(),
         );
+      case ReportExportKind.commission:
+        final data = await _allReportRows('commission', start, end,
+            sort: state.sortKey,
+            direction: state.sortAscending ? 'asc' : 'desc',
+            employeeId: state.commissionStaffId);
+        return ReportExport(
+          kind: kind,
+          startDate: from,
+          endDate: to,
+          generatedAt: now,
+          lines: data.rows.map(ReportExportLine.commission).toList(),
+          lineCount: data.total,
+          totalAmount: asNum(data.summary['total_commission']).toDouble(),
+          totalQuantity: asNum(data.summary['total_quantity']).toDouble(),
+          totalNet: asNum(data.summary['total_net_amount']).toDouble(),
+          staffCount: asNum(data.summary['employees']).toInt(),
+          staffName: state.commissionStaffName,
+        );
     }
   }
 
@@ -572,7 +619,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// four requests at a time — all at once would queue up to fifty on the
   /// server behind a single tap.
   Future<_ExportRows> _allReportRows(String type, String start, String end,
-      {String? sort, String? direction, String? productType}) async {
+      {String? sort, String? direction, String? productType, int? employeeId}) async {
     Future<Map<String, dynamic>> page(int n) => _repo.report(
           type: type,
           startDate: start,
@@ -582,6 +629,7 @@ class AdminCubit extends Cubit<AdminState> {
           sort: sort,
           direction: direction,
           productType: productType,
+          employeeId: employeeId,
         );
 
     final first = await page(1);
@@ -641,6 +689,18 @@ class AdminCubit extends Cubit<AdminState> {
   /// these take the Rank By and Type filters; By Staff ranks by revenue alone.
   static bool ranksProducts(String type) => type == 'itemwise' || type == 'categorywise';
 
+  /// The staff × product commission breakdown, which carries a staff filter
+  /// and ranks by commission, net sales, quantity or product name.
+  static bool isCommission(String type) => type == 'commission';
+
+  /// Whether the [type] breakdown can be ranked by [sortKey]: `net` belongs to
+  /// the commission report alone, `bills` to every report but it.
+  static bool sortsBy(String type, String sortKey) => switch (sortKey) {
+        'net' => isCommission(type),
+        'bills' => !isCommission(type),
+        _ => true,
+      };
+
   Future<Map<String, dynamic>> _fetchReportPage(int page) => _repo.report(
         type: state.reportType,
         startDate: Dates.iso(state.startDate),
@@ -650,6 +710,7 @@ class AdminCubit extends Cubit<AdminState> {
         sort: state.sortKey,
         direction: state.sortAscending ? 'asc' : 'desc',
         productType: ranksProducts(state.reportType) ? state.itemProductType : null,
+        employeeId: isCommission(state.reportType) ? state.commissionStaffId : null,
       );
 
   void _applyReportPage(Map<String, dynamic> data, {required bool append}) {
@@ -658,13 +719,18 @@ class AdminCubit extends Cubit<AdminState> {
     final summary = (data['summary'] as Map?) ?? const {};
     // Always the money total: the ledger has a column each for quantity and
     // amount, so ranking by quantity changes the order, never the measure.
-    final total = ranksProducts(state.reportType)
-        ? asNum(summary['total_amount']).toDouble()
-        : asNum(summary['total_revenue']).toDouble();
+    // The commission report totals the commission; its net sales ride along
+    // in [reportNetTotal].
+    final total = switch (state.reportType) {
+      'itemwise' || 'categorywise' => asNum(summary['total_amount']).toDouble(),
+      'commission' => asNum(summary['total_commission']).toDouble(),
+      _ => asNum(summary['total_revenue']).toDouble(),
+    };
 
     final mapped = switch (state.reportType) {
       'itemwise' => rows.map(_itemRow).toList(),
       'categorywise' => rows.map(_categoryRow).toList(),
+      'commission' => rows.map(_commissionRow).toList(),
       _ => rows.map(_employeeRow).toList(),
     };
 
@@ -674,6 +740,8 @@ class AdminCubit extends Cubit<AdminState> {
       reportRowCount: asNum(pag['total'] ?? rows.length).toInt(),
       reportTotal: total,
       reportQuantityTotal: asNum(summary['total_quantity']).toDouble(),
+      reportNetTotal: asNum(summary['total_net_amount']).toDouble(),
+      reportStaffCount: asNum(summary['employees']).toInt(),
       reportRows: append ? [...state.reportRows, ...mapped] : mapped,
     ));
 
@@ -734,6 +802,25 @@ class AdminCubit extends Cubit<AdminState> {
     );
   }
 
+  /// One staff member × product line: the product titles the row, the
+  /// commission is its amount.
+  ReportRow _commissionRow(dynamic e) {
+    final m = Map<String, dynamic>.from(e);
+    final commission = asNum(m['commission']).toDouble();
+    final qty = asNum(m['quantity']).toDouble();
+    return ReportRow(
+      id: asStr(m['employee_id']),
+      title: asStr(m['product_name']),
+      subtitle: '${_qty(qty)} sold',
+      value: Money.of(commission),
+      amount: commission,
+      quantity: qty,
+      staff: asStr(m['employee_name']),
+      net: asNum(m['net_amount']).toDouble(),
+      rate: asNum(m['commission_percentage']).toDouble(),
+    );
+  }
+
   /// The sort rides on every breakdown request, so changing it empties the
   /// cache for all three sides rather than the two product ones. Re-picking
   /// the live sort flips its direction, which is what tapping a column header
@@ -755,6 +842,7 @@ class AdminCubit extends Cubit<AdminState> {
     final cleared = state.sortKey != 'amount' ||
         state.sortAscending ||
         state.itemProductType != null ||
+        state.commissionStaffId != null ||
         state.rangePreset != 'today';
     if (!cleared) return;
     _reportCache.clear();
@@ -768,6 +856,7 @@ class AdminCubit extends Cubit<AdminState> {
       sortKey: 'amount',
       sortAscending: false,
       clearItemProductType: true,
+      clearCommissionStaff: true,
     ));
     unawaited(loadReports());
     unawaited(loadOverview());
@@ -779,6 +868,18 @@ class AdminCubit extends Cubit<AdminState> {
         itemProductType: productType, clearItemProductType: productType == null));
     _dropProductCaches();
     unawaited(loadReports());
+  }
+
+  /// Narrow the commission report to one staff member, or back to everyone
+  /// with a null [id]. The filter rides on the commission request alone, so
+  /// only that side's cached rows are dropped.
+  void setCommissionStaff(int? id, {String name = ''}) {
+    if (state.commissionStaffId == id) return;
+    _reportCache.remove('commission');
+    emit(id == null
+        ? state.copyWith(clearCommissionStaff: true)
+        : state.copyWith(commissionStaffId: id, commissionStaffName: name));
+    if (isCommission(state.reportType)) unawaited(loadReports());
   }
 
   void _dropProductCaches() => _reportCache

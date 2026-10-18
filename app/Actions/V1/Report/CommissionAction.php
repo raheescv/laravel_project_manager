@@ -16,6 +16,9 @@ class CommissionAction
      * sale / return / net amount, the configured commission % and the resulting
      * commission value. Server-paginated with full-set grand totals in `summary`.
      *
+     * Ranked by commission unless [$sort] asks for net sales (`net`), quantity
+     * or the product's name, in [$direction].
+     *
      * @return array{0: array<int, array<string, mixed>>, 1: array<string, mixed>, 2: int}
      */
     public function execute(
@@ -25,7 +28,9 @@ class CommissionAction
         ?int $productId,
         ?int $branchId,
         int $page,
-        int $perPage
+        int $perPage,
+        ?string $sort = null,
+        string $direction = 'desc'
     ): array {
         $filters = [
             'branch_id' => $branchId,
@@ -40,7 +45,7 @@ class CommissionAction
                 $join->on('returns.employee_id', '=', 'sale_items.employee_id')
                     ->on('returns.product_id', '=', 'sale_items.product_id');
             })
-            ->select('users.name as employee', 'products.name as product')
+            ->select('sale_items.employee_id', 'sale_items.product_id', 'users.name as employee', 'products.name as product')
             ->groupBy('sale_items.employee_id', 'sale_items.product_id', 'employee_commissions.commission_percentage')
             ->selectRaw('SUM(sale_items.base_unit_quantity) - COALESCE(MAX(returns.return_quantity), 0) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
@@ -48,11 +53,15 @@ class CommissionAction
             ->selectRaw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount')
             ->selectRaw('COALESCE(MAX(employee_commissions.commission_percentage), 0) as commission_percentage')
             ->selectRaw('(SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0)) * COALESCE(MAX(employee_commissions.commission_percentage), 0) / 100 as total_commission')
-            ->orderByDesc('total_amount')
+            ->orderBy($this->orderColumn($sort), $direction)
+            ->orderByDesc('net_amount')
+            ->orderBy('product')
             ->paginate($perPage, ['*'], 'page', $page);
 
         $rows = collect($paginator->items())
             ->map(fn ($row) => [
+                'employee_id' => (string) $row->employee_id,
+                'product_id' => (string) $row->product_id,
                 'employee_name' => $row->employee,
                 'product_name' => $row->product,
                 'quantity' => round((float) $row->total_quantity, 3),
@@ -79,6 +88,7 @@ class CommissionAction
 
         $summary = [
             'rows' => $paginator->total(),
+            'employees' => $this->buildBaseQuery($filters)->distinct()->count('sale_items.employee_id'),
             'total_quantity' => round((float) ($saleTotals->total_quantity ?? 0) - (float) ($returnTotals->return_quantity ?? 0), 3),
             'total_sale_amount' => round($totalSale, 2),
             'total_return_amount' => round($totalReturn, 2),
@@ -87,5 +97,20 @@ class CommissionAction
         ];
 
         return [$rows, $summary, $paginator->total()];
+    }
+
+    /**
+     * The column a line is ranked by for the `sort` the client asked for. The
+     * staff breakdowns' `bills` has no meaning on a commission line, so it
+     * falls back to the commission like any other unknown sort.
+     */
+    private function orderColumn(?string $sort): string
+    {
+        return match ($sort) {
+            'net' => 'net_amount',
+            'quantity' => 'total_quantity',
+            'name' => 'product',
+            default => 'total_commission',
+        };
     }
 }

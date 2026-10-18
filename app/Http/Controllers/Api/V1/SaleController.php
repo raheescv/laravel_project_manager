@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\V1\Sale\CreateAction;
 use App\Actions\V1\Sale\DeleteAction;
 use App\Actions\V1\Sale\GetAction;
+use App\Actions\V1\Sale\ItemListAction;
 use App\Actions\V1\Sale\ListAction;
 use App\Actions\V1\Sale\UpdateAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Sale\IndexRequest;
+use App\Http\Requests\V1\Sale\ItemIndexRequest;
 use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Http\Requests\V1\Sale\UpdateRequest;
 use App\Http\Resources\V1\Sale\SaleResource;
@@ -44,6 +46,25 @@ class SaleController extends Controller
             return $this->sendValidationError($e->errors(), 'Validation failed');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to retrieve sales: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * List sold items.
+     *
+     * Returns every sale line as its own row (not grouped by product), filtered by
+     * the same parameters as the sale list, plus line, quantity and total sums.
+     */
+    public function items(ItemListAction $action, ItemIndexRequest $request): JsonResponse
+    {
+        try {
+            $result = $action->execute($request);
+
+            return $this->sendSuccess($result, 'Sale items retrieved successfully');
+        } catch (ValidationException $e) {
+            return $this->sendValidationError($e->errors(), 'Validation failed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to retrieve sale items: '.$e->getMessage());
         }
     }
 

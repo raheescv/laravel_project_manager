@@ -29,7 +29,7 @@ class GetRequest extends FormRequest
             'employee_id' => ['nullable', 'integer', 'exists:users,id'],
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'product_type' => ['nullable', 'string', 'in:product,service,asset'],
-            'sort' => ['nullable', 'string', 'in:amount,quantity,bills,name'],
+            'sort' => ['nullable', 'string', 'in:amount,quantity,bills,name,net'],
             'direction' => ['nullable', 'string', 'in:asc,desc'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -45,7 +45,7 @@ class GetRequest extends FormRequest
     {
         return [
             'type.in' => 'The report type must be billwise, employeewise, itemwise, categorywise, commission or overview.',
-            'sort.in' => 'The sort must be amount, quantity, bills or name.',
+            'sort.in' => 'The sort must be amount, quantity, bills, name or net.',
             'direction.in' => 'The direction must be asc or desc.',
             'employee_id.exists' => 'The selected employee does not exist.',
             'product_id.exists' => 'The selected product does not exist.',

@@ -81,6 +81,28 @@ class FakeSaleRepository implements SaleRepository {
       );
 
   @override
+  Future<SaleItemsPage> saleItems({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    int? createdById,
+    int page = 1,
+    int perPage = 30,
+  }) async =>
+      const SaleItemsPage(
+        rows: [
+          {'id': '11', 'sale_id': '1', 'invoice_no': '#1042', 'customer': 'Walk-in', 'date': '2026-06-14', 'status': 'completed', 'product': {'id': '5', 'name': 'Linen Shirt', 'code': 'LS-01'}, 'quantity': 2, 'unit_price': 124.2, 'discount': 0, 'total': 248.4},
+        ],
+        lines: 1,
+        quantity: 2,
+        total: 248.4,
+      );
+
+  @override
   Future<Sale> saleById(String id) async => _finishedSale();
 
   @override
@@ -116,6 +138,9 @@ class FakeAdminRepository implements AdminRepository {
   /// The sort the last breakdown request carried, for the Reports tests.
   String? lastSort;
   String? lastDirection;
+
+  /// The staff member the last commission request was narrowed to.
+  int? lastEmployeeId;
 
   /// What the server says the day is; a test moves the day underneath the
   /// app by swapping this.
@@ -155,10 +180,38 @@ class FakeAdminRepository implements AdminRepository {
     String? sort,
     String? direction,
     String? productType,
+    int? employeeId,
   }) async {
     if (type != 'overview' && type != 'billwise') {
       lastSort = sort;
       lastDirection = direction;
+    }
+    if (type == 'commission') {
+      lastEmployeeId = employeeId;
+      return {
+        'rows': [
+          {
+            'employee_id': '14', 'product_id': '1', 'employee_name': 'Maya Chen', 'product_name': 'Balayage',
+            'quantity': 6, 'sale_amount': 2400, 'return_amount': 0, 'net_amount': 2400,
+            'commission_percentage': 10, 'commission': 240,
+          },
+          {
+            'employee_id': '15', 'product_id': '2', 'employee_name': 'Liam Ortiz', 'product_name': 'Signature Cut',
+            'quantity': 31, 'sale_amount': 1550, 'return_amount': 50, 'net_amount': 1500,
+            'commission_percentage': 6, 'commission': 90,
+          },
+          {
+            'employee_id': '15', 'product_id': '3', 'employee_name': 'Liam Ortiz', 'product_name': 'Styling Wax',
+            'quantity': 9, 'sale_amount': 405, 'return_amount': 0, 'net_amount': 405,
+            'commission_percentage': 0, 'commission': 0,
+          },
+        ],
+        'summary': {
+          'rows': 3, 'employees': 2, 'total_quantity': 46, 'total_sale_amount': 4355,
+          'total_return_amount': 50, 'total_net_amount': 4305, 'total_commission': 330,
+        },
+        'pagination': {'current_page': 1, 'last_page': 1, 'total': 3},
+      };
     }
     if (type == 'employeewise') {
       return {

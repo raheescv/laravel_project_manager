@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile Sales Compact</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL@20..48,500,0..1&display=swap" rel="stylesheet">
+<style>
+    /* AstraPresets.qloudBlue (skin: clean) + AstraTypefaces.clean (Inter throughout) */
+    :root {
+        --primary: #0A62C8; --primary-dark: #01377F; --accent: #0BA8FA;
+        --canvas: #F3F7FD; --card: #FFFFFF; --ink: #161A2B; --text2: #4A4F63; --muted: #8A8FA3;
+        --hairline: #E7E9F2; --tint: rgba(10,98,200,.12);
+        --success: #1F9D63; --success-tint: #E4F6EC; --danger: #D4546A; --danger-tint: #FBE9EC;
+        --warn-tint: #FBF3DF; --gold: var(--accent); --dark-surface: #01377F;
+        --card-shadow: 0 6px 22px -8px rgba(11,40,33,.14);
+        --soft-shadow: 0 6px 18px -6px rgba(11,40,33,.16);
+        --page: #D9DEE8;
+    }
+    :root[data-theme="dark"] {
+        --canvas: #0E1220; --card: #171B2B; --ink: #EDEFF7; --text2: #ADB3C9; --muted: #767C92;
+        --hairline: #272C3E; --tint: rgba(10,98,200,.22);
+        --success-tint: rgba(31,157,99,.16); --danger-tint: rgba(212,84,106,.18); --warn-tint: rgba(201,162,75,.18);
+        --dark-surface: #161A28; --card-shadow: 0 6px 22px -8px rgba(0,0,0,.5); --soft-shadow: 0 6px 18px -6px rgba(0,0,0,.4);
+        --page: #05070D;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); font-family: Inter, system-ui, sans-serif; color: var(--ink); }
+    .ms { font-family: 'Material Symbols Rounded'; font-weight: normal; font-style: normal; line-height: 1; display: inline-block; font-size: 17px; -webkit-font-feature-settings: 'liga'; flex-shrink: 0; }
+    .disp { font-weight: 700; letter-spacing: -.01em; } /* serif() → Inter under the Clean typeface */
+    .ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+    /* page chrome (not part of the app) */
+    .topbar { position: sticky; top: 0; z-index: 50; background: #0D1222; color: #fff; padding: 9px 16px; display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+    .topbar label { opacity: .6; font-weight: 700; letter-spacing: .5px; font-size: 10px; }
+    .grp { display: flex; background: rgba(255,255,255,.1); border-radius: 9px; padding: 3px; }
+    .grp button { font: inherit; font-weight: 700; background: transparent; color: rgba(255,255,255,.8); border: 0; border-radius: 7px; padding: 6px 10px; cursor: pointer; }
+    .grp button.on { background: #fff; color: #0D1222; }
+    .intro { max-width: 1440px; margin: 16px auto 0; padding: 0 16px; font-size: 13px; color: var(--text2); line-height: 1.55; }
+    .intro b { color: var(--ink); }
+    .stage { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; padding: 16px 16px 50px; }
+    .cap { font-size: 10.5px; font-weight: 800; letter-spacing: 1px; color: var(--text2); margin-bottom: 8px; }
+    .hscroll { max-width: calc(100vw - 32px); overflow-x: auto; border-radius: 28px; }
+
+    .device { background: var(--canvas); border: 9px solid #0F121A; overflow: hidden; position: relative; box-shadow: 0 18px 44px rgba(0,0,0,.18); flex-shrink: 0;
+        background-image: radial-gradient(ellipse 120% 60% at 90% -5%, rgba(10,98,200,.07), transparent 55%); }
+    .phone { width: 360px; height: 760px; border-radius: 38px; display: flex; flex-direction: column; }
+    .tablet { border-radius: 28px; display: flex; }
+
+    /* ---------- EmeraldHeader ---------- */
+    .eh { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 0 0 26px 26px; padding: 0 16px 16px; color: #fff; flex-shrink: 0; }
+    .sbar { height: 26px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; padding: 0 6px; }
+    .eh-row { display: flex; align-items: center; gap: 11px; margin-top: 6px; }
+    .eh-title { font-size: 22px; font-weight: 700; line-height: 1.1; }
+    .eh-sub { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.75); margin-top: 3px; }
+    .returns-pill { margin-left: auto; display: flex; align-items: center; gap: 7px; padding: 9px 12px; border-radius: 12px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); font-size: 12px; font-weight: 800; }
+    .returns-pill .ms { color: var(--accent); font-size: 15px; }
+
+    /* segmented control — same shape as the existing _statusSeg */
+    .seg { display: flex; padding: 3px; border-radius: 13px; background: var(--tint); }
+    .seg button { flex: 1; border: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 700; color: var(--text2); padding: 8px 0; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .seg button.on { background: var(--card); color: var(--primary); font-weight: 800; box-shadow: var(--soft-shadow); }
+    .seg button .ms { font-size: 15px; }
+    .seg button .n { font-size: 10px; font-weight: 800; opacity: .7; }
+    .eh .seg { margin-top: 14px; background: rgba(255,255,255,.14); }
+    .eh .seg button { color: rgba(255,255,255,.82); }
+    .eh .seg button.on { background: #fff; color: var(--primary); }
+
+    /* ---------- AstraCard + inner controls ---------- */
+    .acard { background: var(--card); border-radius: 18px; box-shadow: var(--card-shadow); }
+    .search { display: flex; align-items: center; gap: 8px; background: var(--tint); border-radius: 13px; padding: 0 11px; height: 42px; flex: 1; min-width: 0; font-size: 13px; color: var(--muted); font-weight: 500; }
+    .search .ms { color: var(--primary); font-size: 17px; }
+    .iconchip { width: 42px; height: 42px; border-radius: 13px; background: var(--tint); color: var(--primary); display: grid; place-items: center; flex-shrink: 0; position: relative; }
+    .iconchip.solid { background: linear-gradient(135deg, #1B6CCC, var(--primary-dark)); color: #fff; }
+    .iconchip .ms { font-size: 19px; }
+    .badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 9.5px; font-weight: 800; display: grid; place-items: center; padding: 0 4px; border: 2px solid var(--card); }
+
+    /* TabletFilterChip — reused on phone so both form factors share one filter vocabulary */
+    .fchips { display: flex; gap: 7px; }
+    .fchips.scroll-x { overflow-x: auto; scrollbar-width: none; margin: 0 -10px; padding: 0 10px; }
+    .fchips.scroll-x::-webkit-scrollbar { display: none; }
+    .fchips.wrap { flex-wrap: wrap; }
+    .fchip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 20px; background: var(--tint); font-size: 11.5px; font-weight: 700; color: var(--text2); white-space: nowrap; cursor: pointer; }
+    .fchip.ic { padding-left: 9px; }
+    .fchip.tr { padding-right: 8px; }
+    .fchip .ms { font-size: 13px; color: var(--primary); }
+    .fchip .ms.t { font-size: 15px; color: var(--muted); margin-left: -3px; }
+    .fchip.on { background: linear-gradient(135deg, #1B6CCC, var(--primary-dark)); color: #fff; }
+    .fchip.on .ms, .fchip.on .ms.t { color: rgba(255,255,255,.8); }
+
+    /* StatusPill */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 20px; font-size: 10px; font-weight: 800; flex-shrink: 0; }
+    .pill.completed { background: var(--success-tint); color: var(--success); }
+    .pill.draft { background: var(--warn-tint); color: var(--gold); }
+    .pill.held { background: var(--warn-tint); color: var(--gold); }
+    .pill .ms { font-size: 11px; }
+    .mtag { padding: 2px 6px; border-radius: 6px; background: var(--tint); font-size: 8.5px; font-weight: 800; letter-spacing: .3px; color: var(--text2); flex-shrink: 0; }
+
+    /* phone row (existing _row, AstraCard r14) */
+    .prow { display: flex; align-items: center; gap: 12px; padding: 11px 12px; cursor: pointer; }
+    .prow.card { background: var(--card); border-radius: 14px; box-shadow: var(--card-shadow); margin-bottom: 9px; }
+    .prow.flat { border-bottom: 1px solid var(--hairline); }
+    .prow.flat:last-child { border-bottom: 0; }
+    .ichip { width: 40px; height: 40px; border-radius: 12px; background: var(--tint); color: var(--primary); display: grid; place-items: center; flex-shrink: 0; }
+    .ichip .ms { font-size: 16px; }
+    .ichip.held { background: var(--warn-tint); color: var(--gold); }
+    .ichip.q { flex-direction: column; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; line-height: 1; }
+    .ichip.q small { font-size: 7px; font-weight: 800; letter-spacing: .6px; color: var(--muted); margin-top: 2px; }
+    .rmain { flex: 1; min-width: 0; }
+    .rtop { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .rtitle { font-size: 12.5px; font-weight: 800; color: var(--ink); }
+    .rsub { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-size: 10.5px; font-weight: 600; color: var(--muted); min-width: 0; }
+    .ramt { text-align: right; flex-shrink: 0; }
+    .ramt .v { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .ramt .s { font-size: 9.5px; font-weight: 700; color: var(--muted); margin-top: 2px; }
+    .ramt .s.disc { color: var(--danger); }
+    .seclabel { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 4px 8px; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--muted); }
+    .seclabel b { font-size: 13px; letter-spacing: 0; color: var(--text2); font-weight: 700; }
+    .resline { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 4px 8px; }
+    .resline span:first-child { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+    .resline span:last-child { font-size: 16px; font-weight: 700; color: var(--gold); }
+
+    .pbody { flex: 1; overflow-y: auto; padding: 14px 16px 110px; scrollbar-width: none; min-height: 0; }
+    .pbody::-webkit-scrollbar { display: none; }
+
+    /* AstraBottomNav — frosted floating bar + center New button */
+    .bnav { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 66px; border-radius: 26px; background: rgba(255,255,255,.82); border: 1px solid rgba(255,255,255,.75); box-shadow: 0 14px 30px -10px rgba(38,48,107,.25); backdrop-filter: blur(16px); display: flex; align-items: center; justify-content: space-around; z-index: 4; }
+    :root[data-theme="dark"] .bnav { background: rgba(22,26,40,.9); border-color: rgba(255,255,255,.14); }
+    .bnav .t { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 700; color: var(--muted); width: 54px; position: relative; }
+    .bnav .t .ms { font-size: 22px; }
+    .bnav .t.on { color: var(--primary); }
+    .bnav .t.on::after { content: ''; position: absolute; bottom: -9px; width: 26px; height: 4px; border-radius: 3px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+    .bnav .fab { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #1B6CCC, var(--primary-dark)); color: #fff; display: grid; place-items: center; margin-top: -26px; box-shadow: 0 8px 18px rgba(10,98,200,.4); }
+    .bnav .fab .ms { font-size: 28px; }
+
+    /* bottom sheet — _optionSheet (cardSolid, rSheet 30) */
+    .scrim { position: absolute; inset: 0; background: rgba(5,10,25,.45); z-index: 6; display: none; }
+    .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 30px 30px 0 0; padding: 10px 18px 26px; z-index: 7; transform: translateY(105%); transition: transform .22s ease; }
+    .device.sheet-open .scrim { display: block; }
+    .device.sheet-open .sheet { transform: none; }
+    .tablet .sheet { left: auto; right: 24px; bottom: auto; top: 90px; width: 360px; border-radius: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.25); transform: scale(.96); opacity: 0; pointer-events: none; transition: .18s; }
+    .tablet.sheet-open .sheet { transform: none; opacity: 1; pointer-events: auto; }
+    .grab { width: 40px; height: 4px; border-radius: 3px; background: var(--hairline); margin: 0 auto 14px; }
+    .sheet h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .sheet h3 a { font-size: 12px; color: var(--primary); font-weight: 700; cursor: pointer; }
+    .flabel { font-size: 8.5px; font-weight: 800; letter-spacing: 1.1px; color: var(--muted); margin: 14px 2px 7px; }
+
+    /* ---------- tablet: AstraSideRail ---------- */
+    .rail { width: 92px; margin: 14px 0 14px 14px; border-radius: 26px; background: var(--dark-surface); box-shadow: 0 14px 36px rgba(0,0,0,.3); display: flex; flex-direction: column; align-items: center; padding: 16px 0; flex-shrink: 0; }
+    .logo { width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--accent); display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px; margin: 4px 0 18px; }
+    .rlink { display: flex; flex-direction: column; align-items: center; padding: 7px 0; font-size: 8.5px; font-weight: 600; color: rgba(255,255,255,.55); }
+    .rlink .box { width: 46px; height: 40px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 4px; }
+    .rlink .ms { font-size: 20px; }
+    .rlink.on { color: var(--accent); font-weight: 700; }
+    .rlink.on .box { background: rgba(255,255,255,.12); }
+    .rnew { margin-top: auto; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #5CC7FC, var(--accent)); color: var(--primary-dark); display: grid; place-items: center; }
+    .rnew .ms { font-size: 24px; }
+    .rnew-l { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.7); margin-top: 4px; }
+
+    /* TabletPane + TabletPaneHead + TabletListRow */
+    .tpane { background: var(--card); border-right: 1px solid var(--hairline); display: flex; flex-direction: column; flex-shrink: 0; margin-left: 14px; }
+    .tph { padding: 12px 16px; border-bottom: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 10px; }
+    .tph-row { display: flex; align-items: center; gap: 10px; }
+    .tph-title { font-size: 20px; font-weight: 700; }
+    .tph-sub { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+    .tlist { flex: 1; overflow-y: auto; scrollbar-width: none; }
+    .tlist::-webkit-scrollbar { display: none; }
+    .trow { padding: 13px 16px 13px 13px; border-bottom: 1px solid var(--hairline); border-left: 3px solid transparent; cursor: pointer; }
+    .trow.sel { background: var(--tint); border-left-color: var(--primary); }
+    .trow .l1 { display: flex; align-items: center; gap: 8px; }
+    .trow .l1 .t { flex: 1; font-size: 13px; font-weight: 800; }
+    .trow .l1 .v { font-size: 15px; font-weight: 700; }
+    .trow .l2 { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .trow .l2 .s { flex: 1; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+    .trow .l2 .s2 { font-size: 10px; font-weight: 700; color: var(--muted); }
+    .trow .l2 .s2.disc { color: var(--danger); }
+    .tday { display: flex; justify-content: space-between; padding: 10px 16px 7px; font-size: 9.5px; font-weight: 800; letter-spacing: 1.2px; color: var(--muted); background: var(--canvas); border-bottom: 1px solid var(--hairline); position: sticky; top: 0; }
+    .tday b { font-size: 12px; letter-spacing: 0; color: var(--text2); }
+
+    /* TabletActionButton / TabletIconButton */
+    .tab-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 13px; border-radius: 12px; background: var(--card); border: 1px solid var(--hairline); box-shadow: var(--soft-shadow); font-size: 12.5px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    .tab-btn .ms { font-size: 15px; color: var(--primary); }
+    .tab-ibtn { width: 40px; height: 40px; border-radius: 12px; background: var(--card); border: 1px solid var(--hairline); box-shadow: var(--soft-shadow); display: grid; place-items: center; color: var(--ink); flex-shrink: 0; position: relative; cursor: pointer; }
+    .tab-ibtn .ms { font-size: 17px; }
+    .tab-ibtn.solid { background: linear-gradient(135deg, #1B6CCC, var(--primary-dark)); color: #fff; border-color: transparent; }
+
+    /* InvoiceScreen embedded: TabletDetailHead + TabletPanel */
+    .tdetail { flex: 1; min-width: 0; overflow-y: auto; scrollbar-width: none; }
+    .tdetail::-webkit-scrollbar { display: none; }
+    .tdh { display: flex; gap: 14px; align-items: flex-start; }
+    .tdh.stack { flex-direction: column; }
+    .tdh-lab { display: flex; align-items: center; gap: 9px; font-size: 10.5px; font-weight: 800; letter-spacing: 1.2px; color: var(--muted); }
+    .tdh-amt { font-size: 34px; font-weight: 700; margin-top: 5px; letter-spacing: -.02em; }
+    .tdh-sub { font-size: 12.5px; font-weight: 600; color: var(--text2); margin-top: 3px; }
+    .tdh-acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+    .tdh.stack .tdh-acts { margin-left: 0; justify-content: flex-start; }
+    .tpanel-t { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; color: var(--muted); margin: 18px 2px 8px; }
+    .tpanel { background: var(--card); border-radius: 16px; box-shadow: var(--card-shadow); padding: 6px 16px; }
+    .iline { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hairline); }
+    .iline:last-child { border-bottom: 0; }
+    .iline.hit { background: var(--warn-tint); margin: 0 -16px; padding: 10px 16px; box-shadow: inset 3px 0 0 var(--gold); }
+    .iline .n { flex: 1; min-width: 0; }
+    .iline .n b { display: block; font-size: 12.5px; font-weight: 800; }
+    .iline .n span { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+    .iline .v { font-size: 14px; font-weight: 700; }
+    .sumrow { display: flex; justify-content: space-between; padding: 7px 0; font-size: 12.5px; font-weight: 600; color: var(--text2); }
+    .sumrow.big { color: var(--ink); font-weight: 800; font-size: 14px; border-top: 1px solid var(--hairline); padding-top: 10px; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <b style="font-size:13px">Sales · compact</b>
+    <label>FILTERS</label>
+    <div class="grp" data-key="filters"><button data-v="chips" class="on">A · Chip rail</button><button data-v="sheet">B · Filter button</button></div>
+    <label>ROWS</label>
+    <div class="grp" data-key="rows"><button data-v="cards" class="on">Cards</button><button data-v="flat">Flat · by day</button></div>
+    <label>TAB</label>
+    <div class="grp" data-key="tab"><button data-v="invoices" class="on">Invoices</button><button data-v="items">Items</button></div>
+    <label>TABLET</label>
+    <div class="grp" data-key="orient"><button data-v="land" class="on">Landscape</button><button data-v="port">Portrait</button></div>
+    <div class="grp" style="margin-left:auto"><button id="theme">Dark / Light</button></div>
+</div>
+
+<div class="intro" id="intro"></div>
+<div class="stage" id="stage"></div>
+
+<script>
+const S = { filters: 'chips', rows: 'cards', tab: 'invoices', orient: 'land', selInv: 3, selItem: 3 };
+
+const invoices = [
+    { id: 1, inv: 'INV-24081', who: 'Ahmed Al-Kuwari', date: 'Today', time: '4:12 PM', staff: 'Rahees', method: 'CASH', status: 'completed', amt: 1250, day: 0 },
+    { id: 2, inv: 'OFF-7K2-0042', who: 'Walk-in Customer', date: 'Today', time: '3:58 PM', staff: 'Sana', method: '', status: 'held', amt: 340.5, day: 0 },
+    { id: 3, inv: 'INV-24079', who: 'Fatima Hassan', date: 'Today', time: '3:20 PM', staff: 'Sana', method: 'CARD', status: 'completed', amt: 2180, day: 0 },
+    { id: 4, inv: 'INV-24078', who: 'Mohammed Saleh', date: 'Today', time: '2:47 PM', staff: 'Arjun', method: 'CREDIT', status: 'draft', amt: 860, day: 0 },
+    { id: 5, inv: 'INV-24077', who: 'Walk-in Customer', date: 'Today', time: '1:05 PM', staff: 'Rahees', method: 'CASH', status: 'completed', amt: 95, day: 0 },
+    { id: 6, inv: 'INV-24076', who: 'Noora Al-Thani', date: 'Today', time: '12:31 PM', staff: 'Arjun', method: 'CARD', status: 'completed', amt: 4420, day: 0 },
+    { id: 7, inv: 'INV-24075', who: 'Khalid Ibrahim', date: 'Today', time: '11:10 AM', staff: 'Sana', method: 'CASH', status: 'completed', amt: 615, day: 0 },
+    { id: 8, inv: 'INV-24074', who: 'Maryam Yousef', date: '18 Oct', time: '8:40 PM', staff: 'Rahees', method: 'CARD', status: 'completed', amt: 1460, day: 1 },
+    { id: 9, inv: 'INV-24073', who: 'Walk-in Customer', date: '18 Oct', time: '7:15 PM', staff: 'Arjun', method: 'CASH', status: 'completed', amt: 230, day: 1 },
+    { id: 10, inv: 'INV-24072', who: 'Saad Al-Marri', date: '18 Oct', time: '5:02 PM', staff: 'Sana', method: 'CASH, CARD', status: 'completed', amt: 3310, day: 1 },
+];
+const items = [
+    { id: 1, name: 'Linen Shirt — White / L', code: 'LS-WH-L', qty: 2, price: 250, disc: 0, inv: 'INV-24081', who: 'Ahmed Al-Kuwari', time: '4:12 PM', day: 0 },
+    { id: 2, name: 'Chino Trouser — Navy / 32', code: 'CT-NV-32', qty: 3, price: 250, disc: 0, inv: 'INV-24081', who: 'Ahmed Al-Kuwari', time: '4:12 PM', day: 0 },
+    { id: 3, name: 'Abaya — Classic Black / 56', code: 'AB-BK-56', qty: 2, price: 950, disc: 60, inv: 'INV-24079', who: 'Fatima Hassan', time: '3:20 PM', day: 0 },
+    { id: 4, name: 'Silk Shayla — Ivory', code: 'SS-IV', qty: 2, price: 170, disc: 0, inv: 'INV-24079', who: 'Fatima Hassan', time: '3:20 PM', day: 0 },
+    { id: 5, name: 'Thobe — Qatari Cut / 58', code: 'TH-QC-58', qty: 2, price: 430, disc: 0, inv: 'INV-24078', who: 'Mohammed Saleh', time: '2:47 PM', day: 0 },
+    { id: 6, name: 'Ghutra — White', code: 'GH-WH', qty: 1, price: 95, disc: 0, inv: 'INV-24077', who: 'Walk-in Customer', time: '1:05 PM', day: 0 },
+    { id: 7, name: 'Leather Belt — Brown', code: 'LB-BR', qty: 1, price: 220, disc: 0, inv: 'INV-24076', who: 'Noora Al-Thani', time: '12:31 PM', day: 0 },
+    { id: 8, name: 'Oud Perfume 100ml', code: 'OP-100', qty: 4, price: 1050, disc: 0, inv: 'INV-24076', who: 'Noora Al-Thani', time: '12:31 PM', day: 0 },
+    { id: 9, name: 'Linen Shirt — White / L', code: 'LS-WH-L', qty: 1, price: 250, disc: 0, inv: 'INV-24075', who: 'Khalid Ibrahim', time: '11:10 AM', day: 0 },
+    { id: 10, name: 'Cotton Socks (3 pack)', code: 'CS-3P', qty: 8, price: 45, disc: 0, inv: 'INV-24075', who: 'Khalid Ibrahim', time: '11:10 AM', day: 0 },
+    { id: 11, name: 'Abaya — Classic Black / 54', code: 'AB-BK-54', qty: 1, price: 950, disc: 0, inv: 'INV-24074', who: 'Maryam Yousef', time: '8:40 PM', day: 1 },
+    { id: 12, name: 'Silk Shayla — Rose', code: 'SS-RS', qty: 3, price: 170, disc: 0, inv: 'INV-24074', who: 'Maryam Yousef', time: '8:40 PM', day: 1 },
+];
+const dayNames = ['TODAY · SUN 19 OCT', 'SAT 18 OCT'];
+const money = n => 'QAR ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const ms = (n, c = '') => `<span class="ms ${c}">${n}</span>`;
+const lineTotal = r => r.qty * r.price - r.disc;
+const isItems = () => S.tab === 'items';
+const pill = s => s === 'held' ? `<span class="pill held">HELD</span>` : `<span class="pill ${s}">${s.toUpperCase()}</span>`;
+const headline = () => isItems() ? { amt: money(18442), sub: '412 lines · 987 qty' } : { amt: money(48250), sub: '128 invoices' };
+const searchHint = () => isItems() ? 'Product, barcode or invoice' : 'Invoice no. or customer';
+
+/* ---------- shared filter pieces ---------- */
+function segTabs() {
+    return `<div class="seg"><button data-tab="invoices" class="${isItems() ? '' : 'on'}">${ms('receipt_long')} Invoices <span class="n">128</span></button><button data-tab="items" class="${isItems() ? 'on' : ''}">${ms('inventory_2')} Items <span class="n">412</span></button></div>`;
+}
+const fchip = (label, on, icon, trailing = 'expand_more') => `<span class="fchip ${on ? 'on' : ''} ${icon ? 'ic' : ''} ${trailing ? 'tr' : ''}">${icon ? ms(icon) : ''}${label}${trailing ? ms(trailing, 't') : ''}</span>`;
+function chipRail() {
+    return fchip('Today', false, 'event') + fchip('Completed', true, 'task_alt') + fchip('All payments', false, 'account_balance_wallet') + fchip('All staff', false, 'badge') + fchip('Newest', false, 'swap_vert');
+}
+function activeChips() {
+    return fchip('Today', false, 'event', '') + fchip('Completed', true, null, 'close');
+}
+function sheetBody(tablet) {
+    const grp = (label, opts, on) => `<div class="flabel">${label}</div><div class="fchips wrap">${opts.map(o => fchip(o, o === on, null, '')).join('')}</div>`;
+    return `${tablet ? '' : '<div class="grab"></div>'}<h3>Filters <a>Reset</a></h3>
+        ${grp('DATE', ['Today', 'Yesterday', 'This week', 'This month', 'Custom…'], 'Today')}
+        ${grp('STATUS', ['All', 'Completed', 'Draft', 'Cancelled'], 'Completed')}
+        ${grp('PAYMENT', ['All', 'Cash', 'Card', 'Credit'], 'All')}
+        ${grp('STAFF', ['All staff', 'Rahees', 'Sana', 'Arjun'], 'All staff')}
+        ${grp('SORT', ['Newest', 'Oldest', 'Highest', 'Lowest'], 'Newest')}`;
+}
+
+/* ---------- phone ---------- */
+function phoneControls() {
+    if (S.filters === 'chips') {
+        return `<div class="acard" style="padding:10px">
+            <div style="display:flex;gap:8px">${`<div class="search">${ms('search')}<span class="ell">${searchHint()}</span></div>`}<div class="iconchip">${ms('qr_code_scanner')}</div></div>
+            <div class="fchips scroll-x" style="margin-top:9px">${chipRail()}</div></div>`;
+    }
+    return `<div class="acard" style="padding:10px">
+        <div style="display:flex;gap:8px"><div class="search">${ms('search')}<span class="ell">${searchHint()}</span></div><div class="iconchip">${ms('qr_code_scanner')}</div><div class="iconchip solid open-sheet" style="cursor:pointer">${ms('tune')}<span class="badge">1</span></div></div>
+        <div class="fchips wrap" style="margin-top:9px">${activeChips()}</div></div>`;
+}
+function phoneInvoiceRow(r, flat) {
+    const held = r.status === 'held';
+    return `<div class="prow ${flat ? 'flat' : 'card'}">
+        <div class="ichip ${held ? 'held' : ''}">${ms(held ? 'cloud_off' : 'shopping_bag')}</div>
+        <div class="rmain"><div class="rtop"><span class="rtitle ell">${r.inv}</span>${pill(r.status)}</div>
+            <div class="rsub"><span class="ell">${r.who} · ${r.date} · ${r.staff}</span>${r.method ? `<span class="mtag">${r.method}</span>` : ''}</div></div>
+        <div class="ramt"><div class="v">${money(r.amt)}</div></div></div>`;
+}
+function phoneItemRow(r, flat) {
+    return `<div class="prow ${flat ? 'flat' : 'card'}">
+        <div class="ichip q">${r.qty}<small>QTY</small></div>
+        <div class="rmain"><div class="rtop"><span class="rtitle ell">${r.name}</span></div>
+            <div class="rsub"><span class="ell">${r.inv} · ${r.who} · ${r.time}</span></div></div>
+        <div class="ramt"><div class="v">${money(lineTotal(r))}</div><div class="s ${r.disc ? 'disc' : ''}">${r.disc ? '−' + r.disc.toFixed(2) + ' disc' : r.qty + ' × ' + r.price.toFixed(2)}</div></div></div>`;
+}
+function phoneList() {
+    const rows = isItems() ? items : invoices;
+    const rowFn = isItems() ? phoneItemRow : phoneInvoiceRow;
+    if (S.rows === 'cards') {
+        const h = headline();
+        return `<div class="resline"><span>${h.sub}</span><span>${h.amt}</span></div>` + rows.map(r => rowFn(r, false)).join('');
+    }
+    return [0, 1].map(d => {
+        const dr = rows.filter(r => r.day === d);
+        const tot = dr.reduce((t, r) => t + (isItems() ? lineTotal(r) : r.amt), 0);
+        return `<div class="seclabel"><span>${dayNames[d]} · ${dr.length}</span><b>${money(tot)}</b></div><div class="acard" style="border-radius:16px;overflow:hidden">${dr.map(r => rowFn(r, true)).join('')}</div>`;
+    }).join('');
+}
+function phone() {
+    const h = headline();
+    return `<div class="device phone">
+        <div class="eh"><div class="sbar"><span>9:41</span><span>${ms('signal_cellular_alt')} ${ms('battery_full')}</span></div>
+            <div class="eh-row"><div><div class="eh-title">Sales</div><div class="eh-sub">${h.amt} · ${h.sub}</div></div><div class="returns-pill">${ms('assignment_return')} Returns</div></div>
+            ${segTabs()}</div>
+        <div class="pbody">${phoneControls()}${phoneList()}</div>
+        <div class="bnav"><div class="t">${ms('grid_view')}Home</div><div class="t on">${ms('receipt_long')}Sales</div><div class="fab">${ms('add')}</div><div class="t">${ms('bar_chart')}Reports</div><div class="t">${ms('settings')}Settings</div></div>
+        <div class="scrim"></div><div class="sheet">${sheetBody(false)}</div>
+    </div>`;
+}
+
+/* ---------- tablet ---------- */
+function tabletRow(r) {
+    if (isItems()) {
+        return `<div class="trow ${r.id === S.selItem ? 'sel' : ''}" data-pick="${r.id}">
+            <div class="l1"><span class="t ell">${r.name}</span><span class="v">${money(lineTotal(r))}</span></div>
+            <div class="l2"><span class="s ell">${r.inv} · ${r.who} · ${r.time}</span><span class="s2 ${r.disc ? 'disc' : ''}">${r.disc ? '−' + r.disc.toFixed(2) + ' disc · ' : ''}${r.qty} × ${r.price.toFixed(2)}</span></div></div>`;
+    }
+    return `<div class="trow ${r.id === S.selInv ? 'sel' : ''}" data-pick="${r.id}">
+        <div class="l1"><span class="t ell">${r.inv}</span><span class="v">${money(r.amt)}</span></div>
+        <div class="l2"><span class="s ell">${r.who} · ${r.date} · ${r.staff}${r.method ? ' · ' + r.method : ''}</span>${pill(r.status)}</div></div>`;
+}
+function tabletList() {
+    const rows = isItems() ? items : invoices;
+    if (S.rows === 'cards') return rows.map(tabletRow).join('');
+    return [0, 1].map(d => {
+        const dr = rows.filter(r => r.day === d);
+        const tot = dr.reduce((t, r) => t + (isItems() ? lineTotal(r) : r.amt), 0);
+        return `<div class="tday"><span>${dayNames[d]} · ${dr.length}</span><b>${money(tot)}</b></div>${dr.map(tabletRow).join('')}`;
+    }).join('');
+}
+function tabletHeadControls() {
+    const search = `<div class="search">${ms('search')}<span class="ell">${searchHint()}</span></div>`;
+    if (S.filters === 'chips') {
+        return `${segTabs()}<div style="display:flex;gap:8px">${search}<div class="iconchip">${ms('qr_code_scanner')}</div></div><div class="fchips wrap">${chipRail()}</div>`;
+    }
+    return `${segTabs()}<div style="display:flex;gap:8px">${search}<div class="iconchip">${ms('qr_code_scanner')}</div><div class="iconchip solid open-sheet" style="cursor:pointer">${ms('tune')}<span class="badge">1</span></div></div><div class="fchips wrap">${activeChips()}</div>`;
+}
+function invoiceDetail(detailWidth) {
+    let inv, hit = null;
+    if (isItems()) {
+        const it = items.find(i => i.id === S.selItem);
+        inv = invoices.find(v => v.inv === it.inv);
+        hit = it.id;
+    } else inv = invoices.find(v => v.id === S.selInv);
+    let lines = items.filter(i => i.inv === inv.inv);
+    if (!lines.length) lines = [{ id: 0, name: 'Gift Card', code: 'GC-500', qty: 1, price: inv.amt, disc: 0 }];
+    const sub = lines.reduce((t, l) => t + l.qty * l.price, 0), disc = lines.reduce((t, l) => t + l.disc, 0);
+    const stack = detailWidth - 52 < 520;
+    const pad = detailWidth < 560 ? 18 : 26;
+    return `<div class="tdetail" style="padding:18px ${pad}px 28px">
+        <div class="tdh ${stack ? 'stack' : ''}">
+            <div><div class="tdh-lab">INVOICE · ${inv.inv} ${pill(inv.status)}</div><div class="tdh-amt">${money(sub - disc)}</div><div class="tdh-sub">${inv.who} · ${inv.date === 'Today' ? '19 Oct 2026' : '18 Oct 2026'}, ${inv.time}</div></div>
+            <div class="tdh-acts"><span class="tab-btn">${ms('print')}Print</span><span class="tab-btn">${ms('assignment_return')}Return</span><span class="tab-btn">${ms('edit')}Edit</span><span class="tab-ibtn">${ms('more_horiz')}</span><span class="tab-ibtn">${ms('close')}</span></div>
+        </div>
+        <div class="tpanel-t" style="margin-top:22px">BILLED TO</div><div class="tpanel" style="padding:12px 16px;display:flex;align-items:center;gap:12px"><div class="ichip">${ms('person')}</div><div><b style="font-size:13px">${inv.who}</b><div style="font-size:11px;color:var(--muted);font-weight:600">+974 5512 3344 · served by ${inv.staff}</div></div></div>
+        <div class="tpanel-t">ITEMS</div><div class="tpanel">${lines.map(l => `<div class="iline ${l.id === hit ? 'hit' : ''}"><div class="ichip q" style="width:36px;height:36px">${l.qty}<small>QTY</small></div><div class="n"><b class="ell">${l.name}</b><span>${l.code} · ${l.price.toFixed(2)}${l.disc ? ' · −' + l.disc.toFixed(2) : ''}</span></div><div class="v">${money(l.qty * l.price - l.disc)}</div></div>`).join('')}</div>
+        <div class="tpanel-t">SUMMARY</div><div class="tpanel" style="padding:8px 16px"><div class="sumrow"><span>Gross</span><span>${money(sub)}</span></div><div class="sumrow"><span>Discount</span><span>−${money(disc)}</span></div><div class="sumrow big"><span>Total</span><span>${money(sub - disc)}</span></div></div>
+    </div>`;
+}
+function tablet() {
+    const land = S.orient === 'land';
+    const W = land ? 1024 : 768, H = land ? 700 : 1000;
+    const avail = W - 106; // shell side-rail (92 + 14 margin) — TabletMetrics.forWidth(c.maxWidth)
+    const listCol = Math.min(Math.max(avail * 0.34, 280), 400, avail * 0.45);
+    const detailW = avail - 14 - listCol;
+    const h = headline();
+    return `<div class="device tablet" style="width:${W}px;height:${H}px">
+        <div class="rail"><div class="logo">Q</div>
+            <div class="rlink"><div class="box">${ms('grid_view')}</div>Home</div><div class="rlink on"><div class="box">${ms('receipt_long')}</div>Sales</div><div class="rlink"><div class="box">${ms('bar_chart')}</div>Reports</div><div class="rlink"><div class="box">${ms('settings')}</div>Settings</div><div class="rlink"><div class="box">${ms('assignment_return')}</div>Returns</div><div class="rlink"><div class="box">${ms('fact_check')}</div>Stock Check</div><div class="rlink"><div class="box">${ms('schedule')}</div>Day Session</div>
+            <div class="rnew">${ms('add')}</div><div class="rnew-l">New</div></div>
+        <div class="tpane" style="width:${listCol}px">
+            <div class="tph"><div class="tph-row"><div style="flex:1;min-width:0"><div class="tph-title">Sales</div><div class="tph-sub ell">${h.amt} · ${h.sub}</div></div><span class="tab-btn">${ms('assignment_return')}Returns</span></div>
+            ${tabletHeadControls()}</div>
+            <div class="tlist">${tabletList()}</div></div>
+        ${invoiceDetail(detailW)}
+        <div class="scrim"></div><div class="sheet">${sheetBody(true)}</div>
+    </div>`;
+}
+
+function intro() {
+    const f = S.filters === 'chips'
+        ? '<b>A · Chip rail:</b> the tall labelled filter card becomes one small card: search + scan on top, then the filter chips the tablet already uses (<code>TabletFilterChip</code>), scrolling sideways on phone and wrapping on tablet. Each chip opens the same tap-to-apply sheet as today.'
+        : '<b>B · Filter button:</b> one row of search + scan + a filter button with a count. Tapping it opens a single sheet holding date, status, payment, staff and sort (tap to apply, no Save). Only the active filters show as chips, each with ×.';
+    const r = S.rows === 'cards'
+        ? '<b>Cards:</b> today\'s <code>AstraCard</code> row, unchanged.'
+        : '<b>Flat · by day:</b> one card per day with hairline rows and the day\'s total in the section label, so more rows fit on screen. The tablet list uses the same day headings.';
+    return `Built only from existing mobileApp pieces: <code>EmeraldHeader</code>, <code>AstraCard</code>, <code>IconChip</code>, <code>StatusPill</code>, the segmented control style of <code>_statusSeg</code>, <code>AstraBottomNav</code> and, on tablet, <code>AstraSideRail</code>, <code>TabletPane</code>/<code>TabletPaneHead</code>, <code>TabletListRow</code> and the embedded <code>InvoiceScreen</code>. The new part is the <b>Invoices | Items</b> switch: in the header <code>bottom</code> slot on phone and under the pane title on tablet.<br>
+        ${f} ${r}<br><b>Items</b> = individual sale lines, not the grouped report. Tap a line to open its invoice; on tablet the line is highlighted inside it. Filters stay set when you switch tabs. Tap the tablet list rows to change the detail pane${S.filters === 'sheet' ? ', and tap the blue filter button to see the sheet' : ''}.`;
+}
+
+function render() {
+    document.getElementById('intro').innerHTML = intro();
+    document.getElementById('stage').innerHTML = `
+        <div><div class="cap">PHONE</div>${phone()}</div>
+        <div style="max-width:100%"><div class="cap">TABLET · ${S.orient === 'land' ? '1024 LANDSCAPE' : '768 PORTRAIT'}</div><div class="hscroll">${tablet()}</div></div>`;
+    document.querySelectorAll('.grp[data-key]').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', S[g.dataset.key] === b.dataset.v)));
+}
+
+document.addEventListener('click', e => {
+    const opt = e.target.closest('.grp[data-key] button');
+    if (opt) { S[opt.closest('.grp').dataset.key] = opt.dataset.v; return render(); }
+    const tab = e.target.closest('[data-tab]');
+    if (tab) { S.tab = tab.dataset.tab; return render(); }
+    const pick = e.target.closest('[data-pick]');
+    if (pick) { isItems() ? S.selItem = +pick.dataset.pick : S.selInv = +pick.dataset.pick; return render(); }
+    if (e.target.closest('.open-sheet')) { e.target.closest('.device').classList.add('sheet-open'); return; }
+    if (e.target.closest('.scrim')) { e.target.closest('.device').classList.remove('sheet-open'); return; }
+    if (e.target.id === 'theme') { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; }
+});
+render();
+</script>
+</body>
+</html>

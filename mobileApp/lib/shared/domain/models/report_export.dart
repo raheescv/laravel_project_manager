@@ -8,7 +8,8 @@ enum ReportExportKind {
   overview('Sales Overview', 'sales-overview'),
   items('Item Sales', 'item-sales'),
   categories('Category Sales', 'category-sales'),
-  stylists('Staff Sales', 'staff-sales');
+  stylists('Staff Sales', 'staff-sales'),
+  commission('Staff Commission', 'staff-commission');
 
   const ReportExportKind(this.title, this.slug);
 
@@ -20,8 +21,9 @@ enum ReportExportKind {
 }
 
 /// One ranked line of a breakdown export — an item (itemwise), a category
-/// (categorywise) or a staff member (employeewise). Fields the report type
-/// doesn't carry stay zero / empty.
+/// (categorywise), a staff member (employeewise) or a staff member × product
+/// commission line (commission). Fields the report type doesn't carry stay
+/// zero / empty.
 class ReportExportLine extends Equatable {
   const ReportExportLine({
     this.id = '',
@@ -31,6 +33,9 @@ class ReportExportLine extends Equatable {
     this.bills = 0,
     this.items = 0,
     this.amount = 0,
+    this.staff = '',
+    this.net = 0,
+    this.rate = 0,
   });
 
   /// The staff member's user id on a staff line ('' on item lines), so the
@@ -43,7 +48,19 @@ class ReportExportLine extends Equatable {
 
   /// Items a staff member sold, or distinct products sold under a category.
   final int items;
+
+  /// What the line ranks by: the net amount, a staff member's revenue, or the
+  /// commission on a commission line.
   final double amount;
+
+  /// Who earned a commission line ('' on every other report).
+  final String staff;
+
+  /// Net sales (sales − returns) a commission line was worked out on.
+  final double net;
+
+  /// The commission % configured for the staff member × product pair.
+  final double rate;
 
   factory ReportExportLine.item(Map<String, dynamic> j) => ReportExportLine(
         name: asStr(j['item_name']),
@@ -69,8 +86,18 @@ class ReportExportLine extends Equatable {
         amount: asNum(j['revenue']).toDouble(),
       );
 
+  factory ReportExportLine.commission(Map<String, dynamic> j) => ReportExportLine(
+        id: asStr(j['employee_id']),
+        name: asStr(j['product_name']),
+        staff: asStr(j['employee_name']),
+        quantity: asNum(j['quantity']).toDouble(),
+        net: asNum(j['net_amount']).toDouble(),
+        rate: asNum(j['commission_percentage']).toDouble(),
+        amount: asNum(j['commission']).toDouble(),
+      );
+
   @override
-  List<Object?> get props => [id, name, code, quantity, bills, items, amount];
+  List<Object?> get props => [id, name, code, quantity, bills, items, amount, staff, net, rate];
 }
 
 /// One day of the overview's day-by-day table, rolled up from bill-wise rows.
@@ -120,6 +147,9 @@ class ReportExport {
     this.lineCount = 0,
     this.totalAmount = 0,
     this.totalQuantity = 0,
+    this.totalNet = 0,
+    this.staffCount = 0,
+    this.staffName = '',
     this.rankByQty = false,
     this.productType,
   });
@@ -155,6 +185,15 @@ class ReportExport {
   final int lineCount;
   final double totalAmount;
   final double totalQuantity;
+
+  /// Net sales the commission report's commission was worked out on.
+  final double totalNet;
+
+  /// How many staff members the commission report covers.
+  final int staffCount;
+
+  /// The one staff member the commission report is narrowed to, '' for all.
+  final String staffName;
   final bool rankByQty;
 
   /// `product` / `service`, or null for every type.

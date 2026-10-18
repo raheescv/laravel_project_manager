@@ -52,7 +52,7 @@ class ListAction
         $summary = Sale::query()
             ->filter($filters)
             ->when($scopeToSelf, fn ($q) => $q->where('created_by', $user->id))
-            ->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as total_paid')
+            ->selectRaw('COUNT(*) as invoices, COALESCE(SUM(paid), 0) as total_paid, COALESCE(SUM(balance), 0) as total_balance')
             ->first();
 
         $sales = $query->paginate($filters['per_page']);
@@ -62,6 +62,8 @@ class ListAction
             'summary' => [
                 'invoices' => (int) $summary->getAttribute('invoices'),
                 'total_paid' => round((float) $summary->getAttribute('total_paid'), 2),
+                // Still owed across the filtered set — the Sales list's "Due" figure.
+                'total_balance' => round((float) $summary->getAttribute('total_balance'), 2),
             ],
             'pagination' => [
                 'current_page' => $sales->currentPage(),

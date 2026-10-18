@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commission Report Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PREVIEW SHELL — mockup of the Flutter Reports ▸ Breakdown ▸
+   Commission report. Admin (every staff member) and a staff
+   member's own (self-scoped) view, tablet + phone. Not shipped.
+   Tokens lifted from palette.dart (Emerald preset).
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:radial-gradient(60% 50% at 20% 0%,#1b2030,#0c0e16 70%);
+  min-height:100vh;color:#e8ebf5;-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;gap:20px;padding:24px 16px 60px;
+}
+.head{text-align:center;max-width:760px}
+.head h1{font-size:22px;font-weight:700;letter-spacing:-.2px;margin-bottom:6px}
+.head p{font-size:13px;color:#9aa3bd;line-height:1.55}
+.bar{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;position:sticky;top:0;z-index:20;
+  background:rgba(12,14,22,.86);backdrop-filter:blur(10px);padding:10px 14px;border-radius:16px;border:1px solid #242a3b;max-width:100%}
+.grp{display:flex;flex-direction:column;gap:7px;align-items:center}
+.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:#7c86a4}
+.seg{display:flex;background:#171a26;border:1px solid #262b3d;border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap;justify-content:center}
+.seg button{font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:#9aa3bd;padding:8px 13px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{background:#e8ebf5;color:#10131c}
+
+.stage{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;align-items:flex-start;width:100%}
+.frame{display:flex;flex-direction:column;gap:9px;align-items:center;max-width:100%}
+.frame .cap{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7c86a4}
+.notes{width:min(820px,100%);background:#141824;border:1px solid #242a3b;border-radius:18px;padding:18px}
+.notes h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.notes .tag{font-size:11.5px;color:#8b95b3;margin-bottom:12px;line-height:1.5}
+.notes ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:9px 20px}
+@media (max-width:760px){.notes ul{grid-template-columns:1fr}}
+.notes li{font-size:12.5px;line-height:1.5;color:#c5cbe0;padding-left:16px;position:relative}
+.notes li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:#7c86a4}
+.notes b{color:#fff}
+
+/* ============================================================
+   DEVICE
+   ============================================================ */
+.device{flex:none;background:#05060a;border-radius:34px;padding:11px;
+  box-shadow:0 0 0 2px #20242f,0 30px 80px -30px rgba(0,0,0,.9),0 0 70px -24px var(--pri)}
+.device[data-w="tablet"]{width:1000px;max-width:calc(100vw - 32px);height:700px}
+.device[data-w="phone"]{width:392px;max-width:calc(100vw - 32px);height:800px;border-radius:46px;padding:13px}
+.screen{position:relative;width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.device[data-w="phone"] .screen{border-radius:36px}
+
+/* ---- tokens (emerald · light — palette.dart) ---- */
+.device{
+  --pri:#15806C;--pri-d:#0E5648;--acc:#C9A24B;--canvas:#F6F1E8;
+  --ink:#13211d;--ink2:#4b5a55;--muted:#8d9793;--hair:rgba(19,33,29,.09);--card:#fff;--inset:rgba(19,33,29,.04);
+  --shadow:0 1px 2px rgba(16,24,20,.04),0 10px 30px -14px rgba(16,24,20,.16);
+  --tint:color-mix(in srgb,var(--pri) 9%,transparent);
+  --track:rgba(19,33,29,.07);--good:#1F9D63;--bad:#D4546A;
+}
+body[data-theme="dark"] .device{
+  --pri:#2BB596;--pri-d:#7FE0C8;--acc:#D8B45E;--canvas:#07140F;
+  --ink:#E7F2EE;--ink2:#A9BDB6;--muted:#6F857D;--hair:rgba(231,242,238,.08);--card:#15302A;--inset:rgba(231,242,238,.04);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 14px 30px -16px rgba(0,0,0,.6);
+  --track:rgba(231,242,238,.08);--good:#3FCB8B;--bad:#F07A8E;
+}
+.serif{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   SHARED CHROME — command bar (tablet) / header (phone)
+   ============================================================ */
+.cmd{background:var(--card);border-bottom:1px solid var(--hair);padding:11px 22px 12px;display:flex;align-items:center;gap:18px;flex:none}
+.cmd .ttl{font-size:19px}
+.cmd .rng{display:inline-flex;align-items:center;gap:6px;margin-top:4px;background:var(--tint);color:var(--pri);border-radius:8px;padding:4px 9px 4px 7px;font-size:11px;font-weight:700}
+.cmd .right{margin-left:auto;display:flex;gap:9px;align-items:center}
+.sunk{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:13px;background:var(--inset);border:1px solid var(--hair)}
+.sunk > span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;font-size:11.5px;font-weight:600;color:var(--ink2);white-space:nowrap;border:1px solid transparent}
+.sunk > .on{background:var(--card);color:var(--pri);font-weight:800;border-color:var(--hair);box-shadow:var(--shadow)}
+.sunk .new{font-size:8.5px;font-weight:900;letter-spacing:.06em;background:var(--acc);color:#3b2b06;border-radius:5px;padding:1px 4px}
+.hdr{background:linear-gradient(135deg,#0E5648,#15806C);color:#fff;padding:40px 18px 16px;border-radius:0 0 26px 26px;position:relative;overflow:hidden;flex:none}
+.hdr::after{content:"";position:absolute;right:-50px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,#C9A24B 35%,transparent),transparent 70%)}
+.hdr .row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.hdr h3{font-size:21px}
+.hdr p{font-size:11.5px;opacity:.82;margin-top:2px}
+.hbtn{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;color:#E9CF8C;font-size:15px}
+.device[data-w="tablet"] .hdr{display:none}
+.device[data-w="phone"] .cmd{display:none}
+
+.page{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 20px 18px;gap:11px;position:relative}
+.device[data-w="phone"] .page{padding:12px 15px 16px;gap:10px}
+.tabsq{display:flex;align-self:flex-start;flex:none}
+.device[data-w="phone"] .tabsq{align-self:stretch}
+.device[data-w="phone"] .tabsq .sunk{flex:1}
+.device[data-w="phone"] .tabsq .sunk > span{flex:1;justify-content:center}
+
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);border:1px solid var(--hair)}
+.kicker{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap}
+.pill.gold{background:color-mix(in srgb,var(--acc) 18%,transparent);color:color-mix(in srgb,var(--acc) 80%,var(--ink))}
+.pill.quiet{background:var(--tint);color:var(--ink2)}
+.pill.you{background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri)}
+
+/* ---- toolbar ---- */
+.toolbar{display:flex;align-items:center;gap:10px;flex:none;flex-wrap:wrap}
+.toolbar .spacer{flex:1}
+.fbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;background:var(--card);
+  border:1px solid var(--hair);box-shadow:var(--shadow);font-size:11.5px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.fbtn b{color:var(--ink);font-weight:800}
+.fbtn .ar{color:var(--pri)}
+.device[data-w="phone"] .toolbar{gap:8px}
+.device[data-w="phone"] .toolbar .spacer{display:none}
+.device[data-w="phone"] .toolbar > .sunk{width:100%}
+.device[data-w="phone"] .toolbar > .sunk > span{flex:1;justify-content:center;padding:6px 2px;font-size:10.5px;gap:4px}
+.device[data-w="phone"] .toolbar > .sunk .lab-long{display:none}
+.device[data-w="tablet"] .toolbar > .sunk .lab-short{display:none}
+.device[data-w="phone"] .toolbar .fbtn{flex:1;justify-content:center}
+
+.body{flex:1;min-height:0;display:flex;flex-direction:column;gap:11px}
+.scroll{overflow:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ============================================================
+   A · LEDGER
+   ============================================================ */
+.ledger{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.lgrid{display:grid;grid-template-columns:28px minmax(0,1fr) 104px 64px 122px 120px;align-items:center;gap:16px}
+.lhead{padding:11px 18px;border-bottom:1px solid var(--hair);background:var(--inset)}
+.lhead span{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.lhead .r{text-align:right}
+.lhead .sorted{color:var(--pri)}
+.lrows{flex:1;min-height:0}
+.lrow{padding:10px 18px;border-bottom:1px solid var(--hair);cursor:pointer}
+.lrow .rk{width:26px;height:26px;border-radius:9px;background:var(--inset);color:var(--ink2);display:grid;place-items:center;font-size:11px;font-weight:800}
+.lrow.top{background:color-mix(in srgb,var(--pri) 5%,transparent)}
+.lrow.top .rk{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 62%,#7a5c12));color:#fff;box-shadow:0 6px 14px -8px var(--acc)}
+.nm{min-width:0}
+.nm b{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small{display:block;font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{display:inline-block;color:var(--muted);font-size:10px;transition:transform .15s}
+.lrow.open .chev{transform:rotate(90deg);color:var(--pri)}
+.col{font-size:12px;font-weight:600;color:var(--ink2);text-align:right;white-space:nowrap}
+.amt{font-size:13px;font-weight:800;text-align:right;letter-spacing:-.2px;white-space:nowrap}
+.amt.money{color:var(--pri-d)}
+.rate{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--acc) 16%,transparent);color:color-mix(in srgb,var(--acc) 70%,var(--ink))}
+.rate.none{background:var(--inset);color:var(--muted)}
+.sh{display:flex;align-items:center;gap:8px}
+.sh .tr{flex:1;height:5px;border-radius:99px;background:var(--track);overflow:hidden}
+.sh .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--pri),color-mix(in srgb,var(--pri) 55%,var(--acc)))}
+.sh em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);width:32px;text-align:right}
+/* drill-down lines under an opened staff row */
+.lines{background:var(--inset);border-bottom:1px solid var(--hair);padding:4px 18px 8px}
+.line{display:grid;grid-template-columns:28px minmax(0,1fr) 104px 64px 122px 120px;gap:16px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.line:last-child{border-bottom:0}
+.line .nm b{font-size:11.5px;font-weight:700}
+.line.zero .nm b,.line.zero .amt{color:var(--muted);font-weight:600}
+.calc{font-size:10.5px;color:var(--muted);font-weight:600;text-align:right;white-space:nowrap}
+.lfoot{padding:12px 18px;border-top:1.5px solid var(--hair);background:var(--inset);flex:none}
+.lfoot .lab{font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px}
+.lfoot .tot{font-size:18px;color:var(--pri-d);text-align:right;white-space:nowrap}
+
+/* phone ledger */
+.device[data-w="phone"] .lgrid,.device[data-w="phone"] .line{grid-template-columns:26px minmax(0,1fr) auto;gap:10px}
+.device[data-w="phone"] .lhead,.device[data-w="phone"] .lrow,.device[data-w="phone"] .lfoot{padding-left:13px;padding-right:13px}
+.device[data-w="phone"] .lines{padding-left:13px;padding-right:13px}
+.device[data-w="phone"] .wide-only{display:none}
+.device[data-w="tablet"] .phone-only{display:none}
+.device[data-w="phone"] .lrow .sh{grid-column:2 / -1;margin-top:6px}
+
+/* ============================================================
+   B · PAYOUT CARDS
+   ============================================================ */
+.kpis{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;flex:none}
+.device[data-w="phone"] .kpis{grid-template-columns:1fr 1fr;gap:8px}
+.kpi{padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .v{display:block;margin-top:6px;font-size:17px;font-weight:800;letter-spacing:-.3px;white-space:nowrap}
+.kpi small{display:block;margin-top:3px;font-size:10.5px;color:var(--muted);font-weight:600}
+.kpi.hero{background:linear-gradient(135deg,#0E5648,#15806C);color:#fff;border-color:transparent;box-shadow:0 18px 34px -20px #15806C}
+.kpi.hero::after{content:"";position:absolute;right:-40px;top:-50px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,#C9A24B 34%,transparent),transparent 70%)}
+.kpi.hero .kicker{color:rgba(255,255,255,.75)}
+.kpi.hero .v{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:24px;position:relative;z-index:1}
+.kpi.hero small{color:rgba(255,255,255,.78);position:relative;z-index:1}
+.device[data-w="phone"] .kpi.hero{grid-column:1 / -1}
+.cards{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;align-content:start}
+.device[data-w="phone"] .cards{grid-template-columns:1fr;gap:9px}
+.pcard{padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.pcard .top{display:flex;align-items:center;gap:10px}
+.av{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--pri),var(--pri-d));flex:none}
+body[data-theme="dark"] .av{color:#07140F}
+.pcard .top .nm{flex:1}
+.pcard .big{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.pcard .big .serif{font-size:22px;color:var(--pri-d)}
+.pcard .big small{font-size:10.5px;color:var(--muted);font-weight:700}
+.mini{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--hair);padding-top:9px}
+.mini div{display:flex;align-items:center;gap:8px;font-size:11px}
+.mini div span:first-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2);font-weight:600}
+.mini div b{font-weight:800;white-space:nowrap}
+.mini .more{color:var(--pri);font-weight:800;font-size:10.5px}
+.pcard.me{outline:2px solid color-mix(in srgb,var(--pri) 45%,transparent)}
+
+/* ============================================================
+   C · LINES (flat employee × product — the web Sales Details table)
+   ============================================================ */
+.fgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 54px 104px 58px 112px;gap:14px;align-items:center}
+.fgrid.self{grid-template-columns:minmax(0,1.6fr) 54px 104px 58px 112px}
+.fhead{padding:11px 18px;border-bottom:1px solid var(--hair);background:var(--inset)}
+.fhead span{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.fhead .r{text-align:right}
+.frow{padding:9px 18px;border-bottom:1px solid var(--hair);font-size:12px}
+.frow .who{display:flex;align-items:center;gap:8px;min-width:0}
+.frow .who .av{width:24px;height:24px;border-radius:8px;font-size:9.5px}
+.frow .who b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow .prod{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow.zero .prod,.frow.zero .amt{color:var(--muted);font-weight:600}
+.device[data-w="phone"] .fgrid,.device[data-w="phone"] .fgrid.self{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
+.device[data-w="phone"] .fhead,.device[data-w="phone"] .frow{padding-left:13px;padding-right:13px}
+.frow .cap2{grid-column:1 / -1;font-size:10.5px;color:var(--muted);font-weight:600}
+.chips{display:flex;gap:7px;flex-wrap:wrap;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px 5px 10px;border-radius:11px;background:var(--tint);color:var(--pri);font-size:10.5px;font-weight:800}
+
+/* ============================================================
+   STAFF (self) — statement band
+   ============================================================ */
+.band{padding:14px 16px;border-radius:20px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);display:flex;align-items:center;gap:18px;flex:none}
+.band .main{flex:none}
+.band .main .serif{font-size:28px;color:var(--pri-d);display:block;margin-top:4px;line-height:1.05}
+.band .main small{display:block;margin-top:4px;font-size:10.5px;color:var(--muted);font-weight:700}
+.band .eq{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.band .eq .f{background:var(--inset);border:1px solid var(--hair);border-radius:12px;padding:7px 11px;min-width:92px}
+.band .eq .f b{display:block;font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap}
+.band .eq .op{color:var(--muted);font-weight:800;font-size:13px}
+.device[data-w="phone"] .band{flex-direction:column;align-items:stretch;gap:12px;padding:14px}
+.device[data-w="phone"] .band .eq{justify-content:space-between;gap:6px;flex-wrap:nowrap}
+.device[data-w="phone"] .band .eq .f{min-width:0;flex:1;padding:6px 8px}
+.device[data-w="phone"] .band .eq .f b{font-size:11.5px}
+.device[data-w="phone"] .band .eq .op{font-size:11px}
+
+/* B self — payslip */
+.slip{padding:18px;border-radius:22px;background:linear-gradient(135deg,#0E5648,#15806C);color:#fff;position:relative;overflow:hidden;flex:none;box-shadow:0 22px 40px -24px #15806C}
+.slip::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,#C9A24B 38%,transparent),transparent 70%)}
+.slip > *{position:relative;z-index:1}
+.slip .kicker{color:rgba(255,255,255,.75)}
+.slip .serif{font-size:34px;display:block;margin-top:6px}
+.slip .row3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18)}
+.slip .row3 small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.slip .row3 b{display:block;font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap}
+.device[data-w="phone"] .slip .row3{grid-template-columns:1fr 1fr}
+.lcards{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-content:start}
+.device[data-w="phone"] .lcards{grid-template-columns:1fr}
+.lcard{padding:11px 13px;border-radius:15px;background:var(--card);border:1px solid var(--hair);box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+.lcard .nm{flex:1}
+.lcard.zero{opacity:.62}
+</style>
+</head>
+<body data-theme="light">
+
+<div class="head">
+  <h1>Commission report: mobile preview</h1>
+  <p>A new <b>Commission</b> segment in Reports ▸ Breakdown. Admins see every staff member. A staff member who isn't an admin sees only their own commission; the server already enforces this. Pick a direction, then switch the view to compare the admin and staff layouts.</p>
+</div>
+
+<div class="bar">
+  <div class="grp"><span class="lbl">Direction</span>
+    <div class="seg" id="dirSeg">
+      <button data-v="a" aria-pressed="true">A · Ledger</button>
+      <button data-v="b" aria-pressed="false">B · Payout cards</button>
+      <button data-v="c" aria-pressed="false">C · Lines</button>
+    </div>
+  </div>
+  <div class="grp"><span class="lbl">Signed in as</span>
+    <div class="seg" id="viewSeg">
+      <button data-v="admin" aria-pressed="true">Admin</button>
+      <button data-v="self" aria-pressed="false">Staff member</button>
+    </div>
+  </div>
+  <div class="grp"><span class="lbl">Theme</span>
+    <div class="seg" id="themeSeg">
+      <button data-v="light" aria-pressed="true">Light</button>
+      <button data-v="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="frame"><span class="cap">Tablet</span><div class="device" data-w="tablet"><div class="screen" id="tablet"></div></div></div>
+  <div class="frame"><span class="cap">Phone</span><div class="device" data-w="phone"><div class="screen" id="phone"></div></div></div>
+</div>
+
+<div class="notes" id="notes"></div>
+
+<script>
+/* ---------------- sample data (employee × product, net of returns) ---------------- */
+const STAFF = [
+  {id:1, name:'Aisha Rahman', lines:[
+    {p:'Keratin Treatment', q:6,  sale:2400, ret:0,   pct:10},
+    {p:'Hair Color — Full', q:9,  sale:1890, ret:270, pct:8},
+    {p:'Haircut — Ladies',  q:14, sale:1260, ret:0,   pct:5},
+    {p:'Blow Dry',          q:11, sale:550,  ret:0,   pct:5},
+    {p:'Argan Oil Serum',   q:4,  sale:340,  ret:85,  pct:0},
+  ]},
+  {id:2, name:'Mariam Yousef', lines:[
+    {p:'Bridal Makeup',     q:2,  sale:3000, ret:0,   pct:12},
+    {p:'Facial — Hydra',    q:7,  sale:1400, ret:0,   pct:8},
+    {p:'Eyebrow Threading', q:22, sale:440,  ret:0,   pct:5},
+  ]},
+  {id:3, name:'Omar Haddad', lines:[
+    {p:'Haircut — Gents',   q:31, sale:1550, ret:50,  pct:6},
+    {p:'Beard Trim',        q:24, sale:720,  ret:0,   pct:6},
+    {p:'Hair Spa',          q:5,  sale:750,  ret:0,   pct:7},
+    {p:'Styling Wax',       q:9,  sale:405,  ret:0,   pct:0},
+  ]},
+  {id:4, name:'Leena Joseph', lines:[
+    {p:'Manicure',          q:16, sale:1120, ret:0,   pct:7},
+    {p:'Pedicure',          q:12, sale:960,  ret:80,  pct:7},
+    {p:'Gel Polish',        q:10, sale:650,  ret:0,   pct:5},
+  ]},
+  {id:5, name:'Sara Ali', lines:[
+    {p:'Head Massage',      q:8,  sale:480,  ret:0,   pct:5},
+    {p:'Shampoo 500ml',     q:6,  sale:300,  ret:0,   pct:0},
+  ]},
+];
+const ME_ID = 1;
+STAFF.forEach(s=>{
+  s.lines.forEach(l=>{l.net=l.sale-l.ret;l.com=l.net*l.pct/100});
+  s.lines.sort((a,b)=>b.com-a.com||b.net-a.net);
+  s.net=s.lines.reduce((a,l)=>a+l.net,0);
+  s.sale=s.lines.reduce((a,l)=>a+l.sale,0);
+  s.ret=s.lines.reduce((a,l)=>a+l.ret,0);
+  s.qty=s.lines.reduce((a,l)=>a+l.q,0);
+  s.com=s.lines.reduce((a,l)=>a+l.com,0);
+  s.rate=s.net?s.com/s.net*100:0;
+});
+STAFF.sort((a,b)=>b.com-a.com);
+const TOT={net:STAFF.reduce((a,s)=>a+s.net,0),com:STAFF.reduce((a,s)=>a+s.com,0),qty:STAFF.reduce((a,s)=>a+s.qty,0),ret:STAFF.reduce((a,s)=>a+s.ret,0)};
+TOT.rate=TOT.com/TOT.net*100;
+const ME=STAFF.find(s=>s.id===ME_ID);
+
+const m=v=>v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pc=v=>(Math.round(v*10)/10).toString().replace(/\.0$/,'')+'%';
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2);
+const rate=p=>p>0?`<span class="rate">${pc(p)}</span>`:`<span class="rate none">—</span>`;
+
+let state={dir:'a',view:'admin',open:new Set([STAFF[0].id])};
+
+/* ---------------- chrome ---------------- */
+function chrome(inner){
+  const segs=[['▦','By Item','Item'],['◧','By Category','Category'],['☺','By Staff','Staff'],['％','Commission','Commission']];
+  const sunk=segs.map((s,i)=>`<span class="${i===3?'on':''}">${s[0]} <span class="lab-long">${s[1]}</span><span class="lab-short">${s[2]}</span>${i===3?' <span class="new wide-only">NEW</span>':''}</span>`).join('');
+  return `
+  <div class="cmd">
+    <div><div class="ttl serif">Reports</div><span class="rng">▤ 1 Oct – 19 Oct 2026</span></div>
+    <div class="right"><span class="sunk"><span>Today</span><span>7 days</span><span class="on">This month</span><span>Custom</span></span></div>
+  </div>
+  <div class="hdr"><div class="row"><div><h3 class="serif">Reports</h3><p>1 Oct – 19 Oct 2026 · Main Branch</p></div><div class="hbtn">⎙</div></div></div>
+  <div class="page">
+    <div class="tabsq"><span class="sunk"><span>Overview</span><span class="on">Breakdown</span></span></div>
+    <div class="toolbar"><span class="sunk">${sunk}</span><span class="spacer"></span>${toolbarRight()}</div>
+    <div class="body">${inner}</div>
+  </div>`;
+}
+function toolbarRight(){
+  if(state.view==='self') return `<span class="pill you">Only your sales</span>`;
+  if(state.dir==='c') return `<span class="fbtn">☺ Staff · <b>All</b> ▾</span><span class="fbtn phone-only">⇅ Sort · <b>Commission</b> <span class="ar">↓</span></span>`;
+  return `<span class="fbtn phone-only">⇅ Sort · <b>Commission</b> <span class="ar">↓</span></span>`;
+}
+
+/* ---------------- A · Ledger ---------------- */
+function adminA(){
+  const max=Math.max(...STAFF.map(s=>s.com));
+  const rows=STAFF.map((s,i)=>{
+    const open=state.open.has(s.id);
+    const share=s.com/TOT.com*100;
+    const lines=open?`<div class="lines">${s.lines.map(l=>`
+      <div class="line ${l.com===0?'zero':''}">
+        <span></span>
+        <div class="nm"><b>${l.p}</b><small class="phone-only">${l.q} sold · ${m(l.net)} net × ${l.pct}%</small></div>
+        <span class="col wide-only">${m(l.net)}</span>
+        <span class="wide-only" style="text-align:right">${rate(l.pct)}</span>
+        <span class="calc wide-only">${l.q} sold${l.ret?` · −${m(l.ret)} ret`:''}</span>
+        <span class="amt">${l.com?m(l.com):'—'}</span>
+      </div>`).join('')}</div>`:'';
+    return `<div class="lrow lgrid ${s.com>=max?'top':''} ${open?'open':''}" data-toggle="${s.id}">
+        <span class="rk">${i+1}</span>
+        <div class="nm"><b><span class="chev">▶</span>${s.name}</b><small>${s.lines.length} lines · ${s.qty} sold<span class="phone-only"> · ${m(s.net)} net · ${pc(s.rate)}</span></small></div>
+        <span class="col wide-only">${m(s.net)}</span>
+        <span class="wide-only" style="text-align:right">${rate(s.rate)}</span>
+        <div class="sh wide-only"><span class="tr"><i style="width:${share}%"></i></span><em>${pc(share)}</em></div>
+        <span class="amt money">${m(s.com)}</span>
+        <div class="sh phone-only"><span class="tr"><i style="width:${share}%"></i></span><em>${pc(share)}</em></div>
+      </div>${lines}`;
+  }).join('');
+  return `<div class="card ledger">
+    <div class="lhead lgrid"><span>#</span><span>Staff</span><span class="r wide-only">Net sales</span><span class="r wide-only">Rate</span><span class="wide-only">Share</span><span class="r sorted">↓ Commission<span class="wide-only"> (QAR)</span></span></div>
+    <div class="lrows scroll">${rows}</div>
+    <div class="lfoot lgrid"><span></span><span class="lab">Total payable <span class="pill quiet">${STAFF.length} staff</span></span>
+      <span class="col wide-only" style="font-weight:800">${m(TOT.net)}</span><span class="wide-only" style="text-align:right">${rate(TOT.rate)}</span><span class="wide-only"></span>
+      <span class="tot serif">${m(TOT.com)}</span></div>
+  </div>`;
+}
+function selfA(){
+  const s=ME;
+  return `<div class="band">
+      <div class="main"><span class="kicker">My commission · this month</span><span class="serif">QAR ${m(s.com)}</span><small>${s.lines.length} products · ${s.qty} sold</small></div>
+      <div class="eq">
+        <div class="f"><span class="kicker">Sales</span><b>${m(s.sale)}</b></div><span class="op">−</span>
+        <div class="f"><span class="kicker">Returns</span><b>${m(s.ret)}</b></div><span class="op">=</span>
+        <div class="f"><span class="kicker">Net</span><b>${m(s.net)}</b></div><span class="op">×</span>
+        <div class="f"><span class="kicker">Rate</span><b>${pc(s.rate)}</b></div>
+      </div>
+    </div>
+    <div class="card ledger">
+      <div class="lhead lgrid"><span>#</span><span>Product</span><span class="r wide-only">Net sales</span><span class="r wide-only">Rate</span><span class="wide-only">Qty · returns</span><span class="r sorted">↓ Commission<span class="wide-only"> (QAR)</span></span></div>
+      <div class="lrows scroll">${s.lines.map((l,i)=>`
+        <div class="lrow lgrid ${i===0?'top':''}" style="cursor:default">
+          <span class="rk">${i+1}</span>
+          <div class="nm"><b>${l.p}</b><small class="phone-only">${l.q} sold · ${m(l.net)} × ${l.pct?l.pct+'%':'no rate set'}</small></div>
+          <span class="col wide-only">${m(l.net)}</span>
+          <span class="wide-only" style="text-align:right">${rate(l.pct)}</span>
+          <span class="calc wide-only" style="text-align:left">${l.q} sold${l.ret?` · −${m(l.ret)}`:''}</span>
+          <span class="amt ${l.com?'money':''}" style="${l.com?'':'color:var(--muted);font-weight:600'}">${l.com?m(l.com):'—'}</span>
+        </div>`).join('')}</div>
+      <div class="lfoot lgrid"><span></span><span class="lab">Total earned</span><span class="col wide-only" style="font-weight:800">${m(s.net)}</span><span class="wide-only" style="text-align:right">${rate(s.rate)}</span><span class="wide-only"></span><span class="tot serif">${m(s.com)}</span></div>
+    </div>`;
+}
+
+/* ---------------- B · Payout cards ---------------- */
+function kpis(){
+  return `<div class="kpis">
+    <div class="kpi hero"><span class="kicker">Commission payable</span><span class="v">QAR ${m(TOT.com)}</span><small>${STAFF.length} staff · this month</small></div>
+    <div class="kpi"><span class="kicker">Net sales</span><span class="v">${m(TOT.net)}</span><small>after ${m(TOT.ret)} returns</small></div>
+    <div class="kpi"><span class="kicker">Effective rate</span><span class="v">${pc(TOT.rate)}</span><small>commission ÷ net</small></div>
+    <div class="kpi wide-only"><span class="kicker">Top earner</span><span class="v" style="font-size:14px">${STAFF[0].name}</span><small>QAR ${m(STAFF[0].com)}</small></div>
+  </div>`;
+}
+function adminB(){
+  return kpis()+`<div class="cards scroll">${STAFF.map((s,i)=>`
+    <div class="pcard">
+      <div class="top"><span class="av">${ini(s.name)}</span><div class="nm"><b>${s.name}</b><small>${s.lines.length} lines · ${s.qty} sold</small></div>${i===0?'<span class="pill gold">#1</span>':`<span class="pill quiet">#${i+1}</span>`}</div>
+      <div class="big"><span class="serif">${m(s.com)}</span><small>on ${m(s.net)} · ${pc(s.rate)}</small></div>
+      <div class="mini">${s.lines.slice(0,3).map(l=>`<div><span>${l.p}</span>${rate(l.pct)}<b>${l.com?m(l.com):'—'}</b></div>`).join('')}
+        ${s.lines.length>3?`<div><span class="more">+${s.lines.length-3} more lines ›</span></div>`:''}</div>
+    </div>`).join('')}</div>`;
+}
+function selfB(){
+  const s=ME;
+  return `<div class="slip">
+      <span class="kicker">My commission · 1 – 19 Oct 2026</span>
+      <span class="serif">QAR ${m(s.com)}</span>
+      <div class="row3">
+        <div><small>Sales</small><b>${m(s.sale)}</b></div>
+        <div><small>Returns</small><b>−${m(s.ret)}</b></div>
+        <div><small>Net</small><b>${m(s.net)}</b></div>
+        <div><small>Rate</small><b>${pc(s.rate)}</b></div>
+      </div>
+    </div>
+    <div class="lcards scroll">${s.lines.map(l=>`
+      <div class="lcard ${l.com?'':'zero'}">
+        <div class="nm"><b>${l.p}</b><small>${l.q} sold · ${m(l.net)} net${l.ret?` (−${m(l.ret)})`:''}</small></div>
+        ${rate(l.pct)}
+        <span class="amt ${l.com?'money':''}">${l.com?m(l.com):'—'}</span>
+      </div>`).join('')}</div>`;
+}
+
+/* ---------------- C · Lines (flat) ---------------- */
+function flatRows(self){
+  const rows=[];
+  (self?[ME]:STAFF).forEach(s=>s.lines.forEach(l=>rows.push({s,l})));
+  rows.sort((a,b)=>b.l.com-a.l.com||b.l.net-a.l.net);
+  return rows;
+}
+function flat(self){
+  const rows=flatRows(self);
+  const tot=self?{net:ME.net,com:ME.com,qty:ME.qty}:TOT;
+  const g=self?'fgrid self':'fgrid';
+  return `${self?'':`<div class="chips"><span class="chip">${rows.length} lines · ${STAFF.length} staff</span></div>`}
+  <div class="card ledger">
+    <div class="fhead ${g}">${self?'':'<span class="wide-only">Staff</span>'}<span>Product</span><span class="r wide-only">Qty</span><span class="r wide-only">Net sales</span><span class="r wide-only">Rate</span><span class="r sorted">↓ Commission<span class="wide-only"> (QAR)</span></span></div>
+    <div class="lrows scroll">${rows.map(({s,l})=>`
+      <div class="frow ${g} ${l.com?'':'zero'}">
+        ${self?'':`<div class="who wide-only"><span class="av">${ini(s.name)}</span><b>${s.name}</b></div>`}
+        <span class="prod">${l.p}</span>
+        <span class="col wide-only">${l.q}</span>
+        <span class="col wide-only">${m(l.net)}</span>
+        <span class="wide-only" style="text-align:right">${rate(l.pct)}</span>
+        <span class="amt ${l.com?'money':''}">${l.com?m(l.com):'—'}</span>
+        <span class="cap2 phone-only">${self?'':s.name+' · '}${l.q} sold · ${m(l.net)} × ${l.pct?l.pct+'%':'no rate'}</span>
+      </div>`).join('')}</div>
+    <div class="lfoot ${g}" style="align-items:center">${self?'':'<span class="lab">Grand total</span>'}<span class="${self?'lab':'wide-only'}">${self?'Total earned':''}</span>
+      <span class="col wide-only" style="font-weight:800">${tot.qty}</span><span class="col wide-only" style="font-weight:800">${m(tot.net)}</span><span class="wide-only"></span>
+      <span class="tot serif">${m(tot.com)}</span></div>
+  </div>`;
+}
+
+/* ---------------- notes ---------------- */
+const NOTES={
+  a:{t:'A · Ledger',d:'Matches the Breakdown table you picked in September. One row per staff member, ranked by commission. Tap a row to see the products behind it.',
+     admin:['Columns: <b># · Staff · Net sales · Rate · Share · Commission</b>. Rate = commission ÷ net sales, so mixed % shows as one blended figure.','Tap a staff row to open its product lines (net, %, qty, returns, commission). Products with no rate set show greyed with "—".','The footer shows <b>Total payable</b> under Commission and total net sales under Net sales, on the same column grid.','On phone: Staff + Commission only. Net sales and rate move into the caption, and the share bar sits on a second line, the same as By Staff today.'],
+     self:['A compact band at the top shows the calculation: <b>Sales − Returns = Net × Rate</b> → My commission.','Below it, a product ledger with the same columns as the admin drill-down. No ranking against colleagues.','A "Only your sales" pill replaces the sort and filter controls. The server forces employee_id = you.']},
+  b:{t:'B · Payout cards',d:'A pay-out view: what you owe each person, as cards.',
+     admin:['KPI strip: <b>Commission payable</b> (hero), Net sales, Effective rate, Top earner.','One card per staff member: big commission figure, net sales and rate, and their top 3 products with a "+N more" link.','Tablet shows 3 cards per row, phone shows 1. It’s easier to scan per person, but slower to compare 20+ staff.'],
+     self:['A payslip-style hero card with the commission figure and Sales / Returns / Net / Rate.','Product lines as small cards (2 per row on tablet). Zero-rate lines are faded.']},
+  c:{t:'C · Lines',d:'The web Employee Report "Sales Details" table, as-is: one row per staff × product.',
+     admin:['Columns: <b>Staff · Product · Qty · Net sales · Rate · Commission</b>, sorted by commission. This is exactly what the API returns today.','A Staff ▾ filter narrows the list to one person, with no drill-down.','Best for reconciling against the web report. Weakest for "what do I pay each person?"'],
+     self:['The same table with the Staff column dropped, plus a Total earned footer.','The plainest option, with no summary band.']},
+};
+function renderNotes(){
+  const n=NOTES[state.dir];
+  document.getElementById('notes').innerHTML=`<h2>${n.t} · ${state.view==='admin'?'Admin':'Staff member'}</h2><p class="tag">${n.d}</p><ul>${n[state.view].map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+
+function render(){
+  const fn={a:[adminA,selfA],b:[adminB,selfB],c:[()=>flat(false),()=>flat(true)]}[state.dir][state.view==='admin'?0:1];
+  const html=chrome(fn());
+  document.getElementById('tablet').innerHTML=html;
+  document.getElementById('phone').innerHTML=html;
+  renderNotes();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-toggle]');
+  if(t){const id=+t.dataset.toggle;state.open.has(id)?state.open.delete(id):state.open.add(id);render();}
+});
+function bindSeg(id,key,apply){
+  document.querySelectorAll(`#${id} button`).forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll(`#${id} button`).forEach(x=>x.setAttribute('aria-pressed',x===b));
+    apply?apply(b.dataset.v):(state[key]=b.dataset.v);render();
+  }));
+}
+bindSeg('dirSeg','dir');
+bindSeg('viewSeg','view');
+bindSeg('themeSeg',null,v=>document.body.dataset.theme=v);
+render();
+</script>
+</body>
+</html>

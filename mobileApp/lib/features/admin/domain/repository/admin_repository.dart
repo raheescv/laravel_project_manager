@@ -14,6 +14,7 @@ abstract class AdminRepository {
     String? sort,
     String? direction,
     String? productType,
+    int? employeeId,
   });
 
   Future<DaySessionToggleResult> toggleDay(String dateTime);

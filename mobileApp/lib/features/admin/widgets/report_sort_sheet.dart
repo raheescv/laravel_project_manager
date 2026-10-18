@@ -29,13 +29,22 @@ Future<void> showReportSort(BuildContext context) async {
 }
 
 /// The four sorts every breakdown carries, labelled for the report on screen —
-/// a staff row's "amount" is their revenue and its "quantity" is lines sold.
+/// a staff row's "amount" is their revenue and its "quantity" is lines sold; a
+/// commission line's "amount" is its commission, and it has net sales in place
+/// of bills.
 typedef _Sort = ({String key, String label, IconData icon});
 
 class _ReportSortSheet extends StatelessWidget {
   const _ReportSortSheet();
 
-  List<_Sort> _sorts(String reportType) => AdminCubit.ranksProducts(reportType)
+  List<_Sort> _sorts(String reportType) => AdminCubit.isCommission(reportType)
+      ? const [
+          (key: 'amount', label: 'Commission', icon: Icons.percent_rounded),
+          (key: 'net', label: 'Net sales', icon: Icons.payments_rounded),
+          (key: 'quantity', label: 'Quantity', icon: Icons.numbers_rounded),
+          (key: 'name', label: 'Product', icon: Icons.sort_by_alpha_rounded),
+        ]
+      : AdminCubit.ranksProducts(reportType)
       ? const [
           (key: 'amount', label: 'Amount', icon: Icons.payments_rounded),
           (key: 'quantity', label: 'Quantity', icon: Icons.numbers_rounded),
@@ -223,6 +232,14 @@ String sortDirectionLabel(String sortKey, bool ascending) => sortKey == 'name'
 /// The sort as the toolbar button and the applied-filter chip show it, e.g.
 /// `Amount ↓`. Short on purpose — the full picture is in the sheet.
 String sortChipLabel(String sortKey, String reportType) {
+  if (AdminCubit.isCommission(reportType)) {
+    return switch (sortKey) {
+      'net' => 'Net sales',
+      'quantity' => 'Quantity',
+      'name' => 'Product',
+      _ => 'Commission',
+    };
+  }
   final products = AdminCubit.ranksProducts(reportType);
   return switch (sortKey) {
     'quantity' => products ? 'Quantity' : 'Items sold',

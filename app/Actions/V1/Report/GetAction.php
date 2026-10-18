@@ -61,7 +61,7 @@ class GetAction
             'employeewise' => $this->employeeWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction),
             'itemwise' => $this->itemWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction, $productType),
             'categorywise' => $this->categoryWise($startDate, $endDate, $employeeId, $branchId, $page, $perPage, $sort, $direction, $productType),
-            'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage),
+            'commission' => (new CommissionAction())->execute($startDate, $endDate, $employeeId, $productId, $branchId, $page, $perPage, $sort, $direction),
             // Bills are sale-level, so self-scope means "bills I rang up" —
             // created_by, the same set the Sales list and the dashboard cards
             // count. Filtering by line attribution as well would drop a bill

@@ -33,6 +33,7 @@ enum ExportReport {
   items('Item Sales', 'Every item, ranked', Icons.inventory_2_outlined),
   categories('Category Sales', 'Sales mix by category', Icons.category_outlined),
   staff('Staff Sales', 'Revenue per person', Icons.people_alt_outlined),
+  commission('Staff Commission', 'Commission per person and product', Icons.percent_rounded),
   daySession('Sale Bill Report', 'The current day session', Icons.receipt_long_outlined);
 
   const ExportReport(this.title, this.hint, this.icon);
@@ -47,6 +48,7 @@ enum ExportReport {
         ExportReport.items => ReportExportKind.items,
         ExportReport.categories => ReportExportKind.categories,
         ExportReport.staff => ReportExportKind.stylists,
+        ExportReport.commission => ReportExportKind.commission,
         ExportReport.daySession => null,
       };
 
@@ -491,6 +493,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
         'service' => 'Services',
         _ => 'All types',
       });
+    }
+    if (_report == ExportReport.commission) {
+      parts.add(admin.commissionStaffName.isEmpty ? 'All staff' : admin.commissionStaffName);
     }
     if (branch.isNotEmpty) parts.add(branch);
     return parts.join(' · ');

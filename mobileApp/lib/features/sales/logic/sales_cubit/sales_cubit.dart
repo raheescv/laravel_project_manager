@@ -77,6 +77,7 @@ class SalesCubit {
         lastPage: res.lastPage,
         total: res.total + held.length,
         totalPaid: res.totalPaid,
+        summary: {'balance': res.totalBalance},
       );
     } catch (e) {
       // Only an unreachable server falls back to the held rows alone. A server that
@@ -88,6 +89,45 @@ class SalesCubit {
       }
       return PageResult(rows: held, currentPage: 1, lastPage: 1, total: held.length);
     }
+  }
+
+  /// One page of the Items tab: every sold line, under the same filters as the
+  /// invoice list.
+  ///
+  /// Server-only. A held sale's lines are not listed here — the outbox is shown
+  /// on the Invoices tab, which is where a cashier looks for a sale they have
+  /// just rung up — so an unreachable server is an error rather than a list that
+  /// silently omits the queued lines.
+  Future<PageResult> fetchItemsPage({
+    required int page,
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    int? staffId,
+  }) async {
+    final res = await _sales.saleItems(
+      status: status,
+      search: search,
+      paymentMethodId: paymentMethodId,
+      fromDate: fromDate,
+      toDate: toDate,
+      sortBy: sortBy,
+      sortDirection: sortDirection,
+      createdById: staffId,
+      page: page,
+    );
+    return PageResult(
+      rows: res.rows,
+      currentPage: res.currentPage,
+      lastPage: res.lastPage,
+      total: res.lines,
+      totalPaid: res.total,
+      summary: {'quantity': res.quantity, 'discount': res.discount},
+    );
   }
 
   /// The outbox rows, in the shape the list renders, newest first.

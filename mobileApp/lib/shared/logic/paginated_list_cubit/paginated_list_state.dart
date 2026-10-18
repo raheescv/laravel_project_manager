@@ -10,6 +10,7 @@ class PaginatedListState extends Equatable {
     this.lastPage = 1,
     this.total = 0,
     this.totalPaid = 0,
+    this.summary = const {},
     this.loadingMore = false,
     this.errorMessage,
   });
@@ -23,6 +24,9 @@ class PaginatedListState extends Equatable {
   /// `items.length`, which is only what has been scrolled into view.
   final int total;
   final double totalPaid;
+
+  /// Extra whole-set figures — see [PageResult.summary].
+  final Map<String, num> summary;
 
   /// A further page is being appended. Distinct from [isLoading], which covers
   /// the first page and blanks the list.
@@ -45,6 +49,7 @@ class PaginatedListState extends Equatable {
     int? lastPage,
     int? total,
     double? totalPaid,
+    Map<String, num>? summary,
     bool? loadingMore,
     String? errorMessage,
     bool clearError = false,
@@ -56,11 +61,12 @@ class PaginatedListState extends Equatable {
         lastPage: lastPage ?? this.lastPage,
         total: total ?? this.total,
         totalPaid: totalPaid ?? this.totalPaid,
+        summary: summary ?? this.summary,
         loadingMore: loadingMore ?? this.loadingMore,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       );
 
   @override
   List<Object?> get props =>
-      [status, items, page, lastPage, total, totalPaid, loadingMore, errorMessage];
+      [status, items, page, lastPage, total, totalPaid, summary, loadingMore, errorMessage];
 }

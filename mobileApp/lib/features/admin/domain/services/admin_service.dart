@@ -28,6 +28,7 @@ class AdminService implements AdminRepository {
     String? sort,
     String? direction,
     String? productType,
+    int? employeeId,
   }) async {
     final data = await _http.get(EndPoints.reports, query: {
       'type': type,
@@ -38,6 +39,7 @@ class AdminService implements AdminRepository {
       if (sort != null) 'sort': sort,
       if (direction != null) 'direction': direction,
       if (productType != null) 'product_type': productType,
+      if (employeeId != null) 'employee_id': employeeId,
     });
     return Map<String, dynamic>.from(data);
   }

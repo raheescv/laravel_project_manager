@@ -159,6 +159,32 @@ class OfflineFirstSaleService implements SaleRepository {
       );
 
   @override
+  Future<SaleItemsPage> saleItems({
+    String? status,
+    String? search,
+    int? paymentMethodId,
+    String? fromDate,
+    String? toDate,
+    String sortBy = 'date',
+    String sortDirection = 'desc',
+    int? createdById,
+    int page = 1,
+    int perPage = 30,
+  }) =>
+      _online.saleItems(
+        status: status,
+        search: search,
+        paymentMethodId: paymentMethodId,
+        fromDate: fromDate,
+        toDate: toDate,
+        sortBy: sortBy,
+        sortDirection: sortDirection,
+        createdById: createdById,
+        page: page,
+        perPage: perPage,
+      );
+
+  @override
   Future<Sale> saleById(String id) => _online.saleById(id);
 
   @override

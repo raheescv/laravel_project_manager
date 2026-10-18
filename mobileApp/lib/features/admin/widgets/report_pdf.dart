@@ -95,6 +95,7 @@ Future<Uint8List> buildReportPdf(ReportExport data, ReportPdfBrand brand) async 
           ReportExportKind.overview => _overview(data, tone, brand),
           ReportExportKind.items || ReportExportKind.categories || ReportExportKind.stylists =>
             _breakdown(data, tone, brand),
+          ReportExportKind.commission => _commission(data, tone, brand),
         },
       ],
     ),
@@ -169,6 +170,9 @@ pw.Widget _masthead(ReportExport d, ReportPdfBrand b, _Tone tone, String range) 
 
 /// The item filters that shaped the list, so the paper says how it was ranked.
 String _filterLine(ReportExport d) {
+  if (d.kind == ReportExportKind.commission) {
+    return d.staffName.isEmpty ? 'All staff' : 'Staff: ${d.staffName}';
+  }
   if (d.kind != ReportExportKind.items && d.kind != ReportExportKind.categories) return '';
   final type = switch (d.productType) {
     'product' => 'Products only',
@@ -525,6 +529,67 @@ List<pw.Widget> _breakdown(ReportExport d, _Tone tone, ReportPdfBrand b) {
         ),
     },
     if (kind == ReportExportKind.stylists && lines.any((l) => _isMe(l.id, b))) _meNote(b),
+    if (d.truncated)
+      _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them. '
+          'Export a shorter range to list every line.'),
+  ];
+}
+
+// ---- Staff Commission ------------------------------------------------------
+
+/// One line per staff member × product, net of returns, at the commission %
+/// set for that pair — the web Employee Report's Sales Details table.
+List<pw.Widget> _commission(ReportExport d, _Tone tone, ReportPdfBrand b) {
+  const heading = 'Commission breakdown';
+  final lines = d.lines;
+  if (lines.isEmpty) return [_section(heading, tone), _note('No commission in this period.')];
+  final rate = d.totalNet == 0 ? 0.0 : d.totalAmount / d.totalNet * 100;
+
+  return [
+    _section('Summary', tone),
+    _kpiRow(
+      [
+        _Kpi('Staff', '${d.staffCount}'),
+        _Kpi('Net sales', Money.of(d.totalNet)),
+        _Kpi('Effective rate', pctLabel(rate)),
+        _Kpi('Commission', Money.of(d.totalAmount), color: tone.accent),
+      ],
+      tone,
+    ),
+    _section(heading, tone,
+        note: d.truncated ? 'Top ${lines.length} of ${d.lineCount}' : _count(lines.length, 'line')),
+    _table(
+      tone,
+      [
+        const _Col('#', 0.6),
+        const _Col('Staff', 2.6),
+        const _Col('Product', 3.2),
+        const _Col('Qty', 1, right: true),
+        _Col(_withCurrency('Net sales'), 2, right: true),
+        const _Col('Rate', 1, right: true),
+        _Col(_withCurrency('Commission'), 2, right: true),
+      ],
+      [
+        for (var i = 0; i < lines.length; i++)
+          [
+            '${i + 1}',
+            lines[i].staff,
+            lines[i].name,
+            qtyLabel(lines[i].quantity),
+            _amt(lines[i].net),
+            lines[i].rate == 0 ? '-' : pctLabel(lines[i].rate),
+            lines[i].amount == 0 ? '-' : _amt(lines[i].amount),
+          ],
+      ],
+      total: ['', 'Total', '', qtyLabel(d.totalQuantity), _amt(d.totalNet), pctLabel(rate), _amt(d.totalAmount)],
+      // On a report of one person every line is theirs — nothing to pick out.
+      highlight: {
+        if (d.staffCount > 1)
+          for (var i = 0; i < lines.length; i++)
+            if (_isMe(lines[i].id, b)) i,
+      },
+    ),
+    if (d.staffCount > 1 && lines.any((l) => _isMe(l.id, b))) _meNote(b),
     if (d.truncated)
       _note('The list stops at the top ${lines.length} of ${d.lineCount}; the totals cover all of them. '
           'Export a shorter range to list every line.'),

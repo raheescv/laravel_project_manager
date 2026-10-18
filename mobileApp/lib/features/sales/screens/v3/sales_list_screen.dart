@@ -57,17 +57,41 @@ const _sortOptions = <_SortOption>[
   _SortOption('Invoice no', 'invoice_no', 'desc', Icons.tag),
 ];
 
+/// The Items tab sorts by the line's own figures (`ItemIndexRequest`).
+const _itemSortOptions = <_SortOption>[
+  _SortOption('Newest first', 'date', 'desc', Icons.schedule),
+  _SortOption('Oldest first', 'date', 'asc', Icons.history),
+  _SortOption('Amount: high to low', 'total', 'desc', Icons.trending_down),
+  _SortOption('Amount: low to high', 'total', 'asc', Icons.trending_up),
+  _SortOption('Quantity: high to low', 'quantity', 'desc', Icons.stacked_bar_chart),
+];
+
 class _SalesListScreenState extends State<SalesListScreen> {
   /// Owns the repositories (§10) — the screen never resolves one itself.
   final _sales = SalesCubit();
 
   /// Owns fetch/pagination/error state — see [PaginatedListCubit]. The screen
-  /// keeps only the filter values it drives the fetcher with, plus the tablet
-  /// master-detail selection.
+  /// keeps only the filter values it drives the fetchers with, plus the tablet
+  /// drawer's selection.
   late final PaginatedListCubit _list = PaginatedListCubit(
     fetch: _fetchPage,
     errorMessage: 'Could not load sales.',
   );
+
+  /// The Items tab: every sold line, under the same filters.
+  late final PaginatedListCubit _itemList = PaginatedListCubit(
+    fetch: _fetchItemsPage,
+    errorMessage: 'Could not load items.',
+  );
+
+  String _tab = 'invoices'; // invoices | items
+  bool get _isItems => _tab == 'items';
+  PaginatedListCubit get _active => _isItems ? _itemList : _list;
+
+  // A filter change reloads only the tab on screen; the other is marked stale
+  // and reloads when it is next shown.
+  bool _invoicesStale = false;
+  bool _itemsStale = true;
   final _scrollCtl = ScrollController();
   StreamSubscription<int>? _branchSub;
 
@@ -85,6 +109,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
   String _staffName = '';
   String _sortBy = 'date';
   String _sortDir = 'desc';
+  String _itemSortBy = 'date';
+  String _itemSortDir = 'desc';
 
   // Date range — preset drives [_startDate]/[_endDate]. Defaults to today.
   String _datePreset = 'today'; // today | 7d | 30d | month | custom
@@ -97,9 +123,11 @@ class _SalesListScreenState extends State<SalesListScreen> {
       ? widget.onSelectTab!(kReturnsTab)
       : context.push(Routes.salesReturns);
 
-  // Tablet master–detail: the row whose invoice is shown in the right pane.
-  // Untouched on phones, which keep pushing the /invoice route on tap.
+  // Tablet drawer: the row whose invoice is shown over the table's right side
+  // (for an Items-tab line, its invoice plus the line to pick out). Untouched on
+  // phones, which keep pushing the /invoice route on tap.
   Map<String, dynamic>? _selectedRow;
+  String? _selectedItemId;
   Sale? _selectedSale;
   bool _detailLoading = false;
   String? _detailError;
@@ -134,6 +162,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     _scrollCtl.dispose();
     _branchSub?.cancel();
     unawaited(_list.close());
+    unawaited(_itemList.close());
     super.dispose();
   }
 
@@ -141,7 +170,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   void _onScroll() {
     if (!_scrollCtl.hasClients) return;
     final pos = _scrollCtl.position;
-    if (pos.pixels >= pos.maxScrollExtent - 500) unawaited(_list.loadMore());
+    if (pos.pixels >= pos.maxScrollExtent - 500) unawaited(_active.loadMore());
   }
 
   Future<PageResult> _fetchPage(int page) => _sales.fetchPage(
@@ -156,6 +185,18 @@ class _SalesListScreenState extends State<SalesListScreen> {
         staffId: _staffId,
       );
 
+  Future<PageResult> _fetchItemsPage(int page) => _sales.fetchItemsPage(
+        page: page,
+        status: _status,
+        search: _search.isEmpty ? null : _search,
+        paymentMethodId: _methodId,
+        fromDate: _startDate == null ? null : Dates.iso(_startDate!),
+        toDate: _endDate == null ? null : Dates.iso(_endDate!),
+        sortBy: _itemSortBy,
+        sortDirection: _itemSortDir,
+        staffId: _staffId,
+      );
+
   /// Whether this user sees the whole till's sales — and so has anything to
   /// filter by staff, or any reason to be told who rang a sale up.
   ///
@@ -165,33 +206,45 @@ class _SalesListScreenState extends State<SalesListScreen> {
   /// them apart. Only a rank-and-file employee is self-scoped.
   bool get _seesAllSales => context.read<AuthCubit>().user?.seesAllRecords ?? false;
 
-  /// (Re)load from page 1 for the current filters, then re-sync the tablet
-  /// detail pane against the new rows.
+  /// (Re)load the tab on screen from page 1 for the current filters, mark the
+  /// other one stale, then re-sync the tablet drawer against the new rows.
   Future<void> _load() async {
-    await _list.load();
+    if (_isItems) {
+      _itemsStale = false;
+      _invoicesStale = true;
+    } else {
+      _invoicesStale = false;
+      _itemsStale = true;
+    }
+    await _active.load();
     if (mounted) _syncSelection();
   }
 
-  /// Tablet only: keep the detail pane in step with the list — drop a selection
-  /// whose row no longer exists (e.g. after a filter change or a delete), and
-  /// preselect the first invoice so the pane is never awkwardly empty.
+  void _switchTab(String tab) {
+    if (_tab == tab) return;
+    setState(() {
+      _tab = tab;
+      // The drawer belongs to the tab it was opened from.
+      _selectedRow = null;
+      _selectedItemId = null;
+      _selectedSale = null;
+      _detailError = null;
+      _detailLoading = false;
+    });
+    if (_scrollCtl.hasClients) _scrollCtl.jumpTo(0);
+    if (_isItems ? _itemsStale : _invoicesStale) unawaited(_load());
+  }
+
+  /// Tablet only: close the drawer when the row it was opened from is no longer
+  /// listed (e.g. after a filter change or a delete). Nothing is preselected —
+  /// the table is the page, and the drawer opens on a tap.
   void _syncSelection() {
-    if (!mounted || !context.isTablet) return;
-    final rows = _list.state.items;
-    final selId = _selectedRow == null ? '' : asStr(_selectedRow!['id']);
-    final stillThere = selId.isNotEmpty && rows.any((r) => asStr(r['id']) == selId);
-    if (!stillThere) {
-      if (rows.isEmpty) {
-        setState(() {
-          _selectedRow = null;
-          _selectedSale = null;
-          _detailError = null;
-          _detailLoading = false;
-        });
-      } else {
-        _selectRow(rows.first);
-      }
-    }
+    if (!mounted || !context.isTablet || _selectedRow == null) return;
+    final rows = _active.state.items;
+    final stillThere = _isItems
+        ? rows.any((r) => asStr(r['id']) == _selectedItemId)
+        : rows.any((r) => asStr(r['id']) == asStr(_selectedRow!['id']));
+    if (!stillThere) _clearSelection();
   }
 
   /// Payment methods power the in-card payment selector; a failure just leaves
@@ -295,365 +348,576 @@ class _SalesListScreenState extends State<SalesListScreen> {
   String get _methodLabel =>
       _methodId == null ? 'All methods' : _methods.firstWhere((m) => m.id == _methodId, orElse: () => PaymentMethod(id: 0, name: 'Method')).name;
 
-  String get _sortLabel => _sortOptions
-      .firstWhere((o) => o.by == _sortBy && o.dir == _sortDir, orElse: () => _sortOptions.first)
+  List<_SortOption> get _activeSortOptions => _isItems ? _itemSortOptions : _sortOptions;
+  String get _activeSortBy => _isItems ? _itemSortBy : _sortBy;
+  String get _activeSortDir => _isItems ? _itemSortDir : _sortDir;
+
+  String get _sortLabel => _activeSortOptions
+      .firstWhere((o) => o.by == _activeSortBy && o.dir == _activeSortDir, orElse: () => _activeSortOptions.first)
       .label;
+
+  String get _statusLabel => switch (_status) {
+        'completed' => 'Completed',
+        'draft' => 'Draft',
+        'cancelled' => 'Cancelled',
+        _ => 'All statuses',
+      };
 
   String get _staffLabel => _staffId == null ? 'All staff' : _staffName;
 
   @override
   Widget build(BuildContext context) {
-    final st = _list.state;
-    final sub = st.isLoading && st.items.isEmpty ? 'Loading…' : '${st.total} invoice${st.total == 1 ? '' : 's'} found';
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
-        // Tablet has no header band: the shell's side-rail is the chrome and the
-        // list pane names itself (the preview's `.lc-head`). A green band on top
-        // of a two-pane layout is the phone screen showing through.
-        child: context.isTablet
-            ? SafeArea(bottom: false, child: _tabletBody())
-            : Column(
-                children: [
-                  EmeraldHeader(title: 'Sales', subtitle: sub, trailing: _returnsAction()),
-                  Expanded(child: _body()),
-                ],
-              ),
+        // Rebuilds on the active tab's list; a tab switch swaps the bloc, which
+        // BlocBuilder re-subscribes to.
+        child: BlocBuilder<PaginatedListCubit, PaginatedListState>(
+          bloc: _active,
+          builder: (context, _) => context.isTablet
+              // Tablet has no header band: the shell's side-rail is the chrome
+              // and the page names itself.
+              ? SafeArea(bottom: false, child: _tabletBody())
+              : Column(
+                  children: [
+                    EmeraldHeader(title: 'Sales', subtitle: _subtitle, trailing: _returnsPill(), bottom: _tabSeg(onHero: true)),
+                    Expanded(child: _phoneList()),
+                  ],
+                ),
+        ),
       ),
     );
   }
 
-  /// Entry point into the Sales Return module — a compact translucent pill in the
-  /// header so it doesn't crowd the 4-tab bottom nav. Hidden when the user
-  /// can't view returns.
-  Widget? _returnsAction() {
-    if (!context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnView)) {
-      return null;
-    }
-    final p = context.astra;
-    return GestureDetector(
-      onTap: _openReturns,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.assignment_return_outlined, size: 15, color: p.accent),
-            const SizedBox(width: 7),
-            Text('Returns', style: ui(size: 12, weight: FontWeight.w800, color: Colors.white)),
+  bool get _canSeeReturns => context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnView);
+
+  String get _subtitle {
+    final s = _active.state;
+    if (s.isLoading && s.items.isEmpty) return 'Loading…';
+    if (_isItems) return '${s.total} line${s.total == 1 ? '' : 's'} sold';
+    return '${s.total} invoice${s.total == 1 ? '' : 's'} found';
+  }
+
+  // ---- phone ----
+
+  Widget _phoneList() {
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: MaxWidthBox(
+        maxWidth: 720,
+        // Slivers, not ListView(children:) — the rows grow by a page on every
+        // scroll, and the eager form would lay out every accumulated row on each
+        // emit instead of recycling what is off-screen.
+        child: CustomScrollView(
+          controller: _scrollCtl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              sliver: SliverToBoxAdapter(child: _toolsCard()),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverMainAxisGroup(slivers: _listSlivers(_active.state)),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
       ),
     );
   }
 
-  Widget _body() {
-    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
-      bloc: _list,
-      builder: (context, state) {
-        // Slivers, not ListView(children:) — the rows grow by a page on every
-        // scroll, and the eager form would rebuild and lay out every
-        // accumulated row on each emit instead of recycling what is off-screen.
-        return RefreshIndicator(
-          onRefresh: _load,
-          child: MaxWidthBox(
-            maxWidth: 720,
-            child: CustomScrollView(
-              controller: _scrollCtl,
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  sliver: SliverList.list(children: [_bento(), _resultLine()]),
-                ),
-                if (state.isLoading)
-                  const SliverToBoxAdapter(
-                    child: Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator())),
-                  )
-                else if (state.hasFailed)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: EmptyState(icon: Icons.wifi_off, title: 'Sales unavailable', message: state.errorMessage, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
-                    ),
-                  )
-                else if (state.items.isEmpty)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: EmptyState(icon: Icons.receipt_long, title: 'No sales found', message: 'Try a wider date range or clearing the filters.'),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList.separated(
-                      itemCount: state.items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 9),
-                      itemBuilder: (_, i) => _row(state.items[i]),
-                    ),
-                  ),
-                if (state.loadingMore)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-                    ),
-                  ),
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            ),
-          ),
-        );
-      },
+  /// Phone rows sit in one card: hairline-separated, rounded at the ends of
+  /// what is loaded so far, so the list reads as a single ledger.
+  Widget _cardRow(int index, int count, Widget row) {
+    final p = context.astra;
+    const r = Radius.circular(18);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.vertical(top: index == 0 ? r : Radius.zero, bottom: index == count - 1 ? r : Radius.zero),
+      ),
+      child: row,
     );
   }
 
-  /// Tablet: a surfaced master pane — head (collected total + filter chips) over
-  /// flat hairline-separated rows — beside the selected invoice. This is the
-  /// `.listcol` / `.detail` split from the approved preview; the phone's bento
-  /// control card and floating row cards would read as cards-inside-a-card here.
+  List<Widget> _listSlivers(PaginatedListState state) {
+    if (state.isLoading) {
+      return const [
+        SliverToBoxAdapter(
+          child: Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator())),
+        ),
+      ];
+    }
+    if (state.hasFailed || state.items.isEmpty) {
+      return [SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.all(16), child: _emptyState(state)))];
+    }
+    return [
+      SliverList.builder(
+        itemCount: state.items.length,
+        itemBuilder: (_, i) =>
+            _cardRow(i, state.items.length, _isItems ? _itemRow(state.items[i]) : _invoiceRow(state.items[i])),
+      ),
+      if (state.loadingMore) const SliverToBoxAdapter(child: _MoreSpinner()),
+    ];
+  }
+
+  Widget _emptyState(PaginatedListState state) {
+    if (state.hasFailed) {
+      return EmptyState(
+        icon: Icons.wifi_off,
+        title: _isItems ? 'Items unavailable' : 'Sales unavailable',
+        message: state.errorMessage,
+        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load),
+      );
+    }
+    return EmptyState(
+      icon: _isItems ? Icons.inventory_2_outlined : Icons.receipt_long,
+      title: _isItems ? 'No items sold' : 'No sales found',
+      message: 'Try a wider date range or clearing the filters.',
+    );
+  }
+
+  Widget _invoiceRow(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final held = _isHeld(r);
+    final sub = '${d.who}${d.date.isEmpty ? '' : ' · ${d.date}'}'
+        // Only someone who sees the whole till is told who rang it up: everyone
+        // else is looking at a list of nothing but their own sales.
+        '${_seesAllSales && d.staff.isNotEmpty ? ' · ${d.staff}' : ''}'
+        '${d.offlineRef.isEmpty ? '' : ' · ${d.offlineRef}'}';
+    return TabletListRow(
+      selected: false,
+      onTap: () => _open(r),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
+      child: Row(
+        children: [
+          // A held sale reads as a different kind of thing at a glance, because it
+          // is one: it has not reached the server, so its reference is provisional
+          // and its actions are different.
+          IconChip(
+            icon: held ? Icons.cloud_off_rounded : Icons.receipt_outlined,
+            size: 36,
+            radius: 11,
+            bg: held ? p.warnTint : null,
+            fg: held ? p.goldText : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(d.invoice,
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+                    ),
+                    if (held) ...[
+                      const SizedBox(width: 7),
+                      StatusPill(label: 'HELD', bg: p.warnTint, fg: p.goldText),
+                    ] else if (d.status.isNotEmpty) ...[
+                      const SizedBox(width: 7),
+                      StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(sub,
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                    ),
+                    if (d.method.isNotEmpty) ...[const SizedBox(width: 7), Flexible(child: _methodTag(d.method))],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(Money.of(d.amount), style: serif(size: 15, color: p.ink)),
+          // Edit sits on the row only for a held sale. A committed one is edited
+          // from its invoice, where the permission gate and the Return/Delete
+          // actions live; a held one has none of those.
+          if (held) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: () => _editHeld(r),
+              icon: Icon(Icons.edit_outlined, size: 18, color: p.goldText),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Edit held sale',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _itemData(r);
+    return TabletListRow(
+      selected: false,
+      onTap: () => _openItem(r),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
+      child: Row(
+        children: [
+          _qtyChip(d.qty),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(d.product, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+                const SizedBox(height: 3),
+                Text('${d.invoice} · ${d.customer}${d.date.isEmpty ? '' : ' · ${d.date}'}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(Money.of(d.total), style: serif(size: 15, color: p.ink)),
+              const SizedBox(height: 2),
+              Text(d.discount > 0 ? '− ${Money.of(d.discount)} disc' : '${qtyLabel(d.qty)} × ${Money.of(d.price)}',
+                  style: ui(size: 9.5, weight: FontWeight.w700, color: d.discount > 0 ? AstraPalette.danger : p.textMuted)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _qtyChip(num qty) {
+    final p = context.astra;
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(11)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(qtyLabel(qty), style: ui(size: 12.5, weight: FontWeight.w800, color: p.primary, height: 1)),
+          ),
+          const SizedBox(height: 2),
+          Text('QTY', style: ui(size: 7, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.6, height: 1)),
+        ],
+      ),
+    );
+  }
+
+  Widget _methodTag(String method) {
+    final p = context.astra;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
+      child: Text(method,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ui(size: 8.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.3)),
+    );
+  }
+
+  // ---- tablet: full-width ledger table + invoice drawer ----
+
   Widget _tabletBody() {
     // Sized from this screen's own width, not the window's — beside the shell's
     // side-rail those differ by ~106pt, which matters on a small tablet.
     return LayoutBuilder(
-      builder: (ctx, c) => Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TabletPane(
-            width: TabletMetrics.forWidth(c.maxWidth).listColumn,
-            child: Column(
+      builder: (ctx, c) {
+        final drawerWidth = (c.maxWidth * 0.46).clamp(340.0, 460.0);
+        final tableWidth = c.maxWidth - 40;
+        return Stack(
+          children: [
+            Column(
               children: [
-                _paneHead(),
-                Expanded(child: RefreshIndicator(onRefresh: _load, child: _tabletList())),
+                TabletPageHead(
+                  title: 'Sales',
+                  subtitle: _subtitle,
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                  actions: [
+                    SizedBox(width: 260, child: _tabSeg()),
+                    if (_canSeeReturns)
+                      TabletActionButton(label: 'Returns', icon: Icons.assignment_return_outlined, onTap: _openReturns),
+                  ],
+                ),
+                Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 14), child: _tabletTools(tableWidth)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: AstraCard(
+                      radius: 18,
+                      padding: EdgeInsets.zero,
+                      child: ClipRRect(borderRadius: BorderRadius.circular(18), child: _table(tableWidth)),
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-          Expanded(child: _detailPane()),
-        ],
-      ),
-    );
-  }
-
-  /// The master pane's head: the collected total as the headline, the invoice
-  /// count under it, then every filter the bento card holds — as chips, which
-  /// stay legible at pane width where stacked labelled boxes do not.
-  Widget _paneHead() {
-    const statuses = <(String, String?)>[
-      ('All', null),
-      ('Completed', 'completed'),
-      ('Draft', 'draft'),
-      ('Cancelled', 'cancelled'),
-    ];
-    final canSeeReturns = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnView);
-    return TabletPaneHead(
-      title: 'Sales',
-      subtitle: _list.state.isLoading && _list.state.items.isEmpty
-          ? 'Loading…'
-          : '${Money.of(_list.state.totalPaid)} collected · ${_list.state.total} invoice${_list.state.total == 1 ? '' : 's'}',
-      trailing: canSeeReturns
-          ? TabletActionButton(
-              label: 'Returns',
-              icon: Icons.assignment_return_outlined,
-              onTap: _openReturns)
-          : null,
-      children: [
-        const SizedBox(height: 13),
-        // Same search as the phone card — a tablet till has the same person with
-        // the same receipt standing at it.
-        _searchBox(),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            for (final (label, status) in statuses)
-              TabletFilterChip(label: label, active: _status == status, onTap: () => _setStatus(status)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            TabletFilterChip(
-                label: _dateLabel,
-                active: false,
-                icon: Icons.event_rounded,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openDateSheet),
-            TabletFilterChip(
-                label: _methodLabel,
-                active: false,
-                icon: Icons.account_balance_wallet_outlined,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openPaymentSheet),
-            TabletFilterChip(
-                label: _sortLabel,
-                active: false,
-                icon: Icons.swap_vert_rounded,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openSort),
-            if (_seesAllSales)
-              TabletFilterChip(
-                  label: _staffLabel,
-                  active: _staffId != null,
-                  icon: Icons.badge_outlined,
-                  trailingIcon: Icons.keyboard_arrow_down_rounded,
-                  onTap: _openStaffSheet),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _tabletList() {
-    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
-      bloc: _list,
-      builder: (context, state) {
-        return CustomScrollView(
-          controller: _scrollCtl,
-          slivers: [
-            if (state.isLoading)
-              const SliverToBoxAdapter(
-                child: Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator())),
-              )
-            else if (state.hasFailed)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-                  child: EmptyState(
-                      icon: Icons.wifi_off,
-                      title: 'Sales unavailable',
-                      message: state.errorMessage,
-                      action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
-                ),
-              )
-            else if (state.items.isEmpty)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-                  child: EmptyState(
-                      icon: Icons.receipt_long,
-                      title: 'No sales found',
-                      message: 'Try a wider date range or clearing the filters.'),
-                ),
-              )
-            else
-              SliverList.builder(
-                itemCount: state.items.length,
-                itemBuilder: (_, i) => _tabletRow(state.items[i]),
-              ),
-            if (state.loadingMore)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-                ),
-              ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            if (_selectedRow != null) Positioned(top: 0, right: 0, bottom: 0, width: drawerWidth, child: _drawer()),
           ],
         );
       },
     );
   }
 
-  /// One flat pane row — invoice + amount on the first line, who/when/how and
-  /// the status badge on the second.
-  Widget _tabletRow(Map<String, dynamic> r) {
+  Widget _table(double width) {
     final p = context.astra;
-    final d = _rowData(r);
-    final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
-    final sub = [
-      d.who,
-      if (d.date.isNotEmpty) d.date,
-      if (_seesAllSales && d.staff.isNotEmpty) d.staff,
-      if (d.method.isNotEmpty) d.method,
-      if (d.offlineRef.isNotEmpty) d.offlineRef,
-    ].join(' · ');
-    return TabletListRow(
-      selected: selected,
-      onTap: () => _selectRow(r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final state = _active.state;
+    final cols = _isItems ? _itemColumns(width) : _invoiceColumns(width);
+    Widget body;
+    if (state.isLoading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (state.hasFailed || state.items.isEmpty) {
+      // Still a scrollable, so pull-to-refresh works on an empty table.
+      body = ListView(
+        controller: _scrollCtl,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        children: [_emptyState(state)],
+      );
+    } else {
+      body = ListView.builder(
+        controller: _scrollCtl,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: state.items.length + (state.loadingMore ? 1 : 0),
+        itemBuilder: (_, i) {
+          if (i >= state.items.length) return const _MoreSpinner();
+          final r = state.items[i];
+          return _isItems ? _itemTableRow(cols, r) : _invoiceTableRow(cols, r);
+        },
+      );
+    }
+    return Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(d.invoice,
+          _tableLine(
+            cols,
+            [
+              for (final c in cols)
+                Text(c.label.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
-              ),
-              const SizedBox(width: 8),
-              Text(Money.of(d.amount), style: serif(size: 15, color: p.ink)),
+                    style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1)),
             ],
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+            border: true,
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+          Expanded(child: RefreshIndicator(onRefresh: _load, child: body)),
+          if (state.items.isNotEmpty) _tableFooter(cols, state),
+        ],
+      );
+  }
+
+  /// Which columns fit: the optional ones drop out as the table narrows (a
+  /// small tablet in portrait, or the invoice drawer's share of the width).
+  List<_Col> _invoiceColumns(double w) => [
+        const _Col('invoice', 'Invoice', 3),
+        const _Col('date', 'Date', 3),
+        const _Col('customer', 'Customer', 4),
+        if (_seesAllSales && w >= 700) const _Col('staff', 'Staff', 3),
+        if (w >= 760) const _Col('payment', 'Payment', 3),
+        const _Col('status', 'Status', 3),
+        const _Col('amount', 'Amount', 3, end: true),
+      ];
+
+  List<_Col> _itemColumns(double w) => [
+        const _Col('product', 'Product', 5),
+        if (w >= 900) const _Col('code', 'Code', 2),
+        const _Col('invoice', 'Invoice', 3),
+        if (w >= 760) const _Col('customer', 'Customer', 3),
+        const _Col('qty', 'Qty', 2, end: true),
+        if (w >= 700) const _Col('price', 'Price', 3, end: true),
+        if (w >= 820) const _Col('discount', 'Disc', 2, end: true),
+        const _Col('total', 'Total', 3, end: true),
+      ];
+
+  Widget _tableLine(List<_Col> cols, List<Widget> cells, {EdgeInsets? padding, bool border = false, Color? color}) {
+    final p = context.astra;
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: color,
+        border: border ? Border(bottom: BorderSide(color: p.hairline)) : null,
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < cols.length; i++)
+            Expanded(
+              flex: cols[i].flex,
+              child: Padding(
+                padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
+                child: Align(alignment: cols[i].end ? Alignment.centerRight : Alignment.centerLeft, child: cells[i]),
               ),
-              if (d.status.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
-              ],
-            ],
-          ),
+            ),
         ],
       ),
     );
   }
 
-  /// Tablet detail pane — the selected invoice, embedded (its close button
+  Widget _cellText(String text, {bool strong = false, Color? color, bool amount = false}) {
+    final p = context.astra;
+    return Text(text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: amount
+            ? serif(size: 14, color: color ?? p.ink)
+            : ui(size: 12, weight: strong ? FontWeight.w800 : FontWeight.w600, color: color ?? (strong ? p.ink : p.textSecondary)));
+  }
+
+  Widget _invoiceTableRow(List<_Col> cols, Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    final held = _isHeld(r);
+    final selected = !_isItems && _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
+    Widget cell(String id) => switch (id) {
+          'invoice' => _cellText(d.invoice, strong: true),
+          'date' => _cellText(d.date),
+          'customer' => _cellText(d.who),
+          'staff' => _cellText(d.staff.isEmpty ? '—' : d.staff),
+          'payment' => _cellText(d.method.isEmpty ? '—' : d.method),
+          // Scales down rather than overflowing a narrow column.
+          'status' => FittedBox(
+              fit: BoxFit.scaleDown,
+              child: held
+                  ? StatusPill(label: 'HELD', bg: p.warnTint, fg: p.goldText)
+                  : (d.status.isEmpty ? const SizedBox.shrink() : StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg))),
+          'amount' => _cellText(Money.of(d.amount), amount: true),
+          _ => const SizedBox.shrink(),
+        };
+    return TabletListRow(
+      selected: selected,
+      onTap: () => _selectRow(r),
+      padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
+      child: _tableLine(cols, [for (final c in cols) cell(c.id)]),
+    );
+  }
+
+  Widget _itemTableRow(List<_Col> cols, Map<String, dynamic> r) {
+    final d = _itemData(r);
+    final selected = _isItems && _selectedItemId == d.id;
+    Widget cell(String id) => switch (id) {
+          'product' => _cellText(d.product, strong: true),
+          'code' => _cellText(d.code.isEmpty ? '—' : d.code),
+          'invoice' => _cellText(d.invoice),
+          'customer' => _cellText(d.customer),
+          'qty' => _cellText(qtyLabel(d.qty), strong: true),
+          'price' => _cellText(Money.of(d.price)),
+          'discount' => _cellText(d.discount > 0 ? Money.of(d.discount) : '—', color: d.discount > 0 ? AstraPalette.danger : null),
+          'total' => _cellText(Money.of(d.total), amount: true),
+          _ => const SizedBox.shrink(),
+        };
+    return TabletListRow(
+      selected: selected,
+      onTap: () => _openItem(r),
+      padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
+      child: _tableLine(cols, [for (final c in cols) cell(c.id)]),
+    );
+  }
+
+  /// Whole-set totals under the table — what the filters match, not just the
+  /// rows scrolled into view so far.
+  Widget _tableFooter(List<_Col> cols, PaginatedListState state) {
+    final p = context.astra;
+    final loaded = state.items.length;
+    Widget cell(String id) {
+      final style = ui(size: 12, weight: FontWeight.w800, color: p.ink);
+      return switch (id) {
+        'invoice' when !_isItems => Text('$loaded of ${state.total}', maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+        'product' => Text('$loaded of ${state.total} lines', maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+        'qty' => Text(qtyLabel(state.summary['quantity'] ?? 0), style: style),
+        'discount' => Text(Money.of(state.summary['discount'] ?? 0), maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+        'amount' || 'total' => Text(Money.of(state.totalPaid), maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 14, color: p.ink)),
+        _ => const SizedBox.shrink(),
+      };
+    }
+
+    return _tableLine(
+      cols,
+      [for (final c in cols) cell(c.id)],
+      padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
+      color: p.tint,
+    );
+  }
+
+  /// The selected invoice, sliding over the table's right side. The table stays
+  /// live beside it, so tapping another row just swaps what the drawer shows.
+  Widget _drawer() {
+    final p = context.astra;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.canvas,
+        border: Border(left: BorderSide(color: p.hairline)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: p.isDark ? 0.40 : 0.12), blurRadius: 30, offset: const Offset(-12, 0)),
+        ],
+      ),
+      child: ClipRect(child: _detailPane()),
+    );
+  }
+
+  /// The drawer's content — the selected invoice, embedded (its close button
   /// clears the selection; a delete drops the row and reloads the list).
   Widget _detailPane() {
-    if (_selectedRow == null) {
-      return const EmptyState(
-        icon: Icons.receipt_long_outlined,
-        title: 'No invoice selected',
-        message: 'Pick an invoice from the list to see its details here.',
-      );
-    }
     if (_detailLoading) return const Center(child: CircularProgressIndicator());
     if (_detailError != null || _selectedSale == null) {
       return EmptyState(
         icon: Icons.wifi_off,
         title: 'Invoice unavailable',
         message: _detailError ?? 'Could not open invoice.',
-        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: () => _selectRow(_selectedRow!)),
+        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: () => _selectRow(_selectedRow!, itemId: _selectedItemId)),
       );
     }
     final sale = _selectedSale!;
     return InvoiceScreen(
       key: ValueKey('invoice-${sale.id}'),
       sale: sale,
+      highlightItemId: int.tryParse(_selectedItemId ?? ''),
       onClose: () {
-        setState(() {
-          _selectedRow = null;
-          _selectedSale = null;
-          _detailError = null;
-        });
+        _clearSelection();
         _load();
       },
     );
   }
 
-  /// Load a sale into the detail pane (tablet). Guarded so a fast succession of
-  /// taps only ever shows the last-tapped invoice.
-  Future<void> _selectRow(Map<String, dynamic> r) async {
+  void _clearSelection() {
+    setState(() {
+      _selectedRow = null;
+      _selectedSale = null;
+      _selectedItemId = null;
+      _detailError = null;
+      _detailLoading = false;
+    });
+  }
+
+  /// Open an Items-tab line: its invoice, with the line picked out — pushed on a
+  /// phone, in the drawer on a tablet.
+  void _openItem(Map<String, dynamic> r) {
+    final d = _itemData(r);
+    if (d.saleId.isEmpty) return;
+    if (context.isTablet) {
+      _selectRow({'id': d.saleId}, itemId: d.id);
+    } else {
+      _open({'id': d.saleId}, lineId: int.tryParse(d.id));
+    }
+  }
+
+  /// Load a sale into the drawer (tablet). Guarded so a fast succession of taps
+  /// only ever shows the last-tapped invoice.
+  Future<void> _selectRow(Map<String, dynamic> r, {String? itemId}) async {
     // A held row is its own detail — no fetch, and none possible.
     if (_isHeld(r)) {
       setState(() {
         _selectedRow = r;
+        _selectedItemId = null;
         _selectedSale = Sale.fromJson(r);
         _detailLoading = false;
         _detailError = null;
@@ -663,8 +927,14 @@ class _SalesListScreenState extends State<SalesListScreen> {
 
     final id = asStr(r['id']);
     if (id.isEmpty) return;
+    // Another line of the invoice already open: no refetch, just move the mark.
+    if (_selectedSale != null && asStr(_selectedRow?['id']) == id && !_detailLoading) {
+      setState(() => _selectedItemId = itemId);
+      return;
+    }
     setState(() {
       _selectedRow = r;
+      _selectedItemId = itemId;
       _selectedSale = null;
       _detailLoading = true;
       _detailError = null;
@@ -685,12 +955,10 @@ class _SalesListScreenState extends State<SalesListScreen> {
     }
   }
 
-  // ---- Bento control card ----
+  // ---- row data ----
 
-  // ---- sale row ----
-
-  /// The display fields of one list row, shared by the phone card and the
-  /// tablet pane row so both read the payload the same way.
+  /// The display fields of one invoice row, shared by the phone row and the
+  /// tablet table so both read the payload the same way.
   ({
     String invoice,
     String offlineRef,
@@ -737,102 +1005,34 @@ class _SalesListScreenState extends State<SalesListScreen> {
     );
   }
 
-  Widget _row(Map<String, dynamic> r) {
-    final p = context.astra;
-    final d = _rowData(r);
-    final invoice = d.invoice;
-    final amount = d.amount;
-    final who = d.who;
-    final status = d.status;
-    final date = d.date;
-    final method = d.method;
-    final (bg, fg) = (d.bg, d.fg);
-    final held = _isHeld(r);
-    return AstraCard(
-      radius: 14,
-      padding: const EdgeInsets.all(12),
-      onTap: () => _open(r),
-      child: Row(
-        children: [
-          // A held sale reads as a different kind of thing at a glance, because it
-          // is one: it has not reached the server, so its reference is provisional
-          // and its actions are different.
-          IconChip(
-            icon: held ? Icons.cloud_off_rounded : Icons.shopping_bag_outlined,
-            size: 40,
-            radius: 12,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(invoice,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-                    ),
-                    if (held) ...[
-                      const SizedBox(width: 7),
-                      StatusPill(label: 'HELD', bg: p.warnTint, fg: p.goldText),
-                    ] else if (status.isNotEmpty) ...[
-                      const SizedBox(width: 7),
-                      StatusPill(label: status.toUpperCase(), bg: bg, fg: fg),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                          '$who${date.isEmpty ? '' : ' · $date'}'
-                          // Only an admin is shown the cashier: everyone else is
-                          // looking at a list of nothing but their own sales.
-                          '${_seesAllSales && d.staff.isNotEmpty ? ' · ${d.staff}' : ''}'
-                          '${d.offlineRef.isEmpty ? '' : ' · ${d.offlineRef}'}',
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                    ),
-                    if (method.isNotEmpty) ...[
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
-                          child: Text(method,
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: ui(size: 8.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.3)),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(Money.of(amount), style: serif(size: 15, color: p.ink)),
-          // Edit sits on the row only for a held sale. A committed one is edited
-          // from its invoice, where the permission gate and the Return/Delete
-          // actions live; a held one has none of those, so there is nothing to go
-          // to the receipt for.
-          if (held) ...[
-            const SizedBox(width: 4),
-            IconButton(
-              onPressed: () => _editHeld(r),
-              icon: Icon(Icons.edit_outlined, size: 18, color: p.goldText),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              tooltip: 'Edit held sale',
-            ),
-          ],
-        ],
-      ),
+  /// The display fields of one Items-tab line (`SaleItemListResource`).
+  ({
+    String id,
+    String saleId,
+    String product,
+    String code,
+    String invoice,
+    String customer,
+    String date,
+    num qty,
+    num price,
+    num discount,
+    num total
+  }) _itemData(Map<String, dynamic> r) {
+    final product = r['product'] is Map ? r['product'] as Map : const {};
+    final saleId = asStr(r['sale_id']);
+    return (
+      id: asStr(r['id']),
+      saleId: saleId,
+      product: asStr(product['name']).isEmpty ? 'Item' : asStr(product['name']),
+      code: asStr(product['code']),
+      invoice: asStr(r['invoice_no']).isEmpty ? '#$saleId' : asStr(r['invoice_no']),
+      customer: asStr(r['customer']).isEmpty ? AppStrings.walkInCustomer : asStr(r['customer']),
+      date: Dates.human(asStr(r['date'])),
+      qty: asNum(r['quantity']),
+      price: asNum(r['unit_price']),
+      discount: asNum(r['discount']),
+      total: asNum(r['total']),
     );
   }
 
@@ -980,19 +1180,45 @@ class _SalesListScreenState extends State<SalesListScreen> {
     ]));
   }
 
+  void _openStatusSheet() {
+    const statuses = <(String, String?, IconData)>[
+      ('All statuses', null, Icons.all_inclusive_rounded),
+      ('Completed', 'completed', Icons.task_alt_rounded),
+      ('Draft', 'draft', Icons.edit_note_rounded),
+      ('Cancelled', 'cancelled', Icons.cancel_outlined),
+    ];
+    _optionSheet('Status', [
+      for (final (label, status, icon) in statuses)
+        _optTile(
+          label: label,
+          icon: icon,
+          active: _status == status,
+          onTap: () {
+            Navigator.pop(context);
+            _setStatus(status);
+          },
+        ),
+    ]);
+  }
+
   void _openSort() {
-    _optionSheet('Sort sales', [
-      for (final o in _sortOptions)
+    _optionSheet(_isItems ? 'Sort items' : 'Sort sales', [
+      for (final o in _activeSortOptions)
         _optTile(
           label: o.label,
           icon: o.icon,
-          active: _sortBy == o.by && _sortDir == o.dir,
+          active: _activeSortBy == o.by && _activeSortDir == o.dir,
           onTap: () {
             Navigator.pop(context);
-            if (_sortBy == o.by && _sortDir == o.dir) return;
+            if (_activeSortBy == o.by && _activeSortDir == o.dir) return;
             setState(() {
-              _sortBy = o.by;
-              _sortDir = o.dir;
+              if (_isItems) {
+                _itemSortBy = o.by;
+                _itemSortDir = o.dir;
+              } else {
+                _sortBy = o.by;
+                _sortDir = o.dir;
+              }
             });
             _load();
           },
@@ -1000,7 +1226,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
     ]);
   }
 
-  Future<void> _open(Map<String, dynamic> r) async {
+  /// Push the invoice for [r]. [lineId] picks out the sale line an Items-tab row
+  /// was opened from.
+  Future<void> _open(Map<String, dynamic> r, {int? lineId}) async {
     // A held row needs no fetch — and could not do one. It has no server id yet,
     // and the row itself IS the receipt: the outbox stores the sale in exactly the
     // shape the invoice screen renders.
@@ -1019,7 +1247,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       if (!mounted) return;
       // The invoice view returns `true` after deleting the sale — reload so the
       // deleted row drops off the list.
-      final deleted = await context.push<bool>(Routes.invoice, extra: sale);
+      final deleted = await context.push<bool>(lineId == null ? Routes.invoice : '${Routes.invoice}?line=$lineId', extra: sale);
       if (deleted == true && mounted) unawaited(_load());
     } catch (e) {
       if (mounted) Navigator.pop(context);
