@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
-import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -29,13 +27,7 @@ Future<void> showStartScreenSheet(BuildContext context) {
     barrierColor: Colors.black.withValues(alpha: 0.45),
     builder: (sheetContext) {
       final pos = sheetContext.watch<PosSettingsCubit>();
-      // Offer only what this account could actually land on — the dashboard and
-      // the Sales tab live inside the home shell, which the router keeps shut
-      // for anyone without the sales overview permission.
-      final options = StartScreen.optionsFor(
-          canViewDashboard: sheetContext
-              .read<AuthCubit>()
-              .hasPermission(PermissionSlug.salesOverview));
+      const options = StartScreen.values;
       return Container(
         decoration: BoxDecoration(
           color: p.canvas,

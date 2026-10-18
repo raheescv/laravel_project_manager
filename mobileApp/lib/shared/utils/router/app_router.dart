@@ -56,17 +56,13 @@ GoRouter createRouter(AuthCubit auth) {
       // this session works as.
       final atBranchPicker = state.matchedLocation == Routes.selectBranch;
       if (auth.state.branchPending) return atBranchPicker ? null : Routes.selectBranch;
-      final canViewAdmin = auth.hasPermission(PermissionSlug.salesOverview);
       // Landing after sign-in (and after an unlock, which comes back through
       // the login route the same way) is the till's own choice — see
-      // [StartScreen]; `resolve` keeps an account that can't open the dashboard
-      // off it whatever the device is set to.
+      // [StartScreen]. The dashboard is open to every signed-in user (the
+      // server scopes its figures to the account), so every option holds.
       if (atLogin || atBranchPicker) {
-        return serviceLocator<PosSettingsCubit>()
-            .startScreen
-            .resolve(canViewDashboard: canViewAdmin);
+        return serviceLocator<PosSettingsCubit>().startScreen.location;
       }
-      if (state.matchedLocation == Routes.home && !canViewAdmin) return Routes.sale;
       if (state.matchedLocation == Routes.daySession &&
           !auth.hasPermission(PermissionSlug.daySession)) {
         return Routes.sale;

@@ -293,7 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case 3:
         return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
             'Where this device opens once you sign in — and after an unlock.', [
-          for (final option in StartScreen.optionsFor(canViewDashboard: _canViewDashboard(context)))
+          for (final option in StartScreen.values)
             _startScreenRow(context, option, option == _effectiveStartScreen(context)),
         ]);
       case 4:
@@ -1079,19 +1079,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// True when this account may open the home shell — the dashboard and the
-  /// Sales tab both live inside it (see the router's redirect).
-  bool _canViewDashboard(BuildContext context) =>
-      context.watch<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
-
-  /// What the device will *actually* open on. The stored choice normally, but a
-  /// till set to the dashboard that a cashier without the permission signs into
-  /// lands on New Sale instead — so say New Sale, rather than showing a setting
-  /// that doesn't hold.
-  StartScreen _effectiveStartScreen(BuildContext context) {
-    final chosen = context.watch<PosSettingsCubit>().startScreen;
-    return chosen.needsDashboard && !_canViewDashboard(context) ? StartScreen.sale : chosen;
-  }
+  /// What the device opens on after sign-in or an unlock.
+  StartScreen _effectiveStartScreen(BuildContext context) => context.watch<PosSettingsCubit>().startScreen;
 
   /// Where signing in lands. Device-local, so the counter tablet can open
   /// straight on the POS while the same manager's phone still opens on the

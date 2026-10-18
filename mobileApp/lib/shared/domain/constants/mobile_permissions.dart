@@ -28,7 +28,6 @@ class MobilePermission {
 /// visibility, but the mobile POS sale endpoints are currently ungated (see the
 /// `sale` prefix group in routes/api_v1.php).
 abstract final class PermissionSlug {
-  static const salesOverview = 'report.sales overview';
   static const report = 'report.sale item';
   static const daySession = 'day session.create';
   static const daySessionPrint = 'day session.print';
@@ -90,13 +89,6 @@ const mobilePermissions = <MobilePermission>[
     description: 'Assign any staff member on a sale',
     group: 'Sales',
     icon: Icons.badge_outlined,
-  ),
-  MobilePermission(
-    slug: PermissionSlug.salesOverview,
-    label: 'Dashboard',
-    description: 'View the admin dashboard',
-    group: 'Administration',
-    icon: Icons.dashboard_outlined,
   ),
   MobilePermission(
     slug: PermissionSlug.report,

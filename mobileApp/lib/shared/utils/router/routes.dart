@@ -94,20 +94,6 @@ enum StartScreen {
   /// The route this option lands on.
   final String location;
 
-  /// True when the destination lives inside the home shell, which the router
-  /// only lets through for an account that can see the dashboard.
-  bool get needsDashboard => location.startsWith(Routes.home);
-
   static StartScreen fromKey(String? k) =>
       StartScreen.values.firstWhere((s) => s.key == k, orElse: () => StartScreen.home);
-
-  /// Where to actually go. A till set to the dashboard whose cashier can't open
-  /// one — a permission revoked since, or a shared device signed into by
-  /// somebody else — falls back to New Sale rather than bouncing off `/home`.
-  String resolve({required bool canViewDashboard}) =>
-      needsDashboard && !canViewDashboard ? Routes.sale : location;
-
-  /// The options worth offering this account, in display order.
-  static List<StartScreen> optionsFor({required bool canViewDashboard}) =>
-      StartScreen.values.where((s) => canViewDashboard || !s.needsDashboard).toList();
 }

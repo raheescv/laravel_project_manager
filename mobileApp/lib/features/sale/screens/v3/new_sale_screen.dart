@@ -233,13 +233,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     return true;
   }
 
-  /// The dashboard (or `/sale` for a cashier, whose home IS New Sale — see
-  /// the app_router redirect that bounces a non-admin off `/home`).
-  String get _dashboardRoute {
-    final canViewAdmin = context.read<AuthCubit>().hasPermission(PermissionSlug.salesOverview);
-    return canViewAdmin ? Routes.home : Routes.sale;
-  }
-
   /// Back chevron: confirm if there are items, then retrace the stack — pop
   /// back to whatever pushed New Sale (dashboard, sales list, …) when there's
   /// one, otherwise land on the dashboard so the button is never a dead-end.
@@ -250,7 +243,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go(_dashboardRoute);
+      context.go(Routes.home);
     }
   }
 
@@ -261,7 +254,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     unawaited(HapticFeedback.selectionClick());
     if (!await _confirmDiscard()) return;
     if (!mounted) return;
-    context.go(_dashboardRoute);
+    context.go(Routes.home);
   }
 
   @override
