@@ -23,6 +23,8 @@ class StartTopupRequest extends FormRequest
             'lang' => ['nullable', 'string', 'in:En,Ar'],
             // debit → Qatar debit card through QPay (the default); credit → credit card through the Mastercard Gateway.
             'method' => ['nullable', 'string', 'in:debit,credit'],
+            // Credit card only: the parent confirmed they did not pay the debit card top-up that is still being confirmed.
+            'confirm_pending' => ['nullable', 'boolean'],
         ];
     }
 }

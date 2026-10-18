@@ -42,13 +42,15 @@ class StartTopupAction
         $lang = $request->validated('lang') === 'Ar' ? 'Ar' : 'En';
         // An older portal sends no method: the first card type the school offers.
         $gateway = QpayTransaction::METHODS[$request->validated('method') ?: (GetStudentAction::methods()[0]['key'] ?? 'debit')];
-        $response = (new StartPaymentAction())->execute($guardian, $student, (float) $request->validated('amount'), $lang, $gateway);
+        $response = (new StartPaymentAction())->execute($guardian, $student, (float) $request->validated('amount'), $lang, $gateway, $request->boolean('confirm_pending'));
         if (! $response['success']) {
             // A block on an unfinished top-up carries the moment it lifts, so the portal can count
             // down to it, and that top-up's reference, so the portal can link back to its result page.
+            // `confirmable`: a credit card top-up the portal may resend with confirm_pending.
             throw new ParentPortalException($response['message'], array_filter([
                 'retry_at' => $response['retry_at'] ?? null,
                 'pun' => $response['pun'] ?? null,
+                'confirmable' => $response['confirmable'] ?? null,
             ]));
         }
 

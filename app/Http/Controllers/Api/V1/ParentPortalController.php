@@ -341,6 +341,9 @@ class ParentPortalController extends Controller
      * still being confirmed the error carries `data.retry_at` (ISO 8601), the moment
      * paying becomes possible again — the portal counts down to it — and `data.pun`,
      * that earlier top-up's reference, which the portal links to `#/topups/{pun}`.
+     * A credit card top-up held by a debit card one also carries `data.confirmable`:
+     * resend it with `confirm_pending: true` once the parent confirms they did not pay
+     * the debit card one.
      */
     public function startTopup(StartTopupRequest $request, int $account, StartTopupAction $action): JsonResponse
     {

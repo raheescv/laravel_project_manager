@@ -48,9 +48,12 @@ export const blockCard = (id, reason) => client.post(`/students/${id}/card/block
 
 /**
  * `method`: 'debit' (QPay) or 'credit' (Mastercard Gateway).
+ * `confirmPending`: credit only — the parent confirmed they did not pay the debit card top-up still being confirmed
+ * (a 422 with `errors.confirmable` asks for it).
  * → { topup, payment } where payment is { type: 'qpay', url, method, fields } or { type: 'mpgs', script, session_id }.
  */
-export const startTopup = (id, amount, method) => client.post(`/students/${id}/topups`, { amount, lang: 'En', method })
+export const startTopup = (id, amount, method, confirmPending = false) =>
+  client.post(`/students/${id}/topups`, { amount, lang: 'En', method, ...(confirmPending ? { confirm_pending: true } : {}) })
 
 export const fetchTopup = (pun) => client.get(`/topups/${encodeURIComponent(pun)}`)
 

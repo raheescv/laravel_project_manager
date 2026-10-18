@@ -310,13 +310,69 @@ it('writes off a payment the gateway never received once the page has expired', 
         ->and($transaction->failure_reason)->toBe('No card payment was made.');
 });
 
-it('never lets a credit card payment block the card, while a QPay one still does', function (): void {
+it('never lets a credit card payment block the card, while a QPay one asks before a credit card one', function (): void {
     mpgsStart($this, 100);
-    expect((new StartPaymentAction())->execute($this->guardian, $this->student, 50)['success'])->toBeTrue();
+    $debit = (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
+    expect($debit['success'])->toBeTrue();
 
     $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50, 'En', QpayTransaction::GATEWAY_MPGS);
     expect($blocked['success'])->toBeFalse()
-        ->and($blocked['message'])->toContain('still being confirmed');
+        ->and($blocked['message'])->toContain("If you paid it, you'll be charged twice")
+        ->and($blocked['confirmable'])->toBeTrue()
+        ->and($blocked['pun'])->toBe($debit['data']->pun);
+});
+
+it('lets a parent who confirms they did not pay the debit card top-up pay by credit card at once', function (): void {
+    $debit = (new StartPaymentAction())->execute($this->guardian, $this->student, 50)['data'];
+
+    $credit = (new StartPaymentAction())->execute($this->guardian, $this->student, 50, 'En', QpayTransaction::GATEWAY_MPGS, confirmPending: true);
+
+    expect($credit['success'])->toBeTrue($credit['message'])
+        ->and($credit['data']->gateway)->toBe(QpayTransaction::GATEWAY_MPGS)
+        ->and($debit->refresh()->status)->toBe('pending');
+});
+
+it('keeps a new debit card top-up blocked, confirmed or not', function (): void {
+    (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
+
+    $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50, 'En', QpayTransaction::GATEWAY_QPAY, confirmPending: true);
+
+    expect($blocked['success'])->toBeFalse()
+        ->and($blocked['message'])->toContain('A debit card top-up started at')
+        ->and($blocked['confirmable'])->toBeFalse();
+});
+
+it('still asks before a credit card top-up when QPay gives no answer after 20 minutes', function (): void {
+    (new StartPaymentAction())->execute($this->guardian, $this->student, 50);
+    // The gateway fake above answers its own host; QPay's inquiry falls through to this.
+    Http::fake(['*' => Http::failedConnection('cURL error 28: Operation timed out')]);
+    $this->travel(StartPaymentAction::BROKEN_AFTER_MINUTES + 2)->minutes();
+
+    $blocked = (new StartPaymentAction())->execute($this->guardian, $this->student, 50, 'En', QpayTransaction::GATEWAY_MPGS);
+    expect($blocked['success'])->toBeFalse()
+        ->and($blocked['confirmable'])->toBeTrue();
+
+    expect((new StartPaymentAction())->execute($this->guardian, $this->student, 50, 'En', QpayTransaction::GATEWAY_MPGS, confirmPending: true)['success'])->toBeTrue();
+});
+
+it('tells the portal a credit card top-up can be confirmed, and opens the card page once it is', function (): void {
+    $debit = (new StartPaymentAction())->execute($this->guardian, $this->student, 50)['data'];
+    $url = $this->world->url("/api/v1/parent/students/{$this->student->id}/topups");
+    $token = StudentWorld::parentToken($this->guardian);
+
+    $this->withToken($token)->postJson($url, ['amount' => 50, 'method' => 'credit'])
+        ->assertStatus(422)
+        ->assertJsonPath('data.confirmable', true)
+        ->assertJsonPath('data.pun', $debit->pun);
+
+    $this->withToken($token)->postJson($url, ['amount' => 50, 'method' => 'debit', 'confirm_pending' => true])
+        ->assertStatus(422)
+        ->assertJsonMissingPath('data.confirmable');
+
+    mpgsAnswer($this, ['result' => 'SUCCESS', 'session' => ['id' => 'SESSION0002', 'updateStatus' => 'SUCCESS'], 'successIndicator' => 'abc123'], 201);
+    $this->withToken($token)->postJson($url, ['amount' => 50, 'method' => 'credit', 'confirm_pending' => true])
+        ->assertCreated()
+        ->assertJsonPath('data.payment.type', 'mpgs');
 });
 
 it('parks for review an order the gateway only authorised', function (): void {

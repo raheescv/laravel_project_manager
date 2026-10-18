@@ -38,6 +38,11 @@ use Illuminate\Support\Str;
  * Only QPay payments block. The rule is QPay's certification, and a credit card
  * payment is always read back from the gateway (Retrieve Order), so one left
  * open on the card page is simply credited if it turns out to have been paid.
+ *
+ * A QPay block holds new QPay payments only. A parent who opened QPay by mistake
+ * may pay by credit card straight away once they confirm ($confirmPending) that
+ * they did not pay the debit card one: the worst case is both landing on the
+ * card, not money lost. Unconfirmed, the refusal says it can be confirmed.
  */
 class StartPaymentAction
 {
@@ -58,7 +63,7 @@ class StartPaymentAction
     /** How long the portal asks the parent to wait after an inquiry that answered nothing. */
     public const RETRY_AFTER_INQUIRY_MINUTES = 2;
 
-    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En', string $gateway = QpayTransaction::GATEWAY_QPAY): array
+    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En', string $gateway = QpayTransaction::GATEWAY_QPAY, bool $confirmPending = false): array
     {
         try {
             $creditCard = $gateway === QpayTransaction::GATEWAY_MPGS;
@@ -74,7 +79,7 @@ class StartPaymentAction
                 throw new Exception('Enter an amount between '.currency($limits->topupMin).' and '.currency($limits->topupMax).'.', 1);
             }
 
-            $this->guardAgainstBrokenPayment($student);
+            $this->guardAgainstBrokenPayment($student, $creditCard, $confirmPending);
 
             $transaction = DB::transaction(fn () => QpayTransaction::create([
                 'type' => QpayTransaction::TYPE_PAYMENT,
@@ -99,13 +104,14 @@ class StartPaymentAction
             if ($th instanceof TopupInProgressException) {
                 $return['retry_at'] = $th->retryAt->toIso8601String();
                 $return['pun'] = $th->pun;
+                $return['confirmable'] = $th->confirmable;
             }
         }
 
         return $return;
     }
 
-    private function guardAgainstBrokenPayment(Account $student): void
+    private function guardAgainstBrokenPayment(Account $student, bool $creditCard, bool $confirmPending): void
     {
         $pending = QpayTransaction::where('account_id', $student->id)
             ->where('type', QpayTransaction::TYPE_PAYMENT)
@@ -121,7 +127,13 @@ class StartPaymentAction
             $retryAt = self::inquirableAt($transaction);
 
             if (now()->lt($retryAt)) {
-                throw new TopupInProgressException('A top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt, $transaction->pun);
+                if ($creditCard && $confirmPending) {
+                    continue;
+                }
+
+                throw $creditCard
+                    ? self::confirmableBlock($transaction, $retryAt)
+                    : new TopupInProgressException('A debit card top-up started at '.$transaction->created_at->format('h:i A').' is still being confirmed. You can try again after '.$retryAt->format('h:i A').'.', $retryAt, $transaction->pun);
             }
 
             (new InquireAction())->execute($transaction);
@@ -135,6 +147,13 @@ class StartPaymentAction
                 $freeAt = $transaction->created_at->copy()->addHours(self::BLOCK_EXPIRES_AFTER_HOURS);
                 $retryAt = now()->addMinutes(self::RETRY_AFTER_INQUIRY_MINUTES)->min($freeAt);
 
+                if ($creditCard && $confirmPending) {
+                    continue;
+                }
+                if ($creditCard) {
+                    throw self::confirmableBlock($transaction, $retryAt);
+                }
+
                 throw new TopupInProgressException(
                     'We are still confirming an earlier top-up with QPay. Please try again in a few minutes — if it still will not go through, the school office can release it for you.',
                     $retryAt,
@@ -142,6 +161,17 @@ class StartPaymentAction
                 );
             }
         }
+    }
+
+    /** A credit card top-up held by an unconfirmed QPay one: the parent may go ahead once they say they did not pay it. */
+    private static function confirmableBlock(QpayTransaction $transaction, CarbonInterface $retryAt): TopupInProgressException
+    {
+        return new TopupInProgressException(
+            'A debit card payment from '.$transaction->created_at->format('h:i A')." hasn't been confirmed yet. If you paid it, you'll be charged twice. Continue with credit card?",
+            $retryAt,
+            $transaction->pun,
+            confirmable: true,
+        );
     }
 
     /**

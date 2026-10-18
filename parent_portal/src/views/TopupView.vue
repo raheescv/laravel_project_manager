@@ -37,7 +37,7 @@ const now = ref(Date.now())
 let ticker = 0
 
 const waiting = computed(() => Math.max(0, retryAt.value - now.value))
-const blocked = computed(() => waiting.value > 0)
+const held = computed(() => waiting.value > 0)
 const countdown = computed(() => {
   const seconds = Math.ceil(waiting.value / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
@@ -47,6 +47,8 @@ const first = computed(() => firstName(student.value?.name))
 const limits = computed(() => student.value?.topup || { min: 0, max: 0, suggestions: [], methods: [], enabled: false })
 const methods = computed(() => limits.value.methods || [])
 const chosen = computed(() => methods.value.find((option) => option.key === method.value) || methods.value[0] || null)
+// The hold is QPay's: a credit card top-up may go ahead once the parent confirms (see creditConfirm).
+const blocked = computed(() => held.value && chosen.value?.key !== 'credit')
 const methodIcon = { debit: 'fa-university', credit: 'fa-credit-card' }
 const trust = computed(() =>
   chosen.value?.key === 'credit'
@@ -87,13 +89,13 @@ function holdUntil(at) {
   const until = at ? new Date(at).getTime() : 0
   now.value = Date.now()
   retryAt.value = Number.isFinite(until) ? until : 0
-  if (!blocked.value) {
+  if (!held.value) {
     retryAt.value = 0
     return
   }
   ticker = setInterval(() => {
     now.value = Date.now()
-    if (blocked.value) return
+    if (held.value) return
     stopTicker()
     retryAt.value = 0
     payError.value = ''
@@ -104,7 +106,7 @@ function holdUntil(at) {
 /** Typing or picking an amount dismisses a stale message — never a wait that is still running. */
 function dismiss() {
   freed.value = false
-  if (!blocked.value) payError.value = ''
+  if (!held.value) payError.value = ''
 }
 
 const METHOD_KEY = 'pp.topupMethod'
@@ -170,17 +172,29 @@ function continueToPayment() {
   startPayment()
 }
 
-async function startPayment() {
+// Credit card while a debit card top-up is still being confirmed: the API words the risk, the parent decides.
+const creditConfirm = ref('')
+
+function confirmCredit() {
+  creditConfirm.value = ''
+  startPayment(true)
+}
+
+async function startPayment(confirmPending = false) {
   paying.value = true
   try {
-    const { payment } = await startTopup(id, value.value, chosen.value?.key)
+    const { payment } = await startTopup(id, value.value, chosen.value?.key, confirmPending)
     // Leaves the portal for the gateway's page; it brings the parent back to #/topups/{pun}.
     await goToPayment(payment)
   } catch (e) {
+    paying.value = false
+    if (e.errors?.confirmable) {
+      creditConfirm.value = e.message
+      return
+    }
     payError.value = e.message
     pendingPun.value = e.errors?.pun || ''
     holdUntil(e.errors?.retry_at)
-    paying.value = false
   }
 }
 
@@ -249,12 +263,12 @@ onUnmounted(stopTicker)
             <i class="fa fa-check-circle"></i><span class="pp-alert__main">The earlier top-up has waited long enough — you can try again now.</span>
           </div>
 
-          <div v-else-if="payError" class="pp-alert" :class="{ 'pp-alert--warn': blocked }" role="alert">
-            <i class="fa" :class="blocked ? 'fa-clock-o' : 'fa-exclamation-circle'"></i>
+          <div v-else-if="payError" class="pp-alert" :class="{ 'pp-alert--warn': held }" role="alert">
+            <i class="fa" :class="held ? 'fa-clock-o' : 'fa-exclamation-circle'"></i>
             <span class="pp-alert__main">
               {{ payError }}
               <!-- The sentence above already names the time; the clock ticks silently for screen readers. -->
-              <span v-if="blocked" class="pp-countdown" aria-hidden="true">
+              <span v-if="held" class="pp-countdown" aria-hidden="true">
                 <span class="pp-countdown__pulse"></span>
                 <b class="pp-countdown__time">{{ countdown }}</b>
                 <span>until you can try again</span>
@@ -376,6 +390,20 @@ onUnmounted(stopTicker)
     <div class="pp-sheet__actions pp-sheet__actions--stack">
       <button class="pp-btn pp-btn--pay" type="button" @click="continueToPayment"><i class="fa fa-lock"></i>Continue to QPay</button>
       <button class="pp-link" type="button" @click="noticeOpen = false">Cancel</button>
+    </div>
+  </BottomSheet>
+
+  <!-- Credit card while a debit card top-up is unconfirmed: paying twice is the parent's call (the API words it). -->
+  <BottomSheet :open="!!creditConfirm" label="Pay by credit card?" @close="creditConfirm = ''">
+    <div class="pp-sheet__grabber"></div>
+    <div class="pp-lede pp-lede--sheet pp-lede--info">
+      <div class="pp-hero-icon pp-hero-icon--warn"><i class="fa fa-exclamation-triangle"></i></div>
+      <h2>Pay by credit card?</h2>
+      <p>{{ creditConfirm }}</p>
+    </div>
+    <div class="pp-sheet__actions pp-sheet__actions--stack">
+      <button class="pp-btn pp-btn--pay" type="button" @click="confirmCredit"><i class="fa fa-credit-card"></i>Continue with credit card</button>
+      <button class="pp-link" type="button" @click="creditConfirm = ''">Cancel</button>
     </div>
   </BottomSheet>
 </template>
