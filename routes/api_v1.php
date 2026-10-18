@@ -229,8 +229,10 @@ Route::prefix('v1')->group(function () {
             // Admin routes — access is permission-driven (Spatie), not the is_admin
             // flag, so any staff role granted the permission can reach them.
             Route::prefix('admin')->group(function () {
+                // Every signed-in user has a dashboard: GetAction scopes its
+                // figures to the account (seesOnlyOwnRecords), so a cashier
+                // sees their own takings, not the shop's.
                 Route::get('/dashboard', [DashboardController::class, 'index'])
-                    ->middleware(EnsureMobilePermission::class.':report.sales overview')
                     ->name('api.v1.admin.dashboard');
                 Route::get('/reports', [ReportController::class, 'index'])
                     ->middleware(EnsureMobilePermission::class.':report.sale item')

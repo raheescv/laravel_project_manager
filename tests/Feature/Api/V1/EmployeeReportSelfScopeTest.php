@@ -158,3 +158,16 @@ it('keeps the dashboard cards on the employee too', function (): void {
     expect($today["Today's Sales"]['value'])->toEqual(50.0)
         ->and($today["Today's Bills"]['value'])->toBe(1);
 });
+
+it('opens the dashboard for an employee holding no permissions at all', function (): void {
+    $this->employee->syncPermissions([]);
+    Sanctum::actingAs($this->employee->fresh());
+
+    $data = $this->getJson($this->world->url('/api/v1/admin/dashboard'))
+        ->assertSuccessful()->json('data');
+
+    $today = collect($data['todaySummary'])->keyBy('title');
+
+    expect($today["Today's Sales"]['value'])->toEqual(50.0)
+        ->and($today["Today's Bills"]['value'])->toBe(1);
+});
