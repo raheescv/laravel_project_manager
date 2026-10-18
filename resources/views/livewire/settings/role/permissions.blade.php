@@ -43,6 +43,16 @@
                 </div>
                 <div class="col-md-6">
                     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
+                        {{-- Filter: every ability, or only the ones the mobile app checks --}}
+                        <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Filter by app">
+                            <input type="radio" class="btn-check" id="platformAll" value="all" wire:model.live="platform" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="platformAll"><i class="fa fa-desktop me-1"></i> All</label>
+                            <input type="radio" class="btn-check" id="platformMobile" value="mobile" wire:model.live="platform" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="platformMobile" title="Only the permissions the mobile app checks">
+                                <i class="fa fa-mobile me-1"></i> Mobile App
+                                <span class="badge rounded-pill {{ $platform === 'mobile' ? 'bg-white text-primary' : 'bg-primary bg-opacity-10 text-primary' }}">{{ count($mobileIds) }}</span>
+                            </label>
+                        </div>
                         {{-- Filter: hide everything this role already has, so only the gaps remain --}}
                         <label for="onlyNotGranted"
                             class="form-check form-switch d-inline-flex align-items-center gap-2 mb-0 px-3 py-1 rounded-pill border user-select-none
@@ -73,7 +83,7 @@
                     <button class="nav-link active d-flex align-items-center gap-2 fw-semibold" id="tab-selection" data-bs-toggle="tab"
                         data-bs-target="#pane-selection" type="button" role="tab" aria-controls="pane-selection" aria-selected="true">
                         <i class="fa fa-th-list text-primary"></i>
-                        {{ $only_not_granted ? 'Not Granted Yet' : 'Permission Selection' }}
+                        {{ $only_not_granted ? 'Not Granted Yet' : 'Permission Selection' }}{{ $platform === 'mobile' ? ' · Mobile App' : '' }}
                         <span class="badge bg-primary rounded-pill">{{ count($permissions) }}</span>
                     </button>
                 </li>
@@ -137,6 +147,9 @@
                                                             style="cursor: pointer; transition: all 0.15s ease;">
                                                             {{ html()->checkbox('selected.' . $key)->value('')->class('form-check-input shadow-sm mt-0 me-1')->attribute('wire:model.live', 'selected.' . $key)->id('perm_' . $key) }}
                                                             <span class="form-check-label small fw-medium {{ !empty($selected[$key] ?? false) ? 'text-primary' : '' }}">{{ ucFirst($action) }}</span>
+                                                            @if ($platform !== 'mobile' && isset($mobileIds[$key]))
+                                                                <i class="fa fa-mobile text-muted ms-1" title="Used by the mobile app"></i>
+                                                            @endif
                                                         </label>
                                                     @endforeach
                                                 </div>
@@ -153,6 +166,10 @@
                                                         {{ $search ? 'matching this search' : 'available here' }}.
                                                         Turn off <strong>Show only not-granted permissions</strong> to see them.
                                                     </p>
+                                                @elseif ($platform === 'mobile' && !$search)
+                                                    <i class="fa fa-mobile fa-3x mb-3 opacity-25 d-block"></i>
+                                                    <h6 class="text-muted">No mobile app permissions here</h6>
+                                                    <p class="small mb-0">None of the abilities the mobile app checks belong to this system. Press <strong>Sync</strong> if they are missing.</p>
                                                 @else
                                                     <i class="fa fa-search fa-3x mb-3 opacity-25 d-block"></i>
                                                     <h6 class="text-muted">No permissions found</h6>

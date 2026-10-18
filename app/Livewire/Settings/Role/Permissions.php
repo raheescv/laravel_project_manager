@@ -4,6 +4,7 @@ namespace App\Livewire\Settings\Role;
 
 use App\Models\Configuration;
 use App\Models\Role;
+use App\Support\MobileAppPermissions;
 use App\Support\ModuleAccess;
 use Database\Seeders\PermissionSeeder;
 use Exception;
@@ -32,6 +33,9 @@ class Permissions extends Component
     /** Show only the abilities this role has NOT been granted yet. */
     public $only_not_granted = false;
 
+    /** Which app's abilities to list: 'all', or 'mobile' for only those the mobile app checks. */
+    public $platform = 'all';
+
     /** How many abilities in the current view are still not granted. */
     public $not_granted_count = 0;
 
@@ -45,6 +49,11 @@ class Permissions extends Component
     }
 
     public function updatedOnlyNotGranted()
+    {
+        $this->select_all = false;
+    }
+
+    public function updatedPlatform()
     {
         $this->select_all = false;
     }
@@ -72,8 +81,9 @@ class Permissions extends Component
         $visibleIds = collect($this->permissions)->flatMap(fn ($actions) => array_keys($actions))->all();
 
         if (! $this->select_all) {
-            // Only drop what is on screen — anything hidden by the search or the
-            // "Not granted yet" filter must keep its state or save() would revoke it.
+            // Only drop what is on screen — anything hidden by the search, the
+            // "Not granted yet" or the Mobile App filter must keep its state or
+            // save() would revoke it.
             foreach ($visibleIds as $permissionId) {
                 unset($this->selected[$permissionId]);
             }
@@ -179,7 +189,9 @@ class Permissions extends Component
             }
         })->pluck('name', 'id');
 
-        $list = $scoped;
+        $mobileIds = $scoped->filter(fn ($name) => MobileAppPermissions::includes($name))->keys()->all();
+
+        $list = $this->platform === 'mobile' ? $scoped->only($mobileIds) : $scoped;
 
         if ($this->search) {
             $needle = mb_strtolower(trim($this->search));
@@ -200,6 +212,7 @@ class Permissions extends Component
         // never just whatever the search or the not-granted filter happens to show.
         return view('livewire.settings.role.permissions', [
             'allPermissions' => $this->group($scoped),
+            'mobileIds' => array_flip($mobileIds),
         ]);
     }
 
