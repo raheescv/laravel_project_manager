@@ -43,8 +43,11 @@ class ReleaseAction
             // The parent may still be on QPay's page. Releasing then would let them
             // pay a second time for the payment they are in the middle of making,
             // which is the exact thing the block is for.
-            if ($transaction->created_at->gt(now()->subMinutes(StartPaymentAction::BROKEN_AFTER_MINUTES))) {
-                throw new Exception('This top-up was started less than '.StartPaymentAction::BROKEN_AFTER_MINUTES.' minutes ago and may still be in progress. Try again shortly.', 1);
+            $releasableAt = $transaction->created_at->copy()->addMinutes(StartPaymentAction::BROKEN_AFTER_MINUTES);
+            if (now()->lt($releasableAt)) {
+                $minutesLeft = (int) max(1, ceil(now()->diffInSeconds($releasableAt) / 60));
+
+                throw new Exception('This top-up was started less than '.StartPaymentAction::BROKEN_AFTER_MINUTES.' minutes ago and may still be in progress. Try again in '.$minutesLeft.' '.str('minute')->plural($minutesLeft).' (after '.$releasableAt->format('h:i A').').', 1);
             }
 
             (new InquireAction())->execute($transaction);

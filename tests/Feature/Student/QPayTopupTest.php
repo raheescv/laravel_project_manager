@@ -375,11 +375,13 @@ it('settles a payment rather than releasing it when QPay finally answers', funct
 
 it('will not release a payment the parent may still be making', function (): void {
     $fresh = qpayStart($this, 100);
+    $this->travel(5)->minutes();
 
     $response = (new ReleaseAction())->execute($fresh, $this->world->user->id);
 
     expect($response['success'])->toBeFalse()
         ->and($response['message'])->toContain('may still be in progress')
+        ->and($response['message'])->toContain('Try again in 15 minutes (after '.$fresh->created_at->copy()->addMinutes(20)->format('h:i A').')')
         ->and($fresh->refresh()->status)->toBe('pending');
     Http::assertNothingSent();
 });
