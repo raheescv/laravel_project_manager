@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\TenantService;
 use App\Support\Migration\BulkImport;
 use App\Support\Migration\SourceTimestamps;
+use App\Support\Migration\UnsyncedSales;
 use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -108,10 +109,9 @@ class MigrateSalesChunkJob implements ShouldQueue
 
         // Idempotency: skip any invoice_no already present in the target sales table so a re-run
         // (or a redelivered job) does not create duplicate sales. One query for the whole chunk;
-        // flipped to a key set for O(1) lookups. Sale is tenant-scoped (pinned above).
-        $existingInvoiceNos = Sale::whereIn('invoice_no', $sales->pluck('invoice_no')->filter()->all())
-            ->pluck('invoice_no')
-            ->flip();
+        // flipped to a key set for O(1) lookups. Sale is tenant-scoped (pinned above); trashed sales
+        // count as migrated since their invoice_no still holds the unique index.
+        $existingInvoiceNos = UnsyncedSales::existingInvoiceNos($sales->pluck('invoice_no'));
 
         $serviceItemsBySale = DB::connection('mysql2')
             ->table('sale_service_items')

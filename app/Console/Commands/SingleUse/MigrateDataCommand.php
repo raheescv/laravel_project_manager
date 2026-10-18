@@ -20,8 +20,10 @@ use App\Models\UserHasBranch;
 use App\Services\TenantService;
 use App\Support\Migration\BulkImport;
 use App\Support\Migration\SourceTimestamps;
+use App\Support\Migration\UnsyncedSales;
 use App\Support\TenantCache;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -36,9 +38,32 @@ class MigrateDataCommand extends Command
     protected $signature = 'migrate:database-data
         {--tenant= : Tenant id to migrate into (defaults to the resolved/TENANT_ID tenant, or the only tenant when there is just one)}
         {--force : Run even if the target database already contains migrated data}
-        {--fast : Also relax global sync_binlog for maximum speed (dedicated migration DB only; restored on finish)}';
+        {--fast : Also relax global sync_binlog for maximum speed (dedicated migration DB only; restored on finish)}
+        {--only= : Comma-separated steps to run instead of all (branches,settings,accounts,customers,vendors,services,products,roles,employees,users,commissions,purchases,appointments,stock-transfers,sales,sale-returns)}
+        {--unsynced : Sales: queue only source sales whose invoice_no is not in the target yet}
+        {--from-id= : Sales: lowest source sales.id to include}
+        {--to-id= : Sales: highest source sales.id to include}
+        {--from-date= : Sales: earliest source sales.date to include (Y-m-d)}
+        {--to-date= : Sales: latest source sales.date to include (Y-m-d)}
+        {--chunk=500 : Sales: number of sales per queued job}
+        {--dry-run : Sales: only report how many source sales match (and are unsynced), write nothing}';
 
     protected $description = 'Migrate data from mysql2 to mysql database';
+
+    /**
+     * Every --only step name, in run order.
+     */
+    private const STEPS = [
+        'branches', 'settings', 'accounts', 'customers', 'vendors', 'services', 'products', 'roles',
+        'employees', 'users', 'commissions', 'purchases', 'appointments', 'stock-transfers', 'sales',
+        'sale-returns',
+    ];
+
+    /**
+     * Steps that skip rows already in the target, so they may run against a migrated database
+     * without --force.
+     */
+    private const IDEMPOTENT_STEPS = ['sales'];
 
     public $paymentModesIds;
 
@@ -55,10 +80,22 @@ class MigrateDataCommand extends Command
             return self::FAILURE;
         }
 
+        $steps = $this->selectedSteps();
+        if ($steps === null) {
+            return self::FAILURE;
+        }
+
+        if ($this->option('dry-run')) {
+            $this->reportSalesPlan();
+
+            return self::SUCCESS;
+        }
+
         // This command is not idempotent: branches() truncates and every other entity uses
         // ::create(), so a second run duplicates all data. Abort if the target already looks
-        // migrated, unless explicitly forced.
-        if (! $this->option('force') && (User::query()->exists() || Product::query()->exists() || Sale::query()->exists())) {
+        // migrated, unless explicitly forced or only idempotent steps (e.g. --only=sales) run.
+        $onlyIdempotentSteps = array_diff($steps, self::IDEMPOTENT_STEPS) === [];
+        if (! $this->option('force') && ! $onlyIdempotentSteps && (User::query()->exists() || Product::query()->exists() || Sale::query()->exists())) {
             $this->error('Target database already contains data (users/products/sales). This command is a one-shot migration and would duplicate records.');
             $this->warn('Start from a fresh, migrated (empty) database, or re-run with --force if you are certain.');
 
@@ -117,28 +154,43 @@ class MigrateDataCommand extends Command
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         try {
-            $this->branches();
-            $this->settings();
-            $this->accounts();
-            $this->customer();
-            $this->vendor();
-            $this->service();
-            $this->products();
-            $this->rolesAndPermissions();
-            $this->employees();
-            $this->users();
-            $this->employeeCommissions();
-            // The journal-entry actions replayed by sales()/salesReturns()/purchases() read
-            // account + branch ids from the tenant-keyed lazy caches. If those were resolved
-            // earlier in this process (before the locked accounts existed) they hold empty
-            // maps, so drop them now that branches and the seeded locked accounts exist —
-            // otherwise JournalEntryAction fails with "Undefined array key 'sale'".
-            $this->refreshLookupCaches();
-            $this->purchases();
-            $this->appointments();
-            $this->stockTransfers();
-            $this->sales();
-            $this->salesReturns();
+            $runners = [
+                'branches' => fn () => $this->branches(),
+                'settings' => fn () => $this->settings(),
+                'accounts' => fn () => $this->accounts(),
+                'customers' => fn () => $this->customer(),
+                'vendors' => fn () => $this->vendor(),
+                'services' => fn () => $this->service(),
+                'products' => fn () => $this->products(),
+                'roles' => fn () => $this->rolesAndPermissions(),
+                'employees' => fn () => $this->employees(),
+                'users' => fn () => $this->users(),
+                'commissions' => fn () => $this->employeeCommissions(),
+                'purchases' => fn () => $this->purchases(),
+                'appointments' => fn () => $this->appointments(),
+                'stock-transfers' => fn () => $this->stockTransfers(),
+                'sales' => fn () => $this->sales(),
+                'sale-returns' => fn () => $this->salesReturns(),
+            ];
+
+            $cachesRefreshed = false;
+            foreach (self::STEPS as $step) {
+                if (! in_array($step, $steps, true)) {
+                    continue;
+                }
+
+                // The journal-entry actions replayed by sales()/salesReturns()/purchases() read
+                // account + branch ids from the tenant-keyed lazy caches. If those were resolved
+                // earlier in this process (before the locked accounts existed) they hold empty
+                // maps, so drop them now that branches and the seeded locked accounts exist —
+                // otherwise JournalEntryAction fails with "Undefined array key 'sale'".
+                if (! $cachesRefreshed && array_search($step, self::STEPS, true) > array_search('commissions', self::STEPS, true)) {
+                    $this->refreshLookupCaches();
+                    $cachesRefreshed = true;
+                }
+
+                $runners[$step]();
+            }
         } finally {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             BulkImport::disableHistoricalReplay();
@@ -161,6 +213,66 @@ class MigrateDataCommand extends Command
         }
 
         $this->info('Data migration completed successfully!');
+    }
+
+    /**
+     * The steps to run, from --only (all of STEPS when omitted), or null after reporting an
+     * unknown step name.
+     *
+     * @return array<int, string>|null
+     */
+    private function selectedSteps(): ?array
+    {
+        $only = $this->option('only');
+        if ($only === null || trim($only) === '') {
+            return self::STEPS;
+        }
+
+        $steps = array_values(array_unique(array_filter(array_map('trim', explode(',', strtolower($only))))));
+        $unknown = array_diff($steps, self::STEPS);
+        if ($unknown !== []) {
+            $this->error('Unknown step(s) in --only: '.implode(', ', $unknown));
+            $this->warn('Valid steps: '.implode(', ', self::STEPS));
+
+            return null;
+        }
+
+        return $steps;
+    }
+
+    /**
+     * Source sales (id + invoice_no) narrowed by --from-id/--to-id/--from-date/--to-date.
+     *
+     * @return Collection<int, object{id: int, invoice_no: ?string}>
+     */
+    private function sourceSales(): Collection
+    {
+        return DB::connection('mysql2')
+            ->table('sales')
+            ->whereNull('deleted_at')
+            ->when($this->option('from-id'), fn ($query, $id) => $query->where('id', '>=', (int) $id))
+            ->when($this->option('to-id'), fn ($query, $id) => $query->where('id', '<=', (int) $id))
+            ->when($this->option('from-date'), fn ($query, $date) => $query->whereDate('date', '>=', $date))
+            ->when($this->option('to-date'), fn ($query, $date) => $query->whereDate('date', '<=', $date))
+            ->orderBy('id')
+            ->get(['id', 'invoice_no']);
+    }
+
+    private function reportSalesPlan(): void
+    {
+        $sourceSales = $this->sourceSales();
+        $unsyncedIds = UnsyncedSales::ids($sourceSales);
+
+        $this->info('Dry run — nothing written.');
+        $this->table(['Source sales matched', 'Already in target', 'Unsynced'], [[
+            $sourceSales->count(),
+            $sourceSales->count() - $unsyncedIds->count(),
+            $unsyncedIds->count(),
+        ]]);
+
+        if ($unsyncedIds->isNotEmpty()) {
+            $this->line('Unsynced source ids range: '.$unsyncedIds->first().' – '.$unsyncedIds->last());
+        }
     }
 
     /**
@@ -686,25 +798,26 @@ class MigrateDataCommand extends Command
         // That leaves Inventory.quantity racy during the run, so once the batch finishes we reconcile
         // every inventory's quantity from the (race-proof) InventoryLog deltas and recompute product
         // costs once — see reconcileInventoryAndCosts(). Accounting is insert-only and always correct.
-        $saleIds = DB::connection('mysql2')
-            ->table('sales')
-            ->whereNull('deleted_at')
-            ->orderBy('id')
-            ->pluck('id');
+        $sourceSales = $this->sourceSales();
+        $saleIds = $this->option('unsynced') ? UnsyncedSales::ids($sourceSales) : $sourceSales->pluck('id');
 
         $totalSales = $saleIds->count();
+        if ($this->option('unsynced')) {
+            $this->info($sourceSales->count().' source sales matched, '.($sourceSales->count() - $totalSales)." already in the target, {$totalSales} unsynced.");
+        }
         if ($totalSales === 0) {
             $this->info('No sales to migrate.');
 
             return;
         }
 
+        $chunkSize = max(1, (int) $this->option('chunk'));
         $jobs = $saleIds
-            ->chunk(500)
+            ->chunk($chunkSize)
             ->map(fn ($chunk) => new MigrateSalesChunkJob($chunk->values()->all(), array_values($this->paymentModesIds), $this->tenantId))
             ->all();
 
-        $this->info("Queuing {$totalSales} sales as ".count($jobs).' batched jobs (500 each) on the `migration` queue.');
+        $this->info("Queuing {$totalSales} sales as ".count($jobs)." batched jobs ({$chunkSize} each) on the `migration` queue.");
         $this->warn('Start one or more workers in other terminals to drain them (run several for more speed):');
         $this->warn('  php artisan queue:work --queue=migration --stop-when-empty --tries=1 --timeout=3600');
 
