@@ -3,6 +3,8 @@
 namespace App\Actions\InventoryTransfer;
 
 use App\Models\InventoryTransfer;
+use App\Models\Journal;
+use App\Models\User;
 
 class DeleteAction
 {
@@ -15,12 +17,12 @@ class DeleteAction
             }
 
             if ($model->status == 'completed') {
-                throw new \Exception('Completed inventory transfer cant be deleted', 1);
+                if (! User::find($userId)?->is_super_admin) {
+                    throw new \Exception('Completed inventory transfer cant be deleted', 1);
+                }
+                $this->reverseCompleted($model, $userId);
             }
-            $model->items()->update(['deleted_by' => $userId]);
             $model->items()->delete();
-
-            $model->update(['deleted_by' => $userId]);
 
             if (! $model->delete()) {
                 throw new \Exception('Oops! Something went wrong while deleting the InventoryTransfer. Please try again.', 1);
@@ -34,5 +36,28 @@ class DeleteAction
         }
 
         return $return;
+    }
+
+    /**
+     * Move the stock back to the source branch and drop the transfer's journal and its entries.
+     */
+    protected function reverseCompleted(InventoryTransfer $model, int $userId): void
+    {
+        $response = (new StockUpdateAction())->execute($model, $userId, 'transfer_reversal');
+        if (! $response['success']) {
+            throw new \Exception($response['message'], 1);
+        }
+
+        $journals = Journal::withoutGlobalScopes()
+            ->where('model', 'InventoryTransfer')
+            ->where('model_id', $model->id)
+            ->get();
+
+        foreach ($journals as $journal) {
+            $journal->entries()->update(['deleted_by' => $userId]);
+            $journal->entries()->delete();
+            $journal->update(['deleted_by' => $userId]);
+            $journal->delete();
+        }
     }
 }
