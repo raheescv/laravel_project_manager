@@ -37,7 +37,7 @@
                             <span class="input-group-text border-end-0">
                                 <i class="demo-pli-magnifi-glass"></i>
                             </span>
-                            <input type="text" wire:model.live="search" class="form-control border-start-0" placeholder="Search sales..." autofocus>
+                            <input type="text" wire:model.live.debounce.400ms="search" class="form-control border-start-0" placeholder="Search sales..." autofocus>
                         </div>
                     </div>
                     <div class="dropdown">

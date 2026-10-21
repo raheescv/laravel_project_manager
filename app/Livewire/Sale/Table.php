@@ -7,8 +7,11 @@ use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
 use App\Models\Configuration;
 use App\Models\Sale;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
@@ -16,6 +19,38 @@ use Maatwebsite\Excel\Facades\Excel;
 class Table extends Component
 {
     use WithPagination;
+
+    /**
+     * Sortable header field (as sent by <x-sortable-header>) => SQL column.
+     * sortBy() only accepts these keys, so no client value reaches ORDER BY.
+     *
+     * @var array<string, string>
+     */
+    public const SORTABLE_COLUMNS = [
+        'sales.id' => 'sales.id',
+        'id' => 'sales.id',
+        'date' => 'sales.date',
+        'sales.created_at' => 'sales.created_at',
+        'invoice_no' => 'sales.invoice_no',
+        'reference_no' => 'sales.reference_no',
+        'sales.source' => 'sales.source',
+        'branch_id' => 'sales.branch_id',
+        'created_by' => 'sales.created_by',
+        'accounts.name' => 'accounts.name',
+        'payment_method_name' => 'sales.payment_method_name',
+        'gross_amount' => 'sales.gross_amount',
+        'item_discount' => 'sales.item_discount',
+        'tax_amount' => 'sales.tax_amount',
+        'total' => 'sales.total',
+        'other_discount' => 'sales.other_discount',
+        'freight' => 'sales.freight',
+        'grand_total' => 'sales.grand_total',
+        'paid' => 'sales.paid',
+        'balance' => 'sales.balance',
+        'status' => 'sales.status',
+    ];
+
+    private const TOTAL_COLUMNS = ['gross_amount', 'item_discount', 'tax_amount', 'total', 'other_discount', 'freight', 'grand_total', 'paid', 'balance'];
 
     public $search = '';
 
@@ -54,10 +89,23 @@ class Table extends Component
 
     public $sortDirection = 'desc';
 
+    /**
+     * Footer sums plus the row count for the current filters. Recomputed only
+     * when the filters change (or on refresh/delete), so ticking a row,
+     * sorting or paging doesn't re-aggregate the whole filtered set.
+     *
+     * @var array<string, float|int>
+     */
+    #[Locked]
+    public array $totals = [];
+
+    #[Locked]
+    public string $totalsKey = '';
+
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
-        'Sale-Refresh-Component' => '$refresh',
+        'Sale-Refresh-Component' => 'refreshTotals',
     ];
 
     public function mount()
@@ -96,6 +144,7 @@ class Table extends Component
             $this->selected = [];
 
             $this->selectAll = false;
+            $this->refreshTotals();
             $this->dispatch('RefreshSaleTable');
         } catch (\Exception $e) {
             DB::rollback();
@@ -152,8 +201,16 @@ class Table extends Component
         }
     }
 
+    public function refreshTotals(): void
+    {
+        $this->totalsKey = '';
+    }
+
     public function sortBy($field)
     {
+        if (! array_key_exists($field, self::SORTABLE_COLUMNS)) {
+            $field = 'sales.id';
+        }
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -162,9 +219,12 @@ class Table extends Component
         }
     }
 
-    protected function getBaseQuery()
+    /**
+     * @return array<string, mixed>
+     */
+    protected function filters(): array
     {
-        $filters = [
+        return [
             'search' => $this->search,
             'branch_id' => $this->branch_id,
             'customer_id' => $this->customer_id,
@@ -177,50 +237,62 @@ class Table extends Component
             'from_date' => $this->from_date,
             'to_date' => $this->to_date,
         ];
+    }
 
-        return Sale::with('branch')
+    protected function getBaseQuery()
+    {
+        return Sale::with(['branch:id,name', 'createdUser:id,name'])
             ->join('accounts', 'accounts.id', '=', 'sales.account_id')
-            ->filter($filters);
+            ->filter($this->filters());
+    }
 
+    /**
+     * One aggregate pass for both the footer sums and the paginator's total.
+     *
+     * @return array<string, float|int>
+     */
+    protected function totals(): array
+    {
+        $key = md5(json_encode($this->filters()));
+        if ($this->totalsKey === $key && $this->totals) {
+            return $this->totals;
+        }
+
+        $sql = collect(self::TOTAL_COLUMNS)->map(fn ($column) => "SUM(sales.{$column}) as {$column}")
+            ->push('COUNT(*) as total_count')
+            ->implode(', ');
+        $row = $this->getBaseQuery()->toBase()->selectRaw($sql)->first();
+
+        $this->totals = collect(self::TOTAL_COLUMNS)
+            ->mapWithKeys(fn ($column) => [$column => (float) ($row->{$column} ?? 0)])
+            ->put('total_count', (int) ($row->total_count ?? 0))
+            ->all();
+        $this->totalsKey = $key;
+
+        return $this->totals;
     }
 
     public function render()
     {
-        $query = $this->getBaseQuery();
-        $totals = clone $query;
+        $total = $this->totals();
+        $limit = max(1, (int) $this->limit);
+        $page = $this->getPage();
+        $sortColumn = self::SORTABLE_COLUMNS[$this->sortField] ?? 'sales.id';
+        $sortDirection = $this->sortDirection === 'asc' ? 'asc' : 'desc';
 
-        $sql = '
-            SUM(gross_amount) as gross_amount,
-            SUM(item_discount) as item_discount,
-            SUM(tax_amount) as tax_amount,
-            SUM(total) as total,
-            SUM(other_discount) as other_discount,
-            SUM(freight) as freight,
-            SUM(grand_total) as grand_total,
-            SUM(paid) as paid,
-            SUM(balance) as balance
-        ';
-        $total = $totals->selectRaw($sql)
-            // ->useIndex('sales_tenant_id_invoice_no_unique')
-            ->first();
-
-        $total = [
-            'gross_amount' => $total->gross_amount ?? 0,
-            'item_discount' => $total->item_discount ?? 0,
-            'tax_amount' => $total->tax_amount ?? 0,
-            'total' => $total->total ?? 0,
-            'other_discount' => $total->other_discount ?? 0,
-            'freight' => $total->freight ?? 0,
-            'grand_total' => $total->grand_total ?? 0,
-            'paid' => $total->paid ?? 0,
-            'balance' => $total->balance ?? 0,
-        ];
+        $rows = $this->getBaseQuery()
+            ->select('sales.*', 'accounts.name')
+            ->orderBy($sortColumn, $sortDirection)
+            ->when($sortColumn !== 'sales.id', fn ($q) => $q->orderBy('sales.id', 'desc'))
+            ->forPage($page, $limit)
+            ->get();
 
         return view('livewire.sale.table', [
             'total' => $total,
-            'data' => $query->select('sales.*', 'accounts.name')
-                ->orderBy($this->sortField, $this->sortDirection)
-                ->paginate($this->limit),
+            'data' => new LengthAwarePaginator($rows, $total['total_count'], $limit, $page, [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]),
         ]);
     }
 }

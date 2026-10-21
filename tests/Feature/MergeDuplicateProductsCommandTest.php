@@ -64,7 +64,7 @@ it('refuses to merge products of different types', function () {
 });
 
 /** Insert a product, skipping the generated `barcode` column. */
-function makeProduct(string $name, float $mrp, string $type = 'product'): int
+function makeMergeCandidate(string $name, float $mrp, string $type = 'product'): int
 {
     return DB::table('products')->insertGetId([
         'tenant_id' => Product::query()->value('tenant_id') ?? 1,
@@ -76,9 +76,9 @@ function makeProduct(string $name, float $mrp, string $type = 'product'): int
 
 it('merges a bracketed-code group with --like', function () {
     $ids = [
-        makeProduct('LIKE CHAIR AMBIANCE 95000', 95000),
-        makeProduct('LIKE CHAIR AMBIANCE [25810-005]', 25810),
-        makeProduct('LIKE CHAIR AMBIANCE [25810-002]', 25810),
+        makeMergeCandidate('LIKE CHAIR AMBIANCE 95000', 95000),
+        makeMergeCandidate('LIKE CHAIR AMBIANCE [25810-005]', 25810),
+        makeMergeCandidate('LIKE CHAIR AMBIANCE [25810-002]', 25810),
     ];
 
     $this->artisan('app:merge-duplicate-products --like="LIKE CHAIR AMBIANCE" --name="LIKE CHAIR AMBIANCE" --apply')
@@ -91,9 +91,9 @@ it('merges a bracketed-code group with --like', function () {
 });
 
 it('keeps size variants apart by default but merges them with --loose', function () {
-    makeProduct('AUTO PEARL CREAM 1200', 1200);
-    makeProduct('AUTO PEARL CREAM 500', 500);
-    makeProduct('AUTO PEARL CREAM 700', 700);
+    makeMergeCandidate('AUTO PEARL CREAM 1200', 1200);
+    makeMergeCandidate('AUTO PEARL CREAM 500', 500);
+    makeMergeCandidate('AUTO PEARL CREAM 700', 700);
 
     $this->artisan('app:merge-duplicate-products --auto')
         ->doesntExpectOutputToContain('AUTO PEARL CREAM')
@@ -105,8 +105,8 @@ it('keeps size variants apart by default but merges them with --loose', function
 });
 
 it('merges same-priced products whose trailing number is not the price', function () {
-    $keep = makeProduct('AUTO SCRAPER 027', 500);
-    $dupe = makeProduct('AUTO SCRAPER 028', 500);
+    $keep = makeMergeCandidate('AUTO SCRAPER 027', 500);
+    $dupe = makeMergeCandidate('AUTO SCRAPER 028', 500);
 
     $this->artisan('app:merge-duplicate-products --auto --apply')
         ->expectsConfirmation('This permanently deletes the duplicate products in 1 group(s). Continue?', 'yes')

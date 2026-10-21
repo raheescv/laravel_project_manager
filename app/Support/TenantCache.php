@@ -31,6 +31,13 @@ class TenantCache
     /** Configuration keys cached as their json_decoded value. */
     protected const JSON_CONFIGURATION_KEYS = ['payment_methods', 'theme_settings', 'currencies'];
 
+    /**
+     * Stored in place of null: Cache::remember() never caches a null result, so
+     * an unset setting (e.g. `currencies` on a single-currency tenant) would
+     * otherwise re-query on every read — currency() alone hits it per cell.
+     */
+    protected const MISSING = '__tenant_cache_missing__';
+
     public static function get(string $key, mixed $default = null): mixed
     {
         $tenantId = static::tenantId();
@@ -38,7 +45,9 @@ class TenantCache
             return $default;
         }
 
-        return Cache::remember(static::key($key, $tenantId), now()->addDay(), fn () => static::resolve($key)) ?? $default;
+        $value = Cache::remember(static::key($key, $tenantId), now()->addDay(), fn () => static::resolve($key) ?? self::MISSING);
+
+        return $value === self::MISSING ? $default : ($value ?? $default);
     }
 
     public static function forget(string $key): void

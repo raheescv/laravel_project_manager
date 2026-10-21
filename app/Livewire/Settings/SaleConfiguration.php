@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Models\Configuration;
+use App\Support\TenantCache;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Component;
 
@@ -113,6 +114,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'enable_logo_in_print'], ['value' => $this->enable_logo_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_barcode_in_print'], ['value' => $this->enable_barcode_in_print]);
         Configuration::updateOrCreate(['key' => 'sale_type'], ['value' => $this->sale_type]);
+        TenantCache::forget('sale_type');
         Configuration::updateOrCreate(['key' => 'default_customer_enabled'], ['value' => $this->default_customer_enabled]);
         Configuration::updateOrCreate(['key' => 'default_product_type'], ['value' => $this->default_product_type]);
         Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => $this->print_item_label]);

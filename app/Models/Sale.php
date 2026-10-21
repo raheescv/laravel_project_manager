@@ -188,14 +188,17 @@ class Sale extends Model implements AuditableContracts
     {
         // The date range can run on either the sale's own date or the row's
         // creation timestamp — the list's "Based On" selector picks which.
-        $dateColumn = ($filters['based_on'] ?? '') === 'created_at' ? 'sales.created_at' : 'sales.date';
+        $isCreatedAt = ($filters['based_on'] ?? '') === 'created_at';
+        $dateColumn = $isCreatedAt ? 'sales.created_at' : 'sales.date';
 
         return $query
             ->when($filters['search'] ?? '', function ($q, $search) {
                 $search = trim($search);
 
                 return $q->where(function ($q) use ($search): void {
-                    $q->where('sales.id', 'like', "%{$search}%")
+                    // An exact id match keeps the integer column un-cast; a
+                    // LIKE on it would turn every row into text first.
+                    $q->when(ctype_digit($search), fn ($q) => $q->orWhere('sales.id', (int) $search))
                         ->orWhere('sales.invoice_no', 'like', "%{$search}%")
                         // Also finds a sale by the provisional reference printed on
                         // the customer's receipt during an outage — the mobile POS
@@ -208,15 +211,22 @@ class Sale extends Model implements AuditableContracts
             ->when($filters['sale_type'] ?? '', fn ($q, $value) => $q->where('sales.sale_type', $value))
             ->when($filters['source'] ?? '', fn ($q, $value) => $q->where('sales.source', $value))
             ->when($filters['created_by'] ?? '', fn ($q, $value) => $q->where('sales.created_by', $value))
-            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('branch_id', $value))
-            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('account_id', $value))
+            ->when($filters['branch_id'] ?? '', fn ($q, $value) => $q->where('sales.branch_id', $value))
+            ->when($filters['customer_id'] ?? '', fn ($q, $value) => $q->where('sales.account_id', $value))
             ->when($filters['payment_method_id'] ?? '', function ($q, $value) {
-                return $q->whereRaw('FIND_IN_SET(?, payment_method_ids)', [$value]);
+                return $q->whereRaw('FIND_IN_SET(?, sales.payment_method_ids)', [$value]);
             })
-            ->when($filters['sale_day_session_id'] ?? '', fn ($q, $value) => $q->where('sale_day_session_id', $value))
-            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('status', $value))
-            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->whereDate($dateColumn, '>=', date('Y-m-d', strtotime($value))))
-            ->when($filters['to_date'] ?? '', fn ($q, $value) => $q->whereDate($dateColumn, '<=', date('Y-m-d', strtotime($value))));
+            ->when($filters['sale_day_session_id'] ?? '', fn ($q, $value) => $q->where('sales.sale_day_session_id', $value))
+            ->when($filters['status'] ?? '', fn ($q, $value) => $q->where('sales.status', $value))
+            // Plain ranges on the bare column (no DATE() wrapper) so MySQL can
+            // seek the tenant/branch/date indexes. created_at is a timestamp,
+            // so its upper edge is "before midnight after to_date".
+            ->when($filters['from_date'] ?? '', fn ($q, $value) => $q->where($dateColumn, '>=', $isCreatedAt
+                ? date('Y-m-d 00:00:00', strtotime($value))
+                : date('Y-m-d', strtotime($value))))
+            ->when($filters['to_date'] ?? '', fn ($q, $value) => $isCreatedAt
+                ? $q->where($dateColumn, '<', date('Y-m-d 00:00:00', strtotime($value.' +1 day')))
+                : $q->where($dateColumn, '<=', date('Y-m-d', strtotime($value))));
     }
 
     /**
