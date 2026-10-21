@@ -64,6 +64,7 @@ class StockUpdateAction
                 $this->handlePurchase($inventoryData, $item, $purchase, $oldQuantity, $oldCost);
                 break;
             case 'cancel':
+            case 'delete':
             case 'purchase_reversal':
             case 'delete_item':
                 $this->handlePurchaseReversal($inventoryData, $item, $purchase, $purchase_type, $oldQuantity, $oldCost);
@@ -131,6 +132,7 @@ class StockUpdateAction
     {
         return match ($purchase_type) {
             'cancel' => 'Purchase Cancelled',
+            'delete' => 'Purchase Deleted',
             'purchase_reversal' => 'Purchase Adjustment Reversal',
             'delete_item' => 'Purchase Item Delete',
             default => 'Purchase',
