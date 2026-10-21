@@ -24,6 +24,7 @@ class TopupResource extends JsonResource
     public function toArray(Request $request): array
     {
         $success = $this->status === QpayTransaction::STATUS_SUCCESS;
+        $failed = $this->status === QpayTransaction::STATUS_FAILED;
 
         return [
             'pun' => $this->pun,
@@ -39,7 +40,9 @@ class TopupResource extends JsonResource
             'status' => $this->status,
             'status_label' => $this->statusLabel(),
             // The gateway's own words for a failed payment. Review reasons are internal and stay with the school.
-            'message' => $this->status === QpayTransaction::STATUS_FAILED ? $this->failureMessage() : null,
+            'message' => $failed ? $this->failureMessage() : null,
+            // The gateway's raw answer behind that message, e.g. "3000 · Payment Failed", for the parent to quote to their bank.
+            'gateway_response' => $failed ? $this->gatewayResponse() : null,
             // A QPay payment with no result blocks new top-ups; from this moment the parent may
             // cancel it (QPay is asked first — see CancelTopupAction). Null when there is nothing to cancel.
             'cancellable_at' => $this->isPending() && ! $this->isCreditCard()
@@ -54,15 +57,25 @@ class TopupResource extends JsonResource
     }
 
     /**
-     * QPay's "not found" (8106) is its way of saying the parent never paid on its page —
-     * worded for a parent, not as the gateway's "unfounded transaction" jargon.
+     * QPay's codes worded for a parent (see QPayClient::describe) — "Payment Failed"
+     * becomes why it failed. Credit card messages are already worded by MpgsClient.
      */
     private function failureMessage(): ?string
     {
-        if (! $this->isCreditCard() && $this->gateway_status === QPayClient::NOT_FOUND) {
-            return 'The payment was never completed on QPay.';
+        if (! $this->isCreditCard() && ($described = QPayClient::describe($this->gateway_status))) {
+            return $described;
         }
 
         return $this->gateway_status_message;
+    }
+
+    /** QPay's code and its own words; MPGS's decline code. Null when the gateway never answered. */
+    private function gatewayResponse(): ?string
+    {
+        if ($this->isCreditCard() || $this->gateway_status === QPayClient::NOT_FOUND) {
+            return $this->gateway_status ?: null;
+        }
+
+        return collect([$this->gateway_status, trim((string) $this->gateway_status_message, ' .')])->filter()->implode(' · ') ?: null;
     }
 }

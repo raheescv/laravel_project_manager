@@ -204,6 +204,24 @@ it('records a declined payment as failed without touching the card', function ()
         ->and(qpayBalance($this))->toBe(0.0);
 });
 
+it('tells the parent why a declined payment failed, with QPay\'s own code', function (): void {
+    $transaction = qpayStart($this, 100);
+
+    qpayPostReturn($this, qpaySigned(qpayPaymentResponse($transaction, ['Status' => '3000', 'StatusMessage' => 'Payment Failed.'])));
+
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->getJson($this->world->url("/api/v1/parent/topups/{$transaction->pun}"))
+        ->assertOk()
+        ->assertJsonPath('data.status', 'failed')
+        ->assertJsonPath('data.message', QPayClient::describe('3000'))
+        ->assertJsonPath('data.gateway_response', '3000 · Payment Failed');
+
+    expect(QPayClient::describe('3000'))->toContain('bank declined')
+        ->and(QPayClient::describe('2996'))->toContain('cancelled')
+        ->and(QPayClient::describe('EZConnect-0009'))->toContain('school office')
+        ->and(QPayClient::describe('1234'))->toBeNull();
+});
+
 it('drops a tampered result and believes only the inquiry', function (): void {
     $transaction = qpayStart($this, 100);
     Http::fake(fn () => Http::response(qpayInquiryResponse($transaction, ['OriginalStatus' => '3000', 'OriginalStatusMessage' => 'Payment Failed.'])));

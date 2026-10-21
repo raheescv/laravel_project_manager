@@ -41,6 +41,33 @@ class QPayClient
 
     public function __construct(private readonly QPaySettings $settings) {}
 
+    /**
+     * Why a payment did not go through, in words a parent understands — QPay's own
+     * StatusMessage is a bare "Payment Failed". From Appendix B of the guide. Null
+     * for a code the guide does not describe, so the caller can fall back to QPay's text.
+     */
+    public static function describe(?string $status): ?string
+    {
+        $status = (string) $status;
+        if (str_starts_with($status, 'EZConnect-')) {
+            return 'QPay could not accept the payment request. Please contact the school office.';
+        }
+
+        return match ($status) {
+            '3000' => 'Your bank declined the payment, for example because the card does not have enough balance or is not enabled for online payments.',
+            '2992' => 'The payment timed out before your bank confirmed it.',
+            '2994' => 'You chose a payment method on QPay but did not finish paying.',
+            '2996' => 'You cancelled the payment on QPay before choosing a payment method.',
+            '2997' => 'You cancelled the payment on QPay before signing in to your bank.',
+            '4003', '4004' => 'This card cannot be used for online payments. Please contact your bank.',
+            '4100', '2799' => 'The payment was stopped by the payment gateway\'s security checks.',
+            '9001' => 'The payment service had an unexpected error.',
+            self::NOT_FOUND => 'The payment was never completed on QPay.',
+            '2993', '5019', '8107', '8108', '8110', '8200', '8201' => 'Online payment is not available right now. Please contact the school office.',
+            default => null,
+        };
+    }
+
     /** SHA-256 over secret + values ordered by parameter name. */
     public static function hash(string $secretKey, array $params): string
     {

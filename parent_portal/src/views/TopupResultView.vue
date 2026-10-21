@@ -58,6 +58,9 @@ const newBalance = computed(() => {
   return ['pending', 'review', 'unresolved'].includes(status) ? 'Not added yet' : 'No change'
 })
 
+// The gateway's message as a sentence, so "No money was taken." never runs on from it.
+const sentence = (text) => (/[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`)
+
 const view = computed(() => {
   const t = topup.value
   if (!t) return null
@@ -81,7 +84,7 @@ const view = computed(() => {
         tag: ['warn', 'Being checked'],
         msg: `${credit.value ? 'Your card was charged' : 'QPay has your payment'}. The school is checking it, and the money will reach ${who} card once it's confirmed. Please don't pay again.`,
       },
-      failed: { tone: 'failed', icon: 'fa-times', title: 'Payment failed', tag: ['neg', 'Failed'], msg: t.message ? `${t.message} No money was taken.` : 'No money was taken. You can try again.' },
+      failed: { tone: 'failed', icon: 'fa-times', title: 'Payment failed', tag: ['neg', 'Failed'], msg: t.message ? `${sentence(t.message)} No money was taken.` : 'No money was taken. You can try again.' },
       cancelled: { tone: 'failed', icon: 'fa-times', title: 'Payment cancelled', tag: ['muted', 'Cancelled'], msg: 'You left the card payment page, so no money was taken. You can try again.' },
       refund_pending: { tone: 'review', icon: 'fa-reply', title: 'Refund in progress', tag: ['warn', 'Refund pending'], msg: 'The school is refunding this payment to your bank card.' },
       refunded: { tone: 'review', icon: 'fa-reply', title: 'Payment refunded', tag: ['warn', 'Refunded'], msg: 'This payment was refunded to your bank card.' },
@@ -207,6 +210,10 @@ onBeforeUnmount(() => {
           <dd><span class="pp-tag" :class="`pp-tag--${view.tag[0]}`">{{ view.tag[1] }}</span></dd>
         </div>
         <div class="is-wide"><dt>Payment method</dt><dd>{{ paidWith }}</dd></div>
+        <div v-if="topup.status === 'failed' && topup.gateway_response" class="is-wide">
+          <dt>{{ credit ? 'Bank response' : 'QPay response' }}</dt>
+          <dd>{{ topup.gateway_response }}</dd>
+        </div>
         <div class="is-wide"><dt>Payment reference</dt><dd class="pp-receipt__code">{{ topup.pun }}</dd></div>
         <div class="is-wide">
           <dt>{{ credit ? 'Card receipt' : 'QPay confirmation' }}</dt>
