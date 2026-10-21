@@ -16,8 +16,7 @@ class StockUpdateAction
     public function execute($model, $userId, $type = 'transfer')
     {
         try {
-            $this->fromBranch = $model->fromBranch->name;
-            $this->toBranch = $model->toBranch->name;
+            $this->forTransfer($model);
             foreach ($model->items as $item) {
                 $fromInventory = Inventory::find($item->inventory_id);
                 if (! $fromInventory) {
@@ -49,6 +48,18 @@ class StockUpdateAction
         }
 
         return $return;
+    }
+
+    /**
+     * Branch names written into each stock row's remarks; the branch the row
+     * belongs to always comes first.
+     */
+    public function forTransfer($model): static
+    {
+        $this->fromBranch = $model->fromBranch?->name;
+        $this->toBranch = $model->toBranch?->name;
+
+        return $this;
     }
 
     public function toBranchCheckFunction($fromInventory, $branchId, $userId)
@@ -96,20 +107,20 @@ class StockUpdateAction
 
             case 'transfer_reversal_from':
                 $inventory['quantity'] -= $quantity;
-                $inventory['remarks'] = 'InventoryTransfer Adjustment Reversal:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer Adjustment Reversal:'.$modelId.' ['.$this->toBranch.' -> '.$this->fromBranch.']';
                 break;
             case 'transfer_reversal_to':
                 $inventory['quantity'] += $quantity;
-                $inventory['remarks'] = 'InventoryTransfer Adjustment Reversal:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer Adjustment Reversal:'.$modelId.' ['.$this->fromBranch.' <- '.$this->toBranch.']';
                 break;
 
             case 'delete_item_from':
                 $inventory['quantity'] -= $quantity;
-                $inventory['remarks'] = 'InventoryTransfer Item Delete:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer Item Delete:'.$modelId.' ['.$this->toBranch.' -> '.$this->fromBranch.']';
                 break;
             case 'delete_item_to':
                 $inventory['quantity'] += $quantity;
-                $inventory['remarks'] = 'InventoryTransfer Item Delete:'.$modelId;
+                $inventory['remarks'] = 'InventoryTransfer Item Delete:'.$modelId.' ['.$this->fromBranch.' <- '.$this->toBranch.']';
                 break;
         }
         $response = (new UpdateAction())->execute($inventory, $inventory['id']);

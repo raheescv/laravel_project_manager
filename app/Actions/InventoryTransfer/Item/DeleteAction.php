@@ -21,10 +21,11 @@ class DeleteAction
                 if (! Auth::user()->can('inventory transfer.edit completed')) {
                     throw new Exception("You don't have permission to edit it.", 1);
                 }
-                $toInventory = (new StockUpdateAction())->toBranchCheckFunction($model->inventory, $model->inventoryTransfer->to_branch_id, $userId);
-                (new StockUpdateAction())->singleItemFunction($toInventory, $model->quantity, $model->inventory_transfer_id, 'delete_item_from', $userId);
+                $stock = (new StockUpdateAction())->forTransfer($model->inventoryTransfer);
+                $toInventory = $stock->toBranchCheckFunction($model->inventory, $model->inventoryTransfer->to_branch_id, $userId);
+                $stock->singleItemFunction($toInventory, $model->quantity, $model->inventory_transfer_id, 'delete_item_from', $userId);
 
-                (new StockUpdateAction())->singleItemFunction($model->inventory, $model->quantity, $model->inventory_transfer_id, 'delete_item_to', $userId);
+                $stock->singleItemFunction($model->inventory, $model->quantity, $model->inventory_transfer_id, 'delete_item_to', $userId);
             }
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the InventoryTransferItem. Please try again.', 1);

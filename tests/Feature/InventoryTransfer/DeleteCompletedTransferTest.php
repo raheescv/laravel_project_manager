@@ -4,6 +4,7 @@ use App\Actions\InventoryTransfer\DeleteAction;
 use App\Actions\InventoryTransfer\JournalEntryAction;
 use App\Actions\InventoryTransfer\StockUpdateAction;
 use App\Models\Inventory;
+use App\Models\InventoryLog;
 use App\Models\InventoryTransfer;
 use App\Models\Journal;
 use App\Models\JournalEntry;
@@ -91,4 +92,20 @@ it('still deletes a pending transfer without touching stock', function (): void 
     expect($response['success'])->toBeTrue()
         ->and(InventoryTransfer::find($transfer->id))->toBeNull()
         ->and(transferQuantity($this->world->product->id, $this->world->branch->id))->toBe(10.0);
+});
+
+it('names both branches in every transfer and reversal stock remark', function (): void {
+    $this->world->user->forceFill(['is_super_admin' => true])->save();
+    $transfer = makeTransfer($this->world, $this->toBranch->id, 'completed');
+
+    expect((new DeleteAction())->execute($transfer->id, $this->world->user->id)['success'])->toBeTrue();
+
+    $logs = InventoryLog::query()->where('model', 'InventoryTransfer')->where('model_id', $transfer->id)->orderBy('id')->get(['branch_id', 'remarks']);
+
+    expect($logs->map(fn ($log) => [$log->branch_id, $log->remarks])->all())->toBe([
+        [$this->world->branch->id, "InventoryTransfer:{$transfer->id} [Main Branch -> Doha Branch]"],
+        [$this->toBranch->id, "InventoryTransfer:{$transfer->id} [Doha Branch <- Main Branch]"],
+        [$this->toBranch->id, "InventoryTransfer Adjustment Reversal:{$transfer->id} [Doha Branch -> Main Branch]"],
+        [$this->world->branch->id, "InventoryTransfer Adjustment Reversal:{$transfer->id} [Main Branch <- Doha Branch]"],
+    ]);
 });
