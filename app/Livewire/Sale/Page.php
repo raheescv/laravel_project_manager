@@ -165,7 +165,9 @@ class Page extends Component
             fn () => Configuration::where('key', 'default_payment_method_id')->value('value') ?? 1
         );
 
-        $this->payment_method_name = strtolower(Account::find($this->default_payment_method_id)->name);
+        $defaultPaymentMethod = Account::resolvePaymentMethod($this->default_payment_method_id);
+        $this->default_payment_method_id = $defaultPaymentMethod->id ?? $this->default_payment_method_id;
+        $this->payment_method_name = strtolower((string) $defaultPaymentMethod?->name);
         $this->payment = [
             'payment_method_id' => $this->default_payment_method_id,
             'payment_method_name' => $this->payment_method_name,

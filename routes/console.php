@@ -3,7 +3,9 @@
 use App\Services\TenantServerService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
+use Spatie\Health\Commands\DispatchQueueCheckJobsCommand;
 use Spatie\Health\Commands\RunHealthChecksCommand;
+use Spatie\Health\Commands\ScheduleCheckHeartbeatCommand;
 
 // Heartbeat for Tenant Control → Server: proves cron is calling schedule:run.
 Schedule::call(fn () => Cache::put(TenantServerService::HEARTBEAT_KEY, now()->toDateTimeString(), now()->addDay()))
@@ -27,6 +29,10 @@ if (config('constants.auto_pull_enabled')) {
 // Process any remaining visitor batches that haven't reached batch size
 Schedule::command('visitors:process-batches')->everyFiveMinutes();
 
+// Heartbeats the production ScheduleCheck / QueueCheck read; without them both
+// checks always fail and the daily health:check exits 1.
+Schedule::command(ScheduleCheckHeartbeatCommand::class)->everyMinute();
+Schedule::command(DispatchQueueCheckJobsCommand::class)->everyMinute();
 Schedule::command(RunHealthChecksCommand::class)->daily();
 
 // Close any sale day session left open from an earlier day, in the first hour

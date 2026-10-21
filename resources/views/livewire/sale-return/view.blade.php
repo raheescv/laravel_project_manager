@@ -276,20 +276,10 @@
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end gap-2 my-4 d-print-none">
                     @if ($sale_returns['status'] != 'cancelled')
-                        @can('sales return.cancel')
-                            <button type="button" wire:click='save("cancelled")' wire:confirm="Are you sure to cancel this?" class="btn btn-danger">
-                                <i class="fa fa-times me-2"></i>Cancel
-                            </button>
-                        @endcan
                         @can('sales return.edit completed')
                             <a href="{{ route('sale_return::edit', $sale_returns['id']) }}" class="btn btn-primary">
                                 <i class="fa fa-pencil me-2"></i>Edit
                             </a>
-                        @endcan
-                        @can('sales return.cancel')
-                            <button type="button" wire:click='sendToWhatsapp' class="btn btn-success">
-                                <i class="fa fa-whatsapp me-2"></i>Whatsapp
-                            </button>
                         @endcan
                     @endif
                 </div>

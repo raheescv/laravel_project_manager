@@ -11,11 +11,25 @@ class ColumnVisibility extends Component
 
     public function mount()
     {
-        $config = Configuration::where('key', 'sale_return_visible_column')->value('value');
-        $this->sale_return_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+        $this->sale_return_visible_column = self::visibleColumns();
     }
 
-    protected function getDefaultColumns()
+    /**
+     * The saved column choices over the defaults, so a tenant that never saved any still gets every key.
+     *
+     * @return array<string, bool>
+     */
+    public static function visibleColumns(): array
+    {
+        $saved = json_decode((string) Configuration::where('key', 'sale_return_visible_column')->value('value'), true);
+
+        return array_merge(self::defaultColumns(), is_array($saved) ? $saved : []);
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    protected static function defaultColumns(): array
     {
         return [
             'reference_no' => true,
@@ -41,7 +55,7 @@ class ColumnVisibility extends Component
 
     public function resetToDefaults()
     {
-        $this->sale_return_visible_column = $this->getDefaultColumns();
+        $this->sale_return_visible_column = self::defaultColumns();
         Configuration::updateOrCreate(['key' => 'sale_return_visible_column'], ['value' => json_encode($this->sale_return_visible_column)]);
     }
 

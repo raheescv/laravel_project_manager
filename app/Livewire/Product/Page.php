@@ -298,10 +298,12 @@ class Page extends Component
         try {
             DB::beginTransaction();
             $this->products['priority'] = (int) ($this->products['priority'] ?? 0);
-            $this->products['images'] = $this->images;
-            $this->products['angles_360'] = $this->angles_360;
-            $this->products['degree'] = $this->degree;
-            $this->products['document_file_upload'] = $this->document_file;
+            $payload = array_merge($this->products, [
+                'images' => $this->images,
+                'angles_360' => $this->angles_360,
+                'degree' => $this->degree,
+                'document_file_upload' => $this->document_file,
+            ]);
             if (! $this->table_id) {
                 $selected['mainCategory'] = [
                     'id' => $this->products['main_category_id'],
@@ -319,9 +321,9 @@ class Page extends Component
                     'id' => $this->products['brand_id'],
                     'name' => $this->products['brand_id'],
                 ];
-                $response = (new CreateAction())->execute($this->products, Auth::id());
+                $response = (new CreateAction())->execute($payload, Auth::id());
             } else {
-                $response = (new UpdateAction())->execute($this->products, $this->table_id, Auth::id());
+                $response = (new UpdateAction())->execute($payload, $this->table_id, Auth::id());
             }
             if (! $response['success']) {
                 throw new \Exception($response['message'], 1);

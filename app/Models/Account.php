@@ -160,6 +160,17 @@ class Account extends Model implements AuditableContracts
             ?? throw new RuntimeException("The '{$slug}' system account is not configured for this tenant.");
     }
 
+    /**
+     * The given payment method account, or the tenant's first configured payment
+     * method when the id is unset or belongs to another tenant (the hardcoded
+     * fallback id 1 is only valid for the first tenant).
+     */
+    public static function resolvePaymentMethod(int|string|null $id): ?self
+    {
+        return ($id ? self::find($id) : null)
+            ?? self::whereIn('id', tenant_cache('payment_methods', []) ?: [])->orderBy('id')->first();
+    }
+
     public static function rules($id = 0, $merge = [])
     {
         $tenantId = self::getCurrentTenantId();

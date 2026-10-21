@@ -56,7 +56,7 @@ class UpdateAction
                 if ($model->paid == ($data['paid'] ?? 0)) {
                     $data['paid'] = $model->paid;
                 }
-                if ($data['paid'] == $model->paid) {
+                if (isset($data['paid']) && $data['paid'] == $model->paid) {
                     unset($model['paid']);
                 }
                 $model->update($data);
