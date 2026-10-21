@@ -86,6 +86,21 @@ it('builds analytics from the target tenant only', function (): void {
         ->and($summary['top_branches'][0]['name'])->toBe('Doha');
 });
 
+it('counts table rows of the target tenant only, with deleted rows apart', function (): void {
+    $otherBranch = Branch::create(['tenant_id' => $this->other->id, 'name' => 'Doha', 'code' => 'DH']);
+    recordSale($this->world, $this->other->id, $otherBranch->id, 120, now()->toDateString());
+    recordSale($this->world, $this->other->id, $otherBranch->id, 80, now()->toDateString());
+    recordSale($this->world, $this->world->tenant->id, $this->world->branch->id, 5000, now()->toDateString());
+    Sale::withoutGlobalScopes()->where('tenant_id', $this->other->id)->limit(1)->update(['deleted_at' => now()]);
+
+    $counts = collect(app(TenantAnalyticsService::class)->tableCounts($this->other->id))->keyBy('table');
+
+    expect($counts['sales'])->toMatchArray(['label' => 'Sales', 'total' => 1, 'deleted' => 1])
+        ->and($counts['branches']['total'])->toBe(1)
+        ->and($counts['branches']['deleted'])->toBe(0)
+        ->and($counts->first()['total'])->toBeGreaterThanOrEqual($counts->last()['total']);
+});
+
 it('provisions a tenant idempotently without touching the current tenant', function (): void {
     $ownAccounts = Account::withTenant($this->world->tenant->id)->count();
 
@@ -249,6 +264,7 @@ it('renders every tab of the view page', function (): void {
         ->call('selectTab', 'branches')->assertSee('Lusail')
         ->call('selectTab', 'analytics')->assertSee('Sales · last 12 months')
         ->call('refreshAnalytics')->assertDispatched('success')
+        ->call('selectTab', 'data')->assertSee('Hide empty tables')->assertSee('Purchase returns')->assertSee('branches')
         ->call('selectTab', 'seeding')->assertSee('Run provisioning');
 });
 

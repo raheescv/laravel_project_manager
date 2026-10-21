@@ -12,6 +12,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Headline numbers for one tenant, read by the super admin from inside a
@@ -46,6 +48,50 @@ class TenantAnalyticsService
     public static function forget(int $tenantId): void
     {
         Cache::forget(self::cacheKey($tenantId));
+        Cache::forget(self::cacheKey($tenantId).':tables');
+    }
+
+    /**
+     * Row count of this tenant in every table that carries a tenant_id,
+     * largest first. Soft-deleted rows are counted apart so the live number
+     * matches what the tenant sees on screen.
+     *
+     * @return list<array{table: string, label: string, total: int, deleted: int}>
+     */
+    public function tableCounts(int $tenantId): array
+    {
+        return Cache::remember(self::cacheKey($tenantId).':tables', now()->addMinutes(self::CACHE_MINUTES), fn () => $this->computeTableCounts($tenantId));
+    }
+
+    /**
+     * @return list<array{table: string, label: string, total: int, deleted: int}>
+     */
+    private function computeTableCounts(int $tenantId): array
+    {
+        $tables = collect(DB::select(
+            "SELECT TABLE_NAME AS name, MAX(COLUMN_NAME = 'deleted_at') AS soft_deletes FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND COLUMN_NAME IN ('tenant_id', 'deleted_at')
+             GROUP BY TABLE_NAME HAVING SUM(COLUMN_NAME = 'tenant_id') > 0"
+        ));
+        if ($tables->isEmpty()) {
+            return [];
+        }
+
+        $union = $tables->map(fn ($table) => DB::table($table->name)->where('tenant_id', $tenantId)
+            ->selectRaw('? as name, COUNT(*) as total', [$table->name])
+            ->selectRaw($table->soft_deletes ? 'COALESCE(SUM(deleted_at IS NOT NULL), 0) as deleted' : '0 as deleted'))
+            ->reduce(fn ($carry, $query) => $carry ? $carry->unionAll($query) : $query);
+
+        return collect($union->get())
+            ->map(fn ($row): array => [
+                'table' => $row->name,
+                'label' => Str::headline($row->name),
+                'total' => (int) $row->total - (int) $row->deleted,
+                'deleted' => (int) $row->deleted,
+            ])
+            ->sortBy([['total', 'desc'], ['table', 'asc']])
+            ->values()
+            ->all();
     }
 
     public static function cacheKey(int $tenantId): string

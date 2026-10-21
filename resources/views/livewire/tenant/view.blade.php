@@ -31,6 +31,7 @@
         'branches' => ['fa-sitemap', 'Branches', $summary['branches']],
         'billing' => ['fa-money', 'Billing', null],
         'analytics' => ['fa-bar-chart', 'Analytics', null],
+        'data' => ['fa-database', 'Data', null],
         'seeding' => ['fa-magic', 'Seeding', null],
         'server' => ['fa-server', 'Server', null],
     ];
@@ -593,6 +594,86 @@
                             <div class="empty"><i class="fa fa-trophy"></i>No completed sales yet.</div>
                         @endforelse
                     </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($selected_tab === 'data')
+            @php
+                $countsByTable = collect($tableCounts)->keyBy('table');
+                $maxRows = max(1, collect($tableCounts)->max('total'));
+            @endphp
+            <div class="pane" x-data="{ q: '', hideEmpty: true }">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div class="small text-body-secondary">Rows this tenant owns in each table · deleted rows shown apart</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" wire:click="refreshAnalytics" wire:loading.attr="disabled" wire:target="refreshAnalytics">
+                        <i class="fa fa-refresh me-1" wire:loading.class="fa-spin" wire:target="refreshAnalytics"></i>Refresh
+                    </button>
+                </div>
+
+                <div class="row g-2 mb-4">
+                    @foreach ([
+                        'sales' => 'Sales',
+                        'sale_returns' => 'Sale returns',
+                        'purchases' => 'Purchases',
+                        'purchase_returns' => 'Purchase returns',
+                        'local_purchase_orders' => 'LPOs',
+                        'products' => 'Products',
+                        'inventories' => 'Inventory',
+                        'inventory_transfers' => 'Transfers',
+                    ] as $table => $label)
+                        <div class="col-6 col-md-3">
+                            <div class="mini">
+                                <div class="k">{{ $label }}</div>
+                                <div class="v">{{ number_format($countsByTable[$table]['total'] ?? 0) }}
+                                    @if ($countsByTable[$table]['deleted'] ?? 0)
+                                        <small>· {{ number_format($countsByTable[$table]['deleted']) }} deleted</small>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                    <input type="search" class="form-control form-control-sm" style="max-width: 260px" placeholder="Filter tables…" x-model="q">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="tenant-data-hide-empty" x-model="hideEmpty">
+                        <label class="form-check-label small" for="tenant-data-hide-empty">Hide empty tables</label>
+                    </div>
+                    <span class="small text-body-secondary ms-auto">{{ count($tableCounts) }} tables · {{ number_format(collect($tableCounts)->sum('total')) }} rows</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Table</th>
+                                <th class="text-end" style="width: 120px">Rows</th>
+                                <th class="text-end" style="width: 100px">Deleted</th>
+                                <th class="d-none d-md-table-cell" style="width: 30%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($tableCounts as $row)
+                                <tr x-show="(!hideEmpty || {{ $row['total'] + $row['deleted'] }} > 0) && '{{ $row['table'] }} {{ Str::lower($row['label']) }}'.includes(q.toLowerCase())">
+                                    <td>
+                                        <span class="fw-medium">{{ $row['label'] }}</span>
+                                        <code class="small text-body-secondary ms-1">{{ $row['table'] }}</code>
+                                    </td>
+                                    <td class="text-end fw-semibold">{{ number_format($row['total']) }}</td>
+                                    <td class="text-end text-body-secondary">{{ $row['deleted'] ? number_format($row['deleted']) : '—' }}</td>
+                                    <td class="d-none d-md-table-cell">
+                                        <div class="meter"><i class="bg-primary" style="width: {{ round(($row['total'] / $maxRows) * 100) }}%"></i></div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4"><div class="empty"><i class="fa fa-database"></i>No tenant tables found.</div></td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         @endif
