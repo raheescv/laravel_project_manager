@@ -440,7 +440,7 @@
         <span id="imgZoomClose" style="position:absolute; top:18px; right:26px; color:#fff; font-size:34px; line-height:1; cursor:pointer;"
             aria-label="Close">&times;</span>
         <img id="imgZoomTarget" src="" alt="Preview"
-            style="max-width:92vw; max-height:88vh; object-fit:contain; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,.5);">
+            style="max-width:92vw; max-height:88vh; object-fit:contain; background:#fff; padding:12px; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,.5);">
     </div>
     <script>
         (function () {

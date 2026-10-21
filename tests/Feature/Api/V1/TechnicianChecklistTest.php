@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\RentOut\Checklist\GeneratePdfAction;
+use App\Livewire\RentOut\Checklist\Sign;
 use App\Livewire\RentOut\Tabs\ChecklistTab;
 use App\Models\Account;
 use App\Models\Checklist;
@@ -458,6 +459,7 @@ it('renders the PDF and the sign page from one document, move-out photo included
             'tenant_id' => $this->rentOut->tenant_id, 'rent_out_id' => $this->rentOut->id, 'phase' => 'move_in',
             'role' => 'facility_coordinator', 'signer_name' => 'Rahul', 'signature_path' => $photo, 'signed_at' => now(),
         ]);
+        $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
         $this->actingAs($this->me);
 
         $rentOut = RentOut::with(['account', 'group', 'building', 'property', 'type', 'checklistLines.item',
@@ -483,6 +485,10 @@ it('renders the PDF and the sign page from one document, move-out photo included
         expect($screen)->toContain('sigpad_move_in_lessee_'.$this->rentOut->id)
             ->not->toContain('sigpad_move_in_facility_coordinator_')
             ->and($pdf)->not->toContain('sigpad_');
+
+        // A saved signature can be cleared on screen, never from the PDF.
+        expect($screen)->toContain('Clear signature')
+            ->and($pdf)->not->toContain('Clear signature');
     } finally {
         @unlink($absolute);
     }
@@ -620,4 +626,37 @@ it('keeps item names and rooms after the master item is deleted', function (): v
         ->name->toStartWith('Refrigerator')
         ->category->toBe('Kitchen');
     $tab->assertSee('Refrigerator');
+});
+
+it('clears a saved signature on the sign page so it can be signed again', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+    $path = "rent-out-checklists/{$this->rentOut->id}/signatures/lessee.png";
+    Storage::disk('public')->put($path, 'png');
+    RentOutChecklistSignature::create([
+        'tenant_id' => $this->rentOut->tenant_id, 'rent_out_id' => $this->rentOut->id, 'phase' => 'move_in',
+        'role' => 'lessee', 'signer_name' => 'Leena', 'signature_path' => $path, 'signed_at' => now(),
+    ]);
+
+    Livewire::test(Sign::class, ['rentOut' => $this->rentOut, 'phase' => 'move_in', 'role' => 'lessee', 'signatureUrl' => '/storage/'.$path])
+        ->assertSee('Clear signature')
+        ->call('clear')
+        ->assertRedirect(route('property::rent_out::checklist::print', $this->rentOut->id));
+
+    expect(RentOutChecklistSignature::where('rent_out_id', $this->rentOut->id)->exists())->toBeFalse();
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('keeps the signatures of a sealed hand-over', function (): void {
+    $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
+    $this->actingAs($this->me);
+    signAll($this->rentOut, 'move_in');
+    $this->rentOut->update(['actual_move_in_date' => now()->toDateString()]);
+
+    Livewire::test(Sign::class, ['rentOut' => $this->rentOut, 'phase' => 'move_in', 'role' => 'lessee', 'signatureUrl' => '/storage/x.png', 'locked' => true])
+        ->assertDontSee('Clear signature')
+        ->call('clear')
+        ->assertHasErrors('signature');
+
+    expect(RentOutChecklistSignature::where('rent_out_id', $this->rentOut->id)->count())->toBe(3);
 });

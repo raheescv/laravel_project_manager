@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Checklist;
 
+use App\Actions\RentOut\Checklist\ClearSignatureAction;
 use App\Actions\RentOut\Checklist\SaveSignatureAction;
 use App\Models\RentOut;
 use Livewire\Component;
@@ -20,13 +21,19 @@ class Sign extends Component
 
     public ?int $userId = null;
 
-    public function mount(RentOut $rentOut, string $phase, string $role, ?string $signerName = null, ?int $userId = null)
+    public ?string $signatureUrl = null;
+
+    public bool $locked = false;
+
+    public function mount(RentOut $rentOut, string $phase, string $role, ?string $signerName = null, ?int $userId = null, ?string $signatureUrl = null, bool $locked = false)
     {
         $this->rentOut = $rentOut;
         $this->phase = $phase;
         $this->role = $role;
         $this->signerName = $signerName;
         $this->userId = $userId;
+        $this->signatureUrl = $signatureUrl;
+        $this->locked = $locked;
     }
 
     public function save()
@@ -44,6 +51,20 @@ class Sign extends Component
             'signer_name' => $this->signerName,
             'signature' => $this->signature,
         ]);
+
+        return redirect(route('property::rent_out::checklist::print', $this->rentOut->id));
+    }
+
+    public function clear()
+    {
+        abort_unless(auth()->user()?->can('rent out checklist.edit'), 403);
+
+        $response = (new ClearSignatureAction())->execute($this->rentOut->id, $this->phase, $this->role);
+        if (! $response['success']) {
+            $this->addError('signature', $response['message']);
+
+            return;
+        }
 
         return redirect(route('property::rent_out::checklist::print', $this->rentOut->id));
     }
