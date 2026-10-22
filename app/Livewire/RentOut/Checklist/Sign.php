@@ -23,9 +23,7 @@ class Sign extends Component
 
     public ?string $signatureUrl = null;
 
-    public bool $locked = false;
-
-    public function mount(RentOut $rentOut, string $phase, string $role, ?string $signerName = null, ?int $userId = null, ?string $signatureUrl = null, bool $locked = false)
+    public function mount(RentOut $rentOut, string $phase, string $role, ?string $signerName = null, ?int $userId = null, ?string $signatureUrl = null)
     {
         $this->rentOut = $rentOut;
         $this->phase = $phase;
@@ -33,7 +31,6 @@ class Sign extends Component
         $this->signerName = $signerName;
         $this->userId = $userId;
         $this->signatureUrl = $signatureUrl;
-        $this->locked = $locked;
     }
 
     public function save()

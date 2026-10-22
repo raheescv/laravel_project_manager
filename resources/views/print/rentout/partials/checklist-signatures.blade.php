@@ -6,15 +6,11 @@
      again at the foot of the handover terms annex, which is signed against them.
 
      On the sign page ($withPads) every box is the Sign component: a pad while
-     unsigned, the saved image with a "Clear signature" link once signed (until the
-     phase is sealed). The annex copy never carries pads, so each pad exists exactly once.
+     unsigned, the saved image with a "Clear signature" link once signed. The annex
+     copy never carries pads, so each pad exists exactly once.
 
      Expects $phaseKey, $withPads, plus $ro, $roles, $sigSrc, $nameFor and $userIdFor
      from the parent. --}}
-@php
-    $phaseSealed = ! empty($withPads)
-        && \App\Support\RentOutChecklistState::isSealed($ro, \App\Enums\RentOut\ChecklistPhase::from($phaseKey));
-@endphp
 <table class="sign-table">
     <tr>
         @foreach ($roles as $roleKey => $roleLabel)
@@ -28,7 +24,6 @@
                         'signerName' => $nameFor($roleKey),
                         'userId' => $userIdFor($roleKey),
                         'signatureUrl' => $src,
-                        'locked' => $phaseSealed,
                     ], key('sign-' . $phaseKey . '-' . $roleKey . '-' . $ro->id))
                 @elseif ($src)
                     <img class="sign-img zoomable" src="{{ $src }}" data-img="{{ $src }}" alt="signature">

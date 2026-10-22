@@ -2,16 +2,14 @@
     @php $uid = $phase.'_'.$role.'_'.$rentOut->id; @endphp
     @if ($signatureUrl)
         <img class="sign-img zoomable" src="{{ $signatureUrl }}" data-img="{{ $signatureUrl }}" alt="signature">
-        @if (! $locked)
-            @can('rent out checklist.edit')
-                <div class="no-print">
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" wire:click="clear" wire:loading.attr="disabled"
-                        wire:confirm="Clear this saved signature? It will need to be signed again.">
-                        <i class="fa fa-eraser me-1"></i>Clear signature
-                    </button>
-                </div>
-            @endcan
-        @endif
+        @can('rent out checklist.edit')
+            <div class="no-print">
+                <button type="button" class="btn btn-link btn-sm text-danger p-0" wire:click="clear" wire:loading.attr="disabled"
+                    wire:confirm="Clear this saved signature? It will need to be signed again.">
+                    <i class="fa fa-eraser me-1"></i>Clear signature
+                </button>
+            </div>
+        @endcan
         @error('signature')
             <div class="no-print" style="color:red">* {{ $message }}</div>
         @enderror

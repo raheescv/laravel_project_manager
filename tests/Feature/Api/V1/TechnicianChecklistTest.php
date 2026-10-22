@@ -647,16 +647,17 @@ it('clears a saved signature on the sign page so it can be signed again', functi
     Storage::disk('public')->assertMissing($path);
 });
 
-it('keeps the signatures of a sealed hand-over', function (): void {
+it('clears a signature on a sealed hand-over too', function (): void {
     $this->me->givePermissionTo(Permission::findOrCreate('rent out checklist.edit', 'web'));
     $this->actingAs($this->me);
     signAll($this->rentOut, 'move_in');
     $this->rentOut->update(['actual_move_in_date' => now()->toDateString()]);
 
-    Livewire::test(Sign::class, ['rentOut' => $this->rentOut, 'phase' => 'move_in', 'role' => 'lessee', 'signatureUrl' => '/storage/x.png', 'locked' => true])
-        ->assertDontSee('Clear signature')
+    Livewire::test(Sign::class, ['rentOut' => $this->rentOut, 'phase' => 'move_in', 'role' => 'lessee', 'signatureUrl' => '/storage/x.png'])
+        ->assertSee('Clear signature')
         ->call('clear')
-        ->assertHasErrors('signature');
+        ->assertHasNoErrors();
 
-    expect(RentOutChecklistSignature::where('rent_out_id', $this->rentOut->id)->count())->toBe(3);
+    expect(RentOutChecklistSignature::where('rent_out_id', $this->rentOut->id)->pluck('role')->map->value->sort()->values()->all())
+        ->toBe(['facility_coordinator', 'leasing_coordinator']);
 });
