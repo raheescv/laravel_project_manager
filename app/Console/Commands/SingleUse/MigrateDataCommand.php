@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Models\UserHasBranch;
 use App\Services\TenantService;
 use App\Support\Migration\BulkImport;
+use App\Support\Migration\SourceAuthors;
 use App\Support\Migration\SourceTimestamps;
 use App\Support\Migration\UnsyncedSales;
 use App\Support\TenantCache;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -39,7 +41,7 @@ class MigrateDataCommand extends Command
         {--tenant= : Tenant id to migrate into (defaults to the resolved/TENANT_ID tenant, or the only tenant when there is just one)}
         {--force : Run even if the target database already contains migrated data}
         {--fast : Also relax global sync_binlog for maximum speed (dedicated migration DB only; restored on finish)}
-        {--only= : Comma-separated steps to run instead of all (branches,settings,accounts,customers,vendors,services,products,roles,employees,users,commissions,purchases,appointments,stock-transfers,sales,sale-returns)}
+        {--only= : Comma-separated steps to run instead of all (branches,settings,accounts,customers,vendors,services,products,roles,employees,users,commissions,purchases,appointments,stock-transfers,sales,sale-authors,sale-returns)}
         {--unsynced : Sales: queue only source sales whose invoice_no is not in the target yet}
         {--from-id= : Sales: lowest source sales.id to include}
         {--to-id= : Sales: highest source sales.id to include}
@@ -56,14 +58,14 @@ class MigrateDataCommand extends Command
     private const STEPS = [
         'branches', 'settings', 'accounts', 'customers', 'vendors', 'services', 'products', 'roles',
         'employees', 'users', 'commissions', 'purchases', 'appointments', 'stock-transfers', 'sales',
-        'sale-returns',
+        'sale-authors', 'sale-returns',
     ];
 
     /**
      * Steps that skip rows already in the target, so they may run against a migrated database
      * without --force.
      */
-    private const IDEMPOTENT_STEPS = ['sales'];
+    private const IDEMPOTENT_STEPS = ['sales', 'sale-authors'];
 
     public $paymentModesIds;
 
@@ -170,6 +172,7 @@ class MigrateDataCommand extends Command
                 'appointments' => fn () => $this->appointments(),
                 'stock-transfers' => fn () => $this->stockTransfers(),
                 'sales' => fn () => $this->sales(),
+                'sale-authors' => fn () => $this->saleAuthors(),
                 'sale-returns' => fn () => $this->salesReturns(),
             ];
 
@@ -255,7 +258,10 @@ class MigrateDataCommand extends Command
             ->when($this->option('from-date'), fn ($query, $date) => $query->whereDate('date', '>=', $date))
             ->when($this->option('to-date'), fn ($query, $date) => $query->whereDate('date', '<=', $date))
             ->orderBy('id')
-            ->get(['id', 'invoice_no']);
+            ->get(array_merge(
+                ['id', 'invoice_no', 'created_by', 'updated_by'],
+                Schema::connection('mysql2')->hasColumn('sales', 'created_model') ? ['created_model', 'updated_model'] : [],
+            ));
     }
 
     private function reportSalesPlan(): void
@@ -868,6 +874,28 @@ class MigrateDataCommand extends Command
     }
 
     /**
+     * Repairs sales already migrated before the replay kept their authors: every one of them reads
+     * "Created By: system" (or, before created_model was honoured, the user who merely shares the
+     * employee's id — "Habid" for employee 10 "MAKBUL"). Re-points each target sale (matched by
+     * invoice_no) at the user / employee who created / last updated it in the old system, and
+     * restores their names exactly as the old system spells them. Safe to re-run.
+     */
+    private function saleAuthors(): void
+    {
+        $this->info('Restoring sale authors from the source...');
+
+        $userMap = User::where('type', 'user')->pluck('id', 'second_reference_no');
+        $employeeMap = User::where('type', 'employee')->pluck('id', 'second_reference_no');
+
+        $old = DB::connection('mysql2');
+        $renamed = SourceAuthors::restoreUserNames($userMap, $old->table('users')->whereIn('id', $userMap->keys()->all())->pluck('name', 'id'))
+            + SourceAuthors::restoreUserNames($employeeMap, $old->table('employees')->whereIn('id', $employeeMap->keys()->all())->pluck('name', 'id'));
+        $updated = SourceAuthors::restoreSales($userMap, $employeeMap, $this->sourceSales());
+
+        $this->info("Restored {$renamed} user name(s) and the authors of {$updated} sale(s).");
+    }
+
+    /**
      * Post-parallel-replay reconciliation. During the batch the workers ran in BulkImport mode, so
      * Inventory.quantity was written without locks (racy) and product costs were not recomputed. Both
      * are rebuilt here from source-of-truth data that is immune to those races:
@@ -1064,7 +1092,7 @@ class MigrateDataCommand extends Command
                     foreach ($users as $item) {
                         try {
                             DB::transaction(function () use ($item): void {
-                                $name = ucfirst(strtolower($item->name));
+                                $name = $item->name;
                                 $user = User::create([
                                     'type' => 'user',
                                     'code' => rand(100000, 999999),
@@ -1120,7 +1148,7 @@ class MigrateDataCommand extends Command
                         try {
                             DB::transaction(function () use ($item): void {
                                 // Create user
-                                $name = ucfirst(strtolower($item->name));
+                                $name = $item->name;
                                 $user = User::create([
                                     'type' => 'employee',
                                     'code' => rand(100000, 999999),

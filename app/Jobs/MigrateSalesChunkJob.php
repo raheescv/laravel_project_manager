@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\TenantService;
 use App\Support\Migration\BulkImport;
+use App\Support\Migration\SourceAuthors;
 use App\Support\Migration\SourceTimestamps;
 use App\Support\Migration\UnsyncedSales;
 use Exception;
@@ -217,6 +218,10 @@ class MigrateSalesChunkJob implements ShouldQueue
                     // timestamps back so the replayed row keeps its place in history.
                     SourceTimestamps::apply($response['data'], $source);
 
+                    // The actions also stamp the sale and its lines with the system user the replay
+                    // runs as; put the old system's real author back so "Created By" matches the source.
+                    SourceAuthors::applyToSale($response['data'], $data['created_by'], $data['updated_by']);
+
                     return true;
                 });
 
@@ -301,8 +306,10 @@ class MigrateSalesChunkJob implements ShouldQueue
             'address' => null,
             'status' => $sale->status == 2 ? 'completed' : 'draft',
             'source' => 'migration',
-            'created_by' => $userMap[$sale->created_by] ?? null,
-            'updated_by' => $userMap[$sale->updated_by] ?? null,
+            // The old system's users and employees live in separate tables with overlapping ids;
+            // created_model / updated_model say which one the id belongs to.
+            'created_by' => SourceAuthors::resolve($sale->created_model ?? null, $sale->created_by, $userMap, $employeeMap),
+            'updated_by' => SourceAuthors::resolve($sale->updated_model ?? null, $sale->updated_by, $userMap, $employeeMap),
         ];
         $data['comboOffers'] = [];
         $data['items'] = [];

@@ -20,20 +20,29 @@
     <!-- Filter Section -->
     <div class="card mb-3">
         <div class="card-header">
-            <div class="row">
+            <form wire:submit="fetchReport" class="row g-2 align-items-end">
                 <div class="col-md-2">
                     <label for="from_date">From Date</label>
-                    {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model.live', 'fromDate') }}
+                    {{ html()->date('from_date')->value('')->class('form-control')->id('from_date')->attribute('wire:model', 'filter_from_date') }}
                 </div>
                 <div class="col-md-2">
                     <label for="to_date">To Date</label>
-                    {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model.live', 'toDate') }}
+                    {{ html()->date('to_date')->value('')->class('form-control')->id('to_date')->attribute('wire:model', 'filter_to_date') }}
                 </div>
                 <div class="col-md-4" wire:ignore>
                     <label for="branch_id">Branch</label>
                     {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list')->id('branch_id')->placeholder('Branch') }}
                 </div>
-            </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100" data-testid="overview-report-submit" wire:loading.attr="disabled" wire:target="fetchReport">
+                        <span wire:loading.remove wire:target="fetchReport"><i class="fa fa-search"></i> Fetch</span>
+                        <span wire:loading wire:target="fetchReport"><i class="fa fa-circle-o-notch fa-spin"></i> Fetching</span>
+                    </button>
+                </div>
+                @error('filter_to_date')
+                    <div class="col-12 text-danger small"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
+                @enderror
+            </form>
         </div>
     </div>
 
@@ -687,7 +696,7 @@
             $(document).ready(function() {
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
-                    @this.set('branchId', value);
+                    @this.set('filter_branch_id', value, false);
                 });
             });
             window.addEventListener('updatePieChart', event => {

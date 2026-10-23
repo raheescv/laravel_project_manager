@@ -27,6 +27,12 @@ class OverviewReport extends Component
 
     public $toDate;
 
+    public $filter_branch_id;
+
+    public $filter_from_date;
+
+    public $filter_to_date;
+
     public $dataPoints = [];
 
     protected $paginationTheme = 'bootstrap';
@@ -54,6 +60,28 @@ class OverviewReport extends Component
         $this->fromDate = date('Y-m-d');
         $this->toDate = date('Y-m-d');
         $this->branchId = session('branch_id');
+
+        $this->filter_from_date = $this->fromDate;
+        $this->filter_to_date = $this->toDate;
+        $this->filter_branch_id = $this->branchId;
+    }
+
+    public function fetchReport(): void
+    {
+        $this->validate([
+            'filter_from_date' => ['nullable', 'date'],
+            'filter_to_date' => ['nullable', 'date', 'after_or_equal:filter_from_date'],
+            'filter_branch_id' => ['nullable', 'integer'],
+        ], [
+            'filter_to_date.after_or_equal' => 'The to date must be on or after the from date.',
+        ]);
+
+        $this->fromDate = $this->filter_from_date ?: null;
+        $this->toDate = $this->filter_to_date ?: null;
+        $this->branchId = $this->filter_branch_id ?: null;
+
+        $this->resetPage('products-page');
+        $this->resetPage('employees-page');
     }
 
     public function export()
