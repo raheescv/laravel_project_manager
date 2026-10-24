@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Product\Page;
+use App\Models\Configuration;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -10,8 +11,9 @@ use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
- * Products and services carry a priority; the POS grid lists higher priorities first,
- * then alphabetically, so unprioritised items (0) fall to the end.
+ * Products and services carry a priority; the POS grid follows Settings → Sale →
+ * POS Product Order (appProductSort()): by priority or name, ascending or
+ * descending. Priority ties break alphabetically.
  *
  * @see App\Actions\Sale\Pos\GetProductsAction
  */
@@ -47,7 +49,8 @@ beforeEach(function (): void {
     };
 });
 
-it('lists higher priority items first, then by name', function (): void {
+it('lists higher priority items first, then by name, when set to descending', function (): void {
+    Configuration::updateOrCreate(['key' => 'app_product_sort_direction'], ['value' => 'desc']);
     $this->world->product->update(['priority' => 0, 'name' => 'Zz Base Item']);
     ($this->addProduct)('Apple', 0);
     ($this->addProduct)('Banana', 5);
@@ -59,7 +62,31 @@ it('lists higher priority items first, then by name', function (): void {
     expect($names)->toBe(['Cherry', 'Avocado', 'Banana', 'Apple', 'Zz Base Item']);
 });
 
+it('lists the lowest priority number first by default', function (): void {
+    $this->world->product->update(['priority' => 9, 'name' => 'Zz Base Item']);
+    ($this->addProduct)('Banana', 5);
+    ($this->addProduct)('Cherry', 0);
+    ($this->addProduct)('Avocado', 5);
+
+    $names = collect($this->getJson($this->world->url('products'))->assertOk()->json())->pluck('name')->all();
+
+    expect($names)->toBe(['Cherry', 'Avocado', 'Banana', 'Zz Base Item']);
+});
+
+it('lists by name when the order is set to name', function (): void {
+    Configuration::updateOrCreate(['key' => 'app_product_sort_by'], ['value' => 'name']);
+    Configuration::updateOrCreate(['key' => 'app_product_sort_direction'], ['value' => 'desc']);
+    $this->world->product->update(['priority' => 9, 'name' => 'Mango']);
+    ($this->addProduct)('Banana', 0);
+    ($this->addProduct)('Cherry', 5);
+
+    $names = collect($this->getJson($this->world->url('products'))->assertOk()->json())->pluck('name')->all();
+
+    expect($names)->toBe(['Mango', 'Cherry', 'Banana']);
+});
+
 it('orders services by priority too', function (): void {
+    Configuration::updateOrCreate(['key' => 'app_product_sort_direction'], ['value' => 'desc']);
     ($this->addProduct)('Haircut', 1, 'service');
     ($this->addProduct)('Facial', 3, 'service');
 

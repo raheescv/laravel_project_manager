@@ -115,7 +115,7 @@ class SaleSettingController extends Controller
     /**
      * Update the New Sale catalog order from the mobile app.
      *
-     * Writes the same Sale Configuration keys as the web "App Product Order"
+     * Writes the same Sale Configuration keys as the web "POS Product Order"
      * setting, so every till picks the change up on its next sync. Gated on
      * the same `configuration.settings` permission as the print options.
      */

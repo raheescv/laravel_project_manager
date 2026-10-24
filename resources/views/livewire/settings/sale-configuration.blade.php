@@ -39,12 +39,12 @@
                         <div class="form-text">Tapping the same product again adds to its row, or starts a new one.</div>
                     </div>
                     <div class="col-md-6 col-xl-4">
-                        <label class="form-label" for="app_product_sort_by">App Product Order</label>
+                        <label class="form-label" for="app_product_sort_by">POS Product Order</label>
                         {{ html()->select('app_product_sort_by', ['priority' => 'Priority', 'name' => 'Name'])->value('')->class('form-select')->attribute('wire:model', 'app_product_sort_by') }}
-                        <div class="form-text">How the mobile app's New Sale lists products.</div>
+                        <div class="form-text">How the web POS and the mobile app list products.</div>
                     </div>
                     <div class="col-md-6 col-xl-4">
-                        <label class="form-label" for="app_product_sort_direction">App Order Direction</label>
+                        <label class="form-label" for="app_product_sort_direction">POS Order Direction</label>
                         {{ html()->select('app_product_sort_direction', ['asc' => 'Ascending', 'desc' => 'Descending'])->value('')->class('form-select')->attribute('wire:model', 'app_product_sort_direction') }}
                         <div class="form-text">Ascending lists the lowest priority number (or A&ndash;Z) first.</div>
                     </div>

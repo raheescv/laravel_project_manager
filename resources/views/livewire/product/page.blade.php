@@ -181,7 +181,7 @@
                                             <i class="fa fa-sort-numeric-desc text-primary me-1 small"></i>
                                             POS Priority
                                         </label>
-                                        {{ html()->number('priority')->value('')->attribute('min', 0)->attribute('step', 1)->class('form-control border-secondary-subtle shadow-sm')->placeholder('0')->id('priority')->attribute('wire:model', 'products.priority')->attribute('title', 'Higher numbers are listed first on the POS screen') }}
+                                        {{ html()->number('priority')->value('')->attribute('min', 0)->attribute('step', 1)->class('form-control border-secondary-subtle shadow-sm')->placeholder('0')->id('priority')->attribute('wire:model', 'products.priority')->attribute('title', 'POS listing order — see Settings → Sale → POS Product Order') }}
                                     </div>
                                 @endif
                                 @if ($isProduct || $isFixedAsset)

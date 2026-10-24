@@ -16,11 +16,12 @@ class GetProductsAction
             $saleType = $filters['sale_type'] ?? 'normal';
 
             $isFavorite = ($filters['category_id'] ?? null) === 'favorite';
+            $sort = appProductSort();
 
             $query = $this->baseQuery($filters, $branchId)
                 ->when($isFavorite, fn ($q) => $q->where('products.is_favorite', true))
-                ->orderByDesc('products.priority')
-                ->orderBy('products.name');
+                ->when($sort['by'] === 'priority', fn ($q) => $q->orderBy('products.priority', $sort['direction'])->orderBy('products.name'))
+                ->when($sort['by'] === 'name', fn ($q) => $q->orderBy('products.name', $sort['direction']));
 
             $total = (clone $query)->count();
 

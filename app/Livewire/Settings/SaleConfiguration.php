@@ -73,7 +73,7 @@ class SaleConfiguration extends Component
     /** Product cards per row in the POS catalogue — see posGridColumns(). */
     public $pos_grid_columns;
 
-    /** Mobile app New Sale order: 'name' or 'priority' — see appProductSort(). */
+    /** POS catalog order (web + mobile app): 'name' or 'priority' — see appProductSort(). */
     public $app_product_sort_by;
 
     /** 'asc' or 'desc' — see appProductSort(). */

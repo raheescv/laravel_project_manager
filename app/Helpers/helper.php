@@ -866,8 +866,8 @@ if (! function_exists('posGridColumns')) {
 }
 if (! function_exists('appProductSort')) {
     /**
-     * How the mobile app orders its New Sale catalog (Settings → Sale
-     * Configuration → App Product Order, also editable from the app): by
+     * How the web POS and the mobile app's New Sale order the catalog (Settings
+     * → Sale Configuration → POS Product Order, also editable from the app): by
      * `name` or `priority`, `asc` or `desc`. Lowest priority number first
      * unless the business changes it; anything unrecognised falls back to that.
      *
