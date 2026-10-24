@@ -45,6 +45,9 @@ class SaleSettingController extends Controller
                 'default_product_type' => $defaultProductType,
                 // School module: the till offers "Tap student card" only when this is true.
                 'school_enabled' => ModuleAccess::school(),
+                // Painted on catalog tiles whose product has no photo — the same
+                // fallback the web POS uses (Sale\Pos\GetProductsAction).
+                'logo_url' => tenant_cache('logo'),
                 'print' => $this->printBlock(),
             ], 'Sale settings retrieved successfully');
         } catch (\Exception $e) {
