@@ -11,6 +11,10 @@
                 {{ isProduct ? 'P' : 'S' }}
             </span>
 
+            <!-- Priority (Settings → Sale → POS Product Order); 0 = unprioritised -->
+            <span v-if="priority" class="posx-card-tag prio" :title="`Priority ${priority}`">
+                #{{ priority }}
+            </span>
 
         </div>
 
@@ -61,6 +65,9 @@ export default {
     computed: {
         isProduct() {
             return this.product.type === 'product';
+        },
+        priority() {
+            return Number(this.product.priority) || 0;
         },
         hasOffer() {
             return Number(this.product.original_price) > Number(this.product.mrp);

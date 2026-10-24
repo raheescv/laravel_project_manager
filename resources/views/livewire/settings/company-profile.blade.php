@@ -12,12 +12,6 @@
                     {{ html()->input('company_name')->value('')->class('form-control form-control-sm')->placeholder('Enter your company name')->attribute('wire:model', 'company_name') }}
                 </div>
                 <div class="col-12 col-md-4">
-                    <label class="form-label fw-medium small mb-1" for="company_name_arabic">
-                        <i class="fa fa-building me-1"></i>Company Name (Arabic)
-                    </label>
-                    {{ html()->input('company_name_arabic')->value('')->class('form-control form-control-sm')->placeholder('اسم الشركة')->attribute('dir', 'rtl')->attribute('wire:model', 'company_name_arabic') }}
-                </div>
-                <div class="col-12 col-md-4">
                     <label class="form-label fw-medium small mb-1" for="mobile">
                         <i class="fa fa-phone me-1"></i>Contact Number
                     </label>

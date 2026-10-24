@@ -6,6 +6,7 @@ use App\Actions\Sale\BuildDaySessionReportAction;
 use App\Models\Configuration;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
+use App\Support\BarcodeFonts;
 use App\Support\BarcodeTemplateConfiguration;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
@@ -69,7 +70,7 @@ class SaleHelper
     }
 
     /**
-     * The compact English + Arabic "Office Bill" receipt: company name, date,
+     * The compact English-only "Office Bill" receipt: company name, date,
      * the biller's own Bill No, items and totals — nothing else.
      */
     private function officeBill(Sale $sale, string $company_name): string
@@ -79,8 +80,9 @@ class SaleHelper
         return View::make('sale.print-office-bill', [
             'sale' => $sale,
             'company_name' => $company_name,
-            'company_name_arabic' => Configuration::where('key', 'company_name_arabic')->value('value') ?? '',
             'print_item_label' => Configuration::where('key', 'print_item_label')->value('value') ?? 'product',
+            // The thermal (ESC/POS) render runs offline, so it gets the face inline.
+            'font_css' => BarcodeFonts::styleTag(['font' => ['family' => 'plex_sans', 'weight' => 700]], request()->query('format') === 'escpos'),
         ])->render();
     }
 

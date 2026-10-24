@@ -778,7 +778,7 @@ if (! function_exists('thermalPrinterStyle')) {
         return [
             'with_arabic' => 'With Arabic',
             'english_only' => 'English Only',
-            'office_bill' => 'Office Bill (English + Arabic, compact)',
+            'office_bill' => 'Office Bill (English, compact)',
         ];
     }
 }

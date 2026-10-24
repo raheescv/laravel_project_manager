@@ -1857,6 +1857,15 @@ html.dark .posx .posx-date-input {
     color: var(--pos-pri);
 }
 
+/* priority number — top-right, quiet so it reads as a label, not an alert */
+.posx .posx-card-tag.prio {
+    inset-inline-end: 6px;
+    background: var(--pos-panel);
+    border: 1px solid var(--pos-line);
+    color: var(--pos-muted);
+    font-variant-numeric: tabular-nums;
+}
+
 .posx .posx-card-tag.low {
     inset-inline-end: 6px;
     background: var(--pos-danger-soft);

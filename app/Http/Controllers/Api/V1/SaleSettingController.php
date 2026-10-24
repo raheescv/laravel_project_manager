@@ -172,8 +172,6 @@ class SaleSettingController extends Controller
             'show_logo' => Configuration::where('key', 'enable_logo_in_print')->value('value') === 'yes',
             'show_company_name' => (Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no') === 'yes',
             'company_name' => Configuration::where('key', 'company_name')->value('value') ?? '',
-            // Second header line of the "office_bill" style.
-            'company_name_arabic' => Configuration::where('key', 'company_name_arabic')->value('value') ?? '',
             // The cashier's sale note under the totals; off until switched on.
             'show_notes' => Configuration::where('key', 'enable_notes_in_print')->value('value') === 'yes',
             // Opaque cache-buster: changes when a new logo is uploaded so the
