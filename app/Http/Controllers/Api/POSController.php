@@ -10,6 +10,7 @@ use App\Actions\Sale\Pos\GetProductByBarcodeAction;
 use App\Actions\Sale\Pos\GetProductsAction;
 use App\Actions\Sale\UpdateAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sale\PosSubmitRequest;
 use App\Models\Sale;
 use App\Models\SalePayment;
 use Exception;
@@ -104,17 +105,9 @@ class POSController extends Controller
         }
     }
 
-    public function submitSale(Request $request)
+    public function submitSale(PosSubmitRequest $request)
     {
-        // Without day sessions the sale takes the date the cashier picked, so
-        // that date has to be real and not in the future.
         $skipsDaySession = posSkipsDaySession();
-        if ($skipsDaySession) {
-            $request->validate(
-                ['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today']],
-                ['date.before_or_equal' => 'The sale date cannot be in the future.']
-            );
-        }
 
         try {
             $user_id = Auth::id();
