@@ -37,21 +37,8 @@ class CreateAction
                 'tax_amount' => $this->model->items->sum('tax_amount'),
                 'paid' => $this->model->payments->sum('amount'),
             ];
-            if ($updateData['gross_amount'] == $this->model->gross_amount) {
-                unset($updateData['gross_amount']);
-            }
-            if ($updateData['item_discount'] == $this->model->item_discount) {
-                unset($updateData['item_discount']);
-            }
-            if ($updateData['tax_amount'] == $this->model->tax_amount) {
-                unset($updateData['tax_amount']);
-            }
-            if ($updateData['paid'] == $this->model->paid) {
-                unset($updateData['paid']);
-            }
-            if ($updateData) {
-                $this->model->update($updateData);
-            }
+            
+            $this->model->update($updateData);
 
             $this->model->refresh();
             $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
