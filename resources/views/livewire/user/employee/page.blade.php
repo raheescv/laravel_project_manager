@@ -1132,17 +1132,23 @@
                                 <div class="c6">
                                     <label for="pin" class="empx-label">
                                         <i class="fa fa-shield"></i> PIN Code
-                                        @if (isset($users['id']))
-                                            <span class="hint">(leave blank to keep current)</span>
+                                        @if ($hasHiddenPin)
+                                            <span class="hint">(set — shows after their next PIN sign-in, or enter a new one)</span>
+                                        @else
+                                            <span class="hint">(4 digits, unique)</span>
                                         @endif
                                     </label>
-                                    <div class="empx-input">
+                                    <div class="empx-input" x-data="{ showPin: false }">
                                         <span class="empx-input-ic"><i class="fa fa-shield"></i></span>
-                                        {{ html()->password('pin')->value('')->class('empx-control')->attribute('wire:model', 'users.pin')->placeholder('Enter PIN') }}
-                                        <button type="button" class="empx-eye" tabindex="-1" onclick="empxEye(this)" aria-label="Toggle PIN">
-                                            <i class="fa fa-eye"></i>
+                                        <input id="pin" name="pin" x-bind:type="showPin ? 'text' : 'password'" type="password" class="empx-control" wire:model="users.pin" placeholder="Enter 4-digit PIN"
+                                            inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="new-password">
+                                        <button type="button" class="empx-eye" tabindex="-1" x-on:click="showPin = !showPin" aria-label="Toggle PIN">
+                                            <i class="fa" x-bind:class="showPin ? 'fa-eye-slash' : 'fa-eye'"></i>
                                         </button>
                                     </div>
+                                    @error('users.pin')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

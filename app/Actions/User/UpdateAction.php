@@ -28,6 +28,9 @@ class UpdateAction
             if (array_key_exists('password', $data) && blank($data['password'])) {
                 unset($data['password']);
             }
+            if (array_key_exists('pin', $data) && blank($data['pin'])) {
+                unset($data['pin']);
+            }
             validationHelper(User::updateRules($id), $data);
             $model->update($data);
 

@@ -42,6 +42,10 @@ class Page extends Component
 
     public $originalImage;
 
+    // True when the employee has a PIN that predates the encrypted copy, so it
+    // can't be prefilled; it shows once they sign in with it or it is reset.
+    public $hasHiddenPin = false;
+
     public function create()
     {
         $this->mount();
@@ -75,19 +79,24 @@ class Page extends Component
                 'email' => $email,
                 'username' => '',
                 'password' => '',
+                'pin' => '',
                 'designation_id' => '',
                 'order_no' => '',
             ];
             $this->isAdmin = false;
             $this->allowLogin = false;
             $this->originalImage = null;
+            $this->hasHiddenPin = false;
         } else {
+            /** @var User $user */
             $user = User::with('designation')->find($this->table_id);
             $this->users = $user->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
             $this->isAdmin = (bool) $user->is_admin;
             $this->allowLogin = $this->hasLoginAccess($user);
             $this->originalImage = $this->users['image'] ?? null;
+            $this->users['pin'] = $user->revealPin() ?? '';
+            $this->hasHiddenPin = User::isHashedPin($user->getAttributes()['pin'] ?? null);
         }
         $this->dispatch('SelectDropDownValues', $this->users);
     }
@@ -101,6 +110,11 @@ class Page extends Component
             'users.username' => User::usernameRules($this->table_id),
             'users.max_discount_per_sale' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'users.order_no' => ['nullable', 'integer'],
+            'users.pin' => ['nullable', 'digits:4', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (User::pinTaken((string) $value, $this->table_id)) {
+                    $fail('This PIN is already used by another user.');
+                }
+            }],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
         // if (! $this->table_id) {
@@ -128,6 +142,7 @@ class Page extends Component
         'users.code.unique' => 'The code is already Registered',
         'users.code.max' => 'The code field must not be greater than 20 characters.',
         'users.password.max' => 'The code field must not be greater than 20 characters.',
+        'users.pin.digits' => 'The PIN must be exactly 4 digits.',
     ];
 
     public function save($close = false)
@@ -142,8 +157,12 @@ class Page extends Component
             if ($this->photo) {
                 $this->users['image'] = $this->storeOptimizedImage($this->photo, 'users');
             }
+            $data = $this->users;
+            if ($this->table_id && (string) ($data['pin'] ?? '') === (string) User::find($this->table_id)?->revealPin()) {
+                unset($data['pin']);
+            }
             if (! $this->table_id) {
-                $response = (new CreateAction())->execute($this->users);
+                $response = (new CreateAction())->execute($data);
                 if ($response['success']) {
                     $user = User::find($response['data']['id']);
                     if (! empty($this->selectedRoles)) {
@@ -152,7 +171,7 @@ class Page extends Component
                     $this->applyAdminFlag($user);
                 }
             } else {
-                $response = (new UpdateAction())->execute($this->users, $this->table_id);
+                $response = (new UpdateAction())->execute($data, $this->table_id);
                 if ($response['success']) {
                     $user = User::find($this->table_id);
                     $user->syncRoles($this->assignableRoles());

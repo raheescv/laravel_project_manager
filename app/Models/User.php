@@ -5,12 +5,15 @@ namespace App\Models;
 use App\Events\BranchUpdated;
 use App\Traits\BelongsToTenant;
 use Exception;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -62,12 +65,12 @@ class User extends Authenticatable implements AuditableContracts
     protected $hidden = [
         'password',
         'pin',
-        'pin_lookup',
         'remember_token',
     ];
 
     protected $auditExclude = [
         'remember_token',
+        'pin',
     ];
 
     public static function createRules($id = 0, $merge = [])
@@ -257,16 +260,6 @@ class User extends Authenticatable implements AuditableContracts
     }
 
     /**
-     * Replaces the `hashed` cast on `pin` so the write also derives the indexed
-     * lookup digest login needs — the two must never drift apart, so they are set
-     * together or not at all.
-     *
-     * Already-hashed input is passed through untouched, matching what the `hashed`
-     * cast did (the single-use data-migration commands copy stored hashes across).
-     * The plaintext isn't available in that case, so the digest is left NULL and
-     * that user takes the fallback path until their next successful sign-in.
-     */
-    /**
      * Stored trimmed and lower-cased so sign-in is case-insensitive; a blank
      * value is NULL, never '', so the unique index allows many users without one.
      */
@@ -275,38 +268,92 @@ class User extends Authenticatable implements AuditableContracts
         return Attribute::set(fn ($value) => filled($value) ? Str::lower(trim((string) $value)) : null);
     }
 
+    /**
+     * `pin` holds the PIN encrypted under the app key, so login can find the user
+     * by decrypting (microseconds per row, unlike bcrypt) and the employee form can
+     * show it again.
+     *
+     * Already-hashed input is passed through untouched: legacy bcrypt PINs, and the
+     * single-use data-migration commands that copy stored hashes across. Those are
+     * converted to the encrypted form the next time the user signs in with them.
+     */
     protected function pin(): Attribute
     {
         return Attribute::set(function ($value) {
             if ($value === null || $value === '') {
-                return ['pin' => null, 'pin_lookup' => null];
+                return;
             }
 
             $value = (string) $value;
 
-            if (filled(password_get_info($value)['algo'])) {
-                return ['pin' => $value, 'pin_lookup' => null];
-            }
-
-            return [
-                'pin' => Hash::make($value),
-                'pin_lookup' => static::pinLookup($value),
-            ];
+            return static::isHashedPin($value) ? $value : Crypt::encryptString($value);
         });
     }
 
     /**
-     * Deterministic keyed digest of a plaintext PIN, used only to locate the
-     * candidate row before the real bcrypt verification. Keyed with the app key so
-     * a leaked database on its own doesn't reduce a 4-digit PIN to a lookup table.
-     *
-     * Rotating APP_KEY invalidates every stored digest. Recover the same way you
-     * would for any keyed blind index — clear them and let sign-ins repopulate:
-     * `UPDATE users SET pin_lookup = NULL;`
+     * Whether a stored PIN is a legacy one-way hash rather than an encrypted PIN.
      */
-    public static function pinLookup(string $pin): string
+    public static function isHashedPin(?string $storedPin): bool
     {
-        return hash_hmac('sha256', $pin, (string) config('app.key'));
+        return filled($storedPin) && filled(password_get_info($storedPin)['algo']);
+    }
+
+    /**
+     * The plaintext PIN, or null when none is stored, it is still a legacy hash,
+     * or APP_KEY was rotated since it was written.
+     */
+    public function revealPin(): ?string
+    {
+        $storedPin = $this->attributes['pin'] ?? null;
+        if (blank($storedPin) || static::isHashedPin($storedPin)) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($storedPin);
+        } catch (DecryptException) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether the given PIN is this user's, for both encrypted and legacy hashed PINs.
+     */
+    public function checkPin(string $pin): bool
+    {
+        $storedPin = $this->attributes['pin'] ?? null;
+        if (static::isHashedPin($storedPin)) {
+            return Hash::check($pin, $storedPin);
+        }
+
+        $currentPin = $this->revealPin();
+
+        return $currentPin !== null && hash_equals($currentPin, $pin);
+    }
+
+    /**
+     * Users on this tenant whose encrypted PIN is the given one. Legacy hashed
+     * PINs are skipped — comparing them costs a bcrypt check each.
+     *
+     * @return Collection<int, static>
+     */
+    public static function withEncryptedPin(string $pin, bool $activeOnly = false): Collection
+    {
+        return static::query()
+            ->whereNotNull('pin')
+            ->when($activeOnly, fn ($query) => $query->where('is_active', true))
+            ->get(['id', 'pin'])
+            ->reject(fn (User $user) => static::isHashedPin($user->getAttributes()['pin']))
+            ->filter(fn (User $user) => $user->checkPin($pin))
+            ->values();
+    }
+
+    /**
+     * Whether another user on this tenant already signs in with this PIN.
+     */
+    public static function pinTaken(string $pin, $ignoreId = null): bool
+    {
+        return static::withEncryptedPin($pin)->contains(fn (User $user) => $user->id != $ignoreId);
     }
 
     /**

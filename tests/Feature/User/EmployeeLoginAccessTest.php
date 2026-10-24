@@ -1,8 +1,13 @@
 <?php
 
+use App\Actions\V1\Auth\LoginAction;
+use App\Http\Requests\V1\Auth\LoginRequest;
 use App\Livewire\User\Employee\Page;
 use App\Models\Designation;
 use App\Models\User;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
@@ -87,4 +92,97 @@ it('requires an email once login access is on', function (): void {
         ->set('allowLogin', true)
         ->call('save')
         ->assertHasErrors(['users.email' => 'required']);
+});
+
+it('rejects a PIN that is not exactly 4 digits', function (string $pin): void {
+    Livewire::test(Page::class)
+        ->set('users.name', 'Cashier')
+        ->set('users.designation_id', $this->designation->id)
+        ->set('users.pin', $pin)
+        ->call('save')
+        ->assertHasErrors(['users.pin' => 'digits']);
+})->with(['too short' => '123', 'too long' => '12345', 'not numeric' => '12a4']);
+
+it('rejects a PIN already used by another user on the tenant', function (): void {
+    loginAccessEmployee($this->world, ['pin' => '4821']);
+
+    Livewire::test(Page::class)
+        ->set('users.name', 'Cashier')
+        ->set('users.designation_id', $this->designation->id)
+        ->set('users.pin', '4821')
+        ->call('save')
+        ->assertHasErrors(['users.pin']);
+});
+
+it('shows the current PIN when editing, including after a save', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'employee.edit', 'guard_name' => 'web']));
+    $employee = loginAccessEmployee($this->world, ['pin' => '7395', 'designation_id' => $this->designation->id]);
+
+    Livewire::test(Page::class, ['table_id' => $employee->id])
+        ->assertSet('users.pin', '7395')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('users.pin', '7395');
+
+    expect($employee->fresh()->revealPin())->toBe('7395');
+});
+
+it('keeps the current PIN when the field is cleared, and its own PIN is not a duplicate', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'employee.edit', 'guard_name' => 'web']));
+    $employee = loginAccessEmployee($this->world, ['pin' => '7395', 'designation_id' => $this->designation->id]);
+
+    Livewire::test(Page::class, ['table_id' => $employee->id])
+        ->set('users.pin', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($employee->fresh()->revealPin())->toBe('7395');
+});
+
+it('flags a legacy PIN that cannot be shown', function (): void {
+    $employee = loginAccessEmployee($this->world, ['pin' => Hash::make('1111')]);
+
+    Livewire::test(Page::class, ['table_id' => $employee->id])
+        ->assertSet('users.pin', '')
+        ->assertSet('hasHiddenPin', true);
+});
+
+function pinLoginRequest(string $pin): LoginRequest
+{
+    $request = LoginRequest::create('/', 'POST', ['pin' => $pin]);
+    $request->setContainer(app())->setRedirector(app('redirect'))->validateResolved();
+
+    return $request;
+}
+
+it('stores the PIN encrypted in the pin column', function (): void {
+    $employee = loginAccessEmployee($this->world, ['pin' => '7395']);
+    $storedPin = $employee->fresh()->getAttributes()['pin'];
+
+    expect($storedPin)->not->toBe('7395')
+        ->and(User::isHashedPin($storedPin))->toBeFalse()
+        ->and(Crypt::decryptString($storedPin))->toBe('7395');
+});
+
+it('signs in with an encrypted PIN', function (): void {
+    $employee = loginAccessEmployee($this->world, ['pin' => '5821', 'is_active' => true]);
+
+    $response = (new LoginAction())->execute(pinLoginRequest('5821'));
+
+    expect($response['user']->resource->id)->toBe($employee->id);
+});
+
+it('rejects a wrong PIN', function (): void {
+    loginAccessEmployee($this->world, ['pin' => '5821', 'is_active' => true]);
+
+    (new LoginAction())->execute(pinLoginRequest('5822'));
+})->throws(AuthenticationException::class);
+
+it('converts a legacy hashed PIN to an encrypted one the next time it is used to sign in', function (): void {
+    $employee = loginAccessEmployee($this->world, ['pin' => Hash::make('2468'), 'is_active' => true]);
+
+    (new LoginAction())->execute(pinLoginRequest('2468'));
+
+    expect($employee->fresh()->revealPin())->toBe('2468')
+        ->and(User::isHashedPin($employee->fresh()->getAttributes()['pin']))->toBeFalse();
 });

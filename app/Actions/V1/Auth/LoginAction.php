@@ -45,23 +45,14 @@ class LoginAction
 
     /**
      * A PIN carries no username, so the user has to be found by the PIN itself.
-     * Doing that with bcrypt alone means one Hash::check per active user — at
-     * BCRYPT_ROUNDS=12 that is ~266ms each, so a tenant with 149 PIN users spent
-     * ~40 seconds on every sign-in.
-     *
-     * `pin_lookup` (see User::pinLookup) is an indexed keyed digest of the PIN, so
-     * the candidate is found with one query and costs a single bcrypt verify. The
-     * digest only narrows the search — the bcrypt hash is still what authenticates.
+     * PINs are stored encrypted, so every active user's PIN is decrypted and
+     * compared — microseconds each, where bcrypt cost ~266ms per user.
      *
      * A login is only valid when exactly one user matches.
      */
     private function byPin(string $pin): User
     {
-        $matched = User::query()
-            ->where('is_active', true)
-            ->where('pin_lookup', User::pinLookup($pin))
-            ->get(['id', 'pin'])
-            ->filter(fn (User $user) => Hash::check($pin, $user->pin));
+        $matched = User::withEncryptedPin($pin, activeOnly: true);
 
         if ($matched->count() > 1) {
             throw new AuthenticationException('The provided PIN does not match our records.');
@@ -75,12 +66,9 @@ class LoginAction
     }
 
     /**
-     * Fallback for users whose PIN predates `pin_lookup`. A bcrypt hash is one-way,
-     * so the digest could not be backfilled by the migration — each user is migrated
-     * here the first time they sign in, and this set only ever shrinks.
-     *
-     * Scanning is deliberately limited to rows still missing a digest: that bounds
-     * what a mistyped PIN costs, which matters on a till where typos are routine.
+     * Fallback for users whose PIN is still a legacy bcrypt hash. A hash is one-way,
+     * so it can't be converted ahead of time — each user is converted here the first
+     * time they sign in, and this set only ever shrinks.
      *
      * Only id+pin are pulled so we don't hydrate every column (and the audit/cast
      * overhead) for every candidate; the winner is then loaded in full.
@@ -90,9 +78,8 @@ class LoginAction
         $matched = User::query()
             ->where('is_active', true)
             ->whereNotNull('pin')
-            ->whereNull('pin_lookup')
             ->get(['id', 'pin'])
-            ->filter(fn (User $user) => Hash::check($pin, $user->pin));
+            ->filter(fn (User $user) => User::isHashedPin($user->getAttributes()['pin']) && $user->checkPin($pin));
 
         if ($matched->count() !== 1) {
             throw new AuthenticationException('The provided PIN does not match our records.');
@@ -100,9 +87,8 @@ class LoginAction
 
         $user = User::findOrFail($matched->first()->id);
 
-        // Backfill the digest only — writing `pin` would re-hash an already-hashed
-        // value. Quietly, so a sign-in doesn't generate an audit revision.
-        $user->forceFill(['pin_lookup' => User::pinLookup($pin)])->saveQuietly();
+        // Re-store the PIN encrypted. Quietly, so a sign-in doesn't generate an audit revision.
+        $user->forceFill(['pin' => $pin])->saveQuietly();
 
         return $user;
     }
