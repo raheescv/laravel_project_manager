@@ -23,6 +23,8 @@ class SaleResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'invoice_no' => $this->invoice_no,
+            // The biller's own `{code}/{n}` number printed on the "office_bill" receipt.
+            'bill_no' => $this->bill_no,
             // Doubles as the provisional reference printed on the receipt when the
             // sale was rung up offline; `client_uuid` below is what tells the app
             // which of the two this is.
@@ -74,6 +76,7 @@ class SaleResource extends JsonResource
                 'balance' => (float) $this->balance,
             ],
             'created_by' => $this->createdUser?->name,
+            'created_at' => $this->created_at?->toIso8601String(),
             // Present for a student's sale: the card balance after it, for the receipt.
             'student' => $this->studentCard(),
         ];

@@ -13,6 +13,9 @@ class CompanyProfile extends Component
 
     public $company_name;
 
+    /** Printed under the English name on the "Office Bill" receipt. */
+    public $company_name_arabic;
+
     public $company_description;
 
     public $mobile;
@@ -41,6 +44,7 @@ class CompanyProfile extends Component
         $this->company_website = Configuration::where('key', 'company_website')->value('value');
         $this->google_review_url = Configuration::where('key', 'google_review_url')->value('value');
         $this->company_name = Configuration::where('key', 'company_name')->value('value');
+        $this->company_name_arabic = Configuration::where('key', 'company_name_arabic')->value('value');
         $this->company_description = Configuration::where('key', 'company_description')->value('value');
         $this->gst_no = Configuration::where('key', 'gst_no')->value('value');
     }
@@ -84,6 +88,7 @@ class CompanyProfile extends Component
             Configuration::updateOrCreate(['key' => 'company_website'], ['value' => $this->company_website]);
             Configuration::updateOrCreate(['key' => 'google_review_url'], ['value' => trim((string) $this->google_review_url)]);
             Configuration::updateOrCreate(['key' => 'company_name'], ['value' => $this->company_name]);
+            Configuration::updateOrCreate(['key' => 'company_name_arabic'], ['value' => $this->company_name_arabic]);
             Configuration::updateOrCreate(['key' => 'gst_no'], ['value' => $this->gst_no]);
             Configuration::updateOrCreate(['key' => 'company_description'], ['value' => $this->company_description]);
             TenantCache::forget('company_description');

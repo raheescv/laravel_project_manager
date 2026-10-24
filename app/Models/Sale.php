@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Helpers\Facades\WhatsappHelper;
 use App\Models\Models\Views\Ledger;
@@ -137,6 +138,21 @@ class Sale extends Model implements AuditableContracts
                         throw new \Exception('Invalid or closed day session provided.');
                     }
                 }
+            }
+        });
+
+        // Registered after the session binding above, so the bill number counts
+        // against the day-session date the sale actually lands on. Drafts wait
+        // until they are completed.
+        static::creating(function ($sale): void {
+            if ($sale->status === 'completed') {
+                (new AssignStaffBillNoAction())->execute($sale);
+            }
+        });
+
+        static::updating(function ($sale): void {
+            if ($sale->status === 'completed' && $sale->isDirty('status')) {
+                (new AssignStaffBillNoAction())->execute($sale);
             }
         });
     }

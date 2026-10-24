@@ -25,6 +25,9 @@ class SaleHelper
 
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? '';
         $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
+        if ($thermal_printer_style === 'office_bill') {
+            return $this->officeBill($sale, $company_name);
+        }
         $gst_no = Configuration::where('key', 'gst_no')->value('value') ?? null;
         $thermal_printer_footer_english = Configuration::where('key', 'thermal_printer_footer_english')->value('value');
         $thermal_printer_footer_arabic = Configuration::where('key', 'thermal_printer_footer_arabic')->value('value');
@@ -63,6 +66,22 @@ class SaleHelper
         $htmlContent = View::make('sale.print', $data)->render();
 
         return $htmlContent;
+    }
+
+    /**
+     * The compact English + Arabic "Office Bill" receipt: company name, date,
+     * the biller's own Bill No, items and totals — nothing else.
+     */
+    private function officeBill(Sale $sale, string $company_name): string
+    {
+        $sale->loadMissing(['createdUser:id,name', 'items.product.mainCategory', 'comboOffers.comboOffer']);
+
+        return View::make('sale.print-office-bill', [
+            'sale' => $sale,
+            'company_name' => $company_name,
+            'company_name_arabic' => Configuration::where('key', 'company_name_arabic')->value('value') ?? '',
+            'print_item_label' => Configuration::where('key', 'print_item_label')->value('value') ?? 'product',
+        ])->render();
     }
 
     public function convertHtmlToImage($htmlContent, $title)
