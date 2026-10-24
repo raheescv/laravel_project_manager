@@ -143,11 +143,14 @@
                                 <span class="text-muted small">(leave blank to keep current password)</span>
                             @endif
                         </label>
-                        <div class="input-group">
+                        <div class="input-group" x-data="{ showPassword: false }">
                             <span class="input-group-text bg-light border-secondary-subtle">
                                 <i class="fa fa-lock"></i>
                             </span>
-                            {{ html()->password('password')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'users.password')->placeholder('Enter password') }}
+                            {{ html()->password('password')->value('')->class('form-control border-secondary-subtle shadow-sm')->attribute('wire:model', 'users.password')->attribute('x-bind:type', "showPassword ? 'text' : 'password'")->attribute('autocomplete', 'new-password')->placeholder('Enter password') }}
+                            <button type="button" class="btn btn-light border-secondary-subtle" tabindex="-1" x-on:click="showPassword = !showPassword" aria-label="Toggle password">
+                                <i class="fa" x-bind:class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
