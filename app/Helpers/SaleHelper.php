@@ -36,6 +36,7 @@ class SaleHelper
         $print_quantity_label = Configuration::where('key', 'print_quantity_label')->value('value') ?? 'quantity';
         $enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
         $enable_customer_mobile_in_print = Configuration::where('key', 'enable_customer_mobile_in_print')->value('value') ?? 'yes';
+        $enable_notes_in_print = Configuration::where('key', 'enable_notes_in_print')->value('value') ?? 'yes';
         $barcodeSettings = BarcodeTemplateConfiguration::resolveSettings()['settings'];
         $barcodeType = $barcodeSettings['barcode']['type'] ?? 'C128';
         $payments = $sale->payments()->with('paymentMethod:id,name,alias_name')->get(['amount', 'payment_method_id'])->toArray();
@@ -55,6 +56,7 @@ class SaleHelper
             'print_quantity_label',
             'enable_company_name_in_print',
             'enable_customer_mobile_in_print',
+            'enable_notes_in_print',
             'barcode_string',
             'barcodeType',
         );

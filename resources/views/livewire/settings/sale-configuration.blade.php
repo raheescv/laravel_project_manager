@@ -174,6 +174,7 @@
                     @include('livewire.settings.partials.sale-toggle', $yesNo('enable_barcode_in_print', 'Barcode'))
                     @include('livewire.settings.partials.sale-toggle', $yesNo('enable_discount_in_print', 'Discount'))
                     @include('livewire.settings.partials.sale-toggle', $yesNo('enable_total_quantity_in_print', 'Total Quantity'))
+                    @include('livewire.settings.partials.sale-toggle', $yesNo('enable_notes_in_print', 'Sale Notes', 'The note added at checkout, when the sale has one.'))
                 </div>
 
                 <div class="scx-sub mt-4">Footer message</div>

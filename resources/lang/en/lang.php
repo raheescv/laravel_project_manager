@@ -84,6 +84,7 @@ return [
     'Stock' => 'Stock',
     'total' => 'Total',
     'served_by' => 'Served by',
+    'notes' => 'Notes',
     'thank_you_for_shopping_with_us' => 'Thank you for shopping',
     'footer_message' => 'Thank you for shopping Keep BIll For Exchange Within 14 Days T&C Apply.',
     'visit_us_again' => 'Visit Us Again',

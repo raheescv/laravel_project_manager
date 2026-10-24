@@ -230,6 +230,14 @@
             margin: 5px 0;
         }
 
+        .notes-box .notes-text {
+            margin-top: 2px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+        }
+
         .savings-box {
             text-align: center;
             font-size: 12px;
@@ -781,6 +789,17 @@
                     <div dir="rtl"><b>{{ __('lang.you_saved', ['amount' => currency($total_saved), 'currency' => tenant_cache('currency_symbol', '')], 'ar') }}</b></div>
                 @endif
                 <div><b>{{ __('lang.you_saved', ['amount' => currency($total_saved), 'currency' => tenant_cache('currency_code', '')], 'en') }}</b></div>
+            </div>
+        @endif
+        @if ($enable_notes_in_print == 'yes' && filled(trim((string) $sale->notes)))
+            <div class="highlight-box notes-box">
+                <div class="served-by-row">
+                    <b class="text-left">Notes :</b>
+                    @if ($thermal_printer_style == 'with_arabic')
+                        <b class="text-right" dir="ltr">{{ __('lang.notes', [], 'ar') }} :</b>
+                    @endif
+                </div>
+                <div class="notes-text">{{ trim($sale->notes) }}</div>
             </div>
         @endif
         @if ($enable_barcode_in_print == 'yes')

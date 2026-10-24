@@ -75,6 +75,7 @@ class SaleSettingController extends Controller
                 'show_barcode' => ['sometimes', 'boolean'],
                 'show_logo' => ['sometimes', 'boolean'],
                 'show_company_name' => ['sometimes', 'boolean'],
+                'show_notes' => ['sometimes', 'boolean'],
                 'quantity_label' => ['sometimes', 'in:quantity,weight'],
             ]);
 
@@ -89,6 +90,7 @@ class SaleSettingController extends Controller
                 'show_barcode' => 'enable_barcode_in_print',
                 'show_logo' => 'enable_logo_in_print',
                 'show_company_name' => 'enable_company_name_in_print',
+                'show_notes' => 'enable_notes_in_print',
                 'quantity_label' => 'print_quantity_label',
             ];
             foreach ($validated as $field => $value) {
@@ -146,6 +148,8 @@ class SaleSettingController extends Controller
             'show_logo' => Configuration::where('key', 'enable_logo_in_print')->value('value') === 'yes',
             'show_company_name' => (Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no') === 'yes',
             'company_name' => Configuration::where('key', 'company_name')->value('value') ?? '',
+            // The cashier's sale note under the totals; on unless switched off.
+            'show_notes' => (Configuration::where('key', 'enable_notes_in_print')->value('value') ?? 'yes') === 'yes',
             // Opaque cache-buster: changes when a new logo is uploaded so the
             // app knows to re-download GET /settings/logo.
             'logo_version' => Configuration::where('key', 'logo')->value('value') ?? 'default',
