@@ -92,3 +92,19 @@ it('offers the time ago column in the toggle panel, hidden by default', function
         ->call('toggleColumn', 'time_ago')
         ->assertSet('sale_visible_column.time_ago', true);
 });
+
+/**
+ * The "Showing x to y of z results" line stays visible on a single page; only
+ * the page buttons wait for a second page.
+ */
+it('shows the result count even when everything fits on one page', function (): void {
+    insertListedSale($this->world, 'INVCOUNTA', now()->toDateString(), now()->toDateTimeString());
+    insertListedSale($this->world, 'INVCOUNTB', now()->toDateString(), now()->toDateTimeString());
+
+    Livewire::test(Table::class)
+        ->assertSeeHtml('<span class="fw-semibold">2</span>')
+        ->assertSee('results')
+        ->assertDontSeeHtml('class="pagination"')
+        ->set('limit', 1)
+        ->assertSeeHtml('class="pagination"');
+});
