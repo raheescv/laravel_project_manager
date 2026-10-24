@@ -73,6 +73,12 @@ class SaleConfiguration extends Component
     /** Product cards per row in the POS catalogue — see posGridColumns(). */
     public $pos_grid_columns;
 
+    /** Mobile app New Sale order: 'name' or 'priority' — see appProductSort(). */
+    public $app_product_sort_by;
+
+    /** 'asc' or 'desc' — see appProductSort(). */
+    public $app_product_sort_direction;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -104,6 +110,7 @@ class SaleConfiguration extends Component
         $this->round_off_enabled = Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes';
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
         $this->pos_grid_columns = Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto';
+        ['by' => $this->app_product_sort_by, 'direction' => $this->app_product_sort_direction] = appProductSort();
     }
 
     public function save()
@@ -144,6 +151,14 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(
             ['key' => 'pos_grid_columns'],
             ['value' => array_key_exists($this->pos_grid_columns, posGridColumns()) ? $this->pos_grid_columns : 'auto']
+        );
+        Configuration::updateOrCreate(
+            ['key' => 'app_product_sort_by'],
+            ['value' => $this->app_product_sort_by === 'name' ? 'name' : 'priority']
+        );
+        Configuration::updateOrCreate(
+            ['key' => 'app_product_sort_direction'],
+            ['value' => $this->app_product_sort_direction === 'desc' ? 'desc' : 'asc']
         );
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');

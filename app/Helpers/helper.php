@@ -864,6 +864,26 @@ if (! function_exists('posGridColumns')) {
         ];
     }
 }
+if (! function_exists('appProductSort')) {
+    /**
+     * How the mobile app orders its New Sale catalog (Settings → Sale
+     * Configuration → App Product Order, also editable from the app): by
+     * `name` or `priority`, `asc` or `desc`. Lowest priority number first
+     * unless the business changes it; anything unrecognised falls back to that.
+     *
+     * @return array{by: string, direction: string}
+     */
+    function appProductSort(): array
+    {
+        $by = Configuration::where('key', 'app_product_sort_by')->value('value');
+        $direction = Configuration::where('key', 'app_product_sort_direction')->value('value');
+
+        return [
+            'by' => in_array($by, ['name', 'priority'], true) ? $by : 'priority',
+            'direction' => in_array($direction, ['asc', 'desc'], true) ? $direction : 'asc',
+        ];
+    }
+}
 if (! function_exists('saleRoundOffEnabled')) {
     /**
      * Whether a sale's grand total is rounded to the nearest whole number, with

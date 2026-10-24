@@ -211,6 +211,12 @@ Route::prefix('v1')->group(function () {
                 ->middleware(EnsureMobilePermission::class.':configuration.settings')
                 ->name('api.v1.settings.sale.print');
 
+            // Edit the New Sale catalog order (name / priority, asc / desc) —
+            // the same shared Sale Configuration, same gate.
+            Route::put('settings/sale/product-sort', [SaleSettingController::class, 'updateProductSort'])
+                ->middleware(EnsureMobilePermission::class.':configuration.settings')
+                ->name('api.v1.settings.sale.product-sort');
+
             // Stock Check (physical inventory count) — permission-driven, matching
             // the web `inventory.stock check` gate. A count snapshots branch stock
             // on create, is counted against (scan +1 or typed qty), and marking

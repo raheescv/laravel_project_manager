@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\UpdateProductSortRequest;
 use App\Models\Configuration;
 use App\Services\CompanyLogoResolver;
 use App\Support\ModuleAccess;
@@ -48,6 +49,9 @@ class SaleSettingController extends Controller
                 // Painted on catalog tiles whose product has no photo — the same
                 // fallback the web POS uses (Sale\Pos\GetProductsAction).
                 'logo_url' => tenant_cache('logo'),
+                // New Sale catalog order — sent back as sort_by / sort_direction
+                // on GET /products and applied to the offline snapshot.
+                'product_sort' => appProductSort(),
                 'print' => $this->printBlock(),
             ], 'Sale settings retrieved successfully');
         } catch (\Exception $e) {
@@ -105,6 +109,26 @@ class SaleSettingController extends Controller
             throw $e;
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to update print settings: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Update the New Sale catalog order from the mobile app.
+     *
+     * Writes the same Sale Configuration keys as the web "App Product Order"
+     * setting, so every till picks the change up on its next sync. Gated on
+     * the same `configuration.settings` permission as the print options.
+     */
+    public function updateProductSort(UpdateProductSortRequest $request): JsonResponse
+    {
+        try {
+            $validated = $request->validated();
+            Configuration::updateOrCreate(['key' => 'app_product_sort_by'], ['value' => $validated['by']]);
+            Configuration::updateOrCreate(['key' => 'app_product_sort_direction'], ['value' => $validated['direction']]);
+
+            return $this->sendSuccess(['product_sort' => appProductSort()], 'Product order updated successfully');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to update product order: '.$e->getMessage());
         }
     }
 

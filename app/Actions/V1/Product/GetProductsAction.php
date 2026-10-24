@@ -294,6 +294,14 @@ class GetProductsAction
         $sortBy = $filters['sort_by'] ?? 'name';
         $sortDirection = $filters['sort_direction'] ?? 'asc';
 
+        // The New Sale order (see appProductSort()): priority in the asked
+        // direction, ties broken by name.
+        if ($sortBy === 'priority') {
+            $query->orderBy('priority', $sortDirection)->orderBy('name');
+
+            return;
+        }
+
         // Map sort fields to actual database columns
         $sortFieldMap = [
             'name' => 'name',

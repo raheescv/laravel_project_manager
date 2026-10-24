@@ -37,7 +37,7 @@ class GetProductsRequest extends FormRequest
             // Widen `search` to the description text. Off by default because it
             // forces a full row read per product; see GetProductsAction.
             'search_in_description' => ['nullable', 'boolean'],
-            'sort_by' => ['nullable', 'string', 'in:name,price,mrp,cost'],
+            'sort_by' => ['nullable', 'string', 'in:name,price,mrp,cost,priority'],
             'sort_direction' => ['nullable', 'string', 'in:asc,desc'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -64,7 +64,7 @@ class GetProductsRequest extends FormRequest
             'sub_category_id.exists' => 'The selected sub category does not exist.',
             'brand_id.exists' => 'The selected brand does not exist.',
             'branch_id.exists' => 'The selected branch does not exist.',
-            'sort_by.in' => 'The sort by field must be one of: name, price, mrp, cost.',
+            'sort_by.in' => 'The sort by field must be one of: name, price, mrp, cost, priority.',
             'sort_direction.in' => 'The sort direction must be either asc or desc.',
             'per_page.max' => 'The per page value cannot exceed 100.',
             'type.in' => 'The product type must be either product or service.',

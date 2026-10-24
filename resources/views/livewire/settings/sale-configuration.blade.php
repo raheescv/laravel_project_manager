@@ -38,6 +38,16 @@
                         {{ html()->select('sale_item_row_mode', ['merge' => 'Single Row (merge quantity)', 'separate' => 'Multiple Rows (add separately)'])->value('')->class('form-select')->placeholder('Choose how repeated product clicks behave')->attribute('wire:model', 'sale_item_row_mode') }}
                         <div class="form-text">Tapping the same product again adds to its row, or starts a new one.</div>
                     </div>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="app_product_sort_by">App Product Order</label>
+                        {{ html()->select('app_product_sort_by', ['priority' => 'Priority', 'name' => 'Name'])->value('')->class('form-select')->attribute('wire:model', 'app_product_sort_by') }}
+                        <div class="form-text">How the mobile app's New Sale lists products.</div>
+                    </div>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="app_product_sort_direction">App Order Direction</label>
+                        {{ html()->select('app_product_sort_direction', ['asc' => 'Ascending', 'desc' => 'Descending'])->value('')->class('form-select')->attribute('wire:model', 'app_product_sort_direction') }}
+                        <div class="form-text">Ascending lists the lowest priority number (or A&ndash;Z) first.</div>
+                    </div>
                 </div>
                 <div class="scx-toggles mt-3">
                     @include('livewire.settings.partials.sale-toggle', $yesNo('default_customer_enabled', 'Default Customer', 'Start every sale with the General Customer selected.'))
