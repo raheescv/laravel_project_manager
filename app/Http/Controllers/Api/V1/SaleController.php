@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\V1\Sale\CreateAction;
 use App\Actions\V1\Sale\DeleteAction;
+use App\Actions\V1\Sale\EmployeeSummaryAction;
 use App\Actions\V1\Sale\GetAction;
 use App\Actions\V1\Sale\ItemListAction;
 use App\Actions\V1\Sale\ListAction;
@@ -65,6 +66,26 @@ class SaleController extends Controller
             return $this->sendValidationError($e->errors(), 'Validation failed');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to retrieve sale items: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Sales by employee.
+     *
+     * The sold lines, filtered by the same parameters as the item list, grouped by
+     * the employee on each line: how many invoices they appear on and what their
+     * lines total.
+     */
+    public function employees(EmployeeSummaryAction $action, ItemIndexRequest $request): JsonResponse
+    {
+        try {
+            $result = $action->execute($request);
+
+            return $this->sendSuccess($result, 'Sales by employee retrieved successfully');
+        } catch (ValidationException $e) {
+            return $this->sendValidationError($e->errors(), 'Validation failed');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to retrieve sales by employee: '.$e->getMessage());
         }
     }
 

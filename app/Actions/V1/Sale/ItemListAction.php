@@ -6,6 +6,7 @@ use App\Http\Requests\V1\Sale\ItemIndexRequest;
 use App\Http\Resources\V1\Sale\SaleItemListResource;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 class ItemListAction
@@ -20,21 +21,7 @@ class ItemListAction
     public function execute(ItemIndexRequest $request): array
     {
         $filters = $request->validatedWithDefaults();
-        $user = $request->user();
-
-        // Same rule as ListAction: a non-admin employee sees only the lines of
-        // sales they rang up, whatever mine_only says.
-        $scopeToSelf = $user && (! empty($filters['mine_only']) || $user->seesOnlyOwnRecords());
-
-        // Searched per line below (product, code, barcode, invoice, customer), so
-        // it is kept out of the sale filter, which only knows invoice fields.
-        $search = trim((string) ($filters['search'] ?? ''));
-        $saleIds = Sale::query()
-            ->filter(array_merge($filters, ['search' => '']))
-            ->when($scopeToSelf, fn ($q) => $q->where('sales.created_by', $user->id))
-            ->select('sales.id');
-
-        $query = $this->baseQuery($saleIds, $search);
+        $query = $this->filteredLines($filters, $request->user());
 
         $summary = (clone $query)
             ->selectRaw('COUNT(*) as line_count, COALESCE(SUM(sale_items.quantity), 0) as quantity, COALESCE(SUM(sale_items.discount), 0) as discount, COALESCE(SUM(sale_items.total), 0) as total')
@@ -79,6 +66,30 @@ class ItemListAction
                 'has_more_pages' => $items->hasMorePages(),
             ],
         ];
+    }
+
+    /**
+     * The sale lines the filters match — shared with EmployeeSummaryAction so
+     * the Employees tab totals exactly what the Items tab lists.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return Builder<SaleItem>
+     */
+    public function filteredLines(array $filters, ?User $user): Builder
+    {
+        // Same rule as ListAction: a non-admin employee sees only the lines of
+        // sales they rang up, whatever mine_only says.
+        $scopeToSelf = $user && (! empty($filters['mine_only']) || $user->seesOnlyOwnRecords());
+
+        // Searched per line below (product, code, barcode, invoice, customer), so
+        // it is kept out of the sale filter, which only knows invoice fields.
+        $search = trim((string) ($filters['search'] ?? ''));
+        $saleIds = Sale::query()
+            ->filter(array_merge($filters, ['search' => '']))
+            ->when($scopeToSelf, fn ($q) => $q->where('sales.created_by', $user->id))
+            ->select('sales.id');
+
+        return $this->baseQuery($saleIds, $search);
     }
 
     /**
