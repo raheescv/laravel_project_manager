@@ -97,6 +97,7 @@ class GetProductsAction
             'barcode' => $product->barcode,
             'size' => $product->size,
             'code' => $product->code,
+            'priority' => (int) $product->priority,
             'mrp' => $product->saleTypePrice($saleType),
             'original_price' => (float) $product->mrp,
             'stock' => $inventory->quantity ?? 0,
