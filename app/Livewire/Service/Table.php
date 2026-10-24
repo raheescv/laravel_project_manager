@@ -5,6 +5,7 @@ namespace App\Livewire\Service;
 use App\Actions\Product\DeleteAction;
 use App\Exports\ServiceExport;
 use App\Jobs\Export\ExportServiceJob;
+use App\Livewire\Concerns\HasColumnPreferences;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
+    use HasColumnPreferences;
     use WithPagination;
 
     public $search = '';
@@ -41,6 +43,48 @@ class Table extends Component
     protected $listeners = [
         'Service-Refresh-Component' => '$refresh',
     ];
+
+    public function mount(): void
+    {
+        $this->initializeColumnPreferences();
+    }
+
+    /** @return array<string, bool> */
+    protected function defaultColumns(): array
+    {
+        return [
+            'department' => true,
+            'main_category' => true,
+            'sub_category' => true,
+            'code' => true,
+            'name' => true,
+            'name_arabic' => true,
+            'priority' => true,
+            'mrp' => true,
+            'time' => true,
+        ];
+    }
+
+    protected function columnPreferenceKey(): string
+    {
+        return 'service.table.columns';
+    }
+
+    /** @return array<string, string> */
+    protected function columnLabels(): array
+    {
+        return [
+            'department' => 'Department',
+            'main_category' => 'Main Category',
+            'sub_category' => 'Sub Category',
+            'code' => 'Code',
+            'name' => 'Name',
+            'name_arabic' => 'Arabic Name',
+            'priority' => 'Priority',
+            'mrp' => 'Price',
+            'time' => 'Duration',
+        ];
+    }
 
     public function delete()
     {
@@ -73,7 +117,7 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key)) {
+        if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key) && ! preg_match('/^columns\..*/', $key)) {
             $this->resetPage();
         }
     }
@@ -120,7 +164,8 @@ class Table extends Component
 
     public function render()
     {
-        $data = Product::orderBy($this->sortField, $this->sortDirection)
+        $data = Product::with(['department:id,name', 'mainCategory:id,name', 'subCategory:id,name'])
+            ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value): void {
                     $value = trim($value);
@@ -150,6 +195,7 @@ class Table extends Component
 
         return view('livewire.service.table', [
             'data' => $data,
+            'columnLabels' => $this->columnLabels(),
         ]);
     }
 }
