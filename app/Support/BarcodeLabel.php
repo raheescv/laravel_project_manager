@@ -145,18 +145,6 @@ class BarcodeLabel
         return (bool) (($settings['price']['visible'] ?? true) || ($settings['price_arabic']['visible'] ?? true));
     }
 
-    /**
-     * Whether the template prints the Qty line, which carries the weight in weight mode.
-     */
-    public static function printsQty(array $settings): bool
-    {
-        if (self::type($settings) === 'jewellery_tag') {
-            return (bool) ($settings['fields']['qty']['visible'] ?? false);
-        }
-
-        return (bool) ($settings['qty']['visible'] ?? false);
-    }
-
     public static function quantityCaption(): string
     {
         return self::usesWeight() ? 'Weight' : 'Qty';

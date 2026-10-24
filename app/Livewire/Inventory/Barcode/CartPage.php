@@ -109,8 +109,10 @@ class CartPage extends Component
      * `category_name` from "Item Label In Print": rows are titled with the
      * name their label prints.
      *
-     * `price_column` and `weight_column` show the MRP and Weight inputs only
-     * when the chosen template prints a price and a Qty line.
+     * `price_column` shows the Unit Price, Tax and MRP inputs only when the
+     * chosen template prints a price. `weight_column` follows weight mode
+     * alone: the grams work out the MRP, so the column stays even when the
+     * template's Weight line is switched off and only printing drops it.
      *
      * @return array{separate_rows: bool, auto_fill: bool, weight_mode: bool, category_name: bool, price_column: bool, weight_column: bool}
      */
@@ -126,7 +128,7 @@ class CartPage extends Component
             'weight_mode' => $weightMode,
             'category_name' => BarcodeLabel::usesCategoryName(),
             'price_column' => BarcodeLabel::printsPrice($settings),
-            'weight_column' => $weightMode && BarcodeLabel::printsQty($settings),
+            'weight_column' => $weightMode,
         ];
     }
 

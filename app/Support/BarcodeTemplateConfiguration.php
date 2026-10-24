@@ -248,11 +248,12 @@ class BarcodeTemplateConfiguration
 
     /**
      * Drops print cart keys an earlier build saved on templates: the row per
-     * scan switch lives on the cart console now, and grams print on `qty`.
+     * scan switch lives on the cart console now, grams print on `qty`, and the
+     * cart's Weight column follows weight mode, not a template switch.
      */
     protected static function dropLegacyCartSettings(array $settings): array
     {
-        unset($settings['cart'], $settings['weight'], $settings['elements']['weight'], $settings['fields']['weight']);
+        unset($settings['cart'], $settings['weight'], $settings['weight_calculation'], $settings['elements']['weight'], $settings['fields']['weight']);
 
         return $settings;
     }
