@@ -99,7 +99,7 @@ class SaleConfiguration extends Component
         $this->prevent_out_of_stock_sales = Configuration::where('key', 'prevent_out_of_stock_sales')->value('value') ?? 'yes';
         $this->enable_company_name_in_print = Configuration::where('key', 'enable_company_name_in_print')->value('value') ?? 'no';
         $this->enable_customer_mobile_in_print = Configuration::where('key', 'enable_customer_mobile_in_print')->value('value') ?? 'yes';
-        $this->enable_notes_in_print = Configuration::where('key', 'enable_notes_in_print')->value('value') ?? 'yes';
+        $this->enable_notes_in_print = Configuration::where('key', 'enable_notes_in_print')->value('value') ?? 'no';
         $this->enable_tip = Configuration::where('key', 'enable_tip')->value('value') ?? 'yes';
         $this->round_off_enabled = Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes';
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
@@ -134,7 +134,7 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(['key' => 'prevent_out_of_stock_sales'], ['value' => $this->prevent_out_of_stock_sales]);
         Configuration::updateOrCreate(['key' => 'enable_company_name_in_print'], ['value' => $this->enable_company_name_in_print]);
         Configuration::updateOrCreate(['key' => 'enable_customer_mobile_in_print'], ['value' => $this->enable_customer_mobile_in_print]);
-        Configuration::updateOrCreate(['key' => 'enable_notes_in_print'], ['value' => $this->enable_notes_in_print === 'no' ? 'no' : 'yes']);
+        Configuration::updateOrCreate(['key' => 'enable_notes_in_print'], ['value' => $this->enable_notes_in_print === 'yes' ? 'yes' : 'no']);
         Configuration::updateOrCreate(['key' => 'enable_tip'], ['value' => $this->enable_tip]);
         Configuration::updateOrCreate(['key' => 'round_off_enabled'], ['value' => $this->round_off_enabled === 'no' ? 'no' : 'yes']);
         Configuration::updateOrCreate(

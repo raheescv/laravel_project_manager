@@ -185,7 +185,7 @@ class ProvisionAction
             'enable_total_quantity_in_print' => 'yes',
             'enable_logo_in_print' => 'yes',
             'enable_barcode_in_print' => 'yes',
-            'enable_notes_in_print' => 'yes',
+            'enable_notes_in_print' => 'no',
             'payment_methods' => json_encode($paymentMethodIds),
             'default_purchase_branch_id' => json_encode(array_filter([$branchId])),
         ];
