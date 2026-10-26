@@ -7,6 +7,7 @@ import 'package:invo/shared/widgets/astra_bottom_nav.dart';
 import 'package:invo/shared/widgets/astra_drawer.dart';
 import 'package:invo/shared/widgets/nav_hide.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
+import 'package:invo/features/token/screens/v3/token_screen.dart';
 import 'package:invo/features/admin/screens/v3/dashboard_screen.dart';
 import 'package:invo/features/admin/screens/v3/reports_screen.dart';
 import 'package:invo/features/sales/screens/v3/sales_list_screen.dart';
@@ -87,6 +88,7 @@ class _HomeShellState extends State<HomeShell> {
               _visited.contains(kLinkCardTab)
           ? const LinkCardScreen()
           : const SizedBox.shrink(),
+      extra(kTokenTab, PermissionSlug.tokenIssue, () => TokenScreen(onClose: () => _goToTab(0))),
     ];
   }
 
