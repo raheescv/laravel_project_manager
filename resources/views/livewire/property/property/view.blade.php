@@ -890,7 +890,7 @@
                                                 <span class="fw-semibold text-capitalize">
                                                     <i class="fa fa-circle text-primary" style="font-size:.4rem;vertical-align:middle"></i>
                                                     {{ $audit->event }}
-                                                    @if ($modified = collect($audit->getModified())->keys()->take(4)->implode(', '))
+                                                    @if ($modified = collect(array_keys(($audit->new_values ?? []) + ($audit->old_values ?? [])))->take(4)->implode(', '))
                                                         <span class="text-body-secondary fw-normal">— {{ $modified }}</span>
                                                     @endif
                                                 </span>
