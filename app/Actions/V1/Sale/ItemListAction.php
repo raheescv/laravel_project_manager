@@ -37,7 +37,7 @@ class ItemListAction
         $items = $query
             ->select('sale_items.*')
             ->with([
-                'sale:id,invoice_no,date,status,account_id,customer_name,created_by',
+                'sale:id,invoice_no,bill_no,date,status,account_id,customer_name,created_by',
                 'sale.account:id,name',
                 'sale.createdUser:id,name',
                 'product:id,name,code,barcode',
@@ -109,6 +109,7 @@ class ItemListAction
                         ->orWhere('products.barcode_number', 'like', "%{$search}%")
                         ->orWhere('sales.invoice_no', 'like', "%{$search}%")
                         ->orWhere('sales.reference_no', 'like', "%{$search}%")
+                        ->orWhere('sales.bill_no', $search)
                         ->orWhere('sales.customer_name', 'like', "%{$search}%")
                         ->orWhere('sales.customer_mobile', 'like', "%{$search}%");
                 });

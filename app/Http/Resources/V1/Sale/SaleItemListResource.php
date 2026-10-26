@@ -26,6 +26,8 @@ class SaleItemListResource extends JsonResource
             'id' => (string) $this->id,
             'sale_id' => (string) $this->sale_id,
             'invoice_no' => $sale?->invoice_no,
+            // The biller's `{code}/{n}` counter printed on the Office Bill receipt.
+            'bill_no' => $sale?->bill_no,
             'date' => $sale?->date,
             'status' => $sale?->status,
             'customer' => $sale?->customer_name ?: $sale?->account?->name,
