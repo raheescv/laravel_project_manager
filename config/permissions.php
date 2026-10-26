@@ -51,7 +51,6 @@ return [
     'issue' => ['create', 'view', 'edit', 'delete', 'print'],
     'ticket' => ['create', 'view', 'edit', 'delete', 'comment', 'import', 'manage board'],
     'day session' => ['create', 'view', 'list', 'print'],
-    'token' => ['issue'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
@@ -77,6 +76,8 @@ return [
         // Mobile POS only: pick any staff member as a ticket's / line's
         // employee. Without it the app locks the selector to the signed-in user.
         'mobile change employee',
+        // Mobile POS only: issue and print queue token slips (Token screen).
+        'queue token',
         // Storefront checkouts through Tap (Sale → Online Payments).
         'online payments',
         // Send a captured Tap payment back to the customer; cancels its sale.

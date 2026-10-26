@@ -28,7 +28,7 @@ class MobileAppPermissions
         'inventory.stock check',
         'student card.assign',
         'configuration.settings',
-        'token.issue',
+        'sale.queue token',
     ];
 
     public static function includes(string $name): bool
