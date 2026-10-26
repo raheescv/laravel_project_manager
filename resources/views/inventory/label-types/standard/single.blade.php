@@ -19,9 +19,9 @@
     function alignToFlex($align)
     {
         return match ($align ?? 'left') {
-            'right' => 'flex-end',
+            'right' => 'right',
             'center' => 'center',
-            default => 'flex-start',
+            default => 'left',
         };
     }
 
@@ -168,8 +168,9 @@
         }
 
         .price:before {
-            content: {!! json_encode(\App\Support\BarcodeLabel::currency().' ', JSON_UNESCAPED_UNICODE) !!};
+            content: {!! json_encode(\App\Support\BarcodeLabel::currency(), JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
+            margin-inline-end: 0.3em;
         }
 
         .qty {
@@ -187,8 +188,9 @@
         }
 
         .price-arabic:before {
-            content: {!! json_encode(\App\Support\BarcodeLabel::currencyArabic().' ', JSON_UNESCAPED_UNICODE) !!};
+            content: {!! json_encode(\App\Support\BarcodeLabel::currencyArabic(), JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
+            margin-inline-end: 0.3em;
         }
 
         .element-handle {

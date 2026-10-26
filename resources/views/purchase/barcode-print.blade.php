@@ -132,8 +132,9 @@
         }
 
         .price:before {
-            content: {!! json_encode(\App\Support\BarcodeLabel::currency().' ', JSON_UNESCAPED_UNICODE) !!};
+            content: {!! json_encode(\App\Support\BarcodeLabel::currency(), JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
+            margin-inline-end: 0.3em;
         }
 
         .price-arabic {
@@ -146,8 +147,9 @@
         }
 
         .price-arabic:before {
-            content: {!! json_encode(\App\Support\BarcodeLabel::currencyArabic().' ', JSON_UNESCAPED_UNICODE) !!};
+            content: {!! json_encode(\App\Support\BarcodeLabel::currencyArabic(), JSON_UNESCAPED_UNICODE) !!};
             font-size: 90%;
+            margin-inline-end: 0.3em;
         }
 
         [draggable="true"] {
