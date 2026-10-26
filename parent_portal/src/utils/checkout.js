@@ -7,9 +7,25 @@ import { goToQPay } from '@/utils/qpay'
  * the API, which forwards to #/topups/{pun}.
  */
 export function goToPayment(payment) {
+  reloadOnReturn()
   if (payment?.type === 'mpgs') return goToCardCheckout(payment)
   goToQPay(payment)
   return Promise.resolve()
+}
+
+let watchingReturn = false
+
+/**
+ * Back from the gateway restores the portal from the browser's back-forward cache
+ * exactly as it was left: the Pay button still "Opening the payment page…" and the
+ * Checkout library's overlay still up. A fresh load is the only clean state.
+ */
+function reloadOnReturn() {
+  if (watchingReturn) return
+  watchingReturn = true
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) window.location.reload()
+  })
 }
 
 let loadedScript = ''
