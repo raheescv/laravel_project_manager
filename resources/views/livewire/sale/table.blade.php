@@ -179,6 +179,9 @@
                         @if ($sale_visible_column['reference_no'])
                             <th> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="reference_no" label="reference no" /> </th>
                         @endif
+                        @if ($sale_visible_column['bill_no'] ?? false)
+                            <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="bill_no" label="bill no" /> </th>
+                        @endif
                         @if ($sale_visible_column['source'] ?? false)
                             <th class="text-nowrap"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sales.source" label="source" /> </th>
                         @endif
@@ -264,6 +267,9 @@
                             </td>
                             @if ($sale_visible_column['reference_no'])
                                 <td>{{ $item->reference_no }}</td>
+                            @endif
+                            @if ($sale_visible_column['bill_no'] ?? false)
+                                <td class="text-nowrap">{{ $item->bill_no }}</td>
                             @endif
                             @if ($sale_visible_column['source'] ?? false)
                                 <td><x-sale.source-badge :source="$item->source" /></td>
@@ -366,6 +372,9 @@
                         @endif
                         <th></th>
                         @if ($sale_visible_column['reference_no'])
+                            <th></th>
+                        @endif
+                        @if ($sale_visible_column['bill_no'] ?? false)
                             <th></th>
                         @endif
                         @if ($sale_visible_column['source'] ?? false)

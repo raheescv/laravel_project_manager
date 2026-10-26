@@ -29,6 +29,7 @@ class ColumnVisibility extends Component
             'created_at' => false,
             'time_ago' => false,
             'reference_no' => false,
+            'bill_no' => false,
             'source' => false,
             'branch_id' => false,
             'created_by' => true,

@@ -33,6 +33,7 @@ class Table extends Component
         'sales.created_at' => 'sales.created_at',
         'invoice_no' => 'sales.invoice_no',
         'reference_no' => 'sales.reference_no',
+        'bill_no' => 'sales.bill_no',
         'sales.source' => 'sales.source',
         'branch_id' => 'sales.branch_id',
         'created_by' => 'sales.created_by',
