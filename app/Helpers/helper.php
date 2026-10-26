@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Country;
@@ -894,6 +895,91 @@ if (! function_exists('saleRoundOffEnabled')) {
     function saleRoundOffEnabled(): bool
     {
         return (Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes') === 'yes';
+    }
+}
+if (! function_exists('posPaymentButtonIcons')) {
+    /**
+     * The icons a POS payment button can wear, keyed by Font Awesome 4.3 name
+     * (without `fa-`). The mobile app maps the same keys to its own icons, so
+     * a key added here needs a match in `posPaymentIcon()` there.
+     *
+     * @return array<string, string>
+     */
+    function posPaymentButtonIcons(): array
+    {
+        return [
+            'money' => 'Cash',
+            'credit-card' => 'Card',
+            'university' => 'Bank',
+            'exchange' => 'Transfer',
+            'bolt' => 'Instant',
+            'mobile' => 'Mobile',
+            'qrcode' => 'QR',
+            'google-wallet' => 'Wallet',
+            'paper-plane' => 'Send',
+            'gift' => 'Voucher',
+        ];
+    }
+}
+if (! function_exists('posPaymentAutoIcon')) {
+    /**
+     * The icon a POS payment button wears on "Auto": read from the account's
+     * name, so Cash gets notes and a bank transfer a bank. A posPaymentButtonIcons() key.
+     */
+    function posPaymentAutoIcon(string $name): string
+    {
+        $name = strtolower($name);
+
+        return match (true) {
+            str_contains($name, 'cash') => 'money',
+            str_contains($name, 'bank') || str_contains($name, 'transfer') => 'university',
+            default => 'credit-card',
+        };
+    }
+}
+if (! function_exists('posPaymentButtons')) {
+    /**
+     * The quick payment buttons on the POS checkout, web and app (Settings →
+     * System Configurations → POS Payment Buttons), in order. Up to three: the
+     * first two fall back to the Cash and Card accounts, the third shows only
+     * once it is set. Credit and Custom always follow them, and every other
+     * payment method stays under Custom. `icon` is always a
+     * posPaymentButtonIcons() key: the one picked, or posPaymentAutoIcon().
+     *
+     * @return array<int, array{id: int, name: string, slug: string|null, icon: string}>
+     */
+    function posPaymentButtons(): array
+    {
+        $stored = json_decode((string) Configuration::where('key', 'pos_payment_buttons')->value('value'), true);
+        $stored = is_array($stored) ? array_values($stored) : [];
+        $icons = json_decode((string) Configuration::where('key', 'pos_payment_button_icons')->value('value'), true);
+        $icons = is_array($icons) ? array_values($icons) : [];
+        $slugIds = Account::slugIdMap();
+
+        $slots = [];
+        foreach ([$slugIds['cash'] ?? null, $slugIds['card'] ?? null, null] as $slot => $fallback) {
+            $id = (int) ($stored[$slot] ?? 0) ?: $fallback;
+            if ($id && ! isset($slots[$id])) {
+                $icon = $icons[$slot] ?? null;
+                $slots[$id] = array_key_exists((string) $icon, posPaymentButtonIcons()) ? $icon : null;
+            }
+        }
+        if (! $slots) {
+            return [];
+        }
+
+        $accounts = Account::query()->whereIn('id', array_keys($slots))->get(['id', 'name', 'slug'])->keyBy('id');
+
+        return collect($slots)
+            ->map(fn (?string $icon, int $id) => ($account = $accounts->get($id)) ? [
+                'id' => (int) $account->id,
+                'name' => $account->name,
+                'slug' => $account->slug,
+                'icon' => $icon ?? posPaymentAutoIcon($account->name),
+            ] : null)
+            ->filter()
+            ->values()
+            ->all();
     }
 }
 if (! function_exists('posSkipsDaySession')) {

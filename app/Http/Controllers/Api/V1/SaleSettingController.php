@@ -52,6 +52,10 @@ class SaleSettingController extends Controller
                 // New Sale catalog order — sent back as sort_by / sort_direction
                 // on GET /products and applied to the offline snapshot.
                 'product_sort' => appProductSort(),
+                // Quick payment buttons on the checkout, in order, ahead of Credit
+                // and Custom (System Configurations → POS Payment Buttons). Each is
+                // {id, name, slug}; slug 'cash' keeps the cash tender pad.
+                'payment_buttons' => posPaymentButtons(),
                 'print' => $this->printBlock(),
             ], 'Sale settings retrieved successfully');
         } catch (\Exception $e) {

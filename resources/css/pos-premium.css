@@ -1999,6 +1999,50 @@ html.dark .posx .posx-date-input {
     color: var(--pos-on-pri);
 }
 
+/* Credit and Custom: half-height, side-by-side icon and label, quieter than
+   the configured buttons, stacked in one column after them. */
+.posx .posx-pay-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.posx .posx-pay.is-mini {
+    flex: 1;
+    flex-direction: row;
+    gap: 5px;
+    min-height: 0;
+    padding: 3px 6px;
+    border-style: dashed;
+    border-color: var(--pos-line);
+    border-radius: 8px;
+    background: var(--pos-panel-2);
+    color: var(--pos-muted);
+}
+
+.posx .posx-pay.is-mini > i {
+    font-size: .75rem;
+}
+
+.posx .posx-pay.is-mini > span:not(.posx-pay-count) {
+    font-size: .625rem;
+}
+
+.posx .posx-pay.is-mini:hover {
+    border-style: solid;
+    border-color: var(--pos-pri-line);
+    background: var(--pos-pri-soft);
+    color: var(--pos-ink);
+}
+
+.posx .posx-pay.is-mini.is-active {
+    border-style: solid;
+    border-color: var(--pos-pri);
+    background: var(--pos-pri);
+    color: var(--pos-on-pri);
+}
+
 .posx .posx-pay-count {
     position: absolute;
     top: -6px;

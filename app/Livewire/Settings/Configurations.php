@@ -18,6 +18,15 @@ class Configurations extends Component
 
     public $paymentMethods;
 
+    /** @var array<int, int|string|null> Account ids for POS buttons 1–3; button 3 is optional. */
+    public $pos_payment_buttons = [null, null, null];
+
+    /** @var array<int, string|null> Icon key (posPaymentButtonIcons()) per button; null picks one from the name. */
+    public $pos_payment_button_icons = [null, null, null];
+
+    /** @var array<int, string> */
+    public $posButtonOptions = [];
+
     public $country_id;
 
     public $countries;
@@ -33,8 +42,54 @@ class Configurations extends Component
             $this->paymentMethods = Account::whereIn('id', $this->payment_methods)->pluck('name', 'id')->toArray();
         }
 
+        $stored = json_decode((string) Configuration::where('key', 'pos_payment_buttons')->value('value'), true) ?: [];
+        $slugIds = Account::slugIdMap();
+        $this->pos_payment_buttons = [
+            $stored[0] ?? $slugIds['cash'] ?? null,
+            $stored[1] ?? $slugIds['card'] ?? null,
+            $stored[2] ?? null,
+        ];
+        $icons = json_decode((string) Configuration::where('key', 'pos_payment_button_icons')->value('value'), true) ?: [];
+        $this->pos_payment_button_icons = [$icons[0] ?? null, $icons[1] ?? null, $icons[2] ?? null];
+        $this->loadPosButtonOptions();
+
         // Load countries for dropdown
         $this->countries = Country::orderBy('name')->pluck('name', 'id')->toArray();
+    }
+
+    /**
+     * The icon button [slot] shows: the one picked, else what "Auto" renders
+     * for the account it holds (Cash / Card when left on the default).
+     */
+    public function buttonIcon(int $slot): string
+    {
+        $picked = $this->pos_payment_button_icons[$slot] ?? null;
+        if ($picked && array_key_exists($picked, posPaymentButtonIcons())) {
+            return $picked;
+        }
+        $id = $this->pos_payment_buttons[$slot] ?? null;
+        $name = $id ? ($this->posButtonOptions[(int) $id] ?? '') : ['Cash', 'Card', ''][$slot];
+
+        return posPaymentAutoIcon($name);
+    }
+
+    public function updatedPaymentMethods(): void
+    {
+        $this->loadPosButtonOptions();
+    }
+
+    /**
+     * What a POS payment button may hold: the configured payment methods plus
+     * the locked Cash and Card accounts the POS has always offered.
+     */
+    protected function loadPosButtonOptions(): void
+    {
+        $ids = array_map('intval', array_filter((array) ($this->payment_methods ?: [])));
+        $this->posButtonOptions = Account::query()
+            ->where(fn ($query) => $query->whereIn('id', $ids)->orWhere(fn ($query) => $query->where('is_locked', 1)->whereIn('slug', ['cash', 'card'])))
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->toArray();
     }
 
     public function dbView()
@@ -64,6 +119,11 @@ class Configurations extends Component
         abort_unless(Auth::user()?->can('configuration.settings'), 403);
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
+        $this->loadPosButtonOptions();
+        $buttons = array_map(fn ($id) => isset($this->posButtonOptions[(int) $id]) ? (int) $id : null, array_slice(array_pad((array) $this->pos_payment_buttons, 3, null), 0, 3));
+        Configuration::updateOrCreate(['key' => 'pos_payment_buttons'], ['value' => json_encode($buttons)]);
+        $icons = array_map(fn ($icon) => array_key_exists((string) $icon, posPaymentButtonIcons()) ? $icon : null, array_slice(array_pad((array) $this->pos_payment_button_icons, 3, null), 0, 3));
+        Configuration::updateOrCreate(['key' => 'pos_payment_button_icons'], ['value' => json_encode($icons)]);
         $country = Country::find($this->country_id);
         if ($country) {
             Configuration::updateOrCreate(['key' => 'currency_code'], ['value' => $country->currency_code]);

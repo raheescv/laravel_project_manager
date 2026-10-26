@@ -71,7 +71,8 @@ class SaleController extends Controller
         $paymentMethodIds = json_decode(Configuration::where('key', 'payment_methods')->value('value'), true);
         $accountSlugIds = Account::slugIdMap();
         $cashPaymentMethodId = $accountSlugIds['cash'] ?? null;
-        $cardPaymentMethodId = $accountSlugIds['card'] ?? null;
+        $posPaymentButtons = posPaymentButtons();
+        $defaultPaymentMethodId = $posPaymentButtons[0]['id'] ?? $cashPaymentMethodId;
         $paymentMethods = [];
         if ($paymentMethodIds) {
             $paymentMethods = Account::whereIn('id', $paymentMethodIds)
@@ -103,7 +104,7 @@ class SaleController extends Controller
             'grand_total' => 0,
             'items' => [],
             'comboOffers' => [],
-            'payment_method' => $cashPaymentMethodId,
+            'payment_method' => $defaultPaymentMethodId,
             'custom_payment_data' => null,
             'status' => null,
             'notes' => '',
@@ -208,10 +209,11 @@ class SaleController extends Controller
                 $saleData['items'] = $cartItems;
 
                 // Handle payment method
-                if ($sale->payments->count() === 1 && $sale->balance == 0) {
+                $isButtonMethod = in_array($sale->payments->first()?->payment_method_id, array_column($posPaymentButtons, 'id'));
+                if ($sale->payments->count() === 1 && $sale->balance == 0 && $isButtonMethod) {
                     $payment = $sale->payments->first();
                     $saleData['payment_method'] = $payment->payment_method_id;
-                } elseif ($sale->payments->count() > 1 || $sale->balance != 0) {
+                } elseif ($sale->payments->count() >= 1 || $sale->balance != 0) {
                     $saleData['payment_method'] = 'custom';
                     $saleData['custom_payment_data'] = [
                         'payments' => $sale->payments
@@ -329,8 +331,10 @@ class SaleController extends Controller
             'defaultProductType' => $defaultProductType,
             'defaultCustomerEnabled' => $useDefaultCustomer,
             'defaultCustomer' => $defaultCustomer,
-            'cashPaymentMethodId' => $cashPaymentMethodId,
-            'cardPaymentMethodId' => $cardPaymentMethodId,
+            // Settings → System Configurations → POS Payment Buttons: the quick
+            // buttons ahead of Credit and Custom, the first one preselected.
+            'posPaymentButtons' => $posPaymentButtons,
+            'defaultPaymentMethodId' => $defaultPaymentMethodId,
             'defaultQuantity' => $defaultQuantity,
             'roundOffEnabled' => saleRoundOffEnabled(),
             'saleItemRowMode' => $saleItemRowMode,

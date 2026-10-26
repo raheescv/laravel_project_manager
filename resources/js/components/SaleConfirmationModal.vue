@@ -38,25 +38,25 @@
                             <span>WhatsApp</span>
                         </label>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                        <button type="button" class="posx-pay"
-                            :class="{ 'is-active': localPaymentMethod === cashPaymentMethodId || localPaymentMethod === '' }"
-                            @click="$emit('update:paymentMethod', cashPaymentMethodId)">
-                            <i class="fa fa-money"></i><span>Cash</span>
+                    <!-- The configured buttons lead; Credit and Custom share one narrower
+                         column as half-height tiles, so the everyday methods stand out. -->
+                    <div class="grid gap-1.5" :style="{ gridTemplateColumns: `repeat(${paymentButtons.length}, minmax(0, 1fr)) minmax(0, .85fr)` }">
+                        <button v-for="(button, index) in paymentButtons" :key="button.id" type="button" class="posx-pay min-w-0"
+                            :class="{ 'is-active': localPaymentMethod === button.id || (index === 0 && localPaymentMethod === '') }"
+                            @click="$emit('update:paymentMethod', button.id)">
+                            <i :class="`fa ${buttonIcon(button)}`"></i><span class="truncate max-w-full">{{ button.name }}</span>
                         </button>
-                        <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === cardPaymentMethodId }"
-                            @click="$emit('update:paymentMethod', cardPaymentMethodId)">
-                            <i class="fa fa-credit-card"></i><span>Card</span>
-                        </button>
-                        <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === 'credit' }"
-                            @click="$emit('update:paymentMethod', 'credit')">
-                            <i class="fa fa-file-text-o"></i><span>Credit</span>
-                        </button>
-                        <button type="button" class="posx-pay" :class="{ 'is-active': localPaymentMethod === 'custom' }"
-                            @click="$emit('openCustomPayment')">
-                            <i class="fa fa-cogs"></i><span>Custom</span>
-                            <span v-if="localCustomPaymentCount > 0" class="posx-pay-count">{{ localCustomPaymentCount }}</span>
-                        </button>
+                        <div class="posx-pay-stack">
+                            <button type="button" class="posx-pay is-mini" :class="{ 'is-active': localPaymentMethod === 'credit' }"
+                                @click="$emit('update:paymentMethod', 'credit')">
+                                <i class="fa fa-file-text-o"></i><span>Credit</span>
+                            </button>
+                            <button type="button" class="posx-pay is-mini" :class="{ 'is-active': localPaymentMethod === 'custom' }"
+                                @click="$emit('openCustomPayment')">
+                                <i class="fa fa-cogs"></i><span>Custom</span>
+                                <span v-if="localCustomPaymentCount > 0" class="posx-pay-count">{{ localCustomPaymentCount }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -149,13 +149,10 @@ export default {
         paymentMethod: {
             default: null
         },
-        cashPaymentMethodId: {
-            type: Number,
-            default: null
-        },
-        cardPaymentMethodId: {
-            type: Number,
-            default: null
+        // The configured quick buttons ([{ id, name, slug, icon }]), shown before Credit.
+        paymentButtons: {
+            type: Array,
+            default: () => []
         },
         sendToWhatsapp: {
             default: false
@@ -262,11 +259,19 @@ export default {
                     .join(', ')
             }
             const isMethod = id => id !== null && (props.saleData.payment_method === id || props.paymentMethod === id)
-            if (isMethod(props.cashPaymentMethodId)) return 'Cash Payment'
-            if (isMethod(props.cardPaymentMethodId)) return 'Card Payment'
+            const button = props.paymentButtons.find(b => isMethod(b.id))
+            if (button) return `${button.name} Payment`
             if (props.saleData.payment_method === 'credit' || props.paymentMethod === 'credit') return 'Credit Payment (No Payment)'
             return null
         })
+
+        const buttonIcon = (button) => {
+            if (button.icon) return `fa-${button.icon}`
+            const name = `${button.slug || ''} ${button.name || ''}`.toLowerCase()
+            if (name.includes('cash')) return 'fa-money'
+            if (name.includes('bank') || name.includes('transfer')) return 'fa-university'
+            return 'fa-credit-card'
+        }
 
         const localPaymentMethod = computed({
             get() {
@@ -342,6 +347,7 @@ export default {
             statusText,
             statusDescription,
             paymentMethods,
+            buttonIcon,
             localPaymentMethod,
             localSendToWhatsapp,
             localCustomPaymentCount,
