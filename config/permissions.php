@@ -51,6 +51,7 @@ return [
     'issue' => ['create', 'view', 'edit', 'delete', 'print'],
     'ticket' => ['create', 'view', 'edit', 'delete', 'comment', 'import', 'manage board'],
     'day session' => ['create', 'view', 'list', 'print'],
+    'token' => ['issue'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
