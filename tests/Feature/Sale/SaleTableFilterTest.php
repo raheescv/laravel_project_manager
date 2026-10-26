@@ -93,6 +93,18 @@ it('offers the time ago column in the toggle panel, hidden by default', function
         ->assertSet('sale_visible_column.time_ago', true);
 });
 
+it('shows the bill no column only when it is turned on', function (): void {
+    $saleId = insertListedSale($this->world, 'INVBILLNO', now()->toDateString(), now()->toDateTimeString());
+    DB::table('sales')->where('id', $saleId)->update(['bill_no' => 'EMP7/42']);
+
+    expect(App\Livewire\Sale\ColumnVisibility::defaultColumns())->toHaveKey('bill_no', false);
+
+    Livewire::test(Table::class)
+        ->assertDontSee('EMP7/42')
+        ->set('sale_visible_column.bill_no', true)
+        ->assertSee('EMP7/42');
+});
+
 /**
  * The "Showing x to y of z results" line stays visible on a single page; only
  * the page buttons wait for a second page.

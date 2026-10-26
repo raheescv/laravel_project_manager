@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/domain/services/outbox_service.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
@@ -46,7 +47,8 @@ void main() {
       // Provisioning pulls the sale settings and the currency list through these
       // two, so without them every run would report them as missing.
       ..registerLazySingleton<CurrencyCubit>(CurrencyCubit.new)
-      ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new);
+      ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new)
+      ..registerLazySingleton<PosSettingsCubit>(PosSettingsCubit.new);
     sync = OfflineSyncCubit(FakeSaleRepository());
   });
 

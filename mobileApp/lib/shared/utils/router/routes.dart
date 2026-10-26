@@ -13,6 +13,10 @@ class Routes {
   static const String selectBranch = '/select-branch';
   static const String home = '/home';
 
+  /// A user's first sign-in on this device asks where they want to land
+  /// before landing anywhere. See `PosSettingsCubit.needsStartScreenFor`.
+  static const String chooseStartScreen = '/choose-start-screen';
+
   /// The shell with a specific destination selected (tablet side rail / bottom
   /// nav both deep-link into it).
   static String homeTab(int tab) => '$home?tab=$tab';
@@ -55,6 +59,10 @@ class Routes {
   /// Requires a `StockCheckDetail` in `extra`; guarded by the route's redirect.
   static const String stockCheckCount = '/stock-check/count';
 
+  // ---- Queue tokens (`sale.queue token`) ----
+  static const String token = '/token';
+  static const String tokenSettings = '/token/settings';
+
   // ---- Account / settings ----
   static const String profile = '/profile';
   static const String editProfile = '/edit-profile';
@@ -70,11 +78,11 @@ class Routes {
 
 /// Where a signed-in session lands.
 ///
-/// Device-local (Settings → Start screen), because it is a decision about *this
-/// terminal*, not this account: the counter tablet a cashier rings tickets on
-/// wants to open on the POS, while the same manager's own phone — often the
-/// same login — still wants the dashboard. Storing it on the server would make
-/// the two fight over one value.
+/// Device-local and per user (Settings → Start screen), because it is a
+/// decision about *this terminal and this person*: the counter tablet a cashier
+/// rings tickets on wants to open on the POS, while the manager signing in on
+/// the same till — or on their own phone — still wants the dashboard. Storing
+/// it on the server would make two devices fight over one value.
 enum StartScreen {
   home('home', 'Dashboard', 'Today\'s figures and the module tiles', Routes.home),
   sale('sale', 'New Sale', 'Straight into the POS, ready to ring a ticket', Routes.sale),
@@ -82,7 +90,11 @@ enum StartScreen {
   // on directly that one has no bottom nav and nothing to go back to, which
   // strands the user on the screen they chose to start from.
   sales('sales', 'Sales', 'The invoice list, with the rest of the app around it',
-      '${Routes.home}?tab=1');
+      '${Routes.home}?tab=1'),
+  // The shell's Reports tab, for the same reason. It opens on whichever report
+  // (Overview / Breakdown) the user last looked at.
+  reports('reports', 'Reports', 'Sales reports, on the tab you left them',
+      '${Routes.home}?tab=2');
 
   const StartScreen(this.key, this.label, this.blurb, this.location);
 
@@ -96,4 +108,15 @@ enum StartScreen {
 
   static StartScreen fromKey(String? k) =>
       StartScreen.values.firstWhere((s) => s.key == k, orElse: () => StartScreen.home);
+
+  /// The options an account can actually land on — Reports needs the report
+  /// permission, everything else is open to every signed-in user.
+  static List<StartScreen> optionsFor({required bool canViewReports}) =>
+      [for (final s in values) if (s != reports || canViewReports) s];
+
+  /// Where this option lands for an account: one that has lost the report
+  /// permission since picking Reports opens on the dashboard instead of a
+  /// "restricted" page.
+  String resolve({required bool canViewReports}) =>
+      this == reports && !canViewReports ? home.location : location;
 }

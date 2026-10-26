@@ -38,7 +38,7 @@ it('lists the same product on two invoices as two rows, not one grouped row', fu
         ->and($response->json('data.summary.lines'))->toBe(2)
         ->and((float) $response->json('data.summary.quantity'))->toBe(5.0)
         ->and((float) $response->json('data.summary.total'))->toBe(250.0)
-        ->and($response->json('data.data.0'))->toHaveKeys(['sale_id', 'invoice_no', 'customer', 'quantity', 'unit_price', 'discount', 'total']);
+        ->and($response->json('data.data.0'))->toHaveKeys(['sale_id', 'invoice_no', 'customer', 'employee', 'quantity', 'unit_price', 'discount', 'total']);
 });
 
 it('searches lines by product name', function (): void {
@@ -88,4 +88,23 @@ it('reports the outstanding balance on the invoice list summary', function (): v
         ->assertSuccessful()
         ->assertJsonPath('data.summary.invoices', 1)
         ->assertJsonPath('data.summary.total_balance', 0);
+});
+
+it('breaks same-date ties by id in the chosen date direction', function (): void {
+    ringUp($this->world, 1);
+    ringUp($this->world, 2);
+    ringUp($this->world, 3);
+
+    $oldest = $this->getJson($this->world->url('/api/v1/sale?sort_by=date&sort_direction=asc'))->assertSuccessful();
+    $newest = $this->getJson($this->world->url('/api/v1/sale?sort_by=date&sort_direction=desc'))->assertSuccessful();
+    $oldestIds = collect($oldest->json('data.data'))->pluck('id')->map(fn ($id): int => (int) $id)->all();
+    $newestIds = collect($newest->json('data.data'))->pluck('id')->map(fn ($id): int => (int) $id)->all();
+
+    $oldestLines = $this->getJson($this->world->url('/api/v1/sale/items?sort_by=date&sort_direction=asc'))->assertSuccessful();
+    $oldestQuantities = collect($oldestLines->json('data.data'))->pluck('quantity')->map(fn ($quantity): float => (float) $quantity)->all();
+
+    expect($oldestIds)->toHaveCount(3)
+        ->and($oldestIds)->toBe(collect($oldestIds)->sort()->values()->all())
+        ->and($newestIds)->toBe(array_reverse($oldestIds))
+        ->and($oldestQuantities)->toBe([1.0, 2.0, 3.0]);
 });

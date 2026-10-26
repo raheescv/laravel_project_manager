@@ -31,7 +31,8 @@ enum CategoryDisplay {
       .firstWhere((d) => d.key == k, orElse: () => CategoryDisplay.nameOnly);
 }
 
-/// State for [PosSettingsCubit] — every value is device-local (§5 shape).
+/// State for [PosSettingsCubit] — every value is device-local (§5 shape)
+/// except [productSort], which is the shared web setting.
 class PosSettingsState extends Equatable {
   const PosSettingsState({
     this.lockAfterSale = true,
@@ -41,6 +42,7 @@ class PosSettingsState extends Equatable {
     this.showTip = true,
     this.startScreen = StartScreen.home,
     this.categoryDisplay = CategoryDisplay.nameOnly,
+    this.productSort = const ProductSort(),
   });
 
   /// Tile counts a till can choose between for the New Sale catalog grid.
@@ -73,6 +75,10 @@ class PosSettingsState extends Equatable {
   /// the least room.
   final CategoryDisplay categoryDisplay;
 
+  /// How New Sale orders the catalog. Shared — Settings → Sale Configuration
+  /// on the web; priority ascending until the first sync.
+  final ProductSort productSort;
+
   PosSettingsState copyWith({
     bool? lockAfterSale,
     bool? askBranchOnUnlock,
@@ -81,6 +87,7 @@ class PosSettingsState extends Equatable {
     bool? showTip,
     StartScreen? startScreen,
     CategoryDisplay? categoryDisplay,
+    ProductSort? productSort,
   }) =>
       PosSettingsState(
         lockAfterSale: lockAfterSale ?? this.lockAfterSale,
@@ -90,6 +97,7 @@ class PosSettingsState extends Equatable {
         showTip: showTip ?? this.showTip,
         startScreen: startScreen ?? this.startScreen,
         categoryDisplay: categoryDisplay ?? this.categoryDisplay,
+        productSort: productSort ?? this.productSort,
       );
 
   @override
@@ -101,5 +109,6 @@ class PosSettingsState extends Equatable {
         showTip,
         startScreen,
         categoryDisplay,
+        productSort,
       ];
 }

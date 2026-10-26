@@ -38,6 +38,10 @@ const int kPermissionsTab = 8;
 /// which read as leaving the app rather than switching a section of it.
 const int kLinkCardTab = 9;
 
+/// Queue tokens (`sale.queue token`): a shell destination on tablet so the
+/// kiosk reaches it from the rail like any other module.
+const int kTokenTab = 10;
+
 /// The rail's destinations, in display order.
 ///
 /// Every item is a real shell destination ([tab]) rather than a route, an
@@ -58,6 +62,8 @@ List<({IconData icon, String label, int tab})> railDestinations(BuildContext con
     tab(2),
     if (auth.hasPermission(PermissionSlug.daySession))
       (icon: Icons.schedule, label: 'Day Session', tab: kDaySessionTab),
+    if (auth.hasPermission(PermissionSlug.tokenIssue))
+      (icon: Icons.confirmation_number_outlined, label: 'Token', tab: kTokenTab),
     if (serviceLocator<LocalStorageService>().schoolEnabled &&
         auth.hasPermission(PermissionSlug.studentCardAssign))
       (icon: Icons.nfc, label: 'Link Card', tab: kLinkCardTab),

@@ -95,7 +95,7 @@ class FakeSaleRepository implements SaleRepository {
   }) async =>
       const SaleItemsPage(
         rows: [
-          {'id': '11', 'sale_id': '1', 'invoice_no': '#1042', 'customer': 'Walk-in', 'date': '2026-06-14', 'status': 'completed', 'product': {'id': '5', 'name': 'Linen Shirt', 'code': 'LS-01'}, 'quantity': 2, 'unit_price': 124.2, 'discount': 0, 'total': 248.4},
+          {'id': '11', 'sale_id': '1', 'invoice_no': '#1042', 'customer': 'Walk-in', 'date': '2026-06-14', 'status': 'completed', 'product': {'id': '5', 'name': 'Linen Shirt', 'code': 'LS-01'}, 'employee': 'Mariam', 'quantity': 2, 'unit_price': 124.2, 'discount': 0, 'total': 248.4},
         ],
         lines: 1,
         quantity: 2,

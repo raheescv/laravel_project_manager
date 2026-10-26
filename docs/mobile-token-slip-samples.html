@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Token · Screen + slip samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   ============================================================ */
+#stage{ --success:#1F9D63; --danger:#D4546A; }
+#stage[data-preset="qloud"]{
+  --primary:#0A62C8; --primary-dark:#01377F; --accent:#0BA8FA;
+  --canvas:#F3F7FD; --card:#FFFFFF; --ink:#101426; --text2:#4E5875; --muted:#98A0B8;
+  --hairline:#E6EAF3; --tint:#E8F1FD; --shadow:0 10px 24px -16px rgba(1,55,127,.30);
+}
+#stage[data-preset="qloud"][data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B; --ink:#EDEFF7; --text2:#A3ABC2; --muted:#767E96;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(10,98,200,.20); --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+#stage[data-preset="signature"]{
+  --primary:#0F5C4A; --primary-dark:#0A3F33; --accent:#C8A24A;
+  --canvas:#F4F2EC; --card:#FFFFFF; --ink:#16211D; --text2:#4B5B55; --muted:#8E9B95;
+  --hairline:#E5E2D8; --tint:#E9F0EC; --shadow:0 10px 24px -16px rgba(15,92,74,.30);
+}
+#stage[data-preset="signature"][data-theme="dark"]{
+  --canvas:#101614; --card:#1A211E; --ink:#ECF0EE; --text2:#A4B2AC; --muted:#78857F;
+  --hairline:rgba(255,255,255,.09); --tint:rgba(15,92,74,.24); --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,sans-serif;background:#EFEFEF}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 16px 70px;transition:background .2s}
+button{font:inherit;cursor:pointer}
+
+/* ---- page chrome ---- */
+.top{max-width:1360px;margin:0 auto 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400}
+.top p{font-size:13px;color:var(--text2);margin-top:5px;max-width:760px;line-height:1.55}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{border:0;background:transparent;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:7px 13px;border-radius:999px;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+
+/* ---- format console (drives every sample) ---- */
+.console{max-width:1360px;margin:0 auto;background:var(--card);border:1px solid var(--hairline);border-radius:18px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end}
+.console .f{display:flex;flex-direction:column;gap:5px}
+.console label{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.console input[type=text],.console input[type=number]{width:86px;border:1px solid var(--hairline);background:var(--canvas);color:var(--ink);border-radius:10px;padding:8px 10px;font:600 13px 'Inter'}
+.console .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text2);padding-bottom:8px}
+.console .chk input{accent-color:var(--primary);width:16px;height:16px}
+.console .spacer{flex:1}
+.console .issue{border:0;background:var(--primary);color:#fff;font-weight:800;font-size:13px;padding:10px 16px;border-radius:12px}
+.console .sample{font:800 13px 'Inter';color:var(--primary);background:var(--tint);border-radius:10px;padding:9px 12px;font-variant-numeric:tabular-nums}
+
+.band{max-width:1360px;margin:40px auto 16px;display:flex;align-items:center;gap:12px}
+.band b{font:800 10px 'Inter';letter-spacing:1.4px;text-transform:uppercase;color:#fff;background:var(--primary);border-radius:999px;padding:5px 10px}
+.band h2{font-family:'Marcellus',serif;font-size:21px;font-weight:400;white-space:nowrap}
+.band i{flex:1;height:1px;background:var(--hairline)}
+.row{max-width:1360px;margin:0 auto;display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+.cap{font:800 10px 'Inter';letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.notes{flex:1;min-width:250px;max-width:380px;background:var(--card);border:1px solid var(--hairline);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+.notes h3{font-size:14px;font-weight:800;margin-bottom:8px}
+.notes ul{padding-left:17px;font-size:12.5px;line-height:1.65;color:var(--text2)}
+.notes li+li{margin-top:4px}
+.notes .tag{display:inline-block;font:800 10px 'Inter';letter-spacing:.8px;text-transform:uppercase;color:var(--primary);background:var(--tint);border-radius:6px;padding:3px 7px;margin-bottom:10px}
+
+/* ---- phone frame ---- */
+.phone{width:320px;height:660px;border-radius:40px;background:#0B0D14;padding:9px;box-shadow:0 30px 60px -30px rgba(0,0,0,.45);flex-shrink:0}
+.scr{width:100%;height:100%;border-radius:32px;overflow:hidden;background:var(--canvas);display:flex;flex-direction:column;position:relative}
+.sbar{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font:700 12px 'Inter';color:var(--ink)}
+.appbar{display:flex;align-items:center;gap:10px;padding:4px 14px 10px}
+.appbar .ib{width:34px;height:34px;border-radius:11px;border:1px solid var(--hairline);background:var(--card);display:grid;place-items:center;color:var(--ink)}
+.appbar h4{font-size:17px;font-weight:800;flex:1}
+.appbar .chip{font:700 10.5px 'Inter';color:var(--text2);background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:5px 9px}
+svg{display:block}
+
+.num{font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1;white-space:nowrap;text-align:center}
+
+/* counters (shared) */
+.ctr-chips{display:flex;gap:6px;padding:0 14px 12px;overflow:hidden}
+.ctr-chips button{flex:1;border:1px solid var(--hairline);background:var(--card);color:var(--text2);border-radius:12px;padding:8px 4px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.ctr-chips button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.ctr-chips button em{font-style:normal;opacity:.65;margin-left:3px}
+
+/* ---- A · Ticket Stub ---- */
+.a-body{flex:1;padding:0 14px;display:flex;flex-direction:column}
+.a-ticket{background:var(--card);border-radius:22px;box-shadow:var(--shadow);border:1px solid var(--hairline);position:relative;overflow:hidden}
+.a-top{padding:20px 18px 18px;text-align:center}
+.a-logo{font:900 20px 'Inter';letter-spacing:.06em;color:var(--ink)}
+.a-logo small{display:block;font:600 8px 'Inter';letter-spacing:.12em;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.a-lbl{font:800 10.5px 'Inter';letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.a-num{color:var(--primary)}
+.a-ctr{display:inline-block;margin-top:10px;font:700 11px 'Inter';color:var(--primary);background:var(--tint);border-radius:999px;padding:4px 10px}
+.a-perf{position:relative;height:0;border-top:2px dashed var(--hairline);margin:0 14px}
+.a-perf:before,.a-perf:after{content:'';position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--canvas)}
+.a-perf:before{left:-26px}.a-perf:after{right:-26px}
+.a-stub{display:flex;justify-content:space-between;padding:13px 18px 15px;font:600 12px 'Inter';color:var(--text2)}
+.a-stub b{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.a-last{text-align:center;font:600 11.5px 'Inter';color:var(--muted);margin:12px 0 0}
+.a-last b{color:var(--text2);font-variant-numeric:tabular-nums}
+.a-acts{margin-top:auto;padding:12px 0 16px;display:flex;flex-direction:column;gap:8px}
+.btn-p{border:0;background:var(--primary);color:#fff;font-weight:800;font-size:15px;border-radius:15px;height:52px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 10px 20px -12px var(--primary)}
+.btn-row{display:flex;gap:8px}
+.btn-o{flex:1;border:1px solid var(--hairline);background:var(--card);color:var(--ink);font-weight:700;font-size:13.5px;border-radius:13px;height:44px;display:flex;align-items:center;justify-content:center;gap:7px}
+
+/* ---- B · Bold Block ---- */
+.b-hero{margin:0 14px;border-radius:24px;padding:18px 16px 20px;color:#fff;background:linear-gradient(150deg,var(--primary),var(--primary-dark));position:relative;overflow:hidden;text-align:center}
+.b-hero:after{content:'';position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)}
+.b-hero .h{display:flex;justify-content:space-between;font:700 10.5px 'Inter';letter-spacing:.16em;text-transform:uppercase;opacity:.8}
+.b-hero .num{margin:22px 0 14px}
+.b-hero .d{font:600 12px 'Inter';opacity:.85}
+.b-hero .pill{display:inline-flex;gap:6px;align-items:center;margin-top:12px;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 11px;font:700 11px 'Inter'}
+.b-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 14px 0}
+.b-tile{border:1.5px solid var(--hairline);background:var(--card);border-radius:16px;padding:10px 8px;text-align:left}
+.b-tile.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--tint)}
+.b-tile .l{width:26px;height:26px;border-radius:9px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font:900 13px 'Inter'}
+.b-tile.on .l{background:var(--primary);color:#fff}
+.b-tile .n{font:700 12px 'Inter';margin-top:8px;color:var(--ink)}
+.b-tile .x{font:600 10.5px 'Inter';color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.b-meta{display:flex;justify-content:space-between;margin:12px 14px 0;font:600 11.5px 'Inter';color:var(--muted)}
+.b-meta b{color:var(--text2)}
+.b-acts{margin-top:auto;padding:12px 14px 16px;display:flex;gap:8px}
+.b-acts .btn-p{flex:1}
+.b-acts .sq{width:52px;height:52px;border-radius:15px;border:1px solid var(--hairline);background:var(--card);color:var(--ink);display:grid;place-items:center}
+
+/* ---- C · Paper First ---- */
+.c-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 14px 0;overflow:hidden}
+.c-paperwrap{filter:drop-shadow(0 18px 22px rgba(0,0,0,.14))}
+.c-hint{font:600 11px 'Inter';color:var(--muted);margin-top:12px;text-align:center}
+.c-hint b{color:var(--text2);font-variant-numeric:tabular-nums}
+.c-dock{margin:auto 14px 16px;background:var(--card);border:1px solid var(--hairline);border-radius:20px;padding:6px;display:flex;gap:6px;box-shadow:var(--shadow)}
+.c-dock .g{width:48px;height:48px;border:0;background:transparent;color:var(--text2);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:700 9.5px 'Inter'}
+.c-dock .btn-p{flex:1;height:48px;border-radius:14px}
+
+/* ============================================================
+   Thermal slip — always white paper / black ink (what the printer gets)
+   ============================================================ */
+.slipcol{display:flex;flex-direction:column;align-items:center}
+.paper{background:#fff;color:#000;font-family:'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;padding:16px 12px 12px;position:relative}
+.tear{height:8px;background:linear-gradient(135deg,#fff 50%,transparent 50%) 0 0/10px 10px,linear-gradient(-135deg,#fff 50%,transparent 50%) 0 0/10px 10px;background-repeat:repeat-x}
+.paper .ar{font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl}
+.s-logo{text-align:center;font:700 19px 'IBM Plex Sans';letter-spacing:.08em}
+.s-logo small{display:block;font:500 7.5px 'IBM Plex Sans';letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
+.s-hdr{text-align:center;font-size:10.5px;margin-top:8px;line-height:1.35}
+.s-rule{border-top:1.5px dashed #000;margin:10px 0}
+.s-rule.solid{border-top-style:solid;border-top-width:2px}
+.s-lbl{text-align:center;font-weight:700;font-size:11px;letter-spacing:.3em;display:flex;justify-content:center;gap:10px;align-items:baseline}
+.s-lbl .ar{letter-spacing:0;font-size:11.5px}
+.s-num{font-family:'IBM Plex Sans';font-weight:700;margin:6px 0 4px}
+.s-ctr{text-align:center;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.s-dt{display:flex;justify-content:space-between;font-size:10.5px;font-weight:500}
+.s-dt.center{justify-content:center;gap:8px}
+.s-ftr{text-align:center;font-size:10px;line-height:1.5;margin-top:2px}
+.s-box{background:#000;color:#fff;border-radius:10px;padding:10px 6px 8px;margin:8px 0}
+.s-box .s-num{margin:0}
+.s-box .s-ctr{font-size:10.5px;margin-top:4px;opacity:.9}
+.s-left .s-meta{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.s-left .s-meta .s-logo{text-align:left;font-size:15px}
+.s-left .s-meta .r{text-align:right;font-size:9.5px;line-height:1.45;font-weight:500}
+.s-left .s-lbl{justify-content:space-between;letter-spacing:.24em}
+.widthtag{font:700 10px 'Inter';color:var(--muted);margin-top:10px;letter-spacing:.06em}
+
+/* ---- settings screen ---- */
+.set-body{flex:1;overflow:hidden;padding:0 14px}
+.grp{background:var(--card);border:1px solid var(--hairline);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.grp .gh{font:800 9.5px 'Inter';letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);padding:10px 14px 4px}
+.it{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;font:600 12.5px 'Inter';color:var(--ink)}
+.it+.it{border-top:1px solid var(--hairline)}
+.it span{color:var(--muted);font-weight:600}
+.seg{display:flex;background:var(--canvas);border-radius:9px;padding:2px}
+.seg i{font:800 10.5px 'Inter';font-style:normal;padding:4px 9px;border-radius:7px;color:var(--muted)}
+.seg i.on{background:var(--card);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tog{width:34px;height:20px;border-radius:999px;background:var(--primary);position:relative}
+.tog:after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.tog.off{background:var(--hairline)}.tog.off:after{right:auto;left:2px}
+.mini{display:flex;justify-content:center;padding:6px 0 12px;background:var(--canvas)}
+.mini .paper{transform-origin:top center}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="qloud" data-theme="light">
+
+  <div class="top">
+    <div>
+      <h1>Token · screen + slip samples</h1>
+      <p>Three directions for the mobile Token module. Each shows the phone screen and the thermal slip it prints. The slips are always black on white, because that's what the printer gets. The controls below drive every sample live. Try 4-digit padding, a device tag, counters on/off, or 58mm paper to see how the number fits.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" data-k="preset"><button data-v="qloud" class="on">Qloud</button><button data-v="signature">Signature</button></div>
+      <div class="sw" data-k="theme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+      <div class="sw" data-k="paper"><button data-v="80" class="on">80mm</button><button data-v="58">58mm</button></div>
+      <div class="sw" data-k="size"><button data-v="m">M</button><button data-v="l" class="on">L</button><button data-v="xl">XL</button></div>
+    </div>
+  </div>
+
+  <div class="console">
+    <div class="f"><label>Prefix</label><input type="text" id="prefix" value="A"></div>
+    <div class="f"><label>Separator</label><input type="text" id="sep" value="-" maxlength="2"></div>
+    <div class="f"><label>Digits</label><input type="number" id="pad" value="3" min="1" max="5"></div>
+    <div class="f"><label>Start at</label><input type="number" id="start" value="1" min="0"></div>
+    <div class="f"><label>Device tag</label><input type="text" id="tag" value="" placeholder="e.g. K1"></div>
+    <label class="chk"><input type="checkbox" id="counters" checked> Counters</label>
+    <label class="chk"><input type="checkbox" id="logo" checked> Logo</label>
+    <label class="chk"><input type="checkbox" id="footer" checked> Footer</label>
+    <div class="spacer"></div>
+    <div class="sample" id="sample">A-042</div>
+    <button class="issue" id="issue">+ New token</button>
+  </div>
+
+  <!-- ================= A ================= -->
+  <div class="band"><b>A</b><h2>Ticket Stub</h2><i></i></div>
+  <div class="row">
+    <div><div class="cap">Phone screen</div>
+      <div class="phone"><div class="scr">
+        <div class="sbar"><span>9:33</span><span>● ● ●</span></div>
+        <div class="appbar"><div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><h4>Token</h4><span class="chip" data-today></span></div>
+        <div class="ctr-chips" data-chips></div>
+        <div class="a-body">
+          <div class="a-ticket">
+            <div class="a-top">
+              <div class="a-logo" data-logo>ASTRA<small>Trading Contracting &amp; Services</small></div>
+              <div class="a-lbl">Your token number</div>
+              <div class="num a-num" data-fit="screen" data-max="92" data-pad="36"></div>
+              <span class="a-ctr" data-ctrname></span>
+            </div>
+            <div class="a-perf"></div>
+            <div class="a-stub"><div><b>Date</b><span data-date></span></div><div style="text-align:right"><b>Time</b><span data-time></span></div></div>
+          </div>
+          <div class="a-last">Last issued <b data-prev></b> · <b data-count></b> today</div>
+          <div class="a-acts">
+            <button class="btn-p" data-issue><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Token</button>
+            <div class="btn-row">
+              <button class="btn-o"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>Reprint</button>
+              <button class="btn-o">Close</button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="slipcol"><div class="cap">Printed slip</div><div data-slip="a"></div><div class="widthtag" data-widthtag></div></div>
+    <div class="notes">
+      <span class="tag">Closest to your screenshot</span>
+      <h3>Ticket Stub</h3>
+      <ul>
+        <li>The screen looks like a torn ticket: logo, label, a big number in the brand colour, then a perforated stub with the date and time.</li>
+        <li>Counter chips sit above the ticket. They only appear when counters are switched on.</li>
+        <li>The slip is a classic centred layout with dashed rules and a bold number auto-sized to the paper width.</li>
+        <li>Safe and familiar. Works at any theme.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ================= B ================= -->
+  <div class="band"><b>B</b><h2>Bold Block</h2><i></i></div>
+  <div class="row">
+    <div><div class="cap">Phone screen</div>
+      <div class="phone"><div class="scr">
+        <div class="sbar"><span>9:33</span><span>● ● ●</span></div>
+        <div class="appbar"><div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><h4>Token</h4><span class="chip" data-today></span></div>
+        <div class="b-hero">
+          <div class="h"><span>Your token</span><span data-ctrname></span></div>
+          <div class="num" data-fit="block" data-max="104" data-pad="32"></div>
+          <div class="d"><span data-date></span> · <span data-time></span></div>
+          <div class="pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>Sent to printer</div>
+        </div>
+        <div class="b-tiles" data-tiles></div>
+        <div class="b-meta"><span>Last <b data-prev></b></span><span><b data-count></b> issued today</span></div>
+        <div class="b-acts">
+          <button class="sq" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          <button class="sq" title="Reprint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg></button>
+          <button class="btn-p" data-issue><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Token</button>
+        </div>
+      </div></div>
+    </div>
+    <div class="slipcol"><div class="cap">Printed slip</div><div data-slip="b"></div><div class="widthtag" data-widthtag></div></div>
+    <div class="notes">
+      <span class="tag">Best for a kiosk</span>
+      <h3>Bold Block</h3>
+      <ul>
+        <li>The number sits on a solid brand-colour block, so it reads from across the counter.</li>
+        <li>Counters are big tap tiles that show each counter's next number. One tap issues for that counter.</li>
+        <li>On the slip, the number prints in a solid black box, the strongest look on paper. It uses more thermal ink per slip.</li>
+        <li>The icon-only Close and Reprint buttons keep "New Token" dominant.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ================= C ================= -->
+  <div class="band"><b>C</b><h2>Paper First</h2><i></i></div>
+  <div class="row">
+    <div><div class="cap">Phone screen</div>
+      <div class="phone"><div class="scr">
+        <div class="sbar"><span>9:33</span><span>● ● ●</span></div>
+        <div class="appbar"><div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><h4>Token</h4><span class="chip" data-today></span></div>
+        <div class="ctr-chips" data-chips></div>
+        <div class="c-body">
+          <div class="c-paperwrap" data-slip="c-screen"></div>
+          <div class="c-hint">Last <b data-prev></b> · <b data-count></b> today</div>
+        </div>
+        <div class="c-dock">
+          <button class="g"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>Close</button>
+          <button class="btn-p" data-issue><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Token</button>
+          <button class="g"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>Reprint</button>
+        </div>
+      </div></div>
+    </div>
+    <div class="slipcol"><div class="cap">Printed slip</div><div data-slip="c"></div><div class="widthtag" data-widthtag></div></div>
+    <div class="notes">
+      <span class="tag">Minimal · what you see prints</span>
+      <h3>Paper First</h3>
+      <ul>
+        <li>The screen shows the actual slip, so what's on the phone is exactly what prints.</li>
+        <li>A floating dock holds Close, New Token and Reprint.</li>
+        <li>The slip puts the logo top-left and the date and time top-right, with a solid rule, bilingual label and big number. It wastes no paper.</li>
+        <li>Matches your "page-first, not chrome-heavy" taste from the report previews.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ================= Settings ================= -->
+  <div class="band"><b>All</b><h2>Settings → Token (shared by every option)</h2><i></i></div>
+  <div class="row">
+    <div><div class="cap">APP Settings → Token</div>
+      <div class="phone"><div class="scr">
+        <div class="sbar"><span>9:33</span><span>● ● ●</span></div>
+        <div class="appbar"><div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><h4>Token</h4></div>
+        <div class="mini"><div data-slip="mini"></div></div>
+        <div class="set-body" style="padding-top:10px">
+          <div class="grp"><div class="gh">Number</div>
+            <div class="it">Prefix <span data-s="prefix"></span></div>
+            <div class="it">Digits <div class="seg" data-s="pad"></div></div>
+            <div class="it">Start at <span data-s="start"></span></div>
+            <div class="it">Device tag <span data-s="tag"></span></div>
+            <div class="it">Reset <div class="seg"><i class="on">Daily</i><i>Never</i></div></div>
+          </div>
+          <div class="grp"><div class="gh">Slip</div>
+            <div class="it">Number size <div class="seg" data-s="size"></div></div>
+            <div class="it">Logo <div class="tog" data-s="logo"></div></div>
+            <div class="it">Auto-print on issue <div class="tog"></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+    <div class="notes">
+      <span class="tag">Device-local</span>
+      <h3>One settings screen, live preview on top</h3>
+      <ul>
+        <li>The mini slip at the top redraws as you change any value.</li>
+        <li>Number: prefix, digits (zero-pad), start, device tag (so two kiosks never print the same number), reset daily/never.</li>
+        <li>Counters: a list of name + prefix, each with its own sequence. With none set up, the screen shows a single number stream.</li>
+        <li>Slip: number size M/L/XL, logo, header/footer EN + AR, auto-print.</li>
+        <li>"Reset counter" sits at the bottom behind a confirm dialog. It isn't shown in this mock-up.</li>
+        <li>The logo and company name come from the existing Print Settings, so nothing is entered twice.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const S = {
+  preset:'qloud', theme:'light', paper:'80', size:'l',
+  prefix:'A', sep:'-', pad:3, start:1, tag:'', counters:true, logo:true, footer:true,
+  ctr:0,
+  list:[{name:'General',prefix:'A',seq:42},{name:'Cashier',prefix:'B',seq:17},{name:'Service',prefix:'C',seq:8}],
+  single:42,
+};
+const SIZE = {m:.78, l:1, xl:1.18};
+const $ = (q, r=document) => [...r.querySelectorAll(q)];
+const now = new Date();
+const dDate = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const dTime = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+function fmt(seq, prefix){
+  const p = S.counters ? prefix : S.prefix;
+  const head = [S.tag.trim(), p.trim()].filter(Boolean).join(S.sep);
+  const n = String(Math.max(seq, S.start)).padStart(S.pad, '0');
+  return head ? head + S.sep + n : n;
+}
+const cur = () => S.counters ? S.list[S.ctr] : {name:'', prefix:S.prefix, seq:S.single};
+const curNo = () => fmt(cur().seq, cur().prefix);
+const prevNo = () => { const c = cur(); return c.seq - 1 >= S.start ? fmt(c.seq - 1, c.prefix) : '—'; };
+const todayCount = () => S.counters ? S.list.reduce((a, c) => a + c.seq, 0) : S.single;
+
+function slip(kind, w){
+  const c = cur(), no = curNo();
+  const logo = S.logo ? `<div class="s-logo">ASTRA<small>Trading Contracting &amp; Services</small></div>` : '';
+  const ctr = S.counters ? `<div class="s-ctr">${c.name}</div>` : '';
+  const ftr = S.footer ? `<div class="s-ftr">Thank you for waiting<br><span class="ar">شكراً لانتظاركم</span></div>` : '';
+  const lbl = `<div class="s-lbl"><span>TOKEN</span><span class="ar">رقم الدور</span></div>`;
+  let body;
+  if (kind === 'a') {
+    body = `${logo}<div class="s-hdr">Please wait — your number will be called</div><div class="s-rule"></div>${lbl}
+      <div class="num s-num" data-fit="slip" data-max="84" data-pad="24">${no}</div>${ctr}<div class="s-rule"></div>
+      <div class="s-dt"><span>${dDate}</span><span>${dTime}</span></div>${S.footer ? '<div class="s-rule"></div>' + ftr : ''}`;
+  } else if (kind === 'b') {
+    body = `${logo}<div class="s-hdr">Please wait — your number will be called</div>${lbl.replace('s-lbl','s-lbl" style="margin-top:10px')}
+      <div class="s-box"><div class="num s-num" data-fit="slip" data-max="80" data-pad="40">${no}</div>${S.counters ? `<div class="s-ctr">${c.name}</div>` : ''}</div>
+      <div class="s-dt center"><span>${dDate}</span><span>|</span><span>${dTime}</span></div>${S.footer ? '<div class="s-rule"></div>' + ftr : ''}`;
+  } else {
+    body = `<div class="s-left"><div class="s-meta">${S.logo ? '<div class="s-logo">ASTRA</div>' : '<div></div>'}<div class="r">${dDate}<br>${dTime}</div></div>
+      <div class="s-rule solid"></div>${lbl}
+      <div class="num s-num" data-fit="slip" data-max="88" data-pad="24">${no}</div>${ctr}
+      ${S.footer ? '<div class="s-rule"></div>' + ftr : ''}</div>`;
+  }
+  return `<div class="paper" style="width:${w}px">${body}</div><div class="tear" style="width:${w}px"></div>`;
+}
+
+function fitAll(){
+  $('[data-fit]').forEach(el => {
+    const cs = getComputedStyle(el.parentElement);
+    const box = el.parentElement.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 8;
+    let size = +el.dataset.max * (el.dataset.fit === 'slip' ? SIZE[S.size] : 1);
+    el.style.display = 'inline-block'; el.style.width = 'auto';
+    el.style.fontSize = size + 'px';
+    while (size > 18 && el.scrollWidth > box) { size -= 2; el.style.fontSize = size + 'px'; }
+    el.style.display = 'block'; el.style.width = '';
+  });
+}
+
+function render(){
+  const st = document.getElementById('stage');
+  st.dataset.preset = S.preset; st.dataset.theme = S.theme;
+  const w = S.paper === '80' ? 280 : 204;
+  const no = curNo();
+
+  $('[data-slip]').forEach(el => {
+    const k = el.dataset.slip;
+    if (k === 'c-screen') el.innerHTML = slip('c', 236);
+    else if (k === 'mini') { el.innerHTML = slip('a', w); el.style.zoom = .4; }
+    else el.innerHTML = slip(k, w);
+  });
+  $('[data-fit="screen"],[data-fit="block"]').forEach(el => el.textContent = no);
+  $('[data-date]').forEach(el => el.textContent = dDate);
+  $('[data-time]').forEach(el => el.textContent = dTime);
+  $('[data-today]').forEach(el => el.textContent = dDate);
+  $('[data-prev]').forEach(el => el.textContent = prevNo());
+  $('[data-count]').forEach(el => el.textContent = todayCount());
+  $('[data-ctrname]').forEach(el => { el.textContent = S.counters ? cur().name + ' counter' : ''; el.style.display = S.counters ? '' : 'none'; });
+  $('[data-logo]').forEach(el => el.style.display = S.logo ? '' : 'none');
+  $('[data-widthtag]').forEach(el => el.textContent = S.paper + 'mm roll · ' + {m:'M', l:'L', xl:'XL'}[S.size] + ' number');
+  document.getElementById('sample').textContent = no;
+
+  $('[data-chips]').forEach(el => {
+    el.style.display = S.counters ? '' : 'none';
+    el.innerHTML = S.list.map((c, i) => `<button class="${i === S.ctr ? 'on' : ''}" data-ci="${i}">${c.name}<em>${c.prefix}</em></button>`).join('');
+  });
+  $('[data-tiles]').forEach(el => {
+    el.style.display = S.counters ? '' : 'none';
+    el.innerHTML = S.list.map((c, i) => `<button class="b-tile ${i === S.ctr ? 'on' : ''}" data-ci="${i}"><div class="l">${c.prefix}</div><div class="n">${c.name}</div><div class="x">next ${fmt(c.seq + 1, c.prefix)}</div></button>`).join('');
+  });
+
+  const set = (k, html) => $(`[data-s="${k}"]`).forEach(el => el.innerHTML = html);
+  set('prefix', S.counters ? 'Per counter' : (S.prefix || '—'));
+  set('start', S.start);
+  set('tag', S.tag || 'None');
+  set('pad', [2,3,4].map(n => `<i class="${n == S.pad ? 'on' : ''}">${'0'.repeat(n - 1)}7</i>`).join(''));
+  set('size', ['m','l','xl'].map(n => `<i class="${n === S.size ? 'on' : ''}">${n.toUpperCase()}</i>`).join(''));
+  $('[data-s="logo"]').forEach(el => el.classList.toggle('off', !S.logo));
+
+  fitAll();
+}
+
+function issue(){
+  if (S.counters) S.list[S.ctr].seq++; else S.single++;
+  render();
+}
+
+$('.sw').forEach(sw => sw.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('button', sw).forEach(x => x.classList.toggle('on', x === b));
+  S[sw.dataset.k] = b.dataset.v; render();
+}));
+['prefix','sep','tag'].forEach(id => document.getElementById(id).addEventListener('input', e => { S[id] = e.target.value; render(); }));
+['pad','start'].forEach(id => document.getElementById(id).addEventListener('input', e => { S[id] = Math.max(id === 'pad' ? 1 : 0, Math.min(id === 'pad' ? 5 : 99999, +e.target.value || 0)); render(); }));
+['counters','logo','footer'].forEach(id => document.getElementById(id).addEventListener('change', e => { S[id] = e.target.checked; render(); }));
+document.getElementById('issue').addEventListener('click', issue);
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-issue]')) issue();
+  const ci = e.target.closest('[data-ci]');
+  if (ci) { S.ctr = +ci.dataset.ci; render(); }
+});
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>

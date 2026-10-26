@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../domain/models/catalog.dart';
+import '../../domain/models/product_sort.dart';
 import '../crash_reporter.dart';
 import '../friendly_error.dart';
 import 'keys.dart';
@@ -183,12 +187,46 @@ class LocalStorageService {
   Future<void> setSchoolEnabled(bool v) =>
       _prefs.setBool(LocalStorageKeys.schoolEnabled, v);
 
+  // Company logo URL (Settings → Company Profile on the web) — the catalog's
+  // stand-in for a product with no photo, as on the web POS. '' until synced.
+  String get companyLogoUrl => _prefs.getString(LocalStorageKeys.companyLogoUrl) ?? '';
+  Future<void> setCompanyLogoUrl(String v) =>
+      _prefs.setString(LocalStorageKeys.companyLogoUrl, v);
+
+  // Checkout quick payment buttons (System Configurations → POS Payment Buttons
+  // on the web), shown before Credit and Custom. Empty until synced — the
+  // checkout then falls back to Cash and Card.
+  List<PaymentMethod> get posPaymentButtons {
+    final raw = _prefs.getString(LocalStorageKeys.posPaymentButtons);
+    if (raw == null) return const [];
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is List
+          ? [for (final b in decoded) if (b is Map) PaymentMethod.fromJson(Map<String, dynamic>.from(b))]
+          : const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> setPosPaymentButtons(List<PaymentMethod> v) => _prefs.setString(
+      LocalStorageKeys.posPaymentButtons, jsonEncode([for (final b in v) b.toJson()]));
+
   // Default POS Product/Service filter (Settings → Sale Configuration).
   // 'product' / 'service' narrow the catalog; '' means All Types.
   String? get defaultProductType =>
       _prefs.getString(LocalStorageKeys.defaultProductType);
   Future<void> setDefaultProductType(String v) =>
       _prefs.setString(LocalStorageKeys.defaultProductType, v);
+
+  // New Sale catalog order (Settings → Sale Configuration → POS Product Order).
+  // Priority ascending until the first sync says otherwise.
+  ProductSort get productSort => ProductSort.from(
+      _prefs.getString(LocalStorageKeys.productSortBy), _prefs.getString(LocalStorageKeys.productSortDirection));
+  Future<void> setProductSort(ProductSort v) async {
+    await _prefs.setString(LocalStorageKeys.productSortBy, v.by);
+    await _prefs.setString(LocalStorageKeys.productSortDirection, v.direction);
+  }
 
   // New Sale catalog rendering preference — 'grid' (image tiles) or 'list'.
   String? get saleView => _prefs.getString(LocalStorageKeys.saleView);
@@ -283,6 +321,85 @@ class LocalStorageService {
       _prefs.getString(LocalStorageKeys.posStartScreen);
   Future<void> setPosStartScreen(String v) =>
       _prefs.setString(LocalStorageKeys.posStartScreen, v);
+
+  // ---- queue tokens (device-local) ----
+  String? get tokenSettingsJson => _prefs.getString(LocalStorageKeys.tokenSettings);
+  Future<void> setTokenSettingsJson(String v) =>
+      _prefs.setString(LocalStorageKeys.tokenSettings, v);
+
+  // Today's numbering for one branch ([scope]) of the signed-in tenant.
+  String _tokenLedgerKey(String scope) => '${LocalStorageKeys.tokenLedger}.${tenant ?? ''}.$scope';
+  String? tokenLedgerJson(String scope) => _prefs.getString(_tokenLedgerKey(scope));
+  Future<void> setTokenLedgerJson(String scope, String v) =>
+      _prefs.setString(_tokenLedgerKey(scope), v);
+
+  // ---- per-user (device-local, keyed by tenant + user id) ----
+  /// [prefix] scoped to one account on this device. Null without a user, so a
+  /// caller with no session falls back to the device-wide value.
+  String? userKey(String prefix, String? userId) =>
+      (userId == null || userId.isEmpty) ? null : '$prefix.${tenant ?? ''}.$userId';
+
+  // Where [userId] lands after sign-in — a `StartScreen.key`. Until they pick
+  // one it is the device-wide choice, so existing tills keep landing where
+  // they always have.
+  String? startScreenFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userStartScreen, userId);
+    return (key == null ? null : _prefs.getString(key)) ?? posStartScreen;
+  }
+
+  // Whether [userId] has picked their own start screen on this device. False
+  // until they do, so their first sign-in here asks before landing anywhere.
+  // No user means there is no one to ask.
+  bool hasStartScreenFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userStartScreen, userId);
+    return key == null || _prefs.containsKey(key);
+  }
+
+  Future<void> setStartScreenFor(String? userId, String v) {
+    final key = userKey(LocalStorageKeys.userStartScreen, userId);
+    return key == null ? setPosStartScreen(v) : _prefs.setString(key, v);
+  }
+
+  // The Reports tab [userId] last opened. Null until they switch once.
+  String? reportsTabFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userReportsTab, userId);
+    return key == null ? null : _prefs.getString(key);
+  }
+
+  Future<void> setReportsTabFor(String? userId, String v) async {
+    final key = userKey(LocalStorageKeys.userReportsTab, userId);
+    if (key != null) await _prefs.setString(key, v);
+  }
+
+  // The Breakdown ranking [userId] last opened. Null until they switch once.
+  String? reportsBreakdownFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userReportsBreakdown, userId);
+    return key == null ? null : _prefs.getString(key);
+  }
+
+  Future<void> setReportsBreakdownFor(String? userId, String v) async {
+    final key = userKey(LocalStorageKeys.userReportsBreakdown, userId);
+    if (key != null) await _prefs.setString(key, v);
+  }
+
+  // The Sales list tab and sorts [userId] last picked. Empty until they change
+  // one; a bad value reads as empty.
+  Map<String, dynamic> salesListFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userSalesList, userId);
+    final raw = key == null ? null : _prefs.getString(key);
+    if (raw == null) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? decoded : const {};
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  Future<void> setSalesListFor(String? userId, Map<String, dynamic> v) async {
+    final key = userKey(LocalStorageKeys.userSalesList, userId);
+    if (key != null) await _prefs.setString(key, jsonEncode(v));
+  }
 
   // Whether closing the day prints its Sale Bill Report. Null until the close
   // sheet is first answered, which means print.
@@ -390,6 +507,13 @@ class LocalStorageService {
   Future<void> setPrintCompanyName(String v) =>
       _prefs.setString(LocalStorageKeys.printCompanyName, v);
 
+  // The sale's checkout note on the receipt (web `enable_notes_in_print`).
+  bool? get printNotes => _prefs.containsKey(LocalStorageKeys.printNotes)
+      ? _prefs.getBool(LocalStorageKeys.printNotes)
+      : null;
+  Future<void> setPrintNotes(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printNotes, v);
+
   // ---- auto-print (device-local) ----
   // Print the receipt the moment a sale is charged, on the printer this till
   // is paired with — so the cashier never taps Print.
@@ -425,6 +549,21 @@ class LocalStorageService {
           : null;
   Future<void> setPrintSkipInvoice(bool v) =>
       _prefs.setBool(LocalStorageKeys.printSkipInvoice, v);
+
+  // How far [userId]'s Office Bill count has got on this till — `yyyy-MM-dd:n`.
+  String? staffBillFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userStaffBill, userId);
+    return key == null ? null : _prefs.getString(key);
+  }
+
+  Future<void> setStaffBillFor(String? userId, String v) async {
+    final key = userKey(LocalStorageKeys.userStaffBill, userId);
+    if (key != null) await _prefs.setString(key, v);
+  }
+
+  String? get renumberedBillsJson => _prefs.getString(LocalStorageKeys.offlineRenumberedBills);
+  Future<void> setRenumberedBillsJson(String v) =>
+      _prefs.setString(LocalStorageKeys.offlineRenumberedBills, v);
 
   // ---- cached user json ----
   String? get userJson => _prefs.getString(LocalStorageKeys.user);

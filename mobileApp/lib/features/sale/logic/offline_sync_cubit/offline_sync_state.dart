@@ -19,6 +19,7 @@ class OfflineSyncState extends Equatable {
     this.photosCached = 0,
     this.photosTotal = 0,
     this.photosBudgetHit = false,
+    this.renumbered = const [],
   });
 
   final DataFetchStatus status;
@@ -72,6 +73,11 @@ class OfflineSyncState extends Equatable {
   /// tail of the catalog has no pictures. Distinct from a failure: everything
   /// downloaded is sound, there was simply no room for the rest.
   final bool photosBudgetHit;
+
+  /// Office Bills printed offline that the server gave a different number on
+  /// sync, newest first. Each slip needs reprinting before its biller counts
+  /// the day — see [OfflineSyncCubit.dismissRenumbered].
+  final List<RenumberedBill> renumbered;
 
   bool get provisioning => provisionStep != null;
 
@@ -133,6 +139,7 @@ class OfflineSyncState extends Equatable {
     int? photosCached,
     int? photosTotal,
     bool? photosBudgetHit,
+    List<RenumberedBill>? renumbered,
   }) =>
       OfflineSyncState(
         status: status ?? this.status,
@@ -150,6 +157,7 @@ class OfflineSyncState extends Equatable {
         photosCached: photosCached ?? this.photosCached,
         photosTotal: photosTotal ?? this.photosTotal,
         photosBudgetHit: photosBudgetHit ?? this.photosBudgetHit,
+        renumbered: renumbered ?? this.renumbered,
       );
 
   @override
@@ -169,5 +177,6 @@ class OfflineSyncState extends Equatable {
         photosCached,
         photosTotal,
         photosBudgetHit,
+        renumbered,
       ];
 }

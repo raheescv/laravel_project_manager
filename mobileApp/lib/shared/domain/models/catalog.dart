@@ -74,6 +74,7 @@ class Product extends Equatable {
     required this.duration,
     required this.totalStock,
     required this.thumbnail,
+    this.priority = 0,
   });
 
   final int id;
@@ -87,6 +88,9 @@ class Product extends Equatable {
   final String duration;
   final num totalStock;
   final String thumbnail;
+
+  /// POS listing priority (Settings → Sale → POS Product Order); 0 = none.
+  final int priority;
 
   bool get isService => type == 'service';
   bool get hasImage => thumbnail.startsWith('http');
@@ -113,6 +117,7 @@ class Product extends Equatable {
       duration: asStr(j['time']),
       totalStock: asNum(j['total_stock']),
       thumbnail: thumb,
+      priority: asNum(j['priority']).toInt(),
     );
   }
 
@@ -130,6 +135,7 @@ class Product extends Equatable {
         duration,
         totalStock,
         thumbnail,
+        priority,
       ];
 }
 
@@ -202,19 +208,32 @@ class Employee extends Equatable {
 /// A configured payment-method account (Cash, Card, Bank, …) used by the
 /// custom-payment selector. Mirrors `GET /payment-methods`.
 class PaymentMethod extends Equatable {
-  const PaymentMethod({required this.id, required this.name});
+  const PaymentMethod({required this.id, required this.name, this.slug, this.icon});
   final int id;
   final String name;
+
+  /// The account's system slug — 'cash' / 'card' for the locked accounts. Only
+  /// the POS payment buttons carry it (`/settings/sale` → `payment_buttons`).
+  final String? slug;
+
+  /// The icon picked for its POS button — a Font Awesome key from the web
+  /// (`posPaymentButtonIcons()`), or null to pick one from the name.
+  final String? icon;
 
   factory PaymentMethod.fromJson(Map<String, dynamic> j) => PaymentMethod(
         id: asNum(j['id']).toInt(),
         name: asStr(j['name']),
+        slug: j['slug'] == null ? null : asStr(j['slug']),
+        icon: j['icon'] == null ? null : asStr(j['icon']),
       );
 
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'slug': slug, 'icon': icon};
 
   @override
   List<Object?> get props => [
         id,
         name,
+        slug,
+        icon,
       ];
 }

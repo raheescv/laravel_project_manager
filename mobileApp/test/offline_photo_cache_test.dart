@@ -202,8 +202,12 @@ void main() {
         categoriesByType: const {'': [], 'product': [], 'service': []},
       );
 
-      // priority DESC then name — the same order `products()` pages in, so a
-      // budget that runs out costs the tail of the catalog, not the middle.
+      // The configured product order (priority ascending by default) — the
+      // same order `products()` pages in, so a budget that runs out costs the
+      // tail of the catalog, not the middle.
+      expect(await snapshot.thumbnails(branch), ['https://s/b.jpg', 'https://s/a.jpg']);
+
+      await serviceLocator<LocalStorageService>().setProductSort(const ProductSort(direction: ProductSort.desc));
       expect(await snapshot.thumbnails(branch), ['https://s/a.jpg', 'https://s/b.jpg']);
     });
 

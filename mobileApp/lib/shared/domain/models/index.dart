@@ -7,6 +7,7 @@ export 'day_session.dart';
 export 'day_session_report.dart';
 export 'paginated.dart';
 export 'print_settings.dart';
+export 'product_sort.dart';
 export 'sale.dart';
 export 'sale_return.dart';
 export 'user.dart';

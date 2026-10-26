@@ -4,7 +4,9 @@ import 'dart:typed_data';
 /// config (resources/views/sale/print.blade.php).
 enum PrintStyle {
   englishOnly('english_only', 'English only'),
-  withArabic('with_arabic', 'With Arabic');
+  withArabic('with_arabic', 'With Arabic'),
+  // Compact English-only bill: company, the biller's Bill No, items, totals.
+  officeBill('office_bill', 'Office bill');
 
   const PrintStyle(this.key, this.label);
   final String key;
@@ -66,6 +68,7 @@ class PrintSettings {
     this.quantityLabel = QuantityLabel.quantity,
     this.logo,
     this.companyName = '',
+    this.showNotes = false,
   });
 
   final PrintStyle style;
@@ -84,6 +87,10 @@ class PrintSettings {
   /// Company name printed above the branch line, or '' to skip — already
   /// gated on the web `enable_company_name_in_print` flag by the cubit.
   final String companyName;
+
+  /// Print the sale's checkout note (when it has one) — the web
+  /// `enable_notes_in_print` flag.
+  final bool showNotes;
 }
 
 /// The thermal-print block of GET /settings/sale — the web Sale Configuration
@@ -102,6 +109,7 @@ class RemotePrintConfig {
     this.showCompanyName,
     this.companyName,
     this.quantityLabelKey,
+    this.showNotes,
   });
 
   factory RemotePrintConfig.fromJson(Map<String, dynamic> j) => RemotePrintConfig(
@@ -116,6 +124,7 @@ class RemotePrintConfig {
         showCompanyName: j['show_company_name'] is bool ? j['show_company_name'] as bool : null,
         companyName: j['company_name']?.toString(),
         quantityLabelKey: j['quantity_label']?.toString(),
+        showNotes: j['show_notes'] is bool ? j['show_notes'] as bool : null,
       );
 
   final String? styleKey;
@@ -132,4 +141,5 @@ class RemotePrintConfig {
   final bool? showCompanyName;
   final String? companyName;
   final String? quantityLabelKey;
+  final bool? showNotes;
 }

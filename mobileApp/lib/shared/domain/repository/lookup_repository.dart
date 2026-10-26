@@ -5,7 +5,8 @@ import '../models/index.dart';
 /// Reference data used across features (catalog, branches, customers,
 /// employees, payment methods, currencies) plus the shared settings sync.
 /// Lives in `shared/` because several features and the app-wide Branch/
-/// Currency cubits all depend on it. Read-only except [savePrintSettings].
+/// Currency cubits all depend on it. Read-only except [savePrintSettings] and
+/// [saveProductSort].
 abstract class LookupRepository {
   Future<Paginated<Product>> products({
     String? search,
@@ -53,7 +54,7 @@ abstract class LookupRepository {
 
   Future<({String? baseCode, List<Currency> currencies})> currencies();
 
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})> saleSettings();
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings();
 
   /// Company logo bytes (png/jpg/svg) for the receipt header; cached by the
   /// print cubit keyed on `RemotePrintConfig.logoVersion`.
@@ -63,4 +64,8 @@ abstract class LookupRepository {
   /// [body] of the same keys GET /settings/sale returns under `print`).
   /// Returns the server's fresh print block. Needs `configuration.settings`.
   Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body);
+
+  /// Saves the New Sale catalog order to the shared web Sale Configuration.
+  /// Returns the server's stored order. Needs `configuration.settings`.
+  Future<ProductSort?> saveProductSort(ProductSort sort);
 }

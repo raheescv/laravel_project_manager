@@ -10,6 +10,8 @@ extension _ReceiptSections on InvoiceScreen {
     final faint = Colors.white.withValues(alpha: 0.82);
     final invLine = [
       sale.invoiceNo.isEmpty ? '#${sale.id}' : sale.invoiceNo,
+      // The biller's `{code}/{n}` counter printed on the Office Bill receipt.
+      if (sale.billNo.isNotEmpty) 'Bill No ${sale.billNo}',
       if (sale.date.isNotEmpty) Dates.human(sale.date),
     ].join('  ·  ');
 

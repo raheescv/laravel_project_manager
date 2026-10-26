@@ -25,6 +25,8 @@ class SaleResource extends JsonResource
             'invoice_no' => $this->invoice_no,
             // The biller's own `{code}/{n}` number printed on the "office_bill" receipt.
             'bill_no' => $this->bill_no,
+            // Its `n`, so the till can count on from it while it is offline.
+            'staff_bill_sequence' => $this->staff_bill_sequence,
             // Doubles as the provisional reference printed on the receipt when the
             // sale was rung up offline; `client_uuid` below is what tells the app
             // which of the two this is.

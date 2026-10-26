@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../api/end_points.dart';
+import '../../utils/local_storage/local_storage_service.dart';
 import '../../utils/router/http_utils/http_service.dart';
 import '../constants/global_variables.dart';
 import '../helpers/formatters.dart';
@@ -24,6 +25,8 @@ class LookupService implements LookupRepository {
       if (mainCategoryId != null) 'main_category_id': mainCategoryId,
       if (type != null) 'type': type,
       'in_stock_only': false,
+      // Settings → Sale Configuration → POS Product Order, cached on sync.
+      ...serviceLocator<LocalStorageService>().productSort.query,
       'per_page': perPage,
       'page': page,
     });
@@ -149,7 +152,7 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})> saleSettings() async {
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async {
     final data = await _http.get(EndPoints.saleSettings);
     final map = Map<String, dynamic>.from(data as Map);
     return (
@@ -158,6 +161,11 @@ class LookupService implements LookupRepository {
       roundOffEnabled: map['round_off_enabled'] is bool ? map['round_off_enabled'] as bool : null,
       defaultProductType: map['default_product_type']?.toString(),
       schoolEnabled: map['school_enabled'] is bool ? map['school_enabled'] as bool : null,
+      logoUrl: map.containsKey('logo_url') ? asStr(map['logo_url']) : null,
+      productSort: map['product_sort'] is Map ? ProductSort.fromJson(Map<String, dynamic>.from(map['product_sort'] as Map)) : null,
+      paymentButtons: map['payment_buttons'] is List
+          ? [for (final b in map['payment_buttons'] as List) if (b is Map) PaymentMethod.fromJson(Map<String, dynamic>.from(b))]
+          : null,
       print: map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null,
     );
   }
@@ -170,5 +178,12 @@ class LookupService implements LookupRepository {
     final data = await _http.put(EndPoints.printSettings, body: body);
     final map = Map<String, dynamic>.from(data as Map);
     return map['print'] is Map ? RemotePrintConfig.fromJson(Map<String, dynamic>.from(map['print'] as Map)) : null;
+  }
+
+  @override
+  Future<ProductSort?> saveProductSort(ProductSort sort) async {
+    final data = await _http.put(EndPoints.productSortSettings, body: sort.toJson());
+    final map = Map<String, dynamic>.from(data as Map);
+    return map['product_sort'] is Map ? ProductSort.fromJson(Map<String, dynamic>.from(map['product_sort'] as Map)) : null;
   }
 }

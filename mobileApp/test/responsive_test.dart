@@ -25,6 +25,8 @@ import 'package:invo/features/settings/screens/v3/settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
 import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
+import 'package:invo/features/token/screens/v3/token_screen.dart';
+import 'package:invo/features/token/screens/v3/token_settings_screen.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
@@ -138,6 +140,8 @@ void main() {
     'Print settings': (d) async => const PrintSettingsScreen(),
     'Stock check list': (d) async => const StockCheckListScreen(),
     'New stock check': (d) async => const NewStockCheckScreen(),
+    'Token': (d) async => const TokenScreen(),
+    'Token settings': (d) async => const TokenSettingsScreen(),
   };
 
   // The Reports screen defaults to the item-wise report, which renders an

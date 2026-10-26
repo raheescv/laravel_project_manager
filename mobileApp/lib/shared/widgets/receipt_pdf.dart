@@ -34,6 +34,7 @@ const _ar = {
   'balance': 'الرصيد',
   'card_balance': 'رصيد البطاقة',
   'served_by': 'خدم بواسطة',
+  'notes': 'ملاحظات',
   'provisional': 'إيصال مؤقت — رقم الفاتورة الضريبية لاحقاً',
 };
 
@@ -80,7 +81,7 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   // built-in set (₹, €, ﷼, …) still render instead of showing tofu boxes. The
   // fallback only fires for those LTR glyphs, so it can't trigger the Arabic
   // mis-shaping the base-font rule guards against.
-  final theme = ar && _arabicFont != null
+  final theme = (ar || settings.style == PrintStyle.officeBill) && _arabicFont != null
       ? pw.ThemeData.withFont(base: _arabicFont!, bold: _arabicFontBold ?? _arabicFont!)
       : pw.ThemeData.withFont(
           base: pw.Font.helvetica(),
@@ -111,6 +112,10 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
   final grandTotal = netValue - discount + tax + roundOff;
   final balance = grandTotal - sale.paid;
   final totalQty = sale.lines.fold<double>(0, (t, l) => t + l.quantity);
+
+  if (settings.style == PrintStyle.officeBill) {
+    return _buildOfficeBill(sale, settings, theme, format, pad, s, invoiceNo, grandTotal);
+  }
 
   final logo = pdfLogo(settings.logo, width: s(60));
 
@@ -220,6 +225,11 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
             balance: balance,
             cardBalance: sale.student?.cardBalance,
           ),
+          // ---- sale note (web `enable_notes_in_print`) ----
+          if (settings.showNotes && sale.notes.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 6),
+            _notes(sale.notes.trim(), ar, s),
+          ],
           // ---- barcode + qr ----
           if (settings.showBarcode) ...[
             pw.SizedBox(height: 8),
@@ -251,6 +261,139 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
             child: pw.Text('Powered by QLOUD POS',
                 style: pw.TextStyle(fontSize: s(6), color: PdfColors.grey600)),
           ),
+        ],
+      ),
+    ),
+  );
+
+  return doc.save();
+}
+
+// ---- office bill ---------------------------------------------------------
+
+/// The compact English-only "Office bill" ("Stamp" design) — mirrors
+/// resources/views/sale/print-office-bill.blade.php: tracked company name, a
+/// black Bill No badge beside the biller and time, items, totals and a large
+/// grand total. A sale rung up offline prints the number the till counted for
+/// its biller (StaffBillCounter) — staff tally their day on these slips; only a
+/// sale with no number at all falls back to its invoice reference.
+Future<Uint8List> _buildOfficeBill(Sale sale, PrintSettings settings, pw.ThemeData theme, PdfPageFormat format,
+    double pad, double Function(double) s, String invoiceNo, double grandTotal) {
+  final parts = sale.date.split('-');
+  final date = parts.length == 3 ? '${parts[2]}-${parts[1]}-${parts[0]}' : sale.date;
+  final at = DateTime.tryParse(sale.createdAt)?.toLocal() ?? DateTime.now();
+  final time = '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+  final billNo = sale.billNo.isEmpty ? invoiceNo : sale.billNo;
+  // No company name configured → head with the branch, like the web print.
+  final company = settings.companyName.trim().isNotEmpty ? settings.companyName.trim() : sale.branch.trim();
+  final body = pw.TextStyle(fontSize: s(9));
+  final bold = pw.TextStyle(fontSize: s(9), fontWeight: pw.FontWeight.bold);
+  pw.TextStyle caps(double size) =>
+      pw.TextStyle(fontSize: s(size), fontWeight: pw.FontWeight.bold, letterSpacing: size * 0.2);
+
+  pw.Widget split(String left, String right, {pw.TextStyle? style}) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 0.6),
+        child: pw.Row(children: [
+          pw.Expanded(child: pw.Text(left, style: style ?? body)),
+          pw.Text(right, style: style ?? body),
+        ]),
+      );
+
+  final doc = pw.Document(title: 'Bill $billNo');
+  doc.addPage(
+    pw.Page(
+      pageFormat: format,
+      theme: theme,
+      margin: pw.EdgeInsets.fromLTRB(pad, pad * 1.2, pad, pad * 1.6),
+      build: (context) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          if (company.isNotEmpty)
+            pw.Center(
+                child: pw.Text(company.toUpperCase(),
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(fontSize: s(13.5), fontWeight: pw.FontWeight.bold, letterSpacing: s(3)))),
+          pw.SizedBox(height: s(9)),
+          // ---- bill no badge | biller + date/time ----
+          pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(width: 1.5),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
+            ),
+            child: pw.ClipRRect(
+              horizontalRadius: 6,
+              verticalRadius: 6,
+              child: pw.Table(
+                columnWidths: {0: pw.FixedColumnWidth(s(72)), 1: const pw.FlexColumnWidth()},
+                children: [
+                  pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.full, children: [
+                    pw.Container(
+                      color: PdfColors.black,
+                      padding: pw.EdgeInsets.symmetric(vertical: s(5), horizontal: s(4)),
+                      alignment: pw.Alignment.center,
+                      child: pw.Column(mainAxisSize: pw.MainAxisSize.min, children: [
+                        pw.Text('BILL NO', style: caps(6.5).copyWith(color: PdfColors.white)),
+                        pw.Text(billNo,
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                                fontSize: s(billNo.length > 7 ? 11 : 16.5),
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColors.white)),
+                      ]),
+                    ),
+                    pw.Container(
+                      padding: pw.EdgeInsets.symmetric(vertical: s(5), horizontal: s(7)),
+                      alignment: pw.Alignment.centerLeft,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        mainAxisSize: pw.MainAxisSize.min,
+                        children: [
+                          pw.Text('Biller : ${sale.createdBy.isEmpty ? '-' : sale.createdBy}',
+                              style: pw.TextStyle(fontSize: s(10), fontWeight: pw.FontWeight.bold)),
+                          pw.Text('$date · $time', style: pw.TextStyle(fontSize: s(8))),
+                        ],
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+          if (sale.billNo.isNotEmpty) ...[
+            pw.SizedBox(height: s(4)),
+            split('Invoice No', invoiceNo, style: pw.TextStyle(fontSize: s(7))),
+          ],
+          pw.SizedBox(height: s(11)),
+          // ---- items ----
+          split('ITEM', 'PRICE', style: caps(6.8)),
+          pw.Divider(height: s(4), thickness: 1.1, color: PdfColors.black),
+          for (final (i, l) in sale.lines.indexed) ...[
+            if (i > 0) pw.Divider(height: 0, thickness: 0.7, color: PdfColors.black, borderStyle: pw.BorderStyle.dashed),
+            pw.Padding(
+              padding: pw.EdgeInsets.symmetric(vertical: s(5)),
+              child: pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Expanded(
+                    child: pw.Padding(
+                  padding: pw.EdgeInsets.only(right: s(8)),
+                  child: pw.Text(l.quantity == 1 ? l.name : '${l.name} × ${_num(l.quantity)}', style: bold),
+                )),
+                pw.Text(_amt(l.unitPrice * l.quantity), style: bold),
+              ]),
+            ),
+          ],
+          pw.Divider(height: s(5), thickness: 1.1, color: PdfColors.black),
+          // ---- totals ----
+          split('Sub Total', _amt(sale.grossAmount)),
+          split('Discount', _amt(sale.discount)),
+          if (sale.taxAmount != 0) split('Tax', _amt(sale.taxAmount)),
+          if (sale.roundOff != 0) split('Round Off', _amt(sale.roundOff)),
+          pw.SizedBox(height: s(6)),
+          pw.Divider(height: s(8), thickness: 0.7, color: PdfColors.black, borderStyle: pw.BorderStyle.dashed),
+          pw.Center(child: pw.Text('GRAND TOTAL', style: caps(6.8))),
+          pw.Center(
+              child: pw.Text(_amt(grandTotal),
+                  style: pw.TextStyle(fontSize: s(22.5), fontWeight: pw.FontWeight.bold))),
         ],
       ),
     ),
@@ -474,6 +617,30 @@ pw.Widget _servedBy(Sale sale, bool ar, double Function(double) s) => pw.Contain
           pw.SizedBox(height: 2),
           pw.Text(Dates.human(sale.date),
               style: pw.TextStyle(fontSize: s(8), fontWeight: pw.FontWeight.bold)),
+        ],
+      ),
+    );
+
+/// The cashier's checkout note, boxed like the served-by panel.
+pw.Widget _notes(String notes, bool ar, double Function(double) s) => pw.Container(
+      decoration: pw.BoxDecoration(border: pw.Border.all(width: 0.5, color: PdfColors.black)),
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: pw.Text('Notes:', style: pw.TextStyle(fontSize: s(9), fontWeight: pw.FontWeight.bold)),
+              ),
+              if (ar)
+                pw.Text('${_ar['notes']} :',
+                    textDirection: pw.TextDirection.rtl,
+                    style: pw.TextStyle(fontSize: s(9), fontWeight: pw.FontWeight.bold)),
+            ],
+          ),
+          pw.SizedBox(height: 2),
+          pw.Text(notes, style: pw.TextStyle(fontSize: s(8.5), fontWeight: pw.FontWeight.bold)),
         ],
       ),
     );

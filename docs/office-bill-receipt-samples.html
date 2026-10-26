@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office Bill Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --host-bg: #eceae6;
+    --host-ink: #1d1d1f;
+    --host-muted: #6b6b70;
+    --host-card: #ffffff;
+    --host-line: #d6d3ce;
+    --pill: #1d1d1f;
+    --pill-ink: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --host-bg: #17171a; --host-ink: #f2f2f4; --host-muted: #9a9aa2;
+      --host-card: #232327; --host-line: #34343a; --pill: #f2f2f4; --pill-ink: #17171a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --host-bg: #17171a; --host-ink: #f2f2f4; --host-muted: #9a9aa2;
+    --host-card: #232327; --host-line: #34343a; --pill: #f2f2f4; --pill-ink: #17171a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--host-bg); color: var(--host-ink);
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center; justify-content: space-between; padding: 14px 24px;
+    background: color-mix(in srgb, var(--host-bg) 88%, transparent); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--host-line);
+  }
+  .bar h1 { font-size: 15px; margin: 0; font-weight: 700; }
+  .bar p { margin: 2px 0 0; font-size: 12px; color: var(--host-muted); }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg { display: inline-flex; border: 1px solid var(--host-line); border-radius: 999px; padding: 3px; background: var(--host-card); }
+  .seg button {
+    border: 0; background: transparent; color: var(--host-ink); font: 600 12px/1 inherit;
+    font-family: inherit; padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .seg button.on { background: var(--pill); color: var(--pill-ink); }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 28px; padding: 28px 24px 60px; max-width: 1480px; margin: 0 auto; align-items: start;
+  }
+  .sample { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .label { text-align: center; }
+  .label b { font-size: 14px; display: block; }
+  .label span { font-size: 12px; color: var(--host-muted); }
+
+  /* ---------- the paper (always white: it is a thermal roll) ---------- */
+  .paper {
+    width: 302px; background: #fff; color: #000; padding: 18px 16px 26px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 12px 30px rgba(0,0,0,.14);
+    position: relative; transition: width .2s;
+  }
+  .paper::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px;
+    background: linear-gradient(-45deg, transparent 6px, #fff 0) 0 0 / 12px 8px repeat-x,
+                linear-gradient(45deg, transparent 6px, #fff 0) 0 0 / 12px 8px repeat-x;
+  }
+  body.w58 .paper { width: 219px; padding: 14px 10px 22px; font-size: 92%; }
+  .ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; unicode-bidi: isolate; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* =========================================================
+     A — MAISON: centred, tracked caps, hairline rules,
+         inverted grand-total band
+     ========================================================= */
+  .a { font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; line-height: 1.45; }
+  .a .brand { text-align: center; }
+  .a .brand .en { font-size: 22px; font-weight: 700; letter-spacing: .32em; padding-left: .32em; }
+  .a .brand .ar { font-size: 15px; font-weight: 600; margin-top: 1px; }
+  .a .rule2 { border-top: 1px solid #000; border-bottom: 1px solid #000; height: 4px; margin: 12px 0 10px; }
+  .a .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+  .a .meta div small { display: block; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+  .a .meta div strong { font-size: 13px; font-weight: 700; }
+  .a .meta .r { text-align: right; }
+  .a .inv { text-align: center; font-size: 9.5px; letter-spacing: .08em; margin-top: 8px; }
+  .a .thead { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: .16em; font-weight: 700;
+              text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 14px; }
+  .a .row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dotted #000; }
+  .a .row .n { font-weight: 600; font-size: 12px; }
+  .a .row .n .ar { display: block; text-align: left; font-weight: 500; font-size: 12px; margin-top: 1px; }
+  .a .row .p { font-weight: 700; white-space: nowrap; }
+  .a .tot { margin-top: 10px; }
+  .a .tot div { display: flex; justify-content: space-between; padding: 2px 0; font-size: 12px; }
+  .a .grand { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff;
+              padding: 8px 10px; margin-top: 8px; }
+  .a .grand span { font-size: 10px; letter-spacing: .18em; font-weight: 700; text-transform: uppercase; }
+  .a .grand b { font-size: 17px; }
+  .a .thanks { text-align: center; margin-top: 14px; font-size: 10px; letter-spacing: .2em; font-weight: 600; }
+
+  /* =========================================================
+     B — LEDGER: bilingual labels, boxed meta grid,
+         dot leaders, framed total
+     ========================================================= */
+  .b { font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; line-height: 1.4; }
+  .b .head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #000; padding-bottom: 8px; }
+  .b .head .en { font-size: 18px; font-weight: 700; letter-spacing: .08em; }
+  .b .head .ar { font-size: 15px; font-weight: 700; }
+  .b .box { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #000; border-top: 0; }
+  .b .box > div { padding: 6px 8px; border-top: 1px solid #000; }
+  .b .box > div:nth-child(odd) { border-right: 1px solid #000; }
+  .b .box .lbl { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; }
+  .b .box strong { font-size: 13px; }
+  .b .box .wide { grid-column: 1 / -1; border-right: 0 !important; }
+  .b .inv { font-size: 9.5px; margin-top: 5px; display: flex; justify-content: space-between; }
+  .b .thead { display: flex; justify-content: space-between; margin-top: 12px; font-size: 10px; font-weight: 700; }
+  .b .thead span:last-child { text-align: right; }
+  .b .item { padding: 7px 0 6px; border-bottom: 1px solid #000; }
+  .b .item .line { display: flex; align-items: baseline; gap: 6px; }
+  .b .item .line .n { font-weight: 600; }
+  .b .item .line .lead { flex: 1; border-bottom: 1.5px dotted #000; transform: translateY(-3px); min-width: 12px; }
+  .b .item .line .p { font-weight: 700; white-space: nowrap; }
+  .b .item .ar { text-align: left; font-size: 11.5px; }
+  .b .sums { margin-top: 8px; }
+  .b .sums div { display: flex; justify-content: space-between; padding: 1px 0; }
+  .b .sums div .ar { font-size: 11px; }
+  .b .sums .mid { flex: 1; text-align: center; font-weight: 600; }
+  .b .gt { border: 2px solid #000; margin-top: 8px; padding: 7px 9px; display: flex; justify-content: space-between; align-items: center; }
+  .b .gt .l small { display: block; font-size: 11px; }
+  .b .gt .l b { font-size: 12px; letter-spacing: .06em; }
+  .b .gt .v { font-size: 20px; font-weight: 700; }
+
+  /* =========================================================
+     C — MONO: typewriter receipt, dashed rules,
+         oversized bill number
+     ========================================================= */
+  .c { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.5; }
+  .c .brand { text-align: center; }
+  .c .brand .en { font-size: 17px; font-weight: 700; letter-spacing: .2em; }
+  .c .brand .ar { font-size: 14px; font-weight: 600; }
+  .c .dash { border-top: 1.5px dashed #000; margin: 10px 0; }
+  .c .billno { text-align: center; }
+  .c .billno small { display: block; font-size: 10px; letter-spacing: .3em; font-weight: 600; }
+  .c .billno b { font-size: 34px; line-height: 1.05; font-weight: 700; letter-spacing: .02em; }
+  .c .kv { display: flex; justify-content: space-between; }
+  .c .kv b { font-weight: 600; }
+  .c .row { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; }
+  .c .row .n { font-weight: 600; }
+  .c .row + .ar { text-align: left; font-size: 12px; font-weight: 500; }
+  .c .gt { display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; padding: 4px 0; }
+  .c .eq { border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; height: 4px; margin: 2px 0; }
+  .c .foot { text-align: center; font-size: 10px; letter-spacing: .14em; margin-top: 12px; }
+
+  /* =========================================================
+     D — STAMP: brand + biller badge, soft geometry,
+         big grand total
+     ========================================================= */
+  .d { font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; line-height: 1.45; }
+  .d .brand { text-align: center; }
+  .d .mono { width: 44px; height: 44px; border: 2px solid #000; border-radius: 50%; display: grid; place-items: center;
+             margin: 0 auto 6px; font-weight: 700; font-size: 20px; }
+  .d .brand .en { font-size: 18px; font-weight: 700; letter-spacing: .22em; padding-left: .22em; }
+  .d .brand .ar { font-size: 14px; font-weight: 600; }
+  .d .stamp { margin: 12px auto 0; border: 2px solid #000; border-radius: 10px; display: flex; overflow: hidden; }
+  .d .stamp .no { background: #000; color: #fff; padding: 7px 12px; text-align: center; min-width: 90px; }
+  .d .stamp .no small { display: block; font-size: 8.5px; letter-spacing: .2em; font-weight: 600; }
+  .d .stamp .no b { font-size: 22px; line-height: 1.1; }
+  .d .stamp .who { padding: 6px 10px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .d .stamp .who b { font-size: 13px; }
+  .d .stamp .who span { font-size: 10.5px; }
+  .d .sub { display: flex; justify-content: space-between; font-size: 9.5px; margin-top: 6px; }
+  .d .items { margin-top: 14px; }
+  .d .items .h { display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding-bottom: 4px; border-bottom: 1.5px solid #000; }
+  .d .it { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; }
+  .d .it + .it { border-top: 1px dashed #000; }
+  .d .it .n b { display: block; font-weight: 600; }
+  .d .it .n .ar { display: block; text-align: left; font-size: 11.5px; }
+  .d .it .p { font-weight: 700; white-space: nowrap; }
+  .d .sums { border-top: 1.5px solid #000; padding-top: 6px; }
+  .d .sums div { display: flex; justify-content: space-between; }
+  .d .big { text-align: center; margin-top: 12px; padding: 10px 0 2px; border-top: 1px dashed #000; }
+  .d .big small { display: block; font-size: 9px; letter-spacing: .24em; font-weight: 700; }
+  .d .big b { font-size: 30px; line-height: 1.1; }
+  .d .big span { display: block; font-size: 11px; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div>
+      <h1>Office Bill — 4 directions</h1>
+      <p>Same sale on each. Pure black on white so every one prints crisp on a thermal roll.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" id="width">
+        <button class="on" data-w="80">80 mm</button>
+        <button data-w="58">58 mm</button>
+      </div>
+      <div class="seg" id="theme">
+        <button class="on" data-t="light">Light</button>
+        <button data-t="dark">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- A -->
+    <div class="sample">
+      <div class="label"><b>A · Maison</b><span>Centred &amp; tracked, hairline rules, black total band</span></div>
+      <div class="paper a">
+        <div class="brand">
+          <div class="en">TALENT</div>
+          <div class="ar">صالون تالنت</div>
+        </div>
+        <div class="rule2"></div>
+        <div class="meta">
+          <div><small>Bill No</small><strong class="num">9/1</strong></div>
+          <div class="r"><small>Date</small><strong class="num">24-10-2026</strong></div>
+          <div><small>Biller</small><strong>Ashif</strong></div>
+          <div class="r"><small>Time</small><strong class="num">21:45</strong></div>
+        </div>
+        <div class="inv num">INVOICE M-26-0031</div>
+        <div class="thead"><span>Item</span><span>Price</span></div>
+        <div class="row">
+          <div class="n">Hair Cutting &amp; Beard Setting<span class="ar">قص شعر، غسيل الرأس</span></div>
+          <div class="p num">30.00</div>
+        </div>
+        <div class="row">
+          <div class="n">Hair Wash <span class="num">× 2</span><span class="ar">غسيل الشعر</span></div>
+          <div class="p num">10.00</div>
+        </div>
+        <div class="tot">
+          <div><span>Sub Total</span><span class="num">40.00</span></div>
+          <div><span>Discount</span><span class="num">−5.00</span></div>
+        </div>
+        <div class="grand"><span>Grand Total</span><b class="num">35.00</b></div>
+        <div class="thanks">THANK YOU · شكراً</div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="sample">
+      <div class="label"><b>B · Ledger</b><span>Bilingual labels, boxed details, dot leaders, framed total</span></div>
+      <div class="paper b">
+        <div class="head">
+          <div class="en">TALENT</div>
+          <div class="ar">صالون تالنت</div>
+        </div>
+        <div class="box">
+          <div><div class="lbl"><span>Bill No</span><span class="ar">رقم الفاتورة</span></div><strong class="num">9/1</strong></div>
+          <div><div class="lbl"><span>Date</span><span class="ar">التاريخ</span></div><strong class="num">24-10-2026</strong></div>
+          <div class="wide"><div class="lbl"><span>Biller</span><span class="ar">المحاسب</span></div><strong>Ashif</strong> <span class="num">· 21:45</span></div>
+        </div>
+        <div class="inv num"><span>Invoice</span><span>M-26-0031</span></div>
+        <div class="thead"><span>Item <span class="ar">الصنف</span></span><span>Price <span class="ar">السعر</span></span></div>
+        <div class="item">
+          <div class="line"><span class="n">Hair Cutting &amp; Beard Setting</span><span class="lead"></span><span class="p num">30.00</span></div>
+          <div class="ar">قص شعر، غسيل الرأس</div>
+        </div>
+        <div class="item">
+          <div class="line"><span class="n">Hair Wash × 2</span><span class="lead"></span><span class="p num">10.00</span></div>
+          <div class="ar">غسيل الشعر</div>
+        </div>
+        <div class="sums">
+          <div><span>Sub Total</span><span class="mid num">40.00</span><span class="ar">المجموع الفرعي</span></div>
+          <div><span>Discount</span><span class="mid num">−5.00</span><span class="ar">خصم</span></div>
+        </div>
+        <div class="gt">
+          <div class="l"><b>GRAND TOTAL</b><small class="ar">الإجمالي</small></div>
+          <div class="v num">35.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="sample">
+      <div class="label"><b>C · Mono</b><span>Typewriter receipt, dashed rules, oversized bill number</span></div>
+      <div class="paper c">
+        <div class="brand">
+          <div class="en">TALENT</div>
+          <div class="ar">صالون تالنت</div>
+        </div>
+        <div class="dash"></div>
+        <div class="billno"><small>BILL NO</small><b>9/1</b></div>
+        <div class="dash"></div>
+        <div class="kv"><span>Date</span><b>24-10-2026</b></div>
+        <div class="kv"><span>Biller</span><b>ASHIF · 21:45</b></div>
+        <div class="kv"><span>Invoice</span><b>M-26-0031</b></div>
+        <div class="dash"></div>
+        <div class="kv"><b>ITEM</b><b>PRICE</b></div>
+        <div class="row"><span class="n">HAIR CUTTING &amp; BEARD SETTING</span><span>30.00</span></div>
+        <div class="ar">قص شعر، غسيل الرأس</div>
+        <div class="row"><span class="n">HAIR WASH x 2</span><span>10.00</span></div>
+        <div class="ar">غسيل الشعر</div>
+        <div class="dash"></div>
+        <div class="kv"><span>Sub Total</span><span>40.00</span></div>
+        <div class="kv"><span>Discount</span><span>-5.00</span></div>
+        <div class="eq"></div>
+        <div class="gt"><span>GRAND TOTAL</span><span>35.00</span></div>
+        <div class="eq"></div>
+        <div class="foot">*** THANK YOU ***</div>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="sample">
+      <div class="label"><b>D · Stamp</b><span>Monogram, bill/biller badge, hero grand total</span></div>
+      <div class="paper d">
+        <div class="brand">
+          <div class="mono">T</div>
+          <div class="en">TALENT</div>
+          <div class="ar">صالون تالنت</div>
+        </div>
+        <div class="stamp">
+          <div class="no"><small>BILL NO</small><b class="num">9/1</b></div>
+          <div class="who"><b>Ashif</b><span class="num">24-10-2026 · 21:45</span></div>
+        </div>
+        <div class="sub num"><span>Invoice</span><span>M-26-0031</span></div>
+        <div class="items">
+          <div class="h"><span>Item</span><span>Price</span></div>
+          <div class="it">
+            <div class="n"><b>Hair Cutting &amp; Beard Setting</b><span class="ar">قص شعر، غسيل الرأس</span></div>
+            <div class="p num">30.00</div>
+          </div>
+          <div class="it">
+            <div class="n"><b>Hair Wash × 2</b><span class="ar">غسيل الشعر</span></div>
+            <div class="p num">10.00</div>
+          </div>
+        </div>
+        <div class="sums num">
+          <div><span>Sub Total</span><span>40.00</span></div>
+          <div><span>Discount</span><span>−5.00</span></div>
+        </div>
+        <div class="big"><small>GRAND TOTAL</small><b class="num">35.00</b><span class="ar">الإجمالي</span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.querySelectorAll('#width button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#width button').forEach(x => x.classList.toggle('on', x === b));
+    document.body.classList.toggle('w58', b.dataset.w === '58');
+  });
+  document.querySelectorAll('#theme button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('#theme button').forEach(x => x.classList.toggle('on', x === b));
+    document.documentElement.dataset.theme = b.dataset.t;
+  });
+</script>
+</body>
+</html>

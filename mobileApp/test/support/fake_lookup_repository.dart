@@ -21,6 +21,9 @@ class FakeLookupRepository implements LookupRepository {
   /// catalog asked for the unfiltered list.
   final List<String?> requestedSearches = [];
 
+  /// What employees() answers — the New Sale staff list.
+  List<Employee> staff = const [];
+
   Product _p(int id, {String? name, String? cat, double price = 10, String type = 'service'}) => Product(
         id: id,
         code: 'P$id',
@@ -103,7 +106,7 @@ class FakeLookupRepository implements LookupRepository {
   Future<List<Customer>> customers({String? mobile, String? search}) async => const [];
 
   @override
-  Future<List<Employee>> employees({String? search, int? branchId}) async => const [];
+  Future<List<Employee>> employees({String? search, int? branchId}) async => staff;
 
   @override
   Future<List<PaymentMethod>> paymentMethods() async => [
@@ -117,14 +120,17 @@ class FakeLookupRepository implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})> saleSettings() async =>
-      (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, print: null);
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async =>
+      (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, logoUrl: null, productSort: null, paymentButtons: null, print: null);
 
   @override
   Future<Uint8List> logo() async => Uint8List(0);
 
   @override
   Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async => null;
+
+  @override
+  Future<ProductSort?> saveProductSort(ProductSort sort) async => sort;
 
   @override
   Future<Paginated<Customer>> customersPage({int page = 1, int perPage = 100, String? search}) async =>

@@ -3,6 +3,7 @@
 namespace App\Actions\V1\Sale;
 
 use App\Actions\Account\CreateAction as AccountCreateAction;
+use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\EnsureAccountsAction;
 use App\Actions\Student\PreOrder\CollectAction as CollectPreOrderAction;
@@ -137,20 +138,26 @@ class CreateAction
 
             $preOrderId = $student ? $request->validated('preOrderId') : null;
 
-            $sale = DB::transaction(function () use ($data, $user, $preOrderId) {
-                $response = (new SaleCreateAction())->execute($data, (int) $user->id);
+            // The Office Bill number the till already counted for this sale. An
+            // offline till has printed it; staff count their day on those slips.
+            $sale = DB::transaction(fn () => AssignStaffBillNoAction::honouring(
+                $request->validated('staffBillSequence'),
+                $request->validated('staffBillDate'),
+                function () use ($data, $user, $preOrderId) {
+                    $response = (new SaleCreateAction())->execute($data, (int) $user->id);
 
-                if (! $response['success']) {
-                    throw new RuntimeException($response['message']);
-                }
+                    if (! $response['success']) {
+                        throw new RuntimeException($response['message']);
+                    }
 
-                // The parent's pre-order is handed over: the next tap today must not add it again.
-                if ($preOrderId && $response['data']->status === 'completed') {
-                    (new CollectPreOrderAction())->execute((int) $preOrderId, (int) $response['data']->account_id, (int) $response['data']->id, (int) $user->id);
-                }
+                    // The parent's pre-order is handed over: the next tap today must not add it again.
+                    if ($preOrderId && $response['data']->status === 'completed') {
+                        (new CollectPreOrderAction())->execute((int) $preOrderId, (int) $response['data']->account_id, (int) $response['data']->id, (int) $user->id);
+                    }
 
-                return $response['data'];
-            })->load([
+                    return $response['data'];
+                },
+            ))->load([
                 'items.product:id,name,type',
                 'items.employee:id,name',
                 'payments.paymentMethod:id,name',

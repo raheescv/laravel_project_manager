@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:equatable/equatable.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/data_fetching_status.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/domain/repository/lookup_repository.dart';
@@ -19,6 +21,8 @@ import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 
 import '../../domain/models/pending_sale.dart';
+import '../../domain/models/renumbered_bill.dart';
+import '../../domain/services/staff_bill_counter.dart';
 import '../../domain/repository/outbox_repository.dart';
 import '../../domain/repository/sale_repository.dart';
 
@@ -103,6 +107,11 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
   final SaleRepository _online;
 
   OutboxRepository get _outbox => serviceLocator<OutboxRepository>();
+  // Lenient like every other post-sync step: the sale has already landed, and a
+  // missing counter must not report it as failed.
+  StaffBillCounter? get _bills =>
+      serviceLocator.isRegistered<StaffBillCounter>() ? serviceLocator<StaffBillCounter>() : null;
+  LocalStorageService get _storage => serviceLocator<LocalStorageService>();
   LookupRepository get _lookup => serviceLocator<LookupRepository>();
   CatalogSnapshotRepository get _snapshot => serviceLocator<CatalogSnapshotRepository>();
 
@@ -150,7 +159,44 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     final branchId = serviceLocator<BranchCubit>().selectedId;
     final meta = branchId == null ? null : await _snapshot.meta(branchId);
     if (isClosed) return;
-    emit(state.copyWith(rows: rows, catalogSyncedAt: meta?.syncedAt));
+    emit(state.copyWith(rows: rows, catalogSyncedAt: meta?.syncedAt, renumbered: _readRenumbered()));
+  }
+
+  // ---- Office Bills the server renumbered ----
+
+  /// The committed sale behind a renumbered slip, to reprint it.
+  Future<Sale> renumberedSale(String saleId) => _online.saleById(saleId);
+
+  /// Forget a renumbered slip once its biller has the new one.
+  Future<void> dismissRenumbered(String saleId) async {
+    await _writeRenumbered(state.renumbered.where((b) => b.saleId != saleId).toList());
+  }
+
+  /// Note that a synced sale's Office Bill no longer matches its slip.
+  ///
+  /// Kept on the device until someone reprints or dismisses it: the outbox row is
+  /// gone by now, and this is the only record that a slip in a biller's pile
+  /// carries the wrong number.
+  Future<void> _noteRenumbered(RenumberedBill bill) async {
+    await _writeRenumbered([bill, ...state.renumbered.where((b) => b.saleId != bill.saleId)]);
+  }
+
+  List<RenumberedBill> _readRenumbered() {
+    final raw = _storage.renumberedBillsJson;
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      return (jsonDecode(raw) as List<dynamic>)
+          .map((e) => RenumberedBill.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } on FormatException catch (_) {
+      // A corrupt list is dropped rather than wedging the sync engine.
+      return const [];
+    }
+  }
+
+  Future<void> _writeRenumbered(List<RenumberedBill> bills) async {
+    await _storage.setRenumberedBillsJson(jsonEncode([for (final b in bills) b.toJson()]));
+    if (!isClosed) emit(state.copyWith(renumbered: bills));
   }
 
   // ---- push: the outbox ----
@@ -261,10 +307,27 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     _draining = true;
     PendingSale? updated;
     try {
+      // The Office Bill number is already on the biller's slip, so a correction
+      // keeps it rather than claiming another.
+      final before = await _outbox.byUuid(clientUuid);
+      final printed = before == null ? '' : asStr(before.saleJson['bill_no']);
       updated = await _outbox.replaceContent(
         clientUuid: clientUuid,
-        payload: payload,
-        saleJson: saleJson,
+        payload: printed.isEmpty
+            ? payload
+            : {
+                ...payload,
+                'staffBillSequence': before!.payload['staffBillSequence'],
+                'staffBillDate': before.payload['staffBillDate'],
+              },
+        saleJson: printed.isEmpty
+            ? saleJson
+            : {
+                ...saleJson,
+                'bill_no': printed,
+                'staff_bill_sequence': before!.saleJson['staff_bill_sequence'],
+                'date': before.saleJson['date'],
+              },
       );
       if (updated == null) return false;
 
@@ -326,6 +389,25 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
     return row.userId.isEmpty || row.userId == userId;
   }
 
+  /// Square the biller's count with the Office Bill number the server gave a
+  /// synced sale, and flag the slip when that is not the number printed on it.
+  Future<void> _settleBillNo(PendingSale row, Sale saved) async {
+    await _bills?.record(row.userId, saved.date, saved.staffBillSequence);
+    final printed = asStr(row.saleJson['bill_no']);
+    if (printed.isEmpty || saved.billNo.isEmpty || saved.billNo == printed) return;
+    try {
+      await _noteRenumbered(RenumberedBill(
+        saleId: saved.id,
+        provisionalRef: row.provisionalRef,
+        printed: printed,
+        billNo: saved.billNo,
+        biller: asStr(row.saleJson['created_by']),
+      ));
+    } on Exception catch (_) {
+      // The sale itself is safely synced; only the reminder to reprint is lost.
+    }
+  }
+
   /// Post [row], recording the outcome on it either way.
   /// Returns true when the server now holds the sale.
   Future<bool> _push(PendingSale row) async {
@@ -365,6 +447,7 @@ class OfflineSyncCubit extends Cubit<OfflineSyncState> {
       // at this moment, so nothing is lost by looking it up there instead.
       await _outbox.discard(row.clientUuid);
       _syncedRefs.add(saved.invoiceNo.isEmpty ? row.provisionalRef : saved.invoiceNo);
+      await _settleBillNo(row, saved);
       return true;
     } on ApiException catch (e) {
       // Only a verdict on THIS sale is terminal. "Any 4xx" was too broad: 408,

@@ -24,6 +24,7 @@ class CartState extends Equatable {
     this.tipPercent = 0,
     this.roundOffEnabled = true,
     this.payMode = PayMode.cash,
+    this.payMethod,
     this.customPayments = const [],
     this.sendToWhatsapp = false,
     this.notes = '',
@@ -64,6 +65,11 @@ class CartState extends Equatable {
   final bool roundOffEnabled;
 
   final PayMode payMode;
+
+  /// The configured payment button paying in full while [payMode] is
+  /// [PayMode.method]; null for every other mode.
+  final PaymentMethod? payMethod;
+
   final List<CustomPayment> customPayments;
   final bool sendToWhatsapp;
 
@@ -163,6 +169,8 @@ class CartState extends Equatable {
     double? tipPercent,
     bool? roundOffEnabled,
     PayMode? payMode,
+    PaymentMethod? payMethod,
+    bool clearPayMethod = false,
     List<CustomPayment>? customPayments,
     bool? sendToWhatsapp,
     String? notes,
@@ -192,6 +200,7 @@ class CartState extends Equatable {
         tipPercent: tipPercent ?? this.tipPercent,
         roundOffEnabled: roundOffEnabled ?? this.roundOffEnabled,
         payMode: payMode ?? this.payMode,
+        payMethod: clearPayMethod ? null : (payMethod ?? this.payMethod),
         customPayments: customPayments ?? this.customPayments,
         sendToWhatsapp: sendToWhatsapp ?? this.sendToWhatsapp,
         notes: notes ?? this.notes,
@@ -214,6 +223,7 @@ class CartState extends Equatable {
         tipPercent,
         roundOffEnabled,
         payMode,
+        payMethod,
         customPayments,
         sendToWhatsapp,
         notes,

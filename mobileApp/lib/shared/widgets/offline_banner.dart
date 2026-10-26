@@ -42,7 +42,7 @@ class OfflineBanner extends StatelessWidget {
             child: child,
           );
         }
-        return _ProvisioningStrip(child: child);
+        return _ProvisioningStrip(onTapPending: onTapPending, child: child);
       },
     );
   }
@@ -113,9 +113,10 @@ class _WithStrip extends StatelessWidget {
 /// who starts selling against a half-built snapshot has no way to tell it is
 /// half-built — the grid simply has fewer products in it.
 class _ProvisioningStrip extends StatelessWidget {
-  const _ProvisioningStrip({required this.child});
+  const _ProvisioningStrip({required this.child, this.onTapPending});
 
   final Widget child;
+  final VoidCallback? onTapPending;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +128,8 @@ class _ProvisioningStrip extends StatelessWidget {
           a.provisionDone != b.provisionDone ||
           a.provisionIncomplete != b.provisionIncomplete ||
           a.catalogSyncedAt != b.catalogSyncedAt ||
-          a.hasCatalog != b.hasCatalog,
+          a.hasCatalog != b.hasCatalog ||
+          a.renumbered != b.renumbered,
       builder: (context, sync) {
         // Only the FIRST run gets the progress strip. A routine refresh happens
         // behind a catalog that already works, and announcing it would train
@@ -140,6 +142,23 @@ class _ProvisioningStrip extends StatelessWidget {
               text: 'Preparing offline data — ${sync.provisionStep} '
                   '(${sync.provisionDone} of ${sync.provisionTotal})',
               progress: sync.provisionProgress,
+            ),
+            child: child,
+          );
+        }
+        // An Office Bill slip in a biller's pile carries a number the server could
+        // not keep. Said on every screen until it is reprinted: staff count their
+        // day on those slips, and a wrong one is invisible until the count is off.
+        if (sync.renumbered.isNotEmpty) {
+          final first = sync.renumbered.first;
+          return _WithStrip(
+            strip: _Banner(
+              colour: const Color(0xFF8A3A1F),
+              icon: Icons.receipt_long_outlined,
+              text: sync.renumbered.length == 1
+                  ? 'Bill ${first.printed} synced as ${first.billNo} — tap to reprint'
+                  : '${sync.renumbered.length} office bills synced under new numbers — tap to reprint',
+              onTap: onTapPending,
             ),
             child: child,
           );
@@ -238,51 +257,56 @@ class _Banner extends StatelessWidget {
     required this.icon,
     required this.text,
     this.progress,
+    this.onTap,
   });
 
   final Color colour;
   final IconData icon;
   final String text;
   final double? progress;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     if (context.isTablet) {
-      return _offlineBadge(context, colour: colour, icon: icon, text: text, progress: progress);
+      return _offlineBadge(context, colour: colour, icon: icon, text: text, progress: progress, onTap: onTap);
     }
     return Material(
       color: colour,
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 14, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      text,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 11, weight: FontWeight.w700, color: Colors.white),
+      child: InkWell(
+        onTap: onTap,
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 14, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        text,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 11, weight: FontWeight.w700, color: Colors.white),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            if (progress != null)
-              LinearProgressIndicator(
-                value: progress,
-                minHeight: 2,
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
-                valueColor: const AlwaysStoppedAnimation(Colors.white),
-              ),
-          ],
+              if (progress != null)
+                LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 2,
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                ),
+            ],
+          ),
         ),
       ),
     );

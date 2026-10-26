@@ -22,3 +22,13 @@ test('an admin can change their own administrator access', function (): void {
 
     expect((bool) $admin->fresh()->is_admin)->toBeFalse();
 });
+
+test('the user form password field has a show/hide toggle', function (): void {
+    $admin = User::factory()->create(['tenant_id' => 1, 'is_active' => 1, 'is_admin' => true, 'mobile' => '+97450000001']);
+
+    $this->actingAs($admin);
+
+    Livewire::test(Page::class, ['table_id' => $admin->id])
+        ->assertSeeHtml('x-bind:type="showPassword ? &#039;text&#039; : &#039;password&#039;"')
+        ->assertSeeHtml('aria-label="Toggle password"');
+});

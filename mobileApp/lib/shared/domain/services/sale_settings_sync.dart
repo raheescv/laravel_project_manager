@@ -1,7 +1,10 @@
+import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 
 import '../../utils/local_storage/local_storage_service.dart';
 import '../constants/global_variables.dart';
+import '../models/catalog.dart';
+import '../models/product_sort.dart';
 import '../repository/lookup_repository.dart';
 
 /// The remote half of Settings → Sale Configuration, cached for offline use.
@@ -11,6 +14,9 @@ typedef RemoteSaleSettings = ({
   bool? roundOffEnabled,
   String? defaultProductType,
   bool? schoolEnabled,
+  String? logoUrl,
+  ProductSort? productSort,
+  List<PaymentMethod>? paymentButtons,
   RemotePrintConfig? print,
 });
 
@@ -47,6 +53,18 @@ Future<RemoteSaleSettings> pullAndCacheSaleSettings() async {
   // School module: whether the till offers student cards at all.
   final school = settings.schoolEnabled;
   if (school != null && school != storage.schoolEnabled) await storage.setSchoolEnabled(school);
+
+  // Company logo — painted on catalog tiles whose product has no photo.
+  final logo = settings.logoUrl;
+  if (logo != null && logo != storage.companyLogoUrl) await storage.setCompanyLogoUrl(logo);
+
+  // New Sale catalog order — the cubit caches it for the Settings card, and
+  // the catalog reloads on its next open when it no longer matches.
+  await serviceLocator<PosSettingsCubit>().applyRemoteProductSort(settings.productSort);
+
+  // Checkout quick buttons (System Configurations → POS Payment Buttons).
+  final buttons = settings.paymentButtons;
+  if (buttons != null) await storage.setPosPaymentButtons(buttons);
 
   // Thermal-print options ride along on the same response.
   await serviceLocator<PrintSettingsCubit>().applyRemote(settings.print);

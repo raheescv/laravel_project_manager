@@ -46,6 +46,8 @@ abstract final class PermissionSlug {
   // Same gate as the web Settings page — editing the shared Sale
   // Configuration (printer & receipt options) from the app.
   static const settings = 'configuration.settings';
+  // Issue and print queue tokens (Token screen + its settings).
+  static const tokenIssue = 'sale.queue token';
 }
 
 /// The permissions surfaced on the "My Permissions" screen, grouped by module
@@ -138,6 +140,13 @@ const mobilePermissions = <MobilePermission>[
     description: 'Count physical stock & reconcile inventory',
     group: 'Inventory',
     icon: Icons.fact_check_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.tokenIssue,
+    label: 'Queue Tokens',
+    description: 'Issue and print queue token slips',
+    group: 'Sales',
+    icon: Icons.confirmation_number_outlined,
   ),
   MobilePermission(
     slug: PermissionSlug.settings,

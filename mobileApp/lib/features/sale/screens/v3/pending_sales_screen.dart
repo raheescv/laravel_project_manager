@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
+import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/router/http_utils/common_exception.dart';
 import 'package:invo/shared/utils/router/routes.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/receipt_printer.dart';
 
 import '../../domain/models/pending_sale.dart';
+import '../../domain/models/renumbered_bill.dart';
 import '../../logic/offline_sync_cubit/offline_sync_cubit.dart';
 
 /// Sales taken on this till that the server has not acknowledged yet.
@@ -58,7 +64,7 @@ class PendingSalesScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, OfflineSyncCubit sync, OfflineSyncState state) {
-    if (state.rows.isEmpty) {
+    if (state.rows.isEmpty && state.renumbered.isEmpty) {
       return const EmptyState(
         icon: Icons.cloud_done_outlined,
         title: 'Nothing waiting',
@@ -69,9 +75,104 @@ class PendingSalesScreen extends StatelessWidget {
       onRefresh: sync.drain,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-        itemCount: state.rows.length,
+        // Slips to reprint first: a biller counting their day needs these before
+        // anything still on its way.
+        itemCount: state.renumbered.length + state.rows.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) => _PendingRow(row: state.rows[i], sync: sync),
+        itemBuilder: (_, i) => i < state.renumbered.length
+            ? _RenumberedCard(bill: state.renumbered[i], sync: sync)
+            : _PendingRow(row: state.rows[i - state.renumbered.length], sync: sync),
+      ),
+    );
+  }
+}
+
+/// An Office Bill printed offline that synced under a different number. The
+/// biller's slip says one thing and the books another, so the till offers the
+/// corrected slip until somebody reprints or dismisses it.
+class _RenumberedCard extends StatefulWidget {
+  const _RenumberedCard({required this.bill, required this.sync});
+
+  final RenumberedBill bill;
+  final OfflineSyncCubit sync;
+
+  @override
+  State<_RenumberedCard> createState() => _RenumberedCardState();
+}
+
+class _RenumberedCardState extends State<_RenumberedCard> {
+  bool _busy = false;
+
+  Future<void> _reprint() async {
+    final print = context.read<PrintSettingsCubit>();
+    final snack = AstraSnack.capture(context);
+    final bill = widget.bill;
+    setState(() => _busy = true);
+    try {
+      final sale = await widget.sync.renumberedSale(bill.saleId);
+      final result = await printReceipt(sale, print.snapshot, target: print.printer);
+      if (result.ok) {
+        await widget.sync.dismissRenumbered(bill.saleId);
+        snack.success('Bill ${bill.billNo} reprinted');
+      } else if (result != ReceiptPrintResult.cancelled) {
+        snack.error('Couldn\'t reach the printer — try again.');
+      }
+    } on ApiException catch (e) {
+      snack.error(e.message);
+    } catch (_) {
+      snack.error(AppStrings.somethingWentWrong);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final bill = widget.bill;
+    return AstraCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Bill ${bill.printed} is now ${bill.billNo}',
+                    style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
+              ),
+              StatusPill(label: 'Reprint', bg: p.dangerTint, fg: AstraPalette.danger),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${bill.biller.isEmpty ? 'The biller' : bill.biller}\'s slip ${bill.provisionalRef} was printed '
+            'offline as ${bill.printed}, but it synced as ${bill.billNo}. '
+            'Replace the slip so the day\'s count adds up.',
+            style: ui(size: 11, color: p.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: AstraButton(
+                  label: 'Reprint ${bill.billNo}',
+                  icon: Icons.print_outlined,
+                  gold: true,
+                  busy: _busy,
+                  onTap: _busy ? null : _reprint,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AstraButton(
+                  label: 'Done',
+                  icon: Icons.check,
+                  onTap: _busy ? null : () => widget.sync.dismissRenumbered(bill.saleId),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

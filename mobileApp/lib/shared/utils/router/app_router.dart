@@ -24,10 +24,13 @@ import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart
 import 'package:invo/features/stock_check/screens/v3/stock_check_count_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
+import 'package:invo/features/settings/screens/v3/choose_start_screen.dart';
 import 'package:invo/features/settings/screens/v3/offline_data_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
+import 'package:invo/features/token/screens/v3/token_screen.dart';
+import 'package:invo/features/token/screens/v3/token_settings_screen.dart';
 import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
@@ -58,10 +61,19 @@ GoRouter createRouter(AuthCubit auth) {
       if (auth.state.branchPending) return atBranchPicker ? null : Routes.selectBranch;
       // Landing after sign-in (and after an unlock, which comes back through
       // the login route the same way) is the till's own choice — see
-      // [StartScreen]. The dashboard is open to every signed-in user (the
-      // server scopes its figures to the account), so every option holds.
-      if (atLogin || atBranchPicker) {
-        return serviceLocator<PosSettingsCubit>().startScreen.location;
+      // [StartScreen], saved per user. The dashboard is open to every
+      // signed-in user (the server scopes its figures to the account); only
+      // Reports needs a permission, and falls back to the dashboard without it.
+      // A user signing in on this device for the first time picks it first.
+      final pos = serviceLocator<PosSettingsCubit>();
+      final atChooser = state.matchedLocation == Routes.chooseStartScreen;
+      final mustChoose = pos.needsStartScreenFor(auth.user?.id);
+      if (atChooser && mustChoose) return null;
+      if (atLogin || atBranchPicker || atChooser) {
+        if (mustChoose) return Routes.chooseStartScreen;
+        return pos
+            .startScreenFor(auth.user?.id)
+            .resolve(canViewReports: auth.hasPermission(PermissionSlug.report));
       }
       if (state.matchedLocation == Routes.daySession &&
           !auth.hasPermission(PermissionSlug.daySession)) {
@@ -89,6 +101,10 @@ GoRouter createRouter(AuthCubit auth) {
       if (loc.startsWith(Routes.stockCheck) && !auth.hasPermission(PermissionSlug.stockCheck)) {
         return Routes.sale;
       }
+      // Queue tokens — the screen and its settings share one gate.
+      if (loc.startsWith(Routes.token) && !auth.hasPermission(PermissionSlug.tokenIssue)) {
+        return Routes.sale;
+      }
       if (loc == Routes.linkStudentCard &&
           (!serviceLocator<LocalStorageService>().schoolEnabled ||
               !auth.hasPermission(PermissionSlug.studentCardAssign))) {
@@ -99,6 +115,7 @@ GoRouter createRouter(AuthCubit auth) {
     routes: [
       GoRoute(path: Routes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(path: Routes.selectBranch, builder: (_, __) => const BranchSelectScreen()),
+      GoRoute(path: Routes.chooseStartScreen, builder: (_, __) => const ChooseStartScreen()),
       GoRoute(
         path: Routes.home,
         builder: (_, state) => HomeShell(
@@ -204,6 +221,14 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
           path: Routes.permissions,
           builder: (_, __) => const TabletRailScaffold(child: PermissionsScreen())),
+      // On tablet Token is a shell destination (`/home?tab=10`); this route serves
+      // phones and deep links.
+      GoRoute(
+          path: Routes.token,
+          builder: (_, __) => const TabletRailScaffold(activeTab: kTokenTab, child: TokenScreen())),
+      GoRoute(
+          path: Routes.tokenSettings,
+          builder: (_, __) => const TabletRailScaffold(child: TokenSettingsScreen())),
       GoRoute(
           path: Routes.offlineData,
           builder: (_, __) => const TabletRailScaffold(child: OfflineDataScreen())),

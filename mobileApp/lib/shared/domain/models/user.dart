@@ -21,6 +21,7 @@ class ApiUser extends Equatable {
     this.photoUrl = '',
     this.daySessionOpenedAt = '',
     this.lastClosedSessionAt = '',
+    this.billSequence = 0,
     this.permissions = const [],
     this.branches = const [],
   });
@@ -45,6 +46,9 @@ class ApiUser extends Equatable {
   final String daySessionDate;
   final String daySessionOpenedAt; // 'Y-m-d H:i:s' while a day is open, else ''
   final String lastClosedSessionAt; // 'Y-m-d H:i:s' of the most recent close, else ''
+  // This user's last Office Bill number on [daySessionDate] when the server
+  // last said — where an offline till counts on from. See StaffBillCounter.
+  final int billSequence;
   final List<String> permissions; // Spatie permission slugs granted to this user
   // The branches this user may work as (their web assignments). More than one
   // and every sign-in asks which — see `AuthState.branchPending`.
@@ -98,6 +102,7 @@ class ApiUser extends Equatable {
         daySessionDate: asStr(j['sale_day_session_date']),
         daySessionOpenedAt: asStr(j['sale_day_session_opened_at']),
         lastClosedSessionAt: asStr(j['last_closed_session_at']),
+        billSequence: asNum(j['staff_bill_sequence']).toInt(),
         permissions: (j['permissions'] as List<dynamic>? ?? [])
             .map((e) => asStr(e))
             .toList(),
@@ -122,6 +127,7 @@ class ApiUser extends Equatable {
         'sale_day_session_date': daySessionDate,
         'sale_day_session_opened_at': daySessionOpenedAt,
         'last_closed_session_at': lastClosedSessionAt,
+        'staff_bill_sequence': billSequence,
         'permissions': permissions,
         'branches': [for (final b in branches) b.toJson()],
       };
@@ -138,6 +144,7 @@ class ApiUser extends Equatable {
     String? daySessionDate,
     String? daySessionOpenedAt,
     String? lastClosedSessionAt,
+    int? billSequence,
   }) =>
       ApiUser(
         id: id,
@@ -155,6 +162,7 @@ class ApiUser extends Equatable {
         daySessionDate: daySessionDate ?? this.daySessionDate,
         daySessionOpenedAt: daySessionOpenedAt ?? this.daySessionOpenedAt,
         lastClosedSessionAt: lastClosedSessionAt ?? this.lastClosedSessionAt,
+        billSequence: billSequence ?? this.billSequence,
         permissions: permissions,
         branches: branches,
       );
@@ -179,6 +187,7 @@ class ApiUser extends Equatable {
         daySessionDate,
         daySessionOpenedAt,
         lastClosedSessionAt,
+        billSequence,
         permissions,
         branches,
       ];

@@ -153,7 +153,10 @@ class CartLine extends Equatable {
 }
 
 /// How the ticket is being settled. Mirrors the web POS "Confirm Sale" modes.
-enum PayMode { cash, card, credit, custom, studentCard }
+/// [method] is one configured payment button (System Configurations → POS
+/// Payment Buttons) paying the whole ticket — see [CartState.payMethod]. The
+/// Cash and Card buttons keep their own modes, so cash keeps its tender pad.
+enum PayMode { cash, card, credit, custom, studentCard, method }
 
 extension PayModeX on PayMode {
   /// The `paymentMethod` string the Sale API expects for this mode.
@@ -163,6 +166,8 @@ extension PayModeX on PayMode {
         PayMode.credit => 'credit',
         PayMode.custom => 'custom',
         PayMode.studentCard => 'student_card',
+        // Sent as a one-row custom payment, by account id rather than by name.
+        PayMode.method => 'custom',
       };
 
   String get label => switch (this) {
@@ -173,6 +178,7 @@ extension PayModeX on PayMode {
         // Matches the server's locked payment method (never "…Card": reports
         // bucket any method whose name contains "card" as bank-card takings).
         PayMode.studentCard => 'Student Wallet',
+        PayMode.method => 'Method',
       };
 }
 
@@ -194,7 +200,33 @@ class CustomPayment {
 /// `BlocSelector<CartCubit, CartState, T>` to rebuild on one field instead of
 /// the whole ticket — which the old tick-based base class made impossible.
 class CartCubit extends Cubit<CartState> {
-  CartCubit() : super(CartState(roundOffEnabled: _roundOffSetting()));
+  CartCubit() : super(_freshTicket());
+
+  /// An empty ticket, paid by the first configured payment button.
+  static CartState _freshTicket() {
+    final pay = _defaultPay();
+    return CartState(roundOffEnabled: _roundOffSetting(), payMode: pay.mode, payMethod: pay.method);
+  }
+
+  /// The checkout's quick payment buttons, in order (cached from the web).
+  /// Empty until synced, when the checkout shows Cash and Card as it always has.
+  static List<PaymentMethod> paymentButtons() => serviceLocator.isRegistered<LocalStorageService>()
+      ? serviceLocator<LocalStorageService>().posPaymentButtons
+      : const [];
+
+  /// What pressing [button] selects: the Cash and Card accounts keep their own
+  /// modes, any other account pays in full as [PayMode.method].
+  static ({PayMode mode, PaymentMethod? method}) payFor(PaymentMethod button) => switch (button.slug) {
+        'cash' => (mode: PayMode.cash, method: null),
+        'card' => (mode: PayMode.card, method: null),
+        _ => (mode: PayMode.method, method: button),
+      };
+
+  /// A new ticket's payment — the first button, or Cash before any sync.
+  static ({PayMode mode, PaymentMethod? method}) _defaultPay() {
+    final buttons = paymentButtons();
+    return buttons.isEmpty ? (mode: PayMode.cash, method: null) : payFor(buttons.first);
+  }
 
   /// The cached Round Off setting — on when nothing has been synced yet.
   static bool _roundOffSetting() => serviceLocator.isRegistered<LocalStorageService>()
@@ -216,6 +248,7 @@ class CartCubit extends Cubit<CartState> {
   bool get orderDiscountIsPercent => state.orderDiscountIsPercent;
   double get tipPercent => state.tipPercent;
   PayMode get payMode => state.payMode;
+  PaymentMethod? get payMethod => state.payMethod;
   List<CustomPayment> get customPayments => state.customPayments;
   bool get sendToWhatsapp => state.sendToWhatsapp;
   String get notes => state.notes;
@@ -282,7 +315,9 @@ class CartCubit extends Cubit<CartState> {
         clearStudent: true,
         lines: state.preOrder == null ? null : _withoutPreOrderLines(),
         clearPreOrder: true,
-        payMode: state.paysByStudentCard ? PayMode.cash : null,
+        payMode: state.paysByStudentCard ? _defaultPay().mode : null,
+        payMethod: state.paysByStudentCard ? _defaultPay().method : null,
+        clearPayMethod: state.paysByStudentCard,
         customPayments: state.paysByStudentCard ? const [] : null,
       ));
 
@@ -297,6 +332,7 @@ class CartCubit extends Cubit<CartState> {
       lines: otherStudent ? _withoutPreOrderLines() : null,
       clearPreOrder: otherStudent,
       payMode: PayMode.studentCard,
+      clearPayMethod: true,
       customPayments: const [],
     ));
   }
@@ -308,7 +344,9 @@ class CartCubit extends Cubit<CartState> {
         customerMobile: '',
         lines: state.preOrder == null ? null : _withoutPreOrderLines(),
         clearPreOrder: true,
-        payMode: state.paysByStudentCard ? PayMode.cash : null,
+        payMode: state.paysByStudentCard ? _defaultPay().mode : null,
+        payMethod: state.paysByStudentCard ? _defaultPay().method : null,
+        clearPayMethod: state.paysByStudentCard,
         customPayments: state.paysByStudentCard ? const [] : null,
       ));
 
@@ -446,19 +484,32 @@ class CartCubit extends Cubit<CartState> {
 
   void setPayMode(PayMode mode) => emit(state.copyWith(
         payMode: mode,
+        clearPayMethod: true,
         customPayments: mode == PayMode.custom ? null : const [],
       ));
+
+  /// A quick payment button: that one method pays the whole ticket.
+  void setPayButton(PaymentMethod button) {
+    final pay = payFor(button);
+    emit(state.copyWith(
+      payMode: pay.mode,
+      payMethod: pay.method,
+      clearPayMethod: pay.method == null,
+      customPayments: const [],
+    ));
+  }
 
   void setCustomPayments(List<CustomPayment> payments) => emit(state.copyWith(
         customPayments: payments,
         payMode: PayMode.custom,
+        clearPayMethod: true,
       ));
 
   void setSendToWhatsapp(bool value) => emit(state.copyWith(sendToWhatsapp: value));
 
   void setNotes(String value) => emit(state.copyWith(notes: value));
 
-  void clear() => emit(CartState(roundOffEnabled: _roundOffSetting()));
+  void clear() => emit(_freshTicket());
 
   void seedFromSale(Sale sale) {
     final lines = sale.lines
@@ -500,6 +551,7 @@ class CartCubit extends Cubit<CartState> {
       tipPercent: sale.grandTotal > 0 ? round2(sale.tip / sale.grandTotal * 100) : 0,
       roundOffEnabled: _roundOffSetting(),
       payMode: payment.mode,
+      payMethod: payment.method,
       customPayments: payment.rows,
       notes: sale.notes,
     ));
@@ -540,20 +592,28 @@ class CartCubit extends Cubit<CartState> {
   /// the next save, and an overpayment would quietly lose the excess — both are
   /// custom-sheet amounts, so both stay on the custom sheet. Every figure
   /// involved is a 2dp column, so the tolerance is float noise, not a cent.
-  ({PayMode mode, List<CustomPayment> rows}) _seedPayments(Sale sale) {
+  ({PayMode mode, PaymentMethod? method, List<CustomPayment> rows}) _seedPayments(Sale sale) {
     final payments = sale.payments;
     final paid = sale.paid;
     if (payments.isEmpty) {
-      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, method: null, rows: const []);
     }
     // The tip is an extra on top of `grand_total`, and it is paid along with it.
     final ticket = sale.grandTotal + sale.tip;
     if (payments.length == 1 && (paid - ticket).abs() < 0.005) {
       final name = payments.first.method.toLowerCase();
       // The student card's payment method, read back as the button that paid it.
-      if (name == PayMode.studentCard.label.toLowerCase()) return (mode: PayMode.studentCard, rows: const []);
-      if (name.contains('cash')) return (mode: PayMode.cash, rows: const []);
-      if (name.contains('card')) return (mode: PayMode.card, rows: const []);
+      if (name == PayMode.studentCard.label.toLowerCase()) return (mode: PayMode.studentCard, method: null, rows: const []);
+      // With the payment buttons synced, a method reads back as its button —
+      // and one that has no button stays on the custom sheet, as on the web.
+      final buttons = paymentButtons();
+      final button = buttons.where((b) => b.id == payments.first.paymentMethodId).firstOrNull;
+      if (button != null) {
+        final pay = payFor(button);
+        return (mode: pay.mode, method: pay.method, rows: const []);
+      }
+      if (buttons.isEmpty && name.contains('cash')) return (mode: PayMode.cash, method: null, rows: const []);
+      if (buttons.isEmpty && name.contains('card')) return (mode: PayMode.card, method: null, rows: const []);
     }
     final rows = payments
         .where((p) => p.paymentMethodId != null)
@@ -561,9 +621,9 @@ class CartCubit extends Cubit<CartState> {
             methodId: p.paymentMethodId!, methodName: p.method, amount: p.amount))
         .toList();
     if (rows.isEmpty) {
-      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, rows: const []);
+      return (mode: paid > 0 ? PayMode.cash : PayMode.credit, method: null, rows: const []);
     }
-    return (mode: PayMode.custom, rows: rows);
+    return (mode: PayMode.custom, method: null, rows: rows);
   }
 
   /// The idempotency key for the ticket as it currently stands.
@@ -665,6 +725,8 @@ class CartCubit extends Cubit<CartState> {
           if (state.payMode == PayMode.custom)
             for (final p in state.customPayments)
               {'payment_method_id': p.methodId, 'method': p.methodName, 'amount': round2(p.amount)}
+          else if (state.payMode == PayMode.method && state.payMethod != null)
+            {'payment_method_id': state.payMethod!.id, 'method': state.payMethod!.name, 'amount': state.total}
           else if (state.payMode != PayMode.credit)
             {'payment_method_id': null, 'method': state.payMode.label, 'amount': state.total},
         ],
@@ -736,7 +798,11 @@ class CartCubit extends Cubit<CartState> {
                     'payment_method_id': p.methodId,
                     'amount': round2(p.amount),
                   })
-              .toList(),
+              .toList()
+        else if (state.payMode == PayMode.method && state.payMethod != null)
+          'payments': [
+            {'payment_method_id': state.payMethod!.id, 'amount': state.total},
+          ],
         'sendToWhatsapp': state.sendToWhatsapp,
         // Always sent, empty included, so clearing a note on an edit clears it.
         'notes': state.notes.trim(),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
+import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -14,7 +16,13 @@ IconData startScreenIcon(StartScreen s) => switch (s) {
       StartScreen.home => Icons.grid_view,
       StartScreen.sale => Icons.add_shopping_cart,
       StartScreen.sales => Icons.receipt_long,
+      StartScreen.reports => Icons.insights_rounded,
     };
+
+/// The start screens this account may pick — Reports only with the report
+/// permission.
+List<StartScreen> startScreenOptions(BuildContext context) => StartScreen.optionsFor(
+    canViewReports: context.read<AuthCubit>().hasPermission(PermissionSlug.report));
 
 /// Click-and-go start-screen picker: tapping a row saves it and closes the
 /// sheet — it applies at the next sign-in or unlock, so there is nothing to
@@ -27,7 +35,7 @@ Future<void> showStartScreenSheet(BuildContext context) {
     barrierColor: Colors.black.withValues(alpha: 0.45),
     builder: (sheetContext) {
       final pos = sheetContext.watch<PosSettingsCubit>();
-      const options = StartScreen.values;
+      final options = startScreenOptions(sheetContext);
       return Container(
         decoration: BoxDecoration(
           color: p.canvas,
@@ -62,7 +70,7 @@ Future<void> showStartScreenSheet(BuildContext context) {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: Text('Where this device opens once you sign in.',
+                  child: Text('Where this device opens once you sign in — saved for you alone.',
                       style: ui(size: 11.5, weight: FontWeight.w600, color: p.textMuted)),
                 ),
               ),

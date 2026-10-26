@@ -185,6 +185,7 @@ class InvoiceScreen extends StatelessWidget {
     final methods = sale.payments.map((e) => _titleCase(e.method.trim())).where((e) => e.isNotEmpty).toSet();
     final subtitle = [
       sale.customerName.trim().isEmpty ? AppStrings.walkInCustomer : sale.customerName.trim(),
+      if (sale.billNo.isNotEmpty) 'Bill No ${sale.billNo}',
       if (sale.date.isNotEmpty) Dates.human(sale.date),
       if (methods.isNotEmpty) methods.join(', '),
       // The reference the customer's receipt was printed under, once this sale has
@@ -214,6 +215,9 @@ class InvoiceScreen extends StatelessWidget {
                         ? null
                         : TabletIconButton(
                             icon: Icons.chevron_left, tooltip: 'Back', onTap: () => _tap(() => context.pop())),
+                    trailing: embedded
+                        ? TabletIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: () => _tap(onClose!))
+                        : null,
                     actions: [
                       TabletActionButton(
                           label: 'Print', icon: Icons.print_outlined, onTap: () => _tap(() => _print(context))),
@@ -239,9 +243,6 @@ class InvoiceScreen extends StatelessWidget {
                           icon: Icons.more_horiz,
                           tooltip: 'More',
                           onTap: () => _tap(() => _moreSheet(context, canEdit, canDelete))),
-                      if (embedded)
-                        TabletIconButton(
-                            icon: Icons.close_rounded, tooltip: 'Close', onTap: () => _tap(onClose!)),
                     ],
                   ),
                   const SizedBox(height: 22),

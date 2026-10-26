@@ -197,11 +197,12 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       _error('This sale has already synced — open it from Sales to edit it.');
       return null;
     }
-    // The provisional reference the customer already has is unchanged, so it is
-    // read back off the row rather than reprinted as something new.
+    // The provisional reference and the Office Bill number already printed are
+    // unchanged, so they are read back off the row rather than reprinted as
+    // something new.
     final row = await serviceLocator<OutboxRepository>().byUuid(pendingUuid);
     return Sale.fromJson({
-      ...ticket.offlineSale,
+      ...(row?.saleJson ?? ticket.offlineSale),
       'invoice_no': row?.displayRef ?? '',
     });
   }
@@ -871,7 +872,30 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  // ---- Payment method (Student Wallet / Cash / Card / Credit / Custom) ----
+  // ---- Payment method (Student Wallet / buttons 1–3 / Credit / Custom) ----
+
+  /// The icon for a configured payment button, from its system slug or name.
+  IconData _buttonIcon(PaymentMethod button) {
+    // The icon picked on the web — same keys as `posPaymentButtonIcons()`.
+    final picked = switch (button.icon) {
+      'money' => Icons.payments_outlined,
+      'credit-card' => Icons.credit_card,
+      'university' => Icons.account_balance_outlined,
+      'exchange' => Icons.swap_horiz,
+      'bolt' => Icons.bolt,
+      'mobile' => Icons.smartphone,
+      'qrcode' => Icons.qr_code_2,
+      'google-wallet' => Icons.account_balance_wallet_outlined,
+      'paper-plane' => Icons.send_outlined,
+      'gift' => Icons.card_giftcard,
+      _ => null,
+    };
+    if (picked != null) return picked;
+    final name = '${button.slug ?? ''} ${button.name}'.toLowerCase();
+    if (name.contains('cash')) return Icons.payments_outlined;
+    if (name.contains('bank') || name.contains('transfer')) return Icons.account_balance_outlined;
+    return Icons.credit_card;
+  }
 
   /// Whether [m] is the Student Wallet account — by id once a tapped card has
   /// named it, otherwise by the account's locked name.
@@ -902,13 +926,19 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   Widget _paymentSection(CartCubit cart) {
     final p = context.astra;
-    final modes = <(PayMode, IconData)>[
-      if (_offersWallet(cart)) (PayMode.studentCard, Icons.school_outlined),
-      (PayMode.cash, Icons.payments_outlined),
-      (PayMode.card, Icons.credit_card),
+    // The quick buttons from System Configurations → POS Payment Buttons; Cash
+    // and Card until the app has synced them.
+    final buttons = CartCubit.paymentButtons();
+    final modes = <(PayMode, IconData, PaymentMethod?)>[
+      if (_offersWallet(cart)) (PayMode.studentCard, Icons.school_outlined, null),
+      if (buttons.isEmpty) ...[
+        (PayMode.cash, Icons.payments_outlined, null),
+        (PayMode.card, Icons.credit_card, null),
+      ] else
+        for (final button in buttons) (CartCubit.payFor(button).mode, _buttonIcon(button), button),
       // Credit makes no sense on a prepaid card, so a student's ticket drops it.
-      if (cart.student == null && cart.payMode != PayMode.studentCard) (PayMode.credit, Icons.description_outlined),
-      (PayMode.custom, Icons.tune),
+      if (cart.student == null && cart.payMode != PayMode.studentCard) (PayMode.credit, Icons.description_outlined, null),
+      (PayMode.custom, Icons.tune, null),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -932,9 +962,27 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
             color: p.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(16),
           ),
+          // The configured buttons lead; Credit and Custom share one narrower
+          // column as half-height tiles, so the everyday methods stand out.
           child: Row(
             children: [
-              for (final (mode, icon) in modes) Expanded(child: _method(cart, mode, icon)),
+              for (final (mode, icon, button) in modes)
+                if (!_isMinor(mode)) Expanded(flex: 10, child: _method(cart, mode, icon, button: button)),
+              const SizedBox(width: 4),
+              Expanded(
+                flex: 8,
+                child: SizedBox(
+                  height: 66,
+                  child: Column(
+                    children: [
+                      for (final (index, (mode, icon, _)) in modes.where((m) => _isMinor(m.$1)).indexed) ...[
+                        if (index > 0) const SizedBox(height: 4),
+                        Expanded(child: _method(cart, mode, icon, mini: true)),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -942,11 +990,18 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  Widget _method(CartCubit cart, PayMode mode, IconData icon) {
+  /// Credit and Custom — the methods kept smaller, after the quick buttons.
+  bool _isMinor(PayMode mode) => mode == PayMode.credit || mode == PayMode.custom;
+
+  /// One tile of the row. A configured [button] pays the whole ticket by that
+  /// method; it is the active tile when it is the one the ticket is paid by.
+  /// A [mini] tile is half height, icon beside its label, on a quieter face.
+  Widget _method(CartCubit cart, PayMode mode, IconData icon, {PaymentMethod? button, bool mini = false}) {
     final p = context.astra;
-    final active = cart.payMode == mode;
+    final active = cart.payMode == mode && (mode != PayMode.method || cart.payMethod?.id == button?.id);
     final count = mode == PayMode.custom ? cart.customPayments.length : 0;
     final label = switch (mode) {
+      _ when button != null => button.name,
       // "Student Wallet" can't fit a fifth of a phone row; the cap says whose.
       PayMode.studentCard => 'Wallet',
       PayMode.custom when count > 0 => '$count method${count == 1 ? '' : 's'}',
@@ -957,19 +1012,24 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
+        if (button != null) {
+          cart.setPayButton(button);
+          if (mode != PayMode.cash) setState(() => _tendered = null);
+          return;
+        }
         switch (mode) {
           case PayMode.custom:
             _openCustom();
           case PayMode.studentCard:
             _selectWallet(cart);
-          case PayMode.cash || PayMode.card || PayMode.credit:
+          case PayMode.cash || PayMode.card || PayMode.credit || PayMode.method:
             cart.setPayMode(mode);
             // The tender pad unmounts with the mode, so what it reported would
             // otherwise linger on the checkout button of a card sale.
             if (mode != PayMode.cash) setState(() => _tendered = null);
         }
       },
-      child: AnimatedContainer(
+      child: mini ? _miniTile(active, icon, label, count) : AnimatedContainer(
         duration: motion,
         curve: Curves.easeOut,
         height: 66,
@@ -1031,6 +1091,48 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _miniTile(bool active, IconData icon, String label, int count) {
+    final p = context.astra;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: active ? p.card : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: active ? p.primary.withValues(alpha: 0.35) : p.textMuted.withValues(alpha: 0.25), width: 1),
+        boxShadow: active ? context.astraTheme.softShadow : null,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
+          const SizedBox(width: 5),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label,
+                  maxLines: 1,
+                  style: ui(size: 10.5, weight: active ? FontWeight.w800 : FontWeight.w700,
+                      color: active ? p.primary : p.textMuted)),
+            ),
+          ),
+          if (count > 0 && !active) ...[
+            const SizedBox(width: 4),
+            Container(
+              width: 14,
+              height: 14,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: AstraPalette.success, shape: BoxShape.circle),
+              child: Text('$count', style: ui(size: 8, weight: FontWeight.w800, color: Colors.white)),
+            ),
+          ],
+        ],
       ),
     );
   }

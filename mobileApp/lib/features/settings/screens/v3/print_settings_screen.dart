@@ -212,6 +212,15 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
                 onChanged: canEdit
                     ? (v) => _apply(context.read<PrintSettingsCubit>().setShowBarcode(v))
                     : null),
+            const SizedBox(height: 9),
+            _flagRow(context,
+                icon: Icons.sticky_note_2_outlined,
+                title: 'Sale notes',
+                subtitle: 'Print the note added at checkout',
+                value: c.showNotes,
+                onChanged: canEdit
+                    ? (v) => _apply(context.read<PrintSettingsCubit>().setShowNotes(v))
+                    : null),
             const SizedBox(height: 20),
             SectionLabel('Footer'),
             const SizedBox(height: 8),

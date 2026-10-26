@@ -8,3 +8,4 @@ export 'sales/index.dart';
 export 'sales_returns/index.dart';
 export 'settings/index.dart';
 export 'shell/index.dart';
+export 'token/index.dart';

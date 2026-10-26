@@ -101,6 +101,7 @@ class DayStatus extends Equatable {
     required this.date,
     required this.openedAt,
     required this.lastClosedAt,
+    this.billSequence = 0,
     this.session,
   });
 
@@ -108,6 +109,8 @@ class DayStatus extends Equatable {
   final String date; // 'yyyy-MM-dd' business day
   final String openedAt; // 'Y-m-d H:i:s' while open, else ''
   final String lastClosedAt; // 'Y-m-d H:i:s' of the most recent close, else ''
+  // The signed-in user's last Office Bill number on [date].
+  final int billSequence;
   final DaySession? session;
 
   bool get isOpen => status == 'open';
@@ -119,11 +122,12 @@ class DayStatus extends Equatable {
         date: asStr(j['date']),
         openedAt: asStr(j['opened_at']),
         lastClosedAt: asStr(j['last_closed_at']),
+        billSequence: asNum(j['staff_bill_sequence']).toInt(),
         session: j['session'] is Map
             ? DaySession.fromJson(Map<String, dynamic>.from(j['session']))
             : null,
       );
 
   @override
-  List<Object?> get props => [status, date, openedAt, lastClosedAt, session];
+  List<Object?> get props => [status, date, openedAt, lastClosedAt, billSequence, session];
 }

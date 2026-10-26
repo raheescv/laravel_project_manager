@@ -19,6 +19,7 @@ class PrintSettingsState extends Equatable {
     this.logoBytes,
     this.showCompanyName = false,
     this.companyName = '',
+    this.showNotes = false,
     this.autoPrint = true,
     this.printer = PrinterTarget.none,
     this.skipInvoice = false,
@@ -36,6 +37,7 @@ class PrintSettingsState extends Equatable {
   final Uint8List? logoBytes;
   final bool showCompanyName;
   final String companyName;
+  final bool showNotes;
   final bool autoPrint;
 
   /// The printer this till prints to, and over which link.
@@ -61,7 +63,9 @@ class PrintSettingsState extends Equatable {
         footerArabic: footerArabic,
         quantityLabel: quantityLabel,
         logo: showLogo ? logoBytes : null,
-        companyName: showCompanyName ? companyName : '',
+        // The Office bill always heads with the company, whatever the toggle.
+        companyName: showCompanyName || style == PrintStyle.officeBill ? companyName : '',
+        showNotes: showNotes,
       );
 
   PrintSettingsState copyWith({
@@ -77,6 +81,7 @@ class PrintSettingsState extends Equatable {
     Uint8List? logoBytes,
     bool? showCompanyName,
     String? companyName,
+    bool? showNotes,
     bool? autoPrint,
     PrinterTarget? printer,
     bool? skipInvoice,
@@ -95,6 +100,7 @@ class PrintSettingsState extends Equatable {
         logoBytes: logoBytes ?? this.logoBytes,
         showCompanyName: showCompanyName ?? this.showCompanyName,
         companyName: companyName ?? this.companyName,
+        showNotes: showNotes ?? this.showNotes,
         autoPrint: autoPrint ?? this.autoPrint,
         printer: clearPrinter ? PrinterTarget.none : (printer ?? this.printer),
         skipInvoice: skipInvoice ?? this.skipInvoice,
@@ -104,6 +110,6 @@ class PrintSettingsState extends Equatable {
   List<Object?> get props => [
         style, width, quantityLabel, showDiscount, showTotalQty, showBarcode,
         footerEnglish, footerArabic, showLogo, logoBytes, showCompanyName,
-        companyName, autoPrint, printer, skipInvoice,
+        companyName, showNotes, autoPrint, printer, skipInvoice,
       ];
 }

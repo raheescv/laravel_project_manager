@@ -56,6 +56,8 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
       logoBytes: logo,
       showCompanyName: st.printShowCompany ?? false,
       companyName: st.printCompanyName ?? '',
+      // Off until the first sync says otherwise — matches the web default.
+      showNotes: st.printNotes ?? false,
       autoPrint: st.printAuto ?? true,
       printer: PrinterTarget(
         transport: PrinterTransport.fromKey(st.printerTransport),
@@ -81,6 +83,7 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
   bool get showLogo => state.showLogo;
   bool get showCompanyName => state.showCompanyName;
   String get companyName => state.companyName;
+  bool get showNotes => state.showNotes;
   bool get autoPrint => state.autoPrint;
   PrinterTarget get printer => state.printer;
   bool get skipInvoice => state.skipInvoice;
@@ -225,6 +228,13 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
       store: _storage.setPrintShowCompany,
       body: {'show_company_name': v});
 
+  Future<bool> setShowNotes(bool v) => _set(
+      value: v,
+      current: state.showNotes,
+      apply: (s, x) => s.copyWith(showNotes: x),
+      store: _storage.setPrintNotes,
+      body: {'show_notes': v});
+
   /// Saves both footer messages in one round-trip (the edit sheet submits
   /// them together).
   Future<bool> setFooters({required String english, required String arabic}) async {
@@ -297,6 +307,10 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
     if (r.showCompanyName != null && r.showCompanyName != next.showCompanyName) {
       next = next.copyWith(showCompanyName: r.showCompanyName);
       await _storage.setPrintShowCompany(r.showCompanyName!);
+    }
+    if (r.showNotes != null && r.showNotes != next.showNotes) {
+      next = next.copyWith(showNotes: r.showNotes);
+      await _storage.setPrintNotes(r.showNotes!);
     }
     final company = r.companyName;
     if (company != null && company != next.companyName) {

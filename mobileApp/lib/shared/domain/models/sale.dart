@@ -194,6 +194,9 @@ class Sale extends Equatable {
     required this.paid,
     required this.balance,
     required this.createdBy,
+    this.billNo = '',
+    this.staffBillSequence = 0,
+    this.createdAt = '',
     this.clientUuid = '',
     this.referenceNo = '',
     this.notes = '',
@@ -224,6 +227,14 @@ class Sale extends Equatable {
   // Outstanding amount straight from the sale's `balance` column (grand_total − paid).
   final double balance;
   final String createdBy;
+  // The biller's own `{code}/{n}` number for the Office bill receipt. A sale
+  // rung up offline carries the number the till counted for it (see
+  // StaffBillCounter), which the server keeps on sync whenever it is free.
+  final String billNo;
+  // Its `n` — 0 when there is none (a draft, or a sale from before it existed).
+  final int staffBillSequence;
+  // ISO-8601 server timestamp; the Office bill prints its HH:mm after the biller.
+  final String createdAt;
   // Device-generated idempotency key. Set on a sale rung up offline and echoed
   // back by the server, so a synced sale can be matched to its outbox row.
   final String clientUuid;
@@ -283,6 +294,9 @@ class Sale extends Equatable {
       paid: asNum(summary['paid']).toDouble(),
       balance: asNum(summary['balance']).toDouble(),
       createdBy: asStr(j['created_by']),
+      billNo: asStr(j['bill_no']),
+      staffBillSequence: asNum(j['staff_bill_sequence']).toInt(),
+      createdAt: asStr(j['created_at']),
       clientUuid: asStr(j['client_uuid']),
       referenceNo: asStr(j['reference_no']),
       notes: asStr(j['notes']),
@@ -314,6 +328,9 @@ class Sale extends Equatable {
         paid,
         balance,
         createdBy,
+        billNo,
+        staffBillSequence,
+        createdAt,
         clientUuid,
         referenceNo,
         notes,

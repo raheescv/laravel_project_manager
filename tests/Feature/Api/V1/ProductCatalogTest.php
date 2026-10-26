@@ -168,6 +168,35 @@ it('prefers an explicit thumbnail over the image fallback', function (): void {
     expect($rows[0]['thumbnail'])->toBe('https://cdn.test/chosen.png');
 });
 
+it('lists the POS order — lowest priority first, then by name — when sorted by priority', function (): void {
+    $this->world->product->update(['name' => 'Mid Item', 'priority' => 5]);
+    $low = makeProduct($this->world, ['name' => 'Aaa Low', 'priority' => 0]);
+    $top = makeProduct($this->world, ['name' => 'Zzz Top', 'priority' => 10]);
+    $service = makeProduct($this->world, ['type' => 'service', 'name' => 'Bbb Service', 'priority' => 7]);
+    $tied = makeProduct($this->world, ['name' => 'Aaa Tied', 'priority' => 5]);
+
+    $ids = array_column(listProducts($this->world, ['sort_by' => 'priority', 'per_page' => 100]), 'id');
+
+    expect($ids)->toBe([$low->id, $tied->id, $this->world->product->id, $service->id, $top->id]);
+
+    $descending = array_column(listProducts($this->world, ['sort_by' => 'priority', 'sort_direction' => 'desc', 'per_page' => 100]), 'id');
+
+    expect($descending)->toBe([$top->id, $service->id, $tied->id, $this->world->product->id, $low->id]);
+
+    $services = array_column(listProducts($this->world, ['sort_by' => 'priority', 'type' => 'service']), 'id');
+
+    expect($services)->toBe([$service->id]);
+});
+
+it('still lists by name when no sort is asked for', function (): void {
+    $this->world->product->update(['name' => 'Mmm Item', 'priority' => 0]);
+    $top = makeProduct($this->world, ['name' => 'Zzz Top', 'priority' => 10]);
+
+    $ids = array_column(listProducts($this->world, ['per_page' => 100]), 'id');
+
+    expect($ids)->toBe([$this->world->product->id, $top->id]);
+});
+
 /** Give [product] a spin sequence of [frames] angle images. */
 function spinFrames(Product $product, int $frames): void
 {

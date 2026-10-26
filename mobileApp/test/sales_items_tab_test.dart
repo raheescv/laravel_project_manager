@@ -52,6 +52,21 @@ void main() {
     });
   }
 
+  testWidgets('the tablet table names the employee on each line', (tester) async {
+    await pumpAt(tester, const Size(1194, 834));
+    await openItemsTab(tester);
+
+    expect(find.text('EMPLOYEE'), findsOneWidget);
+    expect(find.text('Mariam'), findsOneWidget);
+  });
+
+  testWidgets('the phone row names the employee on each line', (tester) async {
+    await pumpAt(tester, const Size(390, 844));
+    await openItemsTab(tester);
+
+    expect(find.textContaining('Mariam'), findsOneWidget);
+  });
+
   testWidgets('a tapped line opens its invoice in the tablet drawer', (tester) async {
     await pumpAt(tester, const Size(1194, 834));
     await openItemsTab(tester);

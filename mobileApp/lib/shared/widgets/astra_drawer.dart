@@ -130,6 +130,17 @@ class AstraDrawer extends StatelessWidget {
                                 ? _toTab(context, kStockCheckTab)
                                 : _toRoute(context, Routes.stockCheck)),
                       ],
+                      if (auth.hasPermission(PermissionSlug.tokenIssue)) ...[
+                        _section(p, 'QUEUE'),
+                        _item(context, p,
+                            icon: Icons.confirmation_number_outlined,
+                            label: 'Token',
+                            subtitle: 'Issue & print queue tokens',
+                            active: context.isTablet && activeTab == kTokenTab,
+                            onTap: () => context.isTablet
+                                ? _toTab(context, kTokenTab)
+                                : _toRoute(context, Routes.token)),
+                      ],
                       if (serviceLocator<LocalStorageService>().schoolEnabled &&
                           auth.hasPermission(PermissionSlug.studentCardAssign)) ...[
                         _section(p, 'STUDENTS'),

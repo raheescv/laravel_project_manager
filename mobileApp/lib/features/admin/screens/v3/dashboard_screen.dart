@@ -105,6 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   void _openReturns() => _open(kReturnsTab, Routes.salesReturns);
   void _openStockCheck() => _open(kStockCheckTab, Routes.stockCheck);
   void _openProfile() => _open(kProfileTab, Routes.profile);
+  void _openToken() => _open(kTokenTab, Routes.token);
 
   @override
   Widget build(BuildContext context) {
@@ -138,19 +139,20 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                       _quickActions(),
                       SizedBox(height: context.isTablet ? 20 : 16),
                       if (admin.dashboard != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4, bottom: 8),
-                          child: SectionLabel('Insights'),
-                        ),
+                        if (_showPeriodCards)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4, bottom: 8),
+                            child: SectionLabel('Insights'),
+                          ),
                         if (context.isTablet)
                           _tabletInsights(admin)
                         else ...[
-                          _periodCards(admin),
+                          if (_showPeriodCards) _periodCards(admin),
                           if (_showLeaderboard(admin)) ...[
                             const SizedBox(height: 14),
                             _topPerformers(admin),
                           ],
-                          const SizedBox(height: 18),
+                          if (_showPeriodCards || _showLeaderboard(admin)) const SizedBox(height: 18),
                           _paymentSplit(admin),
                         ],
                       ] else if (admin.loading) ...[
@@ -476,8 +478,10 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     Widget mainColumn() => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _periodCards(admin),
-            const SizedBox(height: 18),
+            if (_showPeriodCards) ...[
+              _periodCards(admin),
+              const SizedBox(height: 18),
+            ],
             _paymentSplit(admin),
           ],
         );
@@ -505,6 +509,11 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   }
 
   // ---- WEEK / MONTH comparison ----
+  /// The week and month takings are the business's running totals — a
+  /// manager's read, not a till's — so a rank-and-file employee doesn't get
+  /// them; same scope gate as the leaderboard.
+  bool get _showPeriodCards => context.read<AuthCubit>().user?.seesAllRecords ?? false;
+
   Widget _periodCards(AdminCubit admin) {
     final business = _byTitle(admin.dashboard?.business);
     final weekly = business['weekly sales'];
@@ -579,6 +588,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       _launchTile('Reports', Icons.bar_chart, () => widget.onSelectTab?.call(2)),
       if (auth.hasPermission(PermissionSlug.daySession))
         _launchTile('Day Session', Icons.schedule, _openDaySession),
+      if (auth.hasPermission(PermissionSlug.tokenIssue))
+        _launchTile('Token', Icons.confirmation_number_outlined, _openToken),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

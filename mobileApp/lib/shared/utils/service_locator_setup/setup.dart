@@ -10,6 +10,7 @@ import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
 import 'package:invo/features/sale/domain/services/offline_sale_service.dart';
 import 'package:invo/features/sale/domain/services/outbox_service.dart';
+import 'package:invo/features/sale/domain/services/staff_bill_counter.dart';
 import 'package:invo/features/sale/domain/services/sale_service.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/features/sale_return/domain/repository/sale_return_repository.dart';
@@ -21,6 +22,9 @@ import 'package:invo/features/student_card/logic/student_card_cubit/student_card
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
 import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cubit.dart';
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
+import 'package:invo/features/token/domain/repository/token_repository.dart';
+import 'package:invo/features/token/domain/services/token_service.dart';
+import 'package:invo/features/token/logic/token_cubit/token_cubit.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
@@ -72,6 +76,7 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<ProfileRepository>(ProfileService.new)
     ..registerLazySingleton<CatalogSnapshotRepository>(CatalogSnapshotService.new)
     ..registerLazySingleton<OutboxRepository>(OutboxService.new)
+    ..registerLazySingleton(StaffBillCounter.new)
     // Sales go through the decorator so an unreachable server queues the ticket
     // instead of losing it. Everything else on the contract passes straight
     // through to `onlineSales`.
@@ -80,6 +85,7 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<StockCheckRepository>(StockCheckService.new)
     ..registerLazySingleton<AdminRepository>(AdminService.new)
     ..registerLazySingleton<StudentCardRepository>(StudentCardService.new)
+    ..registerLazySingleton<TokenRepository>(TokenService.new)
     // ---- App-wide cubits (survive the whole session) ----
     ..registerLazySingleton<AuthCubit>(AuthCubit.new)
     ..registerLazySingleton<ThemeCubit>(ThemeCubit.new)
@@ -92,6 +98,8 @@ Future<void> setUpServiceLocator() async {
         ))
     ..registerLazySingleton<PrintSettingsCubit>(PrintSettingsCubit.new)
     ..registerLazySingleton<PosSettingsCubit>(PosSettingsCubit.new)
+    // App-wide so the Token screen and Settings → Token share one state.
+    ..registerLazySingleton<TokenCubit>(() => TokenCubit(serviceLocator()))
     ..registerLazySingleton<OfflineSyncCubit>(() => OfflineSyncCubit(onlineSales))
     // One per tap sheet / Link Card screen; the owner closes it.
     ..registerFactory<StudentCardCubit>(() => StudentCardCubit(serviceLocator()));

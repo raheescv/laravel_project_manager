@@ -147,6 +147,7 @@ extension _CatalogViews on _NewSaleScreenState {
                   children: [
                     _tileImage(s, 84),
                     if (qty > 0) Positioned(top: 6, left: 6, child: _qtyBadge(qty, 22)),
+                    if (s.priority > 0) Positioned(bottom: 6, left: 6, child: _priorityTag(s, 16)),
                   ],
                 ),
               ),
@@ -546,6 +547,10 @@ extension _CatalogViews on _NewSaleScreenState {
                     fit: StackFit.expand,
                     children: [
                       _tileImage(s, width, iconSize: k.icon),
+                      // Bottom corner: the top row already holds the cart
+                      // count and the price.
+                      if (s.priority > 0)
+                        Positioned(bottom: k.inset, left: k.inset, child: _priorityTag(s, k.badge * 0.75)),
                       // Badge and capsule share one bounded row, so a long
                       // amount on a narrow tile ellipsizes inside the capsule
                       // instead of running off the photo.
@@ -612,6 +617,25 @@ extension _CatalogViews on _NewSaleScreenState {
     );
   }
 
+  /// The product's POS priority as a small quiet chip, so the order the
+  /// catalog follows (Settings → Sale → POS Product Order) can be read off the
+  /// tiles. Not drawn for 0 — an unprioritised product carries no label.
+  Widget _priorityTag(Product s, double height) {
+    final p = context.astra;
+    return Container(
+      height: height,
+      padding: EdgeInsets.symmetric(horizontal: height * 0.32),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: p.cardSolid.withValues(alpha: p.isDark ? 0.82 : 0.92),
+        borderRadius: BorderRadius.circular(height * 0.32),
+        border: Border.all(color: p.hairline),
+      ),
+      child: Text('#${s.priority}',
+          style: ui(size: height * 0.55, weight: FontWeight.w800, color: p.textMuted, height: 1.1)),
+    );
+  }
+
   /// What stands in for the old add button, in both the grid and the list: how
   /// many of this product are on the ticket, so a tap that lands is visible on
   /// the tile itself. [size] is the badge's diameter — a capsule once the count
@@ -634,11 +658,11 @@ extension _CatalogViews on _NewSaleScreenState {
   }
 
   /// The tile's crowning image — cover-fills the whole slot when the product has
-  /// a photo, otherwise a tinted panel with a large category icon so the frame
-  /// is never empty. Storage paths are resolved onto the reachable base URL with
-  /// the same host header the API uses (mirrors [ProductThumb]).
+  /// a photo, otherwise the company logo (see [_tileLogo]) so the frame is never
+  /// empty. Storage paths are resolved onto the reachable base URL with the same
+  /// host header the API uses (mirrors [ProductThumb]).
   Widget _tileImage(Product s, double width, {double iconSize = 40}) {
-    if (s.thumbnail.isEmpty) return _tileFallback(s, iconSize: iconSize);
+    if (s.thumbnail.isEmpty) return _tileLogo(s, width, iconSize: iconSize);
     final cfg = context.read<AuthCubit>().config;
     return Image(
       image: OfflineImage.provider(
@@ -650,13 +674,41 @@ extension _CatalogViews on _NewSaleScreenState {
       width: double.infinity,
       height: double.infinity,
       gaplessPlayback: true,
-      errorBuilder: (_, __, ___) => _tileFallback(s, iconSize: iconSize),
+      errorBuilder: (_, __, ___) => _tileLogo(s, width, iconSize: iconSize),
       loadingBuilder: (context, child, progress) =>
           progress == null ? child : _tileFallback(s, loading: true, iconSize: iconSize),
     );
   }
 
-  Widget _tileFallback(Product s, {bool loading = false, double iconSize = 40}) {
+  /// A product with no photo (or one that won't load) wears the company logo,
+  /// fitted onto the tinted panel — the same stand-in the web POS uses. The
+  /// bundled default logo is an SVG, which `Image` cannot decode, so that, an
+  /// unsynced till, or a logo that fails to load falls back to the category icon.
+  Widget _tileLogo(Product s, double width, {double iconSize = 40}) {
+    final logo = serviceLocator<LocalStorageService>().companyLogoUrl;
+    final isSvg = (Uri.tryParse(logo)?.path ?? logo).toLowerCase().endsWith('.svg');
+    if (logo.isEmpty || isSvg) return _tileFallback(s, iconSize: iconSize);
+    final cfg = context.read<AuthCubit>().config;
+    return _tilePanel(Padding(
+      padding: EdgeInsets.all(width * 0.14),
+      child: Image(
+        image: OfflineImage.provider(
+          cfg.assetUrl(logo),
+          headers: cfg.assetHeaders,
+          cacheWidth: decodeWidthFor(context, width),
+        ),
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => _tileIcon(s, iconSize),
+        loadingBuilder: (context, child, progress) => progress == null ? child : _tileSpinner(),
+      ),
+    ));
+  }
+
+  Widget _tileFallback(Product s, {bool loading = false, double iconSize = 40}) =>
+      _tilePanel(loading ? _tileSpinner() : _tileIcon(s, iconSize));
+
+  Widget _tilePanel(Widget child) {
     final p = context.astra;
     return Container(
       decoration: BoxDecoration(
@@ -667,11 +719,15 @@ extension _CatalogViews on _NewSaleScreenState {
         ),
       ),
       alignment: Alignment.center,
-      child: loading
-          ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: p.primary))
-          : Icon(iconForName('${s.categoryName} ${s.name}'), size: iconSize, color: p.primary.withValues(alpha: 0.85)),
+      child: child,
     );
   }
+
+  Widget _tileSpinner() =>
+      SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: context.astra.primary));
+
+  Widget _tileIcon(Product s, double iconSize) =>
+      Icon(iconForName('${s.categoryName} ${s.name}'), size: iconSize, color: context.astra.primary.withValues(alpha: 0.85));
 
   /// Two-tone serif price: gold currency mark + ink amount.
   Widget _priceText(double v, {double currency = 12, double amount = 17}) {

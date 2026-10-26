@@ -445,8 +445,13 @@ class AdminCubit extends Cubit<AdminState> {
     }
 
     final req = ++_reportReq;
+    // A restored type (Reports reopening on the user's last breakdown) may not
+    // carry the sort left over from before — same rule as [setReportType].
+    final keepsSort = type == null || sortsBy(type, state.sortKey);
     emit(state.copyWith(
       reportType: type,
+      sortKey: keepsSort ? null : 'amount',
+      sortAscending: keepsSort ? null : false,
       reportLoading: true,
       reportLoadingMore: false,
       clearReportError: true,

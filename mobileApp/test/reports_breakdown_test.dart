@@ -166,4 +166,26 @@ void main() {
     expect(find.text('Grand total'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('reopens on the tab and ranking this user last picked', (tester) async {
+    final d = TestHarness();
+    await d.init(admin: true);
+    addTearDown(d.dispose);
+    await openBreakdown(tester, d);
+    await tester.tap(find.text('By Category'));
+    await settle(tester);
+
+    expect(d.storage.reportsTabFor('14'), 'breakdown');
+    expect(d.storage.reportsBreakdownFor('14'), 'categorywise');
+    // Another account on the same till has its own (none yet).
+    expect(d.storage.reportsTabFor('22'), isNull);
+
+    // A fresh Reports screen, as on the next sign-in — no taps this time.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(d.wrap(const ReportsScreen()));
+    await settle(tester);
+    expect(find.text('CATEGORY'), findsOneWidget);
+    expect(find.text('Grand total'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

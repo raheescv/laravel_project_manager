@@ -6,6 +6,7 @@ import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'package:invo/features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
+import 'package:invo/shared/domain/models/product_sort.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
@@ -19,6 +20,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/app_version.dart';
+import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
@@ -82,6 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _askClientCard(context),
                         _tipCard(context),
                         _gridColumnsCard(context),
+                        _productOrderCard(context),
                         _categoryDisplayCard(context),
                         _startScreenCard(context),
                         _permissionsCard(context),
@@ -280,6 +283,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // exactly what it costs a phone.
           _categoryDisplayCard(context),
           const SizedBox(height: 11),
+          _productOrderCard(context),
+          const SizedBox(height: 11),
           // "Products per row" is deliberately absent here — see the phone list.
           // A tablet takes its column count from the width the catalog is given,
           // and the preference is only ever a floor, so a picker on this screen
@@ -292,8 +297,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]);
       case 3:
         return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
-            'Where this device opens once you sign in — and after an unlock.', [
-          for (final option in StartScreen.values)
+            'Where this device opens for you once you sign in — and after an unlock.', [
+          for (final option in startScreenOptions(context))
             _startScreenRow(context, option, option == _effectiveStartScreen(context)),
         ]);
       case 4:
@@ -1042,6 +1047,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// The order New Sale lists products in — by priority or name, either way
+  /// round. Shared with every till and the web Sale Configuration, so it saves
+  /// to the server; without `configuration.settings` it is shown, not offered.
+  Widget _productOrderCard(BuildContext context) {
+    final p = context.astra;
+    final sort = context.watch<PosSettingsCubit>().productSort;
+    final canEdit = context.read<AuthCubit>().hasPermission(PermissionSlug.settings);
+    final directionLabels = sort.isByName ? const ('A – Z', 'Z – A') : const ('Low first', 'High first');
+    final summary = '${sort.isByName ? 'Name' : 'Priority'} · ${sort.isDescending ? directionLabels.$2 : directionLabels.$1}';
+
+    Future<void> save(ProductSort next) async {
+      final ok = await context.read<PosSettingsCubit>().setProductSort(next);
+      if (!ok && context.mounted) AstraSnack.error(context, 'Couldn\'t save — check your connection.');
+    }
+
+    Widget segment(List<(String, String)> options, String selected, ValueChanged<String> onPick) => Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(11)),
+          child: Row(
+            children: [
+              for (final (value, label) in options)
+                Expanded(
+                  child: GestureDetector(
+                    onTap: canEdit && value != selected ? () => onPick(value) : null,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: value == selected ? p.primaryGradient : null,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text(label,
+                          style: ui(
+                              size: 11.5,
+                              weight: FontWeight.w800,
+                              color: value == selected ? Colors.white : p.textSecondary)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+
+    return AstraCard(
+      radius: 14,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconChip(icon: Icons.sort_rounded, size: 34, radius: 9, bg: p.tint),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Product order', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                    Text(canEdit ? 'New Sale · $summary · all tills' : 'New Sale · $summary · set on the web',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+                  ],
+                ),
+              ),
+              if (!canEdit) Icon(Icons.lock_outline, size: 15, color: p.textMuted),
+            ],
+          ),
+          const SizedBox(height: 10),
+          segment(const [(ProductSort.byPriority, 'Priority'), (ProductSort.byName, 'Name')], sort.by,
+              (v) => save(sort.copyWith(by: v))),
+          const SizedBox(height: 6),
+          segment([(ProductSort.asc, directionLabels.$1), (ProductSort.desc, directionLabels.$2)], sort.direction,
+              (v) => save(sort.copyWith(direction: v))),
         ],
       ),
     );

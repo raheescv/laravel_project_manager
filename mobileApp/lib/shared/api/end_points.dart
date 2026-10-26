@@ -26,6 +26,7 @@ class EndPoints {
   static const String currencies = '/settings/currencies';
   static const String saleSettings = '/settings/sale';
   static const String printSettings = '/settings/sale/print';
+  static const String productSortSettings = '/settings/sale/product-sort';
   static const String logo = '/settings/logo';
 
   // ---- Diagnostics ----

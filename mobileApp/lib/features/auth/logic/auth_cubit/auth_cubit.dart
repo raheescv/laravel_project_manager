@@ -478,6 +478,7 @@ class AuthCubit extends Cubit<AuthState> {
     String? openedAt,
     String? date,
     String? lastClosedAt,
+    int? billSequence,
   }) async {
     final u = state.user;
     if (u == null) return;
@@ -487,6 +488,8 @@ class AuthCubit extends Cubit<AuthState> {
       daySessionOpenedAt:
           status == 'open' ? (openedAt ?? u.daySessionOpenedAt) : '',
       lastClosedSessionAt: lastClosedAt,
+      // A new business day restarts the count; without a figure for it, 0.
+      billSequence: billSequence ?? (date != null && date != u.daySessionDate ? 0 : null),
     );
     emit(state.copyWith(user: next));
     await _storage.setUserJson(jsonEncode(next.toJson()));
@@ -505,7 +508,8 @@ class AuthCubit extends Cubit<AuthState> {
     if (u.daySessionStatus == live.status &&
         u.daySessionDate == live.date &&
         u.daySessionOpenedAt == live.openedAt &&
-        u.lastClosedSessionAt == live.lastClosedAt) {
+        u.lastClosedSessionAt == live.lastClosedAt &&
+        u.billSequence == live.billSequence) {
       return;
     }
     await syncDaySession(
@@ -513,6 +517,7 @@ class AuthCubit extends Cubit<AuthState> {
       openedAt: live.openedAt,
       date: live.date,
       lastClosedAt: live.lastClosedAt,
+      billSequence: live.billSequence,
     );
   }
 

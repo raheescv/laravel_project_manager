@@ -19,6 +19,9 @@ import 'package:invo/features/settings/logic/pos_settings_cubit/pos_settings_cub
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/features/stock_check/domain/repository/stock_check_repository.dart';
 import 'package:invo/features/stock_check/domain/services/stock_check_service.dart';
+import 'package:invo/features/token/domain/repository/token_repository.dart';
+import 'package:invo/features/token/domain/services/token_service.dart';
+import 'package:invo/features/token/logic/token_cubit/token_cubit.dart';
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
@@ -61,6 +64,7 @@ class TestHarness {
   late BranchCubit branch;
   late PrintSettingsCubit printSettings;
   late PosSettingsCubit posSettings;
+  late TokenCubit token;
 
   /// Register everything and seed a signed-in admin user.
   Future<void> init({bool admin = true}) async {
@@ -89,7 +93,8 @@ class TestHarness {
       // Not exercised by the layout tests, but resolved from the locator when
       // the profile / stock-check screens build.
       ..registerLazySingleton<ProfileRepository>(ProfileService.new)
-      ..registerLazySingleton<StockCheckRepository>(StockCheckService.new);
+      ..registerLazySingleton<StockCheckRepository>(StockCheckService.new)
+      ..registerLazySingleton<TokenRepository>(TokenService.new);
 
     authCubit = AuthCubit();
     authCubit.seedSession(ApiUser(
@@ -119,13 +124,15 @@ class TestHarness {
     branch = BranchCubit(userBranchId: 3);
     printSettings = PrintSettingsCubit();
     posSettings = PosSettingsCubit();
+    token = TokenCubit(serviceLocator());
     serviceLocator
       ..registerSingleton<ThemeCubit>(theme)
       ..registerSingleton<HapticsCubit>(haptics)
       ..registerSingleton<CurrencyCubit>(currency)
       ..registerSingleton<BranchCubit>(branch)
       ..registerSingleton<PrintSettingsCubit>(printSettings)
-      ..registerSingleton<PosSettingsCubit>(posSettings);
+      ..registerSingleton<PosSettingsCubit>(posSettings)
+      ..registerSingleton<TokenCubit>(token);
 
     cart = CartCubit();
   }
@@ -147,6 +154,7 @@ class TestHarness {
         BlocProvider<BranchCubit>.value(value: branch),
         BlocProvider<PrintSettingsCubit>.value(value: printSettings),
         BlocProvider<PosSettingsCubit>.value(value: posSettings),
+        BlocProvider<TokenCubit>.value(value: token),
         BlocProvider<CartCubit>.value(value: cart),
         BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         BlocProvider<CatalogCubit>(create: (_) => CatalogCubit()),

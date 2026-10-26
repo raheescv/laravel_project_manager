@@ -2,6 +2,7 @@
 
 use App\Livewire\Account\Page;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
@@ -48,4 +49,20 @@ it('forces the cheque flag off for non-asset accounts', function (): void {
         ->assertHasNoErrors();
 
     expect(Account::find($saleId)->is_cheque)->toBeFalse();
+});
+
+it('resets the account category after save & add new so the dropdown clears', function (): void {
+    $category = AccountCategory::factory()->create();
+
+    Livewire::test(Page::class)
+        ->call('create')
+        ->set('accounts.name', 'Petty Cash Drawer')
+        ->set('accounts.account_type', 'asset')
+        ->set('accounts.account_category_id', $category->id)
+        ->call('save', true)
+        ->assertHasNoErrors()
+        ->assertSet('accounts.account_category_id', null)
+        ->assertDispatched('SelectDropDownValues', fn (string $event, array $params): bool => empty($params[0]['account_category_id']));
+
+    expect(Account::where('name', 'Petty Cash Drawer')->value('account_category_id'))->toBe($category->id);
 });

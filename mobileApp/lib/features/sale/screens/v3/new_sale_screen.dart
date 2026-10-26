@@ -86,35 +86,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       cat.loadIfNeeded();
       // Warm the stylist list so the STAFF selector can show the assigned
       // staff's photo (e.g. when editing a sale) without opening the picker.
-      context.read<StylistCubit>().loadIfNeeded();
+      final stylistsReady = context.read<StylistCubit>().loadIfNeeded();
       // Default stylist = logged-in user.
       final user = context.read<AuthCubit>().user;
       final cart = context.read<CartCubit>();
       // Pull the latest sale settings (Settings → Sale Configuration) so the
       // default quantity, tip availability and default Product/Service filter
       // reflect the current web setting; then preselect that type on the catalog.
+      final logoBefore = serviceLocator<LocalStorageService>().companyLogoUrl;
       cart.syncSaleSettings().then((_) {
-        if (mounted) cat.applyDefaultType();
+        if (!mounted) return;
+        cat.applyDefaultType();
+        // A product order changed on the web refetches in the new order.
+        cat.loadIfNeeded();
+        // A first sync (or a new upload on the web) brings the logo that
+        // photo-less tiles wear — repaint so they pick it up now.
+        if (serviceLocator<LocalStorageService>().companyLogoUrl != logoBefore) setState(() {});
       });
-      // Preselect the staff: the last employee used on a ticket (remembered
-      // across sales) wins; otherwise default to the logged-in user. Skipped
-      // while editing, where the ticket already carries its own stylist.
-      // Without the change-employee permission (StylistCubit.canChoose) the
-      // staff is always the signed-in user — a colleague remembered on this
-      // device, or left on the ticket by whoever used a shared till last, must
+      // Preselect the staff (skipped while editing, where the ticket already
+      // carries its own stylist). Without the change-employee permission
+      // (StylistCubit.canChoose) the staff is always the signed-in user — a
+      // colleague left on the ticket by whoever used a shared till last must
       // not carry over.
       final selfOnly = !context.read<StylistCubit>().canChoose;
       final notSelf = user != null && cart.stylistId != int.tryParse(user.id);
       final editing = cart.isEditing || cart.state.isEditingPending;
       if (cart.stylistName.isEmpty || (selfOnly && !editing && notSelf)) {
-        final storage = serviceLocator<LocalStorageService>();
-        final savedId = storage.saleStylistId;
-        final savedName = storage.saleStylistName;
-        if (!selfOnly && savedId != null && savedName != null && savedName.isNotEmpty) {
-          cart.setStylist(savedId, savedName);
-        } else if (user != null) {
-          cart.setStylist(int.tryParse(user.id), user.name);
-        }
+        _preselectStylist(user, selfOnly: selfOnly, stylistsReady: stylistsReady);
       }
       // Prompt for the client up front so the ticket starts with who's in the
       // chair. Only on a fresh ticket (still the default Walk-in, no items), and
@@ -949,6 +947,31 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
         ),
       ),
     );
+  }
+
+  /// Fresh-ticket staff: the signed-in user when they are on the staff list;
+  /// otherwise the last employee picked on this device; otherwise the
+  /// signed-in user anyway. The user goes on at once so the selector never
+  /// shows blank, then is swapped for the remembered employee only once the
+  /// loaded staff list proves the user isn't assignable staff.
+  Future<void> _preselectStylist(ApiUser? user,
+      {required bool selfOnly, required Future<void> stylistsReady}) async {
+    final cart = context.read<CartCubit>();
+    final stylists = context.read<StylistCubit>();
+    final selfId = user == null ? null : int.tryParse(user.id);
+    if (user != null) cart.setStylist(selfId, user.name);
+    if (selfOnly) return;
+    if (user != null) {
+      await stylistsReady;
+      if (!mounted || !stylists.state.loaded || cart.stylistId != selfId) return;
+      if (stylists.byId(selfId) != null) return;
+    }
+    final storage = serviceLocator<LocalStorageService>();
+    final savedId = storage.saleStylistId;
+    final savedName = storage.saleStylistName;
+    if (savedId != null && savedName != null && savedName.isNotEmpty) {
+      cart.setStylist(savedId, savedName);
+    }
   }
 
   Future<void> _pickStylist() async {

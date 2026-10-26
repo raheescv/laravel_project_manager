@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/services/catalog_snapshot_service.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 
 import 'support/offline_harness.dart';
 
@@ -80,6 +82,32 @@ void main() {
     // A stale row from the previous catalog would still be sellable at a price
     // the shop no longer charges.
     expect(page.total, 1);
+  });
+
+  test('pages in the configured product order, as the live catalog does', () async {
+    await snapshot.replace(
+      branchId: branch,
+      products: [
+        product(id: 1, name: 'Mid', priority: 5),
+        product(id: 2, name: 'Top', priority: 9),
+        product(id: 3, name: 'Low', priority: 1),
+        product(id: 4, name: 'Also Mid', priority: 5),
+      ],
+      categoriesByType: const {},
+    );
+    final storage = serviceLocator<LocalStorageService>();
+    Future<List<int>> ids() async => (await snapshot.products(branchId: branch)).items.map((p) => p.id).toList();
+
+    // Default: lowest priority number first, ties by name.
+    expect(await ids(), [3, 4, 1, 2]);
+    // Each item carries its priority for the tile's tag.
+    expect((await snapshot.products(branchId: branch)).items.map((p) => p.priority), [1, 5, 5, 9]);
+
+    await storage.setProductSort(const ProductSort(direction: ProductSort.desc));
+    expect(await ids(), [2, 4, 1, 3]);
+
+    await storage.setProductSort(const ProductSort(by: ProductSort.byName, direction: ProductSort.desc));
+    expect(await ids(), [2, 1, 3, 4]);
   });
 
   test('one branch snapshot never leaks into another', () async {

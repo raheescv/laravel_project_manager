@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
+import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
@@ -16,6 +17,7 @@ import 'package:invo/features/admin/widgets/report_sort_sheet.dart';
 import 'package:invo/features/admin/widgets/report_picker_sheet.dart';
 import 'package:invo/features/admin/widgets/report_staff_sheet.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/charts.dart';
 import 'package:invo/shared/widgets/you_badge.dart';
@@ -37,7 +39,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
   /// payments, per-day trend), 1 = Breakdown (By Item / By Category / By Staff
   /// ranking, and the Commission lines).
   /// The date range is shared, so it stays on top of both.
-  int _tab = 0;
+  /// Opens on the tab this user last left it on (saved per user, on device).
+  late int _tab = _savedTab;
+
+  /// The keys the two reports are saved under, by index.
+  static const _tabKeys = ['overview', 'breakdown'];
+
+  /// Breakdown rankings a saved choice may restore — anything else (an older
+  /// build's key) leaves the cubit's default.
+  static const _breakdownTypes = {'itemwise', 'categorywise', 'employeewise', 'commission'};
+
+  LocalStorageService get _storage => serviceLocator<LocalStorageService>();
+  String? get _userId => context.read<AuthCubit>().user?.id;
+
+  int get _savedTab => _tabKeys.indexOf(_storage.reportsTabFor(_userId) ?? '').clamp(0, 1);
+
+  String? get _savedBreakdown {
+    final saved = _storage.reportsBreakdownFor(_userId);
+    return _breakdownTypes.contains(saved) ? saved : null;
+  }
 
   @override
   void initState() {
@@ -48,7 +68,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminCubit>()
-        ..loadReports(force: true)
+        ..loadReports(type: _savedBreakdown, force: true)
         ..loadOverview();
     });
     // The shell keeps this screen alive, so reload the current range for the
@@ -75,6 +95,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (_tab == i) return;
     setState(() => _tab = i);
     if (_scrollCtl.hasClients) _scrollCtl.jumpTo(0);
+    unawaited(_storage.setReportsTabFor(_userId, _tabKeys[i]));
+  }
+
+  /// Switch the Breakdown ranking, remembered for this user's next visit.
+  void _setBreakdown(AdminCubit admin, String type) {
+    admin.setReportType(type);
+    unawaited(_storage.setReportsBreakdownFor(_userId, type));
   }
 
   /// Infinite scroll: pull the next page of the breakdown once near the bottom.
@@ -870,7 +897,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       onTap: () {
         if (admin.reportType == type) return;
         HapticFeedback.selectionClick();
-        admin.setReportType(type);
+        _setBreakdown(admin, type);
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(

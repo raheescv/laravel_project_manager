@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 
 import '../../utils/local_storage/image_store.dart';
+import '../../utils/local_storage/local_storage_service.dart';
 import '../../utils/local_storage/offline_db.dart';
+import '../constants/global_variables.dart';
 import '../helpers/formatters.dart';
 import '../models/index.dart';
 import '../repository/catalog_snapshot_repository.dart';
@@ -135,7 +137,7 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
       columns: ['payload', 'total_stock'],
       where: where.toString(),
       whereArgs: args,
-      orderBy: 'priority DESC, name COLLATE NOCASE ASC',
+      orderBy: serviceLocator<LocalStorageService>().productSort.sqlOrderBy,
       limit: perPage,
       offset: (page - 1) * perPage,
     );
@@ -216,7 +218,7 @@ class CatalogSnapshotService implements CatalogSnapshotRepository {
       whereArgs: [branchId],
       // The same ordering `products()` pages in, so a budget that runs out
       // leaves the tail of the catalog without photos rather than the middle.
-      orderBy: 'priority DESC, name COLLATE NOCASE ASC',
+      orderBy: serviceLocator<LocalStorageService>().productSort.sqlOrderBy,
     );
     return [
       ...catRows.map((r) => asStr(r['image_url'])),

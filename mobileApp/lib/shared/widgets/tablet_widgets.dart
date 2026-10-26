@@ -212,7 +212,10 @@ class TabletPageHead extends StatelessWidget {
       child: Row(
         children: [
           if (leading != null) ...[leading!, const SizedBox(width: 12)],
-          Flexible(
+          // Expanded (not Flexible) so the title block owns the slack and the
+          // actions stay pinned right — a subtitle that changes length (e.g.
+          // "lines sold" ↔ "invoices found") would otherwise shove them sideways.
+          Expanded(
             flex: 4,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,11 +236,14 @@ class TabletPageHead extends StatelessWidget {
             const SizedBox(width: 12),
             Flexible(
               flex: 6,
-              child: Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 8,
-                runSpacing: 8,
-                children: actions,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: actions,
+                ),
               ),
             ),
           ],
@@ -260,6 +266,7 @@ class TabletDetailHead extends StatelessWidget {
     this.subtitle,
     this.badge,
     this.leading,
+    this.trailing,
     this.actions = const [],
   });
 
@@ -271,6 +278,10 @@ class TabletDetailHead extends StatelessWidget {
 
   /// Back affordance when the detail is a pushed route rather than a pane.
   final Widget? leading;
+
+  /// Pinned to the head's top-right corner, apart from [actions] — the pane's
+  /// close button, so it never drops into the action row on narrow widths.
+  final Widget? trailing;
   final List<Widget> actions;
 
   @override
@@ -310,16 +321,23 @@ class TabletDetailHead extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [leading!, const SizedBox(width: 12), Expanded(child: body)],
           );
-    if (actions.isEmpty) return head;
+    if (actions.isEmpty && trailing == null) return head;
     return LayoutBuilder(
       builder: (ctx, c) {
         if (c.maxWidth < 520) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              head,
-              const SizedBox(height: 14),
-              Wrap(spacing: 9, runSpacing: 9, children: actions),
+              trailing == null
+                  ? head
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [Expanded(child: head), const SizedBox(width: 12), trailing!],
+                    ),
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Wrap(spacing: 9, runSpacing: 9, children: actions),
+              ],
             ],
           );
         }
@@ -327,8 +345,11 @@ class TabletDetailHead extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: head),
-            const SizedBox(width: 14),
-            Wrap(alignment: WrapAlignment.end, spacing: 9, runSpacing: 9, children: actions),
+            if (actions.isNotEmpty) ...[
+              const SizedBox(width: 14),
+              Wrap(alignment: WrapAlignment.end, spacing: 9, runSpacing: 9, children: actions),
+            ],
+            if (trailing != null) ...[const SizedBox(width: 12), trailing!],
           ],
         );
       },

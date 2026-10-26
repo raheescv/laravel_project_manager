@@ -85,6 +85,14 @@ it('lists by name when the order is set to name', function (): void {
     expect($names)->toBe(['Mango', 'Cherry', 'Banana']);
 });
 
+it('sends each item its priority for the card badge', function (): void {
+    ($this->addProduct)('Banana', 5);
+
+    $rows = collect($this->getJson($this->world->url('products'))->assertOk()->json())->keyBy('name');
+
+    expect($rows['Banana']['priority'])->toBe(5);
+});
+
 it('orders services by priority too', function (): void {
     Configuration::updateOrCreate(['key' => 'app_product_sort_direction'], ['value' => 'desc']);
     ($this->addProduct)('Haircut', 1, 'service');

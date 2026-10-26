@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/domain/repository/catalog_snapshot_repository.dart';
 import 'package:invo/shared/logic/branch_cubit/branch_cubit.dart';
@@ -10,6 +11,7 @@ import 'package:invo/shared/utils/router/http_utils/reachability.dart';
 
 import '../repository/outbox_repository.dart';
 import '../repository/sale_repository.dart';
+import 'staff_bill_counter.dart';
 
 /// Wraps the live [SaleRepository] so a sale survives a dead network.
 ///
@@ -34,6 +36,25 @@ class OfflineFirstSaleService implements SaleRepository {
   @override
   Future<Sale> createSale(Map<String, dynamic> payload, {Map<String, dynamic>? offlineSale}) async {
     final clientUuid = payload['clientUuid'] as String?;
+    final user = _resolve<AuthCubit>()?.user;
+
+    // The biller's Office Bill number, claimed by every completed sale — see
+    // [StaffBillCounter]. Worked out afresh on each press, and only recorded once
+    // the sale is captured or confirmed, so a retried charge claims the same one.
+    // A draft has none: the server numbers it when it is completed.
+    final claim = asStr(payload['status']) == 'draft' ? null : _resolve<StaffBillCounter>()?.nextFor(user);
+    final posted = claim == null
+        ? payload
+        : {...payload, 'staffBillSequence': claim.sequence, 'staffBillDate': claim.date};
+    // The receipt prints the claimed number, filed under the day it counts on.
+    final receipt = claim == null || offlineSale == null
+        ? offlineSale
+        : {
+            ...offlineSale,
+            'bill_no': StaffBillCounter.billNo(user!, claim.sequence),
+            'staff_bill_sequence': claim.sequence,
+            'date': claim.date,
+          };
 
     // Don't make the cashier wait out a timeout the app already knows the answer
     // to. `connectTimeout` is 20s, and a charge that has to expire it before the
@@ -42,19 +63,25 @@ class OfflineFirstSaleService implements SaleRepository {
     //
     // Only taken when offline capture is actually possible, so a draft or an edit
     // still gets the real attempt and the real error.
-    if (offlineSale != null && clientUuid != null && _knownUnreachable()) {
-      return _capture(clientUuid: clientUuid, payload: payload, offlineSale: offlineSale);
+    if (receipt != null && clientUuid != null && _knownUnreachable()) {
+      return _capture(clientUuid: clientUuid, payload: posted, offlineSale: receipt);
     }
 
+    final Sale saved;
     try {
-      return await _online.createSale(payload);
+      saved = await _online.createSale(posted);
     } catch (e) {
       // No key or no receipt-ready snapshot means the caller never opted into
       // offline capture (a draft, or an edit). Those stay online-only.
-      if (offlineSale == null || clientUuid == null || !isServerUnreachable(e)) rethrow;
+      if (receipt == null || clientUuid == null || !isServerUnreachable(e)) rethrow;
 
-      return _capture(clientUuid: clientUuid, payload: payload, offlineSale: offlineSale);
+      return _capture(clientUuid: clientUuid, payload: posted, offlineSale: receipt);
     }
+    // Whatever number the server settled on is where this biller's count stands.
+    if (user != null) {
+      await _resolve<StaffBillCounter>()?.record(user.id, saved.date, saved.staffBillSequence);
+    }
+    return saved;
   }
 
   /// Whether the app already knows a request cannot land.
@@ -111,12 +138,19 @@ class OfflineFirstSaleService implements SaleRepository {
       if (branchId != null && !queued.isDraft) {
         await _snapshot.reduceStock(branchId: branchId, soldByProductId: queued.soldQuantities);
       }
+      // The Office Bill number is on paper now, so the biller's count moves past
+      // it. Read off the row: a repeat press returns the row first captured.
+      await _resolve<StaffBillCounter>()?.record(
+        queued.userId,
+        asStr(queued.payload['staffBillDate']),
+        asNum(queued.payload['staffBillSequence']).toInt(),
+      );
       // The provisional reference is only known once the row is written, so
       // the returned sale carries it in place of the invoice number. It is also
       // set as the offline reference, so this sale reads the same way before and
       // after syncing: the number on the customer's receipt is always there.
       return Sale.fromJson({
-        ...offlineSale,
+        ...queued.saleJson,
         'invoice_no': queued.provisionalRef,
         'reference_no': queued.provisionalRef,
       });

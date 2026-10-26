@@ -100,8 +100,13 @@ class CatalogCubit extends Cubit<CatalogState> {
     unawaited(load());
   }
 
+  /// The catalog order the products on screen were fetched in. A change from
+  /// Settings (here or on the web, picked up by the sale-settings sync) makes
+  /// the next [loadIfNeeded] refetch instead of keeping the old order.
+  ProductSort? _loadedSort;
+
   Future<void> loadIfNeeded() async {
-    if (state.loaded) return;
+    if (state.loaded && _loadedSort == _storage.productSort) return;
     await load();
   }
 
@@ -110,6 +115,7 @@ class CatalogCubit extends Cubit<CatalogState> {
 
   Future<void> load() async {
     _initDefaultType();
+    _loadedSort = _storage.productSort;
     final req = ++_reqId;
     final needCategories = !_categoriesCached || _categoriesFor != state.selectedType;
     emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));

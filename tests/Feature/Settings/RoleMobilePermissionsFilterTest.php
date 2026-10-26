@@ -52,7 +52,7 @@ it('lists only the mobile app permissions under the Mobile App filter', function
     $component->set('platform', 'mobile');
     $listed = listedAbilities($component);
 
-    expect($listed)->toContain('sale.create', 'day session.create', 'sale.mobile change employee')
+    expect($listed)->toContain('sale.create', 'day session.create', 'sale.mobile change employee', 'sale.queue token')
         ->and($listed)->not->toContain('account.create')
         ->and(array_diff($listed, MobileAppPermissions::NAMES))->toBeEmpty();
 });

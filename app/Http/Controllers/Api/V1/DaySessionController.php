@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Actions\V1\DaySession\ReportAction;
 use App\Actions\V1\DaySession\ToggleStatusAction;
 use App\Http\Controllers\Controller;
@@ -74,14 +75,19 @@ class DaySessionController extends Controller
                 ->orderBy('closed_at', 'desc')
                 ->first();
 
+            $date = $isOpen ? $session->opened_at->format('Y-m-d') : now()->format('Y-m-d');
+
             return $this->sendSuccess([
                 'is_open' => $isOpen,
                 'status' => $isOpen ? 'open' : 'closed',
                 // Same shape as AuthUserResource's day-session block, so a
                 // client can refresh its cached user straight from this.
-                'date' => $isOpen ? $session->opened_at->format('Y-m-d') : now()->format('Y-m-d'),
+                'date' => $date,
                 'opened_at' => $session?->opened_at?->format('Y-m-d H:i:s'),
                 'last_closed_at' => $lastClosed?->closed_at?->format('Y-m-d H:i:s'),
+                // The signed-in biller's last Office Bill number that day, so a
+                // till about to sell counts on from the server's figure.
+                'staff_bill_sequence' => AssignStaffBillNoAction::lastSequence((int) $request->user()->id, $date),
                 // Opening/closing/expected float belongs to whoever runs the
                 // day, so the session block is permission-gated even though the
                 // status above it is not.

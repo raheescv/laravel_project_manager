@@ -26,9 +26,16 @@ class LocalStorageKeys {
   static const String roundOffEnabled = 'astra.roundOffEnabled';
   /// Whether the business runs the School module (student cards). From the web.
   static const String schoolEnabled = 'astra.schoolEnabled';
+  /// Company logo URL, shown on catalog tiles without a photo. From the web.
+  static const String companyLogoUrl = 'astra.companyLogoUrl';
+  /// Checkout quick payment buttons, in order, as JSON. From the web.
+  static const String posPaymentButtons = 'astra.posPaymentButtons';
   /// Link Student Card catalog rendering preference — 'grid' or 'list'.
   static const String studentCardView = 'astra.studentCardView';
   static const String defaultProductType = 'astra.defaultProductType';
+  /// New Sale catalog order — 'name' | 'priority' and 'asc' | 'desc'. From the web.
+  static const String productSortBy = 'astra.productSortBy';
+  static const String productSortDirection = 'astra.productSortDirection';
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
 
@@ -78,6 +85,24 @@ class LocalStorageKeys {
   /// phone keeps the dashboard, on the same build and the same account.
   static const String posStartScreen = 'astra.pos.startScreen';
 
+  /// Per-user prefixes: the stored key is `<prefix>.<tenant>.<userId>`, so two
+  /// cashiers sharing a till each keep their own answer. See
+  /// `LocalStorageService.userKey`.
+  /// Where this user lands after sign-in — a `StartScreen.key`. Falls back to
+  /// the device-wide [posStartScreen] until the user picks their own.
+  static const String userStartScreen = 'astra.user.startScreen';
+  /// The Reports tab this user last opened — 'overview' | 'breakdown'.
+  static const String userReportsTab = 'astra.user.reportsTab';
+  /// The Breakdown ranking this user last opened — an `AdminState.reportType`
+  /// ('itemwise' | 'categorywise' | 'employeewise' | 'commission').
+  static const String userReportsBreakdown = 'astra.user.reportsBreakdown';
+  /// The Sales list tab and sorts this user last picked, as JSON. Filters and
+  /// the date range are NOT kept: the list always opens on today, unfiltered.
+  static const String userSalesList = 'astra.user.salesList';
+  /// How far this user's Office Bill count has got on this till, as
+  /// `yyyy-MM-dd:n`. See `StaffBillCounter`.
+  static const String userStaffBill = 'astra.user.staffBill';
+
   /// Whether closing the day also prints its Sale Bill Report on the thermal
   /// roll. Device-local: the close sheet remembers the last answer on this till.
   static const String daySessionPrintOnClose = 'astra.daySession.printOnClose';
@@ -90,6 +115,10 @@ class LocalStorageKeys {
   /// because it is a storage and data-plan decision, and a tablet on shop wifi
   /// and a phone on a metered SIM should be free to answer it differently.
   static const String offlineCachePhotos = 'astra.offline.cachePhotos';
+  /// Office Bills the server renumbered on sync, as JSON, until someone has
+  /// reprinted or dismissed them. Device-wide: whoever is at the till hands the
+  /// biller the new slip.
+  static const String offlineRenumberedBills = 'astra.offline.renumberedBills';
 
   /// Roster of users who have signed in on this device, so an offline till can
   /// authenticate a cashier who has used it before. SECURE storage only.
@@ -109,6 +138,7 @@ class LocalStorageKeys {
   static const String printLogoData = 'astra.print.logoData';
   static const String printShowCompany = 'astra.print.showCompany';
   static const String printCompanyName = 'astra.print.companyName';
+  static const String printNotes = 'astra.print.notes';
 
   // Auto-print — device-local (every till is paired with its own printer, so
   // these never sync to the shared web Sale Configuration).
@@ -117,4 +147,9 @@ class LocalStorageKeys {
   static const String printerUrl = 'astra.print.printerUrl';
   static const String printerName = 'astra.print.printerName';
   static const String printSkipInvoice = 'astra.print.skipInvoice';
+
+  // Queue tokens — device-local. Settings are device-wide; the ledger key is
+  // suffixed with `.<tenant>.<branch>` so each branch counts on its own.
+  static const String tokenSettings = 'astra.token.settings';
+  static const String tokenLedger = 'astra.token.ledger';
 }

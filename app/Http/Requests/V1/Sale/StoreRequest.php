@@ -85,6 +85,12 @@ class StoreRequest extends FormRequest
             // the live `branch_id` has moved on by the time it drains. Honoured
             // only when that cashier is assigned to it — see User::operatingBranchId.
             'clientBranchId' => ['nullable', 'integer'],
+            // The biller's `{code}/{n}` the till counted for this sale, and the
+            // business date it counted it on. An offline till prints it on the
+            // Office Bill staff keep to tally their day, so the server keeps it
+            // whenever it is still free — see AssignStaffBillNoAction::honouring.
+            'staffBillSequence' => ['nullable', 'integer', 'min:1'],
+            'staffBillDate' => ['nullable', 'required_with:staffBillSequence', 'date_format:Y-m-d'],
         ];
     }
 

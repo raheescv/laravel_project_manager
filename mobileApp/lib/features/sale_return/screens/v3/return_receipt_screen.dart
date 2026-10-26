@@ -157,6 +157,9 @@ class ReturnReceiptScreen extends StatelessWidget {
                         ? null
                         : TabletIconButton(
                             icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
+                    trailing: embedded
+                        ? TabletIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: onClose)
+                        : null,
                     actions: [
                       if (_editable && canEdit)
                         TabletActionButton(label: 'Edit', icon: Icons.edit_outlined, onTap: () => _edit(context)),
@@ -166,8 +169,6 @@ class ReturnReceiptScreen extends StatelessWidget {
                             icon: Icons.assignment_return_outlined,
                             primary: true,
                             onTap: () => context.go(Routes.saleReturnPick)),
-                      if (embedded)
-                        TabletIconButton(icon: Icons.close_rounded, tooltip: 'Close', onTap: onClose),
                     ],
                   ),
                   const SizedBox(height: 22),

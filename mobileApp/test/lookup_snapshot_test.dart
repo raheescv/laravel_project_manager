@@ -237,15 +237,18 @@ class _StubLookup implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, RemotePrintConfig? print})>
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})>
       saleSettings() async =>
-          (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, print: null);
+          (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, logoUrl: null, productSort: null, paymentButtons: null, print: null);
 
   @override
   Future<Uint8List> logo() => throw UnimplementedError();
 
   @override
   Future<RemotePrintConfig?> savePrintSettings(Map<String, dynamic> body) async => null;
+
+  @override
+  Future<ProductSort?> saveProductSort(ProductSort sort) async => sort;
 
   @override
   Future<Paginated<Customer>> customersPage({int page = 1, int perPage = 100, String? search}) async =>

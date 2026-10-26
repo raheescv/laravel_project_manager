@@ -247,10 +247,14 @@ it('prints the quantity, not a stale weight, when quantities print as qty', func
     expect($html)->toContain('RS 99.00')->toContain('Qty 1')->not->toContain('4.250 g');
 });
 
-it('prints the weight and the Settings currency on a standard sticker', function (): void {
+it('prints the weight, the Settings currency and physical alignment on a standard sticker', function (): void {
     ($this->printWeights)();
     ($this->useCurrency)('AED', 'د.إ');
-    $settings = BarcodeTemplateConfiguration::normalizeSettings(['qty' => ['visible' => true]], 'standard');
+    $settings = BarcodeTemplateConfiguration::normalizeSettings([
+        'qty' => ['visible' => true],
+        'price' => ['align' => 'left'],
+        'price_arabic' => ['align' => 'right'],
+    ], 'standard');
 
     $html = view('inventory.barcode-cart-print', [
         'settings' => $settings,
@@ -262,7 +266,10 @@ it('prints the weight and the Settings currency on a standard sticker', function
     ])->render();
 
     expect($html)->toContain('77.00')->toContain('Wt 2.500 g')
-        ->toContain('content: "AED "')->toContain('content: "د.إ "')->not->toContain('"QR ');
+        ->toContain('content: "AED";')->toContain('content: "د.إ";')->not->toContain('"QR')
+        ->and(substr_count($html, 'margin-inline-end: 0.3em;'))->toBe(2)
+        ->and($html)->toContain('justify-content: right')->toContain('justify-content: left')
+        ->not->toContain('justify-content: flex-end')->not->toContain('justify-content: flex-start');
 });
 
 it('follows Quantity Label In Print for the qty caption', function (): void {
@@ -491,8 +498,7 @@ it('fills the unit price and tax of every row and works out each MRP', function 
     expect(collect($component->get('cartItems'))->pluck('price')->sort()->values()->all())->toEqual([210.0, 420.0]);
 });
 
-it('hides the MRP and Weight columns when the template prints neither', function (): void {
-    ($this->printWeights)();
+it('hides the MRP columns when the template prints no price', function (): void {
     BarcodeTemplateConfiguration::saveConfiguration([
         'default_template' => 'plain',
         'templates' => [
@@ -512,6 +518,45 @@ it('hides the MRP and Weight columns when the template prints neither', function
         ->assertDontSee('Fill all rows')
         ->call('printBarcodes')
         ->assertDispatched('label-print');
+});
+
+it('keeps the Weight column for the MRP when the template does not print the weight', function (): void {
+    ($this->printWeights)();
+    BarcodeTemplateConfiguration::saveConfiguration([
+        'default_template' => 'gold',
+        'templates' => [
+            'gold' => ['name' => 'Gold', 'type' => 'jewellery_tag', 'settings' => [
+                'type' => 'jewellery_tag',
+                'weight_calculation' => true,
+                'fields' => ['qty' => ['visible' => false]],
+            ]],
+        ],
+    ]);
+    $key = "inventory_{$this->inventoryId}";
+
+    expect(BarcodeTemplateConfiguration::resolveSettings('gold')['settings'])->not->toHaveKey('weight_calculation');
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('<th class="bcx-cart__num">Weight</th>')
+        ->assertSet("cartItems.{$key}.weight", 1.0)
+        ->set("cartItems.{$key}.unit_price", '1000')
+        ->set("cartItems.{$key}.weight", '2.5')
+        ->set("cartItems.{$key}.tax", '3');
+
+    expect($component->get("cartItems.{$key}.price"))->toBe(2575.0);
+
+    $component->call('printBarcodes')->assertDispatched('label-print');
+
+    $html = view('inventory.barcode-cart-print', [
+        'settings' => BarcodeTemplateConfiguration::resolveSettings('gold')['settings'],
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => session('print_cart_items'),
+    ])->render();
+
+    expect($html)->toContain('RS 2,575.00')->not->toContain('Wt 2.500 g');
 });
 
 it('renders the console with weight and MRP columns in weight mode', function (): void {

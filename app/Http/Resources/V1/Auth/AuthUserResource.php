@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\V1\Auth;
 
+use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Models\Branch;
 use App\Models\SaleDaySession;
 use App\Models\User;
@@ -66,6 +67,9 @@ class AuthUserResource extends JsonResource
             'sale_day_session_status' => $openingSession ? 'open' : 'closed',
             'sale_day_session_opened_at' => $openingSession?->opened_at?->format('Y-m-d H:i:s'),
             'last_closed_session_at' => $lastClosedSession?->closed_at?->format('Y-m-d H:i:s'),
+            // This user's last Office Bill number on that business day — where an
+            // offline till counts on from.
+            'staff_bill_sequence' => AssignStaffBillNoAction::lastSequence((int) $this->id, $date),
         ];
     }
 }

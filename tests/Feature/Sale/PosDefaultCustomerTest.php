@@ -37,8 +37,8 @@ it('preselects the current tenant\'s general customer', function (): void {
 it('defaults payment to the current tenant\'s cash account', function (): void {
     $props = posPageProps();
 
-    expect($props['cashPaymentMethodId'])->toBe($this->world->accounts['cash'])
-        ->and($props['cardPaymentMethodId'])->toBe($this->world->accounts['card'])
+    expect($props['defaultPaymentMethodId'])->toBe($this->world->accounts['cash'])
+        ->and(array_column($props['posPaymentButtons'], 'id'))->toBe([$this->world->accounts['cash'], $this->world->accounts['card']])
         ->and($props['saleData']['payment_method'])->toBe($this->world->accounts['cash']);
 });
 

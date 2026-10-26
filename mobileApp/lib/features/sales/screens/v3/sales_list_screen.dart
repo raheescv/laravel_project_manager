@@ -19,6 +19,7 @@ import 'package:invo/shared/logic/paginated_list_cubit/paginated_list_cubit.dart
 import 'package:invo/features/sales/logic/sales_cubit/sales_cubit.dart';
 import 'package:invo/shared/utils/components/app_strings.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
+import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
@@ -138,6 +139,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final now = DateTime.now();
     _startDate = DateTime(now.year, now.month, now.day);
     _endDate = _startDate;
+    _restoreChoices();
     _scrollCtl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
@@ -165,6 +167,35 @@ class _SalesListScreenState extends State<SalesListScreen> {
     unawaited(_itemList.close());
     super.dispose();
   }
+
+  LocalStorageService get _storage => serviceLocator<LocalStorageService>();
+  String? get _userId => context.read<AuthCubit>().user?.id;
+
+  /// Reopen on the tab and the sorts this user last picked on this device.
+  /// Filters and the date range are not kept — the list always opens on today,
+  /// unfiltered. A sort an older build saved falls back to the default.
+  void _restoreChoices() {
+    final saved = _storage.salesListFor(_userId);
+    if (saved.isEmpty) return;
+    if (saved['tab'] == 'items') _tab = 'items';
+    bool known(List<_SortOption> options, Object? by, Object? dir) => options.any((o) => o.by == by && o.dir == dir);
+    if (known(_sortOptions, saved['sort_by'], saved['sort_dir'])) {
+      _sortBy = saved['sort_by'] as String;
+      _sortDir = saved['sort_dir'] as String;
+    }
+    if (known(_itemSortOptions, saved['item_sort_by'], saved['item_sort_dir'])) {
+      _itemSortBy = saved['item_sort_by'] as String;
+      _itemSortDir = saved['item_sort_dir'] as String;
+    }
+  }
+
+  void _saveChoices() => unawaited(_storage.setSalesListFor(_userId, {
+        'tab': _tab,
+        'sort_by': _sortBy,
+        'sort_dir': _sortDir,
+        'item_sort_by': _itemSortBy,
+        'item_sort_dir': _itemSortDir,
+      }));
 
   /// Infinite scroll: pull the next page once the user nears the bottom.
   void _onScroll() {
@@ -231,6 +262,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
       _detailError = null;
       _detailLoading = false;
     });
+    _saveChoices();
     if (_scrollCtl.hasClients) _scrollCtl.jumpTo(0);
     if (_isItems ? _itemsStale : _invoicesStale) unawaited(_load());
   }
@@ -575,7 +607,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
               children: [
                 Text(d.product, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
                 const SizedBox(height: 3),
-                Text('${d.invoice} · ${d.customer}${d.date.isEmpty ? '' : ' · ${d.date}'}',
+                Text('${d.invoice} · ${d.customer}${d.employee.isEmpty ? '' : ' · ${d.employee}'}${d.date.isEmpty ? '' : ' · ${d.date}'}',
                     maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),
@@ -721,6 +753,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   /// small tablet in portrait, or the invoice drawer's share of the width).
   List<_Col> _invoiceColumns(double w) => [
         const _Col('invoice', 'Invoice', 3),
+        if (w >= 640) const _Col('billNo', 'Bill No', 2),
         const _Col('date', 'Date', 3),
         const _Col('customer', 'Customer', 4),
         if (_seesAllSales && w >= 700) const _Col('staff', 'Staff', 3),
@@ -733,7 +766,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
         const _Col('product', 'Product', 5),
         if (w >= 900) const _Col('code', 'Code', 2),
         const _Col('invoice', 'Invoice', 3),
+        if (w >= 980) const _Col('billNo', 'Bill No', 2),
         if (w >= 760) const _Col('customer', 'Customer', 3),
+        if (w >= 700) const _Col('employee', 'Employee', 3),
         const _Col('qty', 'Qty', 2, end: true),
         if (w >= 700) const _Col('price', 'Price', 3, end: true),
         if (w >= 820) const _Col('discount', 'Disc', 2, end: true),
@@ -780,6 +815,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
     final selected = !_isItems && _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
     Widget cell(String id) => switch (id) {
           'invoice' => _cellText(d.invoice, strong: true),
+          'billNo' => _cellText(d.billNo.isEmpty ? '—' : d.billNo),
           'date' => _cellText(d.date),
           'customer' => _cellText(d.who),
           'staff' => _cellText(d.staff.isEmpty ? '—' : d.staff),
@@ -808,7 +844,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
           'product' => _cellText(d.product, strong: true),
           'code' => _cellText(d.code.isEmpty ? '—' : d.code),
           'invoice' => _cellText(d.invoice),
+          'billNo' => _cellText(d.billNo.isEmpty ? '—' : d.billNo),
           'customer' => _cellText(d.customer),
+          'employee' => _cellText(d.employee.isEmpty ? '—' : d.employee),
           'qty' => _cellText(qtyLabel(d.qty), strong: true),
           'price' => _cellText(Money.of(d.price)),
           'discount' => _cellText(d.discount > 0 ? Money.of(d.discount) : '—', color: d.discount > 0 ? AstraPalette.danger : null),
@@ -962,6 +1000,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
   ({
     String invoice,
     String offlineRef,
+    String billNo,
     num amount,
     String who,
     String staff,
@@ -991,6 +1030,8 @@ class _SalesListScreenState extends State<SalesListScreen> {
     return (
       invoice: invoice,
       offlineRef: offlineRef == invoice ? '' : offlineRef,
+      // The biller's `{code}/{n}` counter from the Office Bill receipt.
+      billNo: asStr(r['bill_no']),
       amount: asNum(summary['paid'] ?? summary['gross_amount'] ?? r['paid'] ?? r['gross_amount'] ?? r['amount']),
       who: asStr(customer['name']).isEmpty ? AppStrings.walkInCustomer : asStr(customer['name']),
       // Who rang it up. `SaleListResource` sends the name, and a held row carries
@@ -1012,7 +1053,9 @@ class _SalesListScreenState extends State<SalesListScreen> {
     String product,
     String code,
     String invoice,
+    String billNo,
     String customer,
+    String employee,
     String date,
     num qty,
     num price,
@@ -1027,7 +1070,10 @@ class _SalesListScreenState extends State<SalesListScreen> {
       product: asStr(product['name']).isEmpty ? 'Item' : asStr(product['name']),
       code: asStr(product['code']),
       invoice: asStr(r['invoice_no']).isEmpty ? '#$saleId' : asStr(r['invoice_no']),
+      billNo: asStr(r['bill_no']),
       customer: asStr(r['customer']).isEmpty ? AppStrings.walkInCustomer : asStr(r['customer']),
+      // The employee on the line (the stylist who did the service), not the cashier.
+      employee: asStr(r['employee']),
       date: Dates.human(asStr(r['date'])),
       qty: asNum(r['quantity']),
       price: asNum(r['unit_price']),
@@ -1220,6 +1266,7 @@ class _SalesListScreenState extends State<SalesListScreen> {
                 _sortDir = o.dir;
               }
             });
+            _saveChoices();
             _load();
           },
         ),
