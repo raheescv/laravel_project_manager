@@ -44,7 +44,7 @@ class ListAction
         $query->orderBy($sortBy, $sortDirection);
 
         if ($sortBy !== 'id') {
-            $query->orderBy('id', 'desc');
+            $query->orderBy('id', $sortBy === 'date' ? $sortDirection : 'desc');
         }
 
         // Totals across the whole filtered set (not just the current page), so the

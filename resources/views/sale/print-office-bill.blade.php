@@ -1,5 +1,6 @@
 @php
     $billNo = $sale->bill_no ?: $sale->invoice_no;
+    $heading = filled($company_name) ? $company_name : $sale->branch?->name;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -176,8 +177,8 @@
 
 <body onload="window.print();">
     <div class="brand">
-        @if (filled($company_name))
-            <div class="en">{{ $company_name }}</div>
+        @if (filled($heading))
+            <div class="en">{{ $heading }}</div>
         @endif
     </div>
 

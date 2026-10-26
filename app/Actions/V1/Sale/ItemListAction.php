@@ -45,7 +45,7 @@ class ItemListAction
                 'employee:id,name',
             ])
             ->orderBy($sortColumn, $filters['sort_direction'])
-            ->orderBy('sale_items.id', 'desc')
+            ->orderBy('sale_items.id', $sortColumn === 'sales.date' ? $filters['sort_direction'] : 'desc')
             ->paginate($filters['per_page']);
 
         return [
@@ -69,8 +69,7 @@ class ItemListAction
     }
 
     /**
-     * The sale lines the filters match — shared with EmployeeSummaryAction so
-     * the Employees tab totals exactly what the Items tab lists.
+     * The sale lines the filters match.
      *
      * @param  array<string, mixed>  $filters
      * @return Builder<SaleItem>

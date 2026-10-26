@@ -1,179 +1,128 @@
 @php
     $accountTypeMeta = [
-        'asset' => ['icon' => 'fa-cubes', 'accent' => '#10b981', 'hint' => 'What you own'],
-        'liability' => ['icon' => 'fa-credit-card', 'accent' => '#f59e0b', 'hint' => 'What you owe'],
-        'income' => ['icon' => 'fa-line-chart', 'accent' => '#0ea5e9', 'hint' => 'Money in'],
-        'expense' => ['icon' => 'fa-shopping-cart', 'accent' => '#ef4444', 'hint' => 'Money out'],
-        'equity' => ['icon' => 'fa-university', 'accent' => '#8b5cf6', 'hint' => 'Owner capital'],
+        'asset' => ['icon' => 'fa-cubes', 'accent' => '#10b981'],
+        'liability' => ['icon' => 'fa-credit-card', 'accent' => '#f59e0b'],
+        'income' => ['icon' => 'fa-line-chart', 'accent' => '#0ea5e9'],
+        'expense' => ['icon' => 'fa-shopping-cart', 'accent' => '#ef4444'],
+        'equity' => ['icon' => 'fa-university', 'accent' => '#8b5cf6'],
     ];
+    $accountTypeAccents = collect($accountTypeMeta)->map(fn ($meta) => $meta['accent'])->all();
 @endphp
-<div class="acctx" x-data="{ selectedType: $wire.entangle('accounts.account_type') }">
-    <div class="acctx-header">
-        <div class="acctx-header-left">
-            <span class="acctx-header-icon"><i class="fa fa-book"></i></span>
-            <div>
-                <h1 class="acctx-title">{{ $table_id ? 'Edit Account' : 'Create Account' }}</h1>
-                <p class="acctx-subtitle">{{ $table_id ? 'Update the chart-of-accounts entry' : 'Add a new entry to your chart of accounts' }}</p>
-            </div>
+<div class="acctx"
+    x-data="{ selectedType: $wire.entangle('accounts.account_type'), accents: @js($accountTypeAccents), labels: @js(accountTypes()) }"
+    :style="'--acctx-sel: ' + (accents[selectedType] ?? 'var(--bs-primary)')">
+    <div class="acctx-head">
+        <div>
+            <h3 class="acctx-title">{{ $table_id ? 'Edit Account' : 'Create Account' }}</h3>
+            <div class="acctx-crumb">Chart of accounts</div>
         </div>
+        <span class="acctx-pill" x-show="selectedType" x-text="labels[selectedType] ?? ''" x-cloak></span>
         <button type="button" class="acctx-close" data-bs-dismiss="modal" aria-label="Close"><i class="fa fa-times"></i></button>
     </div>
 
     <form wire:submit="save">
-        <div class="acctx-body">
-            {{-- Error Messages --}}
+        <div class="acctx-rows">
             @if ($this->getErrorBag()->count())
                 <div class="acctx-alert" role="alert">
-                    <i class="fa fa-exclamation-circle acctx-alert-icon"></i>
-                    <div class="flex-grow-1">
-                        <strong class="acctx-alert-title">Please fix the following errors</strong>
-                        <ul class="acctx-alert-list">
-                            @foreach ($this->getErrorBag()->toArray() as $value)
-                                <li>{{ $value[0] }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    <button type="button" class="acctx-alert-close" data-bs-dismiss="alert" aria-label="Close"><i class="fa fa-times"></i></button>
-                </div>
-            @endif
-
-            {{-- Account Type — premium radio cards --}}
-            @if (!$type_selection_freeze)
-                <div class="acctx-field">
-                    <label class="acctx-label">
-                        <i class="fa fa-tag"></i> Account Type <span class="acctx-req">*</span>
-                    </label>
-                    <div class="acctx-typegrid @error('accounts.account_type') is-invalid @enderror">
-                        @foreach (accountTypes() as $key => $label)
-                            @php $meta = $accountTypeMeta[$key] ?? ['icon' => 'fa-circle', 'accent' => 'var(--bs-primary)', 'hint' => '']; @endphp
-                            <label class="acctx-typecard" style="--acc: {{ $meta['accent'] }};">
-                                <input type="radio" class="acctx-typeradio" wire:model="accounts.account_type" value="{{ $key }}"
-                                    x-on:change="selectedType = $event.target.value; if (selectedType !== 'asset') { $wire.set('accounts.is_cheque', false) }">
-                                <span class="acctx-typeicon"><i class="fa {{ $meta['icon'] }}"></i></span>
-                                <span class="acctx-typebody">
-                                    <span class="acctx-typename">{{ $label }}</span>
-                                    <span class="acctx-typehint">{{ $meta['hint'] }}</span>
-                                </span>
-                                <i class="fa fa-check-circle acctx-typecheck"></i>
-                            </label>
+                    <i class="fa fa-exclamation-circle"></i>
+                    <ul>
+                        @foreach ($this->getErrorBag()->toArray() as $value)
+                            <li>{{ $value[0] }}</li>
                         @endforeach
-                    </div>
-                    @error('accounts.account_type')
-                        <div class="acctx-error"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
-                    @enderror
+                    </ul>
                 </div>
             @endif
 
-            {{-- Account Category --}}
-            <div class="acctx-field">
-                <label for="modal_account_category_id" class="acctx-label">
-                    <i class="fa fa-folder"></i> Account Category
-                </label>
-                <div class="acctx-inputwrap" wire:ignore>
-                    <span class="acctx-inputicon"><i class="fa fa-folder-open"></i></span>
-                    {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id acctx-input')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
-                </div>
-            </div>
-
-            <div class="acctx-grid2">
-                {{-- Name --}}
-                <div class="acctx-field">
-                    <label for="modal_account_name" class="acctx-label">
-                        <i class="fa fa-user"></i> Name <span class="acctx-req">*</span>
-                    </label>
-                    <div class="acctx-inputwrap @error('accounts.name') is-invalid @enderror">
-                        <span class="acctx-inputicon"><i class="fa fa-building"></i></span>
-                        {{ html()->input('name')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.name')->id('modal_account_name')->placeholder('Enter account name') }}
+            @if (!$type_selection_freeze)
+                <div class="acctx-row acctx-row--top">
+                    <label class="acctx-label">Type <span class="acctx-req">*</span></label>
+                    <div>
+                        <div class="acctx-types">
+                            @foreach (accountTypes() as $key => $label)
+                                @php $meta = $accountTypeMeta[$key] ?? ['icon' => 'fa-circle', 'accent' => 'var(--bs-primary)']; @endphp
+                                <label class="acctx-type" style="--acc: {{ $meta['accent'] }};">
+                                    <input type="radio" wire:model="accounts.account_type" value="{{ $key }}"
+                                        x-on:change="selectedType = $event.target.value; if (selectedType !== 'asset') { $wire.set('accounts.is_cheque', false) }">
+                                    <i class="fa {{ $meta['icon'] }}"></i> {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('accounts.account_type')
+                            <div class="acctx-error">{{ $message }}</div>
+                        @enderror
                     </div>
+                </div>
+            @endif
+
+            <div class="acctx-row">
+                <label for="modal_account_name" class="acctx-label">Name <span class="acctx-req">*</span></label>
+                <div>
+                    {{ html()->input('name')->value('')->class('acctx-input' . ($errors->has('accounts.name') ? ' is-invalid' : ''))->attribute('wire:model', 'accounts.name')->id('modal_account_name')->placeholder('Enter account name') }}
                     @error('accounts.name')
-                        <div class="acctx-error"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
+                        <div class="acctx-error">{{ $message }}</div>
                     @enderror
                 </div>
+            </div>
 
-                {{-- Alias Name --}}
-                <div class="acctx-field">
-                    <label for="modal_account_alias" class="acctx-label">
-                        <i class="fa fa-tag"></i> Alias Name
-                    </label>
-                    <div class="acctx-inputwrap">
-                        <span class="acctx-inputicon"><i class="fa fa-at"></i></span>
-                        {{ html()->input('alias_name')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.alias_name')->id('modal_account_alias')->placeholder('Enter alias name (optional)') }}
-                    </div>
+            <div class="acctx-row">
+                <label for="modal_account_alias" class="acctx-label">Alias</label>
+                <div>
+                    {{ html()->input('alias_name')->value('')->class('acctx-input' . ($errors->has('accounts.alias_name') ? ' is-invalid' : ''))->attribute('wire:model', 'accounts.alias_name')->id('modal_account_alias')->placeholder('Optional') }}
+                    @error('accounts.alias_name')
+                        <div class="acctx-error">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
-            {{-- Opening Balance --}}
-            <div class="acctx-panel">
-                <div class="acctx-panel-head">
-                    <i class="fa fa-exchange"></i>
-                    <span>Opening Balance</span>
+            <div class="acctx-row">
+                <label for="modal_account_category_id" class="acctx-label">Category</label>
+                <div class="acctx-select" wire:ignore>
+                    {{ html()->select('account_category_id', $accountCategories ?? [])->value(old('account_category_id', $accounts['account_category_id'] ?? ''))->class('select-account_category_id')->id('modal_account_category_id')->placeholder('Select account category')->attribute('wire:model.live', 'accounts.account_category_id') }}
                 </div>
-                <div class="acctx-grid2">
-                    <div class="acctx-field mb-0">
-                        <label for="opening_debit" class="acctx-label">
-                            <i class="fa fa-arrow-up text-success"></i> Opening Debit
-                        </label>
-                        <div class="acctx-inputwrap @error('accounts.opening_debit') is-invalid @enderror">
-                            <span class="acctx-inputicon"><i class="fa fa-money text-success"></i></span>
-                            {{ html()->input('opening_debit')->type('number')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.opening_debit')->placeholder('0.00')->id('opening_debit') }}
-                        </div>
-                        @error('accounts.opening_debit')
-                            <div class="acctx-error"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="acctx-field mb-0">
-                        <label for="opening_credit" class="acctx-label">
-                            <i class="fa fa-arrow-down text-danger"></i> Opening Credit
-                        </label>
-                        <div class="acctx-inputwrap @error('accounts.opening_credit') is-invalid @enderror">
-                            <span class="acctx-inputicon"><i class="fa fa-money text-danger"></i></span>
-                            {{ html()->input('opening_credit')->type('number')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.opening_credit')->placeholder('0.00')->id('opening_credit') }}
-                        </div>
-                        @error('accounts.opening_credit')
-                            <div class="acctx-error"><i class="fa fa-exclamation-circle"></i> {{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-                <p class="acctx-note"><i class="fa fa-info-circle"></i> Enter the initial balance when creating this account. Leave blank if not applicable.</p>
             </div>
 
-            {{-- Cheque Account — only relevant for Asset accounts --}}
-            <label class="acctx-cheque" for="account_is_cheque" x-show="selectedType === 'asset'" x-cloak>
-                <input class="acctx-cheque-input" type="checkbox" role="switch" id="account_is_cheque" wire:model="accounts.is_cheque">
-                <span class="acctx-cheque-icon"><i class="fa fa-pencil-square-o"></i></span>
-                <span class="acctx-cheque-body">
-                    <span class="acctx-cheque-title">
-                        Cheque Account
-                        <span class="acctx-cheque-badge acctx-cheque-badge--on"><i class="fa fa-check"></i> Enabled</span>
-                        <span class="acctx-cheque-badge acctx-cheque-badge--off">Off</span>
-                    </span>
-                    <span class="acctx-cheque-hint">Used as a payment method, this account asks for cheque details.</span>
-                    <span class="acctx-cheque-chips">
-                        <span class="acctx-cheque-chip"><i class="fa fa-university"></i> Bank name</span>
-                        <span class="acctx-cheque-chip"><i class="fa fa-barcode"></i> Cheque no</span>
-                    </span>
-                </span>
-                <span class="acctx-cheque-switch" aria-hidden="true"><span class="acctx-cheque-knob"></span></span>
-            </label>
+            <div class="acctx-row">
+                <label for="opening_debit" class="acctx-label">Opening balance</label>
+                <div>
+                    <div class="acctx-pair">
+                        <div class="acctx-amt acctx-amt--dr @error('accounts.opening_debit') is-invalid @enderror">
+                            <b>DR</b>
+                            {{ html()->input('opening_debit')->type('number')->value('')->attribute('step', 'any')->attribute('wire:model', 'accounts.opening_debit')->placeholder('0.00')->id('opening_debit') }}
+                        </div>
+                        <div class="acctx-amt acctx-amt--cr @error('accounts.opening_credit') is-invalid @enderror">
+                            <b>CR</b>
+                            {{ html()->input('opening_credit')->type('number')->value('')->attribute('step', 'any')->attribute('wire:model', 'accounts.opening_credit')->placeholder('0.00')->id('opening_credit') }}
+                        </div>
+                    </div>
+                    @error('accounts.opening_debit')
+                        <div class="acctx-error">{{ $message }}</div>
+                    @enderror
+                    @error('accounts.opening_credit')
+                        <div class="acctx-error">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
 
-            {{-- Description --}}
-            <div class="acctx-field mb-0">
-                <label for="modal_account_description" class="acctx-label">
-                    <i class="fa fa-align-left"></i> Description
+            <div class="acctx-row" x-show="selectedType === 'asset'" x-cloak>
+                <label for="account_is_cheque" class="acctx-label">Cheque Account</label>
+                <label class="acctx-toggle" for="account_is_cheque">
+                    <input type="checkbox" role="switch" id="account_is_cheque" wire:model="accounts.is_cheque">
+                    <span class="acctx-switch" aria-hidden="true"></span>
+                    <span class="acctx-toggle-hint">Ask for bank name &amp; cheque no. on payment</span>
                 </label>
-                <div class="acctx-inputwrap acctx-inputwrap--top">
-                    <span class="acctx-inputicon"><i class="fa fa-file-text"></i></span>
-                    {{ html()->textarea('description')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.description')->attribute('rows', '3')->id('modal_account_description')->placeholder('Enter account description (optional)') }}
-                </div>
+            </div>
+
+            <div class="acctx-row acctx-row--top">
+                <label for="modal_account_description" class="acctx-label">Description</label>
+                {{ html()->textarea('description')->value('')->class('acctx-input')->attribute('wire:model', 'accounts.description')->attribute('rows', '2')->id('modal_account_description')->placeholder('Optional') }}
             </div>
         </div>
 
-        <div class="acctx-footer">
-            <button type="button" class="acctx-btn acctx-btn--ghost" data-bs-dismiss="modal">
-                <i class="fa fa-times"></i> Close
-            </button>
-            <button type="button" wire:click="save(1)" class="acctx-btn acctx-btn--soft">
-                <i class="fa fa-plus-circle"></i> Save & Add New
+        <div class="acctx-foot">
+            <span class="acctx-help"><i class="fa fa-keyboard-o"></i> Enter to save</span>
+            <button type="button" class="acctx-btn acctx-btn--ghost" data-bs-dismiss="modal">Close</button>
+            <button type="button" wire:click="save(1)" class="acctx-btn acctx-btn--line">
+                <i class="fa fa-plus"></i> Save &amp; New
             </button>
             <button type="submit" class="acctx-btn acctx-btn--primary">
                 <span wire:loading.remove wire:target="save"><i class="fa fa-check"></i> Save</span>
@@ -181,7 +130,6 @@
             </button>
         </div>
     </form>
-
     @push('scripts')
         <script>
             $(document).ready(function() {
@@ -207,17 +155,21 @@
                 });
                 window.addEventListener('SelectDropDownValues', event => {
                     var data = event.detail[0];
-                    if (data && data.account_category_id) {
-                        @this.set('accounts.account_category_id', data.account_category_id);
-                        var accountCategoryTomSelectInstance = document.querySelector('#modal_account_category_id').tomselect;
-                        if (accountCategoryTomSelectInstance && data.account_category) {
-                            var preselectedData = {
-                                id: data.account_category_id,
-                                name: data.account_category['name'],
-                            };
-                            accountCategoryTomSelectInstance.addOption(preselectedData);
-                            accountCategoryTomSelectInstance.addItem(preselectedData.id);
+                    var accountCategoryTomSelectInstance = document.querySelector('#modal_account_category_id').tomselect;
+                    if (!data || !data.account_category_id) {
+                        if (accountCategoryTomSelectInstance) {
+                            accountCategoryTomSelectInstance.clear(true);
                         }
+                        return;
+                    }
+                    @this.set('accounts.account_category_id', data.account_category_id);
+                    if (accountCategoryTomSelectInstance && data.account_category) {
+                        var preselectedData = {
+                            id: data.account_category_id,
+                            name: data.account_category['name'],
+                        };
+                        accountCategoryTomSelectInstance.addOption(preselectedData);
+                        accountCategoryTomSelectInstance.addItem(preselectedData.id);
                     }
                 });
             });
@@ -225,233 +177,149 @@
     @endpush
 
     <style>
-            .acctx [x-cloak] { display: none !important; }
-            .acctx {
-                --acctx-radius: 10px;
-                --acctx-border: var(--bs-border-color, #e5e7eb);
-                --acctx-surface: var(--bs-body-bg, #fff);
-                --acctx-muted: var(--bs-secondary-color, #6b7280);
-                --acctx-field-bg: var(--bs-tertiary-bg, #f8f9fb);
-                color: var(--bs-body-color);
-            }
+        /* ════════════  Account form — "Compact Flow" (scoped under .acctx)  ════════════
+           Label-left rows like the Expense/Income ".exx" flow. Colour tracks the settings theme (--bs-primary);
+           the top rule + header pill pick up the selected account type's accent (--acctx-sel). */
+        .acctx [x-cloak] { display: none !important; }
+        .acctx {
+            --acctx-sel: var(--bs-primary);
+            --acctx-bg: var(--bs-body-bg, #fff);
+            --acctx-soft: var(--bs-tertiary-bg, #f5f7fa);
+            --acctx-line: var(--bs-border-color, #e6eaf0);
+            --acctx-ink: var(--bs-body-color, #111827);
+            --acctx-ink-2: var(--bs-secondary-color, #556274);
+            --acctx-mute: color-mix(in srgb, var(--acctx-ink-2) 70%, transparent);
+            --acctx-ring: color-mix(in srgb, var(--bs-primary) 16%, transparent);
+            --acctx-fz: 13px;
+            font-size: var(--acctx-fz);
+            color: var(--acctx-ink);
+            background: var(--acctx-bg);
+            border-top: 3px solid var(--acctx-sel);
+            border-radius: inherit;
+            transition: border-color .2s ease;
+        }
 
-            /* Header */
-            .acctx-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.75rem;
-                padding: 0.75rem 1rem;
-                border-bottom: 1px solid var(--acctx-border);
-                background:
-                    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--bs-primary) 10%, transparent) 0%, transparent 55%),
-                    var(--acctx-surface);
-            }
-            .acctx-header-left { display: flex; align-items: center; gap: 0.65rem; }
-            .acctx-header-icon {
-                width: 36px; height: 36px; flex: 0 0 36px;
-                display: inline-flex; align-items: center; justify-content: center;
-                border-radius: 9px; font-size: 1rem; color: #fff;
-                background: linear-gradient(135deg, var(--bs-primary), color-mix(in srgb, var(--bs-primary) 60%, #000));
-                box-shadow: 0 4px 12px color-mix(in srgb, var(--bs-primary) 32%, transparent);
-            }
-            .acctx-title { font-size: 1rem; font-weight: 700; margin: 0; line-height: 1.2; }
-            .acctx-subtitle { font-size: 0.72rem; color: var(--acctx-muted); margin: 1px 0 0; }
-            .acctx-close {
-                border: 1px solid var(--acctx-border); background: var(--acctx-surface);
-                width: 30px; height: 30px; border-radius: 8px; color: var(--acctx-muted);
-                display: inline-flex; align-items: center; justify-content: center;
-                transition: all .15s ease; cursor: pointer;
-            }
-            .acctx-close:hover { color: var(--bs-danger); border-color: var(--bs-danger); transform: rotate(90deg); }
+        .acctx-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--acctx-line); }
+        .acctx-title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.25; }
+        .acctx-crumb { font-size: 11.5px; color: var(--acctx-mute); }
+        .acctx-pill {
+            font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px;
+            color: var(--acctx-sel); background: color-mix(in srgb, var(--acctx-sel) 12%, transparent);
+        }
+        .acctx-close {
+            margin-inline-start: auto; border: 0; background: transparent; color: var(--acctx-mute);
+            padding: 4px 7px; border-radius: 6px; cursor: pointer;
+        }
+        .acctx-close:hover { color: var(--acctx-ink); background: var(--acctx-soft); }
 
-            /* Body */
-            .acctx-body { padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-height: 72vh; overflow-y: auto; }
-            .acctx-field { display: flex; flex-direction: column; }
-            .acctx-field.mb-0 { margin-bottom: 0; }
-            .acctx-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-            @media (max-width: 640px) { .acctx-grid2 { grid-template-columns: 1fr; } }
+        .acctx-rows { padding: 6px 0; max-height: 72vh; overflow-y: auto; }
+        .acctx-row { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 12px; padding: 8px 18px; }
+        .acctx-row + .acctx-row { border-top: 1px solid color-mix(in srgb, var(--acctx-line) 60%, transparent); }
+        .acctx-row--top { align-items: start; }
+        .acctx-row--top > .acctx-label { padding-top: 8px; }
+        .acctx-label { margin: 0; font-size: 12px; font-weight: 600; color: var(--acctx-ink-2); }
+        .acctx-req { color: var(--bs-danger); }
 
-            .acctx-label {
-                font-size: 0.78rem; font-weight: 600; margin-bottom: 0.3rem;
-                display: inline-flex; align-items: center; gap: 0.35rem; color: var(--bs-body-color);
-            }
-            .acctx-label > i:first-child { color: var(--acctx-muted); }
-            .acctx-req { color: var(--bs-danger); }
+        .acctx-types { display: flex; flex-wrap: wrap; gap: 6px; }
+        .acctx-type {
+            position: relative; display: inline-flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;
+            padding: 5px 10px; border-radius: 8px; border: 1px solid var(--acctx-line);
+            font-size: 12px; font-weight: 600; color: var(--acctx-ink-2); transition: all .12s ease;
+        }
+        .acctx-type input { position: absolute; opacity: 0; pointer-events: none; }
+        .acctx-type i { color: var(--acc); }
+        .acctx-type:hover { border-color: var(--acc); }
+        .acctx-type:has(input:checked) { background: var(--acc); border-color: var(--acc); color: #fff; }
+        .acctx-type:has(input:checked) i { color: #fff; }
+        .acctx-type:has(input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent); }
 
-            /* Inputs */
-            .acctx-inputwrap {
-                display: flex; align-items: stretch;
-                border: 1px solid var(--acctx-border); border-radius: var(--acctx-radius);
-                background: var(--acctx-surface); overflow: hidden;
-                transition: border-color .15s ease, box-shadow .15s ease;
-            }
-            .acctx-inputwrap:focus-within {
-                border-color: var(--bs-primary);
-                box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary) 18%, transparent);
-            }
-            .acctx-inputwrap.is-invalid { border-color: var(--bs-danger); }
-            .acctx-inputwrap--top .acctx-inputicon { align-items: flex-start; padding-top: 0.55rem; }
-            .acctx-inputicon {
-                display: inline-flex; align-items: center; justify-content: center;
-                width: 38px; flex: 0 0 38px; background: var(--acctx-field-bg);
-                color: var(--acctx-muted); border-right: 1px solid var(--acctx-border);
-            }
-            .acctx-input {
-                flex: 1 1 auto; border: 0 !important; background: transparent !important;
-                padding: 0.45rem 0.7rem; font-size: 0.86rem; color: var(--bs-body-color) !important;
-                box-shadow: none !important; outline: none !important; width: 100%;
-            }
-            .acctx-input::placeholder { color: var(--acctx-muted); opacity: .7; }
-            textarea.acctx-input { resize: vertical; min-height: 58px; }
-            /* TomSelect fits flush inside the wrap — allow the dropdown to overflow */
-            .acctx-inputwrap:has(.ts-wrapper) { overflow: visible; }
-            .acctx-inputwrap .ts-wrapper { flex: 1 1 auto; border: 0 !important; min-width: 0; }
-            .acctx-inputwrap .ts-dropdown { z-index: 1080; }
-            .acctx-inputwrap .ts-control {
-                border: 0 !important; background: transparent !important; box-shadow: none !important;
-                border-radius: 0 !important; padding: 0.35rem 0.7rem; min-height: 36px;
-            }
+        .acctx-input {
+            width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--acctx-line); border-radius: 8px;
+            background: var(--acctx-bg); color: var(--acctx-ink); font: inherit; outline: none;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .acctx-input::placeholder { color: var(--acctx-mute); }
+        .acctx-input:focus { border-color: var(--bs-primary); box-shadow: 0 0 0 3px var(--acctx-ring); }
+        .acctx-input.is-invalid { border-color: var(--bs-danger); }
+        textarea.acctx-input { height: auto; min-height: 56px; padding: 8px 10px; resize: vertical; }
 
-            /* Account Type radio cards */
-            .acctx-typegrid {
-                display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.45rem;
-            }
-            @media (max-width: 720px) { .acctx-typegrid { grid-template-columns: repeat(2, 1fr); } }
-            .acctx-typegrid.is-invalid { outline: 1px dashed color-mix(in srgb, var(--bs-danger) 60%, transparent); outline-offset: 3px; border-radius: var(--acctx-radius); }
-            .acctx-typecard {
-                position: relative; cursor: pointer;
-                display: flex; flex-direction: row; align-items: center; text-align: left; gap: 0.5rem;
-                padding: 0.5rem 0.6rem; border-radius: var(--acctx-radius);
-                border: 1.5px solid var(--acctx-border); background: var(--acctx-surface);
-                transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
-            }
-            .acctx-typecard:hover { transform: translateY(-1px); border-color: var(--acc); box-shadow: 0 5px 12px color-mix(in srgb, var(--acc) 20%, transparent); }
-            .acctx-typeradio { position: absolute; opacity: 0; pointer-events: none; }
-            .acctx-typeicon {
-                width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px;
-                display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem;
-                color: var(--acc); background: color-mix(in srgb, var(--acc) 14%, transparent);
-                transition: all .15s ease;
-            }
-            .acctx-typebody { display: flex; flex-direction: column; gap: 0; line-height: 1.1; min-width: 0; }
-            .acctx-typename { font-weight: 600; font-size: 0.8rem; }
-            .acctx-typehint { font-size: 0.64rem; color: var(--acctx-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .acctx-typecheck {
-                position: absolute; top: 5px; right: 6px; font-size: 0.8rem;
-                color: var(--acc); opacity: 0; transform: scale(.5); transition: all .18s ease;
-            }
-            /* Selected state */
-            .acctx-typecard:has(.acctx-typeradio:checked) {
-                border-color: var(--acc);
-                background: color-mix(in srgb, var(--acc) 9%, var(--acctx-surface));
-                box-shadow: 0 6px 16px color-mix(in srgb, var(--acc) 25%, transparent);
-            }
-            .acctx-typecard:has(.acctx-typeradio:checked) .acctx-typeicon { color: #fff; background: var(--acc); transform: scale(1.04); }
-            .acctx-typecard:has(.acctx-typeradio:checked) .acctx-typecheck { opacity: 1; transform: scale(1); }
-            .acctx-typecard:has(.acctx-typeradio:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 30%, transparent); }
+        .acctx-select .ts-wrapper { width: 100%; }
+        .acctx-select .ts-control {
+            min-height: 34px; padding: 5px 10px; border: 1px solid var(--acctx-line) !important; border-radius: 8px !important;
+            background: var(--acctx-bg) !important; color: var(--acctx-ink); box-shadow: none !important; font-size: var(--acctx-fz);
+        }
+        .acctx-select .ts-wrapper.focus .ts-control { border-color: var(--bs-primary) !important; box-shadow: 0 0 0 3px var(--acctx-ring) !important; }
+        .acctx-select .ts-control input { font-size: var(--acctx-fz); color: var(--acctx-ink); }
+        .acctx-select .ts-control input::placeholder { color: var(--acctx-mute); }
+        .acctx-select .ts-dropdown { z-index: 1080; font-size: var(--acctx-fz); }
 
-            /* Panel (opening balance) */
-            .acctx-panel {
-                border: 1px solid var(--acctx-border); border-radius: var(--acctx-radius);
-                background: var(--acctx-field-bg); padding: 0.7rem 0.8rem;
-            }
-            .acctx-panel-head {
-                display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem;
-                font-weight: 600; font-size: 0.8rem; color: var(--bs-primary);
-            }
-            .acctx-note { margin: 0.55rem 0 0; font-size: 0.7rem; color: var(--acctx-muted); }
-            .acctx-note i { margin-right: 0.25rem; }
+        .acctx-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .acctx-amt {
+            display: flex; align-items: center; height: 34px; overflow: hidden;
+            border: 1px solid var(--acctx-line); border-radius: 8px; background: var(--acctx-bg);
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .acctx-amt:focus-within { border-color: var(--bs-primary); box-shadow: 0 0 0 3px var(--acctx-ring); }
+        .acctx-amt.is-invalid { border-color: var(--bs-danger); }
+        .acctx-amt b { display: grid; place-items: center; height: 100%; padding: 0 9px; font-size: 10.5px; letter-spacing: .05em; }
+        .acctx-amt--dr b { color: #059669; background: color-mix(in srgb, #10b981 10%, transparent); }
+        .acctx-amt--cr b { color: #dc2626; background: color-mix(in srgb, #ef4444 10%, transparent); }
+        .acctx-amt input {
+            flex: 1; min-width: 0; height: 100%; padding: 0 10px; border: 0; outline: none; background: transparent;
+            color: var(--acctx-ink); font: inherit; font-weight: 600; text-align: end; font-variant-numeric: tabular-nums;
+            -moz-appearance: textfield;
+        }
+        .acctx-amt input::-webkit-outer-spin-button,
+        .acctx-amt input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-            /* Cheque toggle — premium switch card */
-            .acctx-cheque {
-                --chq: #10b981;
-                position: relative; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0;
-                padding: 0.7rem 0.85rem; border-radius: var(--acctx-radius);
-                border: 1.5px solid var(--acctx-border); background: var(--acctx-surface);
-                transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .15s ease;
-            }
-            .acctx-cheque:hover { border-color: color-mix(in srgb, var(--chq) 55%, var(--acctx-border)); transform: translateY(-1px); }
-            .acctx-cheque-input { position: absolute; opacity: 0; pointer-events: none; }
-            .acctx-cheque-icon {
-                width: 38px; height: 38px; flex: 0 0 38px; border-radius: 10px;
-                display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem;
-                color: var(--chq); background: color-mix(in srgb, var(--chq) 13%, transparent);
-                transition: all .18s ease;
-            }
-            .acctx-cheque-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-            .acctx-cheque-title { font-weight: 700; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 0.45rem; }
-            .acctx-cheque-badge {
-                font-size: 0.6rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-                padding: 2px 7px; border-radius: 999px; line-height: 1.3;
-            }
-            .acctx-cheque-badge--off { color: var(--acctx-muted); background: var(--acctx-field-bg); border: 1px solid var(--acctx-border); }
-            .acctx-cheque-badge--on { display: none; color: #fff; background: var(--chq); }
-            .acctx-cheque-hint { font-size: 0.7rem; color: var(--acctx-muted); }
-            .acctx-cheque-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
-            .acctx-cheque-chip {
-                display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.66rem; font-weight: 600;
-                padding: 2px 8px; border-radius: 999px; color: var(--acctx-muted);
-                border: 1px dashed var(--acctx-border); background: var(--acctx-field-bg); transition: all .18s ease;
-            }
-            .acctx-cheque-switch {
-                position: relative; flex: 0 0 44px; width: 44px; height: 24px; border-radius: 999px;
-                background: color-mix(in srgb, var(--acctx-muted) 30%, transparent); transition: background .2s ease;
-            }
-            .acctx-cheque-knob {
-                position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
-                background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .2s cubic-bezier(.4,1.4,.6,1);
-            }
-            .acctx-cheque:has(.acctx-cheque-input:checked) {
-                border-color: var(--chq);
-                background: color-mix(in srgb, var(--chq) 7%, var(--acctx-surface));
-                box-shadow: 0 6px 16px color-mix(in srgb, var(--chq) 20%, transparent);
-            }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-icon { color: #fff; background: var(--chq); }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-badge--on { display: inline-flex; align-items: center; gap: 3px; }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-badge--off { display: none; }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-chip {
-                color: var(--chq); border-style: solid; border-color: color-mix(in srgb, var(--chq) 40%, transparent);
-                background: color-mix(in srgb, var(--chq) 10%, transparent);
-            }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-switch { background: var(--chq); }
-            .acctx-cheque:has(.acctx-cheque-input:checked) .acctx-cheque-knob { transform: translateX(20px); }
-            .acctx-cheque:has(.acctx-cheque-input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chq) 30%, transparent); }
+        .acctx-toggle { position: relative; display: flex; align-items: center; gap: 10px; margin: 0; cursor: pointer; }
+        .acctx-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+        .acctx-switch {
+            position: relative; flex: none; width: 32px; height: 18px; border-radius: 20px;
+            background: color-mix(in srgb, var(--acctx-ink-2) 30%, transparent); transition: background .2s ease;
+        }
+        .acctx-switch::after {
+            content: ""; position: absolute; top: 2px; inset-inline-start: 2px; width: 14px; height: 14px;
+            border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .2); transition: inset-inline-start .2s ease;
+        }
+        .acctx-toggle:has(input:checked) .acctx-switch { background: var(--bs-primary); }
+        .acctx-toggle:has(input:checked) .acctx-switch::after { inset-inline-start: 16px; }
+        .acctx-toggle:has(input:focus-visible) .acctx-switch { box-shadow: 0 0 0 3px var(--acctx-ring); }
+        .acctx-toggle-hint { font-size: 12px; color: var(--acctx-ink-2); }
 
-            /* Alert */
-            .acctx-alert {
-                display: flex; align-items: flex-start; gap: 0.5rem;
-                border: 1px solid color-mix(in srgb, var(--bs-danger) 35%, transparent);
-                background: color-mix(in srgb, var(--bs-danger) 10%, var(--acctx-surface));
-                border-radius: var(--acctx-radius); padding: 0.6rem 0.8rem; color: var(--bs-danger-text-emphasis, var(--bs-danger));
-            }
-            .acctx-alert-icon { margin-top: 2px; color: var(--bs-danger); }
-            .acctx-alert-title { display: block; margin-bottom: 0.25rem; font-size: 0.85rem; }
-            .acctx-alert-list { margin: 0; padding-left: 1.1rem; font-size: 0.8rem; }
-            .acctx-alert-close { border: 0; background: transparent; color: inherit; opacity: .6; cursor: pointer; }
-            .acctx-alert-close:hover { opacity: 1; }
+        .acctx-alert {
+            display: flex; gap: 8px; margin: 6px 18px; padding: 8px 12px; border-radius: 8px; font-size: 12px;
+            color: var(--bs-danger-text-emphasis, var(--bs-danger));
+            background: color-mix(in srgb, var(--bs-danger) 9%, transparent);
+            border: 1px solid color-mix(in srgb, var(--bs-danger) 30%, transparent);
+        }
+        .acctx-alert i { margin-top: 2px; }
+        .acctx-alert ul { margin: 0; padding-inline-start: 14px; }
+        .acctx-error { margin-top: 4px; font-size: 11.5px; color: var(--bs-danger); }
 
-            .acctx-error { color: var(--bs-danger); font-size: 0.74rem; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.3rem; }
+        .acctx-foot {
+            display: flex; align-items: center; gap: 8px; padding: 12px 18px;
+            background: var(--acctx-soft); border-top: 1px solid var(--acctx-line);
+            border-radius: 0 0 var(--bs-modal-inner-border-radius, 7px) var(--bs-modal-inner-border-radius, 7px);
+        }
+        .acctx-help { margin-inline-end: auto; font-size: 11.5px; color: var(--acctx-mute); }
+        .acctx-btn {
+            display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px;
+            border-radius: 8px; border: 1px solid transparent; font-size: 12.5px; font-weight: 600; cursor: pointer;
+            transition: all .15s ease;
+        }
+        .acctx-btn--ghost { background: transparent; color: var(--acctx-ink-2); }
+        .acctx-btn--ghost:hover { color: var(--acctx-ink); background: color-mix(in srgb, var(--acctx-ink-2) 10%, transparent); }
+        .acctx-btn--line { background: var(--acctx-bg); border-color: var(--acctx-line); color: var(--acctx-ink); }
+        .acctx-btn--line:hover { border-color: var(--bs-primary); color: var(--bs-primary); }
+        .acctx-btn--primary { background: var(--bs-primary); color: #fff; }
+        .acctx-btn--primary:hover { filter: brightness(1.08); }
 
-            /* Footer */
-            .acctx-footer {
-                display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap;
-                padding: 0.7rem 1rem; border-top: 1px solid var(--acctx-border);
-                background: var(--acctx-field-bg);
-            }
-            .acctx-btn {
-                display: inline-flex; align-items: center; gap: 0.4rem;
-                border-radius: 9px; padding: 0.45rem 0.9rem; font-size: 0.82rem; font-weight: 600;
-                border: 1px solid transparent; cursor: pointer; transition: all .15s ease;
-            }
-            .acctx-btn--ghost { background: var(--acctx-surface); border-color: var(--acctx-border); color: var(--acctx-muted); }
-            .acctx-btn--ghost:hover { color: var(--bs-body-color); border-color: var(--acctx-muted); }
-            .acctx-btn--soft { background: color-mix(in srgb, var(--bs-success) 14%, transparent); color: var(--bs-success); }
-            .acctx-btn--soft:hover { background: var(--bs-success); color: #fff; }
-            .acctx-btn--primary {
-                background: linear-gradient(135deg, var(--bs-primary), color-mix(in srgb, var(--bs-primary) 65%, #000));
-                color: #fff; box-shadow: 0 6px 15px color-mix(in srgb, var(--bs-primary) 35%, transparent);
-            }
-            .acctx-btn--primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+        @media (max-width: 575.98px) {
+            .acctx-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+            .acctx-row--top > .acctx-label { padding-top: 0; }
+            .acctx-help { display: none; }
+            .acctx-foot { flex-wrap: wrap; justify-content: flex-end; }
+        }
     </style>
 </div>
