@@ -28,6 +28,9 @@
             <div class="s-no">{{ $sale->invoice_no }}</div>
             <div class="s-meta">
                 <span><i class="fa fa-calendar"></i><b>{{ systemDate($sale->date) }}</b></span>
+                @if ($sale->bill_no)
+                    <span><i class="fa fa-ticket"></i>Bill No <b>{{ $sale->bill_no }}</b></span>
+                @endif
                 <span><i class="fa fa-user"></i><b>{{ $sale->customer_name ?: $sale->account?->name }}</b></span>
                 @if ($sale->source)
                     <x-sale.source-badge :source="$sale->source" />
@@ -106,6 +109,8 @@
             <div>
                 <div class="s-fl"><i class="fa fa-file-o"></i> Invoice details</div>
                 <div class="s-dr"><span class="l"><i class="fa fa-calendar"></i>Date</span><span class="v">{{ systemDate($sale->date) }}</span></div>
+                {{-- The biller's `{code}/{n}` counter printed on the Office Bill receipt. --}}
+                <div class="s-dr"><span class="l"><i class="fa fa-ticket"></i>Bill no</span><span class="v">{{ $sale->bill_no ?: '—' }}</span></div>
                 <div class="s-dr"><span class="l"><i class="fa fa-calendar-o"></i>Due date</span><span class="v">{{ systemDate($sale->due_date) }}</span></div>
                 <div class="s-dr">
                     {{-- A sale synced from a till that was offline keeps the reference printed on

@@ -27,6 +27,8 @@ class SaleListResource extends JsonResource
             // the back office typed. The list shows it so that a search for the
             // number on a customer's receipt visibly matches the row it returns.
             'client_uuid' => $this->client_uuid,
+            // The biller's `{code}/{n}` counter printed on the Office Bill receipt.
+            'bill_no' => $this->bill_no,
             'date' => $this->date,
             'status' => $this->status,
             'sale_type' => $this->sale_type,

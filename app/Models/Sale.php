@@ -32,6 +32,8 @@ class Sale extends Model implements AuditableContracts
     protected $fillable = [
         'tenant_id',
         'invoice_no',
+        'staff_bill_sequence',
+        'bill_no',
         'reference_no',
         // Device-generated idempotency key for sales queued offline on the
         // mobile POS, plus the till clock at the moment it was rung up.
@@ -220,6 +222,8 @@ class Sale extends Model implements AuditableContracts
                         // the customer's receipt during an outage — the mobile POS
                         // stores that in reference_no when the sale syncs.
                         ->orWhere('sales.reference_no', 'like', "%{$search}%")
+                        // The biller's `{code}/{n}` number on the Office Bill receipt.
+                        ->orWhere('sales.bill_no', $search)
                         ->orWhere('sales.customer_name', 'like', "%{$search}%")
                         ->orWhere('sales.customer_mobile', 'like', "%{$search}%");
                 });
