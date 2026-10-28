@@ -16,8 +16,8 @@
                 <div class="col-12">
                     <label class="form-label fw-medium small mb-1">POS Payment Buttons</label>
                     <div class="row g-2">
-                        @foreach (['Button 1', 'Button 2', 'Button 3 (optional)'] as $slot => $slotLabel)
-                            <div class="col-12 col-md-4">
+                        @foreach (['Button 1', 'Button 2', 'Button 3 (optional)', 'Button 4 (optional)'] as $slot => $slotLabel)
+                            <div class="col-12 col-md-6 col-xl-3">
                                 <label class="form-text mt-0 mb-1 d-block" for="pos_payment_button_{{ $slot }}">{{ $slotLabel }}</label>
                                 @php($pickedIcon = $pos_payment_button_icons[$slot] ?? null)
                                 <div class="input-group input-group-sm" wire:key="pos-payment-button-{{ $slot }}">
@@ -40,7 +40,7 @@
                                         </div>
                                     </div>
                                     <select class="form-select" id="pos_payment_button_{{ $slot }}" wire:model.live="pos_payment_buttons.{{ $slot }}">
-                                        <option value="">{{ ['Cash (default)', 'Card (default)', 'Not shown'][$slot] }}</option>
+                                        <option value="">{{ ['Cash (default)', 'Card (default)', 'Not shown', 'Not shown'][$slot] }}</option>
                                         @foreach ($posButtonOptions as $optionId => $optionName)
                                             <option value="{{ $optionId }}">{{ $optionName }}</option>
                                         @endforeach

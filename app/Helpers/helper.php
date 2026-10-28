@@ -940,9 +940,9 @@ if (! function_exists('posPaymentAutoIcon')) {
 if (! function_exists('posPaymentButtons')) {
     /**
      * The quick payment buttons on the POS checkout, web and app (Settings →
-     * System Configurations → POS Payment Buttons), in order. Up to three: the
-     * first two fall back to the Cash and Card accounts, the third shows only
-     * once it is set. Credit and Custom always follow them, and every other
+     * System Configurations → POS Payment Buttons), in order. Up to four: the
+     * first two fall back to the Cash and Card accounts, the third and fourth
+     * show only once they are set. Credit and Custom always follow them, and every other
      * payment method stays under Custom. `icon` is always a
      * posPaymentButtonIcons() key: the one picked, or posPaymentAutoIcon().
      *
@@ -957,7 +957,7 @@ if (! function_exists('posPaymentButtons')) {
         $slugIds = Account::slugIdMap();
 
         $slots = [];
-        foreach ([$slugIds['cash'] ?? null, $slugIds['card'] ?? null, null] as $slot => $fallback) {
+        foreach ([$slugIds['cash'] ?? null, $slugIds['card'] ?? null, null, null] as $slot => $fallback) {
             $id = (int) ($stored[$slot] ?? 0) ?: $fallback;
             if ($id && ! isset($slots[$id])) {
                 $icon = $icons[$slot] ?? null;

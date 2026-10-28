@@ -18,11 +18,11 @@ class Configurations extends Component
 
     public $paymentMethods;
 
-    /** @var array<int, int|string|null> Account ids for POS buttons 1–3; button 3 is optional. */
-    public $pos_payment_buttons = [null, null, null];
+    /** @var array<int, int|string|null> Account ids for POS buttons 1–4; buttons 3 and 4 are optional. */
+    public $pos_payment_buttons = [null, null, null, null];
 
     /** @var array<int, string|null> Icon key (posPaymentButtonIcons()) per button; null picks one from the name. */
-    public $pos_payment_button_icons = [null, null, null];
+    public $pos_payment_button_icons = [null, null, null, null];
 
     /** @var array<int, string> */
     public $posButtonOptions = [];
@@ -48,9 +48,10 @@ class Configurations extends Component
             $stored[0] ?? $slugIds['cash'] ?? null,
             $stored[1] ?? $slugIds['card'] ?? null,
             $stored[2] ?? null,
+            $stored[3] ?? null,
         ];
         $icons = json_decode((string) Configuration::where('key', 'pos_payment_button_icons')->value('value'), true) ?: [];
-        $this->pos_payment_button_icons = [$icons[0] ?? null, $icons[1] ?? null, $icons[2] ?? null];
+        $this->pos_payment_button_icons = [$icons[0] ?? null, $icons[1] ?? null, $icons[2] ?? null, $icons[3] ?? null];
         $this->loadPosButtonOptions();
 
         // Load countries for dropdown
@@ -68,7 +69,7 @@ class Configurations extends Component
             return $picked;
         }
         $id = $this->pos_payment_buttons[$slot] ?? null;
-        $name = $id ? ($this->posButtonOptions[(int) $id] ?? '') : ['Cash', 'Card', ''][$slot];
+        $name = $id ? ($this->posButtonOptions[(int) $id] ?? '') : ['Cash', 'Card', '', ''][$slot];
 
         return posPaymentAutoIcon($name);
     }
@@ -120,9 +121,9 @@ class Configurations extends Component
         Configuration::updateOrCreate(['key' => 'default_payment_method_id'], ['value' => $this->default_payment_method_id]);
         Configuration::updateOrCreate(['key' => 'payment_methods'], ['value' => json_encode($this->payment_methods)]);
         $this->loadPosButtonOptions();
-        $buttons = array_map(fn ($id) => isset($this->posButtonOptions[(int) $id]) ? (int) $id : null, array_slice(array_pad((array) $this->pos_payment_buttons, 3, null), 0, 3));
+        $buttons = array_map(fn ($id) => isset($this->posButtonOptions[(int) $id]) ? (int) $id : null, array_slice(array_pad((array) $this->pos_payment_buttons, 4, null), 0, 4));
         Configuration::updateOrCreate(['key' => 'pos_payment_buttons'], ['value' => json_encode($buttons)]);
-        $icons = array_map(fn ($icon) => array_key_exists((string) $icon, posPaymentButtonIcons()) ? $icon : null, array_slice(array_pad((array) $this->pos_payment_button_icons, 3, null), 0, 3));
+        $icons = array_map(fn ($icon) => array_key_exists((string) $icon, posPaymentButtonIcons()) ? $icon : null, array_slice(array_pad((array) $this->pos_payment_button_icons, 4, null), 0, 4));
         Configuration::updateOrCreate(['key' => 'pos_payment_button_icons'], ['value' => json_encode($icons)]);
         $country = Country::find($this->country_id);
         if ($country) {

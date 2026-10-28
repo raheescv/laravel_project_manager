@@ -9,9 +9,9 @@ use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
- * Settings → System Configurations → POS Payment Buttons: up to three quick
+ * Settings → System Configurations → POS Payment Buttons: up to four quick
  * buttons on the POS checkout (web and app) ahead of Credit and Custom. The
- * first two fall back to Cash and Card; the third shows only once it is set.
+ * first two fall back to Cash and Card; the third and fourth show only once set.
  */
 beforeEach(function (): void {
     $this->world = PosWorld::create();
@@ -53,7 +53,7 @@ it('saves three buttons from settings and preselects the first', function (): vo
     $this->actingAs($this->world->user);
 
     Livewire::test(Configurations::class)
-        ->assertSet('pos_payment_buttons', [$this->world->cashAccountId, $this->world->accounts['card'], null])
+        ->assertSet('pos_payment_buttons', [$this->world->cashAccountId, $this->world->accounts['card'], null, null])
         ->set('pos_payment_buttons', [$bankId, $this->world->cashAccountId, $this->world->accounts['card']])
         ->call('save');
 
@@ -79,7 +79,7 @@ it('drops a button that is not a payment method when saving', function (): void 
         ->call('save');
 
     expect(json_decode(Configuration::where('key', 'pos_payment_buttons')->value('value'), true))
-        ->toBe([$this->world->cashAccountId, $this->world->accounts['card'], null]);
+        ->toBe([$this->world->cashAccountId, $this->world->accounts['card'], null, null]);
 });
 
 it('sends the picked icon, or the Auto one, and drops an icon not on the list', function (): void {
@@ -94,11 +94,24 @@ it('sends the picked icon, or the Auto one, and drops an icon not on the list', 
         ->and($component->instance()->buttonIcon(2))->toBe('bolt');
     $component->call('save');
 
-    expect(json_decode(Configuration::where('key', 'pos_payment_button_icons')->value('value'), true))->toBe([null, null, 'bolt'])
+    expect(json_decode(Configuration::where('key', 'pos_payment_button_icons')->value('value'), true))->toBe([null, null, 'bolt', null])
         ->and(array_column(posPaymentButtons(), 'icon'))->toBe(['money', 'credit-card', 'bolt']);
 
     Sanctum::actingAs($this->world->user);
     $this->getJson($this->world->url('/api/v1/settings/sale'))
         ->assertSuccessful()
         ->assertJsonPath('data.payment_buttons.2.icon', 'bolt');
+});
+
+it('shows a fourth button only once it is configured', function (): void {
+    $fawranId = $this->world->addPaymentMethod('Fawran');
+    $bankId = $this->world->addPaymentMethod('Bank Transfer');
+    $this->actingAs($this->world->user);
+
+    Livewire::test(Configurations::class)
+        ->set('pos_payment_buttons', [$this->world->cashAccountId, $this->world->accounts['card'], $fawranId, $bankId])
+        ->call('save');
+
+    expect(array_column(posPaymentButtons(), 'name'))->toBe(['Cash', 'Card', 'Fawran', 'Bank Transfer'])
+        ->and(array_column(posPaymentButtons(), 'icon'))->toBe(['money', 'credit-card', 'credit-card', 'university']);
 });

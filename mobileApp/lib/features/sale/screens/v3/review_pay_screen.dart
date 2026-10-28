@@ -872,7 +872,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  // ---- Payment method (Student Wallet / buttons 1–3 / Credit / Custom) ----
+  // ---- Payment method (Student Wallet / buttons 1–4 / Credit / Custom) ----
 
   /// The icon for a configured payment button, from its system slug or name.
   IconData _buttonIcon(PaymentMethod button) {
