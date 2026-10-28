@@ -58,6 +58,7 @@ it('maps every management tab to a url slug', function (): void {
         'payment' => 'PaymentTab',
         'terms' => 'PaymentTermTab',
         'services' => 'ServicesTab',
+        'roi' => 'RoiTab',
         'cheques' => 'ChequeTab',
         'checklist' => 'ChecklistTab',
     ])->not->toHaveKey('utilities');

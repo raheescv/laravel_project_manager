@@ -40,7 +40,7 @@ class NavigationService
                 'label' => 'Sales',
                 'icon' => 'fa fa-dollar',
                 'visible' => true,
-                'children' => ['Sales', 'Booking', 'Payments', 'Service Charge Report', 'Cheque Management'],
+                'children' => ['Sales', 'Booking', 'Payments', 'Service Charge Report', 'ROI Report', 'Cheque Management'],
             ],
             [
                 'id' => 'leads',

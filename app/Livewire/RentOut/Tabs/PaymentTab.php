@@ -6,6 +6,7 @@ use App\Actions\RentOut\Payment\ReverseTransactionAction;
 use App\Enums\RentOut\AgreementType;
 use App\Livewire\Concerns\HasColumnPreferences;
 use App\Models\RentOut;
+use App\Models\RentOutRoi;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -180,7 +181,8 @@ class PaymentTab extends Component
     {
         $query = RentOutTransaction::with(['account', 'categoryAccount'])
             ->where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0);
+            ->where('credit', '>', 0)
+            ->where('source', '!=', RentOutRoi::SOURCE);
 
         if ($this->filterSource) {
             $query->where('source', $this->filterSource);
@@ -208,6 +210,7 @@ class PaymentTab extends Component
         // Source summary (receipts only)
         $sourceSummary = RentOutTransaction::where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0)
+            ->where('source', '!=', RentOutRoi::SOURCE)
             ->selectRaw('source, SUM(credit) as total_credit, COUNT(*) as count')
             ->groupBy('source')
             ->get();
@@ -215,11 +218,13 @@ class PaymentTab extends Component
         // Available filter options (receipts only)
         $sources = RentOutTransaction::where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0)
+            ->where('source', '!=', RentOutRoi::SOURCE)
             ->distinct()->pluck('source')->filter()->sort()->values();
 
         // category is an account id: offer the Rent Out service categories by name.
         $categories = RentOut::serviceCategoryOptions(RentOutTransaction::where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0)
+            ->where('source', '!=', RentOutRoi::SOURCE)
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category'));
@@ -227,6 +232,7 @@ class PaymentTab extends Component
         $paymentModes = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
             ->where('credit', '>', 0)
+            ->where('source', '!=', RentOutRoi::SOURCE)
             ->whereNotNull('account_id')
             ->get()
             ->pluck('account.name', 'account_id')

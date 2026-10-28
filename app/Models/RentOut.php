@@ -291,6 +291,12 @@ class RentOut extends Model implements AuditableContracts
         return $this->hasMany(RentOutService::class);
     }
 
+    /** @return HasMany<RentOutRoi, $this> */
+    public function rois(): HasMany
+    {
+        return $this->hasMany(RentOutRoi::class);
+    }
+
     /** @return HasMany<RentOutNote, $this> */
     public function notes(): HasMany
     {

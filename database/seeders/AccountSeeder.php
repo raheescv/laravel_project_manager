@@ -89,6 +89,9 @@ class AccountSeeder extends Seeder
         $data[] = ['name' => 'Forfeited Deposits', 'slug' => 'forfeited_deposits', 'account_type' => 'income', 'description' => 'Vendor security deposits and guarantees kept after a breach', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectIncomeMaster->id];
         $data[] = ['name' => 'Security Deposit Loss', 'slug' => 'security_deposit_loss', 'account_type' => 'expense', 'description' => 'Security deposits paid to vendors that were not refunded', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
 
+        // Rent-out ROI (ResolvesRentOutAccounts::roiExpenseAccountId creates this on first use for older tenants)
+        $data[] = ['name' => 'ROI Expense', 'slug' => 'roi_expense', 'account_type' => 'expense', 'description' => 'Return on investment owed to buyers on sale agreements', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
+
         // Equity accounts (App\Support\OpeningStock creates this on first use for older tenants)
         $data[] = ['name' => 'Opening Stock', 'slug' => 'opening_stock', 'account_type' => 'equity', 'description' => 'Value of stock on hand when the books were opened', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $equityMaster->id];
 

@@ -434,6 +434,7 @@ return [
                 'rent out cheque',
                 'rent out utility',
                 'rent out service',
+                'rent out roi',
                 'rent out payment term',
                 'rent out note',
                 'rent out document',

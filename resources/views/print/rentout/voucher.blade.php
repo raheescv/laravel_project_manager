@@ -1,11 +1,15 @@
 @php
-    $isServiceInvoice = in_array($payment->source, ['Service', 'ServiceCharge'], true) && $payment->debit > 0 && ! ($payment->credit > 0);
+    $roi              = $roi ?? null;
+    $isRoiInvoice     = $payment->source === \App\Models\RentOutRoi::SOURCE;
+    $isServiceInvoice = (in_array($payment->source, ['Service', 'ServiceCharge'], true) && $payment->debit > 0 && ! ($payment->credit > 0)) || $isRoiInvoice;
     $voucherAmount    = $payment->credit > 0 ? $payment->credit : $payment->debit;
     $voucherNo        = $payment->voucher_no ?? $payment->id;
     $voucherTitle     = match (true) {
-        $isServiceInvoice                     => trim(trim((string) $payment->category_label) . ' Invoice'),
-        $payment->model === 'RentOutSecurity' => 'Security Deposit Payment Voucher',
-        default                               => 'Payment Voucher',
+        $isRoiInvoice                                                => 'ROI Invoice',
+        $isServiceInvoice                                            => trim(trim((string) $payment->category_label) . ' Invoice'),
+        $payment->source === \App\Models\RentOutRoi::PAYMENT_SOURCE  => 'ROI Payment Voucher',
+        $payment->model === 'RentOutSecurity'                        => 'Security Deposit Payment Voucher',
+        default                                                      => 'Payment Voucher',
     };
 @endphp
 <!DOCTYPE html>
@@ -118,7 +122,7 @@
 
     {{-- ── Amount ── --}}
     <div class="b-amount">
-        <div class="lbl">{{ $isServiceInvoice ? 'Amount Due' : 'Amount Paid' }}</div>
+        <div class="lbl">{{ $isRoiInvoice ? 'ROI Payable' : ($isServiceInvoice ? 'Amount Due' : 'Amount Paid') }}</div>
         <div class="fig"><span class="cur">QR</span> {{ currency($voucherAmount) }}</div>
     </div>
 
@@ -130,7 +134,7 @@
         <tbody>
             @if ($rentOut->customer)
             <tr>
-                <td class="f-label">{{ $isServiceInvoice ? 'Billed To' : 'Paid To' }}</td>
+                <td class="f-label">{{ $isRoiInvoice ? 'Payable To' : ($isServiceInvoice ? 'Billed To' : 'Paid To') }}</td>
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $rentOut->customer->name }}</td>
             </tr>
@@ -147,6 +151,23 @@
                 <td class="f-colon">:</td>
                 <td class="f-value">{{ $rentOut->agreement_no ?: '—' }}</td>
             </tr>
+            @if ($roi)
+            <tr>
+                <td class="f-label">ROI Period</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $roi->start_date?->format('d-m-Y') }} to {{ $roi->end_date?->format('d-m-Y') }}</td>
+            </tr>
+            <tr>
+                <td class="f-label">Sale Price</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">QR {{ currency($roi->sale_price) }}</td>
+            </tr>
+            <tr>
+                <td class="f-label">Per Month ROI</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">QR {{ currency($roi->per_month_roi) }} &times; {{ $roi->no_of_months }} {{ \Illuminate\Support\Str::plural('month', $roi->no_of_months) }}</td>
+            </tr>
+            @endif
             @unless ($isServiceInvoice)
             <tr>
                 <td class="f-label">Payment Mode</td>

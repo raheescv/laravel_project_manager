@@ -19,6 +19,8 @@
     <x-rent-out.service-charge-modal />
     <x-rent-out.service-payment-modal />
     <x-rent-out.payout-modal />
+    <x-rent-out.roi-modal />
+    <x-rent-out.roi-payment-modal />
     <x-rent-out.transfer-payment-modal />
 
     {{-- Scripts --}}

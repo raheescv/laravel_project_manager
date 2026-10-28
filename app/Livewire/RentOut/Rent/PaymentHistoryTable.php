@@ -5,6 +5,7 @@ namespace App\Livewire\RentOut\Rent;
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\PaymentMode;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
+use App\Models\RentOutRoi;
 use App\Models\RentOutTransaction;
 use App\Support\RentOutConfig;
 use Illuminate\Database\Eloquent\Builder;
@@ -76,6 +77,7 @@ class PaymentHistoryTable extends Component
             ])
             ->whereHas('rentOut', fn ($q) => $q->where('agreement_type', $agreementTypeEnum))
             ->where('credit', '>', 0) // Only receipts (money received from customers)
+            ->where('source', '!=', RentOutRoi::SOURCE) // ROI credits the customer without any cash coming in
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->when($this->search, function ($q, $value) {

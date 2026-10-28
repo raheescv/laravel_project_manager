@@ -7,6 +7,7 @@ use App\Actions\Journal\UpdateAction as JournalUpdateAction;
 use App\Actions\RentOut\Payment\Concerns\ResolvesRentOutAccounts;
 use App\Models\Journal;
 use App\Models\RentOut;
+use App\Models\RentOutRoi;
 use App\Models\RentOutTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -93,6 +94,60 @@ class StoreTransactionAction
             'group' => ($data['group'] ?? 'Service').' Payment',
             'counter_account_id' => $rentOut->account_id,
             'journal_source' => $rentOut->agreement_type?->sourceSlug() ?? 'rent_out',
+        ]));
+    }
+
+    /**
+     * Book ROI owed to the buyer (credit entry, no cash moves).
+     *
+     * Journal: Dr ROI Expense, Cr Customer. The row stays on the customer's
+     * account like a charge does, so the statement shows it as a credit with no
+     * payment mode; the expense account is the journal's counter side.
+     */
+    public function accrueRoi(int $rentOutId, array $data): array
+    {
+        $rentOut = RentOut::findOrFail($rentOutId);
+        $expenseAccountId = $this->roiExpenseAccountId($rentOut);
+
+        return $this->execute(array_merge($data, [
+            'rent_out_id' => $rentOutId,
+            'credit' => $data['amount'],
+            'debit' => 0,
+            'account_id' => $rentOut->account_id,
+            'counter_account_id' => $expenseAccountId,
+            'category' => $expenseAccountId,
+            'source' => RentOutRoi::SOURCE,
+            'model' => 'RentOutRoi',
+            'group' => 'ROI',
+            'payment_type' => 'ROI',
+            'journal_source' => 'expense',
+            // Dr counter (expense) / Cr row account (customer) is the payout-shaped pair.
+            'journal_is_payout' => true,
+        ]));
+    }
+
+    /**
+     * Pay ROI out to the buyer against the balance accrueRoi() built up.
+     *
+     * Journal: Dr Customer, Cr Payment Method.
+     */
+    public function payRoi(int $rentOutId, array $data): array
+    {
+        $rentOut = RentOut::findOrFail($rentOutId);
+
+        return $this->execute(array_merge($data, [
+            'rent_out_id' => $rentOutId,
+            'credit' => 0,
+            'debit' => $data['amount'],
+            'counter_account_id' => $rentOut->account_id,
+            'category' => $this->roiExpenseAccountId($rentOut),
+            'source' => RentOutRoi::PAYMENT_SOURCE,
+            'model' => 'RentOut',
+            'model_id' => $rentOutId,
+            'group' => 'ROI Payment',
+            'payment_type' => 'ROI',
+            'journal_source' => 'expense',
+            'journal_is_payout' => true,
         ]));
     }
 

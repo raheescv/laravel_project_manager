@@ -247,6 +247,7 @@ return [
     'rent out lease cheque' => ['create', 'view', 'edit', 'delete', 'update status'],
     'rent out utility' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out service' => ['create', 'view', 'edit', 'delete', 'export'],
+    'rent out roi' => ['create', 'view', 'delete', 'payment'],
     'rent out payment term' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out note' => ['create', 'view', 'delete'],
     'rent out document' => ['create', 'view', 'edit', 'delete'],

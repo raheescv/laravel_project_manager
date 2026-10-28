@@ -11,6 +11,11 @@
     }
     $tabs = array_merge($tabs, [
         ['key' => 'ServicesTab', 'slug' => 'services', 'icon' => 'fa-cogs', 'label' => 'Services'],
+    ]);
+    if (! $isRental) {
+        $tabs[] = ['key' => 'RoiTab', 'slug' => 'roi', 'icon' => 'fa-line-chart', 'label' => 'ROI'];
+    }
+    $tabs = array_merge($tabs, [
         ['key' => 'ChequeTab', 'slug' => 'cheques', 'icon' => 'fa-check-square-o', 'label' => 'Cheques'],
         ['key' => 'SecurityTab', 'slug' => 'security', 'icon' => 'fa-shield', 'label' => 'Security'],
         ['key' => 'ExtendTab', 'slug' => 'extend', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
@@ -90,6 +95,12 @@
             <div x-show="activeTab === 'ServicesTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.services-tab', ['rentOutId' => $rentOut->id], key('services-tab-' . $rentOut->id))
             </div>
+
+            @if (! $isRental)
+                <div x-show="activeTab === 'RoiTab'" x-transition:enter.duration.150ms>
+                    @livewire('rent-out.tabs.roi-tab', ['rentOutId' => $rentOut->id], key('roi-tab-' . $rentOut->id))
+                </div>
+            @endif
 
             <div x-show="activeTab === 'ChequeTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.cheques-tab', ['rentOutId' => $rentOut->id], key('cheques-tab-' . $rentOut->id))

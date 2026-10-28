@@ -32,6 +32,11 @@ class RentOutReportController extends Controller
         return view('property.report.service-charge');
     }
 
+    public function roi()
+    {
+        return view('property.report.roi');
+    }
+
     public function daybook(?string $agreement_type = null)
     {
         $type = $agreement_type ? AgreementType::tryFrom($agreement_type) : null;

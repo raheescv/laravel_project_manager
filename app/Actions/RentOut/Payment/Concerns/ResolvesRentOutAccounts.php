@@ -4,6 +4,7 @@ namespace App\Actions\RentOut\Payment\Concerns;
 
 use App\Enums\RentOut\AgreementType;
 use App\Models\Account;
+use App\Models\AccountCategory;
 use App\Models\RentOut;
 
 /**
@@ -50,6 +51,31 @@ trait ResolvesRentOutAccounts
     {
         return $this->lockedAccountId($rentOut->tenant_id, 'service_charge')
             ?? $this->lockedAccountId($rentOut->tenant_id, 'sale');
+    }
+
+    /**
+     * Expense account ROI owed to a buyer is booked to. Tenants that existed
+     * before ROI get the locked account created the first time it is needed,
+     * so an ROI posting never fails on a missing account.
+     */
+    protected function roiExpenseAccountId(RentOut $rentOut): int
+    {
+        $existing = $this->lockedAccountId($rentOut->tenant_id, 'roi_expense');
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $category = AccountCategory::firstOrCreate(['tenant_id' => $rentOut->tenant_id, 'name' => 'Indirect Expense']);
+
+        return (int) Account::forceCreate([
+            'tenant_id' => $rentOut->tenant_id,
+            'name' => 'ROI Expense',
+            'slug' => 'roi_expense',
+            'account_type' => 'expense',
+            'description' => 'Return on investment owed to buyers on sale agreements',
+            'account_category_id' => $category->id,
+            'is_locked' => 1,
+        ])->id;
     }
 
     /**

@@ -14,6 +14,7 @@ use App\Models\ProjectContract;
 use App\Models\ProjectContractPayment;
 use App\Models\ProjectContractPaymentTerm;
 use App\Models\RentOut;
+use App\Models\RentOutRoi;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
 use App\Support\ProjectContract\ApprovalGate;
@@ -350,9 +351,11 @@ class PrintController extends Controller
     {
         $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
+        // An ROI row prints as the ROI invoice, so it needs the period and rate it was booked with.
+        $roi = $payment->source === RentOutRoi::SOURCE ? RentOutRoi::find($payment->model_id) : null;
 
         $data = array_merge(
-            compact('payment', 'rentOut'),
+            compact('payment', 'rentOut', 'roi'),
             $this->getCompanyInfo()
         );
 

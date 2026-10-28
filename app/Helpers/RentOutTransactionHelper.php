@@ -132,6 +132,32 @@ class RentOutTransactionHelper
         ]);
     }
 
+    public function storeRoi(int $rentOutId, string $date, float $amount, int $roiId, string $remark = ''): array
+    {
+        return $this->action()->accrueRoi($rentOutId, [
+            'date' => $date,
+            'amount' => $amount,
+            'model_id' => $roiId,
+            'paid_date' => $date,
+            'reason' => 'ROI',
+            'remark' => $remark,
+            'created_by' => Auth::id(),
+        ]);
+    }
+
+    public function storeRoiPayment(int $rentOutId, string $date, float $amount, int $accountId, string $remark = ''): array
+    {
+        return $this->action()->payRoi($rentOutId, [
+            'date' => $date,
+            'amount' => $amount,
+            'account_id' => $accountId,
+            'paid_date' => $date,
+            'reason' => 'ROI Payment',
+            'remark' => $remark,
+            'created_by' => Auth::id(),
+        ]);
+    }
+
     public function storeServicePayLater(int $rentOutId, array $data): array
     {
         return $this->charge($rentOutId, $this->serviceData($data));
