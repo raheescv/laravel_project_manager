@@ -282,3 +282,30 @@ it('refuses to remember an unknown option, a hidden widget or an unknown one', f
     $this->putJson($this->world->url('/dashboard/widgets/lead-status/option'), ['option' => 'lease'])->assertForbidden();
     $this->putJson($this->world->url('/dashboard/widgets/no-such-widget/option'), ['option' => 'lease'])->assertNotFound();
 });
+
+it('shows upcoming and expired agreements as two tabs of one rent out card', function (): void {
+    ($this->grant)('property dashboard.rent out expiry overview');
+
+    $widget = collect($this->get($this->world->url('/'))->viewData('dashboard')['catalogue'])->firstWhere('key', 'rent-agreements');
+
+    expect($widget['defaultOption'])->toBe('upcoming')
+        ->and($widget['span'])->toBe(12)
+        ->and($widget['options'])->toBe([['value' => 'upcoming', 'label' => 'Upcoming'], ['value' => 'expired', 'label' => 'Expired']])
+        ->and(($this->widget)('rent-agreements', ['option' => 'upcoming'])->assertOk()->json('blocks.0.empty'))->toBe('Nothing ends in the next 90 days.')
+        ->and(($this->widget)('rent-agreements', ['option' => 'expired'])->assertOk()->json('blocks.0.empty'))->toBe('No expired agreements.');
+});
+
+it('moves a saved layout with the old upcoming and expired cards onto the merged card', function (): void {
+    ($this->grant)('dashboard.customize', 'property dashboard.rent out expiry overview', 'sale.dashboard weekly summary');
+    UserPreference::setValue(WidgetRegistry::PREFERENCE_KEY, [
+        ['key' => 'rent-upcoming', 'span' => 6, 'collapsed' => false],
+        ['key' => 'rent-expired', 'span' => 6, 'collapsed' => false],
+        ['key' => 'business-kpis', 'span' => 12, 'collapsed' => false],
+    ], $this->world->user->id);
+    UserPreference::setValue(WidgetRegistry::PREFERENCE_KEY.'.seen', ['rent-kpis', 'rent-upcoming', 'rent-expired', 'business-kpis'], $this->world->user->id);
+
+    $layout = app(WidgetRegistry::class)->layoutFor($this->world->user->fresh());
+
+    expect(collect($layout)->pluck('key')->all())->toBe(['rent-agreements', 'business-kpis'])
+        ->and($layout[0]['span'])->toBe(12);
+});

@@ -55,6 +55,16 @@ class WidgetRegistry
     ];
 
     /**
+     * Widgets merged or renamed since layouts were first saved: old key => new key.
+     *
+     * @var array<string, string>
+     */
+    protected const RENAMED = [
+        'rent-upcoming' => 'rent-agreements',
+        'rent-expired' => 'rent-agreements',
+    ];
+
+    /**
      * The shipped arrangement: a divider title, then the widgets under it.
      *
      * @var array<string, list<string>>
@@ -71,7 +81,7 @@ class WidgetRegistry
         'Complaints' => ['complaint-kpis', 'complaint-buildings', 'complaint-trend', 'complaint-resolution'],
         'Property financials' => ['property-financial'],
         'Supply requests' => ['supply-status', 'supply-summary', 'supply-recent'],
-        'Rent out expiry' => ['rent-kpis', 'rent-upcoming', 'rent-expired'],
+        'Rent out expiry' => ['rent-kpis', 'rent-agreements'],
         'Agreements' => ['contract-dashboard'],
     ];
 
@@ -193,16 +203,20 @@ class WidgetRegistry
                 continue;
             }
             $key = $item['key'] ?? null;
+            $renamed = is_string($key) && isset(self::RENAMED[$key]);
+            $key = $renamed ? self::RENAMED[$key] : $key;
             if (! is_string($key) || ! isset($visible[$key]) || isset($placed[$key])) {
                 continue;
             }
             $placed[$key] = true;
-            $layout[] = ['key' => $key, 'span' => $this->clampSpan((int) ($item['span'] ?? 0), $visible[$key]), 'collapsed' => (bool) ($item['collapsed'] ?? false)]
+            $span = $renamed ? $visible[$key]->span : $this->clampSpan((int) ($item['span'] ?? 0), $visible[$key]);
+            $layout[] = ['key' => $key, 'span' => $span, 'collapsed' => (bool) ($item['collapsed'] ?? false)]
                 + (empty($item['row']) ? [] : ['row' => true])
                 + (empty($item['tall']) ? [] : ['tall' => true]);
         }
 
         $seen = is_array($saved) ? (array) UserPreference::getValue(self::PREFERENCE_KEY.'.seen', [], $user->id) : [];
+        $seen = array_map(fn (mixed $key): mixed => self::RENAMED[$key] ?? $key, $seen);
         foreach ($visible as $key => $definition) {
             if (! isset($placed[$key]) && ! in_array($key, $seen, true)) {
                 $layout[] = $this->freshItem($definition);

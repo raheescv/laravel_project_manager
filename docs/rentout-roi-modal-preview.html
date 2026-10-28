@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROI Modal Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+    body { font-family: Poppins, system-ui, sans-serif; background: #e9ecf2; min-height: 100vh; }
+    .stage { padding: 32px 16px; }
+    .note { max-width: 980px; margin: 0 auto 20px; color: #4a5468; font-size: 13px; }
+    .note code { color: #1f3a6e; }
+    .modal-mock { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 60px rgba(20, 30, 60, .25); }
+    .form-control-sm { font-size: .82rem; }
+    .form-label { font-size: .8rem; }
+    .bg-light { background-color: #e4e7ef !important; }
+    .roi-hint { font-size: .72rem; color: #6b7487; }
+    .diff { font-size: .62rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: #fff3cd; color: #8a6100; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 2px; }
+    .formula { max-width: 980px; margin: 20px auto 0; background: #fff; border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #33405a; }
+    .formula b { color: #1f3a6e; }
+    .tabbar { max-width: 980px; margin: 20px auto 0; background: #fff; border-radius: 10px; padding: 12px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tabbar .lbl { font-size: 12px; color: #6b7487; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="stage">
+    <p class="note">
+        <b>Preview — ROI modal</b> (sale agreements). Copy of the Service Charge modal with
+        <span class="diff">changed</span> fields: <b>Unit Size → Sale Price</b>, <b>Per Sq Meter → Per Month ROI</b>,
+        Amount = Per Month ROI × No Of Months. Edit the dates or ROI to see it recalculate.
+    </p>
+
+    <div class="modal-mock">
+        <div class="modal-header bg-success text-white border-0 py-2 px-3">
+            <h6 class="modal-title fw-bold mb-0 text-white">
+                <i class="fa fa-line-chart me-2"></i> ROI (Return on Investment)
+            </h6>
+            <button type="button" class="btn-close btn-close-white btn-sm"></button>
+        </div>
+
+        <div class="modal-body p-3">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar me-1 text-muted"></i> Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm" value="2026-10-28">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-plus-o me-1 text-muted"></i> Start Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm" id="startDate" value="2026-09-21">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-check-o me-1 text-muted"></i> End Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control form-control-sm" id="endDate" value="2026-12-31">
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-hashtag me-1 text-muted"></i> No Of Months</label>
+                    <input type="text" class="form-control form-control-sm bg-light" id="noOfMonths" readonly>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-tag me-1 text-muted"></i> Sale Price<span class="diff">changed</span></label>
+                    <input type="text" class="form-control form-control-sm bg-light" id="salePrice" value="1,629,740.00" readonly>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-line-chart me-1 text-muted"></i> Per Month ROI <span class="text-danger">*</span><span class="diff">changed</span></label>
+                    <input type="number" class="form-control form-control-sm" id="perMonthRoi" value="8148.70" step="0.01">
+                    <div class="roi-hint mt-1" id="roiYield"></div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-calculator me-1 text-muted"></i> Amount <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm bg-light fw-bold" id="amount" readonly>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-comment-o me-1 text-muted"></i> Remark</label>
+                    <textarea class="form-control form-control-sm" rows="2" placeholder="Optional remark..."></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold small mb-1"><i class="fa fa-file-text-o me-1 text-muted"></i> Description</label>
+                    <input type="text" class="form-control form-control-sm bg-light" id="description" readonly>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer py-2 px-3 border-top">
+            <button type="button" class="btn btn-sm btn-secondary"><i class="fa fa-times me-1"></i> Close</button>
+            <button type="button" class="btn btn-sm btn-primary"><i class="fa fa-check me-1"></i> Save</button>
+        </div>
+    </div>
+
+    <div class="formula">
+        <b>Amount</b> = Per Month ROI × No Of Months &nbsp;·&nbsp;
+        <b>No Of Months</b> = round(days between Start and End ÷ 30), same rule as Service Charge &nbsp;·&nbsp;
+        <b>Yield</b> = Per Month ROI × 12 ÷ Sale Price
+        <hr class="my-2">
+        <b>On Save</b> (expense owed to the customer): Dr <b>ROI Expense</b> / Cr <b>Customer</b> &nbsp;·&nbsp;
+        <b>Paying it</b> (existing Payout on the Payment tab): Dr <b>Customer</b> / Cr <b>Cash / Bank</b>
+    </div>
+
+    <div class="tabbar">
+        <span class="lbl">Services tab buttons (sale agreements):</span>
+        <button class="btn btn-sm btn-outline-info"><i class="fa fa-calculator me-1"></i> Service Charge</button>
+        <button class="btn btn-sm btn-outline-success"><i class="fa fa-line-chart me-1"></i> ROI</button>
+    </div>
+</div>
+
+<script>
+    const salePrice = 1629740;
+    const money = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = iso => iso.split('-').reverse().join('-');
+
+    function calculate() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const roi = parseFloat(document.getElementById('perMonthRoi').value) || 0;
+
+        const days = Math.max(Math.round((new Date(end) - new Date(start)) / 86400000) + 1, 0);
+        const months = Math.round(days / 30);
+
+        document.getElementById('noOfMonths').value = months;
+        document.getElementById('amount').value = money(Math.round(roi * months * 100) / 100);
+        document.getElementById('roiYield').textContent = '≈ ' + (roi * 12 / salePrice * 100).toFixed(2) + '% per year of sale price';
+        document.getElementById('description').value = 'ROI for the period ' + fmt(start) + ' to ' + fmt(end);
+    }
+
+    ['startDate', 'endDate', 'perMonthRoi'].forEach(id => document.getElementById(id).addEventListener('input', calculate));
+    calculate();
+</script>
+</body>
+</html>

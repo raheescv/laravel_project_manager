@@ -20,16 +20,14 @@ class RentOutExpirySource extends DashboardSource
 
         return [
             new WidgetDefinition('rent-kpis', 'Rent out', 'Lease expiry', 'Occupied agreements ending soon', 'calendar', 'kpi', 12, 6, $permission),
-            new WidgetDefinition('rent-upcoming', 'Rent out', 'Upcoming end dates', 'Ending in the next 90 days', 'calendar', 'table', 6, 6, $permission),
-            new WidgetDefinition('rent-expired', 'Rent out', 'Expired agreements', 'Most recently ended', 'exclamation-circle', 'table', 6, 6, $permission),
+            new WidgetDefinition('rent-agreements', 'Rent out', 'Agreement end dates', 'Ending in the next 90 days or recently ended', 'calendar', 'table', 12, 6, $permission, ['upcoming' => 'Upcoming', 'expired' => 'Expired'], 'upcoming'),
         ];
     }
 
     public function data(string $key, ?string $option, array $params = []): array
     {
         return match ($key) {
-            'rent-upcoming' => ['blocks' => [$this->upcoming()]],
-            'rent-expired' => ['blocks' => [$this->expired()]],
+            'rent-agreements' => ['blocks' => [$option === 'expired' ? $this->expired() : $this->upcoming()]],
             default => ['blocks' => [$this->counts()], 'link' => $this->link('Open rent out', 'property::rent::index', 'rent out.view')],
         };
     }
