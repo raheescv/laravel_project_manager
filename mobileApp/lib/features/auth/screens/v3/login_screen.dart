@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'package:invo/shared/domain/helpers/responsive.dart';
@@ -27,10 +30,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _bioReady = false;
   late final AnimationController _shake =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+  // The tablet card shows a clock; this ticks it over on the minute.
+  DateTime _now = DateTime.now();
+  Timer? _clock;
 
   @override
   void initState() {
     super.initState();
+    _clock = Timer.periodic(const Duration(seconds: 15), (_) {
+      final now = DateTime.now();
+      if (mounted && now.minute != _now.minute) setState(() => _now = now);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = context.read<AuthCubit>();
       final lastMode = await auth.lastLoginMode();
@@ -46,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _clock?.cancel();
     _shake.dispose();
     _userCtl.dispose();
     _passCtl.dispose();
@@ -74,6 +85,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return name.split(RegExp(r'\s+')).first;
   }
 
+  String _subtitle(AuthCubit auth, bool locked) => locked
+      ? '${_firstName(auth)} · enter your MPIN to carry on'
+      : _mode == 'pin'
+          ? 'Enter your MPIN to continue'
+          : 'Sign in with your username & password';
+
   void _tap(String d) {
     if (_pin.length >= 6) return;
     HapticFeedback.selectionClick();
@@ -94,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // device. Same screen, because it's the same keypad and the same shake —
     // only the wording and where the PIN is checked differ.
     final locked = auth.isLocked;
+    final tablet = context.isTablet;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -105,6 +123,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         ),
         child: Stack(
           children: [
+            if (tablet) ..._tabletBackdrop()
+            else ...[
             Positioned(
               right: -80,
               top: -70,
@@ -127,7 +147,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 child: QloudLogomark(height: 320, color: Colors.white),
               ),
             ),
-            SafeArea(
+            ],
+            if (tablet) _tabletLayout(auth, locked)
+            else SafeArea(
               child: MaxWidthBox(
                 maxWidth: 460,
                 child: LayoutBuilder(
@@ -163,26 +185,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     Text(locked ? 'Locked' : 'Welcome back',
                         style: serif(size: 29, color: Colors.white)),
                     const SizedBox(height: 4),
-                    Text(
-                        locked
-                            ? '${_firstName(auth)} · enter your MPIN to carry on'
-                            : _mode == 'pin'
-                                ? 'Enter your MPIN to continue'
-                                : 'Sign in with your username & password',
+                    Text(_subtitle(auth, locked),
                         style: ui(size: 12.5, weight: FontWeight.w500, color: Colors.white70)),
                     const SizedBox(height: 22),
                     if (_mode == 'pin') ...[
-                      AnimatedBuilder(
-                        animation: _shake,
-                        builder: (_, child) {
-                          final dx = (_shake.value == 0)
-                              ? 0.0
-                              : 8 * (1 - _shake.value) *
-                                  (1 - 2 * ((_shake.value * 5) % 1).abs());
-                          return Transform.translate(offset: Offset(dx, 0), child: child);
-                        },
-                        child: _dots(p.accent),
-                      ),
+                      _shakingDots(p.accent),
                       const Spacer(),
                       _keypad(),
                     ] else ...[
@@ -191,17 +198,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ],
                     const SizedBox(height: 16),
                     _footerToggle(p.accent),
-                    // Ending the session is the slow path, so it stays a
-                    // deliberate choice rather than something a sale does.
-                    if (locked)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: GestureDetector(
-                          onTap: () => context.read<AuthCubit>().logout(),
-                          child: Text('Sign out completely',
-                              style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white60)),
-                        ),
-                      ),
+                    if (locked) _signOutLink(),
                     const SizedBox(height: 14),
                     AppVersionText(
                         style: ui(size: 10, weight: FontWeight.w600, color: Colors.white38, letterSpacing: 1.2)),
@@ -240,6 +237,236 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
+  /// Tablet: one frosted card on the gradient — identity | keypad side by side
+  /// in landscape, stacked in portrait — instead of the phone column stranded
+  /// mid-screen (sample B in docs/mobile-tablet-login-preview.html). Scrolls
+  /// only when the keyboard squeezes it, so the till's 686pt never does.
+  Widget _tabletLayout(AuthCubit auth, bool locked) {
+    final gold = context.astra.accent;
+    return SafeArea(
+      child: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final portrait = constraints.maxHeight > constraints.maxWidth;
+              final keyHeight = portrait ? 66.0 : constraints.maxHeight < 650 ? 54.0 : 62.0;
+              final keypadSide = _tabletKeypadSide(auth, locked, gold, keyHeight, portrait: portrait);
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          portrait
+                              ? _glassCard(
+                                  width: 470,
+                                  padding: const EdgeInsets.fromLTRB(40, 36, 40, 30),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _tabletIdentity(auth, locked, portrait: true),
+                                      const SizedBox(height: 26),
+                                      keypadSide,
+                                    ],
+                                  ),
+                                )
+                              : _glassCard(
+                                  width: math.min(900, constraints.maxWidth - 120),
+                                  padding: const EdgeInsets.symmetric(horizontal: 38, vertical: 34),
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        Expanded(flex: 10, child: _tabletIdentity(auth, locked, portrait: false)),
+                                        Container(
+                                          width: 1,
+                                          margin: const EdgeInsets.symmetric(horizontal: 36),
+                                          color: Colors.white.withValues(alpha: 0.14),
+                                        ),
+                                        Expanded(flex: 11, child: keypadSide),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                          const SizedBox(height: 16),
+                          AppVersionText(
+                              prefix: 'QLOUD POS · ',
+                              style: ui(size: 10, weight: FontWeight.w600, color: Colors.white38, letterSpacing: 1.2)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: 8,
+            right: 12,
+            child: IconButton(
+              onPressed: () => ConnectionSheet.show(context),
+              icon: Icon(Icons.settings_outlined, color: Colors.white.withValues(alpha: 0.8)),
+              tooltip: 'Connection settings',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Two soft glows and a large watermark behind the frosted card, so the blur
+  /// has something to catch.
+  List<Widget> _tabletBackdrop() {
+    final p = context.astra;
+    Widget glow(Color color) => Container(
+          width: 520,
+          height: 520,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [color, Colors.transparent]),
+          ),
+        );
+    return [
+      Positioned(left: -160, top: -200, child: glow(p.accent.withValues(alpha: 0.42))),
+      Positioned(right: -180, bottom: -220, child: glow(p.primary.withValues(alpha: 0.55))),
+      const Positioned(
+        right: -40,
+        bottom: -30,
+        child: Opacity(opacity: 0.06, child: QloudLogomark(height: 380, color: Colors.white)),
+      ),
+    ];
+  }
+
+  /// No drop shadow: through a translucent card it reads as a dark slab inside
+  /// the glass, not as lift — the hairline border and the blur do that job.
+  Widget _glassCard({required double width, required EdgeInsets padding, required Widget child}) {
+    final radius = BorderRadius.circular(30);
+    return SizedBox(
+      width: width,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.075),
+              borderRadius: radius,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Brand, greeting and — in landscape — the clock, spread down the card's
+  /// left half. A locked till shows whose session is waiting instead of the mark.
+  Widget _tabletIdentity(AuthCubit auth, bool locked, {required bool portrait}) {
+    final p = context.astra;
+    final align = portrait ? CrossAxisAlignment.center : CrossAxisAlignment.start;
+    final textAlign = portrait ? TextAlign.center : TextAlign.start;
+    final brand = Column(
+      crossAxisAlignment: align,
+      children: [
+        locked ? _lockedAvatar(auth) : const QloudLogomark(height: 62, color: Colors.white),
+        const SizedBox(height: 14),
+        Text('QLOUD', style: ui(size: 13, weight: FontWeight.w800, color: p.accent, letterSpacing: 7)),
+        const SizedBox(height: 4),
+        Text('POS', style: ui(size: 9, weight: FontWeight.w700, color: Colors.white54, letterSpacing: 6)),
+      ],
+    );
+    final greeting = Column(
+      crossAxisAlignment: align,
+      children: [
+        Text(locked ? 'Locked' : 'Welcome back',
+            textAlign: textAlign, style: serif(size: portrait ? 32 : 36, color: Colors.white)),
+        const SizedBox(height: 6),
+        Text(_subtitle(auth, locked),
+            textAlign: textAlign, style: ui(size: 13.5, weight: FontWeight.w500, color: Colors.white70)),
+      ],
+    );
+    if (portrait) return Column(children: [brand, const SizedBox(height: 18), greeting]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        brand,
+        Padding(padding: const EdgeInsets.symmetric(vertical: 24), child: greeting),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(DateFormat('HH:mm').format(_now),
+                style: ui(size: 30, weight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
+            const SizedBox(height: 2),
+            Text(DateFormat('EEEE, d MMMM').format(_now),
+                style: ui(size: 12, weight: FontWeight.w600, color: Colors.white54)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _lockedAvatar(AuthCubit auth) => Container(
+        width: 60,
+        height: 60,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.14),
+          border: Border.all(color: context.astra.accent.withValues(alpha: 0.6), width: 2),
+        ),
+        child: Text(_firstName(auth).characters.first.toUpperCase(),
+            style: ui(size: 23, weight: FontWeight.w800, color: Colors.white)),
+      );
+
+  Widget _tabletKeypadSide(AuthCubit auth, bool locked, Color gold, double keyHeight, {required bool portrait}) =>
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_mode == 'pin') ...[
+            Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: _shakingDots(gold)),
+            SizedBox(height: portrait ? 16 : 14),
+            _keypad(keyHeight: keyHeight, gap: 12, digitSize: 26),
+            const SizedBox(height: 4),
+          ] else ...[
+            _passwordForm(auth, gold),
+            const SizedBox(height: 14),
+          ],
+          _footerToggle(gold),
+          if (locked) Center(child: _signOutLink()),
+        ],
+      );
+
+  Widget _shakingDots(Color gold) => AnimatedBuilder(
+        animation: _shake,
+        builder: (_, child) {
+          final dx = (_shake.value == 0)
+              ? 0.0
+              : 8 * (1 - _shake.value) *
+                  (1 - 2 * ((_shake.value * 5) % 1).abs());
+          return Transform.translate(offset: Offset(dx, 0), child: child);
+        },
+        child: _dots(gold),
+      );
+
+  // Ending the session is the slow path, so it stays a deliberate choice
+  // rather than something a sale does.
+  Widget _signOutLink() => Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: GestureDetector(
+          onTap: () => context.read<AuthCubit>().logout(),
+          child: Text('Sign out completely',
+              style: ui(size: 11.5, weight: FontWeight.w700, color: Colors.white60)),
+        ),
+      );
+
   Widget _dots(Color gold) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(4, (i) {
@@ -256,7 +483,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         }),
       );
 
-  Widget _keypad() {
+  Widget _keypad({double keyHeight = 50, double gap = 9, double digitSize = 24}) {
     // Built from Rows (not a GridView) so it has an intrinsic height and works
     // inside IntrinsicHeight / the scroll-when-short layout.
     const rows = [
@@ -266,18 +493,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       ['', '0', '<'],
     ];
     Widget cell(String k) {
-      if (k.isEmpty) return const Expanded(child: SizedBox(height: 50));
+      if (k.isEmpty) return Expanded(child: SizedBox(height: keyHeight));
       if (k == '<') {
         return Expanded(
           child: _key(
             child: const Icon(Icons.backspace_outlined, color: Colors.white70, size: 20),
             onTap: _backspace,
             bare: true,
+            height: keyHeight,
           ),
         );
       }
       return Expanded(
-        child: _key(child: Text(k, style: serif(size: 24, color: Colors.white)), onTap: () => _tap(k)),
+        child: _key(
+            child: Text(k, style: serif(size: digitSize, color: Colors.white)),
+            onTap: () => _tap(k),
+            height: keyHeight),
       );
     }
 
@@ -285,12 +516,12 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       children: [
         for (final row in rows)
           Padding(
-            padding: const EdgeInsets.only(bottom: 9),
+            padding: EdgeInsets.only(bottom: gap),
             child: Row(
               children: [
                 for (var i = 0; i < row.length; i++) ...[
                   cell(row[i]),
-                  if (i < row.length - 1) const SizedBox(width: 9),
+                  if (i < row.length - 1) SizedBox(width: gap),
                 ],
               ],
             ),
@@ -299,11 +530,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _key({required Widget child, required VoidCallback onTap, bool bare = false}) =>
+  Widget _key({required Widget child, required VoidCallback onTap, bool bare = false, double height = 50}) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 50,
+          height: height,
           decoration: bare
               ? null
               : BoxDecoration(

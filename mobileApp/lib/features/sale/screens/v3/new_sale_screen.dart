@@ -69,10 +69,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   StreamSubscription<AuthState>? _daySub;
   late final AppLifecycleListener _lifecycle;
 
-  /// A field on the tablet rail (the order discount) holds focus — see
-  /// [_tabletCartPanel].
-  bool _railFocused = false;
-
   /// Grid (image tiles) vs list — restored from the last choice on this device.
   _ProductView _view = serviceLocator<LocalStorageService>().saleView == 'list'
       ? _ProductView.list
@@ -693,17 +689,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     final railW = screen.width > screen.height
         ? (screen.width * 0.36).clamp(340.0, 460.0)
         : (screen.width * 0.32).clamp(320.0, 430.0);
-    // The keyboard leaves a landscape till ~300pt, less than the rail's fixed
-    // parts need: while the discount is being typed the client/staff card and
-    // the ticket heading step aside so the field and the total it changes stay
-    // on screen (they overflowed the rail before). The lines list shrinks on
-    // its own.
-    final typing = _railFocused && MediaQuery.viewInsetsOf(context).bottom > 0;
-    return Focus(
-      canRequestFocus: false,
-      skipTraversal: true,
-      onFocusChange: (focused) => setState(() => _railFocused = focused),
-      child: Container(
+    // The keyboard (order discount, catalog search) leaves a landscape till
+    // ~300pt — less than the rail's head, client card and total need, so the
+    // rail overflowed. While it is up the rail scrolls instead, anchored at its
+    // foot so the field being typed and the total stay in view, and the lines
+    // hug their rows rather than fill the height.
+    final keyboardUp = MediaQuery.viewInsetsOf(context).bottom > 0;
+    return Container(
       width: railW,
       // Docked, not floating: the rail runs to the right and bottom edges of the
       // window so the total is at the foot of the screen instead of above a band
@@ -720,7 +712,24 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
         borderRadius: const BorderRadius.horizontal(left: Radius.circular(26)),
         border: Border(left: BorderSide(color: p.hairline)),
       ),
-      child: Column(
+      child: LayoutBuilder(
+        builder: (context, box) => SingleChildScrollView(
+          reverse: true,
+          physics: keyboardUp ? null : const NeverScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: keyboardUp
+                ? BoxConstraints(minHeight: box.maxHeight)
+                : BoxConstraints.tightFor(height: box.maxHeight),
+            child: _tabletRailColumn(cart, railW, keyboardUp),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tabletRailColumn(CartCubit cart, double railW, bool keyboardUp) {
+    final p = context.astra;
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
@@ -742,30 +751,33 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             ],
           ),
           const SizedBox(height: 10),
-          if (!typing) ...[
-            _whoStack(cart),
-            _preOrderBanner(cart),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.shopping_bag_outlined, size: 16, color: p.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Current ticket',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 12, weight: FontWeight.w800, color: p.ink, letterSpacing: 0.5)),
-                ),
-                Text('${cart.count} ${cart.count == 1 ? 'item' : 'items'}',
-                    style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-              ],
-            ),
-            const SizedBox(height: 8),
-          ],
+          _whoStack(cart),
+          _preOrderBanner(cart),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.shopping_bag_outlined, size: 16, color: p.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Current ticket',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 12, weight: FontWeight.w800, color: p.ink, letterSpacing: 0.5)),
+              ),
+              Text('${cart.count} ${cart.count == 1 ? 'item' : 'items'}',
+                  style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+            ],
+          ),
+          const SizedBox(height: 8),
           // One card of slim rows, the way a ticket reads, rather than a card
           // per line — on the till's short landscape rail the cards fit two.
           // The card hugs its lines and scrolls once they outgrow the rail.
-          Expanded(
+          // Flex 0 under the keyboard, where the rail scrolls and has no height
+          // to fill; one Flexible either way so the total below keeps its state
+          // (and the discount field its focus) when the keyboard comes and goes.
+          Flexible(
+            flex: keyboardUp ? 0 : 1,
+            fit: FlexFit.tight,
             child: cart.isEmpty
                 ? EmptyState(
                     icon: Icons.add_shopping_cart,
@@ -801,8 +813,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review), withDiscount: true, compact: true),
           ],
         ],
-      ),
-      ),
     );
   }
 
