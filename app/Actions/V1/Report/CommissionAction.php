@@ -3,6 +3,7 @@
 namespace App\Actions\V1\Report;
 
 use App\Traits\Report\EmployeeReportQueryBuilder;
+use Illuminate\Support\Facades\DB;
 
 class CommissionAction
 {
@@ -40,25 +41,39 @@ class CommissionAction
             'to_date' => $endDate,
         ];
 
-        $paginator = $this->buildBaseQuery($filters)
+        $lines = $this->buildBaseQuery($filters)
             ->leftJoinSub($this->buildReturnSubqueryByEmployeeAndProduct($filters), 'returns', function ($join): void {
                 $join->on('returns.employee_id', '=', 'sale_items.employee_id')
                     ->on('returns.product_id', '=', 'sale_items.product_id');
             })
             ->select('sale_items.employee_id', 'sale_items.product_id', 'users.name as employee', 'products.name as product')
             ->groupBy('sale_items.employee_id', 'sale_items.product_id', 'employee_commissions.commission_percentage')
+            ->selectRaw('SUM(sale_items.base_unit_quantity) as sale_quantity')
             ->selectRaw('SUM(sale_items.base_unit_quantity) - COALESCE(MAX(returns.return_quantity), 0) as total_quantity')
             ->selectRaw('SUM(sale_items.total) as total_amount')
             ->selectRaw('COALESCE(MAX(returns.return_amount), 0) as return_amount')
             ->selectRaw('SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0) as net_amount')
             ->selectRaw('COALESCE(MAX(employee_commissions.commission_percentage), 0) as commission_percentage')
-            ->selectRaw('(SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0)) * COALESCE(MAX(employee_commissions.commission_percentage), 0) / 100 as total_commission')
+            ->selectRaw('(SUM(sale_items.total) - COALESCE(MAX(returns.return_amount), 0)) * COALESCE(MAX(employee_commissions.commission_percentage), 0) / 100 as total_commission');
+
+        // Full-set grand totals (all pages) in one pass over the grouped lines,
+        // instead of re-running the line query once per figure — mirrors the
+        // web Employee Report footer so the mobile summary reconciles.
+        $lineTotals = DB::query()
+            ->fromSub($lines, 'lines')
+            ->selectRaw('COUNT(*) as line_count')
+            ->selectRaw('COUNT(DISTINCT employee_id) as employee_count')
+            ->selectRaw('COALESCE(SUM(sale_quantity), 0) as total_quantity')
+            ->selectRaw('COALESCE(SUM(total_amount), 0) as total_amount')
+            ->selectRaw('COALESCE(SUM(total_commission), 0) as total_commission')
+            ->first();
+
+        $rows = (clone $lines)
             ->orderBy($this->orderColumn($sort), $direction)
             ->orderByDesc('net_amount')
             ->orderBy('product')
-            ->paginate($perPage, ['*'], 'page', $page);
-
-        $rows = collect($paginator->items())
+            ->forPage($page, $perPage)
+            ->get()
             ->map(fn ($row) => [
                 'employee_id' => (string) $row->employee_id,
                 'product_id' => (string) $row->product_id,
@@ -73,30 +88,23 @@ class CommissionAction
             ])
             ->all();
 
-        // Full-set grand totals (all pages), net of returns — mirrors the web
-        // Employee Report footer so the mobile summary reconciles.
-        $saleTotals = $this->buildBaseQuery($filters)
-            ->selectRaw('SUM(sale_items.base_unit_quantity) as total_quantity')
-            ->selectRaw('SUM(sale_items.total) as total_amount')
-            ->first();
-
         $returnTotals = $this->buildReturnTotalsQuery($filters)->first();
-        $totalCommission = $this->calculateEmployeeCommissions($filters)->sum();
 
-        $totalSale = (float) ($saleTotals->total_amount ?? 0);
+        $total = (int) $lineTotals->line_count;
+        $totalSale = (float) $lineTotals->total_amount;
         $totalReturn = (float) ($returnTotals->return_amount ?? 0);
 
         $summary = [
-            'rows' => $paginator->total(),
-            'employees' => $this->buildBaseQuery($filters)->distinct()->count('sale_items.employee_id'),
-            'total_quantity' => round((float) ($saleTotals->total_quantity ?? 0) - (float) ($returnTotals->return_quantity ?? 0), 3),
+            'rows' => $total,
+            'employees' => (int) $lineTotals->employee_count,
+            'total_quantity' => round((float) $lineTotals->total_quantity - (float) ($returnTotals->return_quantity ?? 0), 3),
             'total_sale_amount' => round($totalSale, 2),
             'total_return_amount' => round($totalReturn, 2),
             'total_net_amount' => round($totalSale - $totalReturn, 2),
-            'total_commission' => round((float) $totalCommission, 2),
+            'total_commission' => round((float) $lineTotals->total_commission, 2),
         ];
 
-        return [$rows, $summary, $paginator->total()];
+        return [$rows, $summary, $total];
     }
 
     /**
