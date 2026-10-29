@@ -46,10 +46,10 @@ class DaySessionCubit extends Cubit<DaySessionState> {
   bool get isOpen => state.isOpen;
   DaySessionSummary? get report => state.report;
 
-  /// Whether closing the day also prints its Sale Bill Report — this till's
-  /// last answer on the close sheet, printing until it is first answered.
-  bool get printOnClose => _storage.daySessionPrintOnClose ?? true;
-  Future<void> setPrintOnClose(bool v) => _storage.setDaySessionPrintOnClose(v);
+  /// Whether closing the day also prints its Sale Bill Report — the signed-in
+  /// user's last tap on the close sheet's toggle, printing until they first tap it.
+  bool get printOnClose => _storage.daySessionPrintOnCloseFor(_auth.user?.id) ?? true;
+  Future<void> setPrintOnClose(bool v) => _storage.setDaySessionPrintOnCloseFor(_auth.user?.id, v);
 
   // The report's session is kept: [refresh] replaces it straight after, and
   // dropping it here would blink the report card off and on.

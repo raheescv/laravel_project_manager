@@ -29,6 +29,15 @@ class OfflineBanner extends StatelessWidget {
   /// (the strip is then plain text).
   final VoidCallback? onTapPending;
 
+  /// Bottom space a sheet must leave so the floating tablet pill does not sit
+  /// on its buttons — above the safe area, which the sheet insets for itself.
+  /// Zero on a phone, when no pill is showing, or while the keyboard (which
+  /// covers the pill) is up.
+  static double floatingClearance(BuildContext context) {
+    if (MediaQuery.viewInsetsOf(context).bottom > 0) return 0;
+    return context.dependOnInheritedWidgetOfExactType<_FloatingStripScope>()?.clearance ?? 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!serviceLocator.isRegistered<ConnectivityCubit>()) return child;
@@ -73,7 +82,8 @@ class _WithStrip extends StatelessWidget {
       // so only the pill itself takes taps — the grid underneath stays live.
       return Stack(
         children: [
-          child,
+          // Pill (~30) + its 18 lift + a gap, for sheets to clear.
+          _FloatingStripScope(clearance: visible ? 62 : 0, child: child),
           if (visible)
             Positioned(
               left: 0,
@@ -104,6 +114,15 @@ class _WithStrip extends StatelessWidget {
       ],
     );
   }
+}
+
+class _FloatingStripScope extends InheritedWidget {
+  const _FloatingStripScope({required this.clearance, required super.child});
+
+  final double clearance;
+
+  @override
+  bool updateShouldNotify(_FloatingStripScope oldWidget) => clearance != oldWidget.clearance;
 }
 
 /// Shown while the device is stocking itself for the first time, and afterwards

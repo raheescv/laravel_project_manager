@@ -401,11 +401,19 @@ class LocalStorageService {
     if (key != null) await _prefs.setString(key, jsonEncode(v));
   }
 
-  // Whether closing the day prints its Sale Bill Report. Null until the close
-  // sheet is first answered, which means print.
-  bool? get daySessionPrintOnClose => _prefs.getBool(LocalStorageKeys.daySessionPrintOnClose);
-  Future<void> setDaySessionPrintOnClose(bool v) =>
-      _prefs.setBool(LocalStorageKeys.daySessionPrintOnClose, v);
+  // Whether closing the day prints its Sale Bill Report for [userId]. Until
+  // they tap the toggle it is the device-wide answer; null until either is
+  // set, which means print.
+  bool? daySessionPrintOnCloseFor(String? userId) {
+    final key = userKey(LocalStorageKeys.userDaySessionPrintOnClose, userId);
+    return (key == null ? null : _prefs.getBool(key)) ??
+        _prefs.getBool(LocalStorageKeys.daySessionPrintOnClose);
+  }
+
+  Future<void> setDaySessionPrintOnCloseFor(String? userId, bool v) {
+    final key = userKey(LocalStorageKeys.userDaySessionPrintOnClose, userId);
+    return _prefs.setBool(key ?? LocalStorageKeys.daySessionPrintOnClose, v);
+  }
 
   // ---- offline selling (device-local) ----
   // Short tag identifying this till inside the provisional references it prints,

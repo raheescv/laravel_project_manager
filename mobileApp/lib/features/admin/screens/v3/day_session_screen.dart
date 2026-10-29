@@ -566,8 +566,9 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
 
 
   /// Confirms the close and, for those who may print it, asks whether the day's
-  /// Sale Bill Report goes to the thermal roll straight after — an answer this
-  /// till remembers. Null when the close is called off.
+  /// Sale Bill Report goes to the thermal roll straight after — every tap on
+  /// that toggle is remembered for the signed-in user. Null when the close is
+  /// called off.
   Future<_CloseChoice?> _confirmClose(DaySessionCubit c) async {
     final p = context.astra;
     final t = context.astraTheme;
@@ -636,7 +637,10 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
             ),
             if (canPrint) ...[
               const SizedBox(height: 10),
-              _printToggle(printIt, printHint, () => setSheet(() => printIt = !printIt)),
+              _printToggle(printIt, printHint, () {
+                setSheet(() => printIt = !printIt);
+                unawaited(c.setPrintOnClose(printIt));
+              }),
             ],
             const SizedBox(height: 18),
             Row(
@@ -688,7 +692,6 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
         ),
       )),
     );
-    if (choice != null && canPrint) unawaited(c.setPrintOnClose(choice == _CloseChoice.closeAndPrint));
     return choice;
   }
 }

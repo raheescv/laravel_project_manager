@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'package:invo/features/sale/screens/v3/review_pay_screen.dart';
+import 'package:invo/shared/widgets/tablet_widgets.dart';
+
+import 'support/test_harness.dart';
+
+/// Review & Pay on a tablet: the page head covers the ticket column only, so
+/// the pay rail runs from the top of the window. On the canteen till's short
+/// landscape (1097×686) that is what lets the tender pad and the note sit above
+/// the Charge bar without scrolling.
+void main() {
+  setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
+
+  for (final size in const [Size(1097, 686), Size(686, 1097), Size(1194, 834)]) {
+    testWidgets('pay rail starts at the top at ${size.width.toInt()}×${size.height.toInt()}', (tester) async {
+      final d = TestHarness();
+      await d.init();
+      addTearDown(d.dispose);
+      final products = await d.demoProducts();
+      for (final product in products.take(3)) {
+        d.cart.add(product);
+      }
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(d.wrap(const ReviewPayScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(tester.takeException(), isNull, reason: 'no overflow at $size');
+
+      final head = tester.getRect(find.byType(TabletPageHead));
+      expect(tester.getRect(find.text('AMOUNT DUE')).top, lessThan(head.bottom),
+          reason: 'the rail should use the height beside the page head');
+      expect(tester.getRect(find.text('AMOUNT DUE')).left, greaterThan(head.right),
+          reason: 'the page head should stop at the ticket column');
+
+      final charge = tester.getRect(find.textContaining('Charge'));
+      expect(tester.getRect(find.text('Add a note')).bottom, lessThan(charge.top),
+          reason: 'the note prompt should be on screen above the Charge bar');
+    });
+  }
+}

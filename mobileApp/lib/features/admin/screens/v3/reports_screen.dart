@@ -146,11 +146,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
       body: AstraBackground(
         child: Column(
           children: [
+            // The report switcher rides in the header's title row, beside the
+            // print button, so the body starts straight at the date range.
             EmeraldHeader(
               title: 'Reports',
-              subtitle: 'Every angle on your sales',
+              subtitle: canView ? null : 'Every angle on your sales',
               trailing: canView
-                  ? HeaderIconButton(icon: Icons.print_outlined, gold: true, onTap: () => unawaited(_openExport()))
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _reportTabs(),
+                        const SizedBox(width: 8),
+                        HeaderIconButton(icon: Icons.print_outlined, gold: true, onTap: () => unawaited(_openExport())),
+                      ],
+                    )
                   : null,
             ),
             Expanded(
@@ -166,8 +175,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                         child: Column(
                           children: [
-                            _reportTabs(),
-                            const SizedBox(height: 8),
                             _dateFilter(admin),
                             const SizedBox(height: 8),
                             Expanded(child: _breakdownCard(admin)),
@@ -182,7 +189,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     // null sections (e.g. the trend on a single-day range) drop out
                     // entirely so they don't leave an empty gap.
                     for (final section in <Widget?>[
-                      _reportTabs(),
                       _dateFilter(admin),
                       ..._tabSections(admin),
                     ])
@@ -213,15 +219,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   /// Report switcher — picks which of the two reports the page shows.
   ///
+  /// On phone it sits in the header's title row, so it is drawn on the hero:
+  /// a translucent track with a white thumb, labels only (no icons) so it
+  /// leaves the title room on a 360-wide phone.
+  ///
   /// [quiet] draws it the way the command bar draws its presets: a segmented
-  /// cluster sunk into a recessed track, sized to its labels, rather than a
-  /// full-width gradient bar. Used on tablet, where it sits directly under the
-  /// command bar and shouldn't compete with it.
+  /// cluster sunk into a recessed track, sized to its labels. Used on tablet,
+  /// where it sits in the command bar beside the presets.
   Widget _reportTabs({bool quiet = false}) {
     final p = context.astra;
     Widget tab(String label, int index, IconData icon) {
       final active = _tab == index;
-      final seg = GestureDetector(
+      final heroColor = active ? p.primary : Colors.white.withValues(alpha: 0.82);
+      return GestureDetector(
         onTap: () {
           if (_tab == index) return;
           HapticFeedback.selectionClick();
@@ -231,46 +241,42 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: EdgeInsets.symmetric(vertical: quiet ? 7 : 10, horizontal: quiet ? 14 : 0),
+          padding: EdgeInsets.symmetric(vertical: 7, horizontal: quiet ? 14 : 11),
           alignment: Alignment.center,
           decoration: quiet
               ? _thumb(active)
-              : BoxDecoration(
-                  gradient: active ? p.primaryGradient : null,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: active ? context.astraTheme.floatShadow(p.primary) : null,
-                ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: quiet ? 14 : 15,
-                  color: quiet ? (active ? p.primary : p.textMuted) : (active ? Colors.white : p.textSecondary)),
-              SizedBox(width: quiet ? 6 : 7),
-              Flexible(
-                child: Text(label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(
-                        size: quiet ? 11.5 : 12.5,
-                        weight: active ? FontWeight.w800 : (quiet ? FontWeight.w600 : FontWeight.w800),
-                        color: quiet
-                            ? (active ? p.primary : p.textSecondary)
-                            : (active ? Colors.white : p.textSecondary))),
-              ),
-            ],
-          ),
+              : BoxDecoration(color: active ? Colors.white : Colors.transparent, borderRadius: BorderRadius.circular(9)),
+          child: quiet
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
+                    const SizedBox(width: 6),
+                    Text(label,
+                        maxLines: 1,
+                        style: ui(
+                            size: 11.5,
+                            weight: active ? FontWeight.w800 : FontWeight.w600,
+                            color: active ? p.primary : p.textSecondary)),
+                  ],
+                )
+              : Text(label,
+                  maxLines: 1,
+                  style: ui(size: 11.5, weight: active ? FontWeight.w800 : FontWeight.w700, color: heroColor)),
         ),
       );
-      return quiet ? seg : Expanded(child: seg);
     }
 
     final tabs = [tab('Overview', 0, Icons.insights_rounded), tab('Breakdown', 1, Icons.leaderboard_rounded)];
     if (quiet) return _sunkGroup(children: tabs);
     return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(15)),
-      child: Row(children: tabs),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: tabs),
     );
   }
 
@@ -305,8 +311,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
       );
 
-  /// Tablet command bar — the title, the range it is showing, and the whole
-  /// range control on one flat bar closed by a hairline (the same chrome as
+  /// Tablet command bar — the title, the range it is showing, the report
+  /// switcher and the whole range control on one flat bar closed by a hairline (the same chrome as
   /// Link Card): every control is sunk into a recessed group instead of
   /// floating as its own tinted pill, so the reports below start the page.
   ///
@@ -337,7 +343,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ),
           const SizedBox(width: 20),
-          // Wrap, not Row: on a narrow tablet the two groups drop to a second
+          // Wrap, not Row: on a narrow tablet the groups drop to a second
           // line instead of overflowing the bar.
           Expanded(
             flex: 7,
@@ -346,7 +352,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 10,
               runSpacing: 8,
-              children: [_presetSegmented(admin), _barActions(admin)],
+              children: [_reportTabs(quiet: true), _presetSegmented(admin), _barActions(admin)],
             ),
           ),
         ],
@@ -513,14 +519,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (_tab == 1) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _reportTabs(quiet: true),
-            const SizedBox(height: 14),
-            Expanded(child: _breakdownCard(admin)),
-          ],
-        ),
+        child: _breakdownCard(admin),
       );
     }
 
@@ -528,10 +527,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
       controller: _scrollCtl,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Align(alignment: Alignment.centerLeft, child: _reportTabs(quiet: true)),
-        ),
         LayoutBuilder(
           builder: (ctx, c) {
             if (c.maxWidth < 820) return col([...left, ...right]);

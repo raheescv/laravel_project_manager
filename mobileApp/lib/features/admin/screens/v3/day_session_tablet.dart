@@ -13,15 +13,19 @@ extension _DaySessionTablet on _DaySessionScreenState {
     // Taller than the window (a small tablet), it simply scrolls.
     return LayoutBuilder(builder: (context, box) {
       final split = box.maxWidth >= 760;
+      // A short landscape window (the canteen till gets ~985×593 inside the
+      // shell) takes the compact board, so the page fits without scrolling.
+      final compact = box.maxHeight < 720;
+      final gap = compact ? 10.0 : 14.0;
       final showReport = report != null && !noticeFirst;
       final Widget lower;
       if (!showReport) {
-        lower = _momentCard(c, user, fill: split);
+        lower = _momentCard(c, user, fill: split, compact: compact);
       } else if (split) {
         lower = Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(flex: 145, child: _momentCard(c, user, fill: true)),
+            Expanded(flex: 145, child: _momentCard(c, user, fill: true, compact: compact)),
             const SizedBox(width: 14),
             Expanded(flex: 100, child: _tabletReportCard(report, fill: true)),
           ],
@@ -29,26 +33,29 @@ extension _DaySessionTablet on _DaySessionScreenState {
       } else {
         lower = Column(children: [_momentCard(c, user), const SizedBox(height: 14), _tabletReportCard(report)]);
       }
+      // The padding sits inside the fill: as a SliverPadding around it, the
+      // fill took the whole height below the top inset and the bottom inset
+      // was added after it, so the page always scrolled by that much.
       return CustomScrollView(
         slivers: [
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + MediaQuery.paddingOf(context).bottom),
-            sliver: SliverFillRemaining(
-              hasScrollBody: false,
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, compact ? 12 : 16, 24, (compact ? 14 : 24) + MediaQuery.paddingOf(context).bottom),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _heroBand(c, user, branchName),
-                  const SizedBox(height: 14),
+                  _heroBand(c, user, branchName, compact: compact),
+                  SizedBox(height: gap),
                   if (noticeFirst) ...[
                     _saleGateCard(),
-                    const SizedBox(height: 14),
+                    SizedBox(height: gap),
                   ],
-                  _stepperCard(c, user),
-                  const SizedBox(height: 14),
+                  _stepperCard(c, user, compact: compact),
+                  SizedBox(height: gap),
                   if (split) Expanded(child: lower) else ...[lower, const Spacer()],
-                  const SizedBox(height: 16),
-                  _tabletActions(c, noticeFirst: noticeFirst, split: split),
+                  SizedBox(height: compact ? 12 : 16),
+                  _tabletActions(c, noticeFirst: noticeFirst, split: split, compact: compact),
                 ],
               ),
             ),
@@ -87,7 +94,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
   }
 
   // ------------------------------------------------------------ HERO BAND
-  Widget _heroBand(DaySessionCubit c, ApiUser? user, String branchName) {
+  Widget _heroBand(DaySessionCubit c, ApiUser? user, String branchName, {bool compact = false}) {
     final p = context.astra;
     final open = c.isOpen;
     final opened = _openedMoment(c, user);
@@ -125,7 +132,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 24, 18),
+            padding: EdgeInsets.fromLTRB(20, compact ? 12 : 18, 24, compact ? 12 : 18),
             child: Row(
               children: [
                 if (context.canPop()) ...[
@@ -133,14 +140,14 @@ extension _DaySessionTablet on _DaySessionScreenState {
                   const SizedBox(width: 14),
                 ],
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: compact ? 48 : 60,
+                  height: compact ? 48 : 60,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
                   ),
-                  child: Icon(open ? Icons.wb_sunny_outlined : Icons.bedtime_outlined, size: 28, color: Colors.white),
+                  child: Icon(open ? Icons.wb_sunny_outlined : Icons.bedtime_outlined, size: compact ? 24 : 28, color: Colors.white),
                 ),
                 const SizedBox(width: 18),
                 Expanded(
@@ -156,16 +163,19 @@ extension _DaySessionTablet on _DaySessionScreenState {
                           Flexible(
                             child: Text(open ? 'Day Open' : 'Day Closed',
                                 maxLines: 1, overflow: TextOverflow.ellipsis,
-                                style: serif(size: 28, color: Colors.white)),
+                                style: serif(size: compact ? 23 : 28, color: Colors.white)),
                           ),
                           const SizedBox(width: 10),
                           _heroPill(open),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(since,
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.82))),
+                      // Compact: the stepper's first step already says when.
+                      if (!compact) ...[
+                        const SizedBox(height: 2),
+                        Text(since,
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.82))),
+                      ],
                     ],
                   ),
                 ),
@@ -215,7 +225,9 @@ extension _DaySessionTablet on _DaySessionScreenState {
   // --------------------------------------------------------- STEPPER CARD
   /// The lifecycle across the full width: one track from the first dot to the
   /// last, filled up to where the day is.
-  Widget _stepperCard(DaySessionCubit c, ApiUser? user) {
+  /// [compact]: no section label and no float pill (the hero band already shows
+  /// the opening float) — the slim strip a short landscape window needs.
+  Widget _stepperCard(DaySessionCubit c, ApiUser? user, {bool compact = false}) {
     final p = context.astra;
     final open = c.isOpen;
     final opened = _openedMoment(c, user);
@@ -227,36 +239,38 @@ extension _DaySessionTablet on _DaySessionScreenState {
             _step(_NodeState.done, 'Day opened',
                 opened == null ? 'This session is open.' : Dates.humanDateTime(opened.toString()),
                 align: CrossAxisAlignment.start,
-                float: c.session != null ? Money.of(c.session!.openingAmount) : null),
+                float: c.session != null && !compact ? Money.of(c.session!.openingAmount) : null, compact: compact),
             _step(_NodeState.live, 'In session', 'Sales are recorded against this day.',
-                align: CrossAxisAlignment.center, badge: 'LIVE'),
+                align: CrossAxisAlignment.center, badge: 'LIVE', compact: compact),
             _step(_NodeState.pending, 'Close day', 'Pick the moment below, then confirm.',
-                align: CrossAxisAlignment.end),
+                align: CrossAxisAlignment.end, compact: compact),
           ]
         : [
             _step(_NodeState.done, 'Last day closed',
                 closedAt.isEmpty
                     ? 'No recent session on record.'
                     : '${Dates.humanDateTime(closedAt)}${closedBy.isEmpty ? '' : ' by $closedBy'}',
-                align: CrossAxisAlignment.start),
+                align: CrossAxisAlignment.start, compact: compact),
             _step(_NodeState.pending, 'Open a new day', 'Pick the moment below, then start the day.',
-                align: CrossAxisAlignment.end),
+                align: CrossAxisAlignment.end, compact: compact),
           ];
 
     return AstraCard(
       radius: 20,
-      padding: const EdgeInsets.fromLTRB(26, 16, 26, 18),
+      padding: EdgeInsets.fromLTRB(26, compact ? 12 : 16, 26, compact ? 12 : 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionLabel('Session lifecycle'),
-          const SizedBox(height: 14),
+          if (!compact) ...[
+            SectionLabel('Session lifecycle'),
+            const SizedBox(height: 14),
+          ],
           Stack(
             children: [
               Positioned(
-                left: 14,
-                right: 14,
-                top: 12.5,
+                left: compact ? 11 : 14,
+                right: compact ? 11 : 14,
+                top: compact ? 9.5 : 12.5,
                 child: Container(
                   height: 3,
                   alignment: Alignment.centerLeft,
@@ -284,7 +298,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
   }
 
   Widget _step(_NodeState state, String title, String subtitle,
-      {required CrossAxisAlignment align, String? badge, String? float}) {
+      {required CrossAxisAlignment align, String? badge, String? float, bool compact = false}) {
     final p = context.astra;
     final textAlign = switch (align) {
       CrossAxisAlignment.center => TextAlign.center,
@@ -294,8 +308,8 @@ extension _DaySessionTablet on _DaySessionScreenState {
     return Column(
       crossAxisAlignment: align,
       children: [
-        _stepDot(state, size: 28, onTrack: true),
-        const SizedBox(height: 12),
+        _stepDot(state, size: compact ? 22 : 28, onTrack: true),
+        SizedBox(height: compact ? 7 : 12),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -343,7 +357,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
   /// The closing / opening moment: a big tappable readout (either half opens
   /// its full picker) over one-tap Day and Time choices. Nothing points into
   /// the future — the server refuses it — or before [_earliest].
-  Widget _momentCard(DaySessionCubit c, ApiUser? user, {bool fill = false}) {
+  Widget _momentCard(DaySessionCubit c, ApiUser? user, {bool fill = false, bool compact = false}) {
     final p = context.astra;
     final sel = c.selected;
     final n = DateTime.now();
@@ -364,26 +378,26 @@ extension _DaySessionTablet on _DaySessionScreenState {
 
     final isNow = sel == now;
     final dayChoices = <Widget>[
-      _choice('Today', sub: DateFormat('EEE d').format(today),
+      _choice('Today', sub: DateFormat('EEE d').format(today), compact: compact,
           selected: DateUtils.isSameDay(sel, today),
           onTap: () => setAt(DateTime(today.year, today.month, today.day, sel.hour, sel.minute))),
       if (!DateUtils.dateOnly(earliest).isAfter(yesterday))
-        _choice('Yesterday', sub: DateFormat('EEE d').format(yesterday),
+        _choice('Yesterday', sub: DateFormat('EEE d').format(yesterday), compact: compact,
             selected: DateUtils.isSameDay(sel, yesterday),
             onTap: () => setAt(DateTime(yesterday.year, yesterday.month, yesterday.day, sel.hour, sel.minute))),
-      _choice('Other date', icon: Icons.calendar_today_outlined, ghost: true, onTap: () => _pickDate(c)),
+      _choice('Other date', icon: Icons.calendar_today_outlined, ghost: true, compact: compact, onTap: () => _pickDate(c)),
     ];
     Widget back(String label, int minutes) {
       final at = now.subtract(Duration(minutes: minutes));
-      return _choice(label, selected: sel == at, onTap: at.isBefore(earliest) ? null : () => setAt(at));
+      return _choice(label, selected: sel == at, compact: compact, onTap: at.isBefore(earliest) ? null : () => setAt(at));
     }
 
     final timeChoices = <Widget>[
-      _choice('Now', icon: Icons.bolt_outlined, selected: isNow, onTap: c.setNow),
+      _choice('Now', icon: Icons.bolt_outlined, selected: isNow, compact: compact, onTap: c.setNow),
       back('−15 min', 15),
       back('−30 min', 30),
       back('−1 hr', 60),
-      _choice('Custom', icon: Icons.schedule_outlined, ghost: true, onTap: () => _pickTime(c)),
+      _choice('Custom', icon: Icons.schedule_outlined, ghost: true, compact: compact, onTap: () => _pickTime(c)),
     ];
 
     final footer = c.isOpen
@@ -400,7 +414,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
 
     return AstraCard(
       radius: 20,
-      padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
+      padding: EdgeInsets.fromLTRB(22, compact ? 14 : 18, 22, compact ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -421,7 +435,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
                   )
                 : null,
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: compact ? 10 : 14),
           Container(
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
@@ -436,26 +450,26 @@ extension _DaySessionTablet on _DaySessionScreenState {
                   Expanded(
                     flex: 5,
                     child: _readout('Date', DateFormat('d').format(sel), DateFormat('EEEE').format(sel),
-                        DateFormat('MMMM yyyy').format(sel), () => _pickDate(c)),
+                        DateFormat('MMMM yyyy').format(sel), () => _pickDate(c), compact: compact),
                   ),
                   Container(width: 1, color: p.hairline),
                   Expanded(
                     flex: 4,
                     child: _readout('Time', DateFormat('h:mm').format(sel), DateFormat('a').format(sel),
-                        'Tap to change', () => _pickTime(c)),
+                        'Tap to change', () => _pickTime(c), compact: compact),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          _choiceRow('Day', dayChoices),
-          const SizedBox(height: 10),
-          _choiceRow('Time', timeChoices),
-          const SizedBox(height: 16),
+          SizedBox(height: compact ? 10 : 14),
+          _choiceRow('Day', dayChoices, compact: compact),
+          SizedBox(height: compact ? 8 : 10),
+          _choiceRow('Time', timeChoices, compact: compact),
+          SizedBox(height: compact ? 10 : 16),
           if (fill) const Spacer(),
           Container(
-            padding: const EdgeInsets.only(top: 12),
+            padding: EdgeInsets.only(top: compact ? 10 : 12),
             decoration: BoxDecoration(border: Border(top: BorderSide(color: p.hairline))),
             child: IntrinsicHeight(
               child: Row(
@@ -488,7 +502,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
     );
   }
 
-  Widget _readout(String k, String big, String strong, String soft, VoidCallback onTap) {
+  Widget _readout(String k, String big, String strong, String soft, VoidCallback onTap, {bool compact = false}) {
     final p = context.astra;
     return GestureDetector(
       onTap: onTap,
@@ -496,7 +510,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 44, 18),
+            padding: compact ? const EdgeInsets.fromLTRB(18, 10, 44, 12) : const EdgeInsets.fromLTRB(20, 16, 44, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -508,7 +522,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
                   alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
-                      Text(big, style: serif(size: 44, color: p.ink, height: 1)),
+                      Text(big, style: serif(size: compact ? 36 : 44, color: p.ink, height: 1)),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,14 +553,14 @@ extension _DaySessionTablet on _DaySessionScreenState {
     );
   }
 
-  Widget _choiceRow(String k, List<Widget> choices) {
+  Widget _choiceRow(String k, List<Widget> choices, {bool compact = false}) {
     final p = context.astra;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           width: 48,
-          height: 42,
+          height: compact ? 38 : 42,
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(k.toUpperCase(),
@@ -561,7 +575,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
   /// A one-tap moment choice. Filled when it is the selected moment, dashed
   /// for the ones that open a full picker, faded when out of bounds.
   Widget _choice(String label,
-      {String? sub, IconData? icon, bool selected = false, bool ghost = false, required VoidCallback? onTap}) {
+      {String? sub, IconData? icon, bool selected = false, bool ghost = false, bool compact = false, required VoidCallback? onTap}) {
     final p = context.astra;
     final fg = selected ? Colors.white : (ghost ? p.primary : p.ink);
     return Opacity(
@@ -570,7 +584,7 @@ extension _DaySessionTablet on _DaySessionScreenState {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
-          height: 42,
+          height: compact ? 38 : 42,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: selected ? p.primary : (ghost ? p.tint : Colors.transparent),
@@ -665,7 +679,8 @@ extension _DaySessionTablet on _DaySessionScreenState {
   // -------------------------------------------------------------- ACTIONS
   /// The notice and the one call to action, inline at the foot of the page —
   /// a tablet has the room, so nothing floats over the content.
-  Widget _tabletActions(DaySessionCubit c, {required bool noticeFirst, required bool split}) {
+  /// [compact] drops the hint under the button — the confirm sheet says it anyway.
+  Widget _tabletActions(DaySessionCubit c, {required bool noticeFirst, required bool split, bool compact = false}) {
     final p = context.astra;
     final open = c.isOpen;
     final stamp = '${DateFormat('d MMM').format(c.selected)}, ${Dates.time(c.selected)}';
@@ -679,16 +694,18 @@ extension _DaySessionTablet on _DaySessionScreenState {
           busy: c.busy || c.syncing,
           onTap: () => _act(c),
         ),
-        const SizedBox(height: 8),
-        Text(
-          open
-              ? 'You\'ll confirm before the day is closed'
-              : widget.forSale
-                  ? 'Opens the day, then takes you to New Sale'
-                  : 'Starts a new sale session for this branch',
-          textAlign: TextAlign.center,
-          style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
-        ),
+        if (!compact) ...[
+          const SizedBox(height: 8),
+          Text(
+            open
+                ? 'You\'ll confirm before the day is closed'
+                : widget.forSale
+                    ? 'Opens the day, then takes you to New Sale'
+                    : 'Starts a new sale session for this branch',
+            textAlign: TextAlign.center,
+            style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted),
+          ),
+        ],
       ],
     );
     if (noticeFirst) return cta;

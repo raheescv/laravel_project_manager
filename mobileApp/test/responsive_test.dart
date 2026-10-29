@@ -87,6 +87,9 @@ const _viewports = <String, Size>{
   'small tablet portrait': Size(768, 1024),
   'tablet portrait': Size(834, 1194),
   'tablet landscape': tablet,
+  // The canteen till (I24T02, 1200×1920 @ 280dpi): short in landscape.
+  'till landscape': Size(1097, 686),
+  'till portrait': Size(686, 1097),
 };
 
 void main() {

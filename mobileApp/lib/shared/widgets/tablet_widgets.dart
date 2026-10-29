@@ -298,7 +298,7 @@ class TabletDetailHead extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: ui(size: 10.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1.2)),
             ),
-            if (badge != null) ...[const SizedBox(width: 9), badge!],
+            if (badge != null) ...[const SizedBox(width: 9), Flexible(child: badge!)],
           ],
         ),
         const SizedBox(height: 5),
@@ -347,7 +347,12 @@ class TabletDetailHead extends StatelessWidget {
             Expanded(child: head),
             if (actions.isNotEmpty) ...[
               const SizedBox(width: 14),
-              Wrap(alignment: WrapAlignment.end, spacing: 9, runSpacing: 9, children: actions),
+              // Capped so a long action row wraps onto a second line rather than
+              // squeezing the head (a portrait till fits four buttons, not the amount).
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: c.maxWidth * 0.55),
+                child: Wrap(alignment: WrapAlignment.end, spacing: 9, runSpacing: 9, children: actions),
+              ),
             ],
             if (trailing != null) ...[const SizedBox(width: 12), trailing!],
           ],

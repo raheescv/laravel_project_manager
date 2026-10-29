@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\EmployeeCommission;
+use App\Models\Sale;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Permission;
@@ -125,4 +127,41 @@ it('shows a rank-and-file employee their own commission only', function (): void
         ->and($data['rows'][0]['employee_id'])->toBe((string) $this->employee->id)
         ->and($data['summary']['total_commission'])->toEqual(10.0)
         ->and($data['filters']['employee_id'])->toBe((string) $this->employee->id);
+});
+
+it('pages the lines while the summary keeps full-set totals', function (): void {
+    Sanctum::actingAs($this->world->user);
+
+    $data = ($this->report)(['per_page' => 1, 'page' => 2])->assertSuccessful()->json('data');
+
+    expect($data['rows'])->toHaveCount(1)
+        ->and($data['rows'][0]['employee_id'])->toBe((string) $this->world->user->id)
+        ->and($data['pagination'])->toMatchArray(['current_page' => 2, 'last_page' => 2, 'total' => 2])
+        ->and($data['summary'])->toMatchArray([
+            'rows' => 2,
+            'employees' => 2,
+            'total_quantity' => 3,
+            'total_commission' => 15,
+        ]);
+});
+
+it('includes both ends of the date range and drops sales outside it', function (): void {
+    Sanctum::actingAs($this->world->user);
+
+    $saleDate = Carbon::parse(Sale::query()->value('date'));
+
+    $sameDay = ($this->report)([
+        'startDate' => $saleDate->toDateString(),
+        'endDate' => $saleDate->toDateString(),
+    ])->assertSuccessful()->json('data');
+
+    $dayBefore = ($this->report)([
+        'startDate' => $saleDate->copy()->subDays(7)->toDateString(),
+        'endDate' => $saleDate->copy()->subDay()->toDateString(),
+    ])->assertSuccessful()->json('data');
+
+    expect($sameDay['summary']['rows'])->toBe(2)
+        ->and($sameDay['summary']['total_commission'])->toEqual(15.0)
+        ->and($dayBefore['rows'])->toBe([])
+        ->and($dayBefore['summary']['total_commission'])->toEqual(0.0);
 });

@@ -104,8 +104,12 @@ class LocalStorageKeys {
   static const String userStaffBill = 'astra.user.staffBill';
 
   /// Whether closing the day also prints its Sale Bill Report on the thermal
-  /// roll. Device-local: the close sheet remembers the last answer on this till.
+  /// roll. The device-wide answer from before it was kept per user — now only
+  /// the starting point for a user who hasn't tapped the toggle yet.
   static const String daySessionPrintOnClose = 'astra.daySession.printOnClose';
+  /// This user's last tap on the close sheet's "Print the Sale Bill Report"
+  /// toggle.
+  static const String userDaySessionPrintOnClose = 'astra.user.daySessionPrintOnClose';
 
   // Offline selling — device-local. The tag identifies this till in the
   // provisional references it prints; the sequence numbers them.

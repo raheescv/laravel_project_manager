@@ -221,8 +221,12 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
         Padding(
           padding: const EdgeInsets.only(bottom: 5),
           child: _noteCount > 0 && !_keypad
-              ? Text('$_noteCount note${_noteCount == 1 ? '' : 's'}',
-                  style: ui(size: 10.5, weight: FontWeight.w800, color: p.textMuted))
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
+                  child: Text('$_noteCount note${_noteCount == 1 ? '' : 's'}',
+                      style: ui(size: 11.5, weight: FontWeight.w800, color: p.primary)),
+                )
               : GestureDetector(
                   onTap: _exact,
                   child: Text('Exact ${Money.plain(widget.total)}',
@@ -257,7 +261,10 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
     );
   }
 
-  /// Tap the notes that came across the counter; long-press takes one back.
+  /// Tap the notes that came across the counter. A counted note shows how many
+  /// as a solid badge on its right — read at a glance across the counter, where
+  /// the old corner "×2" was a 9pt whisper — and a − on its left takes one back
+  /// (long-press still does too, but nobody finds a long-press).
   Widget _noteGrid(AstraPalette p) {
     return GridView.count(
       crossAxisCount: 3,
@@ -267,34 +274,78 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
       crossAxisSpacing: 7,
       childAspectRatio: 2.5,
       children: [
-        for (final note in _ladder)
-          GestureDetector(
-            onTap: () => _addNote(note),
-            onLongPress: () => _removeNote(note),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: (_notes[note] ?? 0) > 0 ? p.tint : p.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: (_notes[note] ?? 0) > 0 ? p.primary : p.hairline),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Text(Money.plain(note, decimals: 0),
-                      style: ui(size: 14, weight: FontWeight.w800, color: p.ink)),
-                  if ((_notes[note] ?? 0) > 0)
-                    Positioned(
-                      top: 3,
-                      right: 6,
-                      child: Text('×${_notes[note]}',
-                          style: ui(size: 9, weight: FontWeight.w800, color: p.primary)),
-                    ),
-                ],
+        for (final note in _ladder) _noteTile(p, note, _notes[note] ?? 0),
+      ],
+    );
+  }
+
+  Widget _noteTile(AstraPalette p, double note, int count) {
+    final counted = count > 0;
+    return GestureDetector(
+      onTap: () => _addNote(note),
+      onLongPress: () => _removeNote(note),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          color: counted ? p.tint : p.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: counted ? p.primary : p.hairline, width: counted ? 1.5 : 1),
+        ),
+        child: Row(
+          children: [
+            // The − and the badge are the same width, so the value stays
+            // centred whether the note is counted or not.
+            SizedBox(
+              width: 26,
+              child: counted
+                  ? GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _removeNote(note),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: p.card,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: p.primary.withValues(alpha: 0.4)),
+                        ),
+                        child: Icon(Icons.remove, size: 14, color: p.primary),
+                      ),
+                    )
+                  : null,
+            ),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(Money.plain(note, decimals: 0),
+                    style: ui(size: 15, weight: FontWeight.w800, color: counted ? p.primaryDark : p.ink)),
               ),
             ),
-          ),
-      ],
+            SizedBox(
+              width: 26,
+              child: counted
+                  ? FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Container(
+                        height: 24,
+                        constraints: const BoxConstraints(minWidth: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: p.primaryGradient,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: context.astraTheme.floatShadow(p.primary),
+                        ),
+                        child: Text('×$count',
+                            style: ui(size: 12, weight: FontWeight.w800, color: Colors.white, height: 1.1)),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

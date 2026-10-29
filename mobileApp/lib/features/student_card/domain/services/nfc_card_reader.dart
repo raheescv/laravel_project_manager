@@ -52,6 +52,8 @@ class NfcCardReader {
       await NfcManager.instance.stopSession();
     } on PlatformException catch (_) {
       // No session was running.
+    } on MissingPluginException catch (_) {
+      // No NFC stack — nothing was started.
     }
   }
 

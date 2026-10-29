@@ -536,10 +536,15 @@ class _Segment<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    return Row(
+    // Wrap, not Row + Spacer: in a narrow column (the two-column tablet layout
+    // on a portrait till) the choices drop under the label instead of overflowing.
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 12,
+      runSpacing: 8,
       children: [
         Text(label, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-        const Spacer(),
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(11)),

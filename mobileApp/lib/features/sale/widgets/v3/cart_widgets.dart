@@ -93,27 +93,7 @@ Widget cartLineCard(BuildContext context, CartLine line) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              QtyStepper(
-                qty: qtyLabel(line.qty),
-                onMinus: () {
-                  HapticFeedback.selectionClick();
-                  cart.changeQty(line, -cart.defaultQty);
-                },
-                onPlus: () {
-                  HapticFeedback.selectionClick();
-                  cart.changeQty(line, cart.defaultQty);
-                },
-                onTapValue: () async {
-                  unawaited(HapticFeedback.selectionClick());
-                  final v = await showQtyInputSheet(
-                    context,
-                    current: line.qty,
-                    title: line.name,
-                    subtitle: 'Enter quantity',
-                  );
-                  if (v != null) cart.setQty(line, v);
-                },
-              ),
+              _lineStepper(context, cart, line),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -142,14 +122,132 @@ Widget cartLineCard(BuildContext context, CartLine line) {
   );
 }
 
+/// The quantity stepper both line layouts share: ± by the till's default step,
+/// tap the number to type one.
+Widget _lineStepper(BuildContext context, CartCubit cart, CartLine line, {bool dense = false}) => QtyStepper(
+      qty: qtyLabel(line.qty),
+      dense: dense,
+      onMinus: () {
+        HapticFeedback.selectionClick();
+        cart.changeQty(line, -cart.defaultQty);
+      },
+      onPlus: () {
+        HapticFeedback.selectionClick();
+        cart.changeQty(line, cart.defaultQty);
+      },
+      onTapValue: () async {
+        unawaited(HapticFeedback.selectionClick());
+        final v = await showQtyInputSheet(
+          context,
+          current: line.qty,
+          title: line.name,
+          subtitle: 'Enter quantity',
+        );
+        if (v != null) cart.setQty(line, v);
+      },
+    );
+
+/// The tablet rail's ticket line — one row where the phone draws a card: name
+/// over staff, the stepper, and the line total (with the unit price under it
+/// once the quantity makes it differ).
+///
+/// The rail is short on a landscape till, where the ~130pt card left room for
+/// barely two lines; a row is ~60pt. Tapping the name opens the same sheet as
+/// the card's Edit details button. [thumb] is dropped on a narrow rail, where
+/// the name needs the width more than the picture does.
+Widget cartLineRow(BuildContext context, CartLine line, {bool thumb = true, bool divider = true}) {
+  final p = context.astra;
+  final cart = context.read<CartCubit>();
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: BoxDecoration(border: divider ? Border(bottom: BorderSide(color: p.hairline)) : null),
+    child: Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              showEditLineSheet(context, line);
+            },
+            child: Row(
+              children: [
+                if (thumb) ...[
+                  ProductThumb(
+                      url: line.thumbnail, fallbackIcon: iconForName('${line.type} ${line.name}'), size: 38, radius: 10),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(line.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: serif(size: 14, color: p.ink)),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(line.employeeName.isEmpty ? 'Unassigned' : line.employeeName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: ui(size: 10.5, weight: FontWeight.w600, color: p.textSecondary)),
+                          ),
+                          if (line.discountLabel.isNotEmpty) ...[
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(color: p.warnTint, borderRadius: BorderRadius.circular(8)),
+                              child: Text(line.discountLabel, style: ui(size: 9, weight: FontWeight.w800, color: p.goldText)),
+                            ),
+                          ],
+                          const SizedBox(width: 5),
+                          Icon(Icons.edit_outlined, size: 12, color: p.goldText),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        _lineStepper(context, cart, line, dense: true),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 70,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(Money.of(line.total), style: serif(size: 15, color: p.goldText)),
+              ),
+              if (line.qty != 1)
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text('${Money.of(line.unitPrice)} ea',
+                      style: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted)),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Order discount card: a big %/amount switch beside a roomy input (unit shown
 /// inside it), and the live amount saved in the header — edits right in the card, no popup. [embedded] drops the card chrome
 /// and the header amount so it can sit inside [cartSummaryCard], whose own
-/// Discount line already shows what's saved.
+/// Discount line already shows what's saved. [inline] puts the label, switch
+/// and input on one line, for the tablet rail where height is the scarce side.
 class OrderDiscountRow extends StatefulWidget {
-  const OrderDiscountRow({super.key, required this.cart, this.embedded = false});
+  const OrderDiscountRow({super.key, required this.cart, this.embedded = false, this.inline = false});
   final CartCubit cart;
   final bool embedded;
+  final bool inline;
   @override
   State<OrderDiscountRow> createState() => _OrderDiscountRowState();
 }
@@ -174,6 +272,30 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
     final isPercent = cart.orderDiscountIsPercent;
     final saved = cart.orderDiscountAmount;
     final unit = isPercent ? '%' : Money.symbol.trim();
+    if (widget.inline) {
+      // A portrait rail is ~250pt inside the card: the icon goes and the
+      // input keeps a fixed width, so the amount stays readable and the label
+      // is what gives way.
+      return LayoutBuilder(builder: (context, c) {
+        final narrow = c.maxWidth < 300;
+        final label = Text('Discount',
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink));
+        final input = _input(p, isPercent, unit, height: 34);
+        return Row(
+          children: [
+            if (!narrow) ...[
+              IconChip(icon: Icons.sell_outlined, size: 28, radius: 9, iconSize: 15, bg: p.warnTint, fg: p.goldText),
+              const SizedBox(width: 8),
+            ],
+            narrow ? Expanded(child: label) : label,
+            const SizedBox(width: 10),
+            _typeSwitch(p, isPercent, height: 34),
+            const SizedBox(width: 8),
+            narrow ? SizedBox(width: 88, child: input) : Expanded(child: input),
+          ],
+        );
+      });
+    }
     final body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -191,18 +313,7 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
           const SizedBox(height: 11),
           Row(
             children: [
-              Container(
-                height: 40,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: p.isDark ? Colors.white12 : const Color(0xFFF3EFE6),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [_toggle('%', true, isPercent), _toggle(Money.symbol.trim(), false, !isPercent)],
-                ),
-              ),
+              _typeSwitch(p, isPercent),
               const SizedBox(width: 10),
               Expanded(child: _input(p, isPercent, unit)),
             ],
@@ -213,14 +324,27 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
     return AstraCard(radius: 15, padding: const EdgeInsets.fromLTRB(13, 11, 13, 12), child: body);
   }
 
-  Widget _input(AstraPalette p, bool isPercent, String unit) {
+  Widget _typeSwitch(AstraPalette p, bool isPercent, {double height = 40}) => Container(
+        height: height,
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: p.isDark ? Colors.white12 : const Color(0xFFF3EFE6),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [_toggle('%', true, isPercent), _toggle(Money.symbol.trim(), false, !isPercent)],
+        ),
+      );
+
+  Widget _input(AstraPalette p, bool isPercent, String unit, {double height = 40}) {
     final focused = _focus.hasFocus;
     final unitStyle = ui(size: 13, weight: FontWeight.w800, color: p.goldText);
     return GestureDetector(
       onTap: _focus.requestFocus,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        height: 40,
+        height: height,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: p.isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
@@ -302,8 +426,11 @@ class _OrderDiscountRowState extends State<OrderDiscountRow> {
 }
 
 /// Totals + Charge. Pass [withDiscount] to fold the order discount into the
-/// top of the same card, set apart on its own tinted panel.
-Widget cartSummaryCard(BuildContext context, CartCubit cart, {required VoidCallback onCharge, bool withDiscount = false}) {
+/// top of the same card, set apart on its own tinted panel. [compact] (the
+/// tablet rail) draws that discount on one line and tightens the card, so the
+/// ticket lines above it keep the height.
+Widget cartSummaryCard(BuildContext context, CartCubit cart,
+    {required VoidCallback onCharge, bool withDiscount = false, bool compact = false}) {
   final p = context.astra;
   final t = context.astraTheme;
   Widget sumRow(String label, String value, Color color) => Padding(
@@ -317,22 +444,24 @@ Widget cartSummaryCard(BuildContext context, CartCubit cart, {required VoidCallb
         ),
       );
   return Container(
-    padding: const EdgeInsets.fromLTRB(15, 14, 15, 13),
+    padding: compact ? const EdgeInsets.fromLTRB(13, 11, 13, 11) : const EdgeInsets.fromLTRB(15, 14, 15, 13),
     decoration: BoxDecoration(color: p.card, borderRadius: BorderRadius.circular(22), boxShadow: t.cardShadow),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (withDiscount) ...[
           Container(
-            padding: const EdgeInsets.fromLTRB(11, 10, 11, 11),
+            padding: compact ? const EdgeInsets.fromLTRB(8, 6, 6, 6) : const EdgeInsets.fromLTRB(11, 10, 11, 11),
             decoration: BoxDecoration(
               color: p.goldText.withValues(alpha: p.isDark ? 0.10 : 0.06),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: p.goldText.withValues(alpha: 0.18)),
             ),
-            child: OrderDiscountRow(cart: cart, embedded: true),
+            child: OrderDiscountRow(cart: cart, embedded: true, inline: compact),
           ),
-          Padding(padding: const EdgeInsets.only(top: 12, bottom: 10), child: Container(height: 1, color: p.hairline)),
+          Padding(
+              padding: EdgeInsets.only(top: compact ? 9 : 12, bottom: compact ? 8 : 10),
+              child: Container(height: 1, color: p.hairline)),
         ],
         sumRow('Subtotal', Money.of(cart.subtotal), p.textSecondary),
         if (cart.totalDiscount > 0) sumRow('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),

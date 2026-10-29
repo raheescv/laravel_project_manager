@@ -30,6 +30,7 @@ import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/continuous_scanner_screen.dart';
+import 'package:invo/shared/widgets/offline_banner.dart';
 import 'package:invo/shared/widgets/offline_image.dart';
 import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
@@ -67,6 +68,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   /// Follows the branch day while the POS is up — see [_watchDay].
   StreamSubscription<AuthState>? _daySub;
   late final AppLifecycleListener _lifecycle;
+
+  /// A field on the tablet rail (the order discount) holds focus — see
+  /// [_tabletCartPanel].
+  bool _railFocused = false;
 
   /// Grid (image tiles) vs list — restored from the last choice on this device.
   _ProductView _view = serviceLocator<LocalStorageService>().saleView == 'list'
@@ -474,11 +479,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
 
   /// The client half of the selector. A tapped student card shows the student
   /// and what the card can spend, so the cashier sees it before charging.
-  Widget _clientSeg(CartCubit cart) {
+  Widget _clientSeg(CartCubit cart, {bool dense = false}) {
     final student = cart.student;
-    if (student == null) return _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient);
+    if (student == null) return _whoSeg(Icons.person_outline, 'CLIENT', cart.customerName, _pickClient, dense: dense);
     return _whoSeg(Icons.school_outlined, 'STUDENT · ${Money.of(student.available)}', student.name, _pickClient,
-        avatarUrl: student.imageUrl, avatarHeaders: context.read<AuthCubit>().config.assetHeaders);
+        avatarUrl: student.imageUrl, avatarHeaders: context.read<AuthCubit>().config.assetHeaders, dense: dense);
   }
 
   /// Tap a student card: the student becomes the client and the card pays. A
@@ -547,14 +552,17 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   /// gold micro-label, value and a chevron.
   /// [locked] shows the value read-only — no tap, a lock in place of the
   /// chevron — for a selector the signed-in user isn't allowed to change.
+  /// [dense] (the tablet rail) shrinks the avatar and padding so the ticket
+  /// lines below get the height.
   Widget _whoSeg(IconData icon, String label, String value, VoidCallback onTap,
-      {String? avatarUrl, Map<String, String>? avatarHeaders, bool locked = false}) {
+      {String? avatarUrl, Map<String, String>? avatarHeaders, bool locked = false, bool dense = false}) {
     final p = context.astra;
+    final avatar = dense ? 32.0 : 38.0;
     final fallback = Container(
-      width: 38,
-      height: 38,
+      width: avatar,
+      height: avatar,
       decoration: BoxDecoration(shape: BoxShape.circle, color: p.tint),
-      child: Icon(icon, size: 17, color: p.primary),
+      child: Icon(icon, size: dense ? 15 : 17, color: p.primary),
     );
     final leading = (avatarUrl != null && avatarUrl.startsWith('http'))
         ? ClipOval(
@@ -562,10 +570,10 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               image: OfflineImage.provider(
                 avatarUrl,
                 headers: avatarHeaders,
-                cacheWidth: decodeWidthFor(context, 38),
+                cacheWidth: decodeWidthFor(context, avatar),
               ),
-              width: 38,
-              height: 38,
+              width: avatar,
+              height: avatar,
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => fallback,
@@ -581,11 +589,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               onTap();
             },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: dense ? 12 : 13, vertical: dense ? 8 : 12),
         child: Row(
           children: [
             leading,
-            const SizedBox(width: 11),
+            SizedBox(width: dense ? 10 : 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,7 +662,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       ),
       child: Column(
         children: [
-          _clientSeg(cart),
+          _clientSeg(cart, dense: true),
           Container(height: 1, color: p.hairline),
           _whoSeg(
             Icons.brush,
@@ -664,6 +672,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             avatarUrl: _staffAvatarUrl(cart),
             avatarHeaders: context.read<AuthCubit>().config.assetHeaders,
             locked: !context.read<StylistCubit>().canChoose,
+            dense: true,
           ),
         ],
       ),
@@ -675,10 +684,26 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   ///
   /// Width tracks the window so a 13" landscape gives the lines room to breathe
   /// without a small tablet in portrait handing the rail half its screen.
+  /// Landscape takes a bigger share: the catalog has width to spare there, and
+  /// the rail — short on a landscape till — makes up in width what it lacks in
+  /// height.
   Widget _tabletCartPanel(CartCubit cart) {
     final p = context.astra;
-    final railW = (MediaQuery.sizeOf(context).width * 0.32).clamp(320.0, 430.0);
-    return Container(
+    final screen = MediaQuery.sizeOf(context);
+    final railW = screen.width > screen.height
+        ? (screen.width * 0.36).clamp(340.0, 460.0)
+        : (screen.width * 0.32).clamp(320.0, 430.0);
+    // The keyboard leaves a landscape till ~300pt, less than the rail's fixed
+    // parts need: while the discount is being typed the client/staff card and
+    // the ticket heading step aside so the field and the total it changes stay
+    // on screen (they overflowed the rail before). The lines list shrinks on
+    // its own.
+    final typing = _railFocused && MediaQuery.viewInsetsOf(context).bottom > 0;
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (focused) => setState(() => _railFocused = focused),
+      child: Container(
       width: railW,
       // Docked, not floating: the rail runs to the right and bottom edges of the
       // window so the total is at the foot of the screen instead of above a band
@@ -716,25 +741,30 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               _closeBtn(34),
             ],
           ),
-          const SizedBox(height: 12),
-          _whoStack(cart),
-          _preOrderBanner(cart),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Icon(Icons.shopping_bag_outlined, size: 16, color: p.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('Current ticket',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 12, weight: FontWeight.w800, color: p.ink, letterSpacing: 0.5)),
-              ),
-              Text('${cart.count} ${cart.count == 1 ? 'item' : 'items'}',
-                  style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
-            ],
-          ),
           const SizedBox(height: 10),
+          if (!typing) ...[
+            _whoStack(cart),
+            _preOrderBanner(cart),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.shopping_bag_outlined, size: 16, color: p.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Current ticket',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 12, weight: FontWeight.w800, color: p.ink, letterSpacing: 0.5)),
+                ),
+                Text('${cart.count} ${cart.count == 1 ? 'item' : 'items'}',
+                    style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          // One card of slim rows, the way a ticket reads, rather than a card
+          // per line — on the till's short landscape rail the cards fit two.
+          // The card hugs its lines and scrolls once they outgrow the rail.
           Expanded(
             child: cart.isEmpty
                 ? EmptyState(
@@ -742,9 +772,23 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                     title: 'No items yet',
                     message: 'Tap a service to add it.',
                   )
-                : ListView(
-                    padding: EdgeInsets.zero,
-                    children: [for (final line in cart.lines) cartLineCard(context, line)],
+                : Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: p.card,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: p.hairline),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: cart.lines.length,
+                        itemBuilder: (context, i) => cartLineRow(context, cart.lines[i],
+                            thumb: railW >= 370, divider: i < cart.lines.length - 1),
+                      ),
+                    ),
                   ),
           ),
           // The discount and the total are pinned to the foot of the rail rather
@@ -753,10 +797,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
           // parked below the fold is a discount nobody applies. It also closes
           // the gap that was left under the Charge card.
           if (!cart.isEmpty) ...[
-            const SizedBox(height: 2),
-            cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review), withDiscount: true),
+            const SizedBox(height: 10),
+            cartSummaryCard(context, cart, onCharge: () => context.push(Routes.review), withDiscount: true, compact: true),
           ],
         ],
+      ),
       ),
     );
   }
@@ -1050,10 +1095,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + OfflineBanner.floatingClearance(ctx)),
           // Scrollable so the form never overflows when the keyboard is up on a
           // short phone or in landscape.
-          child: SingleChildScrollView(
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
             child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1103,6 +1150,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
               ),
             ],
             ),
+          ),
           ),
         ),
       );

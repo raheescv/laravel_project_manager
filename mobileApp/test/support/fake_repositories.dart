@@ -257,10 +257,11 @@ class FakeAdminRepository implements AdminRepository {
     return dayStatusAnswer;
   }
 
-  // The Sale Bill Report is not exercised by these tests; the stubs only keep
-  // the fake in step with the contract.
+  /// The Sale Bill Report card's session; null (no card) unless a layout test sets it.
+  DaySessionSummary? currentSessionAnswer;
+
   @override
-  Future<DaySessionSummary?> currentDaySession() async => null;
+  Future<DaySessionSummary?> currentDaySession() async => currentSessionAnswer;
 
   @override
   Future<DaySessionReport> daySessionReport(String id) async => throw UnimplementedError();

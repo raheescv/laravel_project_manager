@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
+
+import 'package:invo/shared/domain/models/index.dart';
 
 import 'support/test_harness.dart';
 
@@ -83,6 +88,72 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(tester.takeException(), isNull);
     expect(tester.getSize(find.byType(CalendarDatePicker)).width, lessThanOrEqualTo(360));
+  });
+
+  // The canteen till (I24T02, 1097×686 landscape) hands Day Session ~985×593
+  // inside the shell, after the rail and the status/nav bars: the whole board —
+  // stepper, moment, report and the action — must fit without scrolling.
+  group('canteen till', () {
+  // A height check needs real glyph widths — the test font's square glyphs
+  // wrap every line. The bundled Plex stands in for Inter (the default face,
+  // which google_fonts lists as each style's fallback family).
+  setUpAll(() async {
+    // google_fonts names each weight ('Inter_700'); the test engine does not
+    // reach the plain-name fallback, so every name gets the stand-in.
+    for (final weight in ['regular', '500', '600', '700', '800', '900']) {
+      final file = weight == 'regular' || weight == '500' ? 'Regular' : 'Bold';
+      final bytes = File('assets/fonts/IBMPlexSansArabic-$file.ttf').readAsBytesSync();
+      await (FontLoader('Inter_$weight')..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
+    }
+  });
+
+  for (final open in [true, false]) {
+    testWidgets('fits the till without scrolling when the day is ${open ? 'open' : 'closed'}', (tester) async {
+      const screen = Size(1097, 686);
+      const size = Size(985, 593);
+      final d = TestHarness();
+      await d.init(admin: true);
+      addTearDown(d.dispose);
+      final today = DateTime.now().toIso8601String().split('T').first;
+      d.admin.dayStatusAnswer = DayStatus(
+        status: open ? 'open' : 'closed',
+        date: today,
+        openedAt: open ? '$today 03:00:00' : '',
+        lastClosedAt: open ? '' : '$today 01:00:00',
+        session: DaySession.fromJson({
+          'id': '188',
+          'branch': 'Main Canteen',
+          'status': open ? 'open' : 'closed',
+          'opened_at': '$today 03:00:00',
+          'closed_at': open ? '' : '$today 01:00:00',
+          'opened_by': 'Maya Chen',
+          'closed_by': open ? '' : 'Maya Chen',
+          'opening_amount': 0,
+        }),
+      );
+      d.admin.currentSessionAnswer = DaySessionSummary(
+          id: '188', branch: 'Main Canteen', status: open ? 'open' : 'closed',
+          openedAt: '$today 03:00:00', closedAt: open ? '' : '$today 01:00:00', openedBy: 'Maya Chen', closedBy: '');
+      tester.view.physicalSize = screen;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      // The device stays a tablet (MediaQuery is the whole screen); the page
+      // gets the shell's panel.
+      await tester.pumpWidget(d.wrap(const Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(width: 985, height: 593, child: DaySessionScreen()))));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      if (open) expect(find.textContaining('Sale Bill Report #188'), findsOneWidget);
+      final cta = find.textContaining(RegExp(r'^(Close|Open) day · '));
+      expect(tester.getRect(cta).bottom, lessThanOrEqualTo(size.height));
+      final scroll = tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+      expect(scroll.maxScrollExtent, 0, reason: 'the page scrolls by ${scroll.maxScrollExtent}px');
+    });
+  }
   });
 
   testWidgets('portrait tablet stacks without overflow', (tester) async {

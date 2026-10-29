@@ -700,35 +700,40 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// from the payment controls. On a tablet the ticket takes the width and the
   /// money side — tip, method, totals, CTA — docks into a right-hand pane, which
   /// is how a counter POS is actually used.
+  ///
+  /// The page head belongs to the ticket column only, so the pay rail runs the
+  /// full height of the window: above the rail the head was a strip of empty
+  /// band, and on a short landscape till that strip is the room the note and
+  /// the tender pad were missing.
   Widget _tabletScaffold(CartCubit cart, bool settled) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: AstraBackground(
         child: SafeArea(
-          child: Column(
-            children: [
-              TabletPageHead(
-                leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
-                title: _headline(cart),
-                subtitle: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'} on this ticket',
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (ctx, c) => Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: LayoutBuilder(
+            builder: (ctx, c) => Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Column(
                     children: [
+                      TabletPageHead(
+                        leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
+                        title: _headline(cart),
+                        subtitle: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'} on this ticket',
+                      ),
                       Expanded(
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
                           children: [_receiptCard(cart)],
                         ),
                       ),
-                      _payRail(cart, settled, (c.maxWidth * 0.38).clamp(340.0, 460.0)),
                     ],
                   ),
                 ),
-              ),
-            ],
+                _payRail(cart, settled, (c.maxWidth * 0.38).clamp(340.0, 460.0)),
+              ],
+            ),
           ),
         ),
       ),

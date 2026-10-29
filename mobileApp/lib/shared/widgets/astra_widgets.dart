@@ -570,7 +570,12 @@ class StatusPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[Icon(icon, size: 11, color: fg), const SizedBox(width: 4)],
-          Text(label, style: ui(size: 10, weight: FontWeight.w800, color: fg)),
+          // Flexible so a long label (a 14-digit card number) ellipsises
+          // instead of running past a narrow tablet column.
+          Flexible(
+            child: Text(label,
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10, weight: FontWeight.w800, color: fg)),
+          ),
         ],
       ),
     );
@@ -579,13 +584,16 @@ class StatusPill extends StatelessWidget {
 
 /// Quantity stepper (− value +). When [onTapValue] is supplied the value in the
 /// middle becomes tappable (underlined) so the user can type an exact quantity.
+/// [dense] tightens the gap around the value (the buttons keep their size, so
+/// the tap targets don't shrink) for a row that shares its width.
 class QtyStepper extends StatelessWidget {
   const QtyStepper(
-      {super.key, required this.qty, this.onMinus, this.onPlus, this.onTapValue});
+      {super.key, required this.qty, this.onMinus, this.onPlus, this.onTapValue, this.dense = false});
   final String qty;
   final VoidCallback? onMinus;
   final VoidCallback? onPlus;
   final VoidCallback? onTapValue;
+  final bool dense;
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
@@ -604,7 +612,7 @@ class QtyStepper extends StatelessWidget {
         onTap: onTapValue,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          constraints: const BoxConstraints(minWidth: 34),
+          constraints: BoxConstraints(minWidth: dense ? 26 : 34),
           padding: const EdgeInsets.symmetric(vertical: 3),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: p.primary.withValues(alpha: 0.55), width: 1.5)),
@@ -618,7 +626,7 @@ class QtyStepper extends StatelessWidget {
       children: [
         btn(Icons.remove, p.isDark ? Colors.white12 : const Color(0xFFF3EFE6), p.ink, onMinus),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.symmetric(horizontal: dense ? 7 : 12),
           child: value,
         ),
         btn(Icons.add, p.primary, Colors.white, onPlus),

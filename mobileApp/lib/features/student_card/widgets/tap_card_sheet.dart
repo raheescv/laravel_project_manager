@@ -10,6 +10,7 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
+import 'package:invo/shared/widgets/offline_banner.dart';
 
 /// Tap a student card at the till. Resolves the card with the server and returns
 /// the student once the cashier confirms it is the right child (photo check) —
@@ -142,7 +143,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + OfflineBanner.floatingClearance(context)),
         child: SafeArea(
           top: false,
           child: SingleChildScrollView(
@@ -156,9 +157,10 @@ class _TapCardSheetState extends State<_TapCardSheet> {
                       IconButton.filledTonal(
                         tooltip: 'Back',
                         icon: const Icon(Icons.arrow_back),
-                        onPressed: () async {
-                          await _stopReader();
-                          if (!context.mounted) return;
+                        // Channel calls run in order, so this stop lands before
+                        // the Client sheet starts its own session.
+                        onPressed: () {
+                          unawaited(_stopReader());
                           Navigator.pop(context);
                           widget.onBack!();
                         },
