@@ -54,6 +54,24 @@ it('is a 404 for an unknown card and a 422 for a blocked one', function (): void
         ->assertJsonPath('data.card_status', 'blocked');
 });
 
+it('looks a student up by admission number, carrying their card', function (): void {
+    $admissionNo = StudentDetail::where('account_id', $this->student->id)->value('admission_no');
+
+    $this->getJson($this->world->url('/api/v1/students/card/'.$admissionNo))
+        ->assertOk()
+        ->assertJsonPath('data.account_id', $this->student->id)
+        ->assertJsonPath('data.card_uid', '04A21B9C')
+        ->assertJsonPath('data.available', 40);
+});
+
+it('refuses an admission number whose student has no card', function (): void {
+    StudentWorld::enrol($this->world, ['name' => 'Omar', 'admission_no' => 'NR123', 'card_uid' => null, 'guardians' => []]);
+
+    $this->getJson($this->world->url('/api/v1/students/card/NR123'))
+        ->assertUnprocessable()
+        ->assertJsonPath('data.name', 'Omar');
+});
+
 it('rings a sale paid from the student card', function (): void {
     $response = $this->postJson($this->world->url('/api/v1/sale'), cardSalePayload($this->world, $this->student))
         ->assertCreated()

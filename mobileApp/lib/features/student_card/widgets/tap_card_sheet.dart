@@ -14,11 +14,15 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 /// Tap a student card at the till. Resolves the card with the server and returns
 /// the student once the cashier confirms it is the right child (photo check) —
 /// or null when dismissed.
-Future<StudentCard?> showTapCardSheet(BuildContext context) => showModalBottomSheet<StudentCard>(
+///
+/// [uid] is a card already read elsewhere (the Client sheet listens too), looked
+/// up straight away. [onBack] adds a back arrow that closes this sheet and runs it.
+Future<StudentCard?> showTapCardSheet(BuildContext context, {String? uid, VoidCallback? onBack}) =>
+    showModalBottomSheet<StudentCard>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _TapCardSheet(lookup: true),
+      builder: (_) => _TapCardSheet(lookup: true, initialUid: uid, onBack: onBack),
     );
 
 /// Read a card's UID only (Link Card). Returns the normalised UID, or null.
@@ -31,11 +35,13 @@ Future<String?> showReadCardUidSheet(BuildContext context, {required String stud
     );
 
 class _TapCardSheet extends StatefulWidget {
-  const _TapCardSheet({required this.lookup, this.studentName = ''});
+  const _TapCardSheet({required this.lookup, this.studentName = '', this.initialUid, this.onBack});
 
   /// True: look the card up and return the student. False: return the UID.
   final bool lookup;
   final String studentName;
+  final String? initialUid;
+  final VoidCallback? onBack;
 
   @override
   State<_TapCardSheet> createState() => _TapCardSheetState();
@@ -47,6 +53,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
   late final TextEditingController _manual = TextEditingController();
   StreamSubscription<StudentCardState>? _sub;
 
+  bool _readerStopped = false;
   bool _nfc = false;
   bool _checkingNfc = true;
   String? _nfcError;
@@ -58,6 +65,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
     _sub = _cubit.stream.listen((_) {
       if (mounted) setState(() {});
     });
+    if (widget.initialUid != null) unawaited(_onUid(widget.initialUid!));
     _startNfc();
   }
 
@@ -68,7 +76,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
       _nfc = available;
       _checkingNfc = false;
     });
-    if (available) {
+    if (available && !_readerStopped) {
       await _reader.start(
         onUid: (uid) => unawaited(_onUid(uid)),
         onError: (message) {
@@ -87,16 +95,37 @@ class _TapCardSheetState extends State<_TapCardSheet> {
       _nfcError = null;
     });
     if (!widget.lookup) {
-      await _reader.stop();
+      await _stopReader();
       if (mounted) Navigator.pop(context, uid);
       return;
     }
     await _cubit.lookup(uid);
   }
 
+  /// Typed or keyboard-wedge entry. Sent as typed (not hex-normalised) so an
+  /// admission number like "NR123" survives; the server normalises card numbers.
+  Future<void> _onManual(String raw) async {
+    final value = raw.trim();
+    if (value.isEmpty || !mounted) return;
+    if (!widget.lookup) return _onUid(value);
+    setState(() {
+      _uid = value;
+      _nfcError = null;
+    });
+    await _cubit.lookup(value);
+  }
+
+  /// NFC sessions are app-wide: once stopped here, [dispose] must not stop
+  /// again, or it would end the session the Client sheet starts on Back.
+  Future<void> _stopReader() async {
+    if (_readerStopped) return;
+    _readerStopped = true;
+    await _reader.stop();
+  }
+
   @override
   void dispose() {
-    _reader.stop();
+    _stopReader();
     _sub?.cancel();
     _cubit.close();
     _manual.dispose();
@@ -121,10 +150,34 @@ class _TapCardSheetState extends State<_TapCardSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SectionLabel(widget.lookup ? 'Student card' : 'Link card'),
-                const SizedBox(height: 4),
-                Text(widget.lookup ? 'Tap the card' : 'Tap ${widget.studentName.isEmpty ? 'the' : '${widget.studentName}\'s'} new card',
-                    style: serif(size: 22, color: p.ink)),
+                Row(
+                  children: [
+                    if (widget.onBack != null) ...[
+                      IconButton.filledTonal(
+                        tooltip: 'Back',
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () async {
+                          await _stopReader();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                          widget.onBack!();
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SectionLabel(widget.lookup ? 'Student card' : 'Link card'),
+                          const SizedBox(height: 4),
+                          Text(widget.lookup ? 'Tap the card' : 'Tap ${widget.studentName.isEmpty ? 'the' : '${widget.studentName}\'s'} new card',
+                              style: serif(size: 22, color: p.ink)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 if (card != null && widget.lookup)
                   _found(card)
@@ -218,7 +271,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('OR ENTER THE CARD NUMBER', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+        Text(widget.lookup ? 'OR ENTER THE CARD OR ADMISSION NUMBER' : 'OR ENTER THE CARD NUMBER', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -228,10 +281,10 @@ class _TapCardSheetState extends State<_TapCardSheet> {
                 // USB / Bluetooth card readers type the number and press Enter.
                 autofocus: !_nfc && !_checkingNfc,
                 textCapitalization: TextCapitalization.characters,
-                onSubmitted: _onUid,
+                onSubmitted: _onManual,
                 style: ui(size: 14, weight: FontWeight.w700, color: p.ink),
                 decoration: InputDecoration(
-                  hintText: _uid ?? 'e.g. 04A21B9C',
+                  hintText: _uid ?? (widget.lookup ? 'Card no. or admission no.' : 'e.g. 04A21B9C'),
                   filled: true,
                   fillColor: p.card,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -240,7 +293,7 @@ class _TapCardSheetState extends State<_TapCardSheet> {
               ),
             ),
             const SizedBox(width: 8),
-            AstraButton(label: 'Go', expand: false, onTap: () => _onUid(_manual.text)),
+            AstraButton(label: 'Go', expand: false, onTap: () => _onManual(_manual.text)),
           ],
         ),
       ],

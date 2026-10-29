@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'dart:ui' show ImageFilter;
 
@@ -34,6 +35,7 @@ import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/client_lookup_fields.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+import 'package:invo/features/student_card/domain/services/nfc_card_reader.dart';
 import 'package:invo/features/student_card/widgets/tap_card_sheet.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 
@@ -482,8 +484,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   /// Tap a student card: the student becomes the client and the card pays. A
   /// pre-order the parent set up for today goes straight into the cart; the
   /// cashier still checks it before charging.
-  Future<void> _tapStudentCard() async {
-    final card = await showTapCardSheet(context);
+  /// [uid] is a card the Client sheet already read; back returns to that sheet.
+  Future<void> _tapStudentCard({String? uid}) async {
+    final card = await showTapCardSheet(context, uid: uid, onBack: _pickClient);
     if (card == null || !mounted) return;
     final cart = context.read<CartCubit>();
     cart.setStudent(card);
@@ -1015,12 +1018,35 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             ? ''
             : cart.customerMobile);
     final p = context.astra;
+    final canTapCard = cart.student == null &&
+        cart.schoolEnabled &&
+        context.read<AuthCubit>().hasPermission(PermissionSlug.studentCardAssign);
+    // Listen for a card while the sheet is open, so a tap skips the "Tap student
+    // card" button. Android only: on iOS a read session raises the system NFC
+    // sheet, which would cover the form every time it opens.
+    final reader = canTapCard && Platform.isAndroid ? const NfcCardReader() : null;
+    BuildContext? sheetCtx;
+    // The sheet pops with a card UID when one is tapped, '' for the "Tap student
+    // card" button, and null when the client is set or the sheet is dismissed.
+    String? tapped;
     try {
-    await showModalBottomSheet(
+    if (reader != null && await reader.isAvailable) {
+      await reader.start(onUid: (raw) {
+        final uid = NfcCardReader.normalize(raw);
+        final ctx = sheetCtx;
+        if (uid.isEmpty || ctx == null || !ctx.mounted) return;
+        sheetCtx = null;
+        Navigator.pop(ctx, uid);
+      });
+    }
+    if (!mounted) return;
+    tapped = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
+      builder: (ctx) {
+        sheetCtx = ctx;
+        return Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
@@ -1057,15 +1083,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
                     ],
                   ),
                 )
-              else if (cart.schoolEnabled &&
-                  context.read<AuthCubit>().hasPermission(PermissionSlug.studentCardAssign))
+              else if (canTapCard)
                 AstraButton(
                   label: 'Tap student card',
                   icon: Icons.nfc,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _tapStudentCard();
-                  },
+                  onTap: () => Navigator.pop(ctx, ''),
                 ),
               const SizedBox(height: 16),
               ClientLookupFields(nameCtl: nameCtl, mobileCtl: mobileCtl),
@@ -1083,12 +1105,19 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
             ),
           ),
         ),
-      ),
+      );
+      },
     );
     } finally {
+      sheetCtx = null;
+      // Free the reader before the tap sheet starts its own session.
+      await reader?.stop();
       // Owned by this method, not by a State — release them when the sheet closes.
       nameCtl.dispose();
       mobileCtl.dispose();
+    }
+    if (tapped != null && mounted) {
+      await _tapStudentCard(uid: tapped.isEmpty ? null : tapped);
     }
   }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Student\Card\AssignAction;
+use App\Actions\Student\Card\FindByAdmissionNoAction;
 use App\Actions\Student\Card\FindByUidAction;
 use App\Actions\Student\GetBalanceAction;
 use App\Http\Controllers\Controller;
@@ -20,18 +21,23 @@ class StudentCardController extends Controller
     use ApiResponseTrait;
 
     /**
-     * Look up a tapped card.
+     * Look up a tapped card (or a typed admission number).
      *
      * Returns the student the card belongs to, with photo, class, card balance,
-     * the school's overdraft limit and what can be spent now. 404 for an unknown
-     * card; 422 (with the student in `data`) for a blocked card or an inactive student.
+     * the school's overdraft limit and what can be spent now. When no card
+     * matches, the value is tried as an admission number. 404 when neither
+     * matches; 422 (with the student in `data`) for a student with no card, a
+     * blocked card or an inactive student.
      */
     public function show(string $uid): JsonResponse
     {
         try {
-            $student = (new FindByUidAction())->execute($uid);
+            $student = (new FindByUidAction())->execute($uid) ?? (new FindByAdmissionNoAction())->execute($uid);
             if (! $student) {
-                return $this->sendNotFoundError('This card is not linked to any student.');
+                return $this->sendNotFoundError('No student has this card or admission number.');
+            }
+            if (! $student['card_uid']) {
+                return $this->sendError($student['name'].' has no card linked. Link a card before charging it.', $student, 422);
             }
             if ($student['card_status'] === StudentDetail::CARD_BLOCKED) {
                 return $this->sendError($student['name'].'\'s card is blocked. Ask the school office.', $student, 422);
