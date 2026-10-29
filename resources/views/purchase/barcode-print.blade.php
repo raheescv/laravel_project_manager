@@ -188,7 +188,7 @@
                     <div class="barcode-container">
                         @if ($settings['product_name']['visible'] ?? true)
                             <div id="product-name" class="barcode-element product-name" draggable="true" style="{{ getElementStyle('product_name', $settings) }}">
-                                <bdo dir="ltr">{{ mb_substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdo>
+                                <bdi dir="ltr">{{ mb_substr($item->product->name, 0, (int) $settings['product_name']['char_limit']) }}</bdi>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>
@@ -196,7 +196,7 @@
 
                         @if ($settings['product_name_arabic']['visible'] ?? true)
                             <div id="product-name-arabic" class="barcode-element product-name-arabic" draggable="true" style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                                <bdo dir="rtl">{{ mb_substr($item->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                                <bdi dir="rtl">{{ mb_substr($item->product->name_arabic, 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdi>
                                 <div class="element-handle top-left"></div>
                                 <div class="element-handle top-right"></div>
                             </div>

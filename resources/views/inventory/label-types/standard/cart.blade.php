@@ -81,7 +81,7 @@
             padding: 0;
         }
 
-        .barcode-element>bdo,
+        .barcode-element>bdi,
         .barcode-element>span {
             max-width: 100%;
             overflow: hidden;
@@ -224,16 +224,16 @@
                         @if ($settings['product_name']['visible'] ?? true)
                             <div id="product-name" class="barcode-element product-name"
                                 style="{{ getElementStyle('product_name', $settings) }}">
-                                <bdo
-                                    dir="ltr">{{ mb_substr(BarcodeLabel::itemName($product), 0, (int) $settings['product_name']['char_limit']) }}</bdo>
+                                <bdi
+                                    dir="ltr">{{ mb_substr(BarcodeLabel::itemName($product), 0, (int) $settings['product_name']['char_limit']) }}</bdi>
                             </div>
                         @endif
 
                         @if ($settings['product_name_arabic']['visible'] ?? true)
                             <div id="product-name-arabic" class="barcode-element product-name-arabic"
                                 style="{{ getElementStyle('product_name_arabic', $settings) }}">
-                                <bdo
-                                    dir="rtl">{{ mb_substr(BarcodeLabel::itemNameArabic($product), 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdo>
+                                <bdi
+                                    dir="rtl">{{ mb_substr(BarcodeLabel::itemNameArabic($product), 0, (int) $settings['product_name_arabic']['char_limit']) }}</bdi>
                             </div>
                         @endif
 
