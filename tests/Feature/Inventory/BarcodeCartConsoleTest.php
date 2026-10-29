@@ -249,11 +249,13 @@ it('prints the quantity, not a stale weight, when quantities print as qty', func
 
 it('prints the weight, the Settings currency and physical alignment on a standard sticker', function (): void {
     ($this->printWeights)();
+    $this->world->product->update(['name_arabic' => 'ثوب سويسري 3.5 متر']);
     ($this->useCurrency)('AED', 'د.إ');
     $settings = BarcodeTemplateConfiguration::normalizeSettings([
         'qty' => ['visible' => true],
         'price' => ['align' => 'left'],
         'price_arabic' => ['align' => 'right'],
+        'product_name_arabic' => ['char_limit' => 40],
     ], 'standard');
 
     $html = view('inventory.barcode-cart-print', [
@@ -269,7 +271,8 @@ it('prints the weight, the Settings currency and physical alignment on a standar
         ->toContain('content: "AED";')->toContain('content: "د.إ";')->not->toContain('"QR')
         ->and(substr_count($html, 'margin-inline-end: 0.3em;'))->toBe(2)
         ->and($html)->toContain('justify-content: right')->toContain('justify-content: left')
-        ->not->toContain('justify-content: flex-end')->not->toContain('justify-content: flex-start');
+        ->not->toContain('justify-content: flex-end')->not->toContain('justify-content: flex-start')
+        ->toContain('dir="rtl">ثوب سويسري 3.5 متر</bdi>')->not->toContain('<bdo');
 });
 
 it('follows Quantity Label In Print for the qty caption', function (): void {
