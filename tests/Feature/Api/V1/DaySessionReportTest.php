@@ -74,6 +74,30 @@ it('falls back to the session opened last once the day is shut', function (): vo
         ->assertJsonPath('data.session.opened_at', $last->opened_at->format('Y-m-d H:i:s'));
 });
 
+it('takes the session opened within the reports date filter', function (): void {
+    ($this->grantPrint)();
+    $twoDaysAgo = ($this->makeSession)(['opened_at' => now()->subDays(2)->setTime(9, 0), 'closed_at' => now()->subDays(2)->setTime(18, 0)]);
+    ($this->makeSession)(['opened_at' => now()->setTime(0, 1), 'closed_at' => null, 'closed_by' => null, 'status' => 'open']);
+    $date = $twoDaysAgo->opened_at->format('Y-m-d');
+
+    $this->getJson($this->world->url("/api/v1/admin/day-sessions/current?start_date={$date}&end_date={$date}"))
+        ->assertSuccessful()
+        ->assertJsonPath('data.session.id', (string) $twoDaysAgo->id);
+
+    $yesterday = now()->subDay()->format('Y-m-d');
+    $this->getJson($this->world->url("/api/v1/admin/day-sessions/current?start_date={$yesterday}&end_date={$yesterday}"))
+        ->assertSuccessful()
+        ->assertJsonPath('data.session', null);
+});
+
+it('rejects a reports date filter that ends before it starts', function (): void {
+    ($this->grantPrint)();
+
+    $this->getJson($this->world->url('/api/v1/admin/day-sessions/current?start_date=2026-10-30&end_date=2026-10-29'))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('end_date');
+});
+
 it('answers with no session for a branch that never opened a day', function (): void {
     ($this->grantPrint)();
 

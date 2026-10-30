@@ -149,6 +149,30 @@ void main() {
     expect(find.text('Reset'), findsOneWidget);
   });
 
+  testWidgets('a big screen keeps the filter chips in the toolbar row', (tester) async {
+    // A big landscape screen (the canteen till included): one line. A portrait
+    // tablet: the chips keep a line of their own under the segments.
+    for (final (size, inline) in const [
+      (Size(1366, 1024), true),
+      (Size(1194, 834), true),
+      (Size(1097, 686), true),
+      (Size(834, 1194), false),
+    ]) {
+      final d = TestHarness();
+      await d.init(admin: true);
+      await openBreakdown(tester, d, size: size);
+      await tester.tap(find.text('Product'));
+      await settle(tester);
+
+      expect(tester.takeException(), isNull, reason: 'no overflow at ${size.width} wide');
+      double gapTo(Finder f) => (tester.getCenter(f).dy - tester.getCenter(find.text('By Item')).dy).abs();
+      expect(gapTo(find.text('Reset')) < 4, inline, reason: 'Reset inline at ${size.width} wide: $inline');
+      // Inline, the type chip would sit beside the Product segment that shows it.
+      expect(find.text('Products only'), inline ? findsNothing : findsOneWidget);
+      await d.dispose();
+    }
+  });
+
   testWidgets('phone keeps the name, amount and share on two lines', (tester) async {
     final d = TestHarness();
     await d.init(admin: true);

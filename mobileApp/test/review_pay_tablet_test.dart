@@ -7,10 +7,10 @@ import 'package:invo/shared/widgets/tablet_widgets.dart';
 
 import 'support/test_harness.dart';
 
-/// Review & Pay on a tablet: the page head covers the ticket column only, so
-/// the pay rail runs from the top of the window. On the canteen till's short
-/// landscape (1097×686) that is what lets the tender pad and the note sit above
-/// the Charge bar without scrolling.
+/// Review & Pay on a tablet: the page head covers the receipt column only, so
+/// the terminal rail runs from the top of the window. On the canteen till's
+/// short landscape (1097×686) that is what lets the note pad sit above the
+/// Charge bar without scrolling; the note button lives in the page head.
 void main() {
   setUpAll(() => GoogleFonts.config.allowRuntimeFetching = false);
 
@@ -33,14 +33,26 @@ void main() {
       expect(tester.takeException(), isNull, reason: 'no overflow at $size');
 
       final head = tester.getRect(find.byType(TabletPageHead));
-      expect(tester.getRect(find.text('AMOUNT DUE')).top, lessThan(head.bottom),
+      expect(tester.getRect(find.text('PAY WITH')).top, lessThan(head.bottom),
           reason: 'the rail should use the height beside the page head');
-      expect(tester.getRect(find.text('AMOUNT DUE')).left, greaterThan(head.right),
+      expect(tester.getRect(find.text('PAY WITH')).left, greaterThan(head.right),
           reason: 'the page head should stop at the ticket column');
+      expect(tester.getRect(find.text('AMOUNT DUE')).right, lessThanOrEqualTo(head.right),
+          reason: 'the amount due is the foot of the receipt, not the rail');
+
+      // The note sheet's keyboard must not crush the rail under it.
+      tester.view.viewInsets = const FakeViewPadding(bottom: 340);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pump();
+      expect(tester.takeException(), isNull, reason: 'no overflow with the keyboard up at $size');
+      tester.view.resetViewInsets();
+      await tester.pump();
 
       final charge = tester.getRect(find.textContaining('Charge'));
-      expect(tester.getRect(find.text('Add a note')).bottom, lessThan(charge.top),
-          reason: 'the note prompt should be on screen above the Charge bar');
+      expect(tester.getRect(find.textContaining('Exact')).bottom, lessThan(charge.top),
+          reason: 'the cash pad and its tools should be on screen above the Charge bar');
+      expect(tester.getRect(find.byTooltip('Add a note')).bottom, lessThanOrEqualTo(head.bottom),
+          reason: 'the note button sits in the page head');
     });
   }
 }

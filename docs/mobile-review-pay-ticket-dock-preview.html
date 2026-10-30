@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review &amp; Pay — Ticket Dock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&display=swap" rel="stylesheet">
+<style>
+/* Astra tokens — Qloud Blue preset (palette.dart, clean skin) */
+.stage{
+  --canvas:#F3F7FD; --card:#FFFFFF; --ink:#161A2B; --text2:#4A4F63; --muted:#8A8FA3;
+  --hair:#E7E9F2; --tint:#E8F1FD; --primary:#0A62C8; --pdark:#01377F; --pink:#0A62C8;
+  --success:#1F9D63; --succ-tint:#E4F6EC; --danger:#D4546A; --danger-tint:#FBE9EC;
+  --warn:#9A6A00; --warn-tint:#FBF3DF; --track:rgba(0,0,0,.045);
+  --hero:linear-gradient(135deg,#0A62C8,#01377F);
+  --cta:linear-gradient(135deg,#3CBAFB,#0BA8FA); --cta-ink:#01377F;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.32);
+  --sheet-shadow:0 -14px 30px -18px rgba(1,55,127,.30);
+}
+.stage[data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B; --ink:#EDEFF7; --text2:#ADB3C9; --muted:#767C92;
+  --hair:#272C3E; --tint:rgba(10,98,200,.24); --pink:#5FA6F2;
+  --succ-tint:rgba(31,157,99,.17); --danger-tint:rgba(212,84,106,.18);
+  --warn:#E6C16B; --warn-tint:rgba(201,162,75,.17); --track:rgba(255,255,255,.06);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+  --sheet-shadow:0 -14px 30px -16px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:Inter,system-ui,sans-serif;background:#E9EDF4;color:#161A2B}
+.ms{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;line-height:1;letter-spacing:0;display:inline-block;white-space:nowrap;
+  -webkit-font-feature-settings:'liga';font-feature-settings:'liga';font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24}
+.ms.f{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.num{font-variant-numeric:tabular-nums}
+
+/* page chrome */
+.top{position:sticky;top:0;z-index:5;background:rgba(233,237,244,.92);backdrop-filter:blur(10px);border-bottom:1px solid #D9DFEA;
+  padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.top h1{font-size:16px;font-weight:800;margin-right:auto}
+.top h1 small{display:block;font-size:11.5px;font-weight:600;color:#6B7280;margin-top:2px}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl label{font-size:10px;font-weight:800;color:#6B7280;letter-spacing:.8px;text-transform:uppercase}
+.seg{display:flex;background:#DCE2EC;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;font:700 12px Inter;color:#4A4F63;padding:6px 11px;border-radius:7px;cursor:pointer}
+.seg button.on{background:#fff;color:#0A62C8;box-shadow:0 2px 6px -2px rgba(0,0,0,.18)}
+.rules{max-width:1240px;margin:22px auto 0;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rule{background:#fff;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5;color:#4A4F63;box-shadow:0 8px 20px -16px rgba(1,55,127,.4)}
+.rule b{display:flex;align-items:center;gap:6px;color:#161A2B;font-size:12.5px;margin-bottom:3px}
+.rule .ms{font-size:17px;color:#0A62C8}
+.stage{display:flex;flex-wrap:wrap;gap:34px 30px;padding:26px 24px 60px;justify-content:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cap{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800}
+.fit{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+.fit.ok{background:#E4F6EC;color:#1F9D63}.fit.bad{background:#FBE9EC;color:#D4546A}
+
+/* device frame */
+.phone{border-radius:44px;padding:10px;background:#0B0E16;box-shadow:0 30px 60px -30px rgba(0,0,0,.5)}
+.small .phone{border-radius:22px;padding:8px}
+.tab .phone{border-radius:32px;padding:12px}
+.scr{width:var(--w);height:var(--h);border-radius:34px;overflow:hidden;background:var(--canvas);display:flex;flex-direction:column;position:relative;color:var(--ink)}
+.small .scr{border-radius:14px}.tab .scr{border-radius:20px}
+.sb{height:var(--sb);flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-size:13px;font-weight:700}
+.small .sb{padding:0 14px 4px;font-size:11px}.tab .sb{padding:0 22px 2px;font-size:12px;align-items:center}
+.sb .ic{display:flex;gap:4px}.sb .ms{font-size:15px}
+.home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:9px;background:var(--ink);opacity:.35}
+.small .home{display:none}.tab .home{width:180px;bottom:6px}
+.body{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+
+/* atoms */
+.row{display:flex;align-items:center}.sp{flex:1}
+.lbl{font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.sub{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+.qty{font-size:10.5px;font-weight:800;color:var(--pink);background:var(--tint);border-radius:6px;padding:2px 6px;flex:none}
+.avatar{border-radius:50%;background:var(--tint);color:var(--pink);display:grid;place-items:center;font-weight:700;flex:none}
+.link{font-size:11px;font-weight:800;color:var(--pink);display:flex;align-items:center;gap:2px}.link .ms{font-size:15px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--tint);color:var(--pink)}
+.chip .ms{font-size:14px}
+.ghost{flex:none;height:54px;padding:0 17px;border-radius:14px;border:1.4px solid color-mix(in srgb,var(--pdark) 25%,transparent);background:var(--card);
+  font:800 14px Inter;color:var(--pink);display:flex;align-items:center}
+.stage[data-theme="dark"] .ghost{border-color:rgba(255,255,255,.14)}
+.cta{flex:1;height:54px;border-radius:14px;background:var(--cta);color:var(--cta-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 12px 22px -12px rgba(11,168,250,.7)}
+.cta b{font-size:15.5px;font-weight:800}.cta small{font-size:10.5px;font-weight:700;opacity:.8;margin-top:1px}
+.cta.warn{background:linear-gradient(135deg,#F3C766,#E0A93A);color:#4A3300;box-shadow:0 12px 22px -12px rgba(224,169,58,.7)}
+.lines{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
+.line{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.line .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.line b{font-weight:800}
+.ledger{display:flex;border-radius:12px;background:var(--track)}
+.ledger div{flex:1;padding:9px 10px;display:flex;flex-direction:column;gap:3px}
+.ledger div+div{border-left:1px solid var(--hair)}
+.ledger span{font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.ledger b{font-size:14px;font-weight:800}
+.warnbar{display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--warn-tint);color:var(--warn);padding:6px 6px 6px 12px;font-size:12px;font-weight:800}
+.warnbar .ms{font-size:17px}
+.warnbar .btn{margin-left:auto;background:var(--card);color:var(--pink);border-radius:9px;padding:7px 10px;font-size:11px;font-weight:800;box-shadow:var(--shadow)}
+.splitln{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--track);flex:1}
+.splitln .ms{font-size:17px;color:var(--pink)}.splitln span{flex:1;font-size:12px;font-weight:700}.splitln b{font-size:13.5px;font-weight:800}
+
+/* ticket (phone) */
+.b-head{flex:none;display:flex;align-items:center;gap:10px;padding:4px 16px 8px}
+.btn-sq{width:36px;height:36px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:21px;flex:none}
+.b-head h2{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.who{display:flex;align-items:center;gap:5px}
+.who .tap{font-size:9.5px;font-weight:800;color:var(--success);background:var(--succ-tint);border-radius:999px;padding:2px 7px;display:inline-flex;gap:3px;align-items:center}
+.who .tap .ms{font-size:12px}
+.b-body{height:100%;padding:4px 14px 12px;display:flex;flex-direction:column}
+.b-ticket{flex:1;min-height:0;padding:14px 15px 13px;display:flex;flex-direction:column;gap:9px}
+.b-sum{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--text2)}
+.b-tot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:11px;border-top:1px dashed var(--hair)}
+.b-tot .v{font-size:28px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.b-tot .v small{font-size:12px;font-weight:800;color:var(--muted);margin-right:5px;letter-spacing:0}
+
+/* pay sheet */
+.b-sheet{flex:none;background:var(--card);border-radius:24px 24px 0 0;box-shadow:var(--sheet-shadow);padding:8px 14px calc(var(--safe) + 6px)}
+.b-grab{width:38px;height:4px;border-radius:9px;background:var(--hair);margin:0 auto 10px}
+
+/* method grid: row 1 = Cash · Card · 2 configured; row 2 = [Wallet] · Credit · Split */
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mt{height:50px;border-radius:12px;background:var(--track);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:10.5px;font-weight:700;color:var(--text2);padding:0 4px;min-width:0;position:relative}
+.mt .ms{font-size:19px}
+.mt span.l{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt.minor{height:36px;flex-direction:row;gap:6px;background:transparent;border:1px solid var(--hair);color:var(--muted);font-size:11px}
+.mt.minor .ms{font-size:16px}
+.mt.span2{grid-column:span 2}
+.mt.wallet{background:var(--succ-tint);color:var(--success);border-color:transparent}
+.mt.on{background:var(--primary);color:#fff;font-weight:800;border-color:transparent;box-shadow:0 8px 16px -10px rgba(10,98,200,.8)}
+.mt.on .ms{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.mt .db{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.5}
+.mt.on .db{background:#fff}
+.legend .db{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8A8FA3;opacity:.6;margin:0 2px}
+
+.b-strip{margin:10px 0;min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.b-notes{display:flex;gap:5px}
+.b-notes div{flex:1;height:38px;border-radius:10px;border:1px solid var(--hair);display:grid;place-items:center;font-size:13px;font-weight:800;position:relative}
+.b-notes div.on{border:1.5px solid var(--primary);background:var(--tint);color:var(--pink)}
+.b-notes div sup{position:absolute;top:-7px;right:-4px;font-size:9.5px;background:var(--primary);color:#fff;border-radius:999px;padding:2px 5px;line-height:1}
+.b-notes div.k{flex:none;width:38px;color:var(--pink);background:var(--tint);border-color:transparent}
+.b-rc{display:flex;align-items:center;font-size:12px;font-weight:700;color:var(--text2);gap:6px}
+.b-rc b{color:var(--ink);font-weight:800}.b-rc .chg{margin-left:auto;color:var(--success);font-size:15px;font-weight:800}
+.b-okline{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px}
+.b-okline .c{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:17px;flex:none}
+.b-okline b{font-size:13px;font-weight:800;display:block}.b-okline small{font-size:10.5px;font-weight:600;opacity:.8}
+.b-okline .v{margin-left:auto;font-size:15px;font-weight:800;text-align:right;white-space:nowrap}
+
+/* tablet */
+.split{flex:1;min-height:0;display:flex}
+.tpane{flex:1;min-width:0;display:flex;flex-direction:column;padding:4px 24px 20px;gap:14px}
+.thead{flex:none;display:flex;align-items:center;gap:12px}
+.thead .btn-sq{width:40px;height:40px;font-size:22px}
+.thead h2{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.paper{flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 22px 16px;border-radius:0 0 16px 16px;
+  -webkit-mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x;mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x}
+.brand{text-align:center;flex:none;padding-bottom:12px;border-bottom:1px dashed var(--hair)}
+.brand .lg{width:34px;height:34px;border-radius:10px;margin:0 auto 6px;background:var(--hero);display:grid;place-items:center;color:#fff;font-size:19px}
+.brand b{font-size:11.5px;font-weight:800;letter-spacing:2.6px}
+.tr{display:grid;grid-template-columns:52px 1fr 96px 110px;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:13.5px;font-weight:600}
+.tr .r{text-align:right}.tr b{font-weight:800}.tr.h{padding:13px 0 9px}
+.tlist{flex:1;min-height:0;overflow:auto}
+.rail{flex:none;width:var(--rail);display:flex;flex-direction:column;background:var(--card);border-left:1px solid var(--hair)}
+.rail .in{display:flex;flex-direction:column;gap:14px;padding:18px 18px 0}
+.rail .dock{flex:none;padding:12px 18px calc(var(--safe) + 8px)}
+.rail .mt{height:58px;font-size:11.5px}.rail .mt .ms{font-size:21px}
+.rail .mt.minor{height:42px}
+.rail .b-strip{margin:0;min-height:0}
+.rail .b-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rail .b-notes div{height:58px;font-size:17px;border-radius:13px}
+.rail .b-notes div.k{grid-column:1/-1;width:auto;height:40px;font-size:18px}
+.rail .b-rc{font-size:13px}.rail .b-rc .chg{font-size:18px}
+
+/* ========== C · TERMINAL ========== */
+.c-hero{flex:none;background:var(--hero);color:#fff;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+.c-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 0%,rgba(11,168,250,.55),transparent 45%),radial-gradient(circle at 0% 100%,rgba(255,255,255,.10),transparent 40%)}
+.c-hero>*{position:relative}
+.c-hero .in{padding:2px 16px 14px}
+.c-bar{display:flex;align-items:center;gap:10px;height:40px}
+.c-bar .b{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:20px}
+.c-bar h2{font-size:15px;font-weight:800;flex:1}
+.glass{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:11px;font-weight:800;padding:5px 10px;display:flex;align-items:center;gap:4px}
+.glass .ms{font-size:14px}
+.glass.tap{background:rgba(124,240,181,.2);border-color:rgba(124,240,181,.35);color:#B9F8D6}
+.c-amt{text-align:center;margin:2px 0 10px}
+.c-amt .v{font-size:44px;font-weight:700;letter-spacing:-1.6px;line-height:1.05}
+.c-amt .v small{font-size:15px;font-weight:800;opacity:.7;letter-spacing:0;margin-right:6px;vertical-align:middle}
+.c-amt .s{font-size:11px;font-weight:600;color:rgba(255,255,255,.72);margin-top:4px}
+/* the same two-row method grid, re-skinned as glass on the hero */
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;background:rgba(0,0,0,.16);border-radius:14px;padding:4px}
+.cg .mt{height:44px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.88);border-radius:10px;box-shadow:none}
+.cg .mt.minor{height:32px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.78)}
+.cg .mt.wallet{background:rgba(124,240,181,.16);border-color:transparent;color:#B9F8D6}
+.cg .mt.on{background:#fff;color:#0A62C8;border-color:transparent}
+.cg .mt .db{background:#fff}.cg .mt.on .db{background:#0A62C8}
+.c-status{margin-top:9px;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.12);font-size:12px;font-weight:700}
+.c-status .ms{font-size:17px}.c-status b{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap}
+.c-status.ok .ms{color:#7CF0B5}.c-status.warn .ms{color:#F3C766}.c-status.bad .ms{color:#FFB3C0}
+.c-body{height:100%;padding:12px 14px 0;display:flex;flex-direction:column;gap:10px}
+.c-pad{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:8px;max-height:200px}
+.c-pad div{border-radius:16px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;position:relative}
+.c-pad div.on{background:var(--tint);color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--primary)}
+.c-pad div sup{position:absolute;top:6px;right:8px;font-size:10.5px;background:var(--primary);color:#fff;border-radius:999px;padding:3px 6px;line-height:1}
+.c-center{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:12px}
+.c-ring{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--pink);font-size:34px;
+  box-shadow:0 0 0 10px color-mix(in srgb,var(--tint) 50%,transparent);margin-bottom:8px}
+.c-ring.ok{background:var(--succ-tint);color:var(--success);box-shadow:0 0 0 10px color-mix(in srgb,var(--succ-tint) 50%,transparent)}
+.c-ring.w{background:var(--warn-tint);color:var(--warn);box-shadow:0 0 0 10px color-mix(in srgb,var(--warn-tint) 50%,transparent)}
+.c-ttl{font-size:15px;font-weight:800}
+.c-idcard{border-radius:18px;padding:14px;color:#fff;background:linear-gradient(135deg,#0A62C8,#01377F 70%);position:relative;overflow:hidden;flex:none}
+.c-idcard:after{content:"";position:absolute;right:-30px;bottom:-50px;width:150px;height:150px;border-radius:50%;background:rgba(11,168,250,.35)}
+.c-idcard>*{position:relative;z-index:1}
+.c-tools{flex:none;display:flex;gap:8px}
+.c-tools div{flex:1;height:36px;border-radius:11px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text2)}
+.c-tools .ms{font-size:16px;color:var(--pink)}
+.dock{flex:none;padding:10px 14px calc(var(--safe) + 6px)}
+/* C tablet: receipt-paper ticket left (shared with B), terminal rail right */
+.rail.c-rail{background:var(--canvas)}
+.c-rail .c-hero .in{padding:16px 18px}
+.c-rail .c-amt .v{font-size:50px}
+.c-rail .cg .mt{height:52px;font-size:11.5px}.c-rail .cg .mt.minor{height:38px}
+.c-rail .c-body{padding:14px 18px 0}
+.c-rail .c-pad{max-height:none}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>Review &amp; Pay — payment methods
+    <small>mobileApp · review_pay_screen.dart · Qloud Blue · each device checks itself for scrolling</small></h1>
+  <div class="ctl"><label>Design</label>
+    <div class="seg" id="segDesign"><button data-v="b">B · Ticket Dock</button><button data-v="c" class="on">C · Terminal</button></div></div>
+  <div class="ctl"><label>Paying by</label>
+    <div class="seg" id="segState">
+      <button data-v="cash">Cash</button><button data-v="card" class="on">Card</button><button data-v="db1">Bank Transfer</button>
+      <button data-v="db2">QR Pay</button><button data-v="credit">Credit</button><button data-v="split">Split</button><button data-v="wallet">Wallet</button>
+    </div></div>
+  <div class="ctl"><label>Student card</label>
+    <div class="seg" id="segStudent"><button data-v="0" class="on">Not tapped</button><button data-v="1">Tapped</button></div></div>
+  <div class="ctl"><label>Theme</label>
+    <div class="seg" id="segTheme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div></div>
+</div>
+
+<div class="rules">
+  <div class="rule"><b><span class="ms">push_pin</span>Cash · Card are fixed</b>Always the first two tiles, on every till, whether or not they are set up on the web.</div>
+  <div class="rule legend"><b><span class="ms">database</span>2 from the database</b>The next two tiles are the first two <i>POS Payment Buttons</i> that aren’t cash or card, with their configured name and icon (<span class="db"></span> marks them in this preview).</div>
+  <div class="rule"><b><span class="ms">school</span>Wallet only after a tap</b>Hidden until a student card is tapped. It then takes the first slot of row 2, so nothing else moves.</div>
+  <div class="rule"><b><span class="ms">call_split</span>Credit · Split always there</b>Quieter half-height tiles on row 2. With a wallet the row reads Wallet · Credit · Split, without one it reads Credit · Split.</div>
+</div>
+
+<div class="stage" id="stage" data-theme="light"></div>
+
+<script>
+const S = {design:'c', state:'card', student:false, theme:'light'};
+const DEVICES = [
+  {id:'phone', name:'iPhone 390×844', w:390, h:844, sb:47, safe:28},
+  {id:'small', name:'Small Android 360×720', w:360, h:720, sb:26, safe:8},
+  {id:'ipad', name:'iPad 1194×834', w:1194, h:834, sb:24, safe:14, tab:true},
+  {id:'till', name:'Till tablet 1097×686', w:1097, h:686, sb:24, safe:4, tab:true},
+];
+
+const TICKET = {
+  customer:'Walk-in Customer', staff:'Me', total:276, subtotal:296, discount:20,
+  lines:[{q:1,n:'Signature Haircut',t:85},{q:1,n:'Beard Sculpt',t:45},{q:2,n:'Keratin Shine Serum',t:96},{q:1,n:'Hot Towel Shave',t:40},{q:1,n:'Scalp Massage',t:30}],
+};
+/** The two POS Payment Buttons that come from the database (System Configurations). */
+const CONFIGURED = [{k:'db1', i:'account_balance', l:'Bank Transfer'}, {k:'db2', i:'qr_code_2', l:'QR Pay'}];
+const NOTES = [1,5,10,50,100,500], COUNTED = {100:2,50:1,10:3};
+const STUDENT = {name:'Aisha Rahman', cls:'Grade 6 · B', balance:180};
+const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ms = (n,f) => `<span class="ms${f?' f':''}">${n}</span>`;
+const who = () => S.student ? STUDENT.name : TICKET.customer;
+
+function money(state){
+  const t = TICKET.total, charge = `Charge QAR ${fmt(t)}`;
+  switch(state){
+    case 'cash': return {paid:t, bal:0, settled:true, cta:charge, sub:'Change QAR 4.00'};
+    case 'credit': return {paid:0, bal:t, settled:false, cta:'Submit Anyway', sub:`QAR ${fmt(t)} on account`};
+    case 'split': return {paid:t, bal:0, settled:true, cta:charge, parts:[['credit_card','Card',200],['payments','Cash',76]]};
+    case 'wallet': return {paid:t, bal:0, settled:true, cta:charge, sub:'Card is QAR 96.00 short'};
+    default: return {paid:t, bal:0, settled:true, cta:charge};
+  }
+}
+
+/** Row 1: Cash, Card, then the two configured buttons. Row 2: Wallet (only once tapped), Credit, Split. */
+function methodGrid(state, wrap = 'mg'){
+  const tile = (k, i, l, cls = '') => `<div class="mt ${cls}${k===state?' on':''}">${ms(i)}<span class="l">${l}</span>${cls.includes('cfg')?'<i class="db"></i>':''}</div>`;
+  const row1 = [tile('cash','payments','Cash'), tile('card','credit_card','Card'),
+    ...CONFIGURED.map(c => tile(c.k, c.i, c.l, 'cfg'))];
+  const row2 = S.student
+    ? [tile('wallet','school','Wallet','minor span2 wallet'), tile('credit','description','Credit','minor'), tile('split','call_split', state==='split'?'2 ways':'Split','minor')]
+    : [tile('credit','description','Credit','minor span2'), tile('split','call_split', state==='split'?'2 ways':'Split','minor span2')];
+  return `<div class="${wrap}">${row1.join('')}${row2.join('')}</div>`;
+}
+
+function strip(state){
+  const m = money(state);
+  const ok = (bg,c,icon,title,small,val) => `<div class="b-okline" style="background:${bg};color:${c}"><span class="c" style="background:${c}">${ms(icon,1)}</span>
+      <div><b>${title}</b><small>${small}</small></div><span class="v num">${val}</span></div>`;
+  const cfg = CONFIGURED.find(c => c.k === state);
+  if(state==='cash') return `<div class="b-notes">${NOTES.map(n=>`<div class="${COUNTED[n]?'on':''}">${n}${COUNTED[n]?`<sup>×${COUNTED[n]}</sup>`:''}</div>`).join('')}<div class="k">${ms('dialpad')}</div></div>
+    <div class="b-rc">Received <b class="num">QAR 280.00</b><span class="chg num">Change 4.00</span></div>`;
+  if(state==='card') return ok('var(--succ-tint)','var(--success)','check','Paid in full by card','Take it on the card machine','Bal 0.00');
+  if(cfg) return ok('var(--succ-tint)','var(--success)','check',`Paid in full by ${cfg.l}`,'Posted to its configured account','Bal 0.00');
+  if(state==='split') return `<div class="row" style="gap:6px">${m.parts.map(([i,l,a])=>`<div class="splitln">${ms(i)}<span>${l}</span><b class="num">${fmt(a)}</b></div>`).join('')}<span class="chip" style="height:38px">${ms('edit')}Edit</span></div>
+    <div class="b-rc" style="color:var(--success)">${ms('check_circle',1)} Fully paid<span class="chg num">Bal 0.00</span></div>`;
+  if(state==='credit') return ok('var(--warn-tint)','var(--warn)','schedule','Goes on account','Nothing taken now — use Split for part',`Due ${fmt(TICKET.total)}`);
+  if(state==='wallet') return `<div class="row" style="gap:10px"><div class="avatar" style="width:36px;height:36px;font-size:15px">A</div>
+      <div class="sp" style="min-width:0"><div style="font-size:12.5px;font-weight:800">${STUDENT.name}</div><div class="sub" style="margin:0">${STUDENT.cls} · can spend ${fmt(STUDENT.balance)}</div></div></div>
+    <div class="warnbar">${ms('warning',1)} 96.00 short<span class="btn">Card + cash</span></div>`;
+}
+
+const statusBar = () => `<div class="sb"><span>9:41</span><span class="ic">${ms('signal_cellular_alt')}${ms('wifi')}${ms('battery_full',1)}</span></div>`;
+const tapped = () => S.student ? `<span class="tap">${ms('contactless')}Card</span>` : '';
+const ctaRow = state => { const m = money(state);
+  return `<div class="row" style="gap:10px"><span class="ghost">Draft</span><div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${m.sub?`<small>${m.sub}</small>`:''}</div></div>`; };
+
+function phone(state){
+  return `${statusBar()}<div class="b-head"><span class="btn-sq">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub who">${who()} · ${TICKET.staff} ${tapped()}</div></div>
+      <span class="btn-sq" style="color:var(--pink);font-size:20px">${ms('edit_note')}</span></div>
+    <div class="body"><div class="b-body"><div class="card b-ticket">
+      <div class="row"><span class="lbl">Ticket · 5 items</span><span class="sp"></span><span class="link">Edit${ms('chevron_right')}</span></div>
+      <div class="lines" style="flex:1">${TICKET.lines.map(l=>`<div class="line"><span class="qty">${l.q}×</span><span class="n">${l.n}</span><b class="num">${fmt(l.t)}</b></div>`).join('')}</div>
+      <div class="b-sum">Subtotal<span class="num">${fmt(TICKET.subtotal)}</span></div>
+      <div class="b-sum" style="color:var(--warn)">Discount<span class="num">− ${fmt(TICKET.discount)}</span></div>
+      <div class="b-tot"><span class="lbl">Amount due</span><span class="v num"><small>QAR</small>${fmt(TICKET.total)}</span></div>
+    </div></div></div>
+    <div class="b-sheet"><div class="b-grab"></div>${methodGrid(state)}<div class="b-strip">${strip(state)}</div>${ctaRow(state)}</div>`;
+}
+
+/** The receipt-paper ticket pane — shared by the B and C tablet layouts. */
+function paperPane(){
+  return `<div class="tpane"><div class="thead"><span class="btn-sq">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub who">${who()} · ${TICKET.staff} ${tapped()}</div></div>
+      <span class="btn-sq" style="color:var(--pink);font-size:20px">${ms('edit_note')}</span></div>
+      <div class="card paper">
+        <div class="brand"><div class="lg">${ms('cloud',1)}</div><b>QLOUD POS</b><div class="sub">${who()} · ${TICKET.staff} · 29 Oct 2026</div></div>
+        <div class="tr h lbl" style="font-size:10px"><span>Qty</span><span>Item</span><span class="r">Price</span><span class="r">Amount</span></div>
+        <div class="tlist">${TICKET.lines.map(l=>`<div class="tr"><span class="qty" style="justify-self:start">${l.q}×</span><span>${l.n}</span>
+          <span class="r num" style="color:var(--muted)">${fmt(l.t/l.q)}</span><b class="r num">${fmt(l.t)}</b></div>`).join('')}</div>
+        <div class="b-sum" style="margin-top:10px">Subtotal<span class="num">${fmt(TICKET.subtotal)}</span></div>
+        <div class="b-sum" style="color:var(--warn);margin-top:5px">Discount<span class="num">− ${fmt(TICKET.discount)}</span></div>
+        <div class="b-tot"><span class="lbl">Amount due</span><span class="v num" style="font-size:32px"><small>QAR</small>${fmt(TICKET.total)}</span></div>
+      </div></div>`;
+}
+
+function tablet(state){
+  const m = money(state);
+  const bal = m.bal > 0 ? `<b class="num" style="color:var(--danger)">${fmt(m.bal)}</b>` : `<b class="num" style="color:var(--success)">0.00</b>`;
+  return `${statusBar()}<div class="split">${paperPane()}
+    <div class="rail"><div class="body"><div class="in"><span class="lbl">Pay with</span>${methodGrid(state)}<div class="b-strip">${strip(state)}</div></div></div>
+      <div class="dock"><div class="ledger" style="margin-bottom:12px"><div><span>Total</span><b class="num">${fmt(TICKET.total)}</b></div>
+        <div><span>Paid</span><b class="num">${fmt(m.paid)}</b></div><div><span>${m.bal>0?'Due':'Balance'}</span>${bal}</div></div>${ctaRow(state)}</div></div>
+  </div>`;
+}
+
+/* ---------------- C · TERMINAL ---------------- */
+function statusC(state){
+  const cfg = CONFIGURED.find(c => c.k === state);
+  if(state==='cash') return `<div class="c-status ok">${ms('south_west')}Received 280.00 · give back<b class="num">4.00</b></div>`;
+  if(state==='credit') return `<div class="c-status warn">${ms('schedule')}On account · due<b class="num">${fmt(TICKET.total)}</b></div>`;
+  if(state==='wallet') return `<div class="c-status bad">${ms('warning',1)}Student card short by<b class="num">96.00</b></div>`;
+  const by = state==='split' ? ' · card + cash' : cfg ? ` by ${cfg.l}` : ' by card';
+  return `<div class="c-status ok">${ms('check_circle',1)}Fully paid${by}<b class="num">Bal 0.00</b></div>`;
+}
+
+function bodyC(state, phone = true){
+  const m = money(state), cfg = CONFIGURED.find(c => c.k === state);
+  const tools = !phone ? "<span class=\"sp\"></span>" : `<div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+  const center = (ring, icon, title, sub) => `<div class="card c-center"><div class="c-ring ${ring}">${ms(icon)}</div><div class="c-ttl">${title}</div><div class="sub">${sub}</div></div>${tools}`;
+  if(state==='cash') return `<div class="row"><span class="lbl">Tap the notes handed over</span><span class="sp"></span><span class="chip">${ms('dialpad')}Keypad</span></div>
+    <div class="c-pad">${NOTES.map(n=>`<div class="${COUNTED[n]?'on':''}">${n}${COUNTED[n]?`<sup>×${COUNTED[n]}</sup>`:''}</div>`).join('')}</div>
+    <div class="c-tools"><div>${ms('close')}Reset</div><div>${ms('done_all')}Exact</div><div>${ms('edit_note')}Note</div></div>`;
+  if(state==='card') return center('', 'contactless', 'Tap or insert on the card machine', `Charge QAR ${fmt(TICKET.total)}, then confirm below once it says Approved`);
+  if(cfg) return center('ok', cfg.i, `Paid by ${cfg.l}`, `QAR ${fmt(TICKET.total)} is posted to its configured account`);
+  if(state==='credit') return center('w', 'description', 'Put the full amount on account', 'Nothing is taken now. For a part payment, use Split.');
+  if(state==='split') return `<div class="card" style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:9px">
+      <div class="row"><span class="lbl">Split · 2 methods</span><span class="sp"></span><span class="chip">${ms('edit')}Edit split</span></div>
+      ${m.parts.map(([i,l,a])=>`<div class="splitln" style="flex:none;padding:12px">${ms(i)}<span style="font-size:14px">${l}</span><b class="num" style="font-size:16px">${fmt(a)}</b></div>`).join('')}
+    </div>${tools}`;
+  if(state==='wallet') return `<div class="c-idcard"><div class="row" style="gap:12px">
+        <div class="avatar" style="width:44px;height:44px;font-size:18px;background:rgba(255,255,255,.18);color:#fff">A</div>
+        <div class="sp"><div style="font-size:14.5px;font-weight:800">${STUDENT.name}</div><div style="font-size:10.5px;opacity:.75;font-weight:600">${STUDENT.cls}</div></div>${ms('contactless')}</div>
+      <div class="row" style="margin-top:14px"><div><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;opacity:.7">CAN SPEND</div><div style="font-size:22px;font-weight:700" class="num">${fmt(STUDENT.balance)}</div></div>
+        <span class="sp"></span><div style="text-align:right"><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;opacity:.7">AFTER SALE</div><div style="font-size:15px;font-weight:800;color:#FFB3C0" class="num">−96.00</div></div></div></div>
+    <div class="warnbar">${ms('warning',1)} Card is QAR 96.00 short<span class="btn">Card + cash</span></div>${tools}`;
+}
+
+function heroC(state, back = true){
+  const whoChip = S.student ? `<span class="glass tap">${ms('contactless')}Aisha R.</span>` : `<span class="glass">${ms('person')}Walk-in</span>`;
+  return `<div class="c-hero">${back ? statusBar() : ''}<div class="in">
+      ${back ? `<div class="c-bar"><span class="b">${ms('chevron_left')}</span><h2>Review &amp; Pay</h2>${whoChip}</div>`
+             : `<div class="row" style="margin-bottom:4px"><span class="lbl" style="color:rgba(255,255,255,.7)">Amount due</span><span class="sp"></span>${whoChip}</div>`}
+      <div class="c-amt"><div class="v num"><small>QAR</small>${fmt(TICKET.total)}</div><div class="s">5 items · 20.00 off</div></div>
+      ${methodGrid(state, 'cg')}${statusC(state)}</div></div>`;
+}
+
+function phoneC(state){
+  return `<div style="color:#fff;display:contents">${heroC(state)}</div>
+    <div class="body"><div class="c-body">${bodyC(state)}</div></div>
+    <div class="dock">${ctaRow(state)}</div>`;
+}
+
+function tabletC(state){
+  return `${statusBar()}<div class="split">${paperPane()}
+    <div class="rail c-rail">${heroC(state, false)}
+      <div class="body"><div class="c-body">${bodyC(state, false)}</div></div>
+      <div class="dock" style="padding:12px 18px calc(var(--safe) + 8px)">${ctaRow(state)}</div></div>
+  </div>`;
+}
+
+function render(){
+  const stage = document.getElementById('stage');
+  stage.dataset.theme = S.theme;
+  stage.innerHTML = DEVICES.map(d => {
+    const rail = Math.min(460, Math.max(340, d.w * 0.38)); // _payRail's width rule
+    return `<div class="col ${d.id==='small'?'small':''} ${d.tab?'tab':''}">
+      <div class="phone"><div class="scr" data-id="${d.id}" style="--w:${d.w}px;--h:${d.h}px;--sb:${d.sb}px;--safe:${d.safe}px;--rail:${rail}px">
+        ${S.design === 'c' ? (d.tab ? tabletC(S.state) : phoneC(S.state)) : (d.tab ? tablet(S.state) : phone(S.state))}<div class="home"></div></div></div>
+      <div class="cap">${d.name}<span class="fit" data-fit="${d.id}"></span></div></div>`;
+  }).join('');
+  requestAnimationFrame(() => document.querySelectorAll('.scr').forEach(scr => {
+    const over = Math.max(0, ...[...scr.querySelectorAll('.body, .tlist')].map(b => b.scrollHeight - b.clientHeight));
+    const badge = document.querySelector(`[data-fit="${scr.dataset.id}"]`);
+    badge.className = 'fit ' + (over > 1 ? 'bad' : 'ok');
+    badge.textContent = over > 1 ? `Scrolls · +${over}px` : 'Fits — no scroll';
+  }));
+}
+
+function syncSegs(){
+  document.querySelectorAll('#segState button').forEach(b => b.classList.toggle('on', b.dataset.v === S.state));
+  document.querySelectorAll('#segStudent button').forEach(b => b.classList.toggle('on', b.dataset.v === (S.student ? '1' : '0')));
+  document.querySelectorAll('#segTheme button').forEach(b => b.classList.toggle('on', b.dataset.v === S.theme));
+  document.querySelectorAll('#segDesign button').forEach(b => b.classList.toggle('on', b.dataset.v === S.design));
+}
+function bind(id, apply){
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    apply(b.dataset.v); syncSegs(); render();
+  });
+}
+// Wallet can only be chosen once a card is tapped; untapping drops back to Cash.
+bind('segState', v => { S.state = v; if(v === 'wallet') S.student = true; });
+bind('segStudent', v => { S.student = v === '1'; if(!S.student && S.state === 'wallet') S.state = 'cash'; });
+bind('segTheme', v => { S.theme = v; });
+bind('segDesign', v => { S.design = v; });
+document.fonts.ready.then(render); render();
+</script>
+</body>
+</html>

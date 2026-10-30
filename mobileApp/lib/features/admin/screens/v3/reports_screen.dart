@@ -34,6 +34,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   final _scrollCtl = ScrollController();
   StreamSubscription<int>? _branchSub;
+  StreamSubscription<AuthState>? _authSub;
 
   /// The two reports this page holds: 0 = Sales Overview (performance,
   /// payments, per-day trend), 1 = Breakdown (By Item / By Category / By Staff
@@ -68,12 +69,22 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (!context.read<AuthCubit>().hasPermission(PermissionSlug.report)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AdminCubit>()
+        ..reanchorRange()
         ..loadReports(type: _savedBreakdown, force: true)
         ..loadOverview();
     });
     // The shell keeps this screen alive, so reload the current range for the
     // new branch when the active branch changes. `force` because the range is
     // the same but nothing cached for the old branch survives it.
+    // Opening or closing the day moves "today"; a preset range follows it.
+    _authSub = context.read<AuthCubit>().stream.listen((_) {
+      if (!mounted) return;
+      final admin = context.read<AdminCubit>();
+      if (!admin.reanchorRange()) return;
+      admin
+        ..loadReports()
+        ..loadOverview();
+    });
     _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
       if (!mounted) return;
       context.read<AdminCubit>()
@@ -86,6 +97,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   void dispose() {
     _scrollCtl.dispose();
     _branchSub?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 
@@ -331,7 +343,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: Row(
         children: [
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -346,7 +358,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           // Wrap, not Row: on a narrow tablet the groups drop to a second
           // line instead of overflowing the bar.
           Expanded(
-            flex: 7,
+            flex: 8,
             child: Wrap(
               alignment: WrapAlignment.end,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -413,12 +425,31 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  /// Today / 7 Days / 30 Days / Month as one segmented cluster — the quiet
-  /// sibling of the phone's gradient preset chips.
+  /// The date presets, in order: the open session's own day (only while it
+  /// isn't the calendar date, labelled with that date), then Today /
+  /// Yesterday / 7 Days / Month.
+  List<(String, String)> get _presets {
+    final session = context.select<AuthCubit, DateTime?>((a) => a.sessionDay);
+    return [
+      if (session != null) (Dates.dayMonth(session), 'session'),
+      ('Today', 'today'),
+      ('Yesterday', 'yesterday'),
+      ('7 Days', '7d'),
+      ('Month', 'month'),
+    ];
+  }
+
+  /// The presets as one segmented cluster — the quiet sibling of the phone's
+  /// gradient preset chips.
   Widget _presetSegmented(AdminCubit admin) {
-    const presets = [('Today', 'today'), ('7 Days', '7d'), ('30 Days', '30d'), ('Month', 'month')];
-    return _sunkGroup(
-      children: [for (final (label, id) in presets) _presetSegment(admin, label, id)],
+    final presets = _presets;
+    // Scales down rather than overflowing where a portrait tablet's bar is
+    // narrower than the five segments.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: _sunkGroup(
+        children: [for (final (label, id) in presets) _presetSegment(admin, label, id)],
+      ),
     );
   }
 
@@ -435,7 +466,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 13),
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 11),
         alignment: Alignment.center,
         decoration: _thumb(active),
         child: Text(label,
@@ -590,13 +621,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const SizedBox(height: 11),
           Row(
             children: [
-              _presetChip(admin, 'Today', 'today'),
-              const SizedBox(width: 7),
-              _presetChip(admin, '7 Days', '7d'),
-              const SizedBox(width: 7),
-              _presetChip(admin, '30 Days', '30d'),
-              const SizedBox(width: 7),
-              _presetChip(admin, 'Month', 'month'),
+              for (final (i, (label, id)) in _presets.indexed) ...[
+                if (i > 0) const SizedBox(width: 7),
+                _presetChip(admin, label, id, flex: id == 'yesterday' ? 5 : 4),
+              ],
             ],
           ),
         ],
@@ -604,10 +632,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _presetChip(AdminCubit admin, String label, String id) {
+  /// [flex] is out of 4 — a long label like "Yesterday" takes a wider share.
+  Widget _presetChip(AdminCubit admin, String label, String id, {int flex = 4}) {
     final p = context.astra;
     final active = admin.rangePreset == id;
     return Expanded(
+      flex: flex,
       child: GestureDetector(
         onTap: () => admin.setPreset(id),
         child: Container(
@@ -801,8 +831,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _breakdownToolbar(admin),
-        _appliedChips(admin),
+        // A wide screen carries the filter chips in the toolbar row itself;
+        // anything narrower gives them a line of their own beneath it.
+        LayoutBuilder(builder: (context, box) {
+          final inline = context.isTablet && box.maxWidth >= _inlineChipsWidth;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _breakdownToolbar(admin, inlineChips: inline),
+              if (!inline) _appliedChips(admin),
+            ],
+          );
+        }),
         const SizedBox(height: 10),
         // The rows are the only unbounded part of the card, so they get the
         // remaining height and scroll inside it — built lazily as they come
@@ -825,10 +865,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
+  /// Breakdown width from which the applied-filter chips join the toolbar row
+  /// — a landscape tablet or the till (1097dp wide leaves the pane ~965dp
+  /// beside the nav rail). Below it (a portrait tablet, ~700dp) the segments
+  /// and the type group leave no room, so the chips keep a line of their own.
+  static const double _inlineChipsWidth = 860;
+
   /// Which breakdown · which item type (or, on Commission, whose) · the sort.
-  /// One line on tablet; two on phone, where the breakdown segments take the
-  /// full width under shorter labels.
-  Widget _breakdownToolbar(AdminCubit admin) {
+  /// One line on tablet, with the filters in force beside the segments when
+  /// [inlineChips]; two on phone, where the breakdown segments take the full
+  /// width under shorter labels.
+  Widget _breakdownToolbar(AdminCubit admin, {bool inlineChips = false}) {
     final wide = context.isTablet;
     final segments = _sunkGroup(expand: !wide, children: [
       _breakdownSegment(admin, wide ? 'By Item' : 'Item', 'itemwise', Icons.inventory_2_rounded, compact: !wide),
@@ -847,15 +894,25 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     if (wide) {
       // A big screen needs no filter button: the column heads sort, the type
-      // sits here, and the command bar holds the range.
+      // sits here, and the command bar holds the range. On a wide screen the
+      // applied-filter chips share the segments' line — a Wrap, so a long run
+      // of them drops beneath the segments instead of overflowing.
+      final chips = inlineChips ? _appliedChipList(admin, inline: true) : const <Widget>[];
       return Row(
+        // Top, so the type group stays level with the segments if chips wrap.
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // The segments keep their natural width and scroll sideways on a
-          // narrow tablet rather than squeezing their labels to nothing.
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: segments,
+            child: Wrap(
+              spacing: 7,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                // The segments keep their natural width and scroll sideways on
+                // a narrow tablet rather than squeezing their labels to nothing.
+                SingleChildScrollView(scrollDirection: Axis.horizontal, child: segments),
+                ...chips,
+              ],
             ),
           ),
           const SizedBox(width: 12),
@@ -1049,42 +1106,48 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  /// Whether anything is set away from the report's defaults — today, ranked
-  /// by amount, every item type.
+  /// Whether anything is set away from the report's defaults — its default
+  /// day, ranked by amount, every item type.
   bool _filtersOn(AdminCubit admin) =>
-      admin.rangePreset != 'today' ||
+      admin.rangePreset != admin.defaultRangePreset ||
       admin.sortKey != 'amount' ||
       admin.sortAscending ||
       admin.itemProductType != null ||
       admin.commissionStaffId != null;
 
   /// What the list is filtered to, as chips you can take off one at a time —
-  /// so the figures below are never a mystery.
+  /// so the figures below are never a mystery. A line under the toolbar; a
+  /// wide screen puts [_appliedChipList] in the toolbar row instead.
   Widget _appliedChips(AdminCubit admin) {
-    if (!_filtersOn(admin)) return const SizedBox.shrink();
-    final sorted = admin.sortKey != 'amount' || admin.sortAscending;
+    final chips = _appliedChipList(admin);
+    if (chips.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 9),
-      child: Wrap(
-        spacing: 7,
-        runSpacing: 7,
-        children: [
-          if (admin.rangePreset != 'today')
-            _filterChip(Dates.range(admin.startDate, admin.endDate), () => admin.setPreset('today')),
-          if (sorted)
-            _filterChip(
-                '${sortChipLabel(admin.sortKey, admin.reportType)} · '
-                '${sortDirectionLabel(admin.sortKey, admin.sortAscending)}',
-                () => admin.setSort('amount', ascending: false)),
-          if (admin.itemProductType != null)
-            _filterChip(admin.itemProductType == 'product' ? 'Products only' : 'Services only',
-                () => admin.setItemProductType(null)),
-          if (admin.commissionStaffId != null)
-            _filterChip('Staff · ${admin.commissionStaffName}', () => admin.setCommissionStaff(null)),
-          _resetChip(admin),
-        ],
-      ),
+      child: Wrap(spacing: 7, runSpacing: 7, children: chips),
     );
+  }
+
+  /// One chip per filter set away from its default, then Reset — or none.
+  /// [inline] leaves out the item-type and staff chips: in the toolbar row
+  /// they would sit beside the very controls that already show them.
+  List<Widget> _appliedChipList(AdminCubit admin, {bool inline = false}) {
+    if (!_filtersOn(admin)) return const [];
+    final sorted = admin.sortKey != 'amount' || admin.sortAscending;
+    return [
+      if (admin.rangePreset != admin.defaultRangePreset)
+        _filterChip(Dates.range(admin.startDate, admin.endDate), () => admin.setPreset(admin.defaultRangePreset)),
+      if (sorted)
+        _filterChip(
+            '${sortChipLabel(admin.sortKey, admin.reportType)} · '
+            '${sortDirectionLabel(admin.sortKey, admin.sortAscending)}',
+            () => admin.setSort('amount', ascending: false)),
+      if (admin.itemProductType != null && !inline)
+        _filterChip(admin.itemProductType == 'product' ? 'Products only' : 'Services only',
+            () => admin.setItemProductType(null)),
+      if (admin.commissionStaffId != null && !inline)
+        _filterChip('Staff · ${admin.commissionStaffName}', () => admin.setCommissionStaff(null)),
+      _resetChip(admin),
+    ];
   }
 
   Widget _filterChip(String label, VoidCallback onClear) {

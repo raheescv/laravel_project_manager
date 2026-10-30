@@ -24,7 +24,9 @@ abstract class AdminRepository {
 
   /// The session the Sale Bill Report is for: the branch's open session, or the
   /// one opened last once the day is shut. Null before any day was opened.
-  Future<DaySessionSummary?> currentDaySession();
+  /// With [start] / [end] (the Reports screen's filter) only a session opened
+  /// within that range counts — null when none was.
+  Future<DaySessionSummary?> currentDaySession({DateTime? start, DateTime? end});
 
   /// One session's Sale Bill Report figures, laid out on the thermal roll.
   Future<DaySessionReport> daySessionReport(String id);

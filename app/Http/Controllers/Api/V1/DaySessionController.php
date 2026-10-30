@@ -6,6 +6,7 @@ use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Actions\V1\DaySession\ReportAction;
 use App\Actions\V1\DaySession\ToggleStatusAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\DaySession\CurrentRequest;
 use App\Http\Requests\V1\DaySession\StatusRequest;
 use App\Http\Requests\V1\DaySession\ToggleRequest;
 use App\Http\Resources\V1\DaySession\DaySessionResource;
@@ -107,8 +108,11 @@ class DaySessionController extends Controller
      * session (`branch_id`, falling back to the user's default branch) or, once
      * the day is shut, the one opened last. `session` is null for a branch that
      * has never opened a day.
+     *
+     * With `start_date` / `end_date` (the Reports screen's filter) only sessions
+     * opened within that range are considered — `session` is null when none was.
      */
-    public function current(ReportAction $action, StatusRequest $request): JsonResponse
+    public function current(ReportAction $action, CurrentRequest $request): JsonResponse
     {
         try {
             $branchId = $request->branchId();
@@ -119,6 +123,8 @@ class DaySessionController extends Controller
 
             $session = SaleDaySession::with(['branch', 'opener:id,name', 'closer:id,name'])
                 ->where('branch_id', $branchId)
+                ->when($request->validated('start_date'), fn ($query, string $date) => $query->whereDate('opened_at', '>=', $date))
+                ->when($request->validated('end_date'), fn ($query, string $date) => $query->whereDate('opened_at', '<=', $date))
                 ->orderByRaw("CASE WHEN status = 'open' THEN 0 ELSE 1 END")
                 ->orderByDesc('opened_at')
                 ->orderByDesc('id')

@@ -34,7 +34,7 @@ enum ExportReport {
   categories('Category Sales', 'Sales mix by category', Icons.category_outlined),
   staff('Staff Sales', 'Revenue per person', Icons.people_alt_outlined),
   commission('Staff Commission', 'Commission per person and product', Icons.percent_rounded),
-  daySession('Sale Bill Report', 'The current day session', Icons.receipt_long_outlined);
+  daySession('Sale Bill Report', 'The day session in the date filter', Icons.receipt_long_outlined);
 
   const ExportReport(this.title, this.hint, this.icon);
   final String title;
@@ -78,8 +78,8 @@ List<ExportReport> printableReports(BuildContext context, [List<ExportReport> re
 
 /// The report's preview, full screen: the page itself, with the paper and
 /// Print in one pill under it and Close, Share and Save over it. The day
-/// session is [sessionId], or the *current* one: the branch's open session, or
-/// the one opened last once the day is shut.
+/// session is [sessionId], or the one the Reports date filter covers: opened
+/// within it, the open session first, else the one opened last.
 Future<void> openReportPreview(
   BuildContext context,
   ExportReport report, {
@@ -224,7 +224,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
 
     if (_report == ExportReport.daySession) {
       final s = await _currentSession();
-      if (s == null) throw const _Failure('No day session on this branch yet.');
+      if (s == null) throw _Failure('No day session on ${Dates.range(admin.startDate, admin.endDate)}.');
       final title = 'Sale Bill Report #${s.id}';
       final caption = [title, Dates.human(s.openedAt), if (s.branch.isNotEmpty) s.branch].join(' · ');
       if (paper == ReportPaper.roll) {
@@ -262,7 +262,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
   Future<DaySessionSummary?> _currentSession() {
     final id = widget.sessionId;
     return _session ??= id == null
-        ? context.read<AdminCubit>().currentDaySession()
+        ? context.read<AdminCubit>().filteredDaySession()
         : _dayReport(id).then((r) => r.session);
   }
 

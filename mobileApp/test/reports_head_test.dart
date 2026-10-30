@@ -30,9 +30,12 @@ void main() {
     await pumpReports(tester, d);
 
     expect(find.text('Reports'), findsOneWidget);
-    for (final label in ['Today', '7 Days', '30 Days', 'Month']) {
+    // The harness's day session opened on 14 Jun — not the calendar date — so
+    // its own day leads the presets; the 30-day preset is gone.
+    for (final label in ['14 Jun', 'Today', 'Yesterday', '7 Days', 'Month']) {
       expect(find.text(label), findsOneWidget, reason: '$label preset should sit in the bar');
     }
+    expect(find.text('30 Days'), findsNothing);
     expect(find.text('Overview'), findsOneWidget);
     expect(find.text('Breakdown'), findsOneWidget);
     // The range control lives in the bar only — no second stacked filter card.
@@ -66,17 +69,17 @@ void main() {
 
     // The range line under the title changes length with the preset ("Today"
     // vs "1 - 23 Sep 2026"). The controls must not reflow under the pointer.
-    final before = tester.getTopLeft(find.text('30 Days'));
+    final before = tester.getTopLeft(find.text('7 Days'));
     await tester.tap(find.text('Month'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(tester.getTopLeft(find.text('30 Days')), before,
+    expect(tester.getTopLeft(find.text('7 Days')), before,
         reason: 'the preset cluster must stay put when the range changes');
 
     await tester.tap(find.text('Today'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(tester.getTopLeft(find.text('30 Days')), before);
+    expect(tester.getTopLeft(find.text('7 Days')), before);
   });
 
   testWidgets('switcher moves between the two reports', (tester) async {

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablet Token Samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0A62C8; --primaryDark:#01377F; --accent:#0BA8FA; --deep:#012a63;
+  --canvas:#F3F6FB; --card:#FFFFFF; --ink:#0F1B2D; --text2:#5A6677; --muted:#97A1AF; --hair:#E3E8F0; --tint:#E7F0FB; --rail:#0B1E3A;
+}
+:root[data-preset="emerald"]{
+  --primary:#15806C; --primaryDark:#0E5648; --accent:#C9A24B; --deep:#0a4036;
+  --canvas:#F4EFE7; --card:#FFFFFF; --ink:#18241F; --text2:#5D6A64; --muted:#98A29D; --hair:#E8E2D8; --tint:#E6EFEB; --rail:#1F4A3F;
+}
+:root[data-mode="dark"]{ --canvas:#0E131A; --card:#161D27; --ink:#E8EDF4; --text2:#A5B0BF; --muted:#6C7787; --hair:#252E3B; --tint:rgba(255,255,255,.06); --rail:#070b11; }
+:root[data-mode="dark"][data-preset="emerald"]{ --canvas:#0E1513; --card:#161F1C; --ink:#E9EFEC; --text2:#A7B3AE; --muted:#6E7A75; --hair:#26312D; --rail:#0A100E; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#d6dae1;font-family:Inter,system-ui,sans-serif;color:#222;padding:16px}
+:root[data-mode="dark"] body{background:#05070a;color:#ccc}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:400}
+h1{font:800 18px Inter;text-align:center;margin-bottom:4px}
+.note{max-width:1100px;margin:0 auto 12px;font:600 13px/1.5 Inter;color:#555;text-align:center}
+:root[data-mode="dark"] .note{color:#999}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px}
+.bar button{font:700 12.5px Inter;border:1px solid #bbb;background:#fff;color:#222;border-radius:999px;padding:8px 14px;cursor:pointer}
+.bar button.on{background:#0F1B2D;color:#fff;border-color:#0F1B2D}
+.bar .sep{width:1px;height:22px;background:#aaa;margin:0 4px}
+.desc{max-width:900px;margin:4px auto 14px;font:600 13px/1.55 Inter;color:#333;text-align:center;min-height:40px}
+:root[data-mode="dark"] .desc{color:#bbb}
+.desc b{color:#000} :root[data-mode="dark"] .desc b{color:#fff}
+
+.stage{display:flex;justify-content:center;overflow:hidden}
+.frame{transform-origin:top left}
+.device{position:relative;border-radius:28px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.55);border:10px solid #111;background:var(--rail);display:flex}
+.rail{width:88px;flex:none;display:flex;flex-direction:column;align-items:center;padding:34px 0 20px;gap:12px}
+.rail i{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.07);display:grid;place-items:center;color:rgba(255,255,255,.6)}
+.rail i.on{background:rgba(255,255,255,.2);color:#fff}
+.content{flex:1;margin:30px 12px 12px 10px;border-radius:22px;overflow:hidden;position:relative;background:var(--canvas)}
+
+/* atoms */
+.label{font:800 10.5px Inter;letter-spacing:1.6px;text-transform:uppercase;color:var(--primary)}
+.k{font:800 9.5px Inter;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted)}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:18px;cursor:pointer;user-select:none;transition:transform .08s}
+.btn:active{transform:scale(.98)}
+.ib{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;cursor:pointer}
+.chipc{border-radius:14px;padding:10px 14px;cursor:pointer;transition:.15s}
+.chipc b{display:block;font:800 13px Inter}
+.chipc span{display:block;font:600 10.5px Inter;margin-top:2px}
+
+/* the paper slip */
+.slip{background:#fff;color:#111;width:300px;padding:18px 22px 26px;position:relative;font-family:Inter;box-shadow:0 18px 40px -16px rgba(0,0,0,.35)}
+.slip:after{content:'';position:absolute;left:0;right:0;bottom:-10px;height:10px;background:linear-gradient(-45deg,transparent 7px,#fff 0) 0 0/14px 10px,linear-gradient(45deg,transparent 7px,#fff 0) 0 0/14px 10px}
+.slip .co{text-align:center;font:800 13px Inter;letter-spacing:.5px}
+.slip .dt{display:flex;justify-content:space-between;font:600 10.5px Inter;color:#555;margin-top:10px}
+.slip hr{border:0;border-top:2px solid #222;margin:8px 0 12px}
+.slip .tk{display:flex;justify-content:space-between;font:800 11px Inter;letter-spacing:3px;color:#444}
+.slip .no{font:900 84px/1 Inter;text-align:center;letter-spacing:-2px;margin:10px 0 6px}
+.slip .ctr{text-align:center;font:700 12px Inter;color:#444}
+.slip .ft{text-align:center;font:600 10px Inter;color:#777;margin-top:12px}
+.slip.ghost{opacity:.55}
+</style>
+</head>
+<body>
+<h1>Tablet Token page — pick a direction</h1>
+<p class="note">Phone Token page stays as it is — these are tablet-only. The frame is the till (1097×686) with the app's side rail, so the page gets the real ~985×593 it has today. Tap <b>New Token</b> and the counters to try it.</p>
+
+<div class="bar" id="dirBar"></div>
+<div class="bar" id="optBar"></div>
+<div class="desc" id="desc"></div>
+<div class="stage"><div class="frame" id="frame"></div></div>
+
+<script>
+const S = {dir:'A', dev:'land', counters:true, preset:'blue', mode:'light', issued:12, ctr:0, printed:true};
+const DEV = {land:{w:1097,h:686,l:'Till · landscape'}, port:{w:686,h:1097,l:'Till · portrait'}, ipad:{w:1194,h:834,l:'iPad 11"'}};
+const CTRS = [{n:'Canteen',p:'A',seq:13},{n:'Snacks',p:'B',seq:5},{n:'Juice bar',p:'C',seq:2}];
+const DIRS = {
+  A:{n:'A · Now Serving', d:'<b>The number is the page.</b> A big gradient stage shows the token just printed — huge, like a queue display — with the next number under it. The right column is all action: counter tiles, a tall New Token button, Reprint. Today\'s numbers sit as small stats in the stage corner. Best for a fast, busy counter.'},
+  B:{n:'B · Slip & Rail', d:'<b>The paper, larger, with a docked rail.</b> Keeps "what you see is what prints" — the slip now fills the height instead of sitting small in a card. A docked right rail (like New Sale\'s ticket rail) holds the counters, Today stats as tiles, the printer line, and New Token + Reprint at its foot. No hero band; a slim page head. Most consistent with the other tablet screens.'},
+  C:{n:'C · Frosted Kiosk', d:'<b>Matches the new login.</b> The gradient fills the page with glows; the slip floats on the left; a frosted glass card on the right shows the next number, counter pills and a gold New Token button. Most premium-looking; least like the rest of the admin screens.'},
+};
+
+const ic = {
+  plus:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  print:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2"/><rect x="6" y="14" width="12" height="7"/></svg>',
+  tune:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+  bolt:'<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  ticket:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 0 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 1 0-4V6H3z"/><path d="M14 6v12" stroke-dasharray="2 2.5"/></svg>',
+  home:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z"/></svg>',
+  cart:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 4h2l2.5 11h11L21 8H6.5"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>',
+  list:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h0M4 12h0M4 18h0"/></svg>',
+  chart:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
+  gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
+};
+
+const fmt = (p,n) => `${p}-${String(n).padStart(3,'0')}`;
+const SOLO = {n:'',p:'A',seq:13};
+const cur = () => S.counters ? CTRS[S.ctr] : SOLO;
+const lastNo = () => S.printed ? fmt(cur().p, cur().seq-1) : null;
+const nextNo = () => fmt(cur().p, cur().seq);
+const issued = () => S.printed ? S.issued : 0;
+const now = new Date();
+const tm = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+const dLong = now.toLocaleDateString([], {weekday:'long', day:'numeric', month:'short', year:'numeric'});
+const dShort = now.toLocaleDateString([], {day:'numeric', month:'short', year:'numeric'});
+
+function slip(scale=1){
+  const ghost = !S.printed;
+  return `<div style="transform:scale(${scale});transform-origin:center"><div class="slip ${ghost?'ghost':''}">
+    <div class="co">AL WAKRA SCHOOL CANTEEN</div>
+    <div class="dt"><span>${dShort}</span><span>${tm}</span></div><hr>
+    <div class="tk"><span>TOKEN</span><span style="letter-spacing:0">رقم الدور</span></div>
+    <div class="no">${ghost?nextNo():lastNo()}</div>
+    ${S.counters?`<div class="ctr">${cur().n}</div>`:''}
+    <div class="ft">Please wait for your number to be called</div>
+  </div></div>`;
+}
+
+function counterTiles(style){
+  if(!S.counters) return '';
+  return CTRS.map((c,i)=>{
+    const on = i===S.ctr;
+    const css = {
+      light: on ? 'background:linear-gradient(135deg,var(--primary),var(--primaryDark));color:#fff' : 'background:var(--card);border:1px solid var(--hair);color:var(--ink)',
+      glass: on ? 'background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));color:var(--primaryDark)' : 'background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#fff',
+    }[style];
+    const subc = on ? (style==='glass'?'color:color-mix(in srgb,var(--primaryDark) 75%,transparent)':'color:rgba(255,255,255,.8)') : (style==='glass'?'color:rgba(255,255,255,.6)':'color:var(--muted)');
+    return `<div class="chipc" data-ctr="${i}" style="${css}"><b>${c.n}</b><span style="${subc}">next ${fmt(c.p,c.seq)}</span></div>`;
+  }).join('');
+}
+
+/* =============== A · Now Serving =============== */
+function A(w,h){
+  const port = h>w;
+  const stage = `<div style="position:relative;border-radius:24px;overflow:hidden;background:radial-gradient(120% 100% at 0% 0%,var(--primary),var(--primaryDark) 60%,var(--deep));color:#fff;display:flex;flex-direction:column;padding:24px 28px;${port?'height:430px':'height:100%'}">
+      <div style="position:absolute;right:-120px;top:-140px;width:380px;height:380px;border-radius:50%;background:radial-gradient(color-mix(in srgb,var(--accent) 40%,transparent),transparent 70%)"></div>
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font:800 10.5px Inter;letter-spacing:1.8px;color:var(--accent)">${S.printed?'NOW SERVING':'FIRST TOKEN OF THE DAY'}</div>
+        <div style="font:600 12.5px Inter;color:rgba(255,255,255,.65);margin-top:4px">${dLong} · numbers restart daily</div></div>
+        <div style="display:flex;gap:18px;text-align:right">
+          <div><div style="font:800 9px Inter;letter-spacing:1.3px;color:rgba(255,255,255,.55)">ISSUED</div><div style="font:800 20px Inter">${issued()}</div></div>
+          <div><div style="font:800 9px Inter;letter-spacing:1.3px;color:rgba(255,255,255,.55)">STARTS AT</div><div style="font:800 20px Inter">1</div></div>
+        </div>
+      </div>
+      <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div style="font:900 ${port?150:(h<720?150:180)}px/1 Inter;letter-spacing:-6px;${S.printed?'':'opacity:.35'}">${S.printed?lastNo():nextNo()}</div>
+        ${S.counters?`<div style="font:700 15px Inter;color:rgba(255,255,255,.75);margin-top:10px">${cur().n}${S.printed?` · printed ${tm}`:''}</div>`:(S.printed?`<div style="font:700 15px Inter;color:rgba(255,255,255,.75);margin-top:10px">printed ${tm}</div>`:'')}
+      </div>
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:center">
+        <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border-radius:999px;padding:6px 11px;font:800 11px Inter">${ic.bolt} Auto-print · 80 mm</span>
+        <span style="font:700 13px Inter;color:rgba(255,255,255,.75)">Next <b style="color:var(--accent);font-size:16px">${nextNo()}</b></span>
+      </div>
+    </div>`;
+  const side = `<div style="display:flex;flex-direction:column;gap:12px;height:100%">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div class="serif" style="font-size:26px;color:var(--ink)">Token</div><div style="font:600 12px Inter;color:var(--muted)">Downtown · queue</div></div>
+        <div class="ib" style="background:var(--card);border:1px solid var(--hair);color:var(--text2)">${ic.tune}</div>
+      </div>
+      ${S.counters?`<div class="label" style="margin-top:6px">Counter</div><div style="display:grid;grid-template-columns:${port?'repeat(3,1fr)':'1fr'};gap:8px">${counterTiles('light')}</div>`:''}
+      <div style="flex:1;min-height:${port?110:0}px"></div>
+      <div class="btn" data-act="issue" style="flex:${S.counters&&!port?'0 0 150px':'0 0 170px'};flex-direction:column;background:linear-gradient(135deg,var(--primary),var(--primaryDark));color:#fff;box-shadow:0 18px 40px -18px var(--primary)">
+        <span style="width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);display:grid;place-items:center">${ic.plus}</span>
+        <span style="font:800 19px Inter">New Token</span><span style="font:600 12px Inter;color:rgba(255,255,255,.75);margin-top:-6px">Next ${nextNo()} · prints automatically</span>
+      </div>
+      <div class="btn" style="height:52px;background:var(--card);border:1px solid var(--hair);color:${S.printed?'var(--ink)':'var(--muted)'};font:700 13.5px Inter">${ic.print} Reprint ${S.printed?lastNo():''}</div>
+    </div>`;
+  if(port) return `<div style="height:100%;padding:20px;display:flex;flex-direction:column;gap:16px">${stage}<div style="flex:1">${side}</div></div>`;
+  return `<div style="height:100%;padding:18px;display:grid;grid-template-columns:1fr ${w<1150?300:330}px;gap:18px">${stage}${side}</div>`;
+}
+
+/* =============== B · Slip & Rail =============== */
+function B(w,h){
+  const port = h>w;
+  const kpi = (l,v,strong) => `<div style="background:var(--canvas);border:1px solid var(--hair);border-radius:14px;padding:10px 12px"><div class="k">${l}</div><div style="font:800 ${strong?18:16}px Inter;color:${strong?'var(--primary)':'var(--ink)'};margin-top:3px">${v}</div></div>`;
+  const rail = `<div style="background:var(--card);${port?'border-top:1px solid var(--hair);border-radius:22px 22px 0 0':'border-left:1px solid var(--hair)'};height:100%;display:flex;flex-direction:column;padding:20px 20px 18px;gap:14px">
+      ${S.counters?`<div><div class="label">Counter</div><div style="display:${port?'grid;grid-template-columns:repeat(3,1fr)':'flex;flex-direction:column'};gap:8px;margin-top:10px">${counterTiles('light')}</div></div>`:''}
+      <div><div class="label">Today</div>
+        <div style="display:grid;grid-template-columns:${port?'repeat(4,1fr)':'1fr 1fr'};gap:8px;margin-top:10px">
+          ${kpi('Issued',issued())}${kpi('Last',S.printed?lastNo():'—')}${kpi('Next',nextNo(),true)}${kpi('Starts at','1 · daily')}
+        </div></div>
+      <div style="display:flex;align-items:center;gap:8px;font:600 12px Inter;color:var(--text2)">${ic.print}<span style="flex:1">80 mm · Print dialog</span><span style="display:inline-flex;align-items:center;gap:4px;color:var(--primary);font-weight:800">${ic.bolt} Auto</span></div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:10px">
+        <div class="btn" style="width:${port?160:96}px;height:62px;background:var(--canvas);border:1px solid var(--hair);color:${S.printed?'var(--ink)':'var(--muted)'};font:700 13px Inter;flex-direction:${port?'row':'column'};gap:${port?8:3}px">${ic.print}<span>Reprint</span></div>
+        <div class="btn" data-act="issue" style="flex:1;height:62px;background:linear-gradient(135deg,var(--primary),var(--primaryDark));color:#fff;flex-direction:column;gap:1px">
+          <span style="display:flex;align-items:center;gap:8px;font:800 16px Inter">${ic.plus} New Token</span><span style="font:600 11px Inter;color:rgba(255,255,255,.75)">Next ${nextNo()}</span></div>
+      </div>
+    </div>`;
+  const head = `<div style="display:flex;align-items:center;gap:12px;padding:18px 24px 0">
+      <div class="ib" style="background:var(--tint);color:var(--primary)">${ic.ticket}</div>
+      <div style="flex:1"><div class="serif" style="font-size:24px;color:var(--ink);line-height:1.1">Token</div><div style="font:600 12px Inter;color:var(--muted)">${dLong} · numbers restart daily</div></div>
+      <div class="ib" style="background:var(--card);border:1px solid var(--hair);color:var(--text2)">${ic.tune}</div></div>`;
+  const desk = (scale) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+      <div class="k" style="margin-bottom:${18*scale}px">${S.printed?'Last printed':'Next token · preview'}</div>${slip(scale)}</div>`;
+  if(port) return `<div style="height:100%;display:flex;flex-direction:column">${head}<div style="height:52%;display:flex">${desk(1.25)}</div><div style="flex:1">${rail}</div></div>`;
+  const railW = Math.max(300, Math.min(360, w*0.32));
+  return `<div style="height:100%;display:grid;grid-template-columns:1fr ${railW}px">
+      <div style="display:flex;flex-direction:column">${head}${desk(h<720?1.15:1.35)}</div>${rail}</div>`;
+}
+
+/* =============== C · Frosted Kiosk =============== */
+function C(w,h){
+  const port = h>w;
+  const glass = 'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)';
+  const card = `<div style="${glass};border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:14px;${port?'':'height:100%'}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font:800 10.5px Inter;letter-spacing:1.8px;color:var(--accent)">NEXT TOKEN</div>
+        <div class="ib" style="width:36px;height:36px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)">${ic.tune}</div></div>
+      <div style="font:900 ${port?96:(h<720?84:100)}px/1 Inter;color:#fff;letter-spacing:-3px">${nextNo()}</div>
+      <div style="font:600 12.5px Inter;color:rgba(255,255,255,.65)">${issued()} issued today · last ${S.printed?lastNo():'—'}</div>
+      ${S.counters?`<div style="display:flex;gap:8px;flex-wrap:wrap">${counterTiles('glass')}</div>`:''}
+      <div style="flex:1;min-height:6px"></div>
+      <div class="btn" data-act="issue" style="height:68px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));color:var(--primaryDark);font:800 17px Inter">${ic.plus} New Token</div>
+      <div class="btn" style="height:50px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:${S.printed?'#fff':'rgba(255,255,255,.45)'};font:700 13px Inter">${ic.print} Reprint</div>
+    </div>`;
+  const left = `<div style="display:flex;flex-direction:column;${port?'align-items:center':''};height:100%">
+      <div style="${port?'text-align:center':''}"><div class="serif" style="font-size:30px;color:#fff">Token</div>
+      <div style="font:600 12.5px Inter;color:rgba(255,255,255,.62);margin-top:2px">${dLong} · ${ic.bolt} auto-print</div></div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:14px 0">${slip(port?1.05:(h<720?1.0:1.2))}</div></div>`;
+  return `<div style="position:relative;height:100%;overflow:hidden;background:linear-gradient(180deg,var(--primary),var(--primaryDark) 60%,var(--deep))">
+      <div style="position:absolute;width:480px;height:480px;left:-160px;top:-200px;border-radius:50%;background:radial-gradient(color-mix(in srgb,var(--accent) 40%,transparent),transparent 70%)"></div>
+      <div style="position:absolute;width:520px;height:520px;right:-200px;bottom:-240px;border-radius:50%;background:radial-gradient(color-mix(in srgb,var(--primary) 80%,#fff 10%),transparent 70%);opacity:.55"></div>
+      <div style="position:relative;height:100%;padding:22px 26px;${port?'display:flex;flex-direction:column;gap:16px':`display:grid;grid-template-columns:1fr ${w<1150?340:380}px;gap:26px`}">
+        ${port?`<div style="flex:1">${left}</div>${card}`:`${left}${card}`}
+      </div></div>`;
+}
+const R = {A,B,C};
+
+function render(){
+  document.documentElement.dataset.preset = S.preset;
+  document.documentElement.dataset.mode = S.mode;
+  const {w,h} = DEV[S.dev];
+  const avail = Math.min(window.innerWidth-32, 1400);
+  const scale = Math.min(1, avail/(w+20));
+  const fr = document.getElementById('frame');
+  fr.style.width = (w+20)+'px'; fr.style.transform = `scale(${scale})`;
+  fr.parentElement.style.height = ((h+20)*scale)+'px';
+  const cw = w-88-22, ch = h-42;
+  fr.innerHTML = `<div class="device" style="width:${w+20}px;height:${h+20}px">
+      <div class="rail">${[ic.home,ic.cart,ic.list,ic.chart,ic.ticket,ic.gear].map((x,i)=>`<i class="${i===4?'on':''}">${x}</i>`).join('')}</div>
+      <div class="content" style="width:${cw}px;height:${ch}px">${R[S.dir](cw,ch)}</div></div>`;
+  document.getElementById('desc').innerHTML = DIRS[S.dir].d;
+  bars();
+}
+function btn(label,on,fn){ const b=document.createElement('button'); b.textContent=label; if(on)b.className='on'; b.onclick=fn; return b; }
+function sep(){ const s=document.createElement('span'); s.className='sep'; return s; }
+function bars(){
+  const d=document.getElementById('dirBar'); d.innerHTML='';
+  for(const k in DIRS) d.append(btn(DIRS[k].n, S.dir===k, ()=>{S.dir=k;render();}));
+  const o=document.getElementById('optBar'); o.innerHTML='';
+  for(const k in DEV) o.append(btn(DEV[k].l, S.dev===k, ()=>{S.dev=k;render();}));
+  o.append(sep());
+  o.append(btn('Counters', S.counters, ()=>{S.counters=!S.counters;render();}));
+  o.append(btn(S.printed?'After issuing':'Start of day', false, ()=>{S.printed=!S.printed;render();}));
+  o.append(sep());
+  [['blue','QLOUD Blue'],['emerald','Emerald & Gold']].forEach(([k,l])=>o.append(btn(l,S.preset===k,()=>{S.preset=k;render();})));
+  o.append(btn(S.mode==='light'?'Light':'Dark', false, ()=>{S.mode=S.mode==='light'?'dark':'light';render();}));
+}
+document.addEventListener('click', e=>{
+  const c = e.target.closest('[data-ctr]'); const a = e.target.closest('[data-act]');
+  if(c){ S.ctr=+c.dataset.ctr; render(); }
+  if(a){ cur().seq++; S.issued++; S.printed=true; render(); }
+});
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

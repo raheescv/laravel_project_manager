@@ -59,6 +59,15 @@ class ApiUser extends Equatable {
 
   bool get dayOpen => daySessionStatus == 'open';
 
+  /// What "today" means across the app: the open day session's date — a day
+  /// opened yesterday and still running stays yesterday past midnight — else
+  /// the calendar date. The server anchors the dashboard the same way.
+  DateTime get businessDay {
+    final session = dayOpen ? DateTime.tryParse(daySessionDate.split(' ').first) : null;
+    final d = session ?? DateTime.now();
+    return DateTime(d.year, d.month, d.day);
+  }
+
   /// Whether the user has an uploaded avatar (vs. the letter monogram fallback).
   bool get hasPhoto => photoUrl.isNotEmpty;
 

@@ -51,6 +51,24 @@ class Dates {
 
   static String today() => DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+  /// The range a quick date preset covers — session | today | yesterday | 7d
+  /// | 30d | month — counted back from [today]. 'session' is the open day
+  /// session's own date ([session], see `ApiUser.businessDay`), or [today]
+  /// without one. Null for an id that isn't a preset (`custom`, `all`).
+  static ({DateTime start, DateTime end})? presetRange(String id, DateTime today, {DateTime? session}) {
+    final t = DateTime(today.year, today.month, today.day);
+    final s = session == null ? t : DateTime(session.year, session.month, session.day);
+    return switch (id) {
+      'session' => (start: s, end: s),
+      'today' => (start: t, end: t),
+      'yesterday' => (start: t.subtract(const Duration(days: 1)), end: t.subtract(const Duration(days: 1))),
+      '7d' => (start: t.subtract(const Duration(days: 6)), end: t),
+      '30d' => (start: t.subtract(const Duration(days: 29)), end: t),
+      'month' => (start: DateTime(t.year, t.month), end: t),
+      _ => null,
+    };
+  }
+
   /// `yyyy-MM-dd` for a given date — the format the report API expects.
   static String iso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
@@ -66,6 +84,9 @@ class Dates {
 
   /// `21 Jun 2026` — one date, spelled out.
   static String day(DateTime d) => DateFormat('d MMM yyyy').format(d);
+
+  /// `30 Oct` — a date-preset label short enough for a chip.
+  static String dayMonth(DateTime d) => DateFormat('d MMM').format(d);
 
   /// `Sat, 21 Jun 2026` — the weekday-prefixed date used on the day-session screen.
   static String weekday(DateTime d) => DateFormat('EEE, d MMM yyyy').format(d);

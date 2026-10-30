@@ -100,8 +100,9 @@ void main() {
 
     expect(d.admin.lastEmployeeId, 15);
     expect(find.text('STAFF'), findsNothing);
-    // The toolbar button and the applied chip both name who it is for.
-    expect(find.text('Staff · Liam Ortiz'), findsNWidgets(2));
+    // The toolbar button names who it is for. A big screen's toolbar row has
+    // no separate staff chip beside it — only Reset to undo it.
+    expect(find.text('Staff · Liam Ortiz'), findsOneWidget);
 
     await tester.tap(find.text('Reset'));
     await settle(tester);

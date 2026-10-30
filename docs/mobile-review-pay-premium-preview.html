@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review &amp; Pay — premium samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — Qloud Blue preset (palette.dart, clean skin)
+   ============================================================ */
+.stage{
+  --canvas:#F3F7FD; --card:#FFFFFF; --ink:#161A2B; --text2:#4A4F63; --muted:#8A8FA3;
+  --hair:#E7E9F2; --tint:#E8F1FD; --primary:#0A62C8; --pdark:#01377F; --accent:#0BA8FA;
+  --pink:#0A62C8; /* primary used as text */
+  --success:#1F9D63; --succ-tint:#E4F6EC; --danger:#D4546A; --danger-tint:#FBE9EC;
+  --warn:#9A6A00; --warn-tint:#FBF3DF; --track:rgba(0,0,0,.045);
+  --hero:linear-gradient(135deg,#0A62C8,#01377F);
+  --cta:linear-gradient(135deg,#3CBAFB,#0BA8FA); --cta-ink:#01377F;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.32);
+  --sheet-shadow:0 -14px 30px -18px rgba(1,55,127,.30);
+}
+.stage[data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B; --ink:#EDEFF7; --text2:#ADB3C9; --muted:#767C92;
+  --hair:#272C3E; --tint:rgba(10,98,200,.24); --pink:#5FA6F2;
+  --succ-tint:rgba(31,157,99,.17); --danger-tint:rgba(212,84,106,.18);
+  --warn:#E6C16B; --warn-tint:rgba(201,162,75,.17); --track:rgba(255,255,255,.06);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+  --sheet-shadow:0 -14px 30px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:Inter,system-ui,sans-serif;background:#E9EDF4;color:#161A2B}
+.ms{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;line-height:1;letter-spacing:0;
+  display:inline-block;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';
+  font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24}
+.ms.f{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- page chrome ---------- */
+.top{position:sticky;top:0;z-index:5;background:rgba(233,237,244,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid #D9DFEA;padding:14px 24px;display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+.top h1{font-size:16px;font-weight:800;letter-spacing:-.2px;margin-right:auto}
+.top h1 small{display:block;font-size:11.5px;font-weight:600;color:#6B7280;letter-spacing:0;margin-top:2px}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl label{font-size:10px;font-weight:800;color:#6B7280;letter-spacing:.8px;text-transform:uppercase}
+.seg{display:flex;background:#DCE2EC;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;font:700 12px Inter;color:#4A4F63;padding:6px 11px;border-radius:7px;cursor:pointer}
+.seg button.on{background:#fff;color:#0A62C8;box-shadow:0 2px 6px -2px rgba(0,0,0,.18)}
+.stage{display:flex;flex-wrap:wrap;gap:34px 30px;padding:28px 24px 60px;justify-content:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cap{width:100%;max-width:400px}
+.cap .tag{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800}
+.cap .tag em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.6px;padding:3px 8px;border-radius:999px;background:#0A62C8;color:#fff}
+.cap .tag em.old{background:#9CA3AF}
+.cap ul{margin:8px 0 0 16px;font-size:12px;line-height:1.5;color:#4A4F63}
+.fit{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;display:inline-flex;gap:5px;align-items:center}
+.fit.ok{background:#E4F6EC;color:#1F9D63}.fit.bad{background:#FBE9EC;color:#D4546A}
+
+/* ---------- phone ---------- */
+.phone{border-radius:44px;padding:10px;background:#0B0E16;box-shadow:0 30px 60px -30px rgba(0,0,0,.5)}
+.small .phone{border-radius:22px;padding:8px}
+.scr{width:var(--w);height:var(--h);border-radius:34px;overflow:hidden;background:var(--canvas);
+  display:flex;flex-direction:column;position:relative;color:var(--ink)}
+.small .scr{border-radius:14px}
+.sb{height:var(--sb);flex:none;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 26px 6px;font-size:13px;font-weight:700}
+.small .sb{padding:0 14px 4px;font-size:11px}
+.sb .ic{display:flex;gap:4px}.sb .ms{font-size:15px}
+.on-hero .sb{color:#fff}
+.body{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+.dock{flex:none;padding:10px 14px calc(var(--safe) + 6px)}
+.home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:9px;background:var(--ink);opacity:.35}
+.small .home{display:none}
+
+/* shared atoms */
+.lbl{font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+.ghost{flex:none;height:54px;padding:0 17px;border-radius:14px;border:1.4px solid color-mix(in srgb,var(--pdark) 25%,transparent);
+  background:var(--card);font:800 14px Inter;color:var(--pink);display:flex;align-items:center;gap:6px}
+.stage[data-theme="dark"] .ghost{border-color:rgba(255,255,255,.14)}
+.cta{flex:1;height:54px;border-radius:14px;background:var(--cta);color:var(--cta-ink);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;box-shadow:0 12px 22px -12px rgba(11,168,250,.7)}
+.cta b{font-size:15.5px;font-weight:800;letter-spacing:-.1px}
+.cta small{font-size:10.5px;font-weight:700;opacity:.8;margin-top:1px}
+.cta.warn{background:linear-gradient(135deg,#F3C766,#E0A93A);color:#4A3300;box-shadow:0 12px 22px -12px rgba(224,169,58,.7)}
+.row{display:flex;align-items:center}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;font-size:10.5px;font-weight:800;padding:4px 9px}
+.p-ok{background:var(--succ-tint);color:var(--success)}
+.p-warn{background:var(--warn-tint);color:var(--warn)}
+.p-bad{background:var(--danger-tint);color:var(--danger)}
+.qty{font-size:10.5px;font-weight:800;color:var(--pink);background:var(--tint);border-radius:6px;padding:2px 6px;flex:none}
+.avatar{border-radius:50%;background:var(--tint);color:var(--pink);display:grid;place-items:center;font-weight:700;flex:none}
+
+/* ========== TODAY (approximation of the shipped screen) ========== */
+.t-head{background:var(--hero);border-radius:0 0 26px 26px;color:#fff;flex:none}
+.t-head .in{padding:6px 16px 16px;display:flex;align-items:center;gap:11px}
+.t-hb{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.t-head h2{font-size:18px;font-weight:800}
+.t-body{padding:13px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.t-hero{background:var(--hero);border-radius:18px;padding:14px 16px 15px;color:#fff;box-shadow:var(--shadow)}
+.t-track{background:var(--track);border-radius:16px;padding:4px;display:flex;gap:0}
+.t-tile{flex:10;height:66px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;color:var(--text2)}
+.t-tile .c{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:16px}
+.t-tile.on{background:var(--card);box-shadow:var(--shadow);color:var(--pink);border:1.2px solid color-mix(in srgb,var(--primary) 35%,transparent)}
+.t-tile.on .c{background:var(--primary);color:#fff}
+.t-mini{flex:8;display:flex;flex-direction:column;gap:4px;height:66px;margin-left:4px}
+.t-mini div{flex:1;border-radius:10px;border:1px solid color-mix(in srgb,var(--muted) 30%,transparent);display:flex;align-items:center;justify-content:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--muted)}
+.t-mini div.on{background:var(--card);color:var(--pink);border-color:color-mix(in srgb,var(--primary) 35%,transparent)}
+.t-sum{padding:10px 14px}
+.t-sum .r{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text2);padding:7px 0;border-bottom:1px solid var(--hair)}
+.t-sum .r:last-child{border:0}
+.t-sum .r b{font-size:14px;font-weight:800;color:var(--ink)}
+.t-status{border-radius:16px;padding:14px;text-align:center;border:1px solid}
+.t-status .c{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;margin:0 auto 7px;color:#fff;font-size:16px}
+.t-note{padding:13px 14px;border-radius:11px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700}
+.t-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.t-notes div{height:46px;border-radius:12px;border:1px solid var(--hair);background:var(--card);display:grid;place-items:center;font-weight:800;font-size:15px}
+.t-notes div.on{border:1.5px solid var(--primary);background:var(--tint);color:var(--pink)}
+
+/* ========== A · DUE BAND ========== */
+.a-head{background:var(--hero);color:#fff;border-radius:0 0 24px 24px;flex:none;position:relative;overflow:hidden}
+.a-head:after{content:"";position:absolute;right:-60px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(11,168,250,.45),transparent 65%)}
+.a-head .in{position:relative;z-index:1;padding:4px 16px 16px}
+.a-bar{display:flex;align-items:center;gap:10px;height:40px}
+.a-bar .b{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:20px}
+.a-bar h2{font-size:15px;font-weight:800;flex:1}
+.glass{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:11px;font-weight:800;padding:5px 10px;display:flex;align-items:center;gap:4px}
+.glass .ms{font-size:14px}
+.a-amt{display:flex;align-items:flex-end;gap:10px;margin-top:6px}
+.a-amt .v{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1}
+.a-amt .cur{font-size:12px;font-weight:800;opacity:.7;margin-bottom:5px}
+.a-sub{font-size:11px;font-weight:600;color:rgba(255,255,255,.72);margin-top:6px;display:flex;align-items:center;gap:6px}
+.a-state{margin-left:auto;margin-bottom:3px;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:999px;display:flex;gap:4px;align-items:center}
+.a-state .ms{font-size:14px}
+.a-state.ok{background:rgba(31,157,99,.95);color:#fff}
+.a-state.warn{background:#F3C766;color:#4A3300}
+.a-state.bad{background:#fff;color:#D4546A}
+.a-body{height:100%;padding:12px 14px 0;display:flex;flex-direction:column;gap:10px}
+.a-track{display:flex;gap:4px;background:var(--track);border-radius:15px;padding:4px;flex:none}
+.a-m{flex:1;height:52px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:10.5px;font-weight:700;color:var(--text2);position:relative;border:1.2px solid transparent}
+.a-m .ms{font-size:19px}
+.a-m.on{background:var(--card);color:var(--pink);font-weight:800;box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--primary) 30%,transparent)}
+.a-m.on .ms{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.a-m.on:after{content:"";position:absolute;bottom:4px;width:16px;height:3px;border-radius:3px;background:var(--primary)}
+.a-panel{flex:0 1 auto;min-height:0;padding:13px 14px 14px;display:flex;flex-direction:column;gap:11px;overflow:hidden}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:5px 9px;border-radius:999px;border:1px solid var(--hair);color:var(--muted)}
+.chip.ac{background:var(--tint);border-color:transparent;color:var(--pink)}
+.chip .ms{font-size:13px}
+.recv{display:flex;align-items:flex-end;gap:8px}
+.recv .cur{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:4px}
+.recv .v{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:50px;gap:7px}
+.note{border-radius:12px;border:1px solid var(--hair);background:var(--card);display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:15px;position:relative}
+.note.on{border:1.5px solid var(--primary);background:var(--tint);color:var(--pink)}
+.note .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);min-width:24px;height:22px;padding:0 6px;border-radius:999px;
+  background:linear-gradient(135deg,#1C70D0,#01377F);color:#fff;font-size:11px;display:grid;place-items:center}
+.note .m{position:absolute;left:6px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:1px solid color-mix(in srgb,var(--primary) 40%,transparent);
+  display:grid;place-items:center;font-size:14px;color:var(--pink);background:var(--card)}
+.change{border-radius:13px;background:var(--succ-tint);color:var(--success);display:flex;align-items:center;padding:10px 13px;gap:8px;flex:none}
+.change .ms{font-size:18px}
+.change b{font-size:12px;font-weight:800}
+.change .v{margin-left:auto;font-size:20px;font-weight:800;letter-spacing:-.3px}
+.ledger{display:flex;border-radius:12px;background:var(--track);flex:none}
+.ledger div{flex:1;padding:9px 10px;display:flex;flex-direction:column;gap:3px}
+.ledger div+div{border-left:1px solid var(--hair)}
+.ledger span{font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.ledger b{font-size:14px;font-weight:800}
+.ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;font-size:21px}
+.ico.p{background:var(--tint);color:var(--pink)}
+.ico.w{background:var(--warn-tint);color:var(--warn)}
+.ttl{font-size:13.5px;font-weight:800}
+.sub{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.lines{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:hidden}
+.line{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.line .n{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.line b{font-weight:800}
+.dash{height:1px;background:repeating-linear-gradient(90deg,var(--hair) 0 4px,transparent 4px 8px);flex:none}
+.link{font-size:11px;font-weight:800;color:var(--pink);display:flex;align-items:center;gap:2px}
+.link .ms{font-size:15px}
+.meter{height:8px;border-radius:9px;background:var(--danger-tint);overflow:hidden;display:flex}
+.meter i{display:block;background:var(--success);border-radius:9px}
+.warnbar{display:flex;align-items:center;gap:8px;border-radius:12px;background:var(--warn-tint);color:var(--warn);padding:8px 8px 8px 12px;font-size:12px;font-weight:800}
+.warnbar .btn{margin-left:auto;background:var(--card);color:var(--pink);border-radius:9px;padding:7px 10px;font-size:11px;font-weight:800;box-shadow:var(--shadow)}
+.splitln{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--track)}
+.splitln .ms{font-size:18px;color:var(--pink)}
+.splitln span{flex:1;font-size:12.5px;font-weight:700}
+.splitln b{font-size:14px;font-weight:800}
+.a-note{flex:none;display:flex;align-items:center;gap:8px;padding:0 4px;height:30px;font-size:12px;font-weight:700;color:var(--text2)}
+.a-note .ms{font-size:18px;color:var(--pink)}
+.a-note small{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:600}
+
+/* ========== B · TICKET DOCK ========== */
+.b-head{flex:none;display:flex;align-items:center;gap:10px;padding:4px 16px 8px}
+.b-head .b{width:36px;height:36px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:21px}
+.b-head h2{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.b-head .sub{margin-top:1px}
+.b-body{height:100%;padding:4px 14px 12px;display:flex;flex-direction:column}
+.b-ticket{flex:1;min-height:0;padding:14px 15px 13px;display:flex;flex-direction:column;gap:9px;position:relative}
+.b-ticket:before,.b-ticket:after{content:"";position:absolute;bottom:58px;width:16px;height:16px;border-radius:50%;background:var(--canvas)}
+.b-ticket:before{left:-8px}.b-ticket:after{right:-8px}
+.b-tot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:auto;padding-top:11px;border-top:1px dashed var(--hair)}
+.b-tot .v{font-size:28px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.b-tot .v small{font-size:12px;font-weight:800;color:var(--muted);margin-right:5px;letter-spacing:0}
+.b-sum{display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--text2)}
+.b-sheet{flex:none;background:var(--card);border-radius:24px 24px 0 0;box-shadow:var(--sheet-shadow);padding:8px 14px calc(var(--safe) + 6px)}
+.b-grab{width:38px;height:4px;border-radius:9px;background:var(--hair);margin:0 auto 10px}
+.b-methods{display:flex;gap:6px}
+.b-m{flex:1;height:40px;border-radius:12px;background:var(--track);display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--text2)}
+.b-m .ms{font-size:17px}
+.b-m.on{background:var(--primary);color:#fff;font-weight:800;box-shadow:0 8px 16px -10px rgba(10,98,200,.8)}
+.b-m.on .ms{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.b-strip{margin:10px 0 10px;min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.b-notes{display:flex;gap:5px}
+.b-notes div{flex:1;height:38px;border-radius:10px;border:1px solid var(--hair);display:grid;place-items:center;font-size:13px;font-weight:800;position:relative}
+.b-notes div.on{border:1.5px solid var(--primary);background:var(--tint);color:var(--pink)}
+.b-notes div sup{position:absolute;top:-7px;right:-4px;font-size:9.5px;background:var(--primary);color:#fff;border-radius:999px;padding:2px 5px;line-height:1}
+.b-notes div.k{flex:none;width:38px;color:var(--pink);background:var(--tint);border-color:transparent}
+.b-rc{display:flex;align-items:center;font-size:12px;font-weight:700;color:var(--text2);gap:6px}
+.b-rc b{color:var(--ink);font-weight:800}
+.b-rc .chg{margin-left:auto;color:var(--success);font-size:15px;font-weight:800}
+.b-okline{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px}
+.b-okline .c{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:17px;flex:none}
+.b-okline b{font-size:13px;font-weight:800;display:block}
+.b-okline small{font-size:10.5px;font-weight:600;opacity:.8}
+.b-okline .v{margin-left:auto;font-size:15px;font-weight:800;text-align:right}
+
+/* ========== C · TERMINAL ========== */
+.c-hero{flex:none;background:var(--hero);color:#fff;border-radius:0 0 30px 30px;position:relative;overflow:hidden}
+.c-hero:before{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 85% 0%,rgba(11,168,250,.55),transparent 45%),radial-gradient(circle at 0% 100%,rgba(255,255,255,.10),transparent 40%)}
+.c-hero .in{position:relative;padding:2px 16px 14px}
+.c-amt{text-align:center;margin:4px 0 12px}
+.c-amt .v{font-size:46px;font-weight:700;letter-spacing:-1.6px;line-height:1.05}
+.c-amt .v small{font-size:15px;font-weight:800;opacity:.7;letter-spacing:0;margin-right:6px;vertical-align:middle}
+.c-amt .s{font-size:11px;font-weight:600;color:rgba(255,255,255,.72);margin-top:5px}
+.c-methods{display:flex;gap:5px;background:rgba(0,0,0,.16);border-radius:14px;padding:4px}
+.c-m{flex:1;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:700;color:rgba(255,255,255,.82)}
+.c-m .ms{font-size:16px}
+.c-m.on{background:#fff;color:#0A62C8;font-weight:800}
+.c-m.on .ms{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.c-status{margin-top:10px;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.12);font-size:12px;font-weight:700}
+.c-status .ms{font-size:17px}
+.c-status b{margin-left:auto;font-size:15px;font-weight:800}
+.c-status.ok .ms{color:#7CF0B5}.c-status.warn .ms{color:#F3C766}.c-status.bad .ms{color:#FFB3C0}
+.c-body{height:100%;padding:12px 14px 0;display:flex;flex-direction:column;gap:10px}
+.c-pad{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:8px;max-height:200px}
+.c-pad div{border-radius:16px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;position:relative}
+.c-pad div.on{background:var(--tint);color:var(--pink);box-shadow:inset 0 0 0 1.5px var(--primary)}
+.c-pad div sup{position:absolute;top:6px;right:8px;font-size:10.5px;background:var(--primary);color:#fff;border-radius:999px;padding:3px 6px;line-height:1}
+.c-center{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:12px}
+.c-ring{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--pink);font-size:36px;
+  box-shadow:0 0 0 10px color-mix(in srgb,var(--tint) 50%,transparent)}
+.c-idcard{border-radius:18px;padding:14px;color:#fff;background:linear-gradient(135deg,#0A62C8,#01377F 70%);position:relative;overflow:hidden;flex:none}
+.c-idcard:after{content:"";position:absolute;right:-30px;bottom:-50px;width:150px;height:150px;border-radius:50%;background:rgba(11,168,250,.35)}
+.c-tools{flex:none;display:flex;gap:8px}
+.c-tools div{flex:1;height:36px;border-radius:11px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text2)}
+.c-tools .ms{font-size:16px;color:var(--pink)}
+.c-iconbtn{flex:none;width:54px;height:54px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--pink);font-size:22px}
+
+/* ========== TABLET (ticket left · pay rail right) ========== */
+.tab{width:100%}
+.tab .phone{border-radius:32px;padding:12px}
+.tab .scr{border-radius:20px}
+.tab .sb{padding:0 22px 2px;font-size:12px;align-items:center}
+.tab .home{width:180px;bottom:6px}
+.tab .cap{max-width:1218px}
+.tab .cap ul{columns:2;column-gap:36px}
+.split{flex:1;min-height:0;display:flex}
+.tpane{flex:1;min-width:0;display:flex;flex-direction:column;padding:4px 24px 20px;gap:14px}
+.thead{flex:none;display:flex;align-items:center;gap:12px}
+.thead .b{width:40px;height:40px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:22px}
+.thead h2{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.tcard{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 20px 16px}
+.tr{display:grid;grid-template-columns:52px 1fr 96px 110px;align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:13.5px;font-weight:600}
+.tr .r{text-align:right}
+.tr b{font-weight:800}
+.tr.h{padding:13px 0 9px}
+.tlist{flex:1;min-height:0;overflow:auto}
+.ttot{flex:none;display:flex;align-items:flex-end;gap:30px;padding-top:14px;border-top:1px dashed var(--hair)}
+.ttot div{display:flex;flex-direction:column;gap:3px}
+.ttot span{font-size:10px;font-weight:800;letter-spacing:.7px;color:var(--muted);text-transform:uppercase}
+.ttot b{font-size:15px;font-weight:800}
+.ttot .due{margin-left:auto;text-align:right}
+.ttot .due b{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.rail{flex:none;width:var(--rail);display:flex;flex-direction:column;background:var(--card);border-left:1px solid var(--hair)}
+.rail .dock{padding:12px 18px calc(var(--safe) + 8px)}
+.rail .a-body{padding:16px 18px 0}
+.rail .a-panel{box-shadow:none;border:1px solid var(--hair)}
+.rail .a-track{background:var(--track)}
+.a-band{flex:none;background:var(--hero);color:#fff;border-radius:18px;padding:14px 16px 15px;position:relative;overflow:hidden}
+.a-band:after{content:"";position:absolute;right:-50px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(11,168,250,.45),transparent 65%)}
+.a-band>*{position:relative;z-index:1}
+.paper{flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 22px 16px;position:relative;
+  -webkit-mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x;mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x;border-radius:0 0 16px 16px}
+.brand{text-align:center;flex:none;padding-bottom:12px;border-bottom:1px dashed var(--hair)}
+.brand .lg{width:34px;height:34px;border-radius:10px;margin:0 auto 6px;background:var(--hero);display:grid;place-items:center;color:#fff;font-size:19px}
+.brand b{font-size:11.5px;font-weight:800;letter-spacing:2.6px}
+.rail.b-rail{background:var(--card)}
+.b-rail .in{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;padding:18px 18px 0}
+.b-rail .b-m{height:48px;flex-direction:column;gap:2px;font-size:11px}
+.b-rail .b-strip{margin:0;min-height:0}
+.b-rail .b-notes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.b-rail .b-notes div{height:58px;font-size:17px;border-radius:13px}
+.b-rail .b-notes div.k{grid-column:1/-1;width:auto;height:40px;font-size:18px}
+.b-rail .b-rc{font-size:13px}.b-rail .b-rc .chg{font-size:18px}
+.rail.c-rail{background:var(--canvas)}
+.c-rail .c-hero{border-radius:0 0 28px 28px}
+.c-rail .c-hero .in{padding:16px 18px 16px}
+.c-rail .c-amt .v{font-size:50px}
+.c-rail .c-pad{max-height:none}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>Review &amp; Pay — premium samples
+    <small>mobileApp · review_pay_screen.dart · Qloud Blue · each phone checks itself for scrolling</small></h1>
+  <div class="ctl"><label>Paying by</label>
+    <div class="seg" id="segState">
+      <button data-v="cash">Cash</button><button data-v="card" class="on">Card</button><button data-v="split">Split</button>
+      <button data-v="credit">Credit</button><button data-v="wallet">Student card</button>
+    </div></div>
+  <div class="ctl"><label>Device</label>
+    <div class="seg" id="segDev"><button data-v="phone" class="on">iPhone 390×844</button><button data-v="small">Small Android 360×720</button><button data-v="ipad">iPad 1194×834</button><button data-v="till">Till tablet 1097×686</button></div></div>
+  <div class="ctl"><label>Theme</label>
+    <div class="seg" id="segTheme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div></div>
+</div>
+
+<div class="stage" id="stage" data-theme="light"></div>
+
+<script>
+const S = {state:'card', dev:'phone', theme:'light'};
+const DEV = {phone:{w:390,h:844,sb:47,safe:28}, small:{w:360,h:720,sb:26,safe:8},
+  ipad:{w:1194,h:834,sb:24,safe:14,tab:true}, till:{w:1097,h:686,sb:24,safe:4,tab:true}};
+
+const TICKET = {
+  customer:'Walk-in Customer', staff:'Me', total:276, subtotal:296, discount:20,
+  lines:[
+    {q:1,n:'Signature Haircut',t:85},{q:1,n:'Beard Sculpt',t:45},{q:2,n:'Keratin Shine Serum',t:96},
+    {q:1,n:'Hot Towel Shave',t:40},{q:1,n:'Scalp Massage',t:30},
+  ],
+};
+const NOTES = [1,5,10,50,100,500], COUNTED = {100:2,50:1,10:3}; // 280 handed over
+const STUDENT = {name:'Aisha Rahman', cls:'Grade 6 · B · ADM 2041', balance:180};
+const fmt = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const ms = (n,f) => `<span class="ms${f?' f':''}">${n}</span>`;
+
+/** What the ticket's money says in each mode — mirrors CartCubit's paidAmount / balance. */
+function money(state){
+  const total = TICKET.total;
+  switch(state){
+    case 'cash': return {paid:total,bal:0,settled:true,tendered:280,change:4,cta:`Charge QAR ${fmt(total)}`,sub:'Change QAR 4.00'};
+    case 'card': return {paid:total,bal:0,settled:true,cta:`Charge QAR ${fmt(total)}`};
+    case 'split': return {paid:total,bal:0,settled:true,cta:`Charge QAR ${fmt(total)}`,parts:[['credit_card','Card',200],['payments','Cash',76]]};
+    case 'credit': return {paid:0,bal:total,settled:false,cta:'Submit Anyway',sub:`QAR ${fmt(total)} on account`};
+    case 'wallet': return {paid:total,bal:0,settled:true,short:total-STUDENT.balance,cta:`Charge QAR ${fmt(total)}`,sub:'Card is QAR 96.00 short'};
+  }
+}
+
+function methods(state){
+  const list = [];
+  if(state==='wallet') list.push(['wallet','school','Wallet']);
+  list.push(['cash','payments','Cash'],['card','credit_card','Card']);
+  if(state!=='wallet') list.push(['credit','description','Credit']);
+  list.push(['split','call_split', state==='split' ? '2 ways' : 'Split']);
+  return list.map(([k,i,l]) => ({k,i,l,on:k===state}));
+}
+
+const statusBar = () => `<div class="sb"><span>9:41</span><span class="ic">${ms('signal_cellular_alt')}${ms('wifi')}${ms('battery_full',1)}</span></div>`;
+
+/* ---------------- TODAY ---------------- */
+function today(state){
+  const m = money(state);
+  return `<div class="t-head">${statusBar()}<div class="in"><span class="t-hb">${ms('chevron_left')}</span><h2>Review &amp; Pay</h2></div></div>
+    <div class="body"><div class="t-body">
+      <div class="t-hero"><div class="row"><span class="lbl" style="color:rgba(255,255,255,.7)">Amount due</span><span class="sp"></span><span class="glass">5 items ${ms('expand_more')}</span></div>
+        <div style="font-size:34px;font-weight:700;margin-top:2px">QAR ${fmt(TICKET.total)}</div>
+        <div style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.7);margin-top:3px">${TICKET.customer} · 20.00 off</div></div>
+      ${todayMid(state)}</div></div>
+    <div class="dock"><div class="row" style="gap:10px"><span class="ghost">Save Draft</span>
+      <div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${state==='cash'?`<small>${m.sub}</small>`:''}</div></div></div>`;
+}
+
+/** The shipped money section (_moneySection), shared by the phone and the tablet rail. */
+function todayMid(state){
+  const m = money(state);
+  const ms_ = methods(state);
+  const big = ms_.filter(x=>!['credit','split'].includes(x.k)), mini = ms_.filter(x=>['credit','split'].includes(x.k));
+  let mid = '';
+  if(state==='wallet') mid += `<div class="card" style="padding:14px"><div class="row" style="gap:12px">
+      <div class="avatar" style="width:52px;height:52px;font-size:22px">A</div>
+      <div class="sp"><div style="font-size:15px;font-weight:800">${STUDENT.name}</div><div class="sub">${STUDENT.cls}</div></div>
+      <div style="text-align:right"><div class="lbl">Balance</div><div style="font-size:18px;font-weight:700">${fmt(STUDENT.balance)}</div></div></div>
+      <div class="row" style="justify-content:space-between;margin-top:10px;font-size:12px;color:var(--text2);font-weight:600">Can spend <b style="color:var(--ink)">${fmt(STUDENT.balance)}</b></div>
+      <div class="row" style="justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text2);font-weight:600">Card balance after <b style="color:var(--danger)">−96.00</b></div>
+      <div class="warnbar" style="margin-top:10px">The card is QAR 96.00 short.<span class="btn">Card + cash</span></div></div>`;
+  mid += `<div><div class="lbl" style="margin-bottom:8px">Payment method</div><div class="t-track">
+    ${big.map(x=>`<div class="t-tile${x.on?' on':''}"><span class="c">${ms(x.i)}</span>${x.l}</div>`).join('')}
+    <div class="t-mini">${mini.map(x=>`<div class="${x.on?'on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div></div></div>`;
+  if(state==='cash'){
+    mid += `<div class="card" style="padding:12px 14px 14px"><div class="row"><span class="lbl">Received</span><span class="sp"></span><span class="chip">${ms('close')}Reset</span>&nbsp;<span class="chip ac">${ms('dialpad')}Keypad</span></div>
+      <div class="recv" style="margin:6px 0 12px"><span class="cur">QAR</span><span class="v">280.00</span><span class="pill" style="background:var(--tint);color:var(--pink)">6 notes</span></div>
+      <div class="t-notes">${NOTES.map(n=>`<div class="${COUNTED[n]?'on':''}">${n}</div>`).join('')}</div></div>
+      <div class="change"><span class="ms">payments</span><b>Change to give</b><span class="v">QAR 4.00</span></div>`;
+  } else {
+    const ok = m.settled;
+    mid += `<div class="card t-sum"><div class="r">Grand Total <b style="color:var(--pink)">${fmt(TICKET.total)}</b></div>
+      <div class="r">Paid Amount <b>${fmt(m.paid)}</b></div>
+      <div class="r" style="color:${ok?'var(--success)':'var(--danger)'};font-weight:800">${ok?'Balance':'Remaining Balance'} <b style="color:inherit">${fmt(m.bal)}</b></div></div>
+      <div class="t-status" style="background:${ok?'var(--succ-tint)':'var(--warn-tint)'};border-color:${ok?'rgba(31,157,99,.35)':'rgba(154,106,0,.3)'};color:${ok?'var(--success)':'var(--warn)'}">
+        <div class="c" style="background:${ok?'var(--success)':'var(--warn)'}">${ms(ok?'check':'warning',1)}</div>
+        <div style="font-size:13px;font-weight:800">${ok?'Ready to Submit':'Partial Payment'}</div>
+        <div style="font-size:11px;font-weight:600;margin-top:3px">${ok?'Transaction is fully paid and ready to submit':'Transaction has a remaining balance'}</div>
+        ${ok?'<div style="font-size:10.5px;font-weight:700;margin-top:5px;opacity:.7">Tap to submit</div>':''}</div>`;
+  }
+  mid += `<div class="t-note">${ms('edit_note')}Add a note<span class="sp"></span><span style="font-size:10.5px;color:var(--muted);font-weight:600">Optional</span></div>`;
+  return mid;
+}
+
+/* ---------------- A · DUE BAND ---------------- */
+function linesBlock(max){
+  const shown = TICKET.lines.slice(0,max), more = TICKET.lines.length - shown.length;
+  return `<div class="row"><span class="lbl">On this ticket</span><span class="sp"></span><span class="link">View all ${TICKET.lines.length}${ms('chevron_right')}</span></div>
+    <div class="lines">${shown.map(l=>`<div class="line"><span class="qty">${l.q}×</span><span class="n">${l.n}</span><b class="num">${fmt(l.t)}</b></div>`).join('')}
+    ${more>0?`<div class="sub" style="margin:0">+ ${more} more item${more>1?'s':''}</div>`:''}</div>`;
+}
+
+/** [peek] adds the short ticket list — the phone needs it, the tablet already shows the ticket on the left. */
+function panelA(state, peek = true){
+  const m = money(state);
+  const tail = n => peek ? `<div class="dash"></div>${linesBlock(n)}` : '';
+  if(state==='cash') return `
+    <div class="row"><span class="lbl">Received</span><span class="sp"></span><span class="chip">${ms('close')}Reset</span>&nbsp;<span class="chip ac">${ms('dialpad')}Keypad</span></div>
+    <div class="recv"><span class="cur">QAR</span><span class="v num">280.00</span><span class="pill" style="background:var(--tint);color:var(--pink);margin-bottom:3px">6 notes</span><span class="sp"></span><span class="link" style="margin-bottom:4px">Exact</span></div>
+    <div class="notes">${NOTES.map(n=>`<div class="note${COUNTED[n]?' on':''}">${COUNTED[n]?`<span class="m">${ms('remove')}</span>`:''}${n}${COUNTED[n]?`<span class="x">×${COUNTED[n]}</span>`:''}</div>`).join('')}</div>
+    <div class="change">${ms('south_west')}<b>Give back</b><span class="v num">QAR 4.00</span></div>`;
+  if(state==='card') return `
+    <div class="row" style="gap:11px"><span class="ico p">${ms('contactless')}</span>
+      <div class="sp"><div class="ttl">Card payment</div><div class="sub">Take QAR ${fmt(TICKET.total)} on the card machine</div></div>
+      <span class="pill p-ok">${ms('check',1)}Paid</span></div>
+    <div class="ledger"><div><span>Total</span><b class="num">${fmt(TICKET.total)}</b></div><div><span>Paid</span><b class="num">${fmt(m.paid)}</b></div><div><span>Balance</span><b class="num" style="color:var(--success)">0.00</b></div></div>
+    ${tail(4)}`;
+  if(state==='split') return `
+    <div class="row" style="gap:11px"><span class="ico p">${ms('call_split')}</span>
+      <div class="sp"><div class="ttl">Split payment</div><div class="sub">2 methods cover the ticket</div></div>
+      <span class="chip ac">${ms('edit')}Edit</span></div>
+    ${m.parts.map(([i,l,a])=>`<div class="splitln">${ms(i)}<span>${l}</span><b class="num">${fmt(a)}</b></div>`).join('')}
+    <div><div class="meter" style="background:var(--succ-tint)"><i style="width:100%"></i></div>
+      <div class="row" style="margin-top:6px;font-size:11px;font-weight:700;color:var(--muted)">Paid ${fmt(m.paid)} of ${fmt(TICKET.total)}<span class="sp"></span><span style="color:var(--success)">Balance 0.00 ✓</span></div></div>
+    ${tail(2)}`;
+  if(state==='credit') return `
+    <div class="row" style="gap:11px"><span class="ico w">${ms('description')}</span>
+      <div class="sp"><div class="ttl">On account</div><div class="sub">Nothing taken now — the full amount stays owed</div></div>
+      <span class="pill p-warn">Unpaid</span></div>
+    <div class="ledger"><div><span>Total</span><b class="num">${fmt(TICKET.total)}</b></div><div><span>Paid</span><b class="num">0.00</b></div><div><span>Due</span><b class="num" style="color:var(--danger)">${fmt(TICKET.total)}</b></div></div>
+    <div class="sub" style="display:flex;gap:6px;align-items:center;margin:0">${ms('lightbulb')} Taking part now? Use <b style="color:var(--pink)">Split</b> instead.</div>
+    ${tail(3)}`;
+  if(state==='wallet') return `
+    <div class="row" style="gap:11px"><div class="avatar" style="width:42px;height:42px;font-size:18px">A</div>
+      <div class="sp" style="min-width:0"><div class="ttl">${STUDENT.name}</div><div class="sub">${STUDENT.cls}</div></div>
+      <div style="text-align:right"><div class="lbl">Can spend</div><div style="font-size:17px;font-weight:800" class="num">${fmt(STUDENT.balance)}</div></div></div>
+    <div><div class="meter"><i style="width:${STUDENT.balance/TICKET.total*100}%"></i></div>
+      <div class="row" style="margin-top:6px;font-size:11px;font-weight:700;color:var(--muted)">Covers ${fmt(STUDENT.balance)} of ${fmt(TICKET.total)}<span class="sp"></span><span style="color:var(--danger)">After: −96.00</span></div></div>
+    <div class="warnbar">${ms('warning',1)} Card is QAR 96.00 short<span class="btn">Card + cash</span></div>
+    ${tail(2)}`;
+}
+
+function sampleA(state){
+  const m = money(state);
+  const st = state==='credit' ? `<span class="a-state warn">${ms('schedule')}On account</span>`
+    : state==='wallet' ? `<span class="a-state bad">${ms('warning',1)}96.00 short</span>`
+    : `<span class="a-state ok">${ms('check_circle',1)}${state==='cash'?'Change 4.00':'Fully paid'}</span>`;
+  return `<div class="a-head on-hero">${statusBar()}<div class="in">
+      <div class="a-bar"><span class="b">${ms('chevron_left')}</span><h2>Review &amp; Pay</h2><span class="glass">${ms('receipt_long')}5 items</span></div>
+      <div class="lbl" style="color:rgba(255,255,255,.7);margin-top:6px">Amount due</div>
+      <div class="a-amt"><span class="cur">QAR</span><span class="v num">${fmt(TICKET.total)}</span>${st}</div>
+      <div class="a-sub">${ms('person')}${state==='wallet'?STUDENT.name:TICKET.customer} · ${ms('sell')}20.00 off</div>
+    </div></div>
+    <div class="body"><div class="a-body">
+      <div class="a-track">${methods(state).map(x=>`<div class="a-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+      <div class="card a-panel">${panelA(state)}</div>
+      <div class="a-note">${ms('edit_note')}Add a note<small>Optional</small></div>
+    </div></div>
+    <div class="dock" style="padding-top:6px"><div class="row" style="gap:10px"><span class="ghost">Save Draft</span>
+      <div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${m.sub?`<small>${m.sub}</small>`:''}</div></div></div>`;
+}
+
+/* ---------------- B · TICKET DOCK ---------------- */
+function stripB(state){
+  const m = money(state);
+  if(state==='cash') return `
+    <div class="b-notes">${NOTES.map(n=>`<div class="${COUNTED[n]?'on':''}">${n}${COUNTED[n]?`<sup>×${COUNTED[n]}</sup>`:''}</div>`).join('')}<div class="k">${ms('dialpad')}</div></div>
+    <div class="b-rc">Received <b class="num">QAR 280.00</b><span class="chg num">Change 4.00</span></div>`;
+  const ok = (bg,c,icon,title,small,val) => `<div class="b-okline" style="background:${bg};color:${c}"><span class="c" style="background:${c}">${ms(icon,1)}</span>
+      <div><b>${title}</b><small>${small}</small></div><span class="v num">${val}</span></div>`;
+  if(state==='card') return ok('var(--succ-tint)','var(--success)','check','Paid in full by card','Take it on the card machine','Bal 0.00');
+  if(state==='split') return `<div class="row" style="gap:6px">${m.parts.map(([i,l,a])=>`<div class="splitln" style="flex:1;padding:8px 10px">${ms(i)}<span>${l}</span><b class="num">${fmt(a)}</b></div>`).join('')}<span class="chip ac" style="height:38px">${ms('edit')}Edit</span></div>
+      <div class="b-rc" style="color:var(--success)">${ms('check_circle',1)} Fully paid<span class="chg num">Bal 0.00</span></div>`;
+  if(state==='credit') return ok('var(--warn-tint)','var(--warn)','schedule','Goes on account','Nothing taken now — use Split for part',`Due ${fmt(TICKET.total)}`);
+  if(state==='wallet') return `<div class="row" style="gap:10px"><div class="avatar" style="width:36px;height:36px;font-size:15px">A</div>
+      <div class="sp" style="min-width:0"><div style="font-size:12.5px;font-weight:800">${STUDENT.name}</div><div class="sub" style="margin:0">Can spend ${fmt(STUDENT.balance)}</div></div></div>
+      <div class="warnbar" style="padding:6px 6px 6px 12px">${ms('warning',1)} 96.00 short<span class="btn">Card + cash</span></div>`;
+}
+
+function sampleB(state){
+  const m = money(state);
+  return `${statusBar()}<div class="b-head"><span class="b">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub">${state==='wallet'?STUDENT.name:TICKET.customer} · ${TICKET.staff}</div></div>
+      <span class="b" style="color:var(--pink);font-size:20px">${ms('edit_note')}</span></div>
+    <div class="body"><div class="b-body"><div class="card b-ticket">
+      <div class="row"><span class="lbl">Ticket · 5 items</span><span class="sp"></span><span class="link">Edit${ms('chevron_right')}</span></div>
+      <div class="lines" style="flex:1">${TICKET.lines.map(l=>`<div class="line"><span class="qty">${l.q}×</span><span class="n">${l.n}</span><b class="num">${fmt(l.t)}</b></div>`).join('')}</div>
+      <div class="b-sum">Subtotal<span class="num">${fmt(TICKET.subtotal)}</span></div>
+      <div class="b-sum" style="color:var(--warn)">Discount<span class="num">− ${fmt(TICKET.discount)}</span></div>
+      <div class="b-tot"><span class="lbl">Amount due</span><span class="v num"><small>QAR</small>${fmt(TICKET.total)}</span></div>
+    </div></div></div>
+    <div class="b-sheet"><div class="b-grab"></div>
+      <div class="b-methods">${methods(state).map(x=>`<div class="b-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+      <div class="b-strip">${stripB(state)}</div>
+      <div class="row" style="gap:10px"><span class="ghost">Draft</span>
+        <div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${m.sub?`<small>${m.sub}</small>`:''}</div></div>
+    </div>`;
+}
+
+/* ---------------- C · TERMINAL ---------------- */
+function bodyC(state){
+  const m = money(state);
+  if(state==='cash') return `
+    <div class="row"><span class="lbl">Tap the notes handed over</span><span class="sp"></span><span class="chip ac">${ms('dialpad')}Keypad</span></div>
+    <div class="c-pad">${NOTES.map(n=>`<div class="${COUNTED[n]?'on':''}">${n}${COUNTED[n]?`<sup>×${COUNTED[n]}</sup>`:''}</div>`).join('')}</div>
+    <div class="c-tools"><div>${ms('close')}Reset</div><div>${ms('done_all')}Exact</div><div>${ms('edit_note')}Note</div></div>`;
+  if(state==='card') return `<div class="card c-center"><div class="c-ring">${ms('contactless')}</div>
+      <div class="ttl" style="font-size:15px;margin-top:8px">Tap or insert on the card machine</div>
+      <div class="sub">Charge QAR ${fmt(TICKET.total)}, then confirm below once it says Approved</div></div>
+    <div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+  if(state==='split') return `<div class="card" style="flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:9px">
+      <div class="row"><span class="lbl">Split · 2 methods</span><span class="sp"></span><span class="chip ac">${ms('edit')}Edit split</span></div>
+      ${m.parts.map(([i,l,a])=>`<div class="splitln" style="padding:12px">${ms(i)}<span style="font-size:14px">${l}</span><b class="num" style="font-size:16px">${fmt(a)}</b></div>`).join('')}
+      <div class="meter" style="background:var(--succ-tint);margin-top:auto"><i style="width:100%"></i></div></div>
+    <div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+  if(state==='credit') return `<div class="card c-center"><div class="c-ring" style="background:var(--warn-tint);color:var(--warn);box-shadow:0 0 0 10px color-mix(in srgb,var(--warn-tint) 50%,transparent)">${ms('description')}</div>
+      <div class="ttl" style="font-size:15px;margin-top:8px">Put the full amount on account</div>
+      <div class="sub">Nothing is taken now. For a part payment, use Split.</div></div>
+    <div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+  if(state==='wallet') return `<div class="c-idcard"><div class="row" style="gap:12px;position:relative;z-index:1">
+        <div class="avatar" style="width:46px;height:46px;font-size:19px;background:rgba(255,255,255,.18);color:#fff">A</div>
+        <div class="sp"><div style="font-size:14.5px;font-weight:800">${STUDENT.name}</div><div style="font-size:10.5px;opacity:.75;font-weight:600">${STUDENT.cls}</div></div>
+        ${ms('contactless')}</div>
+      <div class="row" style="margin-top:16px;position:relative;z-index:1"><div><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;opacity:.7">CAN SPEND</div><div style="font-size:22px;font-weight:700" class="num">${fmt(STUDENT.balance)}</div></div>
+        <span class="sp"></span><div style="text-align:right"><div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;opacity:.7">AFTER SALE</div><div style="font-size:15px;font-weight:800;color:#FFB3C0" class="num">−96.00</div></div></div></div>
+    <div class="warnbar">${ms('warning',1)} Card is QAR 96.00 short<span class="btn">Card + cash</span></div>
+    <div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+}
+
+function sampleC(state){
+  const m = money(state);
+  const status = state==='cash' ? `<div class="c-status ok">${ms('south_west')}Received 280.00 · give back<b class="num">4.00</b></div>`
+    : state==='credit' ? `<div class="c-status warn">${ms('schedule')}On account · due<b class="num">${fmt(TICKET.total)}</b></div>`
+    : state==='wallet' ? `<div class="c-status bad">${ms('warning',1)}Student card short by<b class="num">96.00</b></div>`
+    : `<div class="c-status ok">${ms('check_circle',1)}Fully paid${state==='split'?' · card + cash':' by card'}<b class="num">Bal 0.00</b></div>`;
+  return `<div class="c-hero on-hero">${statusBar()}<div class="in">
+      <div class="a-bar"><span class="b">${ms('chevron_left')}</span><h2>Review &amp; Pay</h2><span class="glass">${ms('person')}${state==='wallet'?'Aisha R.':'Walk-in'}</span></div>
+      <div class="c-amt"><div class="v num"><small>QAR</small>${fmt(TICKET.total)}</div><div class="s">5 items · 20.00 off</div></div>
+      <div class="c-methods">${methods(state).map(x=>`<div class="c-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+      ${status}
+    </div></div>
+    <div class="body"><div class="c-body">${bodyC(state)}</div></div>
+    <div class="dock"><div class="row" style="gap:10px"><span class="ghost">Draft</span>
+      <div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${m.sub?`<small>${m.sub}</small>`:''}</div></div></div>`;
+}
+
+/* ---------------- TABLET ---------------- */
+const who = state => state==='wallet' ? STUDENT.name : TICKET.customer;
+const ctaRow = (state, ghost = 'Save Draft') => { const m = money(state);
+  return `<div class="row" style="gap:10px"><span class="ghost">${ghost}</span>
+    <div class="cta${m.settled?'':' warn'}"><b>${m.cta}</b>${m.sub?`<small>${m.sub}</small>`:''}</div></div>`; };
+
+function ticketRows(){
+  return `<div class="tr h lbl" style="font-size:10px"><span>Qty</span><span>Item</span><span class="r">Price</span><span class="r">Amount</span></div>
+    <div class="tlist">${TICKET.lines.map(l=>`<div class="tr"><span class="qty" style="justify-self:start">${l.q}×</span><span>${l.n}</span>
+      <span class="r num" style="color:var(--muted)">${fmt(l.t/l.q)}</span><b class="r num">${fmt(l.t)}</b></div>`).join('')}</div>`;
+}
+
+/** The ticket half: page head + an itemised table with its totals underneath. */
+function ticketPane(state, {head = true} = {}){
+  return `<div class="tpane">
+    ${head?`<div class="thead"><span class="b">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub">5 items · ${who(state)} · ${TICKET.staff}</div></div>
+      <span class="chip ac" style="font-size:11px;padding:7px 12px">${ms('edit')}Edit ticket</span></div>`:''}
+    <div class="card tcard">${ticketRows()}
+      <div class="ttot"><div><span>Subtotal</span><b class="num">${fmt(TICKET.subtotal)}</b></div>
+        <div><span>Discount</span><b class="num" style="color:var(--warn)">− ${fmt(TICKET.discount)}</b></div>
+        <div><span>Tax</span><b class="num">0.00</b></div>
+        <div class="due"><span>Amount due</span><b class="num">${fmt(TICKET.total)}</b></div></div></div>
+  </div>`;
+}
+
+function todayTab(state){
+  return `${statusBar()}<div class="split">
+    <div class="tpane"><div class="thead"><span class="b">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub">5 items on this ticket</div></div></div>
+      <div class="card tcard" style="flex:0 1 auto;padding:16px 20px">
+        <div class="brand" style="border:0;padding-bottom:4px"><div class="lg">${ms('cloud',1)}</div><b>QLOUD POS</b><div class="sub">${TICKET.customer} · ${TICKET.staff}</div></div>
+        <div class="dash" style="margin:10px 0"></div>
+        <div class="lines" style="gap:9px">${TICKET.lines.map(l=>`<div class="line"><span class="qty">${l.q}×</span><span class="n">${l.n}</span><b class="num">${fmt(l.t)}</b></div>`).join('')}</div>
+        <div class="dash" style="margin:10px 0"></div>
+        <div class="b-sum">Subtotal<span>${fmt(TICKET.subtotal)}</span></div><div class="b-sum" style="color:var(--warn);margin-top:5px">Discount<span>− ${fmt(TICKET.discount)}</span></div>
+        <div class="row" style="justify-content:space-between;margin-top:6px"><b style="font-size:12.5px">Total</b><b style="font-size:19px">${fmt(TICKET.total)}</b></div></div></div>
+    <div class="rail"><div class="body"><div class="t-body" style="padding:18px 18px 12px">
+      <div class="t-hero"><span class="lbl" style="color:rgba(255,255,255,.7)">Amount due</span>
+        <div style="font-size:34px;font-weight:700;margin-top:2px">QAR ${fmt(TICKET.total)}</div>
+        <div style="font-size:10.5px;font-weight:600;color:rgba(255,255,255,.7);margin-top:3px">${TICKET.customer} · 20.00 off</div></div>
+      ${todayMid(state)}</div></div>
+      <div class="dock">${ctaRow(state)}</div></div>
+  </div>`;
+}
+
+function tabA(state){
+  const st = state==='credit' ? `<span class="a-state warn">${ms('schedule')}On account</span>`
+    : state==='wallet' ? `<span class="a-state bad">${ms('warning',1)}96.00 short</span>`
+    : `<span class="a-state ok">${ms('check_circle',1)}${state==='cash'?'Change 4.00':'Fully paid'}</span>`;
+  return `${statusBar()}<div class="split">${ticketPane(state)}
+    <div class="rail"><div class="body"><div class="a-body">
+      <div class="a-band"><div class="row"><span class="lbl" style="color:rgba(255,255,255,.7)">Amount due</span><span class="sp"></span>${st}</div>
+        <div class="a-amt" style="margin-top:4px"><span class="cur">QAR</span><span class="v num" style="font-size:40px">${fmt(TICKET.total)}</span></div>
+        <div class="a-sub">${ms('person')}${who(state)} · ${ms('sell')}20.00 off</div></div>
+      <div class="a-track">${methods(state).map(x=>`<div class="a-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+      <div class="card a-panel">${panelA(state, false)}</div>
+      <div class="a-note">${ms('edit_note')}Add a note<small>Optional</small></div>
+    </div></div><div class="dock" style="padding-top:6px">${ctaRow(state)}</div></div>
+  </div>`;
+}
+
+function tabB(state){
+  const m = money(state);
+  const bal = m.bal > 0 ? `<b class="num" style="color:var(--danger)">${fmt(m.bal)}</b>` : `<b class="num" style="color:var(--success)">0.00</b>`;
+  return `${statusBar()}<div class="split">
+    <div class="tpane"><div class="thead"><span class="b">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub">${who(state)} · ${TICKET.staff}</div></div>
+      <span class="b" style="color:var(--pink);font-size:20px">${ms('edit_note')}</span></div>
+      <div class="card paper">
+        <div class="brand"><div class="lg">${ms('cloud',1)}</div><b>QLOUD POS</b><div class="sub">${who(state)} · ${TICKET.staff} · 29 Oct 2026</div></div>
+        ${ticketRows()}
+        <div class="b-sum" style="margin-top:10px">Subtotal<span class="num">${fmt(TICKET.subtotal)}</span></div>
+        <div class="b-sum" style="color:var(--warn);margin-top:5px">Discount<span class="num">− ${fmt(TICKET.discount)}</span></div>
+        <div class="b-tot"><span class="lbl">Amount due</span><span class="v num" style="font-size:32px"><small>QAR</small>${fmt(TICKET.total)}</span></div>
+      </div></div>
+    <div class="rail b-rail"><div class="body"><div class="in">
+      <span class="lbl">Pay with</span>
+      <div class="b-methods">${methods(state).map(x=>`<div class="b-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+      <div class="b-strip">${stripB(state)}</div>
+    </div></div>
+    <div class="dock"><div class="ledger" style="margin-bottom:12px"><div><span>Total</span><b class="num">${fmt(TICKET.total)}</b></div>
+      <div><span>Paid</span><b class="num">${fmt(m.paid)}</b></div><div><span>${m.bal>0?'Due':'Balance'}</span>${bal}</div></div>${ctaRow(state,'Draft')}</div></div>
+  </div>`;
+}
+
+function tabC(state){
+  const status = state==='cash' ? `<div class="c-status ok">${ms('south_west')}Received 280.00 · give back<b class="num">4.00</b></div>`
+    : state==='credit' ? `<div class="c-status warn">${ms('schedule')}On account · due<b class="num">${fmt(TICKET.total)}</b></div>`
+    : state==='wallet' ? `<div class="c-status bad">${ms('warning',1)}Student card short by<b class="num">96.00</b></div>`
+    : `<div class="c-status ok">${ms('check_circle',1)}Fully paid${state==='split'?' · card + cash':' by card'}<b class="num">Bal 0.00</b></div>`;
+  return `${statusBar()}<div class="split">${ticketPane(state)}
+    <div class="rail c-rail">
+      <div class="c-hero"><div class="in">
+        <div class="row"><span class="lbl" style="color:rgba(255,255,255,.7)">Amount due</span><span class="sp"></span><span class="glass">${ms('person')}${state==='wallet'?'Aisha R.':'Walk-in'}</span></div>
+        <div class="c-amt"><div class="v num"><small>QAR</small>${fmt(TICKET.total)}</div><div class="s">5 items · 20.00 off</div></div>
+        <div class="c-methods">${methods(state).map(x=>`<div class="c-m${x.on?' on':''}">${ms(x.i)}${x.l}</div>`).join('')}</div>
+        ${status}</div></div>
+      <div class="body"><div class="c-body" style="padding:14px 18px 0">${bodyC(state)}</div></div>
+      <div class="dock">${ctaRow(state,'Draft')}</div></div>
+  </div>`;
+}
+
+const SAMPLES = [
+  {id:'today', name:'Today', tag:'Current', old:true, fn:today, tab:todayTab, tabNotes:[
+    'The rail is one long list: hero → methods → Summary card → “Ready to Submit” card → note.',
+    'The ticket card on the left is a narrow receipt that wastes most of the pane.',
+    'With a student card the rail scrolls (+32px on iPad, +170px on the 686px till).']},
+  {id:'a', name:'A · Due Band', tag:'Recommended', fn:sampleA, tab:tabA, tabNotes:[
+    'Ticket becomes a proper table (Qty · Item · Price · Amount) with totals pinned at the bottom.',
+    'The rail is the phone design minus the ticket peek: due band, methods, one mode card, CTA.',
+    'Same widgets as the phone, so the two layouts can’t drift apart (as today’s _moneySection).',
+    'Fits the 686px canteen till without scrolling in every mode.']},
+  {id:'b', name:'B · Ticket Dock', tag:'Sample', fn:sampleB, tab:tabB, tabNotes:[
+    'Receipt-paper ticket on the left with a torn top edge. It reads like the slip that will print.',
+    'The rail is a pay sheet: methods, mode strip, then Total | Paid | Balance pinned above the CTA.',
+    'Lightest rail of the three. Works well when most sales are card.']},
+  {id:'c', name:'C · Terminal', tag:'Sample', fn:sampleC, tab:tabC, tabNotes:[
+    'The rail becomes the terminal: blue amount block, glass method pills, live status line.',
+    'Note tiles grow to fill the rail, which suits a fixed counter till.',
+    'Strongest “cash register” feel, but heavier and more blue on screen.']},
+];
+
+const SAMPLES_PHONE = [
+  {id:'today', notes:[
+    'The total shows 4× in Card mode: hero, Summary card, “Ready to Submit” card, button.',
+    'Two stacked blue blocks (header + amount hero) spend ~190px before any control.',
+    'Student card adds a full panel above the methods, which pushes everything down.']},
+  {id:'a', name:'A · Due Band', tag:'Recommended', fn:sampleA, notes:[
+    'Amount due merges into the header, with a live status pill (Fully paid / Change / Short).',
+    'One flat row of equal method tiles. Credit and Split are no longer squeezed into a mini column.',
+    'One card per mode fills the free space: Cash = notes + give-back, Card = Total|Paid|Balance + ticket peek.',
+    'Note collapses to a single quiet line, and the “Tap to submit” card is gone because the CTA does that job.']},
+  {id:'b', name:'B · Ticket Dock', tag:'Sample', fn:sampleB, notes:[
+    'Shows the full ticket on screen, so the cashier sees what is being charged.',
+    'Methods, the mode strip, and the CTA sit in a bottom sheet at a fixed height.',
+    'Cash notes become a single row of chips, and the received/change amounts go on one line.']},
+  {id:'c', name:'C · Terminal', tag:'Sample', fn:sampleC, notes:[
+    'A big centred amount with the methods as glass pills on the hero, like a card terminal.',
+    'The status line on the hero always gives the answer: give back / fully paid / short.',
+    'Large note tiles for thumbs. Card mode shows a single “tap on the machine” prompt.']},
+];
+
+function render(){
+  const d = DEV[S.dev], stage = document.getElementById('stage');
+  stage.dataset.theme = S.theme;
+  const rail = Math.min(460, Math.max(340, d.w * 0.38)); // _payRail's width rule
+  stage.innerHTML = SAMPLES.map((s, i) => `
+    <div class="col ${S.dev==='small'?'small':''} ${d.tab?'tab':''}">
+      <div class="phone"><div class="scr" style="--w:${d.w}px;--h:${d.h}px;--sb:${d.sb}px;--safe:${d.safe}px;--rail:${rail}px" data-id="${s.id}">${d.tab ? s.tab(S.state) : s.fn(S.state)}<div class="home"></div></div></div>
+      <div class="cap"><div class="tag">${s.name}<em class="${s.old?'old':''}">${s.tag}</em><span class="sp"></span><span class="fit" data-fit="${s.id}"></span></div>
+        <ul>${(d.tab ? s.tabNotes : SAMPLES_PHONE[i].notes).map(n=>`<li>${n}</li>`).join('')}</ul></div>
+    </div>`).join('');
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.scr').forEach(scr => {
+      const over = Math.max(0, ...[...scr.querySelectorAll('.body, .tlist')].map(b => b.scrollHeight - b.clientHeight));
+      const badge = document.querySelector(`[data-fit="${scr.dataset.id}"]`);
+      badge.className = 'fit ' + (over > 1 ? 'bad' : 'ok');
+      badge.textContent = over > 1 ? `Scrolls · +${over}px` : 'Fits — no scroll';
+    });
+  });
+}
+
+function bindSeg(id, key){
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    e.currentTarget.querySelectorAll('button').forEach(x => x.classList.toggle('on', x===b));
+    S[key] = b.dataset.v; render();
+  });
+}
+bindSeg('segState','state'); bindSeg('segDev','dev'); bindSeg('segTheme','theme');
+document.fonts.ready.then(render); render();
+</script>
+</body>
+</html>

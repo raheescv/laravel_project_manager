@@ -89,6 +89,23 @@ void main() {
     expect(find.textContaining(RegExp(r'^\d\d:\d\d$')), findsNothing);
   });
 
+  // A landscape keyboard takes half the till's height; the Server sheet used to
+  // overflow the rest ("RenderFlex overflowed by 34 pixels on the bottom").
+  testWidgets('Server sheet survives the keyboard on the till landscape', (tester) async {
+    await pumpAt(tester, const Size(1097, 686));
+    await tester.tap(find.byTooltip('Connection settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('Server'), findsOneWidget);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    await tester.scrollUntilVisible(find.text('Save'), 50, scrollable: find.byType(Scrollable).last);
+    expect(find.text('Save').hitTestable(), findsOneWidget);
+  });
+
   testWidgets('phone keeps the single column, no card', (tester) async {
     await pumpAt(tester, const Size(390, 844));
     expect(card(), findsNothing);

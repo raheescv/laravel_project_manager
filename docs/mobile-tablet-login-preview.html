@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablet Login Samples</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#0A62C8; --primaryDark:#01377F; --accent:#0BA8FA; --deep:#012a63;
+  --canvas:#F3F6FB; --card:#FFFFFF; --ink:#0F1B2D; --text2:#5A6677; --muted:#97A1AF; --hair:#E3E8F0; --tint:#E7F0FB;
+}
+:root[data-preset="emerald"]{
+  --primary:#15806C; --primaryDark:#0E5648; --accent:#C9A24B; --deep:#0a4036;
+  --canvas:#F4EFE7; --card:#FFFFFF; --ink:#18241F; --text2:#5D6A64; --muted:#98A29D; --hair:#E8E2D8; --tint:#E6EFEB;
+}
+:root[data-mode="dark"]{ --canvas:#0E131A; --card:#161D27; --ink:#E8EDF4; --text2:#A5B0BF; --muted:#6C7787; --hair:#252E3B; --tint:rgba(255,255,255,.06); }
+:root[data-mode="dark"][data-preset="emerald"]{ --canvas:#0E1513; --card:#161F1C; --ink:#E9EFEC; --text2:#A7B3AE; --muted:#6E7A75; --hair:#26312D; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#d6dae1;font-family:Inter,system-ui,sans-serif;color:#222;padding:16px}
+:root[data-mode="dark"] body{background:#05070a;color:#ccc}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:400}
+h1{font:800 18px Inter;text-align:center;margin-bottom:4px}
+.note{max-width:1100px;margin:0 auto 12px;font:600 13px/1.5 Inter;color:#555;text-align:center}
+:root[data-mode="dark"] .note{color:#999}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px}
+.bar button{font:700 12.5px Inter;border:1px solid #bbb;background:#fff;color:#222;border-radius:999px;padding:8px 14px;cursor:pointer}
+.bar button.on{background:#0F1B2D;color:#fff;border-color:#0F1B2D}
+.bar .sep{width:1px;height:22px;background:#aaa;margin:0 4px}
+.desc{max-width:900px;margin:4px auto 14px;font:600 13px/1.55 Inter;color:#333;text-align:center;min-height:40px}
+:root[data-mode="dark"] .desc{color:#bbb}
+.desc b{color:#000} :root[data-mode="dark"] .desc b{color:#fff}
+
+.stage{display:flex;justify-content:center;overflow:hidden}
+.frame{transform-origin:top left}
+.device{position:relative;border-radius:28px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.55);border:10px solid #111}
+.sb{position:absolute;top:0;left:0;right:0;height:24px;display:flex;justify-content:space-between;padding:4px 18px;font:700 11px Inter;color:rgba(255,255,255,.85);z-index:5;pointer-events:none}
+.sb.darkink{color:var(--ink)}
+
+/* ---------- shared ---------- */
+.grad{background:linear-gradient(180deg,var(--primary),var(--primaryDark) 60%,var(--deep))}
+.glow{position:absolute;border-radius:50%;pointer-events:none}
+.mark{display:inline-block}
+.word{font:800 13px Inter;letter-spacing:7px;color:var(--accent)}
+.word2{font:700 9px Inter;letter-spacing:6px;color:rgba(255,255,255,.55)}
+.ghost{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:rgba(255,255,255,.8);cursor:pointer}
+.ghost.ink{color:var(--text2)}
+.dots{display:flex;gap:14px;justify-content:center}
+.dots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.2);display:block;transition:.15s}
+.dots i.on{background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.dots.ink i{background:var(--hair)} .dots.ink i.on{background:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 18%,transparent)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.key{border-radius:16px;display:grid;place-items:center;cursor:pointer;user-select:none;transition:transform .08s}
+.key:active{transform:scale(.95)}
+.seg{display:flex;padding:4px;border-radius:30px;flex:1}
+.seg span{flex:1;text-align:center;padding:10px 0;border-radius:30px;font:700 12.5px Inter;cursor:pointer}
+.bio{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;flex:none}
+.field{display:flex;align-items:center;gap:11px;border-radius:14px;padding:0 16px;height:54px;font:600 14px Inter}
+.btn{height:54px;border-radius:14px;display:grid;place-items:center;font:800 15px Inter}
+.ver{font:600 10px Inter;letter-spacing:1.2px}
+.link{font:700 12px Inter;cursor:pointer}
+.avatar{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font:800 22px Inter}
+.clock{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 12px;font:700 11.5px Inter}
+</style>
+</head>
+<body>
+<h1>Tablet login — pick a direction</h1>
+<p class="note">Phone login stays exactly as it is — these are tablet-only (<code>context.isTablet</code>). Frames are drawn at the real logical size and scaled to fit your window. Tap the keypad to try it.</p>
+
+<div class="bar" id="dirBar"></div>
+<div class="bar" id="optBar"></div>
+<div class="desc" id="desc"></div>
+<div class="stage"><div class="frame" id="frame"></div></div>
+
+<script>
+const S = {dir:'A', dev:'land', st:'pin', preset:'blue', mode:'light', pin:''};
+const DEV = {land:{w:1097,h:686,l:'Till · landscape 1097×686'}, port:{w:686,h:1097,l:'Till · portrait 686×1097'}, ipad:{w:1194,h:834,l:'iPad 11" · 1194×834'}};
+const DIRS = {
+  A:{n:'A · Split Stage', d:'<b>Brand on the left, keypad on a clean surface on the right.</b> The gradient holds the logo, a big clock and the greeting; the keypad sits on a light (or dark-mode) pane in the palette ink, with large keys (60pt on the till, 68pt on bigger tablets). Portrait stacks the brand as a top band over the keypad sheet. Most "premium POS terminal" of the three.'},
+  B:{n:'B · Frosted Card', d:'<b>One frosted-glass card floating on the gradient.</b> Inside, identity left | keypad right, split by a hairline; ambient glows and the watermark mark behind. Closest to today\'s look — just composed for a wide screen instead of a stretched phone column. Portrait becomes a single centred card.'},
+  C:{n:'C · Counter Lock', d:'<b>No panels — a tablet lock screen.</b> Greeting and clock left-aligned on the left, big round keys on the right (66pt on the till, 76pt on bigger tablets), fingerprint sits in the keypad\'s empty bottom-left slot. Fastest to hit at a counter; most minimal. Portrait centres everything with the keypad below.'},
+};
+
+const ic = {
+  gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  fp:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v3a8 8 0 0 1-1.5 4.7M8 10.5a4 4 0 0 1 8 0V13m0 3.5a14 14 0 0 1-.6 3M4.5 16A10 10 0 0 1 4 12.5a8 8 0 0 1 14.2-5M20 12.5c0 1.4-.1 2.7-.4 4M7.8 19.5A11 11 0 0 0 8 16v-2"/></svg>',
+  back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="m17 9-6 6m0-6 6 6"/></svg>',
+  user:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  lock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  eye:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  store:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1.5-5h15L21 9M4 9v11h16V9M3 9h18"/></svg>',
+  wifi:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01M1.5 9a15 15 0 0 1 21 0"/></svg>',
+};
+const mark = (h, color='#fff') => `<svg class="mark" height="${h}" viewBox="0 0 100 100"><circle cx="46" cy="46" r="30" fill="none" stroke="${color}" stroke-width="11"/><path d="M62 62 L84 84" stroke="${color}" stroke-width="12" stroke-linecap="round"/><circle cx="46" cy="46" r="9" fill="${color}"/></svg>`;
+
+const locked = () => S.st==='locked';
+const title = () => locked() ? 'Locked' : 'Welcome back';
+const sub = () => locked() ? 'Maya · enter your MPIN to carry on' : S.st==='pin' ? 'Enter your MPIN to continue' : 'Sign in with your username & password';
+const now = new Date();
+const clk = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit', hour12:false});
+const day = now.toLocaleDateString([], {weekday:'long', day:'numeric', month:'long'});
+
+function dots(ink){ return `<div class="dots ${ink?'ink':''}">${[0,1,2,3].map(i=>`<i class="${i<S.pin.length?'on':''}"></i>`).join('')}</div>`; }
+
+/* keypad: style = 'light' (on surface) | 'glass' (on gradient) | 'round' */
+function pad(style, h, bioSlot){
+  const keys=['1','2','3','4','5','6','7','8','9', bioSlot?'bio':'', '0','<'];
+  const kStyle = {
+    light:`height:${h}px;background:var(--tint);color:var(--ink);border:1px solid var(--hair)`,
+    glass:`height:${h}px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15)`,
+    round:`width:${h}px;height:${h}px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.16);justify-self:center`,
+  }[style];
+  const bare = style==='light' ? 'color:var(--text2)' : 'color:rgba(255,255,255,.75)';
+  return `<div class="pad" style="${style==='round'?'gap:16px 26px':''}">${keys.map(k=>{
+    if(k==='') return `<div></div>`;
+    if(k==='<') return `<div class="key" data-k="<" style="height:${h}px;${bare}">${ic.back}</div>`;
+    if(k==='bio') return `<div class="key" data-k="bio" style="${style==='round'?`width:${h}px;justify-self:center;`:''}height:${h}px;${bare}">${ic.fp}</div>`;
+    return `<div class="key serif" data-k="${k}" style="${kStyle};font-size:${style==='round'?30:26}px">${k}</div>`;
+  }).join('')}</div>`;
+}
+
+function toggle(ink, withBio=true){
+  const segBg = ink ? 'background:var(--tint);border:1px solid var(--hair)' : 'background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)';
+  const on = ink ? 'background:var(--primary);color:#fff' : 'background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));color:var(--primaryDark)';
+  const off = ink ? 'color:var(--text2)' : 'color:rgba(255,255,255,.72)';
+  const pinOn = S.st!=='pass';
+  return `<div style="display:flex;gap:10px;align-items:center">
+    <div class="seg" style="${segBg}"><span data-st="pin" style="${pinOn?on:off}">MPIN</span><span data-st="pass" style="${!pinOn?on:off}">Password</span></div>
+    ${withBio?`<div class="bio" style="${ink?'background:var(--primary);color:#fff':'background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));color:var(--primaryDark)'}">${ic.fp}</div>`:''}
+  </div>`;
+}
+
+function passForm(ink){
+  const f = ink ? 'background:var(--canvas);border:1px solid var(--hair);color:var(--ink)' : 'background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#fff';
+  const ph = ink ? 'color:var(--muted)' : 'color:rgba(255,255,255,.55)';
+  const icc = ink ? 'color:var(--primary)' : 'color:var(--accent)';
+  const b = ink ? 'background:var(--primary);color:#fff' : 'background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));color:var(--primaryDark)';
+  return `<div style="display:flex;flex-direction:column;gap:12px">
+    <div class="field" style="${f}"><span style="${icc}">${ic.user}</span><span style="${ph}">Username, email or code</span></div>
+    <div class="field" style="${f}"><span style="${icc}">${ic.lock}</span><span style="${ph};flex:1">Password</span><span style="${ph}">${ic.eye}</span></div>
+    <div class="btn" style="${b};margin-top:4px">Sign in</div>
+  </div>`;
+}
+
+function signOut(ink){ return locked() ? `<div class="link" style="text-align:center;margin-top:12px;color:${ink?'var(--text2)':'rgba(255,255,255,.6)'}">Sign out completely</div>` : ''; }
+function avatarOrMark(size, ink){
+  if(locked()) return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*.38}px;background:${ink?'var(--tint)':'rgba(255,255,255,.14)'};color:${ink?'var(--primary)':'#fff'};border:2px solid color-mix(in srgb,var(--accent) 60%,transparent)">M</div>`;
+  return mark(size);
+}
+function wordmark(align='center'){ return `<div style="text-align:${align}"><div class="word">QLOUD</div><div class="word2" style="margin-top:4px">POS</div></div>`; }
+function metaChips(){ return `<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <span class="chip" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.85)">${ic.store} Al Wakra · Canteen</span>
+  <span class="chip" style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.85)">${ic.wifi} Online</span></div>`; }
+
+/* ================= A · Split Stage ================= */
+function A(w,h){
+  const port = h>w;
+  const keyH = port ? 70 : (h<720 ? 60 : 68);
+  const right = `
+    <div style="display:flex;flex-direction:column;height:100%;padding:${port?'30px 0 22px':'34px 0 22px'};width:100%;max-width:380px;margin:0 auto">
+      <div style="text-align:center">
+        <div class="label" style="font:800 10.5px Inter;letter-spacing:1.6px;text-transform:uppercase;color:var(--primary)">${S.st==='pass'?'Password sign-in':'Enter MPIN'}</div>
+        ${S.st==='pass'?'':`<div style="margin-top:16px" id="shake">${dots(true)}</div>`}
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 0">
+        ${S.st==='pass'?passForm(true):pad('light',keyH)}
+      </div>
+      ${toggle(true)}
+      ${signOut(true)}
+    </div>`;
+  const brand = `
+    <div class="glow" style="width:420px;height:420px;right:-140px;top:-160px;background:radial-gradient(color-mix(in srgb,var(--accent) 45%,transparent),transparent 70%)"></div>
+    <div style="position:absolute;right:-50px;bottom:-40px;opacity:.07">${mark(port?240:360)}</div>
+    <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:${port?'40px 40px 26px':'44px 44px 26px'}">
+      <div style="display:flex;align-items:center;gap:14px">${mark(42)}${wordmark('left')}</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:${port?'flex-end':'center'};padding-top:${port?'0':'10px'}">
+        ${port?'':`<div class="clock serif" style="font-size:86px;line-height:1;color:#fff;letter-spacing:-2px">${clk}</div>
+        <div style="font:600 13px Inter;color:rgba(255,255,255,.6);margin:8px 0 30px">${day}</div>`}
+        ${locked()?`<div style="margin-bottom:14px">${avatarOrMark(52)}</div>`:''}
+        <div class="serif" style="font-size:${port?36:40}px;color:#fff">${title()}</div>
+        <div style="font:500 14px Inter;color:rgba(255,255,255,.72);margin-top:6px">${sub()}</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:${port?'20px':'0'}">
+        ${port?`<span class="clock" style="font:700 13px Inter;color:rgba(255,255,255,.7)">${clk} · ${day}</span>`:metaChips()}
+        <span class="ver" style="color:rgba(255,255,255,.4)">v3.4.0</span>
+      </div>
+    </div>
+    <div class="ghost" style="position:absolute;top:30px;right:${port?'26px':'24px'}">${ic.gear}</div>`;
+  if(port) return `<div style="height:100%;display:flex;flex-direction:column">
+      <div class="grad" style="position:relative;height:38%;overflow:hidden">${brand}</div>
+      <div style="flex:1;background:var(--card);border-radius:28px 28px 0 0;margin-top:-26px;position:relative;padding:0 40px">${right}</div></div>`;
+  return `<div class="grad" style="height:100%;display:flex">
+    <div style="position:relative;flex:1.05;overflow:hidden">${brand}</div>
+    <div style="flex:1;background:var(--card);border-radius:28px 0 0 28px;padding:0 40px;box-shadow:-20px 0 60px -30px rgba(0,0,0,.5)">${right}</div></div>`;
+}
+
+/* ================= B · Frosted Card ================= */
+function B(w,h){
+  const port = h>w;
+  const keyH = port ? 66 : (h<720 ? 54 : 62);
+  const glass = 'background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 40px 90px -40px rgba(0,0,0,.7)';
+  const identity = `
+    <div style="display:flex;flex-direction:column;align-items:${port?'center':'flex-start'};text-align:${port?'center':'left'};${port?'':'height:100%;justify-content:space-between'}">
+      <div style="display:flex;flex-direction:column;align-items:inherit">
+        ${avatarOrMark(locked()?60:62)}
+        <div style="margin-top:14px">${wordmark(port?'center':'left')}</div>
+      </div>
+      <div style="margin-top:${port?'18px':'0'}">
+        <div class="serif" style="font-size:${port?32:36}px;color:#fff">${title()}</div>
+        <div style="font:500 13.5px Inter;color:rgba(255,255,255,.7);margin-top:6px">${sub()}</div>
+      </div>
+      ${port?'':`<div>
+        <div class="clock" style="font:800 30px Inter;color:#fff;letter-spacing:-.5px">${clk}</div>
+        <div style="font:600 12px Inter;color:rgba(255,255,255,.55);margin-top:2px">${day}</div>
+      </div>`}
+    </div>`;
+  const keypadSide = `
+    <div style="display:flex;flex-direction:column;${port?'':'height:100%;'}gap:${port?16:14}px;justify-content:center">
+      ${S.st==='pass'?'':`<div style="padding:4px 0 ${port?6:4}px">${dots(false)}</div>`}
+      ${S.st==='pass'?passForm(false):pad('glass',keyH)}
+      ${toggle(false)}
+      ${signOut(false)}
+    </div>`;
+  const card = port
+    ? `<div style="${glass};border-radius:30px;width:470px;padding:36px 40px 30px;display:flex;flex-direction:column;gap:26px">${identity}${keypadSide}</div>`
+    : `<div style="${glass};border-radius:30px;width:${Math.min(900,w-120)}px;height:${Math.min(560,h-96)}px;padding:34px 38px;display:grid;grid-template-columns:1fr 1px 1.1fr;gap:36px">${identity}<div style="background:rgba(255,255,255,.14)"></div>${keypadSide}</div>`;
+  return `<div class="grad" style="position:relative;height:100%;overflow:hidden">
+    <div class="glow" style="width:520px;height:520px;left:-160px;top:-200px;background:radial-gradient(color-mix(in srgb,var(--accent) 42%,transparent),transparent 70%)"></div>
+    <div class="glow" style="width:520px;height:520px;right:-180px;bottom:-220px;background:radial-gradient(color-mix(in srgb,var(--primary) 70%,#fff 0%),transparent 70%);opacity:.55"></div>
+    <div style="position:absolute;right:-40px;bottom:-30px;opacity:.06">${mark(380)}</div>
+    <div class="ghost" style="position:absolute;top:30px;right:26px">${ic.gear}</div>
+    <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+      ${card}
+      <span class="ver" style="color:rgba(255,255,255,.38)">QLOUD POS · v3.4.0</span>
+    </div></div>`;
+}
+
+/* ================= C · Counter Lock ================= */
+function C(w,h){
+  const port = h>w;
+  const keyH = port ? 84 : (h<720 ? 66 : 76);
+  const left = `
+    <div style="display:flex;flex-direction:column;${port?'align-items:center;text-align:center':''}">
+      <div style="display:flex;align-items:center;gap:12px;${port?'justify-content:center':''}">${mark(34)}<span class="word" style="letter-spacing:6px">QLOUD <span style="color:rgba(255,255,255,.5)">POS</span></span></div>
+      <div class="clock serif" style="font-size:${port?72:96}px;line-height:1;color:#fff;letter-spacing:-3px;margin-top:${port?22:30}px">${clk}</div>
+      <div style="font:600 13.5px Inter;color:rgba(255,255,255,.6);margin-top:8px">${day}</div>
+      <div style="height:1px;width:${port?'60px':'80px'};background:color-mix(in srgb,var(--accent) 70%,transparent);margin:${port?'20px auto':'26px 0'}"></div>
+      <div style="display:flex;align-items:center;gap:12px;${port?'justify-content:center':''}">
+        ${locked()?avatarOrMark(44):''}
+        <div><div class="serif" style="font-size:${port?30:34}px;color:#fff">${title()}</div>
+        <div style="font:500 13.5px Inter;color:rgba(255,255,255,.7);margin-top:4px">${sub()}</div></div>
+      </div>
+      ${S.st==='pass'?'':`<div style="margin-top:${port?22:28}px;display:flex;${port?'justify-content:center':''}" id="shake">${dots(false)}</div>`}
+    </div>`;
+  const keyW = keyH*3 + 26*2;
+  const right = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:${port?18:14}px;width:${S.st==='pass'?380:keyW}px">
+      ${S.st==='pass'?`<div style="width:100%">${passForm(false)}</div>`:pad('round',keyH,true)}
+      <div style="width:${S.st==='pass'?380:keyW}px">${toggle(false,S.st==='pass')}</div>
+      ${signOut(false)}
+    </div>`;
+  return `<div style="position:relative;height:100%;overflow:hidden;background:radial-gradient(120% 90% at 0% 0%,var(--primary),var(--primaryDark) 55%,var(--deep))">
+    <div class="glow" style="width:600px;height:600px;right:-220px;top:-260px;background:radial-gradient(color-mix(in srgb,var(--accent) 30%,transparent),transparent 70%)"></div>
+    <div class="ghost" style="position:absolute;top:30px;right:26px">${ic.gear}</div>
+    <span class="ver" style="position:absolute;bottom:18px;${port?'left:50%;transform:translateX(-50%)':'left:56px'};color:rgba(255,255,255,.38)">v3.4.0</span>
+    ${port
+      ? `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;padding:40px">${left}${right}</div>`
+      : `<div style="height:100%;display:grid;grid-template-columns:1fr auto;align-items:center;padding:0 ${w<1150?70:96}px 0 56px;gap:40px">${left}${right}</div>`}
+  </div>`;
+}
+
+const R = {A,B,C};
+
+function render(){
+  document.documentElement.dataset.preset = S.preset;
+  document.documentElement.dataset.mode = S.mode;
+  const {w,h} = DEV[S.dev];
+  const avail = Math.min(window.innerWidth-32, 1400);
+  const scale = Math.min(1, avail/(w+20));
+  const fr = document.getElementById('frame');
+  fr.style.width = (w+20)+'px'; fr.style.transform = `scale(${scale})`;
+  fr.parentElement.style.height = ((h+20)*scale)+'px';
+  fr.innerHTML = `<div class="device" style="width:${w+20}px;height:${h+20}px">
+    <div class="sb"><span>${clk}</span><span>● ● ▮</span></div>
+    <div style="width:${w}px;height:${h}px">${R[S.dir](w,h)}</div></div>`;
+  document.getElementById('desc').innerHTML = DIRS[S.dir].d;
+  bars();
+}
+function btn(label,on,fn){ const b=document.createElement('button'); b.textContent=label; if(on)b.className='on'; b.onclick=fn; return b; }
+function sep(){ const s=document.createElement('span'); s.className='sep'; return s; }
+function bars(){
+  const d=document.getElementById('dirBar'); d.innerHTML='';
+  for(const k in DIRS) d.append(btn(DIRS[k].n, S.dir===k, ()=>{S.dir=k;S.pin='';render();}));
+  const o=document.getElementById('optBar'); o.innerHTML='';
+  for(const k in DEV) o.append(btn(DEV[k].l, S.dev===k, ()=>{S.dev=k;render();}));
+  o.append(sep());
+  [['pin','MPIN'],['pass','Password'],['locked','Locked till']].forEach(([k,l])=>o.append(btn(l,S.st===k,()=>{S.st=k;S.pin='';render();})));
+  o.append(sep());
+  [['blue','QLOUD Blue'],['emerald','Emerald & Gold']].forEach(([k,l])=>o.append(btn(l,S.preset===k,()=>{S.preset=k;render();})));
+  o.append(btn(S.mode==='light'?'Light':'Dark', false, ()=>{S.mode=S.mode==='light'?'dark':'light';render();}));
+}
+document.addEventListener('click', e=>{
+  const k = e.target.closest('[data-k]'); const st = e.target.closest('[data-st]');
+  if(st){ S.st = (locked() && st.dataset.st==='pin') ? 'locked' : st.dataset.st; S.pin=''; render(); return; }
+  if(!k) return;
+  const v=k.dataset.k;
+  if(v==='<') S.pin=S.pin.slice(0,-1);
+  else if(v!=='bio' && S.pin.length<4) S.pin+=v;
+  render();
+  if(S.pin.length===4) setTimeout(()=>{S.pin='';render();},450);
+});
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

@@ -8,7 +8,6 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:invo/features/settings/logic/print_settings_cubit/print_settings_cubit.dart';
 import 'package:invo/features/token/domain/models/token_models.dart';
 import 'package:invo/features/token/logic/token_cubit/token_cubit.dart';
-import 'package:invo/features/token/widgets/v3/token_hero_band.dart';
 import 'package:invo/features/token/widgets/v3/token_slip_pdf.dart';
 import 'package:invo/features/token/widgets/v3/token_slip_view.dart';
 import 'package:invo/shared/domain/constants/data_fetching_status.dart';
@@ -108,8 +107,8 @@ class _TokenScreenState extends State<TokenScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return BlocBuilder<TokenCubit, TokenState>(
       builder: (context, s) {
-        // A tablet gets the Status Board, the same frame as Day Session: a
-        // floating hero band, cards filling the window, the action at the foot.
+        // A tablet gets "Now Serving": the number as a queue display beside a
+        // column of actions.
         if (context.isTablet) {
           return Scaffold(
             backgroundColor: Colors.transparent,
@@ -174,177 +173,356 @@ class _TokenScreenState extends State<TokenScreen> with WidgetsBindingObserver {
         ],
       );
 
-  /// Tablet Status Board. Wide windows split the stage (the slip) and the
-  /// Today panel side by side and stretch them to the action row; a narrow
-  /// tablet stacks them and scrolls.
+  /// Tablet "Now Serving" (sample A in docs/mobile-tablet-token-preview.html):
+  /// the number is the page. A gradient stage shows the token just printed at
+  /// queue-display size with the next one under it; the column beside it is
+  /// all action — counters, a tall New Token, Reprint. A narrow (portrait)
+  /// window stacks the stage over the column.
   Widget _tablet(BuildContext context, TokenState s) {
     final branch = context.watch<BranchCubit>().selected?.name ?? '';
     return LayoutBuilder(builder: (context, box) {
-      final split = box.maxWidth >= 760;
-      final stage = AstraCard(
-        radius: 22,
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-        child: Column(
+      final split = box.maxWidth >= 760 && box.maxWidth > box.maxHeight;
+      final stage = _ServingStage(state: s, numberSize: split && box.maxHeight >= 650 ? 180 : 150);
+      final actions = _tabletActions(context, s, branch, portrait: !split);
+      return Padding(
+        padding: EdgeInsets.fromLTRB(18, 18, 18, 18 + MediaQuery.paddingOf(context).bottom),
+        child: split
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: stage),
+                  const SizedBox(width: 18),
+                  SizedBox(width: box.maxWidth < 1150 ? 300 : 330, child: actions),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: math.min(430.0, box.maxHeight * 0.45), child: stage),
+                  const SizedBox(height: 16),
+                  Expanded(child: actions),
+                ],
+              ),
+      );
+    });
+  }
+
+  /// The action column: title + settings, the counter picker, then New Token
+  /// and Reprint pinned to the foot where a thumb finds them.
+  Widget _tabletActions(BuildContext context, TokenState s, String branch, {required bool portrait}) {
+    final p = context.astra;
+    final last = s.last;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            Row(children: [
-              SectionLabel(s.last == null ? 'Next token' : 'Last printed'),
+            if (widget.onClose == null && context.canPop()) ...[
+              _SquareButton(icon: Icons.arrow_back, onTap: _close),
               const SizedBox(width: 12),
-              Expanded(child: _TodayHint(state: s, align: TextAlign.right)),
-            ]),
-            const SizedBox(height: 18),
-            if (split) Expanded(child: _SlipStage(state: s)) else _SlipStage(state: s, width: 320),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Token', style: serif(size: 26, color: p.ink)),
+                  const SizedBox(height: 2),
+                  Text(branch.isEmpty ? 'Queue tokens' : '$branch · queue',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 12, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ),
+            ),
+            _SquareButton(icon: Icons.tune, onTap: () => context.push(Routes.tokenSettings)),
           ],
         ),
-      );
-      final panel = _TodayPanel(state: s, onSelectCounter: context.read<TokenCubit>().selectCounter);
-      return CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + MediaQuery.paddingOf(context).bottom),
-            sliver: SliverFillRemaining(
-              hasScrollBody: false,
+        if (s.settings.hasCounters) ...[
+          const SizedBox(height: 18),
+          const SectionLabel('Counter'),
+          const SizedBox(height: 10),
+          // Many counters scroll here rather than pushing New Token off the foot.
+          Expanded(
+            child: SingleChildScrollView(
+              child: _CounterChips(
+                  state: s, onSelect: context.read<TokenCubit>().selectCounter, columns: portrait ? 3 : 1),
+            ),
+          ),
+        ] else
+          const Spacer(),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: s.settings.hasCounters || portrait ? 150 : 170,
+          child: _IssueButton(
+            next: s.nextDisplayNo,
+            autoPrint: s.settings.autoPrint,
+            busy: s.issuing,
+            onTap: _issue,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _OutlineAction(
+            icon: Icons.print_outlined,
+            label: _printing ? 'Printing…' : last == null ? 'Reprint' : 'Reprint ${last.displayNo}',
+            height: 52,
+            onTap: last == null || _printing ? null : () => _print(last)),
+      ],
+    );
+  }
+}
+
+/// The queue-display stage: the token just printed, huge, or before the first
+/// token of the day a faded preview of the number New Token will issue.
+class _ServingStage extends StatelessWidget {
+  const _ServingStage({required this.state, required this.numberSize});
+
+  final TokenState state;
+  final double numberSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final print = context.watch<PrintSettingsCubit>();
+    final last = state.last;
+    final shown = last?.displayNo ?? state.nextDisplayNo;
+    final counterName = last?.counterName ?? state.counter?.name ?? '';
+    final caption = [
+      if (counterName.isNotEmpty) counterName,
+      if (last != null) 'printed ${DateFormat('h:mm a').format(last.issuedAt)}',
+    ].join(' · ');
+    final autoPrint = state.settings.autoPrint;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topLeft,
+            radius: 1.6,
+            colors: [p.primary, p.primaryDark, Color.lerp(p.primaryDark, Colors.black, 0.25)!],
+            stops: const [0, 0.6, 1],
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned(
+              right: -120,
+              top: -140,
+              width: 380,
+              height: 380,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(colors: [p.accent.withValues(alpha: 0.4), Colors.transparent]),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 24, 28, 22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TokenHeroBand(
-                    icon: Icons.confirmation_number_outlined,
-                    overline: branch.isEmpty ? 'QUEUE TOKENS' : 'QUEUE TOKENS · ${branch.toUpperCase()}',
-                    title: 'Token',
-                    subtitle: '${DateFormat('EEEE, d MMM yyyy').format(DateTime.now())} · numbers restart daily',
-                    pill: s.settings.autoPrint
-                        ? const TokenHeroPill(icon: Icons.bolt, label: 'Auto-print')
-                        : const TokenHeroPill(icon: Icons.touch_app_outlined, label: 'Manual print'),
-                    meta: [
-                      (label: 'Issued today', value: '${s.ledger.issued}', gold: false),
-                      (label: 'Last token', value: s.last?.displayNo ?? '—', gold: true),
-                    ],
-                    onBack: widget.onClose == null && context.canPop() ? _close : null,
-                    compact: box.maxWidth < 820,
-                    trailing: HeaderIconButton(icon: Icons.tune, onTap: () => context.push(Routes.tokenSettings)),
-                  ),
-                  const SizedBox(height: 14),
-                  if (split)
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(flex: 145, child: stage),
-                          const SizedBox(width: 14),
-                          Expanded(flex: 100, child: panel),
-                        ],
-                      ),
-                    )
-                  else ...[
-                    stage,
-                    const SizedBox(height: 14),
-                    panel,
-                    const Spacer(),
-                  ],
-                  const SizedBox(height: 16),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: split ? 220 : 160,
-                        child: _OutlineAction(
-                            icon: Icons.print_outlined,
-                            label: _printing ? 'Printing…' : 'Reprint',
-                            height: 56,
-                            onTap: s.last == null || _printing ? null : () => _print(s.last!)),
-                      ),
-                      const SizedBox(width: 14),
                       Expanded(
-                        child: AstraButton(
-                          label: 'New Token',
-                          subtitle: 'Next ${s.nextDisplayNo}${s.settings.autoPrint ? ' · prints automatically' : ''}',
-                          icon: Icons.add,
-                          busy: s.issuing,
-                          onTap: _issue,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(last == null ? 'FIRST TOKEN OF THE DAY' : 'NOW SERVING',
+                                style: ui(size: 10.5, weight: FontWeight.w800, color: p.accent, letterSpacing: 1.8)),
+                            const SizedBox(height: 4),
+                            Text('${DateFormat('EEEE, d MMM yyyy').format(DateTime.now())} · numbers restart daily',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: ui(size: 12.5, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.65))),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      _StageStat(label: 'ISSUED', value: '${state.ledger.issued}'),
+                      const SizedBox(width: 18),
+                      _StageStat(label: 'STARTS AT', value: '${state.settings.startAt}'),
+                    ],
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 240),
+                          transitionBuilder: (child, a) => FadeTransition(
+                            opacity: a,
+                            child: ScaleTransition(scale: Tween(begin: 0.94, end: 1.0).animate(a), child: child),
+                          ),
+                          child: FittedBox(
+                            key: ValueKey('$shown-${last?.issuedAt}'),
+                            fit: BoxFit.scaleDown,
+                            child: Opacity(
+                              opacity: last == null ? 0.35 : 1,
+                              child: Text(shown,
+                                  maxLines: 1,
+                                  style: ui(
+                                      size: numberSize,
+                                      weight: FontWeight.w900,
+                                      color: Colors.white,
+                                      height: 1,
+                                      letterSpacing: -numberSize / 70)),
+                            ),
+                          ),
+                        ),
+                        if (caption.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Text(caption,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ui(size: 15, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.75))),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(autoPrint ? Icons.bolt : Icons.touch_app_outlined, size: 13, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text('${autoPrint ? 'Auto-print' : 'Manual print'} · ${print.width.label}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: ui(size: 11, weight: FontWeight.w800, color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text.rich(TextSpan(
+                        text: 'Next  ',
+                        style: ui(size: 13, weight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.75)),
+                        children: [
+                          TextSpan(
+                              text: state.nextDisplayNo,
+                              style: ui(size: 16, weight: FontWeight.w800, color: p.accent)),
+                        ],
+                      )),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
-      );
-    });
-  }
-}
-
-/// Today panel beside the slip: the counter picker, then the day's numbers
-/// and where the slip goes.
-class _TodayPanel extends StatelessWidget {
-  const _TodayPanel({required this.state, required this.onSelectCounter});
-
-  final TokenState state;
-  final ValueChanged<String> onSelectCounter;
-
-  @override
-  Widget build(BuildContext context) {
-    final print = context.watch<PrintSettingsCubit>();
-    final printer = print.printer;
-    return AstraCard(
-      radius: 22,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (state.settings.hasCounters) ...[
-            const SectionLabel('Counter'),
-            const SizedBox(height: 10),
-            _CounterChips(state: state, onSelect: onSelectCounter, wrap: true),
-            const SizedBox(height: 22),
           ],
-          const SectionLabel('Today'),
-          const SizedBox(height: 6),
-          _PanelRow(label: 'Issued', value: '${state.ledger.issued}'),
-          _PanelRow(label: 'Last token', value: state.last?.displayNo ?? '—'),
-          _PanelRow(label: 'Next token', value: state.nextDisplayNo, strong: true),
-          _PanelRow(label: 'Starts at', value: '${state.settings.startAt} · daily'),
-          const SizedBox(height: 16),
-          const SectionLabel('Printing'),
-          const SizedBox(height: 6),
-          _PanelRow(label: 'Paper', value: print.width.label),
-          _PanelRow(
-              label: 'Printer',
-              value: printer.isPaired ? printer.displayName : 'Print dialog',
-              last: true),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _PanelRow extends StatelessWidget {
-  const _PanelRow({required this.label, required this.value, this.strong = false, this.last = false});
+class _StageStat extends StatelessWidget {
+  const _StageStat({required this.label, required this.value});
 
   final String label;
   final String value;
-  final bool strong;
-  final bool last;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label,
+              style: ui(
+                  size: 9, weight: FontWeight.w800, color: Colors.white.withValues(alpha: 0.55), letterSpacing: 1.3)),
+          const SizedBox(height: 2),
+          Text(value, style: ui(size: 20, weight: FontWeight.w800, color: Colors.white)),
+        ],
+      );
+}
+
+/// The tall New Token target in the tablet action column.
+class _IssueButton extends StatelessWidget {
+  const _IssueButton({required this.next, required this.autoPrint, required this.busy, required this.onTap});
+
+  final String next;
+  final bool autoPrint;
+  final bool busy;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: last ? null : Border(bottom: BorderSide(color: p.hairline)),
-      ),
-      child: Row(
-        children: [
-          Text(label, style: ui(size: 12.5, weight: FontWeight.w600, color: p.textSecondary)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(value,
-                textAlign: TextAlign.right,
+    return GestureDetector(
+      onTap: busy ? null : onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: p.primaryGradient,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+                color: p.primary.withValues(alpha: 0.28),
+                blurRadius: 24,
+                spreadRadius: -14,
+                offset: const Offset(0, 10)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: busy
+                  ? const SizedBox(
+                      width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
+                  : const Icon(Icons.add, color: Colors.white, size: 26),
+            ),
+            const SizedBox(height: 10),
+            Text('New Token', style: ui(size: 19, weight: FontWeight.w800, color: Colors.white)),
+            const SizedBox(height: 2),
+            Text('Next $next${autoPrint ? ' · prints automatically' : ''}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: ui(size: strong ? 15 : 13, weight: FontWeight.w800, color: strong ? p.primary : p.ink)),
-          ),
-        ],
+                style: ui(size: 12, weight: FontWeight.w600, color: Colors.white.withValues(alpha: 0.75))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SquareButton extends StatelessWidget {
+  const _SquareButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: p.hairline),
+        ),
+        child: Icon(icon, size: 18, color: p.textSecondary),
       ),
     );
   }
@@ -400,10 +578,9 @@ class _SlipStage extends StatelessWidget {
 }
 
 class _TodayHint extends StatelessWidget {
-  const _TodayHint({required this.state, this.align = TextAlign.center});
+  const _TodayHint({required this.state});
 
   final TokenState state;
-  final TextAlign align;
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +588,7 @@ class _TodayHint extends StatelessWidget {
     final last = state.last;
     return Text(
       last == null ? 'Next token · tap New Token to issue' : 'Last ${last.displayNo} · ${state.ledger.issued} today',
-      textAlign: align,
+      textAlign: TextAlign.center,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: ui(size: 11.5, weight: FontWeight.w600, color: p.textMuted),
@@ -422,11 +599,14 @@ class _TodayHint extends StatelessWidget {
 /// One chip per counter showing its prefix and its next number; a tap picks
 /// the counter New Token issues for.
 class _CounterChips extends StatelessWidget {
-  const _CounterChips({required this.state, required this.onSelect, this.wrap = false});
+  const _CounterChips({required this.state, required this.onSelect, this.columns});
 
   final TokenState state;
   final ValueChanged<String> onSelect;
-  final bool wrap;
+
+  /// Lay the chips out as equal-width tiles in this many columns (tablet),
+  /// or null for the phone's single scrolling row.
+  final int? columns;
 
   @override
   Widget build(BuildContext context) {
@@ -461,7 +641,18 @@ class _CounterChips extends StatelessWidget {
           ),
         ),
     ];
-    if (wrap) return Wrap(spacing: 8, runSpacing: 8, children: chips);
+    final perRow = columns;
+    if (perRow != null) {
+      return LayoutBuilder(
+        builder: (_, c) => Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final chip in chips) SizedBox(width: (c.maxWidth - 8 * (perRow - 1)) / perRow, child: chip),
+          ],
+        ),
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(children: [

@@ -61,6 +61,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   );
   final _scrollCtl = ScrollController();
   StreamSubscription<int>? _branchSub;
+  StreamSubscription<AuthState>? _authSub;
 
   String? _status; // null = all
   int? _methodId; // null = all payment methods
@@ -68,8 +69,13 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   String _sortBy = 'date';
   String _sortDir = 'desc';
 
-  // Date range — preset drives [_startDate]/[_endDate]; defaults to today.
-  String _datePreset = 'today'; // today | 7d | 30d | month | custom
+  // Date range — preset drives [_startDate]/[_endDate]. Opens on the open
+  // session's day while it trails the calendar, else today (see
+  // AuthCubit.defaultDatePreset).
+  String _datePreset = 'today'; // session | today | yesterday | 7d | month | custom
+
+  /// The session day the date filter was last anchored on — see [_onAuthChanged].
+  DateTime? _anchoredSession;
   DateTime? _startDate;
   DateTime? _endDate;
 
@@ -83,15 +89,14 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   @override
   void initState() {
     super.initState();
-    // Default the list to today's returns.
-    final now = DateTime.now();
-    _startDate = _endDate = DateTime(now.year, now.month, now.day);
+    _openOnDefaultDay();
     _scrollCtl.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _load();
       _loadMethods();
     });
     // Reload for the new branch if it changes while this screen is alive.
+    _authSub = context.read<AuthCubit>().stream.listen(_onAuthChanged);
     _branchSub = context.read<BranchCubit>().onBranchChanged.listen((_) {
       if (!mounted) return;
       _load();
@@ -103,6 +108,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   void dispose() {
     _scrollCtl.dispose();
     _branchSub?.cancel();
+    _authSub?.cancel();
     unawaited(_list.close());
     super.dispose();
   }
@@ -154,27 +160,40 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     _load();
   }
 
+  /// The open session's day while it trails the calendar, else today.
+  void _openOnDefaultDay() {
+    final auth = context.read<AuthCubit>();
+    final range = auth.datePresetRange(auth.defaultDatePreset)!;
+    _datePreset = auth.defaultDatePreset;
+    _anchoredSession = auth.sessionDay;
+    _startDate = range.start;
+    _endDate = range.end;
+  }
+
   void _setDatePreset(String id) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final range = context.read<AuthCubit>().datePresetRange(id);
     setState(() {
       _datePreset = id;
-      switch (id) {
-        case 'today':
-          _startDate = today;
-          _endDate = today;
-        case '7d':
-          _startDate = today.subtract(const Duration(days: 6));
-          _endDate = today;
-        case '30d':
-          _startDate = today.subtract(const Duration(days: 29));
-          _endDate = today;
-        case 'month':
-          _startDate = DateTime(now.year, now.month, 1);
-          _endDate = today;
+      if (range != null) {
+        _startDate = range.start;
+        _endDate = range.end;
       }
     });
     _load();
+  }
+
+  /// The shell keeps this screen alive, so when the day session opens or
+  /// closes a filter on its default day follows to the new default, and a
+  /// preset range follows the calendar; a custom range is the user's own and
+  /// stays put.
+  void _onAuthChanged(AuthState _) {
+    if (!mounted || _datePreset == 'custom') return;
+    final auth = context.read<AuthCubit>();
+    final preset = auth.reanchorDatePreset(_datePreset, _anchoredSession);
+    _anchoredSession = auth.sessionDay;
+    final range = auth.datePresetRange(preset);
+    if (range == null || (preset == _datePreset && range.start == _startDate && range.end == _endDate)) return;
+    _setDatePreset(preset);
   }
 
   Future<void> _pickCustomDate() async {
@@ -201,9 +220,10 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   // ---- labels ----
 
   String get _dateLabel => switch (_datePreset) {
+        'session' when _startDate != null => Dates.dayMonth(_startDate!),
         'today' => 'Today',
+        'yesterday' => 'Yesterday',
         '7d' => 'Last 7 days',
-        '30d' => 'Last 30 days',
         'month' => 'This month',
         _ => (_startDate != null && _endDate != null) ? Dates.range(_startDate!, _endDate!) : 'Custom',
       };
@@ -741,10 +761,12 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   }
 
   void _openDateSheet() {
-    const presets = [
+    final session = context.read<AuthCubit>().sessionDay;
+    final presets = [
+      if (session != null) ('Session day · ${Dates.dayMonth(session)}', 'session', Icons.event_available),
       ('Today', 'today', Icons.today),
+      ('Yesterday', 'yesterday', Icons.history),
       ('Last 7 days', '7d', Icons.date_range),
-      ('Last 30 days', '30d', Icons.calendar_view_week),
       ('This month', 'month', Icons.calendar_month),
     ];
     _optionSheet('Date range', [

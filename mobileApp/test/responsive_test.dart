@@ -207,7 +207,7 @@ void main() {
   });
 
   testWidgets(
-    'Review & Pay: Credit zeroes the paid amount and Custom sheet opens',
+    'Review & Pay: Credit zeroes the paid amount and Split opens the sheet',
     (tester) async {
       final d = TestHarness();
       await d.init();
@@ -221,18 +221,18 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      // Cash is the default → fully paid, ready to submit.
-      expect(find.text('Ready to Submit'), findsOneWidget);
+      // Cash is the default → fully paid.
+      expect(find.text('Paid in cash · count the notes'), findsOneWidget);
 
       // Credit records no payment → a remaining balance.
       await tester.tap(find.text('Credit'));
       await tester.pump();
       expect(d.cart.payMode, PayMode.credit);
       expect(d.cart.paidAmount, 0);
-      expect(find.text('Partial Payment'), findsOneWidget);
+      expect(find.text('On account · due'), findsOneWidget);
 
-      // Custom opens the split-payment sheet.
-      await tester.tap(find.text('Custom'));
+      // Split opens the split-payment sheet.
+      await tester.tap(find.text('Split'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(
@@ -393,7 +393,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    await tester.tap(find.text('Custom'));
+    await tester.tap(find.text('Split'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(tester.takeException(), isNull);

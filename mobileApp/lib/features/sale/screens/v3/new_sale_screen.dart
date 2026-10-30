@@ -1062,17 +1062,6 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
 
   Future<void> _pickClient() async {
     final cart = context.read<CartCubit>();
-    // An unnamed ticket carries the walk-in name and, from the server's default
-    // customer record, the placeholder mobile. Blank both so the cashier types
-    // into empty fields — but only together: a real customer who happens to have
-    // the placeholder number must keep it rather than have it silently wiped.
-    final isWalkIn = cart.customerName == AppStrings.walkInCustomer;
-    final nameCtl = TextEditingController(text: isWalkIn ? '' : cart.customerName);
-    final mobileCtl = TextEditingController(
-        text: isWalkIn && cart.customerMobile == _walkInPlaceholderMobile
-            ? ''
-            : cart.customerMobile);
-    final p = context.astra;
     final canTapCard = cart.student == null &&
         cart.schoolEnabled &&
         context.read<AuthCubit>().hasPermission(PermissionSlug.studentCardAssign);
@@ -1101,78 +1090,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         sheetCtx = ctx;
-        return Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
-          padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + OfflineBanner.floatingClearance(ctx)),
-          // Scrollable so the form never overflows when the keyboard is up on a
-          // short phone or in landscape.
-          child: SafeArea(
-            top: false,
-            child: SingleChildScrollView(
-            child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SectionLabel('Client'),
-              const SizedBox(height: 4),
-              Text('Client Details?', style: serif(size: 22, color: p.ink)),
-              const SizedBox(height: 12),
-              // Student card: tap the card instead of typing a name.
-              if (cart.student != null)
-                AstraCard(
-                  child: Row(
-                    children: [
-                      Icon(Icons.school_outlined, color: p.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text('${cart.student!.name} · ${Money.of(cart.student!.available)} available',
-                            style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          cart.clearStudent();
-                          Navigator.pop(ctx);
-                        },
-                        child: const Text('Remove card'),
-                      ),
-                    ],
-                  ),
-                )
-              else if (canTapCard)
-                AstraButton(
-                  label: 'Tap student card',
-                  icon: Icons.nfc,
-                  onTap: () => Navigator.pop(ctx, ''),
-                ),
-              const SizedBox(height: 16),
-              ClientLookupFields(nameCtl: nameCtl, mobileCtl: mobileCtl),
-              const SizedBox(height: 18),
-              AstraButton(
-                label: 'Set client',
-                icon: Icons.check,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  cart.setClient(nameCtl.text.trim(), mobileCtl.text.trim());
-                  Navigator.pop(ctx);
-                },
-              ),
-            ],
-            ),
-          ),
-          ),
-        ),
-      );
+        return _ClientSheet(cart: cart, canTapCard: canTapCard);
       },
     );
     } finally {
       sheetCtx = null;
       // Free the reader before the tap sheet starts its own session.
       await reader?.stop();
-      // Owned by this method, not by a State — release them when the sheet closes.
-      nameCtl.dispose();
-      mobileCtl.dispose();
     }
     if (tapped != null && mounted) {
       await _tapStudentCard(uid: tapped.isEmpty ? null : tapped);
@@ -1341,6 +1265,118 @@ class _CachedCatalogNotice extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The client sheet. It owns its Name and Mobile controllers: the future that
+/// [showModalBottomSheet] returns completes as the sheet *starts* to close, and
+/// the fields keep building through the exit animation — controllers disposed
+/// by the opener at that point break the fields, and with them the keyboard.
+///
+/// Pops with a card UID when one is tapped (from the opener's NFC session), ''
+/// for the "Tap student card" button, and null when the client is set.
+class _ClientSheet extends StatefulWidget {
+  const _ClientSheet({required this.cart, required this.canTapCard});
+
+  final CartCubit cart;
+  final bool canTapCard;
+
+  @override
+  State<_ClientSheet> createState() => _ClientSheetState();
+}
+
+class _ClientSheetState extends State<_ClientSheet> {
+  late final TextEditingController _nameCtl;
+  late final TextEditingController _mobileCtl;
+
+  @override
+  void initState() {
+    super.initState();
+    final cart = widget.cart;
+    // An unnamed ticket carries the walk-in name and, from the server's default
+    // customer record, the placeholder mobile. Blank both so the cashier types
+    // into empty fields — but only together: a real customer who happens to have
+    // the placeholder number must keep it rather than have it silently wiped.
+    final isWalkIn = cart.customerName == AppStrings.walkInCustomer;
+    _nameCtl = TextEditingController(text: isWalkIn ? '' : cart.customerName);
+    _mobileCtl = TextEditingController(
+        text: isWalkIn && cart.customerMobile == _walkInPlaceholderMobile ? '' : cart.customerMobile);
+  }
+
+  @override
+  void dispose() {
+    _nameCtl.dispose();
+    _mobileCtl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final cart = widget.cart;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(color: p.sheet, borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + OfflineBanner.floatingClearance(context)),
+        // Scrollable so the form never overflows when the keyboard is up on a
+        // short phone or in landscape.
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionLabel('Client'),
+                const SizedBox(height: 4),
+                Text('Client Details?', style: serif(size: 22, color: p.ink)),
+                const SizedBox(height: 12),
+                // Student card: tap the card instead of typing a name.
+                if (cart.student != null)
+                  AstraCard(
+                    child: Row(
+                      children: [
+                        Icon(Icons.school_outlined, color: p.primary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text('${cart.student!.name} · ${Money.of(cart.student!.available)} available',
+                              style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            cart.clearStudent();
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Remove card'),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (widget.canTapCard)
+                  AstraButton(
+                    label: 'Tap student card',
+                    icon: Icons.nfc,
+                    onTap: () => Navigator.pop(context, ''),
+                  ),
+                const SizedBox(height: 16),
+                ClientLookupFields(nameCtl: _nameCtl, mobileCtl: _mobileCtl),
+                const SizedBox(height: 18),
+                AstraButton(
+                  label: 'Set client',
+                  icon: Icons.check,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    cart.setClient(_nameCtl.text.trim(), _mobileCtl.text.trim());
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:invo/shared/api/end_points.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 
@@ -57,8 +58,11 @@ class AdminService implements AdminRepository {
   }
 
   @override
-  Future<DaySessionSummary?> currentDaySession() async {
-    final data = await _http.get(EndPoints.currentDaySession);
+  Future<DaySessionSummary?> currentDaySession({DateTime? start, DateTime? end}) async {
+    final data = await _http.get(EndPoints.currentDaySession, query: {
+      if (start != null) 'start_date': Dates.iso(start),
+      if (end != null) 'end_date': Dates.iso(end),
+    });
     final session = data is Map ? data['session'] : null;
     return session is Map ? DaySessionSummary.fromJson(Map<String, dynamic>.from(session)) : null;
   }

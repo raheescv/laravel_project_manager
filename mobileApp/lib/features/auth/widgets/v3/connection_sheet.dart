@@ -13,6 +13,7 @@ class ConnectionSheet {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _ConnectionSheetBody(auth: auth),
     );
@@ -76,6 +77,9 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
           color: p.sheet,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         ),
+        // Scrolls only when the keyboard squeezes it — a landscape till keeps
+        // barely half its height once the keypad is up.
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -114,6 +118,7 @@ class _ConnectionSheetBodyState extends State<_ConnectionSheetBody> {
             const SizedBox(height: 20),
             AstraButton(label: 'Save', icon: Icons.check, onTap: _save),
           ],
+        ),
         ),
       ),
     );

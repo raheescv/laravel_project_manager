@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:invo/shared/domain/constants/app_config.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
+import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
@@ -43,6 +44,44 @@ class AuthCubit extends Cubit<AuthState> {
   ApiUser? get user => state.user;
   String? get error => state.errorMessage;
   bool get busy => state.busy;
+
+  /// The business day date presets count from — see [ApiUser.businessDay];
+  /// the calendar date while signed out.
+  DateTime get businessDay {
+    final d = user?.businessDay ?? DateTime.now();
+    return DateTime(d.year, d.month, d.day);
+  }
+
+  /// The open day session's date while it isn't the calendar date — a day
+  /// opened yesterday and still running. Date filters offer it as its own
+  /// option ('session') and open on it; null when there's no such day.
+  DateTime? get sessionDay {
+    final now = DateTime.now();
+    final day = businessDay;
+    return day == DateTime(now.year, now.month, now.day) ? null : day;
+  }
+
+  /// The preset a date filter opens on: the session's day when it trails the
+  /// calendar, else today.
+  String get defaultDatePreset => sessionDay != null ? 'session' : 'today';
+
+  /// The range a date preset covers: 'session' is the open session's day,
+  /// every other preset counts back from the calendar date.
+  ({DateTime start, DateTime end})? datePresetRange(String id) {
+    final now = DateTime.now();
+    return Dates.presetRange(id, DateTime(now.year, now.month, now.day), session: businessDay);
+  }
+
+  /// Where a date filter on [preset] goes now that the session day may have
+  /// moved from [anchored] (a day opened or closed): a filter on its default
+  /// day (today / session) follows to the new default; a session preset with
+  /// no session day left falls back to today; any other choice stays.
+  String reanchorDatePreset(String preset, DateTime? anchored) {
+    final day = sessionDay;
+    if (day != anchored && (preset == 'today' || preset == 'session')) return defaultDatePreset;
+    if (preset == 'session' && day == null) return 'today';
+    return preset;
+  }
 
   /// Fired after a successful sign-in (used to default the active branch to the
   /// freshly-authenticated user's home branch).

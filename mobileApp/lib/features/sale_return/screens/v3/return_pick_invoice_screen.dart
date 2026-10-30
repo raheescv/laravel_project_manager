@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale_return/logic/return_ops_cubit/return_ops_cubit.dart';
 
 import 'package:flutter/material.dart';
@@ -66,20 +67,10 @@ class _ReturnPickInvoiceScreenState extends State<ReturnPickInvoiceScreen> {
   }
 
   void _applyPreset(String id, {bool reload = true}) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final range = Dates.presetRange(id, context.read<AuthCubit>().businessDay);
     _datePreset = id;
-    switch (id) {
-      case '30d':
-        _startDate = today.subtract(const Duration(days: 29));
-        _endDate = today;
-      case 'month':
-        _startDate = DateTime(now.year, now.month, 1);
-        _endDate = today;
-      case 'all':
-        _startDate = null;
-        _endDate = null;
-    }
+    _startDate = range?.start;
+    _endDate = range?.end;
     if (reload) {
       setState(() {});
       unawaited(_list.load());

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:invo/features/sale/logic/sale_ops_cubit/sale_ops_cubit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +27,7 @@ import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
 import 'package:invo/features/sale/widgets/v3/cash_tender_card.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
-import 'package:invo/features/student_card/widgets/student_card_tile.dart';
+import 'package:invo/features/student_card/domain/models/student_card.dart';
 import 'package:invo/features/student_card/widgets/tap_card_sheet.dart';
 
 class ReviewPayScreen extends StatefulWidget {
@@ -48,41 +49,23 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
   /// Cash handed over the counter, as keyed on the tender pad. Display only —
   /// see [CashTenderPanel]: cash settles the ticket in full whatever is entered
   /// here, so this never reaches the payload. Held on the screen (not inside the
-  /// panel) because the checkout button names the change on its label.
+  /// panel) because the header and the checkout button both name the change.
   double? _tendered;
 
-  /// Whether the itemised receipt is unfolded under the amount-due hero. The
-  /// ticket has already been reviewed on the cart screen, so on a phone it
-  /// starts folded and the payment controls get the height instead.
-  bool _showItems = false;
-
-  /// The sale note. Owned by the screen (not a sheet) so it is disposed with
-  /// it; seeded from the cart so an edited sale or draft shows its note.
+  /// The sale note. Owned by the screen (not the note sheet) so it is disposed
+  /// with it; seeded from the cart so an edited sale or draft shows its note.
   late final TextEditingController _noteCtl;
   final FocusNode _noteFocus = FocusNode();
-
-  /// Folded down to a one-line prompt until the cashier asks for it — most
-  /// tickets carry no note, and the pay controls keep the height.
-  bool _noteOpen = false;
 
   @override
   void initState() {
     super.initState();
-    final notes = context.read<CartCubit>().notes;
-    _noteCtl = TextEditingController(text: notes);
-    _noteOpen = notes.isNotEmpty;
-    // Repaint the field's border on focus changes, including the Done bar's.
-    _noteFocus.addListener(_onNoteFocus);
+    _noteCtl = TextEditingController(text: context.read<CartCubit>().notes);
     _loadMethods();
-  }
-
-  void _onNoteFocus() {
-    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _noteFocus.removeListener(_onNoteFocus);
     _noteCtl.dispose();
     _noteFocus.dispose();
     super.dispose();
@@ -362,6 +345,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     AstraSnack.error(context, m);
   }
 
+
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartCubit>();
@@ -369,27 +353,26 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
     if (context.isTablet) return _tabletScaffold(cart, settled);
     return Scaffold(
+      // Nothing on this screen takes typing — the note and the split are
+      // sheets that lift themselves over the keyboard. Resizing for it only
+      // crushed the terminal underneath them.
+      resizeToAvoidBottomInset: false,
       body: AstraBackground(
         child: Column(
           children: [
             EmeraldHeader(
               leading: HeaderIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
-              title: _headline(cart),
+              titleWidget: Text(_headline(cart),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 20, color: Colors.white)),
+              trailing: _whoChip(cart),
+              bottom: MaxWidthBox(maxWidth: 560, child: _terminal(cart)),
             ),
             Expanded(
               child: MaxWidthBox(
                 maxWidth: 560,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 13, 16, 24),
-                  children: [
-                    _dueHero(cart),
-                    if (_showItems) ...[
-                      const SizedBox(height: 12),
-                      _receiptCard(cart),
-                    ],
-                    const SizedBox(height: 14),
-                    ..._moneySection(cart),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                  child: _fitted(_payPanel(cart, phone: true)),
                 ),
               ),
             ),
@@ -400,7 +383,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         child: MaxWidthBox(
           maxWidth: 560,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: _checkoutBar(cart, settled),
           ),
         ),
@@ -408,216 +391,645 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  // ---- Amount due + the money controls -------------------------------------
+  /// The pay panel is laid out in whatever height is left under the header —
+  /// no scrolling. Only a screen too short to hold it at all (a small phone on
+  /// a large text size) gets a scroll view, rather than an overflow.
+  Widget _fitted(Widget child) => LayoutBuilder(
+        builder: (context, c) => c.maxHeight >= 240
+            ? child
+            : SingleChildScrollView(child: SizedBox(height: 240, child: child)),
+      );
 
-  /// The number the cashier reads out, stated once and unmissably.
+  // ---- The terminal: amount due, how it's paid, and where that leaves it ----
+
+  /// The blue head of the screen. Everything the cashier decides about money
+  /// sits on it — the amount, the method, and one status line that says what
+  /// happens on Charge — so the panel underneath is only the work of the mode.
   ///
-  /// Tapping it unfolds the itemised receipt underneath; [compact] drops that
-  /// affordance for the tablet rail, where the ticket is already the left pane.
-  Widget _dueHero(CartCubit cart, {bool compact = false}) {
-    final p = context.astra;
-    final n = cart.lines.length;
-    final extras = [
-      if (cart.totalDiscount > 0) '${Money.of(cart.totalDiscount)} off',
-      if (cart.taxTotal > 0) 'incl. ${Money.of(cart.taxTotal)} tax',
-    ];
-
-    return GestureDetector(
-      onTap: compact ? null : () => setState(() => _showItems = !_showItems),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
-        decoration: BoxDecoration(
-          gradient: p.heroGradient,
-          borderRadius: BorderRadius.circular(context.astraTheme.rCard),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  /// On a [tablet] the amount due is the foot of the receipt on the left, so
+  /// the rail drops it and gives the height to the pay panel; a "PAY WITH"
+  /// caption heads it instead. On a phone the header bar above already names
+  /// the screen and the customer.
+  Widget _terminal(CartCubit cart, {bool tablet = false}) {
+    final symbol = Money.symbol.trim();
+    return Column(
+      children: [
+        if (tablet) ...[
+          Row(
+            children: [
+              Text('PAY WITH', style: ui(size: 10, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.9)),
+              const Spacer(),
+              _whoChip(cart),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ] else ...[
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text('AMOUNT DUE',
-                    style: ui(size: 10, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.9)),
-                const Spacer(),
-                if (!compact)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('$n item${n == 1 ? '' : 's'}',
-                            style: ui(size: 10, weight: FontWeight.w800, color: Colors.white)),
-                        const SizedBox(width: 3),
-                        Icon(_showItems ? Icons.expand_less : Icons.expand_more, size: 13, color: Colors.white),
-                      ],
-                    ),
-                  ),
+                if (symbol.isNotEmpty) ...[
+                  Text(symbol, style: ui(size: 15, weight: FontWeight.w800, color: Colors.white70)),
+                  const SizedBox(width: 7),
+                ],
+                Text(Money.plain(cart.total), style: serif(size: 40, color: Colors.white)),
               ],
             ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(Money.of(cart.total), style: serif(size: 34, color: Colors.white)),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              [cart.customerName, ...extras].join(' · '),
+          ),
+          Text(_ticketFacts(cart),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ui(size: 10.5, weight: FontWeight.w600, color: Colors.white70),
-            ),
+              style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+          const SizedBox(height: 11),
+        ],
+        _methodGrid(cart, tablet: tablet),
+        const SizedBox(height: 9),
+        _heroStatus(cart),
+      ],
+    );
+  }
+
+  /// "4 items · 20.00 off · incl. 3.00 tax" — the line under the amount due.
+  String _ticketFacts(CartCubit cart) {
+    final n = cart.lines.length;
+    return [
+      '$n item${n == 1 ? '' : 's'}',
+      if (cart.totalDiscount > 0) '${Money.plain(cart.totalDiscount)} off',
+      if (cart.taxTotal > 0) 'incl. ${Money.plain(cart.taxTotal)} tax',
+    ].join(' · ');
+  }
+
+  /// Who the ticket is for, as a glass chip on the blue — a tapped student card
+  /// shows its contactless mark.
+  Widget _whoChip(CartCubit cart) {
+    final tapped = cart.student != null;
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(999)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tapped ? Icons.contactless_outlined : Icons.person_outline_rounded,
+              size: 13, color: tapped ? _mint : Colors.white),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(cart.customerName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: 10.5, weight: FontWeight.w800, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The success green lifted to read on the blue head.
+  static final Color _mint = Color.lerp(AstraPalette.success, Colors.white, 0.6)!;
+
+  // ---- Payment methods ------------------------------------------------------
+
+  /// The icon for a configured payment button, from its system slug or name.
+  IconData _buttonIcon(PaymentMethod button) {
+    // The icon picked on the web — same keys as `posPaymentButtonIcons()`.
+    final picked = switch (button.icon) {
+      'money' => Icons.payments_outlined,
+      'credit-card' => Icons.credit_card,
+      'university' => Icons.account_balance_outlined,
+      'exchange' => Icons.swap_horiz,
+      'bolt' => Icons.bolt,
+      'mobile' => Icons.smartphone,
+      'qrcode' => Icons.qr_code_2,
+      'google-wallet' => Icons.account_balance_wallet_outlined,
+      'paper-plane' => Icons.send_outlined,
+      'gift' => Icons.card_giftcard,
+      _ => null,
+    };
+    if (picked != null) return picked;
+    final name = '${button.slug ?? ''} ${button.name}'.toLowerCase();
+    if (name.contains('cash')) return Icons.payments_outlined;
+    if (name.contains('bank') || name.contains('transfer')) return Icons.account_balance_outlined;
+    return Icons.credit_card;
+  }
+
+  /// Whether [m] is the Student Wallet account — by id once a tapped card has
+  /// named it, otherwise by the account's locked name.
+  bool _isWallet(PaymentMethod m, CartCubit cart) =>
+      m.id == cart.student?.cardMethodId ||
+      m.name.trim().toLowerCase() == PayMode.studentCard.label.toLowerCase();
+
+  /// The wallet is offered once a student card has been tapped (on New Sale or
+  /// here) — there is nothing to spend before that. A ticket already paying by
+  /// wallet keeps its tile, so the selection can never vanish from under the
+  /// cashier.
+  bool _offersWallet(CartCubit cart) => cart.student != null || cart.payMode == PayMode.studentCard;
+
+  /// The wallet spends a tapped card. With none on the ticket yet, picking it
+  /// asks for the tap — the student then becomes the customer, as on New Sale.
+  Future<void> _selectWallet(CartCubit cart) async {
+    if (cart.student == null) {
+      final card = await showTapCardSheet(context);
+      if (card == null || !mounted) return;
+      cart.setStudent(card);
+    } else {
+      cart.setPayMode(PayMode.studentCard);
+    }
+    setState(() => _tendered = null);
+  }
+
+  /// The two configured POS Payment Buttons shown beside Cash and Card. Cash
+  /// and Card are permanent tiles of their own, and the wallet has its own
+  /// tile, so those buttons are skipped. A ticket already paid by a method
+  /// past the first two keeps it on screen, in the second slot.
+  List<PaymentMethod> _configuredButtons(CartCubit cart) {
+    final shown = CartCubit.paymentButtons()
+        .where((b) => CartCubit.payFor(b).mode == PayMode.method && !_isWallet(b, cart))
+        .take(2)
+        .toList();
+    final current = cart.payMethod;
+    if (cart.payMode == PayMode.method && current != null && !shown.any((b) => b.id == current.id)) {
+      return [...shown.take(1), current];
+    }
+    return shown;
+  }
+
+  void _pickMode(CartCubit cart, PayMode mode) {
+    cart.setPayMode(mode);
+    // The tender pad unmounts with the mode, so what it reported would
+    // otherwise linger on the checkout button of a card sale.
+    if (mode != PayMode.cash) setState(() => _tendered = null);
+  }
+
+  /// Two rows on four columns. The first is how most tickets are paid — Cash,
+  /// Card and the two methods configured on the web; the second the ones that
+  /// change the shape of the payment — the student's wallet (once a card is
+  /// tapped), Credit, and Split.
+  Widget _methodGrid(CartCubit cart, {required bool tablet}) {
+    final configured = _configuredButtons(cart);
+    final tall = tablet ? 52.0 : 46.0;
+    final short = tablet ? 38.0 : 32.0;
+    final splits = cart.payMode == PayMode.custom ? cart.customPayments.length : 0;
+    const gap = 5.0;
+
+    final everyday = <Widget>[
+      _MethodTile(
+        icon: Icons.payments_outlined,
+        label: 'Cash',
+        height: tall,
+        active: cart.payMode == PayMode.cash,
+        onTap: () => _pickMode(cart, PayMode.cash),
+      ),
+      _MethodTile(
+        icon: Icons.credit_card,
+        label: 'Card',
+        height: tall,
+        active: cart.payMode == PayMode.card,
+        onTap: () => _pickMode(cart, PayMode.card),
+      ),
+      for (final button in configured)
+        _MethodTile(
+          icon: _buttonIcon(button),
+          label: button.name,
+          height: tall,
+          configured: true,
+          active: cart.payMode == PayMode.method && cart.payMethod?.id == button.id,
+          onTap: () {
+            cart.setPayButton(button);
+            setState(() => _tendered = null);
+          },
+        ),
+    ];
+    final wallet = _MethodTile(
+      icon: Icons.school_outlined,
+      label: 'Wallet',
+      height: short,
+      minor: true,
+      wallet: true,
+      active: cart.payMode == PayMode.studentCard,
+      onTap: () => _selectWallet(cart),
+    );
+    final credit = _MethodTile(
+      icon: Icons.description_outlined,
+      label: PayMode.credit.label,
+      height: short,
+      minor: true,
+      active: cart.payMode == PayMode.credit,
+      onTap: () => _pickMode(cart, PayMode.credit),
+    );
+    final split = _MethodTile(
+      icon: Icons.call_split_rounded,
+      label: splits > 0 ? '$splits ways' : 'Split',
+      height: short,
+      minor: true,
+      active: cart.payMode == PayMode.custom,
+      onTap: _openCustom,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final column = (c.maxWidth - gap * 3) / 4;
+          final double wide = column * 2 + gap;
+          final lower = _offersWallet(cart)
+              ? [(wallet, wide), (credit, column), (split, column)]
+              : [(credit, wide), (split, wide)];
+          return Column(
+            children: [
+              Row(
+                children: [
+                  for (final (i, tile) in everyday.indexed) ...[
+                    if (i > 0) const SizedBox(width: gap),
+                    Expanded(child: tile),
+                  ],
+                ],
+              ),
+              const SizedBox(height: gap),
+              Row(
+                children: [
+                  for (final (i, (tile, width)) in lower.indexed) ...[
+                    if (i > 0) const SizedBox(width: gap),
+                    SizedBox(width: width, child: tile),
+                  ],
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Where the ticket stands, in one line on the blue: what was received and
+  /// what goes back for cash, what stays owed for credit or a short split.
+  Widget _heroStatus(CartCubit cart) {
+    final (tone, icon, text, value) = _status(cart);
+    final p = context.astra;
+    final iconColor = switch (tone) {
+      _Tone.ok => _mint,
+      _Tone.warn => Color.lerp(p.warnText, Colors.white, 0.45)!,
+      _Tone.bad => Color.lerp(AstraPalette.danger, Colors.white, 0.55)!,
+      _Tone.info => Colors.white,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ui(size: 12, weight: FontWeight.w700, color: Colors.white)),
+          ),
+          if (value != null) ...[
+            const SizedBox(width: 8),
+            Text(value, style: ui(size: 15, weight: FontWeight.w800, color: Colors.white)),
           ],
+        ],
+      ),
+    );
+  }
+
+  (_Tone, IconData, String, String?) _status(CartCubit cart) {
+    final settledLine = 'Bal ${Money.plain(0)}';
+    switch (cart.payMode) {
+      case PayMode.cash:
+        final tendered = _tendered;
+        if (tendered == null) return (_Tone.ok, Icons.payments_outlined, 'Paid in cash · count the notes', settledLine);
+        final change = round2(tendered - cart.total);
+        if (change > 0) {
+          return (_Tone.ok, Icons.south_west_rounded, 'Received ${Money.plain(tendered)} · give back', Money.plain(change));
+        }
+        if (change == 0) return (_Tone.ok, Icons.check_circle_rounded, 'Received ${Money.plain(tendered)} · no change due', null);
+        return (_Tone.bad, Icons.warning_rounded, 'Received ${Money.plain(tendered)} · short by', Money.plain(-change));
+      case PayMode.card:
+        return (_Tone.ok, Icons.check_circle_rounded, 'Fully paid by card', settledLine);
+      case PayMode.method:
+        return (_Tone.ok, Icons.check_circle_rounded, 'Fully paid by ${cart.payMethod?.name ?? 'method'}', settledLine);
+      case PayMode.credit:
+        return (_Tone.warn, Icons.schedule_rounded, 'On account · due', Money.plain(cart.balance));
+      case PayMode.studentCard:
+        final spend = _walletSpend(cart);
+        if (spend.short > 0.004) return (_Tone.bad, Icons.warning_rounded, 'Student card short by', Money.plain(spend.short));
+        if (cart.student == null) return (_Tone.ok, Icons.check_circle_rounded, 'Paid by student card', null);
+        return (_Tone.ok, Icons.check_circle_rounded, 'Paid by student card · left', Money.plain(spend.after));
+      case PayMode.custom:
+        final balance = cart.balance;
+        if (cart.customPayments.isEmpty) return (_Tone.info, Icons.call_split_rounded, 'Split · add the methods', null);
+        if (balance.abs() < 0.001) {
+          final names = cart.customPayments.map((x) => x.methodName).join(' + ');
+          return (_Tone.ok, Icons.check_circle_rounded, 'Fully paid · $names', settledLine);
+        }
+        if (balance > 0) return (_Tone.warn, Icons.schedule_rounded, 'Part paid · still due', Money.plain(balance));
+        return (_Tone.warn, Icons.south_rounded, 'Paid over the total by', Money.plain(-balance));
+    }
+  }
+
+  /// What the tapped card pays on this ticket, what it holds after, and how far
+  /// what it pays is beyond what it may spend.
+  ({double onCard, double after, double short}) _walletSpend(CartCubit cart) {
+    final student = cart.student;
+    if (student == null) return (onCard: 0, after: 0, short: 0);
+    final onCard = switch (cart.payMode) {
+      PayMode.studentCard => cart.total,
+      PayMode.custom => round2(cart.customPayments
+          .where((x) => x.methodId == student.cardMethodId)
+          .fold(0.0, (a, x) => a + x.amount)),
+      _ => 0.0,
+    };
+    return (onCard: onCard, after: round2(student.balance - onCard), short: round2(onCard - student.available));
+  }
+
+  // ---- The panel under the terminal: the work of the chosen mode -------------
+
+  /// Cash gets the note pad; every other mode settles at a value the ticket or
+  /// the split sheet decided, so it gets a prompt for what the cashier does.
+  ///
+  /// On a phone the panel ends in a tool row for the ticket and the note — on
+  /// a tablet the ticket is the left pane and the note sits in its head.
+  Widget _payPanel(CartCubit cart, {required bool phone}) {
+    final tools = [
+      if (phone) ...[
+        PayToolButton(
+          icon: Icons.receipt_long_outlined,
+          label: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'}',
+          onTap: () => _openItems(cart),
+        ),
+        _noteTool(cart),
+      ],
+    ];
+    final total = Money.of(cart.total);
+
+    final Widget body = switch (cart.payMode) {
+      PayMode.cash => CashTenderPanel(
+          total: cart.total,
+          onChanged: (v) => setState(() => _tendered = v),
+          maxPadHeight: phone ? 230 : 250,
+          tools: [if (phone) _noteTool(cart)],
+        ),
+      PayMode.card => _PayPrompt(
+          tone: _Tone.info,
+          icon: Icons.contactless_outlined,
+          title: 'Tap or insert on the card machine',
+          subtitle: 'Take $total on the terminal, then confirm below once it says Approved.',
+        ),
+      PayMode.method => _PayPrompt(
+          tone: _Tone.ok,
+          icon: cart.payMethod == null ? Icons.credit_card : _buttonIcon(cart.payMethod!),
+          title: 'Paid by ${cart.payMethod?.name ?? 'this method'}',
+          subtitle: '$total is posted to its configured account.',
+        ),
+      PayMode.credit => const _PayPrompt(
+          tone: _Tone.warn,
+          icon: Icons.description_outlined,
+          title: 'Put the full amount on account',
+          subtitle: 'Nothing is taken now. For a part payment, use Split.',
+        ),
+      PayMode.custom when cart.customPayments.isEmpty => _PayPrompt(
+          tone: _Tone.info,
+          icon: Icons.call_split_rounded,
+          title: 'Split between methods',
+          subtitle: 'Tap here to set how much each method pays.',
+          onTap: _openCustom,
+        ),
+      PayMode.custom => _splitPanel(cart),
+      PayMode.studentCard => _walletPanel(cart),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (cart.tipEnabled) ...[
+          _tipSelector(cart),
+          const SizedBox(height: 10),
+        ],
+        Expanded(child: body),
+        // Cash builds its own tool row, with Reset and Exact in it.
+        if (cart.payMode != PayMode.cash && tools.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final (i, tool) in tools.indexed) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(child: tool),
+              ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _noteTool(CartCubit cart) => PayToolButton(
+        icon: cart.notes.isEmpty ? Icons.edit_note_rounded : Icons.sticky_note_2_outlined,
+        label: cart.notes.isEmpty ? 'Note' : 'Note added',
+        lit: cart.notes.isNotEmpty,
+        onTap: _openNote,
+      );
+
+  /// A split, line by line, with the way back into the split sheet.
+  Widget _splitPanel(CartCubit cart) {
+    final p = context.astra;
+    final walletId = cart.student?.cardMethodId;
+    final n = cart.customPayments.length;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: context.astraTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text('SPLIT · $n METHOD${n == 1 ? '' : 'S'}',
+                  style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+              const Spacer(),
+              GestureDetector(
+                onTap: _openCustom,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_rounded, size: 12, color: p.primary),
+                      const SizedBox(width: 5),
+                      Text('Edit split', style: ui(size: 10.5, weight: FontWeight.w800, color: p.primary)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: n,
+              separatorBuilder: (_, __) => const SizedBox(height: 7),
+              itemBuilder: (_, i) {
+                final row = cart.customPayments[i];
+                final icon = row.methodId == walletId
+                    ? Icons.school_outlined
+                    : row.methodName.toLowerCase().contains('cash')
+                        ? Icons.payments_outlined
+                        : Icons.credit_card;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: p.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 17, color: p.primary),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(row.methodName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                      ),
+                      Text(Money.plain(row.amount), style: ui(size: 15, weight: FontWeight.w800, color: p.ink)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The tapped card, and — when it can't cover the ticket — the card + cash
+  /// split that can.
+  Widget _walletPanel(CartCubit cart) {
+    final p = context.astra;
+    final student = cart.student;
+    if (student == null) {
+      return const _PayPrompt(
+        tone: _Tone.ok,
+        icon: Icons.school_outlined,
+        title: 'Paid by student card',
+        subtitle: 'This sale was paid from the student wallet.',
+      );
+    }
+    final spend = _walletSpend(cart);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _StudentWalletCard(card: student, after: spend.onCard > 0 ? spend.after : null),
+        if (spend.short > 0.004) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+            decoration: BoxDecoration(color: p.warnTint, borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              children: [
+                Icon(Icons.warning_rounded, size: 16, color: p.warnText),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Card is ${Money.of(spend.short)} short',
+                      style: ui(size: 12, weight: FontWeight.w800, color: p.warnText)),
+                ),
+                GestureDetector(
+                  onTap: () => _splitCardAndCash(cart),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: p.card,
+                      borderRadius: BorderRadius.circular(9),
+                      boxShadow: context.astraTheme.softShadow,
+                    ),
+                    child: Text('Card + cash', style: ui(size: 11, weight: FontWeight.w800, color: p.primary)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// A compact tip row — four chips on one line.
+  Widget _tipSelector(CartCubit cart) {
+    final p = context.astra;
+    final tips = [0.0, 10.0, 15.0, 20.0];
+    return Row(
+      children: [
+        Text('TIP', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+        const SizedBox(width: 10),
+        for (final tip in tips) ...[
+          Expanded(
+            child: GestureDetector(
+              onTap: () => cart.setTip(tip),
+              child: Container(
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: cart.tipPercent == tip ? p.primaryGradient : null,
+                  color: cart.tipPercent == tip ? null : p.card,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: context.astraTheme.softShadow,
+                ),
+                child: Text(tip == 0 ? 'None' : '${tip.toStringAsFixed(0)}%',
+                    style: ui(size: 11.5, weight: FontWeight.w800, color: cart.tipPercent == tip ? Colors.white : p.textSecondary)),
+              ),
+            ),
+          ),
+          if (tip != tips.last) const SizedBox(width: 6),
+        ],
+      ],
+    );
+  }
+
+  // ---- Ticket and note sheets ------------------------------------------------
+
+  /// The itemised receipt, on a phone — the ticket was reviewed on the cart
+  /// screen, so here it is one tap away rather than taking the pay controls'
+  /// height.
+  Future<void> _openItems(CartCubit cart) {
+    final height = MediaQuery.of(context).size.height;
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (_) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: SizedBox(
+            height: (300 + cart.lines.length * 44.0).clamp(0, height * 0.75).toDouble(),
+            child: _paperTicket(cart),
+          ),
         ),
       ),
     );
   }
 
-  /// The money half of the screen, shared by both layouts.
-  ///
-  /// Cash is the one mode whose handed-over amount can differ from the ticket —
-  /// the drawer takes a note and gives the difference back — so it gets the
-  /// tender pad, and the totals/status pair would only restate what the hero and
-  /// the change band already say. Every other mode settles at a value the ticket
-  /// or the split sheet decided, and that is where a partial or overpaid split
-  /// has to be explained, so those keep the pair.
-  List<Widget> _moneySection(CartCubit cart) {
-    return [
-      if (cart.student != null) ...[
-        _StudentCardPanel(cart: cart, onSplit: () => _splitCardAndCash(cart)),
-        const SizedBox(height: 14),
-      ],
-      if (cart.tipEnabled) ...[
-        _tipSelector(cart),
-        const SizedBox(height: 14),
-      ],
-      _paymentSection(cart),
-      const SizedBox(height: 14),
-      if (cart.payMode == PayMode.cash)
-        CashTenderPanel(
-          total: cart.total,
-          onChanged: (v) => setState(() => _tendered = v),
-        )
-      else ...[
-        _summaryCard(cart),
-        const SizedBox(height: 12),
-        _statusCard(cart),
-      ],
-      const SizedBox(height: 14),
-      _noteSection(cart),
-    ];
-  }
-
-  // ---- Sale note -----------------------------------------------------------
-
-  void _openNote() {
-    setState(() => _noteOpen = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _noteFocus.requestFocus();
-    });
-  }
-
-  void _removeNote(CartCubit cart) {
-    _noteFocus.unfocus();
-    _noteCtl.clear();
-    cart.setNotes('');
-    setState(() => _noteOpen = false);
-  }
-
   /// An optional free-text note saved with the sale ("deliver after 6pm",
-  /// "gift wrap"). A quiet prompt until tapped, then a small field in place.
-  Widget _noteSection(CartCubit cart) {
-    final p = context.astra;
-    final t = context.astraTheme;
-
-    if (!_noteOpen) {
-      return GestureDetector(
-        onTap: _openNote,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          decoration: BoxDecoration(
-            color: p.card,
-            borderRadius: BorderRadius.circular(11),
-            boxShadow: t.softShadow,
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.edit_note_rounded, size: 19, color: p.primaryDark),
-              const SizedBox(width: 9),
-              Text('Add a note', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-              const Spacer(),
-              Text('Optional', style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-              const SizedBox(width: 4),
-              Icon(Icons.add_rounded, size: 16, color: p.textMuted),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final focused = _noteFocus.hasFocus;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text('SALE NOTE', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => _removeNote(cart),
-              child: Text('Remove', style: ui(size: 10.5, weight: FontWeight.w700, color: p.textMuted)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 7),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.fromLTRB(13, 11, 13, 9),
-          decoration: BoxDecoration(
-            color: p.card,
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: focused ? p.primary : p.hairline, width: focused ? 1.5 : 1),
-            boxShadow: t.softShadow,
-          ),
-          child: KeyboardDoneField(
-            focusNode: _noteFocus,
-            child: TextField(
-              controller: _noteCtl,
-              focusNode: _noteFocus,
-              minLines: 2,
-              maxLines: 4,
-              maxLength: 1000,
-              textCapitalization: TextCapitalization.sentences,
-              style: ui(size: 13, weight: FontWeight.w600, color: p.ink),
-              cursorColor: p.primary,
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                hintText: 'e.g. Deliver after 6 pm, gift wrap…',
-                hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
-                counterStyle: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted),
-              ),
-              onTapOutside: (_) => _noteFocus.unfocus(),
-              onChanged: cart.setNotes,
-            ),
-          ),
-        ),
-      ],
+  /// "gift wrap"). The screen owns the field's controller and focus node, so
+  /// the sheet can close and reopen on the same text.
+  Future<void> _openNote() {
+    final cart = context.read<CartCubit>();
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (_) => _NoteSheet(controller: _noteCtl, focusNode: _noteFocus, onChanged: cart.setNotes),
     );
-  }
-
-  /// The change line under the primary button — only when there is money to
-  /// actually hand back.
-  String? _changeHint(CartCubit cart) {
-    final tendered = _tendered;
-    if (cart.payMode != PayMode.cash || tendered == null) return null;
-    final change = double.parse((tendered - cart.total).toStringAsFixed(2));
-    return change > 0 ? 'Change ${Money.of(change)}' : null;
   }
 
   /// What this screen is doing, so a parked draft doesn't look like an ordinary
@@ -627,6 +1039,17 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       : cart.isEditing
           ? 'Edit sale'
           : 'Review & Pay';
+
+  String _staff(CartCubit cart) => cart.stylistName.isEmpty ? 'Me' : cart.stylistName;
+
+  /// The change line under the primary button — only when there is money to
+  /// actually hand back.
+  String? _changeHint(CartCubit cart) {
+    final tendered = _tendered;
+    if (cart.payMode != PayMode.cash || tendered == null) return null;
+    final change = double.parse((tendered - cart.total).toStringAsFixed(2));
+    return change > 0 ? 'Change ${Money.of(change)}' : null;
+  }
 
   // ---- Checkout call to action ---------------------------------------------
 
@@ -694,77 +1117,6 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  // ---- Tablet checkout: ticket left, payment rail right ---------------------
-
-  /// A 560pt column centred in a 1200pt window leaves the ticket unreadably far
-  /// from the payment controls. On a tablet the ticket takes the width and the
-  /// money side — tip, method, totals, CTA — docks into a right-hand pane, which
-  /// is how a counter POS is actually used.
-  ///
-  /// The page head belongs to the ticket column only, so the pay rail runs the
-  /// full height of the window: above the rail the head was a strip of empty
-  /// band, and on a short landscape till that strip is the room the note and
-  /// the tender pad were missing.
-  Widget _tabletScaffold(CartCubit cart, bool settled) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: AstraBackground(
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (ctx, c) => Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      TabletPageHead(
-                        leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
-                        title: _headline(cart),
-                        subtitle: '${cart.lines.length} item${cart.lines.length == 1 ? '' : 's'} on this ticket',
-                      ),
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
-                          children: [_receiptCard(cart)],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _payRail(cart, settled, (c.maxWidth * 0.38).clamp(340.0, 460.0)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _payRail(CartCubit cart, bool settled, double width) {
-    return TabletPane(
-      width: width,
-      edge: PaneEdge.left,
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-              children: [
-                _dueHero(cart, compact: true),
-                const SizedBox(height: 14),
-                ..._moneySection(cart),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
-            child: _checkoutBar(cart, settled),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// The quiet outlined button that sits beside the primary call to action.
   Widget _ghostButton({required String label, required VoidCallback? onTap, required bool busy}) {
     final p = context.astra;
@@ -789,449 +1141,241 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     );
   }
 
-  Widget _receiptCard(CartCubit cart) {
+  // ---- Tablet checkout: receipt left, terminal rail right --------------------
+
+  /// On a tablet the ticket takes the width as a till-roll receipt and the
+  /// terminal docks into a right-hand rail, which is how a counter POS is
+  /// actually used.
+  ///
+  /// The page head belongs to the ticket column only, so the rail runs the full
+  /// height of the window — on a short landscape till that height is what lets
+  /// the note pad sit above the Charge bar.
+  Widget _tabletScaffold(CartCubit cart, bool settled) {
     final p = context.astra;
-    return AstraCard(
-      child: Column(
-        children: [
-          Column(
-            children: [
-              const QloudLogomark(height: 28),
-              const SizedBox(height: 6),
-              Text('QLOUD POS', style: ui(size: 11, weight: FontWeight.w800, color: p.ink, letterSpacing: 2.6)),
-              const SizedBox(height: 3),
-              Text('${cart.customerName} · ${cart.stylistName.isEmpty ? 'Me' : cart.stylistName}',
-                  style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-            ],
-          ),
-          _dashed(p),
-          for (final l in cart.lines)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 9),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
-                    child: Text('${l.qty.toStringAsFixed(l.qty % 1 == 0 ? 0 : 1)}×',
-                        style: ui(size: 10.5, weight: FontWeight.w800, color: p.primaryDark)),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(l.name, style: ui(size: 12, weight: FontWeight.w600, color: p.ink))),
-                  Text(Money.of(l.total), style: ui(size: 12, weight: FontWeight.w800, color: p.ink)),
-                ],
-              ),
-            ),
-          _dashed(p),
-          _row('Subtotal', Money.of(cart.subtotal), p.textSecondary),
-          if (cart.totalDiscount > 0) _row('Discount', '− ${Money.of(cart.totalDiscount)}', p.goldText),
-          if (cart.taxTotal > 0) _row('Tax', Money.of(cart.taxTotal), p.textSecondary),
-          if (cart.roundOff != 0) _row('Round Off', Money.of(cart.roundOff), p.textSecondary),
-          if (cart.tipAmount > 0) _row('Tip (${cart.tipPercent.toStringAsFixed(0)}%)', Money.of(cart.tipAmount), p.textSecondary),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total', style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
-              Text(Money.of(cart.total), style: serif(size: 19, color: p.ink)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tipSelector(CartCubit cart) {
-    final p = context.astra;
-    final tips = [0.0, 10.0, 15.0, 20.0];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('ADD A TIP', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-        const SizedBox(height: 7),
-        Row(
-          children: [
-            for (final tip in tips) ...[
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => cart.setTip(tip),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      gradient: cart.tipPercent == tip ? p.primaryGradient : null,
-                      color: cart.tipPercent == tip ? null : p.card,
-                      borderRadius: BorderRadius.circular(11),
-                      boxShadow: context.astraTheme.softShadow,
-                    ),
-                    child: Text(tip == 0 ? 'None' : '${tip.toStringAsFixed(0)}%',
-                        style: ui(size: 11.5, weight: FontWeight.w800, color: cart.tipPercent == tip ? Colors.white : p.textSecondary)),
-                  ),
-                ),
-              ),
-              if (tip != tips.last) const SizedBox(width: 7),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ---- Payment method (Student Wallet / buttons 1–4 / Credit / Custom) ----
-
-  /// The icon for a configured payment button, from its system slug or name.
-  IconData _buttonIcon(PaymentMethod button) {
-    // The icon picked on the web — same keys as `posPaymentButtonIcons()`.
-    final picked = switch (button.icon) {
-      'money' => Icons.payments_outlined,
-      'credit-card' => Icons.credit_card,
-      'university' => Icons.account_balance_outlined,
-      'exchange' => Icons.swap_horiz,
-      'bolt' => Icons.bolt,
-      'mobile' => Icons.smartphone,
-      'qrcode' => Icons.qr_code_2,
-      'google-wallet' => Icons.account_balance_wallet_outlined,
-      'paper-plane' => Icons.send_outlined,
-      'gift' => Icons.card_giftcard,
-      _ => null,
-    };
-    if (picked != null) return picked;
-    final name = '${button.slug ?? ''} ${button.name}'.toLowerCase();
-    if (name.contains('cash')) return Icons.payments_outlined;
-    if (name.contains('bank') || name.contains('transfer')) return Icons.account_balance_outlined;
-    return Icons.credit_card;
-  }
-
-  /// Whether [m] is the Student Wallet account — by id once a tapped card has
-  /// named it, otherwise by the account's locked name.
-  bool _isWallet(PaymentMethod m, CartCubit cart) =>
-      m.id == cart.student?.cardMethodId ||
-      m.name.trim().toLowerCase() == PayMode.studentCard.label.toLowerCase();
-
-  /// Student Wallet joins the row only when the business lists it under Payment
-  /// Methods (and runs the School module, which the card tap needs). A ticket
-  /// already paying by wallet keeps its tile, so the selection can never vanish
-  /// from under the cashier.
-  bool _offersWallet(CartCubit cart) =>
-      cart.payMode == PayMode.studentCard ||
-      (cart.schoolEnabled && _methods.any((m) => _isWallet(m, cart)));
-
-  /// The wallet spends a tapped card. With none on the ticket yet, picking it
-  /// asks for the tap — the student then becomes the customer, as on New Sale.
-  Future<void> _selectWallet(CartCubit cart) async {
-    if (cart.student == null) {
-      final card = await showTapCardSheet(context);
-      if (card == null || !mounted) return;
-      cart.setStudent(card);
-    } else {
-      cart.setPayMode(PayMode.studentCard);
-    }
-    setState(() => _tendered = null);
-  }
-
-  Widget _paymentSection(CartCubit cart) {
-    final p = context.astra;
-    // The quick buttons from System Configurations → POS Payment Buttons; Cash
-    // and Card until the app has synced them.
-    final buttons = CartCubit.paymentButtons();
-    final modes = <(PayMode, IconData, PaymentMethod?)>[
-      if (_offersWallet(cart)) (PayMode.studentCard, Icons.school_outlined, null),
-      if (buttons.isEmpty) ...[
-        (PayMode.cash, Icons.payments_outlined, null),
-        (PayMode.card, Icons.credit_card, null),
-      ] else
-        for (final button in buttons) (CartCubit.payFor(button).mode, _buttonIcon(button), button),
-      // Credit makes no sense on a prepaid card, so a student's ticket drops it.
-      if (cart.student == null && cart.payMode != PayMode.studentCard) (PayMode.credit, Icons.description_outlined, null),
-      (PayMode.custom, Icons.tune, null),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text('PAYMENT METHOD',
-                  style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-            ),
-            // _whatsappToggle(cart),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // One recessed track with the chosen method raised out of it — the same
-        // segmented language as New Sale's type switch, so a fifth option still
-        // reads as one row of choices rather than five loose buttons.
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: p.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          // The configured buttons lead; Credit and Custom share one narrower
-          // column as half-height tiles, so the everyday methods stand out.
-          child: Row(
-            children: [
-              for (final (mode, icon, button) in modes)
-                if (!_isMinor(mode)) Expanded(flex: 10, child: _method(cart, mode, icon, button: button)),
-              const SizedBox(width: 4),
-              Expanded(
-                flex: 8,
-                child: SizedBox(
-                  height: 66,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      // The note sheet's keyboard would otherwise squeeze the rail to ~350pt on
+      // a landscape till — less than the terminal and the Charge bar need.
+      resizeToAvoidBottomInset: false,
+      body: AstraBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (ctx, c) => Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
                   child: Column(
                     children: [
-                      for (final (index, (mode, icon, _)) in modes.where((m) => _isMinor(m.$1)).indexed) ...[
-                        if (index > 0) const SizedBox(height: 4),
-                        Expanded(child: _method(cart, mode, icon, mini: true)),
-                      ],
+                      TabletPageHead(
+                        leading: TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: () => context.pop()),
+                        title: _headline(cart),
+                        subtitle: '${cart.customerName} · ${_staff(cart)}',
+                        actions: [
+                          if (cart.student != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                              decoration: BoxDecoration(color: p.successTint, borderRadius: BorderRadius.circular(999)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.contactless_outlined, size: 14, color: AstraPalette.success),
+                                  const SizedBox(width: 4),
+                                  Text('Card tapped', style: ui(size: 10.5, weight: FontWeight.w800, color: AstraPalette.success)),
+                                ],
+                              ),
+                            ),
+                          TabletIconButton(
+                            icon: cart.notes.isEmpty ? Icons.edit_note_rounded : Icons.sticky_note_2_outlined,
+                            tooltip: cart.notes.isEmpty ? 'Add a note' : 'Edit the note',
+                            onTap: _openNote,
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                          child: _paperTicket(cart),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Credit and Custom — the methods kept smaller, after the quick buttons.
-  bool _isMinor(PayMode mode) => mode == PayMode.credit || mode == PayMode.custom;
-
-  /// One tile of the row. A configured [button] pays the whole ticket by that
-  /// method; it is the active tile when it is the one the ticket is paid by.
-  /// A [mini] tile is half height, icon beside its label, on a quieter face.
-  Widget _method(CartCubit cart, PayMode mode, IconData icon, {PaymentMethod? button, bool mini = false}) {
-    final p = context.astra;
-    final active = cart.payMode == mode && (mode != PayMode.method || cart.payMethod?.id == button?.id);
-    final count = mode == PayMode.custom ? cart.customPayments.length : 0;
-    final label = switch (mode) {
-      _ when button != null => button.name,
-      // "Student Wallet" can't fit a fifth of a phone row; the cap says whose.
-      PayMode.studentCard => 'Wallet',
-      PayMode.custom when count > 0 => '$count method${count == 1 ? '' : 's'}',
-      _ => mode.label,
-    };
-    const motion = Duration(milliseconds: 160);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (button != null) {
-          cart.setPayButton(button);
-          if (mode != PayMode.cash) setState(() => _tendered = null);
-          return;
-        }
-        switch (mode) {
-          case PayMode.custom:
-            _openCustom();
-          case PayMode.studentCard:
-            _selectWallet(cart);
-          case PayMode.cash || PayMode.card || PayMode.credit || PayMode.method:
-            cart.setPayMode(mode);
-            // The tender pad unmounts with the mode, so what it reported would
-            // otherwise linger on the checkout button of a card sale.
-            if (mode != PayMode.cash) setState(() => _tendered = null);
-        }
-      },
-      child: mini ? _miniTile(active, icon, label, count) : AnimatedContainer(
-        duration: motion,
-        curve: Curves.easeOut,
-        height: 66,
-        decoration: BoxDecoration(
-          color: active ? p.card : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: active ? p.primary.withValues(alpha: 0.35) : Colors.transparent, width: 1.2),
-          boxShadow: active ? context.astraTheme.softShadow : null,
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // The filled chip is the selection mark — no corner tick to
-                  // collide with the icon.
-                  AnimatedContainer(
-                    duration: motion,
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: active ? p.primary : Colors.transparent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 16, color: active ? Colors.white : p.textSecondary),
-                  ),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: ui(
-                          size: 11,
-                          weight: active ? FontWeight.w800 : FontWeight.w700,
-                          color: active ? p.primary : p.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // A split that is set up but not the chosen mode still says so.
-            if (count > 0 && !active)
-              Positioned(
-                top: 5,
-                right: 5,
-                child: Container(
-                  width: 15,
-                  height: 15,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(color: AstraPalette.success, shape: BoxShape.circle),
-                  child: Text('$count', style: ui(size: 8.5, weight: FontWeight.w800, color: Colors.white)),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _miniTile(bool active, IconData icon, String label, int count) {
-    final p = context.astra;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: active ? p.card : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: active ? p.primary.withValues(alpha: 0.35) : p.textMuted.withValues(alpha: 0.25), width: 1),
-        boxShadow: active ? context.astraTheme.softShadow : null,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 14, color: active ? p.primary : p.textMuted),
-          const SizedBox(width: 5),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(label,
-                  maxLines: 1,
-                  style: ui(size: 10.5, weight: active ? FontWeight.w800 : FontWeight.w700,
-                      color: active ? p.primary : p.textMuted)),
+                _payRail(cart, settled, (c.maxWidth * 0.38).clamp(340.0, 460.0)),
+              ],
             ),
           ),
-          if (count > 0 && !active) ...[
-            const SizedBox(width: 4),
-            Container(
-              width: 14,
-              height: 14,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(color: AstraPalette.success, shape: BoxShape.circle),
-              child: Text('$count', style: ui(size: 8, weight: FontWeight.w800, color: Colors.white)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ---- Transaction summary (Grand Total / Paid / Balance) ----
-
-  Widget _summaryCard(CartCubit cart) {
-    final p = context.astra;
-    final bal = cart.balance;
-    final ({Color color, IconData icon, String label}) status = bal.abs() < 0.001
-        ? (color: AstraPalette.success, icon: Icons.check_circle, label: 'Balance')
-        : bal > 0
-            ? (color: AstraPalette.danger, icon: Icons.warning_amber_rounded, label: 'Remaining Balance')
-            : (color: const Color(0xFFE08A2B), icon: Icons.south, label: 'Overpaid Amount');
-
-    return AstraCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Column(
-        children: [
-          _sumRow('Grand Total', Money.of(cart.total), p.primary, p),
-          Divider(height: 14, color: p.hairline),
-          _sumRow('Paid Amount', Money.of(cart.paidAmount), p.ink, p),
-          Divider(height: 14, color: p.hairline),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(status.icon, size: 14, color: status.color),
-                  const SizedBox(width: 6),
-                  Text(status.label, style: ui(size: 12, weight: FontWeight.w800, color: status.color)),
-                ],
-              ),
-              Text(Money.of(bal.abs()), style: ui(size: 14, weight: FontWeight.w800, color: status.color)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sumRow(String label, String value, Color valueColor, AstraPalette p) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
-          Text(value, style: ui(size: 14, weight: FontWeight.w800, color: valueColor)),
-        ],
-      );
-
-  // ---- "Ready to submit" status card ----
-
-  Widget _statusCard(CartCubit cart) {
-    final p = context.astra;
-    final bal = cart.balance;
-    final settled = bal.abs() < 0.001;
-    final tappable = settled && !_busy && !_busyDraft;
-
-    final (Color tint, Color color, IconData icon, String title, String desc) = settled
-        ? (p.successTint, AstraPalette.success, Icons.check_circle, 'Ready to Submit', 'Transaction is fully paid and ready to submit')
-        : bal > 0
-            ? (p.warnTint, p.warnText, Icons.warning_amber_rounded, 'Partial Payment', 'Transaction has a remaining balance')
-            : (p.tint, p.primaryDark, Icons.south, 'Overpaid Transaction', 'Transaction amount exceeds payment');
-
-    return GestureDetector(
-      // The shortcut for the primary button, so on a draft it completes the sale
-      // rather than quietly re-saving it as a draft.
-      onTap: tappable ? _submit : null,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-        decoration: BoxDecoration(
-          color: tint,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.35)),
         ),
+      ),
+    );
+  }
+
+  Widget _payRail(CartCubit cart, bool settled, double width) {
+    final p = context.astra;
+    return TabletPane(
+      width: width,
+      edge: PaneEdge.left,
+      // The rail is canvas, not card, so the pad's cards and chips stand off it
+      // as they do on a phone.
+      child: ColoredBox(
+        color: p.canvas,
         child: Column(
           children: [
             Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              child: Icon(icon, size: 16, color: Colors.white),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              decoration: BoxDecoration(
+                gradient: p.heroGradient,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+              ),
+              child: _terminal(cart, tablet: true),
             ),
-            const SizedBox(height: 7),
-            Text(title, style: ui(size: 13, weight: FontWeight.w800, color: color)),
-            const SizedBox(height: 3),
-            Text(desc, textAlign: TextAlign.center, style: ui(size: 11, weight: FontWeight.w600, color: color.withValues(alpha: 0.85))),
-            if (tappable) ...[
-              const SizedBox(height: 5),
-              Text(cart.isEditingDraft ? 'Tap to complete' : 'Tap to submit',
-                  style: ui(size: 10.5, weight: FontWeight.w700, color: color.withValues(alpha: 0.7))),
-            ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+                child: _fitted(_payPanel(cart, phone: false)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+              child: _checkoutBar(cart, settled),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The ticket as a till roll: torn top edge, the QLOUD POS masthead, the
+  /// lines in Qty · Item · Price · Amount columns, then the totals. The lines
+  /// scroll inside the roll; the masthead and totals stay put.
+  Widget _paperTicket(CartCubit cart) {
+    final p = context.astra;
+    final symbol = Money.symbol.trim();
+    final heading = ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8);
+
+    return PhysicalShape(
+      clipper: const _TornEdgeClipper(),
+      color: p.cardSolid,
+      elevation: 3,
+      shadowColor: p.primaryDark.withValues(alpha: 0.3),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // A phone-width roll drops the unit price; the amount says enough.
+          final wide = c.maxWidth > 420;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(22, 24, 22, 16),
+            child: Column(
+              children: [
+                const QloudLogomark(height: 30),
+                const SizedBox(height: 6),
+                Text('QLOUD POS', style: ui(size: 11.5, weight: FontWeight.w800, color: p.ink, letterSpacing: 2.6)),
+                const SizedBox(height: 3),
+                Text('${cart.customerName} · ${_staff(cart)} · ${DateFormat('d MMM yyyy').format(DateTime.now())}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                _dashed(p),
+                Row(
+                  children: [
+                    SizedBox(width: 46, child: Text('QTY', style: heading)),
+                    Expanded(child: Text('ITEM', style: heading)),
+                    if (wide) SizedBox(width: 92, child: Text('PRICE', textAlign: TextAlign.right, style: heading)),
+                    SizedBox(width: 100, child: Text('AMOUNT', textAlign: TextAlign.right, style: heading)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: cart.lines.length,
+                    separatorBuilder: (_, __) => Divider(height: 1, color: p.hairline),
+                    itemBuilder: (_, i) {
+                      final l = cart.lines[i];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 46,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
+                                  child: Text('${l.qty.toStringAsFixed(l.qty % 1 == 0 ? 0 : 1)}×',
+                                      style: ui(size: 10.5, weight: FontWeight.w800, color: p.primaryDark)),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(l.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: ui(size: 13, weight: FontWeight.w600, color: p.ink)),
+                            ),
+                            if (wide)
+                              SizedBox(
+                                width: 92,
+                                child: Text(Money.plain(l.unitPrice),
+                                    textAlign: TextAlign.right,
+                                    style: ui(size: 12.5, weight: FontWeight.w600, color: p.textMuted)),
+                              ),
+                            SizedBox(
+                              width: 100,
+                              child: Text(Money.plain(l.total),
+                                  textAlign: TextAlign.right,
+                                  style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                _dashed(p),
+                _row('Subtotal', Money.plain(cart.subtotal), p.textSecondary),
+                if (cart.totalDiscount > 0) _row('Discount', '− ${Money.plain(cart.totalDiscount)}', p.goldText),
+                if (cart.taxTotal > 0) _row('Tax', Money.plain(cart.taxTotal), p.textSecondary),
+                if (cart.roundOff != 0) _row('Round Off', Money.plain(cart.roundOff), p.textSecondary),
+                if (cart.tipAmount > 0)
+                  _row('Tip (${cart.tipPercent.toStringAsFixed(0)}%)', Money.plain(cart.tipAmount), p.textSecondary),
+                const SizedBox(height: 8),
+                // The number the cashier reads out — the one figure on the
+                // tablet that is stated once, here, at the foot of the roll.
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  decoration: BoxDecoration(
+                    gradient: p.heroGradient,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('AMOUNT DUE',
+                                style: ui(size: 10, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.9)),
+                            const SizedBox(height: 2),
+                            Text(_ticketFacts(cart),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: ui(size: 11, weight: FontWeight.w600, color: Colors.white70)),
+                          ],
+                        ),
+                      ),
+                      if (symbol.isNotEmpty) ...[
+                        Text(symbol, style: ui(size: 14, weight: FontWeight.w800, color: Colors.white70)),
+                        const SizedBox(width: 7),
+                      ],
+                      Text(Money.plain(cart.total), style: serif(size: 34, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1241,8 +1385,8 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: ui(size: 11, weight: FontWeight.w600, color: color)),
-            Text(value, style: ui(size: 11, weight: FontWeight.w700, color: color)),
+            Text(label, style: ui(size: 11.5, weight: FontWeight.w600, color: color)),
+            Text(value, style: ui(size: 11.5, weight: FontWeight.w700, color: color)),
           ],
         ),
       );
@@ -1261,70 +1405,421 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       );
 }
 
-/// The tapped student card on the payment screen: who it is, what the card can
-/// spend, and what this sale leaves on it. Offers a card + cash split when the
-/// card cannot cover the ticket.
-class _StudentCardPanel extends StatelessWidget {
-  const _StudentCardPanel({required this.cart, required this.onSplit});
+/// How a status line or a prompt reads: neutral, settled, owed, or wrong.
+enum _Tone { info, ok, warn, bad }
 
-  final CartCubit cart;
-  final VoidCallback onSplit;
+/// One payment method on the terminal's blue. An everyday [height] tile is icon
+/// over label; a [minor] tile is a shorter outlined pill, icon beside label.
+/// [configured] marks a method that comes from the web's POS Payment Buttons.
+class _MethodTile extends StatelessWidget {
+  const _MethodTile({
+    required this.icon,
+    required this.label,
+    required this.height,
+    required this.active,
+    required this.onTap,
+    this.minor = false,
+    this.wallet = false,
+    this.configured = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final double height;
+  final bool active;
+  final VoidCallback onTap;
+  final bool minor;
+  final bool wallet;
+  final bool configured;
 
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    final student = cart.student!;
-    final onCard = switch (cart.payMode) {
-      PayMode.studentCard => cart.total,
-      PayMode.custom => round2(cart.customPayments
-          .where((x) => x.methodId == student.cardMethodId)
-          .fold(0.0, (a, x) => a + x.amount)),
-      _ => 0.0,
-    };
-    final after = round2(student.balance - onCard);
-    final short = round2(onCard - student.available);
+    final mint = _ReviewPayScreenState._mint;
+    final fg = active
+        ? p.primary
+        : wallet
+            ? mint
+            : Colors.white.withValues(alpha: minor ? 0.8 : 0.9);
+    final Color bg = active
+        ? Colors.white
+        : wallet
+            ? mint.withValues(alpha: 0.16)
+            : minor
+                ? Colors.transparent
+                : Colors.white.withValues(alpha: 0.09);
+    final text = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(label,
+          maxLines: 1,
+          style: ui(size: minor ? 11 : 10.5, weight: active ? FontWeight.w800 : FontWeight.w700, color: fg)),
+    );
 
-    return AstraCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          StudentCardTile(card: student),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Can spend', style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
-              Text(Money.of(student.available), style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
-            ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        height: height,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: minor && !active && !wallet ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
           ),
-          if (onCard > 0) ...[
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          boxShadow: active
+              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 14, offset: const Offset(0, 6))]
+              : null,
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: minor
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, size: 15, color: fg),
+                        const SizedBox(width: 6),
+                        Flexible(child: text),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, size: 19, color: fg),
+                        const SizedBox(height: 3),
+                        text,
+                      ],
+                    ),
+            ),
+            if (configured)
+              Positioned(
+                top: 4,
+                right: 2,
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: (active ? p.primary : Colors.white).withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// What the cashier does for a mode that needs no pad: one ringed icon, a
+/// title and a line under it, centred in the panel. It shrinks with the room
+/// it has, dropping the line first.
+class _PayPrompt extends StatelessWidget {
+  const _PayPrompt({required this.tone, required this.icon, required this.title, required this.subtitle, this.onTap});
+
+  final _Tone tone;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final (Color tint, Color color) = switch (tone) {
+      _Tone.ok => (p.successTint, AstraPalette.success),
+      _Tone.warn => (p.warnTint, p.warnText),
+      _Tone.bad => (p.dangerTint, AstraPalette.danger),
+      _Tone.info => (p.tint, p.primary),
+    };
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: p.card,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: context.astraTheme.softShadow,
+        ),
+        child: LayoutBuilder(
+          builder: (context, c) {
+            final ring = (c.maxHeight * 0.36).clamp(36.0, 70.0);
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Card balance after', style: ui(size: 12, weight: FontWeight.w600, color: p.textSecondary)),
-                Text(Money.of(after), style: ui(size: 13, weight: FontWeight.w800, color: after < 0 ? AstraPalette.danger : p.ink)),
+                Container(
+                  width: ring,
+                  height: ring,
+                  decoration: BoxDecoration(
+                    color: tint,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.5), spreadRadius: ring > 50 ? 10 : 5)],
+                  ),
+                  child: Icon(icon, size: ring * 0.48, color: color),
+                ),
+                SizedBox(height: ring > 50 ? 16 : 8),
+                Text(title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 15, weight: FontWeight.w800, color: p.ink)),
+                if (c.maxHeight > 150) ...[
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: ui(size: 11.5, weight: FontWeight.w600, color: p.textMuted)),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// The tapped student card as a card: who, what it may spend, and — once this
+/// ticket spends some of it — what it holds [after].
+class _StudentWalletCard extends StatelessWidget {
+  const _StudentWalletCard({required this.card, this.after});
+
+  final StudentCard card;
+  final double? after;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    final headers = context.read<AuthCubit>().config.assetHeaders;
+    final caption = ui(size: 9.5, weight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.8);
+    final initial = Container(
+      width: 44,
+      height: 44,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), shape: BoxShape.circle),
+      child: Text(card.name.isEmpty ? '?' : card.name.characters.first.toUpperCase(),
+          style: serif(size: 18, color: Colors.white)),
+    );
+    final left = after;
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(gradient: p.heroGradient, borderRadius: BorderRadius.circular(18)),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30,
+            bottom: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    card.imageUrl.startsWith('http')
+                        ? ClipOval(
+                            child: Image.network(
+                              card.imageUrl,
+                              headers: headers,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              cacheWidth: decodeWidthFor(context, 44),
+                              errorBuilder: (_, __, ___) => initial,
+                            ),
+                          )
+                        : initial,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(card.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ui(size: 14.5, weight: FontWeight.w800, color: Colors.white)),
+                          Text(card.isBlocked ? 'Card blocked' : card.classLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: ui(size: 10.5, weight: FontWeight.w700, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.contactless_outlined, color: Colors.white, size: 22),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('CAN SPEND', style: caption),
+                        Text(Money.plain(card.available), style: serif(size: 22, color: Colors.white)),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (left != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('AFTER SALE', style: caption),
+                          Text(Money.plain(left),
+                              style: ui(
+                                size: 15,
+                                weight: FontWeight.w800,
+                                color: left < 0 ? Color.lerp(AstraPalette.danger, Colors.white, 0.55) : Colors.white,
+                              )),
+                        ],
+                      ),
+                  ],
+                ),
               ],
             ),
-          ],
-          if (short > 0.004) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: p.warnTint, borderRadius: BorderRadius.circular(12)),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text('The card is ${Money.of(short)} short.',
-                        style: ui(size: 12, weight: FontWeight.w700, color: p.warnText)),
-                  ),
-                  TextButton(onPressed: onSplit, child: const Text('Card + cash')),
-                ],
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
+}
+
+/// The note, in a sheet over the pay screen. The controller and focus node
+/// belong to the screen, which disposes them.
+class _NoteSheet extends StatelessWidget {
+  const _NoteSheet({required this.controller, required this.focusNode, required this.onChanged});
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.astra;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: BoxDecoration(
+          color: p.canvas,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(9)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.edit_note_rounded, size: 20, color: p.primary),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('Sale note', style: serif(size: 19, color: p.ink))),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: controller,
+                      builder: (_, value, __) => value.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : GestureDetector(
+                              onTap: () {
+                                controller.clear();
+                                onChanged('');
+                              },
+                              child: Text('Remove', style: ui(size: 11.5, weight: FontWeight.w700, color: p.textMuted)),
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(13, 11, 13, 9),
+                  decoration: BoxDecoration(
+                    color: p.card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: p.primary, width: 1.4),
+                  ),
+                  child: KeyboardDoneField(
+                    focusNode: focusNode,
+                    child: TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      autofocus: true,
+                      minLines: 3,
+                      maxLines: 5,
+                      maxLength: 1000,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: ui(size: 13, weight: FontWeight.w600, color: p.ink),
+                      cursorColor: p.primary,
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        hintText: 'e.g. Deliver after 6 pm, gift wrap…',
+                        hintStyle: ui(size: 13, weight: FontWeight.w500, color: p.textMuted),
+                        counterStyle: ui(size: 9.5, weight: FontWeight.w600, color: p.textMuted),
+                      ),
+                      onChanged: onChanged,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                AstraButton(label: 'Done', onTap: () => Navigator.of(context).pop()),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The top edge of a till roll — round bites torn along it — over a card whose
+/// bottom corners are rounded.
+class _TornEdgeClipper extends CustomClipper<Path> {
+  const _TornEdgeClipper();
+
+  static const _bite = 7.0;
+  static const _period = 18.0;
+  static const _corner = 16.0;
+
+  @override
+  Path getClip(Size size) {
+    final path = Path()..moveTo(0, 0);
+    for (var x = 0.0; x + _period <= size.width; x += _period) {
+      final mid = x + _period / 2;
+      path
+        ..lineTo(mid - _bite, 0)
+        ..arcToPoint(Offset(mid + _bite, 0), radius: const Radius.circular(_bite), clockwise: false);
+    }
+    return path
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height - _corner)
+      ..quadraticBezierTo(size.width, size.height, size.width - _corner, size.height)
+      ..lineTo(_corner, size.height)
+      ..quadraticBezierTo(0, size.height, 0, size.height - _corner)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

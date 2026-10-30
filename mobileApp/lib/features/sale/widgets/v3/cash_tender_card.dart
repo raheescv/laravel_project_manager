@@ -4,7 +4,6 @@ import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/logic/currency_cubit/currency_cubit.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
-import 'package:invo/shared/widgets/astra_widgets.dart';
 
 /// The notes a cashier is realistically handed, per currency — what the tender
 /// pad's note grid offers. Six per ladder so the grid stays two tidy rows; an
@@ -34,25 +33,39 @@ class CashDenominations {
   }
 }
 
-/// "Received" — how much cash the customer actually handed over, and what goes
-/// back to them.
+/// "Received" — how much cash the customer actually handed over.
 ///
 /// This is a **counter aid, not a payment**. Cash always settles the ticket in
 /// full, so nothing entered here reaches the payload: `paidAmount` stays the
 /// total and the balance stays zero. Keying 50 against a 36 ticket means the
 /// drawer took 50 and 14 comes back — not that the customer overpaid by 14.
-/// A genuine part payment is Credit or Split, which is what the short-tendered
-/// hint points at.
+/// A genuine part payment is Credit or Split.
 ///
 /// Two ways in, because a counter uses both: tap the notes that were handed
 /// over (the common case, no keyboard at all), or type an odd amount on the
-/// pad. [onChanged] reports the running amount so the checkout bar can name the
-/// change on its label.
+/// pad. [onChanged] reports the running amount; the screen states the change
+/// in its own header, so the panel is only the pad and its tool row.
+///
+/// The pad fills the height it is given, up to [maxPadHeight] — the panel is
+/// laid out in a fixed-height column, never in a scroll view.
 class CashTenderPanel extends StatefulWidget {
-  const CashTenderPanel({super.key, required this.total, required this.onChanged});
+  const CashTenderPanel({
+    super.key,
+    required this.total,
+    required this.onChanged,
+    this.maxPadHeight,
+    this.tools = const [],
+  });
 
   final double total;
   final ValueChanged<double?> onChanged;
+
+  /// The tallest the note grid may grow (the keypad, one row more, gets a
+  /// third extra); null lets the pad take the whole panel.
+  final double? maxPadHeight;
+
+  /// More buttons for the tool row after Reset and Exact — the phone's Note.
+  final List<Widget> tools;
 
   @override
   State<CashTenderPanel> createState() => _CashTenderPanelState();
@@ -67,6 +80,11 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
   String _typed = '';
   bool _keypad = false;
 
+  /// The customer handed over exactly the total. A switch of its own rather
+  /// than a typed amount, so taking it never moves the cashier off the surface
+  /// they are on — and tapping it again, a note or a key takes it back off.
+  bool _exactTaken = false;
+
   late final List<double> _ladder = CashDenominations.current();
 
   double get _noteTotal => _notes.entries.fold(0.0, (a, e) => a + e.key * e.value);
@@ -75,22 +93,21 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
   /// Null until something has actually been entered — an untouched pad must not
   /// read as "received nothing", which would show the full total as short.
   double? get _tendered {
+    if (_exactTaken) return widget.total;
     if (!_keypad) return _notes.isEmpty ? null : _noteTotal;
     if (_typed.isEmpty) return null;
     // A buffer parked on its decimal point ("36.") is still a number — dropping
-    // the band between the dot and the cents would make it flicker.
+    // the change between the dot and the cents would make it flicker.
     return double.tryParse(_typed.endsWith('.') ? _typed.substring(0, _typed.length - 1) : _typed);
   }
-
-  /// What the amount line reads. The pad echoes the keys as pressed — a
-  /// half-typed "36." must not redraw itself as "36.00" under the thumb — while
-  /// a note tally is a computed total, so that one is formatted.
-  String get _display => _keypad ? (_typed.isEmpty ? Money.plain(0) : _typed) : Money.plain(_noteTotal);
 
   void _report() => widget.onChanged(_tendered);
 
   void _addNote(double value) {
-    setState(() => _notes[value] = (_notes[value] ?? 0) + 1);
+    setState(() {
+      _exactTaken = false;
+      _notes[value] = (_notes[value] ?? 0) + 1;
+    });
     _report();
   }
 
@@ -104,6 +121,7 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
 
   void _key(String k) {
     setState(() {
+      _exactTaken = false;
       if (k == '<') {
         if (_typed.isNotEmpty) _typed = _typed.substring(0, _typed.length - 1);
         return;
@@ -125,6 +143,7 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
 
   void _reset() {
     setState(() {
+      _exactTaken = false;
       _notes.clear();
       _typed = '';
     });
@@ -142,10 +161,13 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
     _report();
   }
 
-  void _exact() {
+  /// Exact on clears whatever was counted or typed; Exact off goes back to an
+  /// untouched pad.
+  void _toggleExact() {
     setState(() {
-      _keypad = true;
-      _typed = Money.plain(widget.total).replaceAll(',', '');
+      _exactTaken = !_exactTaken;
+      _notes.clear();
+      _typed = '';
     });
     _report();
   }
@@ -153,132 +175,148 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    final tendered = _tendered;
+    final cap = widget.maxPadHeight;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AstraCard(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text('RECEIVED',
-                      style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-                  const Spacer(),
-                  if (tendered != null) ...[
-                    _chip(label: 'Reset', icon: Icons.close, onTap: _reset),
-                    const SizedBox(width: 6),
-                  ],
-                  _chip(
-                    label: _keypad ? 'Notes' : 'Keypad',
-                    icon: _keypad ? Icons.grid_view_rounded : Icons.dialpad,
-                    onTap: _toggleSurface,
-                    accent: true,
-                  ),
-                ],
+        Row(
+          children: [
+            Expanded(
+              child: Text(_keypad ? 'TYPE THE AMOUNT RECEIVED' : 'TAP THE NOTES HANDED OVER',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+            ),
+            if (!_keypad && _noteCount > 0) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
+                child: Text('$_noteCount note${_noteCount == 1 ? '' : 's'}',
+                    style: ui(size: 11, weight: FontWeight.w800, color: p.primary)),
               ),
-              const SizedBox(height: 6),
-              _amountLine(p, tendered),
-              const SizedBox(height: 12),
-              if (_keypad) _pad(p) else _noteGrid(p),
+              const SizedBox(width: 6),
             ],
-          ),
+            _chip(
+              label: _keypad ? 'Notes' : 'Keypad',
+              icon: _keypad ? Icons.grid_view_rounded : Icons.dialpad,
+              onTap: _toggleSurface,
+            ),
+          ],
         ),
-        if (tendered != null) ...[
-          const SizedBox(height: 12),
-          ChangeDueBand(total: widget.total, tendered: tendered),
-        ],
-      ],
-    );
-  }
-
-  /// The running amount, big enough to read across the counter.
-  Widget _amountLine(AstraPalette p, double? tendered) {
-    final symbol = Money.symbol.trim();
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (symbol.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Text(symbol, style: ui(size: 12, weight: FontWeight.w800, color: p.textMuted)),
-          ),
-          const SizedBox(width: 7),
+        const SizedBox(height: 9),
+        if (_keypad) ...[
+          _readout(p),
+          const SizedBox(height: 8),
         ],
         Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              _display,
-              style: serif(size: 32, color: tendered == null ? p.textMuted : p.ink),
-            ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: cap == null ? double.infinity : (_keypad ? cap * 1.35 : cap)),
+            child: _keypad ? _pad(p) : _grid([for (final note in _ladder) _noteTile(p, note, _notes[note] ?? 0)], 3),
           ),
         ),
-        const SizedBox(width: 8),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: _noteCount > 0 && !_keypad
-              ? Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                  decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
-                  child: Text('$_noteCount note${_noteCount == 1 ? '' : 's'}',
-                      style: ui(size: 11.5, weight: FontWeight.w800, color: p.primary)),
-                )
-              : GestureDetector(
-                  onTap: _exact,
-                  child: Text('Exact ${Money.plain(widget.total)}',
-                      style: ui(size: 10.5, weight: FontWeight.w800, color: p.primary)),
-                ),
+        const SizedBox(height: 9),
+        Row(
+          children: [
+            Expanded(child: PayToolButton(icon: Icons.close_rounded, label: 'Reset', onTap: _tendered == null ? null : _reset)),
+            const SizedBox(width: 8),
+            Expanded(
+              // Names the amount it fills in, and stays lit while it is the
+              // amount received — the button is the state, not a shortcut.
+              child: PayToolButton(
+                icon: _exactTaken ? Icons.check_circle_rounded : Icons.done_all_rounded,
+                label: _exactTaken ? 'Exact taken' : 'Exact ${Money.plain(widget.total)}',
+                lit: _exactTaken,
+                onTap: _toggleExact,
+              ),
+            ),
+            for (final tool in widget.tools) ...[const SizedBox(width: 8), Expanded(child: tool)],
+          ],
         ),
       ],
     );
   }
 
-  Widget _chip({required String label, required IconData icon, required VoidCallback onTap, bool accent = false}) {
+  /// What has been typed, big enough to check before charging. The pad echoes
+  /// the keys as pressed — a half-typed "36." must not redraw itself as "36.00"
+  /// under the thumb.
+  Widget _readout(AstraPalette p) {
+    final symbol = Money.symbol.trim();
+    final typed = _typed.isNotEmpty;
+    final shown = _exactTaken ? Money.plain(widget.total) : (typed ? _typed : Money.plain(0));
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: typed || _exactTaken ? p.primary : p.hairline, width: 1.4),
+      ),
+      child: Row(
+        children: [
+          Text('RECEIVED', style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
+          const Spacer(),
+          if (symbol.isNotEmpty) ...[
+            Text(symbol, style: ui(size: 12, weight: FontWeight.w800, color: p.textMuted)),
+            const SizedBox(width: 6),
+          ],
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(shown, style: serif(size: 26, color: typed || _exactTaken ? p.ink : p.textMuted)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip({required String label, required IconData icon, required VoidCallback onTap}) {
     final p = context.astra;
-    final color = accent ? p.primary : p.textMuted;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: accent ? p.tint : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: accent ? Colors.transparent : p.hairline),
-        ),
+        decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: color),
+            Icon(icon, size: 12, color: p.primary),
             const SizedBox(width: 5),
-            Text(label, style: ui(size: 10, weight: FontWeight.w800, color: color)),
+            Text(label, style: ui(size: 10, weight: FontWeight.w800, color: p.primary)),
           ],
         ),
       ),
     );
   }
 
-  /// Tap the notes that came across the counter. A counted note shows how many
-  /// as a solid badge on its right — read at a glance across the counter, where
-  /// the old corner "×2" was a 9pt whisper — and a − on its left takes one back
-  /// (long-press still does too, but nobody finds a long-press).
-  Widget _noteGrid(AstraPalette p) {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 7,
-      crossAxisSpacing: 7,
-      childAspectRatio: 2.5,
+  /// [cells] in rows of [columns], every row sharing the height equally — the
+  /// pad stretches to the panel instead of keeping a fixed aspect ratio.
+  Widget _grid(List<Widget> cells, int columns) {
+    return Column(
       children: [
-        for (final note in _ladder) _noteTile(p, note, _notes[note] ?? 0),
+        for (var row = 0; row * columns < cells.length; row++) ...[
+          if (row > 0) const SizedBox(height: 8),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = row * columns; i < row * columns + columns; i++) ...[
+                  if (i > row * columns) const SizedBox(width: 8),
+                  Expanded(child: i < cells.length ? cells[i] : const SizedBox()),
+                ],
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
+  /// Tap the notes that came across the counter. A counted note shows how many
+  /// as a solid badge on its right, and a − on its left takes one back
+  /// (long-press still does too, but nobody finds a long-press).
   Widget _noteTile(AstraPalette p, double note, int count) {
     final counted = count > 0;
     return GestureDetector(
@@ -289,8 +327,9 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           color: counted ? p.tint : p.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: counted ? p.primary : p.hairline, width: counted ? 1.5 : 1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: counted ? p.primary : Colors.transparent, width: 1.5),
+          boxShadow: counted ? null : context.astraTheme.softShadow,
         ),
         child: Row(
           children: [
@@ -319,7 +358,7 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(Money.plain(note, decimals: 0),
-                    style: ui(size: 15, weight: FontWeight.w800, color: counted ? p.primaryDark : p.ink)),
+                    style: ui(size: 19, weight: FontWeight.w800, color: counted ? p.primaryDark : p.ink)),
               ),
             ),
             SizedBox(
@@ -351,97 +390,76 @@ class _CashTenderPanelState extends State<CashTenderPanel> {
 
   Widget _pad(AstraPalette p) {
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '<'];
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 7,
-      crossAxisSpacing: 7,
-      childAspectRatio: 2.2,
-      children: [
-        for (final k in keys)
-          GestureDetector(
-            onTap: () => _key(k),
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: p.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: p.hairline),
-              ),
-              child: k == '<'
-                  ? Icon(Icons.backspace_outlined, size: 17, color: AstraPalette.danger)
-                  : Text(k,
-                      style: ui(
-                        size: 18,
-                        weight: FontWeight.w700,
-                        // A currency with no minor unit has no use for the dot;
-                        // it stays in place so the grid keeps its shape, greyed
-                        // out rather than silently doing nothing.
-                        color: k == '.' && Money.decimals == 0 ? p.textMuted : p.ink,
-                      )),
+    return _grid([
+      for (final k in keys)
+        GestureDetector(
+          onTap: () => _key(k),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: p.card,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: context.astraTheme.softShadow,
             ),
+            child: k == '<'
+                ? Icon(Icons.backspace_outlined, size: 18, color: AstraPalette.danger)
+                : Text(k,
+                    style: ui(
+                      size: 19,
+                      weight: FontWeight.w700,
+                      // A currency with no minor unit has no use for the dot;
+                      // it stays in place so the grid keeps its shape, greyed
+                      // out rather than silently doing nothing.
+                      color: k == '.' && Money.decimals == 0 ? p.textMuted : p.ink,
+                    )),
           ),
-      ],
-    );
+        ),
+    ], 3);
   }
 }
 
-/// What goes back into the customer's hand — or what is still owed.
-///
-/// Short of the total is a hint, not a block: cash posts the ticket in full
-/// either way, so the honest thing is to name the shortfall and point at the
-/// tool that actually models a part payment.
-class ChangeDueBand extends StatelessWidget {
-  const ChangeDueBand({super.key, required this.total, required this.tendered});
+/// One button of the row under the pay panel — Reset, Exact, the item count,
+/// the note. A null [onTap] greys it out. [lit] marks one that holds something
+/// (a note already written).
+class PayToolButton extends StatelessWidget {
+  const PayToolButton({super.key, required this.icon, required this.label, this.onTap, this.lit = false});
 
-  final double total;
-  final double tendered;
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool lit;
 
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    final diff = double.parse((tendered - total).toStringAsFixed(2));
-
-    final (Color tint, Color color, IconData icon, String title, String desc) = diff > 0
-        ? (p.goldTint, p.goldText, Icons.undo, 'Give back',
-            '${Money.of(tendered)} received · ${Money.of(total)} due')
-        : diff == 0
-            ? (p.successTint, AstraPalette.success, Icons.check_circle, 'Exact amount',
-                'No change to hand back')
-            : (p.dangerTint, AstraPalette.danger, Icons.warning_amber_rounded, 'Short by',
-                'Take the rest, or split the payment');
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            child: Icon(icon, size: 15, color: Colors.white),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: onTap == null ? 0.45 : 1,
+        child: Container(
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: lit ? p.tint : p.card,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: lit ? null : context.astraTheme.softShadow,
           ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: ui(size: 12, weight: FontWeight.w800, color: color)),
-                const SizedBox(height: 1),
-                Text(desc, style: ui(size: 10, weight: FontWeight.w600, color: color.withValues(alpha: 0.85))),
-              ],
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: p.primary),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ui(size: 11.5, weight: FontWeight.w800, color: lit ? p.primary : p.textSecondary)),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          if (diff != 0)
-            Text(Money.of(diff.abs()), style: serif(size: 22, color: color)),
-        ],
+        ),
       ),
     );
   }

@@ -68,8 +68,9 @@ class FakeSaleRepository implements SaleRepository {
     int? createdById,
     int page = 1,
     int perPage = 30,
-  }) async =>
-      SalesPage(
+  }) async {
+    salesRange = (from: fromDate, to: toDate);
+    return SalesPage(
         rows: [
           {'id': '1', 'invoice_no': '#1042', 'customer_name': 'Walk-in', 'date': '2026-06-14', 'paid': 248.4, 'status': 'completed'},
           {'id': '2', 'invoice_no': '#1041', 'customer_name': 'A. Rivera', 'date': '2026-06-13', 'paid': 92.0, 'status': 'completed'},
@@ -79,6 +80,10 @@ class FakeSaleRepository implements SaleRepository {
         currentPage: 1,
         lastPage: 1,
       );
+  }
+
+  /// The from / to dates the last [sales] call asked for.
+  ({String? from, String? to})? salesRange;
 
   @override
   Future<SaleItemsPage> saleItems({
@@ -261,7 +266,13 @@ class FakeAdminRepository implements AdminRepository {
   DaySessionSummary? currentSessionAnswer;
 
   @override
-  Future<DaySessionSummary?> currentDaySession() async => currentSessionAnswer;
+  Future<DaySessionSummary?> currentDaySession({DateTime? start, DateTime? end}) async {
+    currentSessionRange = (start: start, end: end);
+    return currentSessionAnswer;
+  }
+
+  /// The date filter the last [currentDaySession] call was made with.
+  ({DateTime? start, DateTime? end})? currentSessionRange;
 
   @override
   Future<DaySessionReport> daySessionReport(String id) async => throw UnimplementedError();

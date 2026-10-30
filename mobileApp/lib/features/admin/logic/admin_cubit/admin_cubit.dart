@@ -86,6 +86,7 @@ typedef _ExportRows = ({
 /// Backs the Dashboard and the Reports suite (bill-wise / employee-wise).
 class AdminCubit extends Cubit<AdminState> {
   AdminCubit() : super(_initialState()) {
+    _anchoredSession = serviceLocator<AuthCubit>().sessionDay;
     // Provided once for the life of the app (InvoApp), so the cubit outlives
     // the session and a sign-out has to empty it by hand — or the next
     // cashier's dashboard would open on the last one's figures while its own
@@ -94,6 +95,9 @@ class AdminCubit extends Cubit<AdminState> {
   }
 
   StreamSubscription<AuthState>? _authSub;
+
+  /// The session day the date filter was last anchored on — see [reanchorRange].
+  DateTime? _anchoredSession;
 
   void _onAuth(AuthState s) {
     if (s.status == AuthStatus.signedOut) reset();
@@ -108,6 +112,7 @@ class AdminCubit extends Cubit<AdminState> {
     ++_overviewReq;
     _reportCache.clear();
     _trendKey = null;
+    _anchoredSession = serviceLocator<AuthCubit>().sessionDay;
     emit(_initialState());
   }
 
@@ -118,14 +123,16 @@ class AdminCubit extends Cubit<AdminState> {
   }
 
   static AdminState _initialState() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    // Reports open on today; the range then stays wherever it is left for the
-    // rest of the session, and a sign-out brings it back here.
+    final auth = serviceLocator<AuthCubit>();
+    final preset = auth.defaultDatePreset;
+    final range = auth.datePresetRange(preset)!;
+    // Reports open on the open session's day, else today; the range then stays
+    // wherever it is left for the rest of the session, and a sign-out brings
+    // it back here.
     return AdminState(
-      startDate: today,
-      endDate: today,
-      rangePreset: 'today',
+      startDate: range.start,
+      endDate: range.end,
+      rangePreset: preset,
     );
   }
 
@@ -196,34 +203,42 @@ class AdminCubit extends Cubit<AdminState> {
   String? get overviewError => state.overviewError;
   SalesOverview? get overview => state.overview;
 
+  /// The preset the report opens on, and Reset goes back to — the open
+  /// session's day when it trails the calendar, else today.
+  String get defaultRangePreset => serviceLocator<AuthCubit>().defaultDatePreset;
+
+  /// 'session' is the open day session's date; the rest count back from the
+  /// calendar date.
   void setPreset(String id) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    var from = state.startDate, to = state.endDate;
-    switch (id) {
-      case 'today':
-        from = today;
-        to = today;
-      case 'yesterday':
-        from = today.subtract(const Duration(days: 1));
-        to = from;
-      case '7d':
-        from = today.subtract(const Duration(days: 6));
-        to = today;
-      case '30d':
-        from = today.subtract(const Duration(days: 29));
-        to = today;
-      case 'month':
-        from = DateTime(now.year, now.month, 1);
-        to = today;
-    }
-    emit(state.copyWith(startDate: from, endDate: to, rangePreset: id));
+    final range = serviceLocator<AuthCubit>().datePresetRange(id);
+    emit(state.copyWith(startDate: range?.start, endDate: range?.end, rangePreset: id));
     // The range is the one input both breakdowns are built on, so it is the
     // one that empties the cache for both. Re-tapping the active preset is
     // deliberately not short-circuited — it doubles as the manual refresh.
     _reportCache.clear();
     unawaited(loadReports());
     unawaited(loadOverview());
+  }
+
+  /// Re-reads a preset range — the cubit is built before sign-in, the day
+  /// session can open or close while Reports sits alive in the shell, and the
+  /// calendar turns at midnight. When the session day moved, a filter on its
+  /// default day follows to the new default (the session's day, or today).
+  /// A custom range is left alone. Whether anything moved, so the caller
+  /// knows to reload.
+  bool reanchorRange() {
+    final auth = serviceLocator<AuthCubit>();
+    final preset = auth.reanchorDatePreset(state.rangePreset, _anchoredSession);
+    _anchoredSession = auth.sessionDay;
+    final range = auth.datePresetRange(preset);
+    if (range == null ||
+        (preset == state.rangePreset && range.start == state.startDate && range.end == state.endDate)) {
+      return false;
+    }
+    _reportCache.clear();
+    _trendKey = null;
+    emit(state.copyWith(startDate: range.start, endDate: range.end, rangePreset: preset));
+    return true;
   }
 
   void setCustomRange(DateTime start, DateTime end) {
@@ -322,11 +337,7 @@ class AdminCubit extends Cubit<AdminState> {
   /// The business day the dashboard reports on: the branch's open day-session
   /// date, or the calendar date when no session is open — the same anchor the
   /// server uses for the KPI cards (App\Actions\V1\Dashboard\GetAction).
-  String get _sessionDate {
-    final user = serviceLocator<AuthCubit>().user;
-    final date = (user?.daySessionDate ?? '').split(' ').first;
-    return (user?.dayOpen ?? false) && date.isNotEmpty ? date : Dates.today();
-  }
+  String get _sessionDate => Dates.iso(serviceLocator<AuthCubit>().businessDay);
 
   Future<void> _loadCards(int req) async {
     try {
@@ -665,6 +676,19 @@ class AdminCubit extends Cubit<AdminState> {
   /// one opened last once the day is shut. Null before any day was opened.
   Future<DaySessionSummary?> currentDaySession() => _repo.currentDaySession();
 
+  /// The Sale Bill Report's session for the date filter on screen — the
+  /// latest opened within it (an open one first). "Today" is the business day,
+  /// so an open session started yesterday is still today's. A server that
+  /// predates the filter answers with its current session regardless, so one
+  /// opened outside the range reads as none rather than the wrong day's.
+  Future<DaySessionSummary?> filteredDaySession() async {
+    final start = state.startDate, end = state.endDate;
+    final found = await _repo.currentDaySession(start: start, end: end);
+    final opened = found == null ? null : DateTime.tryParse(found.openedAt.split(' ').first);
+    if (opened == null || opened.isBefore(start) || opened.isAfter(end)) return null;
+    return found;
+  }
+
   /// A day session's Sale Bill Report figures, for the thermal roll.
   Future<DaySessionReport> daySessionReport(String id) => _repo.daySessionReport(id);
 
@@ -840,7 +864,7 @@ class AdminCubit extends Cubit<AdminState> {
 
   /// Type rides on the item and category requests alone, so it leaves By
   /// Staff's cached rows standing.
-  /// Back to the report the screen opens on: today, ranked by amount, every
+  /// Back to the report the screen opens on: its default day, ranked by amount, every
   /// item type. The breakdown side (By Item / By Category / By Staff) is the
   /// user's place in the report, not a filter, so it stays where it is.
   void resetReportFilters() {
@@ -848,16 +872,16 @@ class AdminCubit extends Cubit<AdminState> {
         state.sortAscending ||
         state.itemProductType != null ||
         state.commissionStaffId != null ||
-        state.rangePreset != 'today';
+        state.rangePreset != defaultRangePreset;
     if (!cleared) return;
     _reportCache.clear();
     _trendKey = null;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final preset = defaultRangePreset;
+    final range = serviceLocator<AuthCubit>().datePresetRange(preset)!;
     emit(state.copyWith(
-      startDate: today,
-      endDate: today,
-      rangePreset: 'today',
+      startDate: range.start,
+      endDate: range.end,
+      rangePreset: preset,
       sortKey: 'amount',
       sortAscending: false,
       clearItemProductType: true,

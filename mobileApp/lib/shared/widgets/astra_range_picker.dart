@@ -13,6 +13,7 @@ Future<DateTimeRange?> showAstraDateRangePicker(
   required DateTime firstDate,
   required DateTime lastDate,
   DateTimeRange? initialDateRange,
+  DateTime? today,
 }) {
   return showDialog<DateTimeRange>(
     context: context,
@@ -21,17 +22,23 @@ Future<DateTimeRange?> showAstraDateRangePicker(
       first: DateUtils.dateOnly(firstDate),
       last: DateUtils.dateOnly(lastDate),
       initial: initialDateRange,
+      today: DateUtils.dateOnly(today ?? DateTime.now()),
     ),
   );
 }
 
 class _RangePickerDialog extends StatefulWidget {
-  const _RangePickerDialog({required this.title, required this.first, required this.last, this.initial});
+  const _RangePickerDialog(
+      {required this.title, required this.first, required this.last, required this.today, this.initial});
 
   final String title;
   final DateTime first;
   final DateTime last;
   final DateTimeRange? initial;
+
+  /// The business day the presets count back from and the grid rings — an
+  /// open day session's date, which can trail the calendar past midnight.
+  final DateTime today;
 
   @override
   State<_RangePickerDialog> createState() => _RangePickerDialogState();
@@ -57,10 +64,9 @@ class _RangePickerDialogState extends State<_RangePickerDialog> {
   DateTime _clamp(DateTime d) =>
       d.isBefore(widget.first) ? widget.first : (d.isAfter(widget.last) ? widget.last : d);
 
-  /// Presets end today — or at [widget.last], should that be earlier.
+  /// Presets end on the business day — or at [widget.last], should that be earlier.
   List<(String, DateTimeRange)> get _presets {
-    final now = DateUtils.dateOnly(DateTime.now());
-    final t = now.isAfter(widget.last) ? widget.last : now;
+    final t = widget.today.isAfter(widget.last) ? widget.last : widget.today;
     DateTimeRange r(DateTime a, DateTime b) => DateTimeRange(start: _clamp(a), end: _clamp(b));
     return [
       ('Today', r(t, t)),
@@ -297,7 +303,7 @@ class _RangePickerDialogState extends State<_RangePickerDialog> {
     final bandRight = inside || (spans && isStart);
     final roundLeft = col == 0 || d.day == 1;
     final roundRight = col == 6 || d.day == lastDay;
-    final today = DateUtils.isSameDay(d, DateTime.now());
+    final today = DateUtils.isSameDay(d, widget.today);
     final band = p.primary.withValues(alpha: p.isDark ? 0.24 : 0.13);
     const r = Radius.circular(18);
 
