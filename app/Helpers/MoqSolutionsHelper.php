@@ -45,7 +45,7 @@ class MoqSolutionsHelper
             $apiLog = ApiLog::create([
                 'endpoint' => $this->endpoint,
                 'method' => 'POST',
-                'service_name' => 'Moq Solutions Sync DayClose Amount',
+                'service_name' => 'Moq DayClose Sync',
                 'request' => json_encode($requestData),
                 'status' => 'pending',
                 'username' => $this->username,

@@ -196,7 +196,7 @@
                                             wire:click="$dispatch('showApiLogDetail', { apiLogId: {{ $item->id }} })">
                                             <i class="fa fa-eye"></i>
                                         </button>
-                                        @if ($item->status === 'failed' && $item->service_name === 'Moq Solutions Sync DayClose Amount')
+                                        @if ($item->status === 'failed' && $item->service_name === 'Moq DayClose Sync')
                                             <button type="button" class="btn btn-outline-warning" title="Retry" wire:click="retryApiCall({{ $item->id }})"
                                                 wire:confirm="Are you sure you want to retry this API call?">
                                                 <i class="fa fa-refresh"></i>
