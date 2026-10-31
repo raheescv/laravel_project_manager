@@ -23,6 +23,8 @@ class MOQSettings extends Component
 
     public $connectionSuccess = false;
 
+    public $canTestConnection = false;
+
     // Sync result
     public $syncResult = '';
 
@@ -39,6 +41,7 @@ class MOQSettings extends Component
     public function mount()
     {
         $this->config = MoqSolutionsHelper::getConfig();
+        $this->canTestConnection = MoqSolutionsHelper::hasSeparateSandbox();
 
         $this->config['endpoint'] = $this->config['endpoint'] ?? '';
         $this->config['endpoint_sandbox'] = $this->config['endpoint_sandbox'] ?? '';
@@ -62,11 +65,14 @@ class MOQSettings extends Component
             if ($result['success']) {
                 $this->connectionSuccess = true;
                 $this->connectionStatus = 'success';
-                $this->connectionMessage = "Connection successful (Status Code: {$result['status_code']})";
+                $this->connectionMessage = "Connection successful (Status Code: {$result['status_code']}, API Log ID: {$result['api_log_id']})";
             } else {
                 $this->connectionSuccess = false;
                 $this->connectionStatus = 'failed';
                 $this->connectionMessage = $result['message'];
+                if (! empty($result['api_log_id'])) {
+                    $this->connectionMessage .= " (API Log ID: {$result['api_log_id']})";
+                }
             }
         } catch (\Exception $e) {
             $this->connectionSuccess = false;

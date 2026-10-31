@@ -35,10 +35,16 @@
                         </div>
 
                         <div class="mt-4">
-                            <button type="button" class="btn btn-outline-info ms-2" wire:click="testConnection">
+                            <button type="button" class="btn btn-outline-info ms-2" wire:click="testConnection" @disabled(! $canTestConnection)>
                                 <i class="demo-psi-refresh me-2"></i>
                                 Test Connection
                             </button>
+                            @unless ($canTestConnection)
+                                <div class="text-warning small mt-2">
+                                    <i class="fa fa-exclamation-triangle"></i>
+                                    Test Connection is disabled because the sandbox endpoint is missing or the same as the live endpoint. A test would post real sales.
+                                </div>
+                            @endunless
                         </div>
                     </div>
                     <div class="card shadow-sm mt-3">

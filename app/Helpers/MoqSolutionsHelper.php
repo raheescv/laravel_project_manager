@@ -119,10 +119,27 @@ class MoqSolutionsHelper
     }
 
     /**
-     * Test API connection
+     * Whether a sandbox endpoint is configured that is not the live endpoint.
+     */
+    public function hasSeparateSandbox(): bool
+    {
+        return ! empty($this->endpoint_sandbox) && rtrim($this->endpoint_sandbox, '/') !== rtrim((string) $this->endpoint, '/');
+    }
+
+    /**
+     * Test API connection against the sandbox endpoint
      */
     public function testConnection()
     {
+        if (! $this->hasSeparateSandbox()) {
+            return [
+                'success' => false,
+                'status_code' => 0,
+                'message' => 'Test connection is disabled: the sandbox endpoint is missing or the same as the live endpoint, so a test would post real sales.',
+                'response' => null,
+            ];
+        }
+
         try {
             $testData = [
                 [
@@ -131,6 +148,18 @@ class MoqSolutionsHelper
                     'Revenue' => 1,
                 ],
             ];
+
+            $apiLog = ApiLog::create([
+                'endpoint' => $this->endpoint_sandbox,
+                'method' => 'POST',
+                'service_name' => 'Moq Test Connection',
+                'request' => json_encode($testData),
+                'status' => 'pending',
+                'username' => $this->username,
+                'token' => $this->token,
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()?->name,
+            ]);
 
             $response = Http::timeout(10)
                 ->withHeaders([
@@ -141,18 +170,33 @@ class MoqSolutionsHelper
                 ])
                 ->post($this->endpoint_sandbox, $testData);
 
+            $apiLog->update([
+                'response' => json_encode($response->json()),
+                'status' => $response->successful() ? 'success' : 'failed',
+                'description' => $response->successful() ? null : 'HTTP '.$response->status(),
+            ]);
+
             return [
                 'success' => $response->successful(),
                 'status_code' => $response->status(),
                 'message' => $response->successful() ? 'Connection successful' : 'Connection failed',
                 'response' => $response->json(),
+                'api_log_id' => $apiLog->id,
             ];
         } catch (\Exception $e) {
+            if (isset($apiLog)) {
+                $apiLog->update([
+                    'status' => 'failed',
+                    'description' => $e->getMessage(),
+                ]);
+            }
+
             return [
                 'success' => false,
                 'status_code' => 0,
                 'message' => 'Connection failed: '.$e->getMessage(),
                 'response' => null,
+                'api_log_id' => $apiLog->id ?? null,
             ];
         }
     }
