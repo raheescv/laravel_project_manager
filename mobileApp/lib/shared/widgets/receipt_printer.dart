@@ -99,12 +99,18 @@ Future<ReceiptPrintResult> _send(
   String title,
   PrinterTarget target,
 ) async {
-  // 1. Direct ESC/POS — the only genuinely zero-tap path, and the only one
-  //    that works silently on Android.
+  // 1. Direct link (ESC/POS, or a PNG for an iMin built-in) — the only
+  //    genuinely zero-tap path, and the only one that works silently on
+  //    Android.
   if (target.isDirect) {
     try {
-      final escpos = await escPosFromPdf(bytes, settings.width);
-      if (await PrinterLink.send(target, escpos)) return ReceiptPrintResult.printed;
+      if (target.transport == PrinterTransport.builtin && await PrinterLink.builtinTakesImage()) {
+        final png = await pngFromPdf(bytes, settings.width);
+        if (await PrinterLink.sendBuiltinImage(png)) return ReceiptPrintResult.printed;
+      } else {
+        final escpos = await escPosFromPdf(bytes, settings.width);
+        if (await PrinterLink.send(target, escpos)) return ReceiptPrintResult.printed;
+      }
       // Printer off, cable out, out of range — fall through to the dialog so
       // the cashier can still get the slip rather than losing it.
     } catch (_) {

@@ -16,6 +16,9 @@
                             if (empty($value)) {
                                 return null;
                             }
+                            if (! is_string($value)) {
+                                return json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                            }
                             $decoded = json_decode($value, true);
                             if (json_last_error() === JSON_ERROR_NONE) {
                                 return json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

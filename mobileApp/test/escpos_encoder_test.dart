@@ -70,6 +70,29 @@ void main() {
     });
   });
 
+  group('thresholdRgba', () {
+    test('turns ink black, paper and transparency white, all opaque', () {
+      final px = _raster(4, 1, {(0, 0), (1, 0)});
+      px[(1 * 4) + 3] = 0; // transparent ink is still paper
+      final out = thresholdRgba([(pixels: px, width: 4, height: 1)], 4, 1);
+      expect(out.sublist(0, 4), [0, 0, 0, 255]);
+      expect(out.sublist(4), everyElement(255));
+    });
+
+    test('stacks pages, clips wide rows and pads narrow ones to the head', () {
+      final wide = _raster(6, 1, {(5, 0)}); // x=5 is off a 4-dot head
+      final narrow = _raster(2, 1, {(1, 0)});
+      final out = thresholdRgba([
+        (pixels: wide, width: 6, height: 1),
+        (pixels: narrow, width: 2, height: 1),
+      ], 4, 2);
+      expect(out.length, 4 * 2 * 4);
+      expect(out.sublist(0, 16), everyElement(255), reason: 'clipped, not wrapped');
+      expect(out.sublist(16 + 4, 16 + 8), [0, 0, 0, 255]);
+      expect(out.sublist(16 + 8), everyElement(255));
+    });
+  });
+
   group('dotsForWidth', () {
     test('matches the printable width of each roll at 203 dpi', () {
       expect(dotsForWidth(PaperWidth.mm80), 576);

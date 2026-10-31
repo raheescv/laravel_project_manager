@@ -65,7 +65,7 @@ void main() {
   test('the toggle is asked of the server, not applied to what came back',
       () async {
     final cubit = ProductListCubit(
-      filters: const ProductFilters(size: '42', spinOnly: true),
+      filters: const ProductFilters(sizes: ['42'], spinOnly: true),
     );
     await cubit.load();
     addTearDown(cubit.close);
@@ -77,7 +77,7 @@ void main() {
   });
 
   test('off, it is not asked at all', () async {
-    final cubit = ProductListCubit(filters: const ProductFilters(size: '42'));
+    final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']));
     await cubit.load();
     addTearDown(cubit.close);
 
@@ -93,7 +93,7 @@ class _Spy implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,

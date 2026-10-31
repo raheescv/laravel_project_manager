@@ -63,6 +63,7 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
         transport: PrinterTransport.fromKey(st.printerTransport),
         address: st.printerUrl ?? '',
         name: st.printerName ?? '',
+        fastTransfer: st.printerFastTransfer,
       ),
       skipInvoice: st.printSkipInvoice ?? false,
     );
@@ -120,12 +121,25 @@ class PrintSettingsCubit extends Cubit<PrintSettingsState> {
     final label = target.name.trim().isEmpty
         ? (address.isEmpty ? target.transport.label : address)
         : target.name.trim();
-    final next = target.copyWith(address: address, name: label);
+    // Re-picking the same printer keeps its transfer speed; a different one
+    // starts from the safe, throttled default.
+    final same = target.transport == state.printer.transport && address == state.printer.address;
+    final next = target.copyWith(
+        address: address, name: label, fastTransfer: same && state.printer.fastTransfer);
     emit(state.copyWith(printer: next));
     await _storage.setPrinter(next.transport.key, next.address, next.name);
+    await _storage.setPrinterFastTransfer(next.fastTransfer);
     // A dialog-only pairing can't print silently, so the "straight back to New
     // Sale" shortcut it enabled no longer has anything to skip ahead from.
     if (!next.isDirect && state.skipInvoice) await setSkipInvoice(false);
+  }
+
+  /// Bluetooth send speed for the paired printer — see
+  /// [PrinterTarget.fastTransfer].
+  Future<void> setFastTransfer(bool v) async {
+    if (v == state.printer.fastTransfer) return;
+    emit(state.copyWith(printer: state.printer.copyWith(fastTransfer: v)));
+    await _storage.setPrinterFastTransfer(v);
   }
 
   /// After a successful auto-print, go straight back to a fresh ticket instead

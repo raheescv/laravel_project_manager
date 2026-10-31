@@ -14,7 +14,7 @@ class FunnelState extends Equatable {
     this.brandsStatus = DataFetchStatus.idle,
     this.sizes = const [],
     this.brands = const [],
-    this.size,
+    this.chosenSizes = const [],
     this.brand,
     this.inStockOnly = true,
     this.errorMessage,
@@ -26,8 +26,21 @@ class FunnelState extends Equatable {
   final List<SizeOption> sizes;
   final List<BrandOption> brands;
 
-  /// The chosen size label, or null when the step was skipped.
-  final String? size;
+  /// The sizes the customer has picked, in the order they appear in the run.
+  /// Empty means every size — nothing narrowed yet, or the step skipped.
+  ///
+  /// A list because people shop for more than one foot: a parent buying for
+  /// two children, or someone between sizes who wants to see both.
+  final List<String> chosenSizes;
+
+  bool isChosen(String size) => chosenSizes.contains(size);
+
+  /// The chosen sizes as one short line — "44 · 43 · 42", and past [max] the
+  /// rest as a count ("44 · 43 · 42 +2") so a crumb never runs off the bar.
+  String chosenSizesLabel({int max = 3}) {
+    if (chosenSizes.length <= max) return chosenSizes.join(' · ');
+    return '${chosenSizes.take(max).join(' · ')} +${chosenSizes.length - max}';
+  }
   final BrandOption? brand;
 
   /// "Only what is on the shelf here", carried across every step rather than
@@ -57,18 +70,23 @@ class FunnelState extends Equatable {
   /// Numeric sizes first, largest to smallest, then the lettered ones. Mixing
   /// "44.5" and "XL" in one comparison has no natural answer, so the two kinds
   /// are kept apart rather than interleaved arbitrarily.
-  static int _bySizeDescending(SizeOption a, SizeOption b) {
-    final x = double.tryParse(a.size);
-    final y = double.tryParse(b.size);
+  static int _bySizeDescending(SizeOption a, SizeOption b) =>
+      compareSizeLabels(a.size, b.size);
+
+  /// [_bySizeDescending] on bare labels, so the chosen sizes can be kept in
+  /// the same order as the run they were picked from.
+  static int compareSizeLabels(String a, String b) {
+    final x = double.tryParse(a);
+    final y = double.tryParse(b);
     if (x != null && y != null) return y.compareTo(x);
     if (x != null) return -1;
     if (y != null) return 1;
-    return a.size.compareTo(b.size);
+    return a.compareTo(b);
   }
 
   /// The furthest step the customer has reached — drives the breadcrumbs.
   FunnelStep get step {
-    if (size == null) return FunnelStep.size;
+    if (chosenSizes.isEmpty) return FunnelStep.size;
     if (brand == null) return FunnelStep.brand;
     return FunnelStep.results;
   }
@@ -78,12 +96,12 @@ class FunnelState extends Equatable {
     DataFetchStatus? brandsStatus,
     List<SizeOption>? sizes,
     List<BrandOption>? brands,
-    String? size,
+    List<String>? chosenSizes,
     BrandOption? brand,
     bool? inStockOnly,
     String? errorMessage,
     bool clearError = false,
-    bool clearSize = false,
+    bool clearSizes = false,
     bool clearBrand = false,
   }) =>
       FunnelState(
@@ -91,7 +109,7 @@ class FunnelState extends Equatable {
         brandsStatus: brandsStatus ?? this.brandsStatus,
         sizes: sizes ?? this.sizes,
         brands: brands ?? this.brands,
-        size: clearSize ? null : (size ?? this.size),
+        chosenSizes: clearSizes ? const [] : (chosenSizes ?? this.chosenSizes),
         brand: clearBrand ? null : (brand ?? this.brand),
         inStockOnly: inStockOnly ?? this.inStockOnly,
         errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
@@ -103,7 +121,7 @@ class FunnelState extends Equatable {
         brandsStatus,
         sizes,
         brands,
-        size,
+        chosenSizes,
         brand,
         inStockOnly,
         errorMessage,

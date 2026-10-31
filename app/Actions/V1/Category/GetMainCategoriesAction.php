@@ -3,6 +3,7 @@
 namespace App\Actions\V1\Category;
 
 use App\Models\Category;
+use App\Support\Storefront\SizeFilter;
 use Illuminate\Support\Collection;
 
 class GetMainCategoriesAction
@@ -18,7 +19,7 @@ class GetMainCategoriesAction
     public function execute(Collection $filters): array
     {
         $type = $filters->get('type');
-        $size = $filters->get('size');
+        $sizes = SizeFilter::from($filters->get('size'), $filters->get('sizes'));
         $branchId = $filters->get('branch_id');
 
         $availableOnly = filter_var(
@@ -27,11 +28,11 @@ class GetMainCategoriesAction
             FILTER_NULL_ON_FAILURE,
         ) ?? false;
 
-        $scope = function ($query) use ($type, $size, $availableOnly, $branchId) {
+        $scope = function ($query) use ($type, $sizes, $availableOnly, $branchId) {
             $query
                 ->whereDoesntHave('brand', fn ($brandQuery) => $brandQuery->where('online_visibility_flag', false))
                 ->when($type, fn ($q, $v) => $q->where('type', $v))
-                ->when($size, fn ($q, $v) => $q->where('size', $v))
+                ->when($sizes, fn ($q, $v) => $q->whereIn('size', $v))
                 ->when($availableOnly, fn ($q) => $q->whereHas('inventories', function ($invQ) use ($branchId) {
                     $invQ->where('quantity', '>', 0)
                         ->when($branchId, fn ($bq, $b) => $bq->where('branch_id', $b));

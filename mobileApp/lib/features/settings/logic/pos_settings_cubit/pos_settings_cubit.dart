@@ -62,7 +62,8 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   }
 
   /// Anything the store hands back that isn't an offered option (an older
-  /// build, a hand-edited pref) falls back to the two-up default.
+  /// build that still offered two-up, a hand-edited pref) falls back to the
+  /// three-up default.
   static int _sanitize(int? v) =>
       PosSettingsState.gridColumnOptions.contains(v)
           ? v!
@@ -79,8 +80,8 @@ class PosSettingsCubit extends Cubit<PosSettingsState> {
   /// `AuthCubit` straight from storage, so it applies from the next unlock.
   bool get askBranchOnUnlock => state.askBranchOnUnlock;
 
-  /// Product tiles across the New Sale grid on a phone. A wider screen still
-  /// fits more — see `_productGrid`.
+  /// Product tiles across the New Sale grid — exactly this many, on a phone
+  /// and a tablet alike.
   int get gridColumns => state.gridColumns;
 
   /// Whether New Sale opens the client form before the catalog, on a ticket

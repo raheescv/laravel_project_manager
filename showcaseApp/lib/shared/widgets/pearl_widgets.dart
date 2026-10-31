@@ -236,10 +236,20 @@ class PearlChip extends StatelessWidget {
     this.height = 54,
     this.labelSize = 15,
     this.labelWeight = FontWeight.w500,
+    this.ticked = false,
   });
 
   final String label;
   final bool selected;
+
+  /// A filled check in the corner, on top of [selected]'s outline.
+  ///
+  /// For runs where more than one plate can be on at once. An outline alone
+  /// reads as "the answer" — one of them — and a customer who has ringed 42
+  /// has no reason to think 43 can be ringed too. A tick is the mark people
+  /// already know means "and this one". Filled, not outlined: it sits over a
+  /// plate of any palette and has to survive the dark theme.
+  final bool ticked;
   final bool available;
   final VoidCallback? onTap;
   final double height;
@@ -254,6 +264,10 @@ class PearlChip extends StatelessWidget {
   /// widget covers a 46pt chip on the product page and a 250pt plate on the
   /// panel without either looking like a scaled photograph of the other.
   double get _radius => (height * .095).clamp(6.0, 24.0);
+
+  double get _tickSize => (height * .2).clamp(16.0, 44.0);
+
+  double get _tickInset => (height * .06).clamp(4.0, 14.0);
 
   double get _borderWidth => selected
       ? (height * .045).clamp(2.0, 4.0)
@@ -323,6 +337,17 @@ class PearlChip extends StatelessWidget {
             if (!available && !selected)
               Positioned.fill(
                 child: CustomPaint(painter: _StrikePainter(p.line)),
+              ),
+            if (ticked)
+              PositionedDirectional(
+                top: _tickInset,
+                end: _tickInset,
+                child: Container(
+                  width: _tickSize,
+                  height: _tickSize,
+                  decoration: BoxDecoration(color: p.accent, shape: BoxShape.circle),
+                  child: Icon(Icons.check, size: _tickSize * .66, color: p.accentInk),
+                ),
               ),
           ],
         ),

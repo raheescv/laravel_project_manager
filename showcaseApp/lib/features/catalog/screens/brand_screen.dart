@@ -111,14 +111,27 @@ class _BrandBody extends StatelessWidget {
     final p = context.pearl;
     final t = L.of(context);
     if (state.brands.isEmpty) {
-      final inSize = state.size == null ? '' : t.inSizeSuffix(state.size!);
+      final sizes = state.chosenSizes;
+      final inSize = switch (sizes.length) {
+        0 => '',
+        1 => t.inSizeSuffix(sizes.single),
+        _ => t.inSizesSuffix(sizes.join(', ')),
+      };
       return MessageState(
-        title: state.size == null ? t.noBrandsHere : t.noBrandsInSize,
+        title: switch (sizes.length) {
+          0 => t.noBrandsHere,
+          1 => t.noBrandsInSize,
+          _ => t.noBrandsInSizes,
+        },
         detail: state.inStockOnly
             ? t.noBrandsInStock(inSize)
             : t.noBrandsAtAll(inSize),
-        actionLabel: state.size == null ? null : t.chooseAnotherSize,
-        onAction: state.size == null ? null : () => reopenFunnelStep(context, FunnelStep.size),
+        actionLabel: switch (sizes.length) {
+          0 => null,
+          1 => t.chooseAnotherSize,
+          _ => t.changeSizes,
+        },
+        onAction: sizes.isEmpty ? null : () => reopenFunnelStep(context, FunnelStep.size),
       );
     }
 

@@ -31,7 +31,7 @@ class ResultsScreen extends StatelessWidget {
       create: (_) => ProductListCubit(
         filters: ProductFilters(
           brandId: funnel.brand?.id,
-          size: funnel.size,
+          sizes: funnel.chosenSizes,
           inStockOnly: funnel.inStockOnly,
         ),
       )
@@ -296,7 +296,7 @@ class _Results extends StatelessWidget {
               ProductFilters(
                 mainCategoryId: state.filters.mainCategoryId,
                 brandId: state.filters.brandId,
-                size: state.filters.size,
+                sizes: state.filters.sizes,
               ),
             ),
       );

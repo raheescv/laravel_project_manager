@@ -4,19 +4,20 @@ import '../models/index.dart';
 /// read path — the funnel, the product page and the store list all come from
 /// the same public catalog API.
 abstract class CatalogRepository {
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly});
+  /// Every `sizes` below is "any of these"; empty means every size.
+  Future<List<CategoryOption>> categories({List<String> sizes, int? branchId, bool inStockOnly});
 
   /// Both size runs for a category, already split into young / adult.
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId});
 
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly});
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes, bool inStockOnly});
 
   Future<List<ColorOption>> colors();
 
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes,
     String? color,
     String? search,
     double? minPrice,

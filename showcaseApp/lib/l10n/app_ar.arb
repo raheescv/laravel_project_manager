@@ -19,7 +19,7 @@
   "stepBrand": "العلامة التجارية",
   "stepResults": "النتائج",
   "choosing": "جارٍ الاختيار…",
-  "anyBrand": "أي علامة",
+  "anyBrand": "كل العلامات",
   "whichSize": "كم مقاسك؟",
   "sizesDidNotLoad": "تعذّر تحميل المقاسات",
   "sizeHintAll": "المقاسات غير المتوفرة مشطوبة — اسأل أحد الموظفين ويمكننا التحقق من الفروع الأخرى.",
@@ -127,7 +127,6 @@
   "textLargest": "الأكبر",
   "allSizes": "كل المقاسات",
   "anySize": "الكل",
-  "anyBrand": "كل العلامات",
   "resetTimer": "إعادة الضبط بعد",
   "resetTimerHint": "عدد الدقائق دون لمس قبل أن تعود الشاشة إلى البداية وتنسى العميل السابق.",
   "minutesUnit": "دقيقة",
@@ -142,5 +141,12 @@
         "type": "int"
       }
     }
-  }
+  },
+  "stepSizes": "المقاسات",
+  "sizeHintMulti": "اختر مقاساً أو أكثر — اضغط المقاس مرة أخرى لإلغائه.",
+  "continueWithSizes": "{count, plural, =1{متابعة بمقاس واحد} =2{متابعة بمقاسين} few{متابعة بـ {count} مقاسات} other{متابعة بـ {count} مقاس}}",
+  "clearSizes": "مسح",
+  "noBrandsInSizes": "لا توجد علامات بهذه المقاسات",
+  "inSizesSuffix": " في المقاسات {sizes}",
+  "changeSizes": "غيّر المقاسات"
 }

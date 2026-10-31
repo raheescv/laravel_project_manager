@@ -549,7 +549,14 @@ class LocalStorageService {
     await _prefs.remove(LocalStorageKeys.printerTransport);
     await _prefs.remove(LocalStorageKeys.printerUrl);
     await _prefs.remove(LocalStorageKeys.printerName);
+    await _prefs.remove(LocalStorageKeys.printerFastTransfer);
   }
+
+  // Bluetooth send speed for the paired printer — see PrinterTarget.fastTransfer.
+  bool get printerFastTransfer =>
+      _prefs.getBool(LocalStorageKeys.printerFastTransfer) ?? false;
+  Future<void> setPrinterFastTransfer(bool v) =>
+      _prefs.setBool(LocalStorageKeys.printerFastTransfer, v);
 
   bool? get printSkipInvoice =>
       _prefs.containsKey(LocalStorageKeys.printSkipInvoice)

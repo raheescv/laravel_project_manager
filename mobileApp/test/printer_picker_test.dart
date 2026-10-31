@@ -125,6 +125,44 @@ void main() {
         reason: 'nothing prints silently any more, so there is nothing to skip');
   });
 
+  testWidgets('Fast transfer is a Bluetooth printer setting that persists',
+      (tester) async {
+    const inner = PrinterTarget(
+        transport: PrinterTransport.bluetooth, address: 'AA:BB:CC:DD:EE:FF', name: 'InnerPrinter');
+    await h.printSettings.setPrinter(inner);
+
+    await tester.pumpWidget(h.wrap(const PrintSettingsScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Fast transfer'), findsOneWidget);
+    expect(h.printSettings.printer.fastTransfer, isFalse,
+        reason: 'a fresh pairing starts on the safe, throttled default');
+
+    await h.printSettings.setFastTransfer(true);
+    expect(h.storage.printerFastTransfer, isTrue);
+    final restored = PrintSettingsCubit();
+    expect(restored.printer.fastTransfer, isTrue);
+    await restored.close();
+
+    // Re-picking the same printer keeps it; a different printer starts over.
+    await h.printSettings.setPrinter(inner);
+    expect(h.printSettings.printer.fastTransfer, isTrue);
+    await h.printSettings.setPrinter(const PrinterTarget(
+        transport: PrinterTransport.bluetooth, address: '11:22:33:44:55:66', name: 'Desk'));
+    expect(h.printSettings.printer.fastTransfer, isFalse);
+
+    await h.printSettings.setPrinter(null);
+    expect(h.storage.printerFastTransfer, isFalse);
+  });
+
+  testWidgets('Fast transfer is not offered for non-Bluetooth printers',
+      (tester) async {
+    await h.printSettings.setPrinter(const PrinterTarget(
+        transport: PrinterTransport.network, address: '192.168.1.50:9100', name: 'Till'));
+    await tester.pumpWidget(h.wrap(const PrintSettingsScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Fast transfer'), findsNothing);
+  });
+
   testWidgets('a pairing saved before transports existed reads as the dialog',
       (tester) async {
     // The old build stored a URL and a name with no transport key.

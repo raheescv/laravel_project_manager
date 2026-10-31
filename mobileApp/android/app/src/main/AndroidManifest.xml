@@ -79,6 +79,7 @@
              service is invisible to queryIntentServices and bindService, so an
              all-in-one POS terminal would report "no built-in printer". -->
         <package android:name="woyou.aidlservice.jiuiv5" />
+        <package android:name="com.imin.printerPlugin" />
         <!-- WhatsApp / WhatsApp Business, so FilesPlugin can tell whether a
              report PDF can go straight to a chat or needs the share sheet. -->
         <package android:name="com.whatsapp" />

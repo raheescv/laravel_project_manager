@@ -86,7 +86,7 @@ void main() {
     test('the swatches do not put the loaded page back to a skeleton', () async {
       final repo = _OutOfOrder();
       useRepo(repo);
-      final cubit = ProductListCubit(filters: const ProductFilters(size: '42'))
+      final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']))
         ..load()
         ..loadColors();
       await pumpEventQueue();
@@ -112,7 +112,7 @@ void main() {
     test('the departments do not put it back either', () async {
       final repo = _OutOfOrder();
       useRepo(repo);
-      final cubit = ProductListCubit(filters: const ProductFilters(size: '42'))
+      final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']))
         ..load()
         ..loadCategories();
       await pumpEventQueue();
@@ -156,7 +156,7 @@ class _OutOfOrder implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -174,7 +174,7 @@ class _OutOfOrder implements CatalogRepository {
   Future<List<ColorOption>> colors() => _colorsC.future;
 
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) =>
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) =>
       _categoriesC.future;
 
   @override
@@ -182,7 +182,7 @@ class _OutOfOrder implements CatalogRepository {
   @override
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async => const [];
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async =>
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async =>
       const [];
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
@@ -203,9 +203,9 @@ class _Throws implements CatalogRepository {
   @override
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async => _fail();
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async => _fail();
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async => _fail();
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async => _fail();
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async => _fail();
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

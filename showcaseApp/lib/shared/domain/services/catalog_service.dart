@@ -12,14 +12,14 @@ class CatalogService implements CatalogRepository {
 
   @override
   Future<List<CategoryOption>> categories({
-    String? size,
+    List<String> sizes = const [],
     int? branchId,
     bool inStockOnly = true,
   }) async {
     // Scoped the same way /brands and /sizes are: the funnel asks for a size
     // first, so a category's count has to mean "in that size", not "in total".
     final data = await _http.get(EndPoints.categories, query: {
-      if (size != null && size.isNotEmpty) 'size': size,
+      ..._sizesQuery(sizes),
       if (branchId != null) 'branch_id': branchId,
       'available_products_only': inStockOnly,
     });
@@ -54,12 +54,12 @@ class CatalogService implements CatalogRepository {
   @override
   Future<List<BrandOption>> brands({
     int? mainCategoryId,
-    String? size,
+    List<String> sizes = const [],
     bool inStockOnly = true,
   }) async {
     final data = await _http.get(EndPoints.brands, query: {
       if (mainCategoryId != null) 'main_category_id': mainCategoryId,
-      if (size != null && size.isNotEmpty) 'size': size,
+      ..._sizesQuery(sizes),
       'available_products_only': inStockOnly,
     });
     return asMapList(data).map(BrandOption.fromJson).toList(growable: false);
@@ -78,7 +78,7 @@ class CatalogService implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -93,7 +93,7 @@ class CatalogService implements CatalogRepository {
     final data = await _http.get(EndPoints.products, query: {
       if (mainCategoryId != null) 'main_category_id': mainCategoryId,
       if (brandId != null) 'brand_id': brandId,
-      if (size != null && size.isNotEmpty) 'size': size,
+      ..._sizesQuery(sizes),
       if (color != null && color.isNotEmpty) 'color': color,
       if (search != null && search.isNotEmpty) 'search': search,
       if (minPrice != null) 'min_price': minPrice,
@@ -115,6 +115,15 @@ class CatalogService implements CatalogRepository {
     });
     return Paginated.from(data, Product.fromJson);
   }
+
+  /// The chosen sizes as `sizes[0]=42&sizes[1]=43`.
+  ///
+  /// Indexed keys rather than a Dart list: Dio's default list encoding repeats
+  /// a bare `sizes=` key, and PHP keeps only the last of those — the grid would
+  /// quietly answer for one size out of three.
+  static Map<String, String> _sizesQuery(List<String> sizes) => {
+        for (final (i, size) in sizes.indexed) 'sizes[$i]': size,
+      };
 
   @override
   Future<Product> product(int id) async {

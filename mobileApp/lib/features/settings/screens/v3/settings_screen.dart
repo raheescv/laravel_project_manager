@@ -278,17 +278,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 11),
           _tipCard(context),
           const SizedBox(height: 11),
-          // Category display *is* here, unlike "Products per row" below: the
-          // rail is drawn the same way on both, and its height costs a tablet
-          // exactly what it costs a phone.
+          // The grid lays out exactly the count chosen on a tablet too, so a
+          // till sets its density here rather than inheriting one from width.
+          _gridColumnsCard(context),
+          const SizedBox(height: 11),
           _categoryDisplayCard(context),
           const SizedBox(height: 11),
           _productOrderCard(context),
           const SizedBox(height: 11),
-          // "Products per row" is deliberately absent here — see the phone list.
-          // A tablet takes its column count from the width the catalog is given,
-          // and the preference is only ever a floor, so a picker on this screen
-          // would set a number the grid then overrides.
           // Same card the phone list shows: it carries the lock chip and the
           // auto-print caveat, which a bare toggle row here did not.
           _lockAfterSaleCard(context),
@@ -997,7 +994,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// How densely New Sale lays the catalog out. A shop whose products carry no
-  /// photos wants three or four across; two-up is for a catalog of images.
+  /// photos wants four or five across; three-up is for a catalog of images.
   /// Applies on tap — there's nothing to confirm.
   Widget _gridColumnsCard(BuildContext context) {
     final p = context.astra;

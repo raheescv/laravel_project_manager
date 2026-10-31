@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:printing/printing.dart';
 
@@ -45,9 +47,7 @@ Future<Uint8List> escPosFromPdf(
   int feedLines = 4,
 }) async {
   final dots = dotsForWidth(width);
-  // Pick the dpi that maps the roll's full page width onto exactly the head's
-  // printable dots, so the receipt fills the paper and never clips.
-  final dpi = dots / (_pageMm(width) / 25.4);
+  final dpi = _dpiFor(width);
 
   final out = BytesBuilder();
   out.add(const [0x1B, 0x40]); // ESC @   — initialise, clear any leftover style
@@ -60,6 +60,59 @@ Future<Uint8List> escPosFromPdf(
   if (feedLines > 0) out.add([0x1B, 0x64, feedLines & 0xFF]); // ESC d n
   if (cut) out.add(const [0x1D, 0x56, 0x42, 0x00]); // GS V 66 0 — partial cut
   return out.toBytes();
+}
+
+/// The dpi that maps the roll's full page width onto exactly the head's
+/// printable dots, so the receipt fills the paper and never clips.
+double _dpiFor(PaperWidth width) => dotsForWidth(width) / (_pageMm(width) / 25.4);
+
+/// True when the RGBA pixel at byte offset [i] should burn a dot. Anything
+/// see-through is paper — the PDF page has no background.
+bool _isInk(Uint8List rgba, int i) {
+  if (rgba[i + 3] < 128) return false;
+  final lum = (rgba[i] * 299 + rgba[i + 1] * 587 + rgba[i + 2] * 114) ~/ 1000;
+  return lum <= _blackAt;
+}
+
+/// Renders [pdf] to a pure black-and-white PNG at the head's dot width, for
+/// terminals whose printer service takes an image instead of ESC/POS (iMin).
+/// Thresholded here, with the same cut-off as the ESC/POS path, so the
+/// service never has to grey-scale or dither the slip itself.
+Future<Uint8List> pngFromPdf(Uint8List pdf, PaperWidth width) async {
+  final dots = dotsForWidth(width);
+  final pages = <({Uint8List pixels, int width, int height})>[];
+  await for (final page in Printing.raster(pdf, dpi: _dpiFor(width))) {
+    pages.add((pixels: page.pixels, width: page.width, height: page.height));
+  }
+  final height = pages.fold<int>(0, (h, p) => h + p.height);
+  final mono = thresholdRgba(pages, dots, height);
+  final completer = Completer<ui.Image>();
+  ui.decodeImageFromPixels(mono, dots, height, ui.PixelFormat.rgba8888, completer.complete);
+  final image = await completer.future;
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  return png!.buffer.asUint8List();
+}
+
+/// Stacks [pages] into one opaque [dots]-wide RGBA buffer of pure black and
+/// white. Rows wider than [dots] are clipped, narrower ones padded with paper.
+Uint8List thresholdRgba(
+    List<({Uint8List pixels, int width, int height})> pages, int dots, int height) {
+  final out = Uint8List(dots * height * 4)..fillRange(0, dots * height * 4, 0xFF);
+  var row = 0;
+  for (final page in pages) {
+    final limit = page.width < dots ? page.width : dots;
+    for (var y = 0; y < page.height; y++, row++) {
+      for (var x = 0; x < limit; x++) {
+        if (!_isInk(page.pixels, (y * page.width + x) * 4)) continue;
+        final o = (row * dots + x) * 4;
+        out[o] = 0;
+        out[o + 1] = 0;
+        out[o + 2] = 0;
+      }
+    }
+  }
+  return out;
 }
 
 /// Packs an RGBA raster into `GS v 0` raster-bitmap bands, thresholding to
@@ -77,11 +130,7 @@ Uint8List rasterToEscPos(Uint8List rgba, int srcW, int srcH, int dots) {
       final srcRow = (y0 + y) * srcW;
       final dstRow = y * bytesPerRow;
       for (var x = 0; x < limit; x++) {
-        final i = (srcRow + x) * 4;
-        // Anything see-through is paper — the PDF page has no background.
-        if (rgba[i + 3] < 128) continue;
-        final lum = (rgba[i] * 299 + rgba[i + 1] * 587 + rgba[i + 2] * 114) ~/ 1000;
-        if (lum <= _blackAt) data[dstRow + (x >> 3)] |= 0x80 >> (x & 7);
+        if (_isInk(rgba, (srcRow + x) * 4)) data[dstRow + (x >> 3)] |= 0x80 >> (x & 7);
       }
     }
     out.add([

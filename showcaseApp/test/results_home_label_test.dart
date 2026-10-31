@@ -118,7 +118,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.state.uri.path, Routes.size);
-    expect(funnel.state.size, isNull);
+    expect(funnel.state.chosenSizes, isEmpty);
     expect(funnel.state.brand, isNull);
     expect(router.canPop(), isFalse);
   });
@@ -191,10 +191,10 @@ class _Stub implements CatalogRepository {
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async =>
       const [SizeOption(size: '42', group: SizeGroup.adult, stockTotal: 4, inStock: true)];
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async =>
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async =>
       const [];
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async =>
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async =>
       const [BrandOption(id: 7, name: 'Hoka', productCount: 13)];
   @override
   Future<List<ColorOption>> colors() async => const [];
@@ -202,7 +202,7 @@ class _Stub implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,

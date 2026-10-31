@@ -11,7 +11,7 @@ import 'package:showcase/shared/widgets/chrome/funnel_breadcrumbs.dart';
 /// customer has ever read.
 void main() {
   const state = FunnelState(
-    size: '43.5',
+    chosenSizes: ['43.5'],
     brand: BrandOption(id: 1, name: 'New Balance', productCount: 9),
   );
 

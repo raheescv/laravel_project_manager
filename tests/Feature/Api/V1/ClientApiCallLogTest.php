@@ -1,6 +1,8 @@
 <?php
 
+use App\Livewire\ApiLog\DetailModal;
 use App\Models\ApiLog;
+use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
@@ -49,4 +51,29 @@ it('does not log calls without an app name', function (): void {
     $this->getJson($this->world->url('/api/v1/branches'))->assertSuccessful();
 
     expect(ApiLog::query()->count())->toBe($before);
+});
+
+it('shows array and JSON-string payloads in the detail modal', function (): void {
+    $arrayLog = ApiLog::query()->create([
+        'tenant_id' => $this->world->tenant->id,
+        'endpoint' => 'api/v1/branches',
+        'method' => 'GET',
+        'request' => ['foo' => 'bar'],
+        'response' => ['message' => 'array-response'],
+        'status' => 'failed',
+    ]);
+    $stringLog = ApiLog::query()->create([
+        'tenant_id' => $this->world->tenant->id,
+        'endpoint' => 'day-close',
+        'method' => 'POST',
+        'request' => json_encode(['amount' => 'string-request']),
+        'status' => 'success',
+    ]);
+
+    Livewire::actingAs($this->world->user)
+        ->test(DetailModal::class)
+        ->call('showDetail', $arrayLog->id)
+        ->assertSee('array-response')
+        ->call('showDetail', $stringLog->id)
+        ->assertSee('string-request');
 });

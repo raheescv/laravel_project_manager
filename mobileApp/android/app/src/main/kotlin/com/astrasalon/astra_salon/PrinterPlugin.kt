@@ -22,6 +22,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.Parcel
 import android.util.Log
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -39,7 +40,8 @@ import woyou.aidlservice.jiuiv5.IWoyouService
  * till can never auto-print through it. This channel is the way around that:
  * Dart rasterises the receipt to ESC/POS (see `escpos.dart`) and hands the raw
  * bytes to whichever link the till is paired with — a Bluetooth SPP socket, a
- * USB bulk endpoint, or the SUNMI inner-printer service. Nothing here shows UI.
+ * USB bulk endpoint, or the SUNMI inner-printer service. iMin terminals take a
+ * PNG through their own print service instead. Nothing here shows UI.
  *
  * Wi-Fi/LAN printing needs no native code and lives in Dart.
  *
@@ -60,6 +62,19 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         private const val SUNMI_PACKAGE = "woyou.aidlservice.jiuiv5"
         private const val SUNMI_ACTION = "woyou.aidlservice.jiuiv5.IWoyouService"
 
+        /**
+         * The iMin inner-printer service. Its interface has exactly one method,
+         * `int printImage(in byte[] png, double contrast)`, so it is driven with
+         * a raw binder transaction rather than a vendored AIDL. The service
+         * decodes the PNG, fits it to the 576-dot head and prints it through
+         * iMin's own bitmap routine — the path its system print plugin uses.
+         * `contrast` is only logged by the service.
+         */
+        private const val IMIN_PACKAGE = "com.imin.printerPlugin"
+        private const val IMIN_ACTION = "com.imin.printerPlugin.AidlPrintService"
+        private const val IMIN_DESCRIPTOR = "com.imin.printerPlugin.IminPrintService"
+        private const val IMIN_PRINT_IMAGE = IBinder.FIRST_CALL_TRANSACTION
+
         private const val USB_PERMISSION_ACTION = "com.astrasalon.invo.USB_PERMISSION"
 
         /**
@@ -70,6 +85,14 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         private const val BT_CHUNK = 512
         private const val BT_CHUNK_PAUSE_MS = 12L
         private const val USB_CHUNK = 8192
+
+        /**
+         * Chunk size when the till's printer settings ask for a fast transfer —
+         * a terminal's own virtual "InnerPrinter" bridge has no radio behind
+         * it, and throttling only starves the head: it stops and restarts
+         * between chunks, printing doubled rows and white seams on the slip.
+         */
+        private const val BT_FAST_CHUNK = 16384
     }
 
     private val io = Executors.newSingleThreadExecutor()
@@ -104,6 +127,24 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         override fun onPrintResult(code: Int, msg: String?) {}
     }
 
+    // ---- built-in (iMin) service binding ---------------------------------
+
+    @Volatile
+    private var imin: IBinder? = null
+    private var iminBound = false
+    private var iminLatch: CountDownLatch? = null
+
+    private val iminConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            imin = service
+            synchronized(bindLock) { iminLatch?.countDown() }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            imin = null
+        }
+    }
+
     fun dispose() {
         synchronized(bindLock) {
             if (bound) {
@@ -114,8 +155,17 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
                 bound = false
                 bindLatch = null
             }
+            if (iminBound) {
+                try {
+                    context.unbindService(iminConnection)
+                } catch (_: Throwable) {
+                }
+                iminBound = false
+                iminLatch = null
+            }
         }
         sunmi = null
+        imin = null
         io.shutdown()
     }
 
@@ -127,18 +177,26 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
                 mapOf(
                     "bluetooth" to (bluetoothAdapter() != null),
                     "usb" to context.packageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST),
-                    "builtin" to hasSunmiService(),
+                    "builtin" to (hasSunmiService() || hasIminService()),
+                    // SUNMI takes raw ESC/POS; only an iMin-only terminal
+                    // needs the receipt as an image.
+                    "builtinImage" to (!hasSunmiService() && hasIminService()),
                 )
             }
             "btDevices" -> reply(result) { bondedPrinters() }
             "btPrint" -> reply(result) {
-                printBluetooth(call.argument<String>("address"), call.argument<ByteArray>("data"))
+                printBluetooth(
+                    call.argument<String>("address"),
+                    call.argument<ByteArray>("data"),
+                    call.argument<Boolean>("fast") == true,
+                )
             }
             "usbDevices" -> reply(result) { usbDevices() }
             "usbPrint" -> reply(result) {
                 printUsb(call.argument<String>("address"), call.argument<ByteArray>("data"))
             }
             "builtinPrint" -> reply(result) { printBuiltIn(call.argument<ByteArray>("data")) }
+            "builtinPrintImage" -> reply(result) { printIminImage(call.argument<ByteArray>("png")) }
             else -> result.notImplemented()
         }
     }
@@ -204,7 +262,7 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         false
     }
 
-    private fun printBluetooth(address: String?, data: ByteArray?): Boolean {
+    private fun printBluetooth(address: String?, data: ByteArray?, fast: Boolean): Boolean {
         if (address.isNullOrBlank() || data == null || data.isEmpty()) return false
         val adapter = bluetoothAdapter() ?: return false
         val device = try {
@@ -237,14 +295,15 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
                 socket.connect()
             }
 
+            val chunk = if (fast) BT_FAST_CHUNK else BT_CHUNK
             val out = socket.outputStream
             var offset = 0
             while (offset < data.size) {
-                val len = minOf(BT_CHUNK, data.size - offset)
+                val len = minOf(chunk, data.size - offset)
                 out.write(data, offset, len)
                 out.flush()
                 offset += len
-                if (offset < data.size) Thread.sleep(BT_CHUNK_PAUSE_MS)
+                if (!fast && offset < data.size) Thread.sleep(BT_CHUNK_PAUSE_MS)
             }
             // Closing the socket the instant the last byte is queued truncates
             // the receipt on printers that buffer; give the head time to drain.
@@ -458,5 +517,64 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         }
         latch.await(5, TimeUnit.SECONDS)
         return sunmi
+    }
+
+    // ---- built-in printer (iMin) -----------------------------------------
+
+    private fun iminIntent(): Intent = Intent(IMIN_ACTION).setPackage(IMIN_PACKAGE)
+
+    private fun hasIminService(): Boolean = try {
+        context.packageManager.queryIntentServices(iminIntent(), 0).isNotEmpty()
+    } catch (_: Throwable) {
+        false
+    }
+
+    private fun printIminImage(png: ByteArray?): Boolean {
+        if (png == null || png.isEmpty()) return false
+        val service = awaitIminService() ?: return false
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
+        return try {
+            data.writeInterfaceToken(IMIN_DESCRIPTOR)
+            data.writeByteArray(png)
+            data.writeDouble(1.0)
+            service.transact(IMIN_PRINT_IMAGE, data, reply, 0)
+            reply.readException()
+            reply.readInt()
+            true
+        } catch (t: Throwable) {
+            Log.w(TAG, "iMin print failed", t)
+            imin = null
+            false
+        } finally {
+            data.recycle()
+            reply.recycle()
+        }
+    }
+
+    /** Same keep-alive binding as [awaitSunmiService], for the iMin service. */
+    private fun awaitIminService(): IBinder? {
+        imin?.let { return it }
+        val latch: CountDownLatch
+        synchronized(bindLock) {
+            imin?.let { return it }
+            if (!iminBound) {
+                if (!hasIminService()) return null
+                iminLatch = CountDownLatch(1)
+                iminBound = try {
+                    context.bindService(iminIntent(), iminConnection, Context.BIND_AUTO_CREATE)
+                } catch (t: Throwable) {
+                    Log.w(TAG, "cannot bind iMin printer", t)
+                    false
+                }
+                if (!iminBound) {
+                    iminLatch = null
+                    return null
+                }
+            }
+            latch = iminLatch ?: return imin
+        }
+        latch.await(5, TimeUnit.SECONDS)
+        return imin
     }
 }

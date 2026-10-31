@@ -38,12 +38,12 @@ void main() {
     final funnel = FunnelCubit();
     await funnel.chooseSize('42');
     funnel.chooseBrand(const BrandOption(id: 7, name: 'Hoka', productCount: 13));
-    expect(funnel.state.size, '42');
+    expect(funnel.state.chosenSizes, ['42']);
     expect(funnel.state.brand, isNotNull);
 
     await funnel.resetForNextCustomer();
 
-    expect(funnel.state.size, isNull);
+    expect(funnel.state.chosenSizes, isEmpty);
     expect(funnel.state.brand, isNull);
     expect(funnel.state.brands, isEmpty);
   });
@@ -97,9 +97,9 @@ class _Stub implements CatalogRepository {
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async =>
       const [SizeOption(size: '42', group: SizeGroup.adult, stockTotal: 4, inStock: true)];
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async => const [];
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async => const [];
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async =>
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async =>
       const [BrandOption(id: 7, name: 'Hoka', productCount: 13)];
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);

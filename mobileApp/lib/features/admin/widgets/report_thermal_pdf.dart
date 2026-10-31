@@ -517,9 +517,12 @@ List<pw.Widget> _commission(ReportExport d, ReportPdfBrand b, _Roll r) {
 }
 
 // ---- building blocks -------------------------------------------------------
+//
+// No wide solid-black fills: a thermal head can only heat so many dots on one
+// line, and a near-full-width black band starves it — the band prints faint
+// and speckled. Emphasis comes from heavy rules, outlines and bold type.
 
 const _black = PdfColors.black;
-const _white = PdfColors.white;
 
 final _arabic = RegExp(r'[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]');
 
@@ -562,16 +565,21 @@ pw.Widget _rule(_Roll r, {bool solid = false}) => pw.Padding(
       ),
     );
 
-/// A section head: white on a black band, with an optional note at the right.
+/// A section head: bold title between a heavy rule and a thin one, with an
+/// optional note at the right.
 pw.Widget _band(String title, _Roll r, {String? note}) => pw.Container(
       margin: pw.EdgeInsets.only(top: r.s(11), bottom: r.s(5)),
-      padding: pw.EdgeInsets.symmetric(horizontal: r.s(5), vertical: r.s(2.5)),
-      color: _black,
+      padding: pw.EdgeInsets.symmetric(horizontal: r.s(1), vertical: r.s(2.5)),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          top: pw.BorderSide(color: _black, width: 2),
+          bottom: pw.BorderSide(color: _black, width: 0.8),
+        ),
+      ),
       child: pw.Row(
         children: [
-          pw.Expanded(child: _t(title, r.s(8.4), bold: true, color: _white, letterSpacing: 0.8)),
-          // Bold: thin white-on-black type loses its strokes at the head.
-          if (note != null) _t(note, r.s(7), bold: true, color: _white),
+          pw.Expanded(child: _t(title, r.s(8.6), bold: true, letterSpacing: 0.8)),
+          if (note != null) _t(note, r.s(7), bold: true),
         ],
       ),
     );
@@ -658,7 +666,8 @@ pw.Widget _tiles(List<(String, String)> tiles, _Roll r) => pw.Row(
       ],
     );
 
-/// A percentage as an outlined bar filled in black.
+/// A percentage as a thin outlined bar filled in black — kept shallow so the
+/// solid run stays a few dot rows, not a band.
 pw.Widget _rate(String label, double pct, _Roll r) {
   final filled = (pct.clamp(0, 100) * 10).round();
   return pw.Column(
@@ -672,8 +681,8 @@ pw.Widget _rate(String label, double pct, _Roll r) {
       ),
       pw.SizedBox(height: r.s(2)),
       pw.Container(
-        height: r.s(6),
-        padding: const pw.EdgeInsets.all(1),
+        height: r.s(3.6),
+        padding: const pw.EdgeInsets.all(0.8),
         decoration: pw.BoxDecoration(border: pw.Border.all(color: _black, width: 0.7)),
         child: pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -695,8 +704,8 @@ class _Col {
 }
 
 /// A roll table: ruled header, dotted row lines, a ruled total row. Text
-/// columns wrap; figure columns shrink to fit. [highlight] rows print white on
-/// black.
+/// columns wrap; figure columns shrink to fit. [highlight] rows print bold in
+/// a heavy outline.
 pw.Widget _table(
   _Roll r,
   List<_Col> cols,
@@ -704,9 +713,8 @@ pw.Widget _table(
   List<String>? total,
   Set<int> highlight = const {},
 }) {
-  pw.Widget cell(String text, _Col col, {bool bold = false, bool inverted = false, double? size}) {
-    final t = _t(text, size ?? r.s(7.4),
-        bold: bold, color: inverted ? _white : _black, align: col.right ? pw.TextAlign.right : null);
+  pw.Widget cell(String text, _Col col, {bool bold = false, double? size}) {
+    final t = _t(text, size ?? r.s(7.4), bold: bold, align: col.right ? pw.TextAlign.right : null);
     return pw.Container(
       alignment: col.right ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
       padding: pw.EdgeInsets.symmetric(horizontal: r.s(1.8), vertical: r.s(1.8)),
@@ -729,10 +737,11 @@ pw.Widget _table(
       ),
       for (var i = 0; i < rows.length; i++)
         pw.TableRow(
-          decoration: highlight.contains(i) ? const pw.BoxDecoration(color: _black) : null,
+          decoration: highlight.contains(i)
+              ? pw.BoxDecoration(border: pw.Border.all(color: _black, width: 1.4))
+              : null,
           children: [
-            for (var c = 0; c < cols.length; c++)
-              cell(rows[i][c], cols[c], bold: highlight.contains(i), inverted: highlight.contains(i)),
+            for (var c = 0; c < cols.length; c++) cell(rows[i][c], cols[c], bold: highlight.contains(i)),
           ],
         ),
       if (total != null)

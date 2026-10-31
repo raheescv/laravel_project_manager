@@ -6,21 +6,16 @@ part of 'new_sale_screen.dart';
 
 extension _CatalogViews on _NewSaleScreenState {
   /// Boutique tile grid. How many tiles fit across is the till's own choice
-  /// (Settings → Catalog grid, two-up by default) — a catalog carrying no
-  /// photos reads better three or four up, where a tile is just a name and a
-  /// price. A screen wide enough for more than the preference asks for still
-  /// gets more, so a tablet is never left with two enormous tiles.
+  /// (Settings → Products per row, three-up by default) — a catalog carrying no
+  /// photos reads better four or five up, where a tile is just a name and a
+  /// price. The count is exact on every screen, a tablet included — the tile
+  /// chrome scales to whatever width that leaves.
   /// Lazily built so long catalogs stay smooth as pages stream in.
-  Widget _productGrid(CatalogCubit cat, int preferredCols, {bool tablet = false}) => SliverPadding(
+  Widget _productGrid(CatalogCubit cat, int cols, {bool tablet = false}) => SliverPadding(
         padding: EdgeInsets.fromLTRB(tablet ? 14 : 16, 4, tablet ? 14 : 16, 16),
         sliver: SliverLayoutBuilder(
           builder: (context, constraints) {
             const gap = 13.0;
-            // A tablet is held further away and has the room, so tiles pack a
-            // little tighter there — 200pt apiece leaves a wide grid emptier
-            // than it needs to be.
-            final fits = (constraints.crossAxisExtent / (tablet ? 176 : 200)).floor();
-            final cols = (fits > preferredCols ? fits : preferredCols).clamp(2, 6);
             // Actual painted tile width, so the photo is decoded to the size it
             // is drawn at rather than at full source resolution — and so the
             // tile's own chrome can shrink along with it.
@@ -764,8 +759,10 @@ class _TileScale {
     required this.icon,
   });
 
-  /// Roomy above ~150px (two-up on a phone, and most tablet grids), trimmed
-  /// through the middle band, stripped back to a name under ~108px.
+  /// Roomy above ~150px (most tablet grids), trimmed through the middle band
+  /// (three-up on a phone), stripped back to a name under ~108px, and packed
+  /// tight under ~80px (five-up on a phone) — where the name keeps two lines,
+  /// because at that width one line holds barely a word.
   factory _TileScale.forWidth(double w) {
     if (w >= 150) {
       return const _TileScale._(
@@ -779,10 +776,16 @@ class _TileScale {
           name: 11.5, nameLines: 2, meta: 9.5, currency: 9, price: 13,
           inset: 6, pillH: 7, pillV: 4, badge: 20, icon: 32);
     }
+    if (w >= 80) {
+      return const _TileScale._(
+          padH: 8, padTop: 7, padBottom: 9, radius: 13,
+          name: 10.5, nameLines: 1, meta: 0, currency: 8, price: 11.5,
+          inset: 5, pillH: 5, pillV: 3, badge: 17, icon: 24);
+    }
     return const _TileScale._(
-        padH: 8, padTop: 7, padBottom: 9, radius: 13,
-        name: 10.5, nameLines: 1, meta: 0, currency: 8, price: 11.5,
-        inset: 5, pillH: 5, pillV: 3, badge: 17, icon: 24);
+        padH: 6, padTop: 5, padBottom: 7, radius: 11,
+        name: 9.5, nameLines: 2, meta: 0, currency: 7, price: 10,
+        inset: 4, pillH: 4, pillV: 2, badge: 15, icon: 20);
   }
 
   final double padH, padTop, padBottom, radius, name, meta, currency, price;

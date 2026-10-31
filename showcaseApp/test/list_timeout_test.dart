@@ -38,7 +38,7 @@ void main() {
 
   test('a request that never answers ends in a visible failure', () {
     fakeAsync((async) {
-      final cubit = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+      final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
       async.flushMicrotasks();
       expect(cubit.state.status, DataFetchStatus.waiting);
 
@@ -55,7 +55,7 @@ void main() {
 
   test('the screen can be retried after it gives up', () {
     fakeAsync((async) {
-      final cubit = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+      final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
       async.elapse(const Duration(seconds: 11));
       expect(cubit.state.status, DataFetchStatus.failed);
 
@@ -73,7 +73,7 @@ class _NeverAnswers implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -92,11 +92,11 @@ class _NeverAnswers implements CatalogRepository {
   @override
   Future<List<ColorOption>> colors() async => const [];
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async => const [];
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async => const [];
   @override
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async => const [];
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async => const [];
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async => const [];
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

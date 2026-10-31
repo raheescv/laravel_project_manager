@@ -24,6 +24,8 @@ class GetBrandsRequest extends FormRequest
         return [
             'query' => ['nullable', 'string', 'max:50'],
             'size' => ['nullable'],
+            'sizes' => ['nullable', 'array', 'max:50'],
+            'sizes.*' => ['string', 'max:50'],
             'main_category_id' => ['nullable'],
             'sub_category_id' => ['nullable'],
             'available_products_only' => ['nullable', 'boolean'],

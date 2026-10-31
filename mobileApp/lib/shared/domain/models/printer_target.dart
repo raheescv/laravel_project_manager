@@ -36,7 +36,12 @@ enum PrinterTransport {
 ///   system    → the platform printer URL from `Printing.pickPrinter`
 @immutable
 class PrinterTarget {
-  const PrinterTarget({required this.transport, required this.address, required this.name});
+  const PrinterTarget({
+    required this.transport,
+    required this.address,
+    required this.name,
+    this.fastTransfer = false,
+  });
 
   /// Nothing paired — auto-print falls back to the OS dialog.
   static const PrinterTarget none =
@@ -45,6 +50,12 @@ class PrinterTarget {
   final PrinterTransport transport;
   final String address;
   final String name;
+
+  /// Bluetooth only: push the job in big chunks with no pauses. Meant for a
+  /// terminal's own virtual "InnerPrinter" bridge, where the default throttle
+  /// (sized for cheap radio printers) starves the head and the slip prints
+  /// doubled rows and white seams. Chosen in the printer settings.
+  final bool fastTransfer;
 
   /// True once this till has something to print to without asking the cashier.
   /// The built-in printer needs no address; every other transport does.
@@ -70,11 +81,17 @@ class PrinterTarget {
       ? name.trim()
       : (address.trim().isNotEmpty ? address.trim() : transport.label);
 
-  PrinterTarget copyWith({PrinterTransport? transport, String? address, String? name}) =>
+  PrinterTarget copyWith({
+    PrinterTransport? transport,
+    String? address,
+    String? name,
+    bool? fastTransfer,
+  }) =>
       PrinterTarget(
         transport: transport ?? this.transport,
         address: address ?? this.address,
         name: name ?? this.name,
+        fastTransfer: fastTransfer ?? this.fastTransfer,
       );
 
   @override
@@ -82,10 +99,11 @@ class PrinterTarget {
       other is PrinterTarget &&
       other.transport == transport &&
       other.address == address &&
-      other.name == name;
+      other.name == name &&
+      other.fastTransfer == fastTransfer;
 
   @override
-  int get hashCode => Object.hash(transport, address, name);
+  int get hashCode => Object.hash(transport, address, name, fastTransfer);
 
   @override
   String toString() => 'PrinterTarget(${transport.key}, $address, $name)';

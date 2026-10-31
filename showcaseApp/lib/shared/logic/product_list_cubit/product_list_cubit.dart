@@ -150,7 +150,7 @@ class ProductListCubit extends Cubit<ProductListState> {
     return _repo.products(
       mainCategoryId: f.mainCategoryId,
       brandId: f.brandId,
-      size: f.size,
+      sizes: f.sizes,
       color: f.color,
       search: f.search,
       minPrice: f.minPrice,
@@ -198,7 +198,7 @@ class ProductListCubit extends Cubit<ProductListState> {
     try {
       await _branch.ready;
       final rows = await _repo.categories(
-        size: state.filters.size,
+        sizes: state.filters.sizes,
         branchId: _branch.selectedId,
         inStockOnly: state.filters.inStockOnly,
       );

@@ -89,7 +89,7 @@ void main() {
                       title: withBreadcrumbs
                           ? FunnelBreadcrumbs(
                               state: const FunnelState(
-                                size: '43.5',
+                                chosenSizes: ['43.5'],
                                 brand: BrandOption(
                                     id: 1, name: 'New Balance', productCount: 9),
                               ),
@@ -289,7 +289,7 @@ class _StubCatalog implements CatalogRepository {
 
   @override
   Future<List<CategoryOption>> categories({
-    String? size,
+    List<String> sizes = const [],
     int? branchId,
     bool inStockOnly = true,
   }) async =>
@@ -298,7 +298,7 @@ class _StubCatalog implements CatalogRepository {
   @override
   Future<List<BrandOption>> brands({
     int? mainCategoryId,
-    String? size,
+    List<String> sizes = const [],
     bool inStockOnly = true,
   }) async =>
       const [];

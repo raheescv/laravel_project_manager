@@ -269,9 +269,9 @@ void main() {
     );
   });
 
-  // Catalog density is a till setting (Settings → Catalog grid). Three and four
-  // up leave a phone tile roughly 110px and 80px wide, where the two-up type and
-  // add button would overflow — the tile chrome scales, so check every option.
+  // Catalog density is a till setting (Settings → Products per row). Three, four
+  // and five up leave a phone tile roughly 110px, 80px and 60px wide, where
+  // roomier type would overflow — the tile chrome scales, so check every option.
   for (final cols in PosSettingsState.gridColumnOptions) {
     testWidgets('New Sale catalog lays out $cols products per row (phone)', (
       tester,
@@ -298,6 +298,30 @@ void main() {
               as SliverGridDelegateWithFixedCrossAxisCount;
       expect(delegate.crossAxisCount, cols);
       expect(find.text('Signature Cut'), findsOneWidget);
+    });
+
+    // A tablet used to widen past the preference; the setting is now exact
+    // there too, on the till's short landscape screen as much as anywhere.
+    testWidgets('New Sale catalog lays out $cols products per row (till landscape)', (
+      tester,
+    ) async {
+      final d = TestHarness();
+      await d.init();
+      addTearDown(d.dispose);
+      await d.posSettings.setGridColumns(cols);
+      tester.view.physicalSize = const Size(1097, 686);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(d.wrap(const NewSaleScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull, reason: 'a $cols-up tablet tile must not overflow');
+      final delegate =
+          tester.widget<SliverGrid>(find.byType(SliverGrid)).gridDelegate
+              as SliverGridDelegateWithFixedCrossAxisCount;
+      expect(delegate.crossAxisCount, cols);
     });
   }
 

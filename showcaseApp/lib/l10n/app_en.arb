@@ -19,7 +19,7 @@
   "stepBrand": "Brand",
   "stepResults": "Results",
   "choosing": "Choosing…",
-  "anyBrand": "Any brand",
+  "anyBrand": "All brands",
   "whichSize": "What is your size?",
   "sizesDidNotLoad": "Sizes did not load",
   "sizeHintAll": "Sizes with nothing on the shelf are struck through — ask a colleague and we can check the other stores.",
@@ -264,7 +264,6 @@
   "textLargest": "Largest",
   "allSizes": "All sizes",
   "anySize": "All",
-  "anyBrand": "All brands",
   "@anyBrand": {
     "description": "The first tile in the brand grid: skip the question and see every brand."
   },
@@ -291,5 +290,31 @@
         "type": "int"
       }
     }
-  }
+  },
+  "stepSizes": "Sizes",
+  "sizeHintMulti": "Pick one or more — tap a size again to take it off.",
+  "@sizeHintMulti": {
+    "description": "Under the size question: says more than one size can be ticked."
+  },
+  "continueWithSizes": "{count, plural, =1{Continue with 1 size} other{Continue with {count} sizes}}",
+  "@continueWithSizes": {
+    "description": "The pinned button that commits the ticked sizes and opens the brand step.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clearSizes": "Clear",
+  "@clearSizes": {
+    "description": "Ghost button beside Continue: unticks every chosen size."
+  },
+  "noBrandsInSizes": "No brands in these sizes",
+  "inSizesSuffix": " in sizes {sizes}",
+  "@inSizesSuffix": {
+    "placeholders": {
+      "sizes": {}
+    }
+  },
+  "changeSizes": "Change sizes"
 }

@@ -38,8 +38,16 @@ class FunnelBreadcrumbs extends StatelessWidget {
     final p = context.pearl;
     final t = L.of(context);
     final crumbs = <(FunnelStep, String, String)>[
-      if (state.size != null) (FunnelStep.size, t.stepSize, state.size!),
-      if (state.brand != null)
+      // Only steps behind [current]. On the size run the ticks are still
+      // being made, and the bar under the run already spells them out — a
+      // second copy up here would be the same answer said twice.
+      if (state.chosenSizes.isNotEmpty && current.index > FunnelStep.size.index)
+        (
+          FunnelStep.size,
+          state.chosenSizes.length == 1 ? t.stepSize : t.stepSizes,
+          state.chosenSizesLabel(),
+        ),
+      if (state.brand != null && current.index > FunnelStep.brand.index)
         (FunnelStep.brand, t.stepBrand, state.brand!.name),
     ];
     final count = crumbs.length + (trailing != null ? 1 : 0);

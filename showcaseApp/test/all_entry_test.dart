@@ -116,7 +116,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Skipped, not chosen — and it is a funnel step like any other answer.
-      expect(funnel.state.size, isNull);
+      expect(funnel.state.chosenSizes, isEmpty);
       expect(router.state.uri.path, Routes.brand);
     });
 
@@ -245,7 +245,7 @@ void main() {
 
       expect(router.state.uri.path, Routes.size);
       expect(router.canPop(), isFalse);
-      expect(funnel.state.size, isNull);
+      expect(funnel.state.chosenSizes, isEmpty);
       expect(funnel.state.inStockOnly, isTrue);
     });
   });
@@ -266,7 +266,7 @@ class _Stub implements CatalogRepository {
   @override
   Future<List<BrandOption>> brands({
     int? mainCategoryId,
-    String? size,
+    List<String> sizes = const [],
     bool inStockOnly = true,
   }) async =>
       const [
@@ -276,7 +276,7 @@ class _Stub implements CatalogRepository {
 
   @override
   Future<List<CategoryOption>> categories({
-    String? size,
+    List<String> sizes = const [],
     int? branchId,
     bool inStockOnly = true,
   }) async =>
@@ -290,7 +290,7 @@ class _Stub implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,

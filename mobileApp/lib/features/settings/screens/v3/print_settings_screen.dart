@@ -87,6 +87,15 @@ class _PrintSettingsScreenState extends State<PrintSettingsScreen> {
             if (c.autoPrint) ...[
               const SizedBox(height: 9),
               _printerRow(context, c),
+              if (c.printer.transport == PrinterTransport.bluetooth && c.hasPrinter) ...[
+                const SizedBox(height: 9),
+                _flagRow(context,
+                    icon: Icons.speed_outlined,
+                    title: 'Fast transfer',
+                    subtitle: 'For the terminal\'s built-in InnerPrinter — fixes doubled or streaky lines',
+                    value: c.printer.fastTransfer,
+                    onChanged: (v) => context.read<PrintSettingsCubit>().setFastTransfer(v)),
+              ],
               const SizedBox(height: 9),
               _testPrintRow(context, c),
               const SizedBox(height: 9),

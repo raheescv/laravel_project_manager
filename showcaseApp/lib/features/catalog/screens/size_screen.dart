@@ -25,19 +25,20 @@ final _ar = LAr();
 
 /// Step 1 — the size run, and where the app opens.
 ///
-/// Tapping a size is the whole interaction: it commits the choice and moves to
-/// the brand step. No preview column, no Continue — a chip that only highlights
-/// and waits for a second tap on a button somewhere else is a step people
-/// stall on, and the size run is long enough that the button is often off
-/// screen by the time they have found their size.
+/// More than one size can be picked: a parent shopping for two children, or
+/// somebody between sizes who wants to see both. A tap ticks a plate on or
+/// off and nothing else — the step is committed from a bar that slides up
+/// under the run as soon as anything is ticked, pinned there so it is never
+/// scrolled out of reach however long the run is. With nothing ticked there is
+/// no bar at all, and the screen asks its one question exactly as before.
 ///
-/// The grid therefore gets the full width of the screen, and the chip's own
-/// "19 left" / struck-through "none" carries the stock story the aside used to.
+/// "All" stays a one-tap answer: it is not a size to tick alongside others, it
+/// is the other way of answering, so it clears any ticks and moves on.
 class SizeScreen extends StatelessWidget {
   const SizeScreen({super.key});
 
-  Future<void> _choose(BuildContext context, String size) async {
-    await context.read<FunnelCubit>().chooseSize(size);
+  Future<void> _continue(BuildContext context) async {
+    await context.read<FunnelCubit>().confirmSizes();
     if (context.mounted) context.goToFunnelStep(FunnelStep.brand);
   }
 
@@ -72,15 +73,26 @@ class SizeScreen extends StatelessWidget {
         DataFetchStatus.waiting when state.sizes.isEmpty => const _SizeSkeleton(),
         _ => _SizeBody(
             state: state,
-            onTapSize: (size) => _choose(context, size),
+            onTapSize: funnel.toggleSize,
             onTapAny: () => _any(context),
           ),
       },
-      // No bottom bar. "All sizes" used to be a filled button pinned under the
-      // run, which made the screen ask its question in two places: a grid of
-      // plates, and a button somewhere else that answered the same question in
-      // a different shape. It is the first plate now — the same target as every
-      // other answer, in the place a customer is already looking.
+      // Only once something is ticked. "All sizes" used to be a filled button
+      // pinned here, which asked the screen's question twice in two shapes; it
+      // is the first plate now. This bar does not ask anything — it says what
+      // has been picked and is the one way to go on with it.
+      bottomBar: AnimatedSize(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        alignment: Alignment.topCenter,
+        child: state.chosenSizes.isEmpty
+            ? const SizedBox(width: double.infinity)
+            : _ContinueBar(
+                state: state,
+                onClear: funnel.clearSizes,
+                onContinue: () => _continue(context),
+              ),
+      ),
     );
   }
 }
@@ -107,6 +119,14 @@ class _SizeBody extends StatelessWidget {
           PearlMetrics.pad, 18, PearlMetrics.pad, 30),
       children: [
         const _BilingualQuestion(size: 26),
+        const SizedBox(height: 10),
+        // Said once, quietly: the plates look like the single-answer run they
+        // used to be, and nothing else on the screen says a second tap is
+        // welcome.
+        Text(
+          t.sizeHintMulti,
+          style: PearlText.body(12).copyWith(color: p.muted),
+        ),
         // Only when the run is showing sizes that cannot be sold, because then
         // the strike-through needs explaining. With the stock filter on there
         // is nothing to explain — every chip on screen is one you can have.
@@ -119,12 +139,12 @@ class _SizeBody extends StatelessWidget {
         ],
         if (run.isNotEmpty) ...[
           const SizedBox(height: 22),
-          // `state.size` rather than a local selection: the only thing worth
-          // marking is the answer already given, for someone who reopened the
-          // step to change it.
+          // Straight off the funnel rather than a local selection, so a
+          // customer who comes back from the brands finds their ticks where
+          // they left them.
           _SizeWrap(
             sizes: run,
-            selected: state.size,
+            chosen: state.chosenSizes,
             onTap: onTapSize,
             onTapAny: onTapAny,
           ),
@@ -259,13 +279,15 @@ class _BilingualQuestion extends StatelessWidget {
 class _SizeWrap extends StatelessWidget {
   const _SizeWrap({
     required this.sizes,
-    required this.selected,
+    required this.chosen,
     required this.onTap,
     required this.onTapAny,
   });
 
   final List<SizeOption> sizes;
-  final String? selected;
+  final List<String> chosen;
+
+  /// Ticks or unticks a size.
   final void Function(String) onTap;
 
   /// "Any of them" — the first plate in the run.
@@ -328,7 +350,7 @@ class _SizeWrap extends StatelessWidget {
                 height: side,
                 labelSize: labelFor(side),
                 labelWeight: FontWeight.w700,
-                selected: selected == null,
+                selected: chosen.isEmpty,
                 onTap: onTapAny,
               ),
             ),
@@ -343,7 +365,8 @@ class _SizeWrap extends StatelessWidget {
                   height: side,
                   labelSize: labelFor(side),
                   labelWeight: FontWeight.w700,
-                  selected: size.size == selected,
+                  selected: chosen.contains(size.size),
+                  ticked: chosen.contains(size.size),
                   available: size.inStock,
                   onTap: () => onTap(size.size),
                 ),
@@ -351,6 +374,80 @@ class _SizeWrap extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// What has been ticked, and the way on with it.
+///
+/// The sizes are spelled out as well as counted: the run is long, and the
+/// plates a customer ticked near the top have usually scrolled away by the
+/// time they reach for this.
+class _ContinueBar extends StatelessWidget {
+  const _ContinueBar({
+    required this.state,
+    required this.onClear,
+    required this.onContinue,
+  });
+
+  final FunnelState state;
+  final VoidCallback onClear;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    final t = L.of(context);
+    final count = state.chosenSizes.length;
+    return PinnedBar(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                (count == 1 ? t.stepSize : t.stepSizes).toUpperCase(),
+                style: PearlText.micro.copyWith(color: p.faint),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  state.chosenSizesLabel(max: 8),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PearlText.label.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .6,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              PearlButton(
+                label: t.clearSizes,
+                icon: Icons.close,
+                ghost: true,
+                onTap: onClear,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: PearlButton(
+                  label: t.continueWithSizes(count),
+                  icon: Icons.arrow_forward,
+                  onTap: onContinue,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

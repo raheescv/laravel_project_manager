@@ -106,7 +106,7 @@ class _StubCatalog implements CatalogRepository {
 
   @override
   Future<List<CategoryOption>> categories({
-    String? size,
+    List<String> sizes = const [],
     int? branchId,
     bool inStockOnly = true,
   }) async =>
@@ -115,7 +115,7 @@ class _StubCatalog implements CatalogRepository {
   @override
   Future<List<BrandOption>> brands({
     int? mainCategoryId,
-    String? size,
+    List<String> sizes = const [],
     bool inStockOnly = true,
   }) async =>
       const [];

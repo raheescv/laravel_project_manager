@@ -150,6 +150,7 @@ class LocalStorageKeys {
   static const String printerTransport = 'astra.print.printerTransport';
   static const String printerUrl = 'astra.print.printerUrl';
   static const String printerName = 'astra.print.printerName';
+  static const String printerFastTransfer = 'astra.print.printerFastTransfer';
   static const String printSkipInvoice = 'astra.print.skipInvoice';
 
   // Queue tokens — device-local. Settings are device-wide; the ledger key is

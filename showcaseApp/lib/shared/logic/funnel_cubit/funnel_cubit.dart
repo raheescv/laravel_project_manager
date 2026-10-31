@@ -74,7 +74,7 @@ class FunnelCubit extends Cubit<FunnelState> {
     try {
       final rows = await _repo.sizes(branchId: _branch.selectedId);
       if (id != _sizesRequest) return;
-      _set(state.copyWith(sizesStatus: DataFetchStatus.success, sizes: rows));
+      _set(_keepVisible(state.copyWith(sizesStatus: DataFetchStatus.success, sizes: rows)));
     } on ApiException catch (e) {
       if (id != _sizesRequest) return;
       _set(state.copyWith(sizesStatus: DataFetchStatus.failed, errorMessage: e.message));
@@ -86,11 +86,49 @@ class FunnelCubit extends Cubit<FunnelState> {
     }
   }
 
-  /// Choosing a size drops the brand behind it — those counts were taken in a
-  /// different size and would send the customer to an empty grid.
-  Future<void> chooseSize(String size) async {
+  /// Tap a size on or off. Local only — nothing is asked of the server until
+  /// the customer says they are done picking ([confirmSizes]), so tapping
+  /// through four plates is four redraws, not four brand fetches racing.
+  ///
+  /// Any change drops the brand behind it: those counts were taken for a
+  /// different set of sizes and would send the customer to an empty grid.
+  void toggleSize(String size) {
+    final next = state.isChosen(size)
+        ? state.chosenSizes.where((s) => s != size).toList()
+        : (<String>[...state.chosenSizes, size]..sort(FunnelState.compareSizeLabels));
     _set(state.copyWith(
-      size: size,
+      chosenSizes: List.unmodifiable(next),
+      clearBrand: true,
+      brands: const [],
+      clearError: true,
+    ));
+  }
+
+  /// Drop any ticked size the run no longer shows — gone from this branch, or
+  /// hidden by "in stock". A tick nobody can see still narrowing the grid is a
+  /// filter the customer cannot find to undo.
+  FunnelState _keepVisible(FunnelState next) {
+    if (next.chosenSizes.isEmpty || next.sizes.isEmpty) return next;
+    final shown = {for (final s in next.visibleSizes) s.size};
+    final kept = next.chosenSizes.where(shown.contains).toList();
+    if (kept.length == next.chosenSizes.length) return next;
+    return next.copyWith(chosenSizes: List.unmodifiable(kept), clearBrand: true);
+  }
+
+  /// Untick every size without leaving the step.
+  void clearSizes() => _set(state.copyWith(
+        clearSizes: true,
+        clearBrand: true,
+        brands: const [],
+      ));
+
+  /// The picked sizes are the answer — fetch the brand step for them.
+  Future<void> confirmSizes() => loadBrands();
+
+  /// Choose exactly [sizes] and move on in one go.
+  Future<void> chooseSizes(List<String> sizes) async {
+    _set(state.copyWith(
+      chosenSizes: List.unmodifiable(<String>[...sizes]..sort(FunnelState.compareSizeLabels)),
       clearBrand: true,
       brands: const [],
       clearError: true,
@@ -98,22 +136,24 @@ class FunnelCubit extends Cubit<FunnelState> {
     await loadBrands();
   }
 
+  Future<void> chooseSize(String size) => chooseSizes([size]);
+
   /// Skipping a step is a first-class action, not a hidden link: plenty of
   /// customers know the brand but not the size, or the reverse.
   Future<void> skipSize() async {
-    _set(state.copyWith(clearSize: true, clearBrand: true, brands: const []));
+    _set(state.copyWith(clearSizes: true, clearBrand: true, brands: const []));
     await loadBrands();
   }
 
   Future<void> loadBrands() async {
-    final key = '${state.size}|${state.inStockOnly}';
+    final key = '${state.chosenSizes.join(',')}|${state.inStockOnly}';
     if (_brandsInFlight == key) return;
     _brandsInFlight = key;
     final id = ++_brandsRequest;
     _set(state.copyWith(brandsStatus: DataFetchStatus.waiting));
     try {
       final rows = await _repo.brands(
-        size: state.size,
+        sizes: state.chosenSizes,
         inStockOnly: state.inStockOnly,
       );
       if (id != _brandsRequest) return;
@@ -140,7 +180,7 @@ class FunnelCubit extends Cubit<FunnelState> {
   /// redrawing — [FunnelState] drops the empty ones.
   Future<void> setInStockOnly(bool value) async {
     if (value == state.inStockOnly) return;
-    _set(state.copyWith(inStockOnly: value));
+    _set(_keepVisible(state.copyWith(inStockOnly: value)));
     if (state.brands.isNotEmpty) await loadBrands();
   }
 
@@ -153,7 +193,7 @@ class FunnelCubit extends Cubit<FunnelState> {
   /// that does not live here.
   Future<void> resetForNextCustomer() async {
     _set(state.copyWith(
-      clearSize: true,
+      clearSizes: true,
       clearBrand: true,
       brands: const [],
       inStockOnly: true,
@@ -164,10 +204,13 @@ class FunnelCubit extends Cubit<FunnelState> {
 
   /// Re-entering an earlier step keeps that step's answer and everything before
   /// it, and drops only what came after — going back must never be destructive.
+  ///
+  /// The size step keeps its ticks: a customer who comes back has usually come
+  /// to add a size or take one off, not to start the run again.
   Future<void> backTo(FunnelStep step) async {
     switch (step) {
       case FunnelStep.size:
-        _set(state.copyWith(clearSize: true, clearBrand: true, brands: const []));
+        _set(state.copyWith(clearBrand: true, brands: const []));
         if (state.sizes.isEmpty) await loadSizes();
       case FunnelStep.brand:
         _set(state.copyWith(clearBrand: true));

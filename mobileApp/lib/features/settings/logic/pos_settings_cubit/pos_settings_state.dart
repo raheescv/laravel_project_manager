@@ -46,10 +46,10 @@ class PosSettingsState extends Equatable {
   });
 
   /// Tile counts a till can choose between for the New Sale catalog grid.
-  /// Three and four suit a catalog without photos, where the tile is mostly
-  /// name and price and two-up just wastes the screen.
-  static const List<int> gridColumnOptions = [2, 3, 4];
-  static const int defaultGridColumns = 2;
+  /// Four and five suit a catalog without photos, where the tile is mostly
+  /// name and price and fewer across just wastes the screen.
+  static const List<int> gridColumnOptions = [3, 4, 5];
+  static const int defaultGridColumns = 3;
 
   final bool lockAfterSale;
 

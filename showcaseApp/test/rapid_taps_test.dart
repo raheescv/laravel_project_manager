@@ -105,11 +105,11 @@ void main() {
   group('the results list', () {
     test('a changed filter supersedes the request already running', () async {
       final repo = useRepo();
-      final cubit = ProductListCubit(filters: const ProductFilters(size: '40'));
+      final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['40']));
 
       unawaited(cubit.load());
       await pumpEventQueue();
-      unawaited(cubit.apply(const ProductFilters(size: '42')));
+      unawaited(cubit.apply(const ProductFilters(sizes: ['42'])));
       await pumpEventQueue();
 
       expect(repo.askedProducts, hasLength(2),
@@ -152,16 +152,16 @@ class _Slow implements CatalogRepository {
   }
 
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) {
-    asked.add(size ?? '');
-    return (_pending[size ?? ''] = Completer<List<BrandOption>>()).future;
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) {
+    asked.add(sizes.join(','));
+    return (_pending[sizes.join(',')] = Completer<List<BrandOption>>()).future;
   }
 
   @override
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -173,7 +173,7 @@ class _Slow implements CatalogRepository {
     int page = 1,
     int perPage = 24,
   }) {
-    askedProducts.add(size ?? '');
+    askedProducts.add(sizes.join(','));
     final c = Completer<Paginated<Product>>();
     _products.add(c);
     return c.future;
@@ -192,5 +192,5 @@ class _Slow implements CatalogRepository {
   @override
   Future<List<Product>> related(Product product, {int limit = 8, bool inStockOnly = true}) async => const [];
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async => const [];
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async => const [];
 }

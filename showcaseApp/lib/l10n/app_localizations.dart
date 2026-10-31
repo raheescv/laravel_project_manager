@@ -888,6 +888,48 @@ abstract class L {
   /// In en, this message translates to:
   /// **'Between {min} and {max} minutes.'**
   String resetTimerRange(int min, int max);
+
+  /// No description provided for @stepSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'Sizes'**
+  String get stepSizes;
+
+  /// Under the size question: says more than one size can be ticked.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick one or more — tap a size again to take it off.'**
+  String get sizeHintMulti;
+
+  /// The pinned button that commits the ticked sizes and opens the brand step.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Continue with 1 size} other{Continue with {count} sizes}}'**
+  String continueWithSizes(int count);
+
+  /// Ghost button beside Continue: unticks every chosen size.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearSizes;
+
+  /// No description provided for @noBrandsInSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'No brands in these sizes'**
+  String get noBrandsInSizes;
+
+  /// No description provided for @inSizesSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **' in sizes {sizes}'**
+  String inSizesSuffix(Object sizes);
+
+  /// No description provided for @changeSizes.
+  ///
+  /// In en, this message translates to:
+  /// **'Change sizes'**
+  String get changeSizes;
 }
 
 class _LDelegate extends LocalizationsDelegate<L> {

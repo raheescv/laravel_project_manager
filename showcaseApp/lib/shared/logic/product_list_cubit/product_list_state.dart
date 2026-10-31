@@ -6,7 +6,7 @@ class ProductFilters extends Equatable {
   const ProductFilters({
     this.mainCategoryId,
     this.brandId,
-    this.size,
+    this.sizes = const [],
     this.color,
     this.search,
     this.minPrice,
@@ -19,7 +19,9 @@ class ProductFilters extends Equatable {
 
   final int? mainCategoryId;
   final int? brandId;
-  final String? size;
+
+  /// Any of these sizes; empty is every size.
+  final List<String> sizes;
   final String? color;
   final String? search;
   final double? minPrice;
@@ -49,7 +51,7 @@ class ProductFilters extends Equatable {
   ProductFilters copyWith({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String>? sizes,
     String? color,
     String? search,
     double? minPrice,
@@ -60,7 +62,7 @@ class ProductFilters extends Equatable {
     String? sortDirection,
     bool clearBrand = false,
     bool clearCategory = false,
-    bool clearSize = false,
+    bool clearSizes = false,
     bool clearColor = false,
     bool clearSearch = false,
     bool clearPrice = false,
@@ -68,7 +70,7 @@ class ProductFilters extends Equatable {
       ProductFilters(
         mainCategoryId: clearCategory ? null : (mainCategoryId ?? this.mainCategoryId),
         brandId: clearBrand ? null : (brandId ?? this.brandId),
-        size: clearSize ? null : (size ?? this.size),
+        sizes: clearSizes ? const [] : (sizes ?? this.sizes),
         color: clearColor ? null : (color ?? this.color),
         search: clearSearch ? null : (search ?? this.search),
         minPrice: clearPrice ? null : (minPrice ?? this.minPrice),
@@ -83,7 +85,7 @@ class ProductFilters extends Equatable {
   List<Object?> get props => [
         mainCategoryId,
         brandId,
-        size,
+        sizes,
         color,
         search,
         minPrice,

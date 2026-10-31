@@ -44,6 +44,23 @@ class PrinterLink {
     return out;
   }
 
+  /// True when the built-in printer takes the receipt as a PNG rather than
+  /// ESC/POS — an iMin terminal, whose print service only accepts images.
+  static Future<bool> builtinTakesImage() async {
+    if (!_nativeSupported) return false;
+    try {
+      final res = await _channel.invokeMapMethod<String, dynamic>('capabilities');
+      return res?['builtinImage'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Hands [png] to the built-in printer's image service. Same contract as
+  /// [send]: true only when the job was accepted.
+  static Future<bool> sendBuiltinImage(Uint8List png) =>
+      _sendNative('builtinPrintImage', {'png': png});
+
   /// Only Android carries the native half. Everything else gets network-only,
   /// which is still a genuine silent print.
   static bool get _nativeSupported => !kIsWeb && Platform.isAndroid;
@@ -197,7 +214,11 @@ class PrinterLink {
       case PrinterTransport.network:
         return _sendNetwork(target.host, target.port, data);
       case PrinterTransport.bluetooth:
-        return _sendNative('btPrint', {'address': target.address, 'data': data});
+        return _sendNative('btPrint', {
+          'address': target.address,
+          'data': data,
+          'fast': target.fastTransfer,
+        });
       case PrinterTransport.usb:
         return _sendNative('usbPrint', {'address': target.address, 'data': data});
       case PrinterTransport.builtin:

@@ -464,4 +464,36 @@ class LEn extends L {
   String resetTimerRange(int min, int max) {
     return 'Between $min and $max minutes.';
   }
+
+  @override
+  String get stepSizes => 'Sizes';
+
+  @override
+  String get sizeHintMulti =>
+      'Pick one or more — tap a size again to take it off.';
+
+  @override
+  String continueWithSizes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Continue with $count sizes',
+      one: 'Continue with 1 size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get clearSizes => 'Clear';
+
+  @override
+  String get noBrandsInSizes => 'No brands in these sizes';
+
+  @override
+  String inSizesSuffix(Object sizes) {
+    return ' in sizes $sizes';
+  }
+
+  @override
+  String get changeSizes => 'Change sizes';
 }

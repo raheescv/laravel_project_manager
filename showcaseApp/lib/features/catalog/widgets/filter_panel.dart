@@ -82,7 +82,7 @@ class FilterPanel extends StatelessWidget {
                 : ProductFilters(
                     mainCategoryId: filters.mainCategoryId,
                     brandId: filters.brandId,
-                    size: filters.size,
+                    sizes: filters.sizes,
                     color: filters.color,
                     search: filters.search,
                     minPrice: min,

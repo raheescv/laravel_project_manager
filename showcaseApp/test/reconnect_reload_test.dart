@@ -118,7 +118,7 @@ void main() {
     test('reloads a page that never came', () async {
       boot();
       await outage();
-      final list = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+      final list = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
       addTearDown(list.close);
       await pumpEventQueue();
       expect(list.state.status, DataFetchStatus.failed);
@@ -132,7 +132,7 @@ void main() {
 
     test('keeps a page that did', () async {
       boot();
-      final list = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+      final list = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
       addTearDown(list.close);
       await pumpEventQueue();
       expect(list.state.status, DataFetchStatus.success);
@@ -217,7 +217,7 @@ class _Shop implements CatalogRepository {
   }
 
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async {
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async {
     brandsAsked++;
     _wire();
     return const [];
@@ -227,7 +227,7 @@ class _Shop implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -269,7 +269,7 @@ class _Shop implements CatalogRepository {
   Future<List<ColorOption>> colors() async => const [];
 
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async =>
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async =>
       const [];
 
   @override

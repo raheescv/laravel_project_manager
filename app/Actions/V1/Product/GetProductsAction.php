@@ -7,6 +7,7 @@ use App\Http\Resources\V1\ProductResource;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Services\TenantService;
+use App\Support\Storefront\SizeFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -244,9 +245,9 @@ class GetProductsAction
                     $imageQ->where('method', 'angle');
                 }, '>=', 2);
             })
-            // Size filter
-            ->when($filters['size'] ?? null, function ($q, $value) {
-                return $q->where('size', $value);
+            // Size filter — one size, or any of several.
+            ->when(SizeFilter::from($filters['size'] ?? null, $filters['sizes'] ?? null), function ($q, $sizes) {
+                return $q->whereIn('size', $sizes);
             })
             // Color filter
             ->when($filters['color'] ?? null, function ($q, $value) {

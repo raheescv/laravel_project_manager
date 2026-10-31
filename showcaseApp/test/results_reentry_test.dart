@@ -39,7 +39,7 @@ void main() {
   tearDown(() => serviceLocator.reset());
 
   test('a visit that is abandoned mid-request does not throw', () async {
-    final first = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+    final first = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
     await pumpEventQueue();
     expect(first.state.status, DataFetchStatus.waiting);
 
@@ -52,11 +52,11 @@ void main() {
   });
 
   test('the next visit still loads after one was abandoned', () async {
-    final first = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+    final first = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
     await pumpEventQueue();
     await first.close();
 
-    final second = ProductListCubit(filters: const ProductFilters(size: '43'))..load();
+    final second = ProductListCubit(filters: const ProductFilters(sizes: ['43']))..load();
     await pumpEventQueue();
     repo.release();
     await pumpEventQueue();
@@ -72,7 +72,7 @@ void main() {
     // or filter listener can call it again in the same frame. Each extra call
     // used to start its own request and supersede the one already running,
     // which is what turned one visit into a stream of requests.
-    final cubit = ProductListCubit(filters: const ProductFilters(size: '42'));
+    final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']));
     unawaited(cubit.load());
     unawaited(cubit.load());
     unawaited(cubit.load());
@@ -87,12 +87,12 @@ void main() {
   });
 
   test('a genuinely new query still supersedes the one running', () async {
-    final cubit = ProductListCubit(filters: const ProductFilters(size: '42'));
+    final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']));
     unawaited(cubit.load());
     await pumpEventQueue();
     expect(repo.productCalls, 1);
 
-    unawaited(cubit.apply(const ProductFilters(size: '43')));
+    unawaited(cubit.apply(const ProductFilters(sizes: ['43'])));
     await pumpEventQueue();
     expect(repo.productCalls, 2, reason: 'a new filter is not a duplicate');
     await cubit.close();
@@ -103,7 +103,7 @@ void main() {
     // request was superseded on the way, loadingMore stayed true and every
     // later loadMore bailed at the guard — infinite scroll dead, footer
     // spinning, for the life of the screen.
-    final cubit = ProductListCubit(filters: const ProductFilters(size: '42'));
+    final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']));
     unawaited(cubit.load());
     await pumpEventQueue();
     repo.release();
@@ -115,7 +115,7 @@ void main() {
     expect(cubit.state.loadingMore, isTrue);
 
     // Something supersedes it — a filter change, a branch switch.
-    unawaited(cubit.apply(const ProductFilters(size: '43')));
+    unawaited(cubit.apply(const ProductFilters(sizes: ['43'])));
     await pumpEventQueue();
     repo.release();
     await pumpEventQueue();
@@ -128,9 +128,9 @@ void main() {
   test('a filter change mid-request still settles', () async {
     // apply() supersedes an in-flight load; the superseded one bows out and the
     // new one has to be the one that emits.
-    final cubit = ProductListCubit(filters: const ProductFilters(size: '42'))..load();
+    final cubit = ProductListCubit(filters: const ProductFilters(sizes: ['42']))..load();
     await pumpEventQueue();
-    unawaited(cubit.apply(const ProductFilters(size: '43')));
+    unawaited(cubit.apply(const ProductFilters(sizes: ['43'])));
     await pumpEventQueue();
 
     repo.release();
@@ -164,7 +164,7 @@ class _SlowCatalog implements CatalogRepository {
   Future<Paginated<Product>> products({
     int? mainCategoryId,
     int? brandId,
-    String? size,
+    List<String> sizes = const [],
     String? color,
     String? search,
     double? minPrice,
@@ -192,11 +192,11 @@ class _SlowCatalog implements CatalogRepository {
   @override
   Future<List<ColorOption>> colors() async => const [];
   @override
-  Future<List<CategoryOption>> categories({String? size, int? branchId, bool inStockOnly = true}) async => const [];
+  Future<List<CategoryOption>> categories({List<String> sizes = const [], int? branchId, bool inStockOnly = true}) async => const [];
   @override
   Future<List<SizeOption>> sizes({int? mainCategoryId, int? brandId, int? branchId}) async => const [];
   @override
-  Future<List<BrandOption>> brands({int? mainCategoryId, String? size, bool inStockOnly = true}) async => const [];
+  Future<List<BrandOption>> brands({int? mainCategoryId, List<String> sizes = const [], bool inStockOnly = true}) async => const [];
   @override
   dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }

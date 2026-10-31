@@ -97,7 +97,7 @@ void main() {
       (tester) async {
     await pumpProduct(tester);
 
-    expect(funnel.state.size, '42');
+    expect(funnel.state.chosenSizes, ['42']);
     expect(funnel.state.inStockOnly, isFalse);
 
     await tester.tap(find.widgetWithIcon(IconSquare, Icons.home_outlined));
@@ -108,7 +108,7 @@ void main() {
     expect(router.canPop(), isFalse);
 
     // The size and the brand go; the stock filter goes back on.
-    expect(funnel.state.size, isNull);
+    expect(funnel.state.chosenSizes, isEmpty);
     expect(funnel.state.brand, isNull);
     expect(funnel.state.inStockOnly, isTrue);
     // And the shop goes back to every shop.
@@ -150,14 +150,14 @@ class _Stub implements CatalogRepository {
   @override
   Future<List<BrandOption>> brands({
     int? mainCategoryId,
-    String? size,
+    List<String> sizes = const [],
     bool inStockOnly = true,
   }) async =>
       const [];
 
   @override
   Future<List<CategoryOption>> categories({
-    String? size,
+    List<String> sizes = const [],
     int? branchId,
     bool inStockOnly = true,
   }) async =>

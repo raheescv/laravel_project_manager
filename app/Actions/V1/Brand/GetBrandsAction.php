@@ -3,6 +3,7 @@
 namespace App\Actions\V1\Brand;
 
 use App\Models\Brand;
+use App\Support\Storefront\SizeFilter;
 use Illuminate\Support\Collection;
 
 class GetBrandsAction
@@ -23,6 +24,7 @@ class GetBrandsAction
         $availableProductsOnly = filter_var($availableProductsOnly, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
         $branchId = $filters->get('branch_id');
+        $sizes = SizeFilter::from($filters->get('size'), $filters->get('sizes'));
 
         $brands = Brand::query()
             ->where('online_visibility_flag', true)
@@ -30,8 +32,8 @@ class GetBrandsAction
                 return $query->where('name', 'like', "%{$value}%");
             })
             ->withCount([
-                'products' => function ($query) use ($filters, $availableProductsOnly, $branchId) {
-                    $query->when($filters->get('size'), fn ($q, $v) => $q->where('size', $v))
+                'products' => function ($query) use ($filters, $sizes, $availableProductsOnly, $branchId) {
+                    $query->when($sizes, fn ($q, $v) => $q->whereIn('size', $v))
                         ->when($filters->get('main_category_id'), fn ($q, $v) => $q->where('main_category_id', $v))
                         ->when($filters->get('sub_category_id'), fn ($q, $v) => $q->where('sub_category_id', $v))
                         // Only count products in an online-visible category (matches /categories).

@@ -272,8 +272,8 @@ Future<Uint8List> buildReceiptPdf(Sale sale, PrintSettings settings) async {
 // ---- office bill ---------------------------------------------------------
 
 /// The compact English-only "Office bill" ("Stamp" design) — mirrors
-/// resources/views/sale/print-office-bill.blade.php: tracked company name, a
-/// black Bill No badge beside the biller and time, items, totals and a large
+/// resources/views/sale/print-office-bill.blade.php: tracked company name, an
+/// outlined Bill No badge beside the biller and time, items, totals and a large
 /// grand total. A sale rung up offline prints the number the till counted for
 /// its biller (StaffBillCounter) — staff tally their day on these slips; only a
 /// sale with no number at all falls back to its invoice reference.
@@ -328,18 +328,20 @@ Future<Uint8List> _buildOfficeBill(Sale sale, PrintSettings settings, pw.ThemeDa
                 columnWidths: {0: pw.FixedColumnWidth(s(72)), 1: const pw.FlexColumnWidth()},
                 children: [
                   pw.TableRow(verticalAlignment: pw.TableCellVerticalAlignment.full, children: [
+                    // Outlined, not filled: a solid black block starves the
+                    // thermal head and prints faint and speckled.
                     pw.Container(
-                      color: PdfColors.black,
+                      decoration: const pw.BoxDecoration(
+                        border: pw.Border(right: pw.BorderSide(width: 1.5)),
+                      ),
                       padding: pw.EdgeInsets.symmetric(vertical: s(5), horizontal: s(4)),
                       alignment: pw.Alignment.center,
                       child: pw.Column(mainAxisSize: pw.MainAxisSize.min, children: [
-                        pw.Text('BILL NO', style: caps(6.5).copyWith(color: PdfColors.white)),
+                        pw.Text('BILL NO', style: caps(6.5)),
                         pw.Text(billNo,
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(
-                                fontSize: s(billNo.length > 7 ? 11 : 16.5),
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColors.white)),
+                                fontSize: s(billNo.length > 7 ? 11 : 16.5), fontWeight: pw.FontWeight.bold)),
                       ]),
                     ),
                     pw.Container(

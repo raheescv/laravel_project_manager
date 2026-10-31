@@ -462,4 +462,38 @@ class LAr extends L {
   String resetTimerRange(int min, int max) {
     return 'بين $min و $max دقيقة.';
   }
+
+  @override
+  String get stepSizes => 'المقاسات';
+
+  @override
+  String get sizeHintMulti =>
+      'اختر مقاساً أو أكثر — اضغط المقاس مرة أخرى لإلغائه.';
+
+  @override
+  String continueWithSizes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'متابعة بـ $count مقاس',
+      few: 'متابعة بـ $count مقاسات',
+      two: 'متابعة بمقاسين',
+      one: 'متابعة بمقاس واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get clearSizes => 'مسح';
+
+  @override
+  String get noBrandsInSizes => 'لا توجد علامات بهذه المقاسات';
+
+  @override
+  String inSizesSuffix(Object sizes) {
+    return ' في المقاسات $sizes';
+  }
+
+  @override
+  String get changeSizes => 'غيّر المقاسات';
 }
