@@ -122,6 +122,7 @@ class ProductivityReport extends Component
         return SaleItem::query()
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.status', 'completed')
+            ->whereNull('sales.deleted_at')
             ->whereBetween('sales.date', [date('Y-m-d', strtotime($this->fromDate)), date('Y-m-d', strtotime($this->toDate))]);
     }
 
@@ -153,12 +154,10 @@ class ProductivityReport extends Component
 
     private function getTopCategories()
     {
-        return SaleItem::query()
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+        return $this->getSalesQuery()
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->join('categories', 'categories.id', '=', 'products.main_category_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
-            ->whereBetween('sales.date', [$this->fromDate, $this->toDate])
             ->groupBy('sale_items.employee_id', 'categories.name', 'users.name')
             ->select(
                 'sale_items.employee_id',
