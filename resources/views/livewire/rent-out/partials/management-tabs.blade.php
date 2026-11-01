@@ -20,7 +20,8 @@
         ['key' => 'SecurityTab', 'slug' => 'security', 'icon' => 'fa-shield', 'label' => 'Security'],
         ['key' => 'ExtendTab', 'slug' => 'extend', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
     ]);
-    if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked) {
+    $showAgreementPoints = ($isBooking ?? false) || $rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked;
+    if ($showAgreementPoints) {
         $tabs[] = ['key' => 'AgreementPointsTab', 'slug' => 'agreement-points', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'];
     }
     $tabs = array_merge($tabs, [
@@ -114,7 +115,7 @@
                 @livewire('rent-out.tabs.extend-tab', ['rentOutId' => $rentOut->id], key('extend-tab-' . $rentOut->id))
             </div>
 
-            @if ($rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked)
+            @if ($showAgreementPoints)
                 <div x-show="activeTab === 'AgreementPointsTab'" x-transition:enter.duration.150ms>
                     @livewire('rent-out.tabs.agreement-points-tab', ['rentOutId' => $rentOut->id], key('agreement-points-tab-' . $rentOut->id))
                 </div>
