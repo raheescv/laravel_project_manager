@@ -87,14 +87,7 @@ class CreateAction
 
             if (isset($data['images'])) {
                 foreach ($data['images'] as $file) {
-                    $imageData = [
-                        'name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension(),
-                        'method' => 'normal',
-                        'path' => url('storage/'.$file->store('products/'.$model->id, 'public')),
-                    ];
-                    $model->images()->create($imageData);
+                    (new AddImageAction())->execute($model, $file);
                 }
                 $path = $model->images()->normal()->first()?->path;
                 $model->update(['thumbnail' => $path]);

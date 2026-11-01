@@ -36,6 +36,10 @@ class ReturnOpsCubit {
   Future<SaleReturn> updateSaleReturn(String id, Map<String, dynamic> payload) =>
       _returns.updateSaleReturn(id, payload);
 
+  /// Posts a return — a new one, or an update to [editingId] when set.
+  Future<SaleReturn> saveSaleReturn(String editingId, Map<String, dynamic> payload) =>
+      editingId.isEmpty ? createSaleReturn(payload) : updateSaleReturn(editingId, payload);
+
   /// Paid invoices to return against — step 1 of the wizard.
   Future<PageResult> fetchPaidInvoices({
     required int page,

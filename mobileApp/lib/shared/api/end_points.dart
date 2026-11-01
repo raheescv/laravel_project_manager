@@ -28,6 +28,14 @@ class EndPoints {
   static const String printSettings = '/settings/sale/print';
   static const String productSortSettings = '/settings/sale/product-sort';
   static const String logo = '/settings/logo';
+  static const String productSettings = '/settings/product';
+
+  // ---- Settings → Catalog (products & services) ----
+  static const String catalogOptions = '/catalog/options';
+  static String catalog(String type) => '/catalog/$type';
+  static String catalogItem(String type, int id) => '/catalog/$type/$id';
+  static String catalogImages(String type, int id) => '/catalog/$type/$id/images';
+  static String catalogImage(String type, int id, int imageId) => '/catalog/$type/$id/images/$imageId';
 
   // ---- Diagnostics ----
   /// Where CrashReporter posts uncaught client errors.

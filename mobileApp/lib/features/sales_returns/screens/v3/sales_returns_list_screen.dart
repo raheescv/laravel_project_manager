@@ -54,7 +54,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
 
   /// Owns fetch/pagination/error state — see [PaginatedListCubit]. The screen
   /// keeps only the filter values it drives the fetcher with, plus the tablet
-  /// master-detail selection.
+  /// drawer's selection.
   late final PaginatedListCubit _list = PaginatedListCubit(
     fetch: _fetchPage,
     errorMessage: 'Could not load returns.',
@@ -79,7 +79,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
-  // Tablet master–detail: the row whose return is shown in the right pane.
+  // Tablet drawer: the row whose return is shown over the table's right side.
   // Untouched on phones, which keep pushing the /return-receipt route on tap.
   Map<String, dynamic>? _selectedRow;
   SaleReturn? _selectedReturn;
@@ -131,7 +131,7 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       );
 
   /// (Re)load from page 1 for the current filters, then re-sync the tablet
-  /// detail pane against the new rows.
+  /// drawer against the new rows.
   Future<void> _load() async {
     await _list.load();
     if (mounted) _syncSelection();
@@ -250,303 +250,388 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
   /// home shell at the tapped section (Sales shows highlighted here).
   void _onNavTap(int i) => context.go(Routes.homeTab(i));
 
+  String get _statusLabel => switch (_status) {
+        'completed' => 'Completed',
+        'draft' => 'Draft',
+        _ => 'All statuses',
+      };
+
+  String get _subtitle {
+    final s = _list.state;
+    if (s.isLoading && s.items.isEmpty) return 'Loading…';
+    return '${s.total} return${s.total == 1 ? '' : 's'} found';
+  }
+
+  void _newReturn() => context.push(Routes.saleReturnPick);
+
   @override
   Widget build(BuildContext context) {
-    final st = _list.state;
-    final sub = st.isLoading && st.items.isEmpty ? 'Loading…' : '${st.total} return${st.total == 1 ? '' : 's'} found';
     final canCreate = context.read<AuthCubit>().hasPermission(PermissionSlug.saleReturnCreate);
     final body = Scaffold(
       backgroundColor: Colors.transparent,
       extendBody: true,
       body: AstraBackground(
-        // Tablet drops the header band (see the preview): the pane names itself
-        // and carries the back + new-return actions, since this is a pushed
-        // route with no side-rail of its own to navigate from.
-        child: context.isTablet
-            ? SafeArea(bottom: false, child: _tabletBody(canCreate))
-            : Column(
-                children: [
-                  EmeraldHeader(
-                    leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
-                    title: 'Sales Returns',
-                    subtitle: sub,
-                    trailing: canCreate
-                        ? HeaderIconButton(icon: Icons.add, gold: true, onTap: () => context.push(Routes.saleReturnPick))
-                        : null,
-                  ),
-                  Expanded(child: _body(canCreate)),
-                ],
-              ),
+        child: BlocBuilder<PaginatedListCubit, PaginatedListState>(
+          bloc: _list,
+          builder: (context, _) => context.isTablet
+              // Tablet has no header band: the page names itself and carries the
+              // back + new-return actions.
+              ? SafeArea(bottom: false, child: _tabletBody(canCreate))
+              : Column(
+                  children: [
+                    EmeraldHeader(
+                      leading: HeaderIconButton(icon: Icons.chevron_left, onTap: _back),
+                      title: 'Sales Returns',
+                      subtitle: _subtitle,
+                      trailing: canCreate ? HeaderIconButton(icon: Icons.add, gold: true, onTap: _newReturn) : null,
+                    ),
+                    Expanded(child: _phoneList(canCreate)),
+                  ],
+                ),
+        ),
       ),
-      // Tablet routes navigate via the shell side-rail + the header back button,
+      // Tablet routes navigate via the side-rail + the page head's back button,
       // so the bottom nav + docked FAB are phone-only.
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: () => context.push(Routes.saleReturnPick)) : null,
+      floatingActionButton: (canCreate && !context.isTablet) ? AstraNavFab(onTap: _newReturn) : null,
       bottomNavigationBar: context.isTablet ? null : AstraNavBar(activeIndex: 1, onTap: _onNavTap),
     );
     // Phone only — the tablet has no bottom bar to get out of the way.
     return context.isTablet ? body : NavHide(child: body);
   }
 
-  Widget _body(bool canCreate) {
+  // ---- phone ----
+
+  Widget _phoneList(bool canCreate) {
     return RefreshIndicator(
       onRefresh: _load,
       child: MaxWidthBox(
         maxWidth: 720,
-        child: _listView(canCreate, const EdgeInsets.fromLTRB(16, 14, 16, 120)),
+        // Slivers, not ListView(children:) — the rows grow by a page on every
+        // scroll, so the eager form would rebuild every accumulated row.
+        child: CustomScrollView(
+          controller: _scrollCtl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              sliver: SliverToBoxAdapter(child: _toolsCard()),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverMainAxisGroup(slivers: _listSlivers(_list.state, canCreate)),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
+          ],
+        ),
       ),
     );
   }
 
-  /// Tablet: a surfaced master pane (head + flat rows) beside the selected
-  /// return — the same `.listcol` / `.detail` split Sales uses.
-  Widget _tabletBody(bool canCreate) {
-    return LayoutBuilder(
-      builder: (ctx, c) => Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+  /// Phone rows sit in one card: hairline-separated, rounded at the ends of
+  /// what is loaded so far, so the list reads as a single ledger.
+  Widget _cardRow(int index, int count, Widget row) {
+    final p = context.astra;
+    const r = Radius.circular(18);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.vertical(top: index == 0 ? r : Radius.zero, bottom: index == count - 1 ? r : Radius.zero),
+      ),
+      child: row,
+    );
+  }
+
+  List<Widget> _listSlivers(PaginatedListState state, bool canCreate) {
+    if (state.isLoading) {
+      return const [
+        SliverToBoxAdapter(
+          child: Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator())),
+        ),
+      ];
+    }
+    if (state.hasFailed || state.items.isEmpty) {
+      return [SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.all(16), child: _emptyState(state, canCreate)))];
+    }
+    return [
+      SliverList.builder(
+        itemCount: state.items.length,
+        itemBuilder: (_, i) => _cardRow(i, state.items.length, _returnRow(state.items[i])),
+      ),
+      if (state.loadingMore) const SliverToBoxAdapter(child: _MoreSpinner()),
+    ];
+  }
+
+  Widget _emptyState(PaginatedListState state, bool canCreate) {
+    if (state.hasFailed) {
+      return EmptyState(
+        icon: Icons.wifi_off,
+        title: 'Returns unavailable',
+        message: state.errorMessage,
+        action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load),
+      );
+    }
+    return EmptyState(
+      icon: Icons.assignment_return_outlined,
+      title: 'No returns found',
+      message: canCreate ? 'Try a wider date range, or start a return from a paid invoice.' : 'Try a wider date range.',
+      action: canCreate ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: _newReturn) : null,
+    );
+  }
+
+  Widget _returnRow(Map<String, dynamic> r) {
+    final p = context.astra;
+    final d = _rowData(r);
+    return TabletListRow(
+      selected: false,
+      onTap: () => _open(asStr(r['id'])),
+      padding: const EdgeInsets.fromLTRB(16, 11, 16, 11),
+      child: Row(
         children: [
-          TabletPane(
-            width: TabletMetrics.forWidth(c.maxWidth).listColumn,
+          IconChip(icon: Icons.assignment_return_outlined, size: 36, radius: 11),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _paneHead(canCreate),
-                Expanded(child: RefreshIndicator(onRefresh: _load, child: _tabletList(canCreate))),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(d.ref,
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink)),
+                    ),
+                    if (d.status.isNotEmpty) ...[
+                      const SizedBox(width: 7),
+                      StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text('${d.who}${d.date.isEmpty ? '' : ' · ${d.date}'}',
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+                    ),
+                    if (d.method.isNotEmpty) ...[const SizedBox(width: 7), Flexible(child: _methodTag(d.method))],
+                  ],
+                ),
               ],
             ),
           ),
-          Expanded(child: _detailPane()),
+          const SizedBox(width: 10),
+          Text('− ${Money.of(d.amount)}', style: serif(size: 15, color: AstraPalette.danger)),
         ],
       ),
     );
   }
 
-  /// The master pane's head: refunded total as the headline, then the bento's
-  /// filters as chips (a control card inside a pane reads as a card-in-a-card).
-  Widget _paneHead(bool canCreate) {
-    const statuses = <(String, String?)>[
-      ('All', null),
-      ('Completed', 'completed'),
-      ('Draft', 'draft'),
-    ];
-    return TabletPaneHead(
-      title: 'Sales Returns',
-      subtitle: _list.state.isLoading && _list.state.items.isEmpty
-          ? 'Loading…'
-          : '${Money.of(_list.state.totalPaid)} refunded · ${_list.state.total} return${_list.state.total == 1 ? '' : 's'}',
-      leading: context.canPop()
-          ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: _back)
-          : null,
-      trailing: canCreate
-          ? TabletActionButton(
-              label: 'New', icon: Icons.add, primary: true, onTap: () => context.push(Routes.saleReturnPick))
-          : null,
+  Widget _methodTag(String method) {
+    final p = context.astra;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
+      child: Text(method,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ui(size: 8.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.3)),
+    );
+  }
+
+  // ---- tablet: full-width ledger table + return drawer ----
+
+  Widget _tabletBody(bool canCreate) {
+    // Sized from this screen's own width, not the window's — beside the
+    // side-rail those differ by ~106pt, which matters on a small tablet.
+    return LayoutBuilder(
+      builder: (ctx, c) {
+        final drawerWidth = (c.maxWidth * 0.46).clamp(340.0, 460.0);
+        final tableWidth = c.maxWidth - 40;
+        return Stack(
+          children: [
+            Column(
+              children: [
+                TabletPageHead(
+                  title: 'Sales Returns',
+                  subtitle: _subtitle,
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+                  leading: context.canPop() ? TabletIconButton(icon: Icons.chevron_left, tooltip: 'Back', onTap: _back) : null,
+                  actions: [
+                    if (canCreate) TabletActionButton(label: 'New return', icon: Icons.add, primary: true, onTap: _newReturn),
+                  ],
+                ),
+                Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 14), child: _tabletTools(tableWidth)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: AstraCard(
+                      radius: 18,
+                      padding: EdgeInsets.zero,
+                      child: ClipRRect(borderRadius: BorderRadius.circular(18), child: _table(tableWidth, canCreate)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_selectedRow != null) Positioned(top: 0, right: 0, bottom: 0, width: drawerWidth, child: _drawer()),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _table(double width, bool canCreate) {
+    final p = context.astra;
+    final state = _list.state;
+    final cols = _columns(width);
+    Widget body;
+    if (state.isLoading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (state.hasFailed || state.items.isEmpty) {
+      // Still a scrollable, so pull-to-refresh works on an empty table.
+      body = ListView(
+        controller: _scrollCtl,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        children: [_emptyState(state, canCreate)],
+      );
+    } else {
+      body = ListView.builder(
+        controller: _scrollCtl,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: state.items.length + (state.loadingMore ? 1 : 0),
+        itemBuilder: (_, i) => i >= state.items.length ? const _MoreSpinner() : _tableRow(cols, state.items[i]),
+      );
+    }
+    return Column(
       children: [
-        const SizedBox(height: 13),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            for (final (label, status) in statuses)
-              TabletFilterChip(label: label, active: _status == status, onTap: () => _setStatus(status)),
+        _tableLine(
+          cols,
+          [
+            for (final c in cols)
+              Text(c.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(size: 9.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1)),
           ],
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+          border: true,
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          children: [
-            TabletFilterChip(
-                label: _dateLabel,
-                active: false,
-                icon: Icons.event_rounded,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openDateSheet),
-            TabletFilterChip(
-                label: _methodLabel,
-                active: false,
-                icon: Icons.account_balance_wallet_outlined,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openPaymentSheet),
-            TabletFilterChip(
-                label: _sortLabel,
-                active: false,
-                icon: Icons.swap_vert_rounded,
-                trailingIcon: Icons.keyboard_arrow_down_rounded,
-                onTap: _openSort),
-          ],
-        ),
+        Expanded(child: RefreshIndicator(onRefresh: _load, child: body)),
+        if (state.items.isNotEmpty) _tableFooter(cols, state),
       ],
     );
   }
 
-  Widget _tabletList(bool canCreate) {
-    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
-      bloc: _list,
-      builder: (context, state) {
-        return CustomScrollView(
-          controller: _scrollCtl,
-          slivers: [
-            if (state.isLoading)
-              const SliverToBoxAdapter(
-                child: Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator())),
-              )
-            else if (state.hasFailed)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-                  child: EmptyState(
-                      icon: Icons.wifi_off,
-                      title: 'Returns unavailable',
-                      message: state.errorMessage,
-                      action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
-                ),
-              )
-            else if (state.items.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
-                  child: EmptyState(
-                    icon: Icons.assignment_return_outlined,
-                    title: 'No returns found',
-                    message: canCreate
-                        ? 'Try a wider date range, or start a return from a paid invoice.'
-                        : 'Try a wider date range.',
-                    action: canCreate
-                        ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push(Routes.saleReturnPick))
-                        : null,
-                  ),
-                ),
-              )
-            else
-              SliverList.builder(
-                itemCount: state.items.length,
-                itemBuilder: (_, i) => _tabletRow(state.items[i]),
-              ),
-            if (state.loadingMore)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-                ),
-              ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
-        );
-      },
-    );
-  }
+  /// Which columns fit: the optional ones drop out as the table narrows (a
+  /// small tablet in portrait, or the drawer's share of the width).
+  List<_Col> _columns(double w) => [
+        const _Col('ref', 'Reference', 3),
+        const _Col('date', 'Date', 3),
+        const _Col('customer', 'Customer', 4),
+        if (w >= 700) const _Col('payment', 'Payment', 3),
+        const _Col('status', 'Status', 3),
+        const _Col('amount', 'Refund', 3, end: true),
+      ];
 
-  /// One flat pane row — reference + refund on the first line, who/when/how and
-  /// the status badge on the second.
-  Widget _tabletRow(Map<String, dynamic> r) {
+  Widget _tableLine(List<_Col> cols, List<Widget> cells, {EdgeInsets? padding, bool border = false, Color? color}) {
     final p = context.astra;
-    final d = _rowData(r);
-    final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
-    final sub = [d.who, if (d.date.isNotEmpty) d.date, if (d.method.isNotEmpty) d.method].join(' · ');
-    return TabletListRow(
-      selected: selected,
-      onTap: () => _selectRow(r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: color,
+        border: border ? Border(bottom: BorderSide(color: p.hairline)) : null,
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(d.ref,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 13, weight: FontWeight.w800, color: p.ink)),
+          for (var i = 0; i < cols.length; i++)
+            Expanded(
+              flex: cols[i].flex,
+              child: Padding(
+                padding: EdgeInsets.only(left: i == 0 ? 0 : 10),
+                child: Align(alignment: cols[i].end ? Alignment.centerRight : Alignment.centerLeft, child: cells[i]),
               ),
-              const SizedBox(width: 8),
-              Text('− ${Money.of(d.amount)}', style: serif(size: 15, color: AstraPalette.danger)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(sub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-              ),
-              if (d.status.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg),
-              ],
-            ],
-          ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _listView(bool canCreate, EdgeInsets padding) {
-    return BlocBuilder<PaginatedListCubit, PaginatedListState>(
-      bloc: _list,
-      builder: (context, state) {
-        // Slivers, not ListView(children:) — the rows grow by a page on every
-        // scroll, so the eager form would rebuild every accumulated row.
-        return CustomScrollView(
-          controller: _scrollCtl,
-          slivers: [
-            SliverPadding(
-              padding: padding.copyWith(bottom: 0),
-              sliver: SliverList.list(children: [_bento(), _resultLine()]),
-            ),
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: padding.left),
-              sliver: state.isLoading
-                  ? const SliverToBoxAdapter(
-                      child: Padding(padding: EdgeInsets.symmetric(vertical: 48), child: Center(child: CircularProgressIndicator())),
-                    )
-                  : state.hasFailed
-                      ? SliverToBoxAdapter(
-                          child: EmptyState(icon: Icons.wifi_off, title: 'Returns unavailable', message: state.errorMessage, action: AstraButton(label: 'Retry', icon: Icons.refresh, expand: false, onTap: _load)),
-                        )
-                      : state.items.isEmpty
-                          ? SliverToBoxAdapter(
-                              child: EmptyState(
-                                icon: Icons.assignment_return_outlined,
-                                title: 'No returns found',
-                                message: canCreate
-                                    ? 'Try a wider date range, or start a return from a paid invoice.'
-                                    : 'Try a wider date range.',
-                                action: canCreate
-                                    ? AstraButton(label: 'New return', icon: Icons.add, expand: false, onTap: () => context.push(Routes.saleReturnPick))
-                                    : null,
-                              ),
-                            )
-                          : SliverList.separated(
-                              itemCount: state.items.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 9),
-                              itemBuilder: (_, i) => _row(state.items[i]),
-                            ),
-            ),
-            if (state.loadingMore)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4))),
-                ),
-              ),
-            SliverToBoxAdapter(child: SizedBox(height: padding.bottom)),
-          ],
-        );
-      },
+  Widget _cellText(String text, {bool strong = false, Color? color, bool amount = false}) {
+    final p = context.astra;
+    return Text(text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: amount
+            ? serif(size: 14, color: color ?? p.ink)
+            : ui(size: 12, weight: strong ? FontWeight.w800 : FontWeight.w600, color: color ?? (strong ? p.ink : p.textSecondary)));
+  }
+
+  Widget _tableRow(List<_Col> cols, Map<String, dynamic> r) {
+    final d = _rowData(r);
+    final selected = _selectedRow != null && asStr(_selectedRow!['id']) == asStr(r['id']);
+    Widget cell(String id) => switch (id) {
+          'ref' => _cellText(d.ref, strong: true),
+          'date' => _cellText(d.date),
+          'customer' => _cellText(d.who),
+          'payment' => _cellText(d.method.isEmpty ? '—' : d.method),
+          // Scales down rather than overflowing a narrow column.
+          'status' => FittedBox(
+              fit: BoxFit.scaleDown,
+              child: d.status.isEmpty ? const SizedBox.shrink() : StatusPill(label: d.status.toUpperCase(), bg: d.bg, fg: d.fg)),
+          'amount' => _cellText('− ${Money.of(d.amount)}', amount: true, color: AstraPalette.danger),
+          _ => const SizedBox.shrink(),
+        };
+    return TabletListRow(
+      selected: selected,
+      onTap: () => _selectRow(r),
+      padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
+      child: _tableLine(cols, [for (final c in cols) cell(c.id)]),
     );
   }
 
-  /// Tablet detail pane — the selected return, embedded (its close button clears
-  /// the selection).
-  Widget _detailPane() {
-    if (_selectedRow == null) {
-      return const EmptyState(
-        icon: Icons.assignment_return_outlined,
-        title: 'No return selected',
-        message: 'Pick a return from the list to see its details here.',
-      );
+  /// Whole-set totals under the table — what the filters match, not just the
+  /// rows scrolled into view so far.
+  Widget _tableFooter(List<_Col> cols, PaginatedListState state) {
+    final p = context.astra;
+    Widget cell(String id) {
+      final style = ui(size: 12, weight: FontWeight.w800, color: p.ink);
+      return switch (id) {
+        'ref' => Text('${state.items.length} of ${state.total}', maxLines: 1, overflow: TextOverflow.ellipsis, style: style),
+        'amount' => Text('− ${Money.of(state.totalPaid)}',
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: serif(size: 14, color: AstraPalette.danger)),
+        _ => const SizedBox.shrink(),
+      };
     }
+
+    return _tableLine(
+      cols,
+      [for (final c in cols) cell(c.id)],
+      padding: const EdgeInsets.fromLTRB(20, 11, 20, 11),
+      color: p.tint,
+    );
+  }
+
+  /// The selected return, sliding over the table's right side. The table stays
+  /// live beside it, so tapping another row just swaps what the drawer shows.
+  Widget _drawer() {
+    final p = context.astra;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.canvas,
+        border: Border(left: BorderSide(color: p.hairline)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: p.isDark ? 0.40 : 0.12), blurRadius: 30, offset: const Offset(-12, 0)),
+        ],
+      ),
+      child: ClipRect(child: _detailPane()),
+    );
+  }
+
+  /// The drawer's content — the selected return, embedded (its close button
+  /// clears the selection).
+  Widget _detailPane() {
     if (_detailLoading) return const Center(child: CircularProgressIndicator());
     if (_detailError != null || _selectedReturn == null) {
       return EmptyState(
@@ -561,18 +646,23 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
       key: ValueKey('return-${ret.id}'),
       saleReturn: ret,
       onClose: () {
-        setState(() {
-          _selectedRow = null;
-          _selectedReturn = null;
-          _detailError = null;
-        });
+        _clearSelection();
         _load();
       },
     );
   }
 
-  /// Load a return into the detail pane (tablet). Guarded against out-of-order
-  /// taps so only the last-tapped return is shown.
+  void _clearSelection() {
+    setState(() {
+      _selectedRow = null;
+      _selectedReturn = null;
+      _detailError = null;
+      _detailLoading = false;
+    });
+  }
+
+  /// Load a return into the drawer (tablet). Guarded against out-of-order taps
+  /// so only the last-tapped return is shown.
   Future<void> _selectRow(Map<String, dynamic> r) async {
     final id = asStr(r['id']);
     if (id.isEmpty) return;
@@ -598,33 +688,19 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     }
   }
 
-  /// Tablet only: keep the detail pane in step with the list — drop a stale
-  /// selection and preselect the first return so the pane is never empty.
+  /// Tablet only: close the drawer when the row it was opened from is no longer
+  /// listed (after a filter change, say). Nothing is preselected — the table is
+  /// the page, and the drawer opens on a tap.
   void _syncSelection() {
-    if (!mounted || !context.isTablet) return;
-    final rows = _list.state.items;
-    final selId = _selectedRow == null ? '' : asStr(_selectedRow!['id']);
-    final stillThere = selId.isNotEmpty && rows.any((r) => asStr(r['id']) == selId);
-    if (!stillThere) {
-      if (rows.isEmpty) {
-        setState(() {
-          _selectedRow = null;
-          _selectedReturn = null;
-          _detailError = null;
-          _detailLoading = false;
-        });
-      } else {
-        _selectRow(rows.first);
-      }
-    }
+    if (!mounted || !context.isTablet || _selectedRow == null) return;
+    final selId = asStr(_selectedRow!['id']);
+    if (!_list.state.items.any((r) => asStr(r['id']) == selId)) _clearSelection();
   }
 
-  // ---- Bento control card ----
+  // ---- row data ----
 
-  // ---- return row ----
-
-  /// The display fields of one list row, shared by the phone card and the
-  /// tablet pane row so both read the payload the same way.
+  /// The display fields of one list row, shared by the phone row and the
+  /// tablet table so both read the payload the same way.
   ({String ref, num amount, String who, String status, String date, String method, Color bg, Color fg}) _rowData(
       Map<String, dynamic> r) {
     final p = context.astra;
@@ -649,67 +725,24 @@ class _SalesReturnListScreenState extends State<SalesReturnListScreen> {
     );
   }
 
-  Widget _row(Map<String, dynamic> r) {
-    final p = context.astra;
-    final d = _rowData(r);
-    final ref = d.ref;
-    final amount = d.amount;
-    final who = d.who;
-    final status = d.status;
-    final date = d.date;
-    final method = d.method;
-    final (bg, fg) = (d.bg, d.fg);
-    return AstraCard(
-      radius: 14,
-      padding: const EdgeInsets.all(12),
-      onTap: () => _open(asStr(r['id'])),
-      child: Row(
-        children: [
-          IconChip(icon: Icons.assignment_return_outlined, size: 40, radius: 12),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(child: Text(ref, maxLines: 1, overflow: TextOverflow.ellipsis, style: ui(size: 12.5, weight: FontWeight.w800, color: p.ink))),
-                    if (status.isNotEmpty) ...[
-                      const SizedBox(width: 7),
-                      StatusPill(label: status.toUpperCase(), bg: bg, fg: fg),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text('$who${date.isEmpty ? '' : ' · $date'}',
-                          maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
-                    ),
-                    if (method.isNotEmpty) ...[
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(6)),
-                          child: Text(method,
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: ui(size: 8.5, weight: FontWeight.w800, color: p.textSecondary, letterSpacing: 0.3)),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text('− ${Money.of(amount)}', style: serif(size: 15, color: AstraPalette.danger)),
-        ],
-      ),
-    );
+  void _openStatusSheet() {
+    const statuses = <(String, String?, IconData)>[
+      ('All statuses', null, Icons.all_inclusive_rounded),
+      ('Completed', 'completed', Icons.task_alt_rounded),
+      ('Draft', 'draft', Icons.edit_note_rounded),
+    ];
+    _optionSheet('Status', [
+      for (final (label, status, icon) in statuses)
+        _optTile(
+          label: label,
+          icon: icon,
+          active: _status == status,
+          onTap: () {
+            Navigator.pop(context);
+            _setStatus(status);
+          },
+        ),
+    ]);
   }
 
   // ---- option sheets (apply on tap) ----

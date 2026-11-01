@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Settings Categories — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Marcellus&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0" rel="stylesheet">
+<style>
+/* ============================================================ THEME (mirrors lib/shared/utils/components/theme/palette.dart) */
+:root{
+  --primary:#0A62C8;--primary-dark:#084C9C;--accent:#0BA8FA;
+  --canvas:#F3F7FD;--card:#fff;--ink:#0F1B2D;--t2:#4B5A70;--muted:#8D99AB;
+  --hair:#E4EAF3;--tint:rgba(10,98,200,.09);--field:#EEF3FA;
+  --danger:#D4546A;--danger-tint:#FBE9EC;--warn:#9A6A00;--warn-tint:#FBF3DF;
+  --hero-1:#084C9C;--hero-2:#0A62C8;--hero-3:#0BA8FA;
+  --shadow:0 18px 40px -26px rgba(10,40,90,.45);--shadow-sm:0 6px 16px -10px rgba(10,40,90,.35);
+  --serif:'Inter',sans-serif;--ui:'Inter',sans-serif;--title-w:800;
+}
+body[data-skin="emerald"]{
+  --primary:#15806C;--primary-dark:#0E5648;--accent:#C9A24B;--canvas:#F6F1E8;--ink:#16312A;--t2:#5D7269;--muted:#A0ABA3;
+  --hair:#ECE6D8;--tint:rgba(21,128,108,.10);--field:#F2EDE2;--hero-1:#0E5648;--hero-2:#15806C;--hero-3:#C9A24B;
+  --serif:'Marcellus',serif;--title-w:400;
+}
+body[data-skin="noir"]{
+  --primary:#B5862F;--primary-dark:#8A6420;--accent:#C8A24A;--canvas:#F3EFE6;--card:#FFFDF7;--ink:#1C1A14;--t2:#54503F;--muted:#928C79;
+  --hair:#E6DFCE;--tint:rgba(200,162,74,.13);--field:#EFEADD;--hero-1:#0C0B08;--hero-2:#1F1C13;--hero-3:#C8A24A;
+  --serif:'Marcellus',serif;--title-w:400;
+}
+body[data-mode="dark"]{
+  --canvas:#0B1220;--card:#152036;--ink:#EEF3FB;--t2:#A9B7CC;--muted:#6F7F98;--hair:rgba(255,255,255,.08);
+  --tint:rgba(11,168,250,.14);--field:#1A2740;--danger-tint:rgba(212,84,106,.18);--warn:#E6C16B;--warn-tint:rgba(230,193,107,.16);
+  --shadow:0 18px 40px -24px rgba(0,0,0,.75);--shadow-sm:0 6px 16px -10px rgba(0,0,0,.6);
+}
+body[data-mode="dark"][data-skin="emerald"]{--canvas:#07140F;--card:#122A23;--field:#17332B;--ink:#F3F1EA;--t2:#A9C2BA;--muted:#6F857D;--tint:rgba(21,128,108,.22)}
+body[data-mode="dark"][data-skin="noir"]{--canvas:#0C0B08;--card:#18160F;--field:#211E15;--ink:#F1ECE0;--t2:#B7B09C;--muted:#857E6C;--hair:#2A271D;--tint:rgba(200,162,74,.16)}
+
+/* ============================================================ HARNESS */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--ui);background:radial-gradient(900px 500px at 10% -10%,rgba(10,98,200,.22),transparent 60%),#0A0F18;color:#fff;min-height:100vh;padding:24px 16px 70px}
+.head{max-width:1180px;margin:0 auto 14px;text-align:center}
+.head h1{font-size:22px;font-weight:800;margin:0 0 4px}
+.head p{margin:0;color:#93A3BB;font-size:13px}
+.bar{position:sticky;top:10px;z-index:50;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1180px;margin:0 auto 14px;background:rgba(12,18,30,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:9px}
+.grp{display:flex;align-items:center;gap:4px;padding:3px;background:rgba(255,255,255,.05);border-radius:11px;flex-wrap:wrap}
+.grp .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7F90AA;font-weight:700;padding:0 6px}
+.bar button{font:700 12px var(--ui);color:#C9D5E6;cursor:pointer;background:none;border:0;border-radius:8px;padding:7px 11px;white-space:nowrap}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:linear-gradient(180deg,#1A78E0,#0A62C8);color:#fff}
+.caption{max-width:780px;margin:0 auto 22px;color:#93A3BB;font-size:12.5px;line-height:1.55;text-align:center}
+.caption b{color:#E6EEF9}
+.stage{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;max-width:1240px;margin:0 auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.col .tag{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#7F90AA}
+.dir{display:none}
+body[data-dir="A"] .dir.A,body[data-dir="B"] .dir.B,body[data-dir="C"] .dir.C{display:contents}
+.section-title{width:100%;max-width:1180px;margin:34px auto 14px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#7F90AA}
+
+/* ============================================================ PHONE */
+.phone{width:360px;height:760px;border-radius:44px;padding:10px;background:linear-gradient(160deg,#28303c,#11151c);box-shadow:0 40px 100px -40px rgba(0,0,0,.9)}
+.screen{position:relative;width:100%;height:100%;border-radius:35px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:118px;height:28px;background:#0c0d12;border-radius:0 0 17px 17px;z-index:60}
+.scroll{flex:1;overflow:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.ms{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;font-size:20px;line-height:1;display:inline-block;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0}
+.serif{font-family:var(--serif);font-weight:var(--title-w)}
+
+/* app header band (EmeraldHeader) */
+.hdr{flex:none;padding:40px 18px 16px;color:#fff;background:radial-gradient(260px 160px at 100% 0,color-mix(in srgb,var(--hero-3) 55%,transparent),transparent 70%),linear-gradient(150deg,var(--hero-1),var(--hero-2))}
+.hdr .row{display:flex;align-items:center;gap:10px}
+.hdr h2{margin:0;font-size:22px}
+.hdr p{margin:2px 0 0;font-size:11.5px;opacity:.75}
+.hdr .back{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.14)}
+
+/* atoms — sized like AstraCard / IconChip / _switch */
+.chip{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--tint);color:var(--primary)}
+.chip .ms{font-size:18px}
+.chip.sm{width:30px;height:30px;border-radius:8px}
+.chip.sm .ms{font-size:17px}
+.chip.grad{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+.tt{flex:1;min-width:0}
+.tt b{display:block;font-size:12.5px;font-weight:700;color:var(--ink)}
+.tt small{display:block;font-size:10px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.chev{color:var(--muted);font-size:18px}
+.val{font-size:12px;font-weight:800;color:var(--primary);letter-spacing:.04em}
+.val.none{color:var(--muted)}
+.sw{flex:none;width:44px;height:26px;border-radius:20px;background:var(--hair);position:relative;cursor:pointer;transition:.16s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.16s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on{background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
+.sw.on::after{left:21px}
+.seg{display:flex;background:var(--tint);border-radius:11px;padding:3px;gap:2px}
+.seg span{flex:1;text-align:center;font-size:11px;font-weight:800;color:var(--t2);padding:6px 8px;border-radius:9px;cursor:pointer;transition:.15s;white-space:nowrap}
+.seg span.on{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+.seg.mini span{flex:none;width:30px;padding:6px 0}
+.swatch{display:flex;width:54px;flex:none}
+.swatch i{width:20px;height:20px;border-radius:50%;border:2px solid var(--card);margin-right:-8px}
+.aa{font-family:var(--serif);font-weight:var(--title-w);font-size:15px}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:var(--warn-tint);color:var(--warn)}
+.badge .ms{font-size:11px}
+.new{display:inline-block;font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:6px;background:var(--primary);color:#fff;vertical-align:2px;margin-left:5px}
+.logout{display:flex;align-items:center;justify-content:center;gap:7px;color:var(--danger);font-size:12.5px;font-weight:700;background:var(--card);border-radius:14px;padding:13px;box-shadow:var(--shadow-sm)}
+.logout .ms{font-size:16px}
+.ver{text-align:center;font-size:10.5px;font-weight:600;color:var(--muted);margin:12px 0 0}
+.note{font-size:10.5px;font-weight:500;color:var(--muted);line-height:1.4;padding:0 2px}
+
+/* ============================================================ A · GROUPED LIST */
+.A .body{padding:14px 14px 110px}
+.A .sh{display:flex;align-items:center;gap:7px;padding:16px 4px 7px}
+.A .sh:first-child{padding-top:2px}
+.A .sh h4{margin:0;font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);flex:1}
+.A .grp2{background:var(--card);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}
+.A .r{display:flex;align-items:center;gap:11px;padding:11px 12px;position:relative}
+.A .r+.r::before{content:"";position:absolute;top:0;left:53px;right:0;height:1px;background:var(--hair)}
+.A .r.stack{flex-wrap:wrap}
+.A .r.stack .seg{width:100%;margin-left:41px}
+.A .r.hl{background:color-mix(in srgb,var(--primary) 5%,transparent)}
+
+/* ============================================================ B · CATEGORY HUB */
+.B .body{padding:14px 14px 110px}
+.B .cl{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);padding:14px 4px 8px}
+.B .cl:first-child{padding-top:0}
+.B .cat{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:15px;padding:12px;box-shadow:var(--shadow-sm);margin-bottom:8px;cursor:pointer}
+.B .cat .chip{width:40px;height:40px;border-radius:12px}
+.B .cat .tt b{font-size:13.5px}
+.B .cat .tt small{font-size:10.5px}
+.B .cat .cnt{font-size:10px;font-weight:800;color:var(--t2);background:var(--field);border-radius:999px;padding:3px 8px}
+.B .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow-sm);padding:12px;margin-bottom:10px}
+.B .card .r{display:flex;align-items:center;gap:11px}
+.B .card .r+.r,.B .card .r+.seg,.B .card .seg+.note,.B .card .note+.r{margin-top:11px}
+.B .lbl{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);padding:6px 4px 8px;display:flex;align-items:center;gap:6px}
+
+/* ============================================================ C · CHIP TABS */
+.C .tabs{flex:none;display:flex;gap:6px;padding:10px 14px;overflow:auto;scrollbar-width:none;background:var(--canvas);border-bottom:1px solid var(--hair)}
+.C .tabs::-webkit-scrollbar{display:none}
+.C .tabs span{flex:none;display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:999px;background:var(--card);color:var(--t2);box-shadow:var(--shadow-sm);cursor:pointer}
+.C .tabs span .ms{font-size:15px}
+.C .tabs span.on{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+.C .body{padding:4px 14px 110px}
+.C .sec{padding-top:12px}
+.C .sec h4{display:flex;align-items:center;gap:8px;margin:0 0 8px;padding:0 2px}
+.C .sec h4 .serif{font-size:17px;flex:1}
+.C .crd{display:flex;align-items:center;gap:11px;background:var(--card);border-radius:14px;padding:11px 12px;box-shadow:var(--shadow-sm);margin-bottom:8px}
+.C .crd.col2{flex-direction:column;align-items:stretch;gap:10px}
+.C .crd.col2 .r{display:flex;align-items:center;gap:11px}
+.C .faded{opacity:.5}
+
+/* ============================================================ TABLET */
+.tablet{width:1000px;max-width:100%;height:620px;border-radius:32px;padding:12px;background:linear-gradient(160deg,#28303c,#11151c);box-shadow:0 40px 100px -40px rgba(0,0,0,.9)}
+.tscreen{width:100%;height:100%;border-radius:22px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex}
+.trail{flex:none;width:64px;background:linear-gradient(180deg,var(--hero-1),var(--hero-2));display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:14px;color:rgba(255,255,255,.65)}
+.trail .ms{font-size:21px}
+.trail .on{color:#fff;background:rgba(255,255,255,.16);border-radius:12px;padding:8px}
+.tnav{flex:none;width:272px;background:var(--card);border-right:1px solid var(--hair);display:flex;flex-direction:column}
+.tnav .ph{padding:18px 16px 12px;border-bottom:1px solid var(--hair)}
+.tnav .ph b{display:block;font-family:var(--serif);font-weight:var(--title-w);font-size:19px}
+.tnav .ph small{font-size:11px;color:var(--muted);font-weight:600}
+.tnav .list{flex:1;overflow:auto;padding:10px;scrollbar-width:none}
+.tnav .grph{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:10px 8px 6px}
+.tnav .grph:first-child{padding-top:2px}
+.nt{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:13px;cursor:pointer;margin-bottom:3px}
+.nt .chip{width:32px;height:32px;border-radius:10px;color:var(--t2)}
+.nt.on{background:var(--tint)}
+.nt.on .chip{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+.nt.on .tt b{font-weight:800}
+.tdet{flex:1;overflow:auto;padding:24px 30px 40px;scrollbar-width:none}
+.tdet .pane{display:none;max-width:560px}
+.tdet .pane.on{display:block}
+.tdet .phd{display:flex;align-items:center;gap:13px;margin-bottom:18px}
+.tdet .phd .chip{width:44px;height:44px;border-radius:14px}
+.tdet .phd .chip .ms{font-size:22px}
+.tdet .phd h3{margin:0;font-family:var(--serif);font-weight:var(--title-w);font-size:22px}
+.tdet .phd p{margin:2px 0 0;font-size:12px;font-weight:600;color:var(--muted)}
+.tdet .psec{border-top:1px solid var(--hair);margin-top:20px;padding:16px 0 10px}
+.tdet .psec:first-of-type{border:0;margin:0;padding-top:0}
+.tdet .psec h5{margin:0;font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.tdet .psec p{margin:3px 0 0;font-size:12px;font-weight:600;color:var(--t2)}
+.tdet .crd{display:flex;align-items:center;gap:11px;background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow-sm);margin-bottom:10px}
+.tdet .crd.col2{flex-direction:column;align-items:stretch;gap:10px}
+.tdet .crd.col2 .r{display:flex;align-items:center;gap:11px}
+.tdet .empty{padding:40px 0;color:var(--muted);font-size:13px;font-weight:600}
+</style>
+</head>
+<body data-dir="A" data-mode="light" data-skin="ocean">
+
+<div class="head">
+  <h1>Settings — categories &amp; Product configuration</h1>
+  <p>mobileApp · Settings screen (phone + tablet)</p>
+</div>
+
+<div class="bar">
+  <div class="grp" data-set="dir"><span class="lab">Phone direction</span>
+    <button data-v="A" class="on">A · Grouped list</button>
+    <button data-v="B">B · Category hub</button>
+    <button data-v="C">C · Chip tabs</button>
+  </div>
+  <div class="grp" data-set="mode"><span class="lab">Mode</span>
+    <button data-v="light" class="on">Light</button><button data-v="dark">Dark</button>
+  </div>
+  <div class="grp" data-set="skin"><span class="lab">Preset</span>
+    <button data-v="ocean" class="on">Ocean</button><button data-v="emerald">Emerald</button><button data-v="noir">Noir</button>
+  </div>
+</div>
+
+<p class="caption" id="cap"></p>
+
+<div class="stage">
+
+  <!-- ===================================================== A · GROUPED LIST -->
+  <div class="dir A">
+    <div class="col"><span class="tag">Settings · top</span>
+      <div class="phone"><div class="screen A"><div class="notch"></div>
+        <div class="hdr"><h2 class="serif">Settings</h2><p>Device and account preferences</p></div>
+        <div class="scroll"><div class="body">
+          <div class="sh"><h4>Appearance</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="swatch"><i style="background:var(--hero-1)"></i><i style="background:var(--primary)"></i><i style="background:var(--accent)"></i></div><div class="tt" style="margin-left:-12px"><b>Colour preset</b><small>Ocean · Crisp blue</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">light_mode</span></div><div class="tt"><b>Light &amp; dark</b><small>Light</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="aa">Aa</span></div><div class="tt"><b>Typography</b><small>Inter · Clean sans</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+
+          <div class="sh"><h4>Sale configuration</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="chip sm"><span class="ms">person_add</span></div><div class="tt"><b>Ask for client on new sale</b><small>Opens the client form as New Sale loads</small></div><div class="sw on"></div></div>
+            <div class="r"><div class="chip sm"><span class="ms">volunteer_activism</span></div><div class="tt"><b>Ask for a tip</b><small>On — the tip row shows at Review &amp; Pay</small></div><div class="sw"></div></div>
+            <div class="r"><div class="chip sm"><span class="ms">grid_view</span></div><div class="tt"><b>Products per row</b><small>New Sale grid · 3 across</small></div><div class="seg mini"><span class="on">3</span><span>4</span><span>5</span></div></div>
+            <div class="r"><div class="chip sm"><span class="ms">style</span></div><div class="tt"><b>Category display</b><small>New Sale rail · Name chips</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r stack"><div class="chip sm"><span class="ms">sort</span></div><div class="tt"><b>Product order</b><small>New Sale · Priority · Low first · all tills</small></div><div class="seg"><span class="on">Priority</span><span>Name</span></div></div>
+            <div class="r"><div class="chip sm"><span class="ms">lock_clock</span></div><div class="tt"><b>Lock after each sale</b><small>MPIN or fingerprint to carry on</small></div><div class="sw on"></div></div>
+            <div class="r"><div class="chip sm"><span class="ms">storefront</span></div><div class="tt"><b>Ask for branch on unlock</b><small>Multi-branch staff pick after unlock</small></div><div class="sw"></div></div>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+    <div class="col"><span class="tag">Scrolled · Product configuration inline</span>
+      <div class="phone"><div class="screen A"><div class="notch"></div>
+        <div class="hdr"><h2 class="serif">Settings</h2><p>Device and account preferences</p></div>
+        <div class="scroll"><div class="body">
+          <div class="sh"><h4>Product configuration <span class="new">moved</span></h4><span class="badge"><span class="ms">public</span>All tills</span></div>
+          <div class="grp2">
+            <div class="r stack hl"><div class="chip sm"><span class="ms">qr_code_2</span></div><div class="tt"><b>Barcode type</b><small>Each product's barcode is typed or scanned</small></div><div class="seg"><span class="on">Product wise</span><span>System generated</span></div></div>
+            <div class="r hl"><div class="chip sm"><span class="ms">text_fields</span></div><div class="tt"><b>Barcode prefix</b><small>In front of every generated barcode</small></div><span class="val">INV</span><span class="ms chev">chevron_right</span></div>
+            <div class="r hl"><div class="chip sm"><span class="ms">link</span></div><div class="tt"><b>Barcode = SKU</b><small>One value fills Barcode and UPC/SKU</small></div><div class="sw"></div></div>
+            <div class="r hl"><div class="chip sm"><span class="ms">visibility_off</span></div><div class="tt"><b>Hide out-of-stock items</b><small>Zero-stock leaves the New Sale catalog</small></div><div class="sw on"></div></div>
+          </div>
+
+          <div class="sh"><h4>Printer &amp; receipt</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="chip sm"><span class="ms">receipt_long</span></div><div class="tt"><b>Printer &amp; receipt</b><small>Classic · 80 mm</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+
+          <div class="sh"><h4>Catalog</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="chip sm"><span class="ms">inventory_2</span></div><div class="tt"><b>Products</b><small>List, add and edit products</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">design_services</span></div><div class="tt"><b>Services</b><small>List, add and edit services</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+
+          <div class="sh"><h4>Account</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="chip sm"><span class="ms">space_dashboard</span></div><div class="tt"><b>Start screen</b><small>Opens on Dashboard after sign-in</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">verified_user</span></div><div class="tt"><b>My permissions</b><small>14 of 22 permissions granted</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+
+          <div class="sh"><h4>System</h4></div>
+          <div class="grp2">
+            <div class="r"><div class="chip sm"><span class="ms">vibration</span></div><div class="tt"><b>Haptics</b><small>Vibration feedback on tap</small></div><div class="sw on"></div></div>
+            <div class="r"><div class="chip sm"><span class="serif" style="font-size:13px">QR</span></div><div class="tt"><b>Currency</b><small>QAR · 3 available</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">business</span></div><div class="tt"><b>Branch</b><small>Main Branch · Doha</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">cloud_done</span></div><div class="tt"><b>Offline data</b><small>Synced 4 min ago</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">cloud</span></div><div class="tt"><b>Server connection</b><small>API base URL and tenant</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+          <div style="height:16px"></div>
+          <div class="logout"><span class="ms">logout</span>Log out</div>
+          <p class="ver">QLOUD POS · 3.4.0 (412)</p>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== B · CATEGORY HUB -->
+  <div class="dir B">
+    <div class="col"><span class="tag">Settings · category list</span>
+      <div class="phone"><div class="screen B"><div class="notch"></div>
+        <div class="hdr"><h2 class="serif">Settings</h2><p>Device and account preferences</p></div>
+        <div class="scroll"><div class="body">
+          <div class="cl">Selling</div>
+          <div class="cat"><div class="chip grad"><span class="ms">point_of_sale</span></div><div class="tt"><b>Sale configuration</b><small>Asks for client · tip off · locks after sale</small></div><span class="cnt">7</span><span class="ms chev">chevron_right</span></div>
+          <div class="cat"><div class="chip grad"><span class="ms">qr_code_2</span></div><div class="tt"><b>Product configuration <span class="new">moved</span></b><small>Product wise · prefix INV · hides out-of-stock</small></div><span class="cnt">4</span><span class="ms chev">chevron_right</span></div>
+          <div class="cat"><div class="chip grad"><span class="ms">inventory_2</span></div><div class="tt"><b>Catalog</b><small>Products · Services</small></div><span class="cnt">2</span><span class="ms chev">chevron_right</span></div>
+          <div class="cat"><div class="chip grad"><span class="ms">receipt_long</span></div><div class="tt"><b>Printer &amp; receipt</b><small>Classic · 80 mm</small></div><span class="ms chev">chevron_right</span></div>
+
+          <div class="cl">You</div>
+          <div class="cat"><div class="chip grad"><span class="ms">palette</span></div><div class="tt"><b>Appearance</b><small>Ocean · Light · Inter</small></div><span class="cnt">3</span><span class="ms chev">chevron_right</span></div>
+          <div class="cat"><div class="chip grad"><span class="ms">space_dashboard</span></div><div class="tt"><b>Start screen</b><small>Opens on Dashboard</small></div><span class="ms chev">chevron_right</span></div>
+          <div class="cat"><div class="chip grad"><span class="ms">verified_user</span></div><div class="tt"><b>My permissions</b><small>14 granted</small></div><span class="ms chev">chevron_right</span></div>
+
+          <div class="cl">This device</div>
+          <div class="cat"><div class="chip grad"><span class="ms">tune</span></div><div class="tt"><b>System configuration</b><small>QAR · Main Branch · synced 4 min ago</small></div><span class="cnt">5</span><span class="ms chev">chevron_right</span></div>
+          <div style="height:10px"></div>
+          <div class="logout"><span class="ms">logout</span>Log out</div>
+          <p class="ver">QLOUD POS · 3.4.0 (412)</p>
+        </div></div>
+      </div></div>
+    </div>
+    <div class="col"><span class="tag">Tapped · Product configuration</span>
+      <div class="phone"><div class="screen B"><div class="notch"></div>
+        <div class="hdr"><div class="row"><div class="back"><span class="ms">arrow_back</span></div><div><h2 class="serif" style="font-size:19px">Product configuration</h2><p style="margin:0">Settings · applies to every branch · saves instantly</p></div></div></div>
+        <div class="scroll"><div class="body">
+          <div class="lbl"><span class="ms" style="font-size:15px">qr_code_2</span>Barcodes</div>
+          <div class="card">
+            <div class="r"><div class="tt"><b>Barcode type</b></div></div>
+            <div class="seg"><span class="on">Product wise</span><span>System generated</span></div>
+            <p class="note" style="margin:8px 0 0">Each product's barcode is typed or scanned on its form.</p>
+            <div class="r"><div class="chip sm"><span class="ms">text_fields</span></div><div class="tt"><b>Barcode prefix</b><small>Up to 10 characters</small></div><span class="val">INV</span><span class="ms chev">chevron_right</span></div>
+            <div class="r"><div class="chip sm"><span class="ms">link</span></div><div class="tt"><b>Barcode = SKU</b><small>One value fills Barcode and UPC/SKU</small></div><div class="sw"></div></div>
+          </div>
+          <div class="lbl"><span class="ms" style="font-size:15px">point_of_sale</span>Point of sale</div>
+          <div class="card">
+            <div class="r"><div class="chip sm"><span class="ms">visibility_off</span></div><div class="tt"><b>Hide out-of-stock items</b><small>Zero-stock leaves the New Sale catalog</small></div><div class="sw on"></div></div>
+          </div>
+          <p class="note">Shared with the web Settings → Product tab — a change here applies on every till.</p>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== C · CHIP TABS -->
+  <div class="dir C">
+    <div class="col"><span class="tag">Chips jump to a section · "Products" tapped</span>
+      <div class="phone"><div class="screen C"><div class="notch"></div>
+        <div class="hdr"><h2 class="serif">Settings</h2><p>Device and account preferences</p></div>
+        <div class="tabs">
+          <span><span class="ms">palette</span>Appearance</span>
+          <span><span class="ms">point_of_sale</span>Sale</span>
+          <span class="on"><span class="ms">qr_code_2</span>Products</span>
+          <span><span class="ms">receipt_long</span>Printer</span>
+          <span><span class="ms">inventory_2</span>Catalog</span>
+          <span><span class="ms">person</span>Account</span>
+          <span><span class="ms">tune</span>System</span>
+        </div>
+        <div class="scroll"><div class="body">
+          <div class="sec faded">
+            <div class="crd"><div class="chip"><span class="ms">storefront</span></div><div class="tt"><b>Ask for branch on unlock</b><small>Multi-branch staff pick after unlock</small></div><div class="sw"></div></div>
+          </div>
+          <div class="sec">
+            <h4><span class="serif">Product configuration</span><span class="badge"><span class="ms">public</span>All tills</span></h4>
+            <div class="crd col2">
+              <div class="r"><div class="chip"><span class="ms">qr_code_2</span></div><div class="tt"><b>Barcode type</b><small>Each product's barcode is typed or scanned</small></div></div>
+              <div class="seg"><span class="on">Product wise</span><span>System generated</span></div>
+            </div>
+            <div class="crd"><div class="chip"><span class="ms">text_fields</span></div><div class="tt"><b>Barcode prefix</b><small>In front of every generated barcode</small></div><span class="val">INV</span><span class="ms chev">chevron_right</span></div>
+            <div class="crd"><div class="chip"><span class="ms">link</span></div><div class="tt"><b>Barcode = SKU</b><small>One value fills Barcode and UPC/SKU</small></div><div class="sw"></div></div>
+            <div class="crd"><div class="chip"><span class="ms">visibility_off</span></div><div class="tt"><b>Hide out-of-stock items</b><small>Zero-stock leaves the New Sale catalog</small></div><div class="sw on"></div></div>
+          </div>
+          <div class="sec">
+            <h4><span class="serif">Printer &amp; receipt</span></h4>
+            <div class="crd"><div class="chip"><span class="ms">receipt_long</span></div><div class="tt"><b>Printer &amp; receipt</b><small>Classic · 80 mm</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+          <div class="sec">
+            <h4><span class="serif">Catalog</span></h4>
+            <div class="crd"><div class="chip"><span class="ms">inventory_2</span></div><div class="tt"><b>Products</b><small>List, add and edit products</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="crd"><div class="chip"><span class="ms">design_services</span></div><div class="tt"><b>Services</b><small>List, add and edit services</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+          <div class="sec">
+            <h4><span class="serif">Account</span></h4>
+            <div class="crd"><div class="chip"><span class="ms">space_dashboard</span></div><div class="tt"><b>Start screen</b><small>Opens on Dashboard after sign-in</small></div><span class="ms chev">chevron_right</span></div>
+            <div class="crd"><div class="chip"><span class="ms">verified_user</span></div><div class="tt"><b>My permissions</b><small>14 of 22 granted</small></div><span class="ms chev">chevron_right</span></div>
+          </div>
+        </div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== TABLET (same for every direction) -->
+  <div class="section-title">Tablet · Product configuration gets its own category in the rail</div>
+  <div class="col">
+    <div class="tablet"><div class="tscreen">
+      <div class="trail"><span class="ms">space_dashboard</span><span class="ms">point_of_sale</span><span class="ms">receipt</span><span class="ms">bar_chart</span><span style="flex:1"></span><span class="ms on">settings</span></div>
+      <div class="tnav">
+        <div class="ph"><b>Settings</b><small>Device and account preferences</small></div>
+        <div class="list" id="tnav">
+          <div class="grph">Selling</div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">point_of_sale</span></div><div class="tt"><b>Sale Configuration</b><small>Asks for client · tip off · locks</small></div></div>
+          <div class="nt on" data-p="pc"><div class="chip"><span class="ms">qr_code_2</span></div><div class="tt"><b>Product configuration <span class="new">moved</span></b><small>Product wise · INV · hides out-of-stock</small></div></div>
+          <div class="nt" data-p="cat"><div class="chip"><span class="ms">inventory_2</span></div><div class="tt"><b>Catalog</b><small>Products · Services</small></div></div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">receipt_long</span></div><div class="tt"><b>Printer &amp; receipt</b><small>Classic · 80 mm</small></div></div>
+          <div class="grph">You</div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">palette</span></div><div class="tt"><b>Appearance</b><small>Ocean · Light · Docked</small></div></div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">space_dashboard</span></div><div class="tt"><b>Start screen</b><small>Opens on Dashboard</small></div></div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">verified_user</span></div><div class="tt"><b>My permissions</b><small>14 granted</small></div></div>
+          <div class="grph">This device</div>
+          <div class="nt" data-p="x"><div class="chip"><span class="ms">tune</span></div><div class="tt"><b>System configuration</b><small>QAR · Main Branch</small></div></div>
+        </div>
+      </div>
+      <div class="tdet">
+        <div class="pane on" id="p-pc">
+          <div class="phd"><div class="chip"><span class="ms">qr_code_2</span></div><div><h3>Product configuration</h3><p>Barcodes and stock rules — shared with the web, applies on every till.</p></div></div>
+          <div class="psec"><h5>Barcodes</h5><p>How new products get their barcode.</p></div>
+          <div class="crd col2">
+            <div class="r"><div class="chip"><span class="ms">qr_code_2</span></div><div class="tt"><b>Barcode type</b><small>Each product's barcode is typed or scanned on its form</small></div></div>
+            <div class="seg"><span class="on">Product wise</span><span>System generated</span></div>
+          </div>
+          <div class="crd"><div class="chip"><span class="ms">text_fields</span></div><div class="tt"><b>Barcode prefix</b><small>Put in front of every generated barcode · up to 10 characters</small></div><span class="val">INV</span><span class="ms chev">chevron_right</span></div>
+          <div class="crd"><div class="chip"><span class="ms">link</span></div><div class="tt"><b>Barcode = SKU</b><small>One value fills both the Barcode and the UPC/EAN/ISBN/SKU code</small></div><div class="sw"></div></div>
+          <div class="psec"><h5>Point of sale</h5><p>What New Sale offers.</p></div>
+          <div class="crd"><div class="chip"><span class="ms">visibility_off</span></div><div class="tt"><b>Hide out-of-stock items</b><small>Zero-stock products leave the New Sale catalog and can't be scanned in</small></div><div class="sw on"></div></div>
+        </div>
+        <div class="pane" id="p-cat">
+          <div class="phd"><div class="chip"><span class="ms">inventory_2</span></div><div><h3>Catalog</h3><p>Products and services — each opens as a full-width page.</p></div></div>
+          <div class="crd"><div class="chip"><span class="ms">inventory_2</span></div><div class="tt"><b>Products</b><small>List, add and edit products</small></div><span class="ms chev">chevron_right</span></div>
+          <div class="crd"><div class="chip"><span class="ms">design_services</span></div><div class="tt"><b>Services</b><small>List, add and edit services</small></div><span class="ms chev">chevron_right</span></div>
+        </div>
+        <div class="pane" id="p-x"><div class="empty">Unchanged — same panel as today. Try “Product configuration” or “Catalog”.</div></div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<script>
+const caps = {
+  A: '<b>A · Grouped list</b> — one scroll, same as today, but the 19 loose cards become labelled groups (Appearance · Sale configuration · <b>Product configuration</b> · Printer · Catalog · Account · System). Product configuration\'s four controls sit <b>inline</b> — no extra page, no Catalog detour. Fewest taps; longest scroll.',
+  B: '<b>B · Category hub</b> — Settings opens on a short list of categories (mirrors the tablet rail); each opens its own page. <b>Product configuration</b> is a category of its own, next to Sale configuration. Cleanest root; one extra tap to any setting.',
+  C: '<b>C · Chip tabs</b> — one scroll with labelled sections, plus a sticky chip strip that jumps to a section (and highlights as you scroll). <b>Product configuration</b> is its own section. Keeps zero-tap toggles of A with B\'s quick navigation.'
+};
+function setCap(){document.getElementById('cap').innerHTML = caps[document.body.dataset.dir] + '<br><br>In every direction the <b>Catalog</b> group keeps only Products and Services; the separate Product configuration page/shell tab goes away. Tablet (below) is the same for all three.';}
+document.querySelectorAll('.grp[data-set]').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  g.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  document.body.dataset[g.dataset.set] = b.dataset.v; setCap();
+}));
+document.addEventListener('click', e => {
+  const sw = e.target.closest('.sw'); if (sw) sw.classList.toggle('on');
+  const s = e.target.closest('.seg span'); if (s) s.parentElement.querySelectorAll('span').forEach(x => x.classList.toggle('on', x === s));
+  const t = e.target.closest('.tabs span'); if (t) t.parentElement.querySelectorAll(':scope > span').forEach(x => x.classList.toggle('on', x === t));
+  const n = e.target.closest('.nt'); if (n) {
+    document.querySelectorAll('.nt').forEach(x => x.classList.toggle('on', x === n));
+    document.querySelectorAll('.tdet .pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + n.dataset.p));
+  }
+});
+setCap();
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Split Action</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F4EFE7; --card:#FFFFFF; --ink:#18241F; --text2:#5D6A64; --muted:#98A29D;
+  --hair:#E8E2D8; --primary:#2F6F5E; --primaryDark:#1F4A3F; --tint:#E6EFEB; --accent:#C9A24A; --gold:#B08A2E;
+  --hero1:#3B7F6B; --hero2:#285446; --warnTint:#FBF1DC; --warn:#9A6B12; --success:#3E9B62; --danger:#C0405A;
+  --field:rgba(0,0,0,.025); --track:#EFEAE1;
+  --m1:#2F6F5E; --m2:#C9A24A; --m3:#8C6A2A; --m4:#4F7DA8;
+}
+:root[data-theme="dark"]{
+  --canvas:#0E1513; --card:#161F1C; --ink:#E9EFEC; --text2:#A7B3AE; --muted:#6E7A75;
+  --hair:#26312D; --primary:#5FB39A; --primaryDark:#0F2A23; --tint:rgba(95,179,154,.13); --accent:#D8B45E; --gold:#D8B45E;
+  --hero1:#245446; --hero2:#163A30; --warnTint:rgba(216,180,94,.12); --warn:#D8B45E; --field:rgba(255,255,255,.04); --track:#222C29;
+  --m1:#5FB39A; --m2:#D8B45E; --m3:#B8904A; --m4:#7FA6CC;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#d9d4cc;font-family:Inter,system-ui,sans-serif;color:var(--ink);padding:16px;overflow-x:hidden}
+:root[data-theme="dark"] body{background:#050807}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:400}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:12px}
+.bar button{font:700 12.5px Inter;border:1px solid #bbb;background:#fff;color:#222;border-radius:999px;padding:8px 14px}
+.bar button.on{background:#1F4A3F;color:#fff;border-color:#1F4A3F}
+.bar .sep{width:1px;height:22px;background:#aaa;margin:0 4px}
+.note{max-width:1194px;margin:0 auto 12px;font:600 13px/1.55 Inter;color:#444;text-align:center}
+:root[data-theme="dark"] .note{color:#aaa}
+.stage{display:flex;justify-content:center}.scaler{transform-origin:top center}
+.device{width:1194px;height:834px;border-radius:30px;overflow:hidden;background:var(--canvas);box-shadow:0 30px 80px -30px rgba(0,0,0,.5);position:relative}
+
+/* ---- the return desk behind (static, dimmed) ---- */
+.desk{position:absolute;inset:0;display:flex;gap:0;padding:14px 18px}
+.paper{background:var(--card);border-radius:14px 14px 4px 4px;box-shadow:0 10px 30px -18px rgba(0,0,0,.4);padding:14px 16px}
+.paper h5{font:800 9px Inter;letter-spacing:2px;color:var(--muted)}
+.paper h3{font:400 19px Fraunces,serif;margin-top:2px}
+.paper p{font:600 11px Inter;color:var(--muted)}
+.ln{height:46px;border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:10px;font:700 13px Inter}
+.ln i{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--hair)}.ln.on i{background:var(--primary);border-color:var(--primary)}
+.ln.on{background:var(--tint);border-radius:10px;padding:0 8px;border:0}
+.scrim{position:absolute;inset:0;background:rgba(10,20,16,.42);z-index:4}
+.float{position:absolute;right:30px;bottom:24px;width:536px;z-index:5;max-height:calc(100% - 48px);display:flex}
+.sheet{background:var(--canvas);border-radius:26px;width:100%;box-shadow:0 40px 80px -24px rgba(0,0,0,.6);padding:18px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+
+/* shared atoms */
+.k{font:800 9.5px Inter;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+.x{width:34px;height:34px;border-radius:11px;border:1px solid var(--hair);display:grid;place-items:center;color:var(--muted);font-size:15px;flex:none}
+.cta{height:52px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--gold));color:var(--primaryDark);font:800 15px Inter;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;box-shadow:0 14px 26px -14px var(--gold)}
+.cta[disabled]{opacity:.45;box-shadow:none}
+.cta.green{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;box-shadow:0 14px 26px -14px var(--hero2)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.keys button{height:48px;border-radius:13px;background:var(--card);box-shadow:0 2px 8px -4px rgba(0,0,0,.18);font:700 19px Inter}
+.keys button.del{color:var(--danger)}
+.quick{display:flex;gap:6px}
+.quick button{flex:1;height:36px;border-radius:11px;background:var(--tint);color:var(--primary);font:800 12px Inter;white-space:nowrap}
+.sw{display:grid;place-items:center;color:#fff;flex:none}
+.sbar{display:flex;height:10px;border-radius:10px;overflow:hidden;gap:3px;background:var(--track)}
+.sbar i{display:block;height:100%;transition:width .2s}
+.status{display:flex;align-items:center;gap:8px;font:800 12px Inter;border-radius:12px;padding:9px 12px}
+.status.ok{background:rgba(62,155,98,.12);color:var(--success)}
+.status.due{background:rgba(192,64,90,.1);color:var(--danger)}
+.status span{margin-left:auto}
+
+/* ===== A · COIN PICKER ===== */
+.coins{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.coin{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px 12px;border-radius:18px;background:var(--card);border:1.5px solid transparent;position:relative;box-shadow:0 4px 14px -10px rgba(0,0,0,.35)}
+.coin .c{width:52px;height:52px;border-radius:50%;font-size:22px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.coin b{font:800 12.5px Inter}
+.coin small{font:700 11px Inter;color:var(--muted)}
+.coin.on{border-color:var(--primary);background:var(--tint)}
+.coin .n{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font:800 11px Inter;display:grid;place-items:center}
+.preview{border:1px dashed var(--hair);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.preview .row{display:flex;justify-content:space-between;font:700 12px Inter;color:var(--text2)}
+.preview .row b{font:400 17px Fraunces,serif;color:var(--ink)}
+.bigamt{text-align:center;padding:6px 0 0}
+.bigamt .serif{font-size:44px;line-height:1}
+.bigamt small{display:block;font:700 12px Inter;color:var(--muted);margin-top:6px}
+.legend{display:flex;justify-content:space-between;font:700 11.5px Inter;color:var(--text2);margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px}.legend i{width:9px;height:9px;border-radius:3px}
+
+/* ===== B · EQUATION ===== */
+.eq{display:flex;align-items:stretch;gap:8px}
+.eq .eqs{display:grid;place-items:center;font:400 22px Fraunces,serif;color:var(--muted);width:16px}
+.slot{flex:1;border-radius:16px;background:var(--card);padding:11px 12px 10px;border:1.5px solid transparent;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 4px 14px -10px rgba(0,0,0,.35);min-width:0}
+.slot::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.slot .t{display:flex;align-items:center;gap:7px;font:800 12px Inter}
+.slot .t .sw{width:22px;height:22px;border-radius:7px;font-size:11px;background:var(--c)}
+.slot .a{font:400 22px Fraunces,serif;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .tag{font:800 8.5px Inter;letter-spacing:.7px;color:var(--muted);margin-top:2px}
+.slot .tag.set{color:var(--gold)}
+.slot.on{border-color:var(--primary);box-shadow:0 0 0 4px var(--tint)}
+.slot.on .a{color:var(--primary)}
+.slot.empty{background:none;border:1.5px dashed var(--hair);box-shadow:none;display:grid;place-items:center;color:var(--muted);font:700 12px Inter}
+.slot.empty::before{display:none}
+.slot .rm{position:absolute;right:6px;top:6px;font-size:12px;color:var(--muted)}
+.mrow{display:flex;gap:8px;flex-wrap:wrap}
+.mchip{height:40px;padding:0 14px 0 6px;border-radius:13px;background:var(--card);display:inline-flex;align-items:center;gap:8px;font:800 12.5px Inter;box-shadow:0 3px 10px -7px rgba(0,0,0,.35);border:1.5px solid transparent}
+.mchip .sw{width:28px;height:28px;border-radius:9px;font-size:13px;background:var(--c)}
+.mchip.on{border-color:var(--c);opacity:.5}
+.eqhead{display:flex;align-items:baseline;gap:8px}
+.eqhead .serif{font-size:30px}
+
+/* ===== C · SLIDER ===== */
+.track{position:relative;height:64px;border-radius:18px;overflow:hidden;display:flex;background:var(--track);user-select:none;touch-action:none}
+.track .seg{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 14px;color:#fff;min-width:0;transition:width .05s}
+.track .seg b{font:800 11px Inter;letter-spacing:.4px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track .seg span{font:400 20px Fraunces,serif;white-space:nowrap}
+.track .seg:last-child{align-items:flex-end;text-align:right}
+.handle{position:absolute;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.35);display:grid;place-items:center;font:800 13px Inter;color:var(--primaryDark);cursor:ew-resize;z-index:2}
+.ratios{display:flex;gap:6px}
+.ratios button{flex:1;height:38px;border-radius:12px;border:1px solid var(--hair);background:var(--card);font:800 12.5px Inter}
+.ratios button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.exact{display:flex;gap:8px}
+.exact button{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;height:50px;padding:0 14px;border-radius:14px;background:var(--card);border:1.5px solid transparent;box-shadow:0 3px 10px -7px rgba(0,0,0,.35);font:800 12.5px Inter}
+.exact button .serif{font-size:18px}
+.exact button.on{border-color:var(--primary)}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+.tog{height:34px;padding:0 12px 0 5px;border-radius:999px;border:1.5px solid var(--hair);display:inline-flex;align-items:center;gap:7px;font:800 12px Inter;color:var(--text2);background:var(--card)}
+.tog .sw{width:24px;height:24px;border-radius:50%;font-size:11px;background:var(--track);color:var(--muted)}
+.tog.on{border-color:var(--c);color:var(--ink)}.tog.on .sw{background:var(--c);color:#fff}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button data-dir="A" class="on">A · Coin Picker</button>
+  <button data-dir="B">B · Equation</button>
+  <button data-dir="C">C · Slider</button>
+  <span class="sep"></span>
+  <button data-step="pick" class="on">1 · Choose methods</button>
+  <button data-step="amount">2 · Set amounts</button>
+  <span class="sep"></span>
+  <button id="reset">Reset</button>
+  <button id="theme">Dark</button>
+</div>
+<p class="note" id="note"></p>
+<div class="stage"><div class="scaler" id="scaler"><div class="device">
+  <div class="desk">
+    <div class="paper" style="flex:10">
+      <h5>NEW RETURN · INVOICE</h5><h3>INV-2026-0412</h3><p>Fatima Al-Kuwari · 28 Oct 2026</p>
+      <div style="margin-top:10px">
+        <div class="ln on"><i></i>1× Hydrating Facial<span style="margin-left:auto">− QAR 180.00</span></div>
+        <div class="ln on"><i></i>3× Argan Oil Shampoo<span style="margin-left:auto">− QAR 130.00</span></div>
+        <div class="ln"><i></i>2× Keratin Repair Hair Mask<span style="margin-left:auto">QAR 180.00</span></div>
+        <div class="ln"><i></i>1× Silk Finish Hair Serum<span style="margin-left:auto">QAR 120.00</span></div>
+      </div>
+    </div>
+    <div style="width:52px"></div>
+    <div style="flex:11;display:flex;flex-direction:column;gap:12px">
+      <div class="paper" style="flex:1"><h5>RETURN SLIP · DRAFT</h5><h3>QAR 310.00</h3><p>Refund to Fatima Al-Kuwari</p></div>
+      <div class="paper" style="height:60px"></div>
+      <div class="paper" style="height:52px"></div>
+    </div>
+  </div>
+  <div class="scrim"></div>
+  <div class="float"><div class="sheet" id="sheet"></div></div>
+</div></div></div>
+
+<script>
+const TOTAL = 310;
+const M = [
+  {id:1,name:'Cash',ic:'¤',c:'var(--m1)'},{id:2,name:'Card',ic:'▭',c:'var(--m2)'},
+  {id:3,name:'Bank Transfer',ic:'⌂',c:'var(--m3)'},{id:4,name:'Cheque',ic:'✎',c:'var(--m4)'},
+];
+const S = {dir:'A', step:'pick', theme:'light', rows:[], active:null, buf:null, ratio:'50'};
+const NOTES = {
+  A:'<b>A · Coin Picker</b> — methods as big colour coins (one tap each, numbered as you pick); a live preview shows the even split <i>before</i> it applies. Amounts open a focused keypad: the big figure, a colour bar of who pays what, quick keys, numpad.',
+  B:'<b>B · Equation</b> — one card for everything: <b>QAR 310 = [Cash] + [Card]</b>. Tap a method to fill the next slot; tap a slot to type its amount on the keypad that opens right there — no second sheet. The other slot re-balances live.',
+  C:'<b>C · Slider</b> — toggle methods, then <b>drag the handle</b> to share the refund (snaps to whole riyals), or tap a ratio (50/50, 60/40, 70/30). Type an exact figure only when you need one. Fastest for a two-way split.',
+};
+const money = v => 'QAR ' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const plain = v => v.toFixed(2);
+const m = id => M.find(x=>x.id===id);
+
+function share(){
+  const open = S.rows.filter(r=>!r.typed); if(!open.length) return;
+  const fixed = S.rows.filter(r=>r.typed).reduce((a,r)=>a+Math.round(r.amount*100),0);
+  const rest = Math.max(0, TOTAL*100-fixed), each = Math.floor(rest/open.length);
+  open.forEach((r,i)=>r.amount=(i===open.length-1?rest-each*(open.length-1):each)/100);
+}
+function setAmt(id,v){
+  const r=S.rows.find(x=>x.id===id); r.amount=Math.round(v*100)/100; r.typed=true;
+  if(S.rows.length>1 && S.rows.every(x=>x.typed)){ const o=[...S.rows].reverse().find(x=>x.id!==id); o.typed=false; }
+  share();
+}
+function add(id){ if(S.rows.some(r=>r.id===id)) return; S.rows.push({id,amount:0,typed:false}); S.rows.forEach(r=>r.typed=false); share(); }
+function remove(id){ S.rows=S.rows.filter(r=>r.id!==id); if(S.rows.length) { if(S.rows.every(r=>r.typed)) S.rows[S.rows.length-1].typed=false; share(); } if(S.active===id) S.active=null; }
+const paid = () => S.rows.reduce((a,r)=>a+r.amount,0);
+function statusRow(){
+  const bal = Math.round((TOTAL-paid())*100)/100;
+  return Math.abs(bal)<.005 ? `<div class="status ok">✓ Splits to the refund total<span>${money(TOTAL)}</span></div>`
+    : `<div class="status due">${bal>0?'Still to refund':'Over by'}<span>${money(Math.abs(bal))}</span></div>`;
+}
+function shareBar(h){ return `<div class="sbar" style="${h?`height:${h}px`:''}">${S.rows.map(r=>`<i style="width:${r.amount/TOTAL*100}%;background:${m(r.id).c}"></i>`).join('')}</div>`; }
+function keypad(){
+  return `<div class="keys">${['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k=>`<button class="${k==='⌫'?'del':''}" data-act="key" data-id="${k}">${k}</button>`).join('')}</div>`;
+}
+function head(title, sub, icon){
+  return `<div style="display:flex;align-items:center;gap:12px">${icon||''}<div style="flex:1;min-width:0"><div class="serif" style="font-size:21px">${title}</div><div style="font:600 12px Inter;color:var(--muted);margin-top:2px">${sub}</div></div><button class="x" data-act="close">✕</button></div>`;
+}
+
+/* ---------- A ---------- */
+function A(){
+  if(S.step==='pick' || !S.rows.length){
+    const picked = S.rows.map(r=>r.id), n = Math.max(2,picked.length);
+    const each = TOTAL/n;
+    return `${head('Split the refund', `${money(TOTAL)} · pick two methods`)}
+      <div class="coins">${M.map(x=>{const i=picked.indexOf(x.id);return `<button class="coin ${i>=0?'on':''}" data-act="pickA" data-id="${x.id}">
+        ${i>=0?`<span class="n">${i+1}</span>`:''}<span class="c sw" style="background:${x.c}">${x.ic}</span><b>${x.name}</b><small>${i>=0?plain(each):'Tap to add'}</small></button>`;}).join('')}</div>
+      <div class="preview"><div class="row"><span class="k">Even split preview</span><span style="font:700 11px Inter;color:var(--muted)">applies on the 2nd tap</span></div>
+        <div class="sbar" style="height:12px">${picked.length?picked.map(id=>`<i style="width:${100/n}%;background:${m(id).c}"></i>`).join(''):'<i style="width:100%;background:transparent"></i>'}</div>
+        <div class="row"><span>${picked.length?picked.map(id=>m(id).name).join(' + '):'Nothing picked yet'}</span><b>${picked.length?plain(each)+' each':'—'}</b></div></div>
+      <div style="text-align:center;font:800 12px Inter;color:var(--primary)">＋ Three or more ways</div>`;
+  }
+  const act = S.active ?? S.rows[0].id, r = S.rows.find(x=>x.id===act), others = S.rows.filter(x=>x!==r);
+  return `${head(`${m(act).name} refunds`, `${others.map(o=>m(o.id).name).join(', ')} take${others.length===1?'s':''} the rest`, `<span class="sw" style="width:40px;height:40px;border-radius:50%;font-size:18px;background:${m(act).c}">${m(act).ic}</span>`)}
+    <div class="bigamt"><span class="serif">${S.buf!=null?(S.buf||'0'):plain(r.amount)}</span><small>of ${money(TOTAL)}</small></div>
+    <div>${shareBar(12)}<div class="legend">${S.rows.map(x=>`<span><i style="background:${m(x.id).c}"></i>${m(x.id).name} ${plain(x.amount)}</span>`).join('')}</div></div>
+    <div class="quick"><button data-act="q" data-id="half">Half · ${plain(TOTAL/2)}</button><button data-act="q" data-id="rest">All the rest</button><button data-act="q" data-id="even">Even</button></div>
+    ${keypad()}
+    <button class="cta green" data-act="done">Done</button>`;
+}
+
+/* ---------- B ---------- */
+function B(){
+  const slots = S.rows.length ? S.rows : [];
+  const slotHtml = [];
+  slots.forEach((r,i)=>{
+    if(i) slotHtml.push('<div class="eqs">+</div>');
+    slotHtml.push(`<div class="slot ${S.active===r.id?'on':''}" style="--c:${m(r.id).c}" data-act="slot" data-id="${r.id}">
+      <span class="rm" data-act="rmB" data-id="${r.id}">✕</span>
+      <div class="t"><span class="sw">${m(r.id).ic}</span>${m(r.id).name}</div>
+      <div class="a">${S.active===r.id&&S.buf!=null?(S.buf||'0'):plain(r.amount)}</div><div class="tag ${r.typed?'set':''}">${r.typed?'SET':'AUTO · SHARES REST'}</div></div>`);
+  });
+  for(let i=slots.length;i<2;i++){ if(i) slotHtml.push('<div class="eqs">+</div>'); slotHtml.push(`<div class="slot empty">Pick a method</div>`); }
+  const editing = S.active!=null;
+  return `${head('Split the refund', editing?'Typing one amount — the other re-balances':'Tap methods to fill the slots · tap a slot to change its amount')}
+    <div class="eqhead"><span class="serif">${money(TOTAL)}</span><span style="font:400 24px Fraunces,serif;color:var(--muted)">=</span></div>
+    <div class="eq">${slotHtml.join('')}</div>
+    ${S.rows.length?shareBar():''}
+    ${editing ? `<div class="quick"><button data-act="q" data-id="half">Half</button><button data-act="q" data-id="rest">All the rest</button><button data-act="q" data-id="even">Even</button></div>${keypad()}`
+      : `<div><div class="k" style="margin-bottom:8px">${S.rows.length<2?'Add a method':'Add another'}</div><div class="mrow">${M.map(x=>{const on=S.rows.some(r=>r.id===x.id);return `<button class="mchip ${on?'on':''}" style="--c:${x.c}" data-act="addB" data-id="${x.id}"><span class="sw">${x.ic}</span>${x.name}</button>`;}).join('')}</div></div>`}
+    ${S.rows.length>=2?statusRow():''}
+    <button class="cta ${editing?'green':''}" data-act="${editing?'doneB':'close'}" ${S.rows.length<2?'disabled':''}>${editing?'Done':`Apply split · ${S.rows.length} ways`}</button>`;
+}
+
+/* ---------- C ---------- */
+function C(){
+  const two = S.rows.length===2;
+  const segs = S.rows.map(r=>`<div class="seg" style="width:${r.amount/TOTAL*100}%;background:${m(r.id).c}"><b>${m(r.id).name.toUpperCase()}</b><span>${plain(r.amount)}</span></div>`).join('');
+  const pos = two ? S.rows[0].amount/TOTAL*100 : 0;
+  return `${head('Split the refund', `${money(TOTAL)} · ${two?'drag to share it':'pick the methods'}`)}
+    <div class="toggles">${M.map(x=>{const on=S.rows.some(r=>r.id===x.id);return `<button class="tog ${on?'on':''}" style="--c:${x.c}" data-act="togC" data-id="${x.id}"><span class="sw">${on?x.ic:'+'}</span>${x.name}</button>`;}).join('')}</div>
+    ${S.rows.length ? `<div class="track" id="track">${segs}${two?`<div class="handle" style="left:${pos}%">⇔</div>`:''}</div>` : `<div class="track" style="display:grid;place-items:center;font:700 12px Inter;color:var(--muted)">Pick two methods above</div>`}
+    ${two?`<div class="ratios">${[['50','50 / 50'],['60','60 / 40'],['70','70 / 30'],['40','40 / 60'],['30','30 / 70']].map(([k,l])=>`<button class="${S.ratio===k?'on':''}" data-act="ratio" data-id="${k}">${l}</button>`).join('')}</div>`:''}
+    ${S.rows.length?`<div><div class="k" style="margin-bottom:8px">Exact amount</div><div class="exact">${S.rows.map(r=>`<button class="${S.active===r.id?'on':''}" data-act="slot" data-id="${r.id}"><span style="display:flex;align-items:center;gap:8px"><span class="sw" style="width:24px;height:24px;border-radius:7px;font-size:11px;background:${m(r.id).c}">${m(r.id).ic}</span>${m(r.id).name}</span><span class="serif">${S.active===r.id&&S.buf!=null?(S.buf||'0'):plain(r.amount)}</span></button>`).join('')}</div></div>`:''}
+    ${S.active!=null?keypad():''}
+    ${S.rows.length>=2?statusRow():''}
+    <button class="cta" data-act="${S.active!=null?'doneB':'close'}" ${S.rows.length<2?'disabled':''}>${S.active!=null?'Done':`Apply split · ${S.rows.length} ways`}</button>`;
+}
+
+function render(){
+  document.getElementById('sheet').innerHTML = ({A,B,C})[S.dir]();
+  document.getElementById('note').innerHTML = NOTES[S.dir];
+  document.querySelectorAll('[data-dir]').forEach(b=>b.classList.toggle('on',b.dataset.dir===S.dir));
+  document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('on',b.dataset.step===S.step));
+  bindDrag(); fit();
+}
+function bindDrag(){
+  const t = document.getElementById('track'); if(!t || S.rows.length!==2) return;
+  const move = e => { const r=t.getBoundingClientRect(); const x=((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width;
+    const v=Math.round(Math.min(1,Math.max(0,x))*TOTAL); S.rows[0].amount=v; S.rows[0].typed=true; S.rows[1].typed=false; share(); S.ratio=''; S.active=null; render(); };
+  t.onmousedown = e => { move(e); const mm=ev=>move(ev), up=()=>{removeEventListener('mousemove',mm);removeEventListener('mouseup',up)}; addEventListener('mousemove',mm); addEventListener('mouseup',up); };
+}
+function fit(){ const sc=document.getElementById('scaler'); const k=Math.min(1,(innerWidth-32)/1194); sc.style.transform=`scale(${k})`; sc.style.height=(834*k)+'px'; }
+function seed(step){
+  S.step=step; S.active=null; S.buf=null; S.ratio='50';
+  S.rows = step==='amount' ? [{id:1,amount:0,typed:false},{id:2,amount:0,typed:false}] : [];
+  if(step==='amount'){ share(); if(S.dir!=='A') S.active=1; }
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest('.bar button');
+  if(b){
+    if(b.dataset.dir){ S.dir=b.dataset.dir; seed(S.step); }
+    if(b.dataset.step) seed(b.dataset.step);
+    if(b.id==='reset') seed('pick');
+    if(b.id==='theme'){S.theme=S.theme==='light'?'dark':'light';document.documentElement.dataset.theme=S.theme;b.textContent=S.theme==='light'?'Dark':'Light';}
+    return render();
+  }
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const id = +el.dataset.id || el.dataset.id;
+  switch(el.dataset.act){
+    case 'pickA':
+      if(S.rows.some(r=>r.id===id)) remove(id); else add(id);
+      if(S.rows.length===2){ S.step='amount'; S.active=S.rows[0].id; }
+      break;
+    case 'addB': add(id); break;
+    case 'rmB': e.stopPropagation(); remove(id); break;
+    case 'togC': S.rows.some(r=>r.id===id)?remove(id):add(id); S.ratio='50'; break;
+    case 'slot': S.active=id; S.buf=null; break;
+    case 'key': {
+      const act = S.active ?? S.rows[0].id; S.active = act;
+      let v = S.buf ?? '';
+      if(id==='⌫') v=v.slice(0,-1); else if(id==='.'){ if(!v.includes('.')) v=(v||'0')+'.'; } else if(!/\.\d\d$/.test(v)) v=(v==='0'?'':v)+id;
+      S.buf=v; setAmt(act, parseFloat(v||'0')); break; }
+    case 'q': {
+      const act = S.active ?? S.rows[0].id; S.active=act; S.buf=null;
+      if(id==='even'){ S.rows.forEach(r=>r.typed=false); share(); }
+      else if(id==='half') setAmt(act, TOTAL/2);
+      else { const others=S.rows.filter(r=>r.id!==act&&r.typed).reduce((a,r)=>a+r.amount,0); setAmt(act, Math.max(0,TOTAL-others)); }
+      break; }
+    case 'ratio': S.ratio=id; S.rows[0].amount=TOTAL*(+id)/100; S.rows[0].typed=true; S.rows[1].typed=false; share(); S.active=null; break;
+    case 'done': case 'doneB': S.active=null; S.buf=null; break;
+    case 'close': seed('pick'); break;
+  }
+  render();
+});
+addEventListener('resize', fit);
+render();
+</script>
+</body>
+</html>

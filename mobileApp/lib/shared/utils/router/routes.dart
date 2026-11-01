@@ -74,6 +74,14 @@ class Routes {
 
   /// What the till holds for selling with no network, and the controls for it.
   static const String offlineData = '/offline-data';
+
+  // ---- Settings → Catalog (`product.*` / `service.*`) ----
+  /// `<prefix>/<type>` lists, `/new` adds and `/<id>` edits — type is
+  /// `product` or `service`.
+  static const String catalogPrefix = '/settings/catalog';
+  static String catalogList(String type) => '$catalogPrefix/$type';
+  static String catalogNew(String type) => '$catalogPrefix/$type/new';
+  static String catalogEdit(String type, int id) => '$catalogPrefix/$type/$id';
 }
 
 /// Where a signed-in session lands.

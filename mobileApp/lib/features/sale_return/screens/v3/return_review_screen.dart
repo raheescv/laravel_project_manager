@@ -51,9 +51,7 @@ class _ReturnReviewScreenState extends State<ReturnReviewScreen> {
     final editingId = draft.editingReturnId;
     setState(() => _busy = true);
     try {
-      final saleReturn = editingId.isEmpty
-          ? await _ops.createSaleReturn(draft.toPayload())
-          : await _ops.updateSaleReturn(editingId, draft.toPayload());
+      final saleReturn = await _ops.saveSaleReturn(editingId, draft.toPayload());
       draft.clear();
       if (mounted) context.pushReplacement(Routes.returnReceipt, extra: saleReturn);
     } on ApiException catch (e) {

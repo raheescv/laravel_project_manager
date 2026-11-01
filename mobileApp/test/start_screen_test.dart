@@ -104,7 +104,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
     }
 
-    testWidgets('phone card opens the picker and the choice sticks', (tester) async {
+    testWidgets('phone category opens the picker and the choice sticks', (tester) async {
       await pumpSettings(tester, const Size(390, 844));
 
       await tester.scrollUntilVisible(find.text('Start screen'), 120,
@@ -112,13 +112,13 @@ void main() {
       await tester.tap(find.text('Start screen'));
       await tester.pumpAndSettle();
 
-      // The sheet lists every option; the card behind it names only the current
-      // one, so tap the row inside the sheet.
+      // A single pick, so the category opens the sheet directly rather than a
+      // page; the row behind it names only the current option.
       await tester.tap(find.text(StartScreen.sale.blurb));
       await tester.pumpAndSettle();
 
       expect(harness.posSettings.startScreen, StartScreen.sale);
-      expect(find.text('Opens on New Sale after sign-in'), findsOneWidget);
+      expect(find.text('Opens on New Sale'), findsOneWidget);
     });
 
     testWidgets('tablet nav opens the start-screen panel, not a neighbour', (tester) async {

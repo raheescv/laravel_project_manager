@@ -30,6 +30,7 @@ import 'package:invo/features/token/screens/v3/token_settings_screen.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:invo/shared/widgets/astra_bottom_nav.dart';
+import 'package:invo/shared/widgets/astra_new_sale_fab.dart';
 
 import 'support/test_harness.dart';
 
@@ -341,7 +342,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(AstraNavBar), findsNothing);
-    expect(find.text('New'), findsOneWidget);
+    expect(find.byType(AstraNewSaleFab), findsOneWidget);
   });
 
   testWidgets('landscape phone keeps phone navigation', (tester) async {

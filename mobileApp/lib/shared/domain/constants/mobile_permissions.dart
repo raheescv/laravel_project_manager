@@ -48,6 +48,15 @@ abstract final class PermissionSlug {
   static const settings = 'configuration.settings';
   // Issue and print queue tokens (Token screen + its settings).
   static const tokenIssue = 'sale.queue token';
+  // Settings → Catalog: the web Product and Service module permissions.
+  static const productView = 'product.view';
+  static const productCreate = 'product.create';
+  static const productEdit = 'product.edit';
+  static const productDelete = 'product.delete';
+  static const serviceView = 'service.view';
+  static const serviceCreate = 'service.create';
+  static const serviceEdit = 'service.edit';
+  static const serviceDelete = 'service.delete';
 }
 
 /// The permissions surfaced on the "My Permissions" screen, grouped by module
@@ -151,8 +160,64 @@ const mobilePermissions = <MobilePermission>[
   MobilePermission(
     slug: PermissionSlug.settings,
     label: 'Sale Configuration',
-    description: 'Change the printer & receipt settings',
+    description: 'Change the printer & receipt settings and product configuration',
     group: 'Administration',
     icon: Icons.print_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.productView,
+    label: 'Products',
+    description: 'Open the product list',
+    group: 'Catalog',
+    icon: Icons.inventory_2_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.productCreate,
+    label: 'Add Product',
+    description: 'Create products and add their photos',
+    group: 'Catalog',
+    icon: Icons.add_box_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.productEdit,
+    label: 'Edit Product',
+    description: 'Change a product and its photos',
+    group: 'Catalog',
+    icon: Icons.edit_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.productDelete,
+    label: 'Delete Product',
+    description: 'Remove a product that was never sold or bought',
+    group: 'Catalog',
+    icon: Icons.delete_outline,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.serviceView,
+    label: 'Services',
+    description: 'Open the service list',
+    group: 'Catalog',
+    icon: Icons.content_cut,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.serviceCreate,
+    label: 'Add Service',
+    description: 'Create services and add their photos',
+    group: 'Catalog',
+    icon: Icons.add_box_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.serviceEdit,
+    label: 'Edit Service',
+    description: 'Change a service and its photos',
+    group: 'Catalog',
+    icon: Icons.edit_outlined,
+  ),
+  MobilePermission(
+    slug: PermissionSlug.serviceDelete,
+    label: 'Delete Service',
+    description: 'Remove a service that was never sold',
+    group: 'Catalog',
+    icon: Icons.delete_outline,
   ),
 ];

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\BrandController;
+use App\Http\Controllers\Api\V1\CatalogItemController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ClientErrorController;
 use App\Http\Controllers\Api\V1\ColorController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\V1\DaySessionController;
 use App\Http\Controllers\Api\V1\EmployeeController;
 use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductSettingController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SaleController;
@@ -216,6 +218,38 @@ Route::prefix('v1')->group(function () {
             Route::put('settings/sale/product-sort', [SaleSettingController::class, 'updateProductSort'])
                 ->middleware(EnsureMobilePermission::class.':configuration.settings')
                 ->name('api.v1.settings.sale.product-sort');
+
+            // Settings → Product Configuration — the shared barcode / POS keys the
+            // web settings tab writes, behind the same gate.
+            Route::get('settings/product', [ProductSettingController::class, 'index'])
+                ->middleware(EnsureMobilePermission::class.':configuration.settings')
+                ->name('api.v1.settings.product');
+            Route::put('settings/product', [ProductSettingController::class, 'update'])
+                ->middleware(EnsureMobilePermission::class.':configuration.settings')
+                ->name('api.v1.settings.product.update');
+
+            // Settings → Catalog: products and services, managed from the app.
+            // Each type is its own group gated on that type's web permissions,
+            // so a role that may edit services but not products sees exactly that.
+            Route::get('catalog/options', [CatalogItemController::class, 'options'])
+                ->middleware(EnsureMobilePermission::class.':product.view,service.view')
+                ->name('api.v1.catalog.options');
+            foreach (['product', 'service'] as $catalogType) {
+                $can = fn (string ...$actions): string => EnsureMobilePermission::class.':'.implode(',', array_map(fn ($a) => "{$catalogType}.{$a}", $actions));
+                Route::prefix("catalog/{$catalogType}")
+                    ->name("api.v1.catalog.{$catalogType}.")
+                    ->group(function () use ($catalogType, $can): void {
+                        Route::get('/', [CatalogItemController::class, 'index'])->middleware($can('view'))->defaults('type', $catalogType)->name('index');
+                        Route::post('/', [CatalogItemController::class, 'store'])->middleware($can('create'))->defaults('type', $catalogType)->name('store');
+                        Route::get('/{id}', [CatalogItemController::class, 'show'])->whereNumber('id')->middleware($can('view'))->defaults('type', $catalogType)->name('show');
+                        Route::match(['put', 'patch'], '/{id}', [CatalogItemController::class, 'update'])->whereNumber('id')->middleware($can('edit'))->defaults('type', $catalogType)->name('update');
+                        Route::delete('/{id}', [CatalogItemController::class, 'destroy'])->whereNumber('id')->middleware($can('delete'))->defaults('type', $catalogType)->name('destroy');
+                        // A new item's photos upload right after it is created,
+                        // so creating is enough to attach them.
+                        Route::post('/{id}/images', [CatalogItemController::class, 'storeImage'])->whereNumber('id')->middleware($can('create', 'edit'))->defaults('type', $catalogType)->name('images.store');
+                        Route::delete('/{id}/images/{imageId}', [CatalogItemController::class, 'destroyImage'])->whereNumber(['id', 'imageId'])->middleware($can('edit'))->defaults('type', $catalogType)->name('images.destroy');
+                    });
+            }
 
             // Stock Check (physical inventory count) — permission-driven, matching
             // the web `inventory.stock check` gate. A count snapshots branch stock

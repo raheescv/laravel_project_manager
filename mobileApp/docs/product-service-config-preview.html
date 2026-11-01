@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Products &amp; Services — Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Marcellus&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0" rel="stylesheet">
+<style>
+/* ============================================================ THEME (mirrors lib/shared/utils/components/theme/palette.dart) */
+:root{
+  --primary:#0A62C8;--primary-dark:#084C9C;--accent:#0BA8FA;
+  --canvas:#F3F7FD;--flat:#F9FBFE;--card:#fff;--ink:#0F1B2D;--t2:#4B5A70;--muted:#8D99AB;
+  --hair:#E4EAF3;--tint:rgba(10,98,200,.09);--field:#EEF3FA;
+  --success:#1F9D63;--success-tint:#E4F6EC;--danger:#D4546A;--danger-tint:#FBE9EC;--warn:#9A6A00;--warn-tint:#FBF3DF;
+  --hero-1:#084C9C;--hero-2:#0A62C8;--hero-3:#0BA8FA;
+  --shadow:0 18px 40px -26px rgba(10,40,90,.45);--shadow-sm:0 6px 16px -10px rgba(10,40,90,.35);
+  --serif:'Inter',sans-serif;--ui:'Inter',sans-serif;--title-w:800;
+}
+body[data-skin="emerald"]{
+  --primary:#15806C;--primary-dark:#0E5648;--accent:#C9A24B;--canvas:#F6F1E8;--flat:#FBF8F2;--ink:#16312A;--t2:#5D7269;--muted:#A0ABA3;
+  --hair:#ECE6D8;--tint:rgba(21,128,108,.10);--field:#F2EDE2;--hero-1:#0E5648;--hero-2:#15806C;--hero-3:#C9A24B;
+  --serif:'Marcellus',serif;--title-w:400;
+}
+body[data-skin="noir"]{
+  --primary:#B5862F;--primary-dark:#8A6420;--accent:#C8A24A;--canvas:#F3EFE6;--flat:#FAF7F0;--card:#FFFDF7;--ink:#1C1A14;--t2:#54503F;--muted:#928C79;
+  --hair:#E6DFCE;--tint:rgba(200,162,74,.13);--field:#EFEADD;--hero-1:#0C0B08;--hero-2:#1F1C13;--hero-3:#C8A24A;
+  --serif:'Marcellus',serif;--title-w:400;
+}
+body[data-skin="aurora"]{
+  --primary:#4F46E5;--primary-dark:#3730A3;--accent:#38BDF8;--canvas:#EEF1F7;--flat:#F7F8FC;--ink:#13183A;--t2:#46507E;--muted:#7F88B3;
+  --hair:#E3E6F1;--tint:rgba(79,70,229,.10);--field:#ECEEF7;--hero-1:#3730A3;--hero-2:#4F46E5;--hero-3:#38BDF8;
+}
+body[data-mode="dark"]{
+  --canvas:#0B1220;--flat:#0E1626;--card:#152036;--ink:#EEF3FB;--t2:#A9B7CC;--muted:#6F7F98;--hair:rgba(255,255,255,.08);
+  --tint:rgba(11,168,250,.14);--field:#1A2740;--success-tint:rgba(31,157,99,.18);--danger-tint:rgba(212,84,106,.18);--warn:#E6C16B;--warn-tint:rgba(230,193,107,.16);
+  --shadow:0 18px 40px -24px rgba(0,0,0,.75);--shadow-sm:0 6px 16px -10px rgba(0,0,0,.6);
+}
+body[data-mode="dark"][data-skin="emerald"]{--canvas:#07140F;--flat:#0A1A14;--card:#122A23;--field:#17332B;--ink:#F3F1EA;--t2:#A9C2BA;--muted:#6F857D;--tint:rgba(21,128,108,.22)}
+body[data-mode="dark"][data-skin="noir"]{--canvas:#0C0B08;--flat:#100F0B;--card:#18160F;--field:#211E15;--ink:#F1ECE0;--t2:#B7B09C;--muted:#857E6C;--hair:#2A271D;--tint:rgba(200,162,74,.16)}
+body[data-mode="dark"][data-skin="aurora"]{--canvas:#0B0E1C;--flat:#0E1122;--card:#161B34;--field:#1C2242;--ink:#EEF1FF;--t2:#AAB2DA;--muted:#737CAB;--tint:rgba(124,139,255,.18)}
+
+/* ============================================================ HARNESS */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--ui);background:radial-gradient(900px 500px at 10% -10%,rgba(10,98,200,.22),transparent 60%),radial-gradient(800px 500px at 110% 0,rgba(11,168,250,.12),transparent 55%),#0A0F18;color:#fff;min-height:100vh;padding:24px 16px 70px}
+.head{max-width:1180px;margin:0 auto 14px;text-align:center}
+.head h1{font-size:22px;font-weight:800;margin:0 0 4px;letter-spacing:-.2px}
+.head p{margin:0;color:#93A3BB;font-size:13px}
+.bar{position:sticky;top:10px;z-index:50;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1180px;margin:0 auto 14px;background:rgba(12,18,30,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:9px}
+.grp{display:flex;align-items:center;gap:4px;padding:3px;background:rgba(255,255,255,.05);border-radius:11px;flex-wrap:wrap}
+.grp .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7F90AA;font-weight:700;padding:0 6px}
+.bar button{font:700 12px var(--ui);color:#C9D5E6;cursor:pointer;background:none;border:0;border-radius:8px;padding:7px 11px;white-space:nowrap}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:linear-gradient(180deg,#1A78E0,#0A62C8);color:#fff}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px}
+.caption{max-width:760px;margin:0 auto 22px;color:#93A3BB;font-size:12.5px;line-height:1.55;text-align:center}
+.caption b{color:#E6EEF9}
+.stage{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;max-width:1240px;margin:0 auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.col .tag{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#7F90AA}
+
+/* ============================================================ PHONE */
+.phone{width:360px;height:760px;border-radius:44px;padding:10px;background:linear-gradient(160deg,#28303c,#11151c);box-shadow:0 40px 100px -40px rgba(0,0,0,.9)}
+.screen{position:relative;width:100%;height:100%;border-radius:35px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:118px;height:28px;background:#0c0d12;border-radius:0 0 17px 17px;z-index:60}
+.status{height:40px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 4px;font-size:12px;font-weight:700}
+.scroll{flex:1;overflow:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.ms{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;font-size:20px;line-height:1;display:inline-block;-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0}
+.ms.f{font-variation-settings:'FILL' 1}
+.serif{font-family:var(--serif);font-weight:var(--title-w)}
+.num{font-variant-numeric:tabular-nums}
+
+/* shared atoms */
+.ibtn{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;color:var(--ink);background:transparent;border:0}
+.ibtn.solid{background:var(--card);box-shadow:var(--shadow-sm)}
+.search{display:flex;align-items:center;gap:8px;height:42px;border-radius:13px;background:var(--field);padding:0 12px;color:var(--muted);font-size:13.5px}
+.search .grow{flex:1}
+.seg{display:flex;background:var(--field);border-radius:12px;padding:3px;gap:2px}
+.seg span{flex:1;text-align:center;font-size:12.5px;font-weight:700;color:var(--t2);padding:7px 0;border-radius:9px;cursor:pointer;transition:.15s}
+.seg span.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow-sm)}
+.thumb{flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;background-size:cover;background-position:center}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.02em}
+.pill.ok{background:var(--success-tint);color:var(--success)}
+.pill.low{background:var(--warn-tint);color:var(--warn)}
+.pill.out{background:var(--danger-tint);color:var(--danger)}
+.pill.svc{background:var(--tint);color:var(--primary)}
+.pill .ms{font-size:13px}
+.toggle{flex:none;width:44px;height:26px;border-radius:999px;background:var(--hair);position:relative;cursor:pointer;transition:.18s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.18s}
+.toggle.on{background:var(--primary)}
+.toggle.on::after{left:21px}
+.save{height:48px;border-radius:14px;border:0;width:100%;font:800 14.5px var(--ui);color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-dark));box-shadow:0 12px 24px -12px var(--primary);display:flex;align-items:center;justify-content:center;gap:8px}
+.fab{position:absolute;right:18px;bottom:22px;height:52px;padding:0 20px 0 16px;border-radius:17px;display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-dark));box-shadow:0 16px 30px -12px var(--primary)}
+.toast{height:36px;line-height:1;position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:var(--ink);color:var(--canvas);font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap}
+.toast .ms{font-size:17px;color:var(--success)}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+
+
+/* ============================================================ C · HERO CONSOLE */
+.C .hero{margin:0 0 0;padding:6px 18px 54px;color:#fff;background:radial-gradient(260px 160px at 100% 0,color-mix(in srgb,var(--hero-3) 55%,transparent),transparent 70%),linear-gradient(150deg,var(--hero-1),var(--hero-2));position:relative}
+.C .hero .row1{display:flex;align-items:center;justify-content:space-between}
+.C .hero .ibtn{color:#fff;background:rgba(255,255,255,.14)}
+.C .hero h2{margin:12px 0 2px;font-size:25px;letter-spacing:-.3px}
+.C .hero p{margin:0;font-size:12px;opacity:.75}
+.C .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:-38px 14px 0;position:relative}
+.C .kpi{background:var(--card);border-radius:15px;padding:10px 11px;box-shadow:var(--shadow)}
+.C .kpi small{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.C .kpi b{display:block;font-size:19px;margin-top:3px}
+.C .kpi.w b{color:var(--warn)}
+.C .fchips{display:flex;gap:7px;padding:14px 14px 4px;overflow:auto;scrollbar-width:none}
+.C .fchips>span{flex:none;font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;background:var(--card);color:var(--t2);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:4px}
+.C .fchips>span.on{background:var(--primary);color:#fff}
+.C .fchips .ms{font-size:15px}
+.C .bar2{display:flex;align-items:center;gap:8px;padding:2px 12px 8px}
+.C .bar2 .t{flex:1;font-weight:800;font-size:15px}
+.C .live{margin:4px 14px 0;border-radius:20px;padding:14px;color:#fff;background:linear-gradient(150deg,var(--hero-1),var(--hero-2));box-shadow:var(--shadow)}
+.C .live .cap{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.7;display:flex;align-items:center;gap:5px}
+.C .live .card{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:15px;padding:10px;margin-top:10px;backdrop-filter:blur(6px)}
+.C .live .card .nm{font-weight:800;font-size:14px}
+.C .live .card .sub{font-size:11.5px;opacity:.75;margin-top:2px}
+.C .live .card .pr{font-size:17px;font-weight:800}
+.C .acc{margin:12px 14px 0;background:var(--card);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden}
+.C .acc .ah{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+.C .acc .ah .n{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:800;background:var(--tint);color:var(--primary)}
+.C .acc .ah .t{flex:1;font-weight:800;font-size:14px}
+.C .acc .ah .s{font-size:11.5px;color:var(--muted);font-weight:600}
+.C .acc .ab{padding:2px 14px 14px;display:grid;gap:9px}
+.C .acc.closed .ab{display:none}
+.C .fld{display:block}
+.C .fld small{display:block;font-size:11px;font-weight:700;color:var(--t2);margin-bottom:5px}
+.C .fld input{width:100%;height:42px;border-radius:12px;border:1.5px solid transparent;background:var(--field);color:var(--ink);font:600 14px var(--ui);padding:0 12px;outline:none}
+.C .fld input:focus{border-color:var(--primary);background:var(--card)}
+.C .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.C .ctog{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.C .ctog+.ctog{border-top:1px solid var(--hair)}
+.C .ctog .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--tint);color:var(--primary)}
+.C .ctog .tt{flex:1;font-weight:700;font-size:13.5px}
+.C .ctog .tt small{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+
+
+
+/* ============================================================ LIST: toolbar · table · gallery */
+.C>.hero,.C>.kpis,.C>.tbar,.C>.fchips{flex:none}
+.C .hero .solidw{width:auto;padding:0 14px;gap:4px;display:flex;align-items:center;font:800 13px var(--ui);background:#fff;color:var(--primary-dark)}
+.C .kpi.x b{color:var(--danger)}
+.C .tbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 14px 0;padding:6px 6px 6px 12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow-sm)}
+.C .tbar .cnt{font-size:12.5px;color:var(--t2);font-weight:600;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.C .tbar .cnt b{color:var(--ink);font-weight:800}
+.C .tbar .sort{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--primary);padding:4px 8px;border-radius:8px;background:var(--tint)}
+.C .tbar .sort .ms{font-size:14px}
+.C .vt{display:flex;background:var(--field);border-radius:10px;padding:3px;gap:2px}
+.C .vt>span{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--t2);padding:6px 9px;border-radius:8px;cursor:pointer;transition:.15s}
+.C .vt span .ms{font-size:16px}
+.C .vt i{font-style:normal}
+.phone .C .vt>span:not(.on) i{display:none}
+.C .vt>span.on{background:var(--primary);color:#fff;box-shadow:0 6px 14px -8px var(--primary)}
+.C .fchips{padding:10px 14px 2px}
+.C .twrap2{flex:1;min-height:0;overflow:auto;margin:8px 14px 14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow-sm);scrollbar-width:none}
+.C .twrap2::-webkit-scrollbar{display:none}
+.tbl{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:100%}
+.tbl th{position:sticky;top:0;z-index:2;background:var(--card);text-align:left;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--hair);white-space:nowrap}
+.tbl th .ms{font-size:13px;vertical-align:-2px;color:var(--primary)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--hair);white-space:nowrap;color:var(--t2);font-weight:600;background:var(--card)}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover td,.tbl tr.sel td{background:color-mix(in srgb,var(--primary) 8%,var(--card))}
+.tbl .stk{position:sticky;left:0;z-index:1;box-shadow:8px 0 10px -10px rgba(0,0,0,.35)}
+.tbl th.stk{z-index:3}
+.tbl .ci{display:flex;align-items:center;gap:9px}
+.tbl .ci .thumb{color:#fff}
+.tbl .ci .thumb .ms{font-size:17px}
+.tbl .nm{color:var(--ink);font-weight:700;max-width:112px;overflow:hidden;text-overflow:ellipsis}
+.tbl .fv{font-size:14px;color:var(--danger)}
+.tbl .r{text-align:right}
+.tbl .b{color:var(--ink);font-weight:800}
+.tbl .mut{color:var(--muted)}
+.tbl .mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+.tbl .sn{display:inline-flex;align-items:center;gap:5px;font-weight:800}
+.tbl .sn i{width:6px;height:6px;border-radius:50%}
+.pill.off{background:var(--field);color:var(--muted)}
+.C .tfoot{position:sticky;left:0;padding:10px 14px 64px;font-size:11.5px;color:var(--muted);font-weight:600}
+.C .galw{flex:1;min-height:0;overflow:auto;padding:8px 14px 90px;scrollbar-width:none}
+.C .galw::-webkit-scrollbar{display:none}
+.C .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.C .gt{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer;transition:.15s}
+.C .gt.sel{box-shadow:0 0 0 2.5px var(--primary),var(--shadow)}
+.C .gi{height:104px;position:relative;display:grid;place-items:center;color:rgba(255,255,255,.92)}
+.C .gi .ico{font-size:36px}
+.C .gi .pill{position:absolute;left:8px;top:8px;background:rgba(255,255,255,.92)}
+body[data-mode="dark"] .C .gi .pill{background:rgba(10,14,22,.78)}
+.C .gi .fav{position:absolute;right:8px;top:8px;font-size:17px;color:#fff}
+.C .gi .offb{position:absolute;left:8px;bottom:8px;font-size:10px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:3px 7px;border-radius:999px}
+.C .gb{padding:9px 11px 11px}
+.C .gb .nm{font-size:13px;font-weight:700;line-height:1.25;height:32px;overflow:hidden}
+.C .gm{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:11px;color:var(--muted);font-weight:600}
+.C .gm b{font-size:14px;color:var(--ink)}
+/* tablet: full-width list + slide-over editor */
+.pane.full{flex:1;width:auto;border-right:0}
+.tablet .tbl .nm{max-width:300px}
+.tablet .C .gal{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.tablet .C .galw{padding-bottom:20px}
+.tablet .C .tfoot{padding-bottom:14px}
+.tbody{position:relative}
+.scrim{position:absolute;inset:0;background:rgba(5,10,20,.32);opacity:0;pointer-events:none;transition:.2s;z-index:10}
+.scrim.open{opacity:1;pointer-events:auto}
+.slide{position:absolute;top:0;right:0;bottom:0;width:440px;z-index:11;background:var(--canvas);box-shadow:-30px 0 60px -30px rgba(0,0,0,.55);transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.slide.open{transform:none}
+.slide .bar2{padding-top:12px}
+
+/* direction visibility */
+.dir{display:none}
+body[data-dir="a"] .dir.A,body[data-dir="b"] .dir.B,body[data-dir="c"] .dir.C,body[data-dir="d"] .dir.D{display:flex}
+.dir{flex-direction:column;height:100%;position:relative}
+
+/* ============================================================ TABLET (1194×~760 landscape, side-rail + two panes) */
+body[data-device="phone"] #stage-tab,body[data-device="tablet"] #stage-phone{display:none}
+#stage-tab{flex-direction:column;align-items:center;gap:26px}
+.twrap{max-width:100%;overflow-x:auto;display:flex;flex-direction:column;align-items:center;gap:10px;padding-bottom:4px}
+.tablet{flex:none;width:1140px;height:740px;border-radius:34px;padding:12px;background:linear-gradient(160deg,#28303c,#11151c);box-shadow:0 40px 100px -40px rgba(0,0,0,.9)}
+.tscreen{width:100%;height:100%;border-radius:24px;overflow:hidden;background:var(--canvas);color:var(--ink);display:flex;flex-direction:column}
+.tstat{flex:none;height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:11.5px;font-weight:700;color:var(--t2)}
+.tstat .ms{font-size:15px}
+.tbody{flex:1;display:flex;min-height:0}
+.rail{flex:none;width:76px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0 16px;background:linear-gradient(180deg,var(--hero-1),#0A0F1A);color:rgba(255,255,255,.55)}
+.rail .logo{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;margin-bottom:14px;background:linear-gradient(135deg,var(--accent),var(--primary));color:#fff;font:800 18px var(--ui)}
+.rail .ri{width:52px;padding:8px 0;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:700}
+.rail .ri .ms{font-size:22px}
+.rail .ri.on{background:rgba(255,255,255,.12);color:#fff}
+.rail .ri.on .ms{font-variation-settings:'FILL' 1;color:var(--accent)}
+.rail .sp{flex:1}
+.pane{position:relative;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.pane.l{flex:none;width:390px;border-right:1px solid var(--hair)}
+.pane.e,.pane.c{flex:1;background:var(--flat)}
+.pane.e .dir,.pane.c .dir{width:100%;max-width:640px;margin:0 auto}
+.pane .bigtitle{padding-top:14px}
+.sel{position:relative;background:var(--tint)!important}
+.setnav{flex:none;width:290px;border-right:1px solid var(--hair);padding:16px 12px;overflow:auto}
+.setnav h3{margin:0 8px 12px;font-size:24px}
+.setnav .g{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px}
+.setnav .si{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:12px;font-size:13.5px;font-weight:600;color:var(--t2)}
+.setnav .si .ms{font-size:19px;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--field)}
+.setnav .si.on{background:var(--card);color:var(--ink);font-weight:800;box-shadow:var(--shadow-sm)}
+.setnav .si.on .ms{background:var(--primary);color:#fff}
+.pane.c .C .hero{border-radius:0 0 24px 24px}
+.empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:13px}
+
+/* ============================================================ v3: toolbar chips · sortable table · view-options sheet · full-page form */
+.C .tbar{padding:6px}
+.C .tl{display:flex;gap:6px;min-width:0}
+.C .tchip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--t2);padding:6px 9px;border-radius:9px;background:var(--field);cursor:pointer;white-space:nowrap}
+.C .tchip b{color:var(--ink);font-weight:800}
+.C .tchip .ms{font-size:15px}
+.C .tchip i{font-style:normal}
+.C .tchip em{font-style:normal;font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;border-radius:999px;padding:1px 6px}
+.phone .C .tchip i{display:none}
+.C .fchips>span .ms{font-size:15px}
+.C .fchips>span em{font-style:normal;font-size:10.5px;font-weight:800;background:var(--primary);color:#fff;border-radius:999px;padding:0 6px}
+.tbl th[data-sort]{cursor:pointer;user-select:none}
+.tbl th.on{color:var(--primary)}
+.tbl th .ms.dim{color:var(--muted);opacity:.55}
+.tbl td.rtl{direction:rtl;text-align:right;color:var(--ink)}
+.tbl tr.off td,.tbl tr.off .nm{color:var(--muted)}
+.tbl .tagoff{font-size:9.5px;font-weight:800;color:var(--muted);background:var(--field);padding:2px 6px;border-radius:999px}
+.tbl .idc{color:var(--muted);font-weight:700}
+
+.sheetwrap{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(5,10,20,.38)}
+.sheet{background:var(--card);border-radius:24px 24px 0 0;max-height:80%;display:flex;flex-direction:column;box-shadow:0 -20px 50px -20px rgba(0,0,0,.4);color:var(--ink)}
+.sheet .hdl{width:38px;height:4px;border-radius:4px;background:var(--hair);margin:9px auto 4px;flex:none}
+.sheet .shd{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 10px;flex:none}
+.sheet .shd b{font-size:16px;font-weight:800}
+.sheet .shd a{font-size:12.5px;font-weight:700;color:var(--primary);cursor:pointer}
+.sheet>.seg{margin:0 16px 6px;flex:none}
+.sheet .sbody{overflow:auto;padding:0 8px 4px;scrollbar-width:none;min-height:0}
+.sheet .sbody::-webkit-scrollbar{display:none}
+.sheet .shint{font-size:11.5px;color:var(--muted);padding:6px 10px 2px;line-height:1.45}
+.vrow{display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer}
+.vrow+.vrow{border-top:1px solid var(--hair)}
+.vrow .dg{color:var(--muted);font-size:18px}
+.vrow .lb{flex:1;font-size:13.5px;font-weight:700}
+.vrow .lb small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+.vrow .lk{color:var(--muted);font-size:17px}
+.vrow .rd{width:20px;height:20px;border-radius:50%;border:2px solid var(--hair);flex:none}
+.vrow.on .rd{border:6px solid var(--primary)}
+.vrow.on .lb{color:var(--primary)}
+.sheet .sfoot{padding:10px 16px 18px;border-top:1px solid var(--hair);flex:none}
+.sheet .sfoot .save{height:44px}
+.popwrap{position:absolute;inset:0;z-index:30}
+.sheet.pop{position:absolute;right:18px;top:226px;z-index:31;width:340px;max-height:440px;border-radius:18px;box-shadow:0 30px 70px -20px rgba(0,0,0,.45),0 0 0 1px var(--hair)}
+.sheet.pop .hdl{display:none}
+.sheet.pop .shd{padding-top:14px}
+.sheet.pop .sfoot{padding-bottom:14px}
+
+.ed2 .ebar{display:flex;align-items:center;gap:8px;padding:2px 10px 8px;flex:none}
+.ed2 .et{flex:1;min-width:0}
+.ed2 .et b{display:block;font-size:16px;font-weight:800}
+.ed2 .et small{font-size:11px;color:var(--muted);font-weight:600}
+.ed2 .ebody{padding:2px 14px 100px}
+.ed2 .cols{display:flex;flex-direction:column;gap:12px}
+.ed2 .colL,.ed2 .colR{display:contents}
+.ed2 .live{order:-1;margin:0}
+.ed2 .live .badge{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.06em;background:rgba(255,255,255,.18);padding:3px 8px;border-radius:999px;text-transform:uppercase}
+.tablet .ed2 .cols{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+.tablet .ed2 .colL,.tablet .ed2 .colR{display:flex;flex-direction:column;gap:14px}
+.tablet .ed2 .ebody{padding:4px 22px 96px}
+.tablet .ed2 .ebar{padding:12px 18px 10px}
+.sec{background:var(--card);border-radius:18px;box-shadow:var(--shadow-sm)}
+.sec .sh{display:flex;align-items:center;gap:10px;padding:13px 14px 4px}
+.sec .sh .si{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--tint);color:var(--primary);flex:none}
+.sec .sh .si .ms{font-size:18px}
+.sec .sh b{flex:1;font-size:14px;font-weight:800}
+.sec .sh .sr{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--t2)}
+.sec .sb{padding:10px 14px 14px;display:grid;gap:10px}
+.C .fld small i{color:var(--danger);font-style:normal}
+.C .fld input::placeholder,.C .fld textarea::placeholder{color:var(--muted);font-weight:500}
+.C .fld input[dir="rtl"]{text-align:right}
+.C .fld textarea{width:100%;height:68px;border-radius:12px;border:1.5px solid transparent;background:var(--field);color:var(--ink);font:500 13.5px var(--ui);padding:10px 12px;outline:none;resize:none}
+.C .fld textarea:focus{border-color:var(--primary);background:var(--card)}
+.pick{height:42px;border-radius:12px;background:var(--field);display:flex;align-items:center;padding:0 8px 0 12px;font:600 14px var(--ui);color:var(--ink);cursor:pointer}
+.pick>span:first-child{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick.ph span{color:var(--muted);font-weight:500}
+.pick .ms{color:var(--muted);font-size:20px}
+.inbtn{display:flex;gap:8px}
+.inbtn input{flex:1;min-width:0}
+.inbtn .sq{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--tint);color:var(--primary)}
+.calc{display:grid;grid-template-columns:repeat(3,1fr);background:var(--field);border-radius:12px}
+.calc div{padding:9px 11px;min-width:0}
+.calc div+div{border-left:1px solid var(--hair)}
+.calc small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.calc b{display:block;font-size:14px;margin-top:3px}
+.calc .g b{color:var(--success)}
+.trow{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700}
+.trow span{flex:1}
+.trow small{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-top:1px}
+.imgs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.imgs .im{aspect-ratio:1;border-radius:13px;display:grid;place-items:center;color:#fff;position:relative}
+.imgs .im .ms{font-size:24px}
+.imgs .im .cv{position:absolute;left:5px;bottom:5px;font-size:9px;font-weight:800;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:999px}
+.imgs .add{border:1.5px dashed color-mix(in srgb,var(--primary) 40%,transparent);color:var(--primary);font-size:10.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchips span{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;background:var(--field);color:var(--t2);cursor:pointer}
+.qchips span.on{background:var(--primary);color:#fff}
+.ebot{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:12px 14px 20px;background:linear-gradient(transparent,var(--canvas) 35%)}
+.ebot .ghost2{flex:1;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:14px;background:var(--card);color:var(--ink);box-shadow:var(--shadow-sm)}
+.ebot .del{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--card);color:var(--danger);box-shadow:var(--shadow-sm)}
+.ebot .save{flex:1.25}
+.tablet .ebot{justify-content:flex-end;padding:12px 22px 14px;background:var(--card);border-top:1px solid var(--hair)}
+.tablet .ebot .ghost2,.tablet .ebot .save{flex:none;width:210px}
+.tablet .ebot .del{margin-right:auto}
+</style>
+</head>
+<body data-dir="c" data-skin="qloud" data-mode="light" data-device="phone" data-page="p" data-view="table" data-form="new">
+
+<div class="head">
+  <h1>Products &amp; Services: Hero Console</h1>
+  <p>Opened from Settings → Catalog (Products · Services · Product configuration). Columns, form sections and types follow the web Product and Service pages.</p>
+</div>
+
+<div class="bar">
+  <div class="grp" id="g-view"><span class="lab">List view</span>
+    <button data-v="table" class="on">Table</button>
+    <button data-v="gallery">Gallery</button>
+  </div>
+  <div class="grp" id="g-page"><span class="lab">Page</span>
+    <button data-v="p" class="on">Products</button>
+    <button data-v="s">Services</button>
+  </div>
+  <div class="grp" id="g-form"><span class="lab">Form</span>
+    <button data-v="new" class="on">New</button>
+    <button data-v="edit">Edit</button>
+  </div>
+  <div class="grp" id="g-skin"><span class="lab">Skin</span>
+    <button data-v="qloud" class="on"><i class="dot" style="background:#0A62C8"></i>Qloud</button>
+    <button data-v="aurora"><i class="dot" style="background:#4F46E5"></i>Aurora</button>
+    <button data-v="emerald"><i class="dot" style="background:#15806C"></i>Emerald</button>
+    <button data-v="noir"><i class="dot" style="background:#C8A24A"></i>Noir</button>
+  </div>
+  <div class="grp" id="g-mode"><span class="lab">Mode</span>
+    <button data-v="light" class="on">Light</button>
+    <button data-v="dark">Dark</button>
+  </div>
+  <div class="grp" id="g-device"><span class="lab">Device</span>
+    <button data-v="phone" class="on">Phone</button>
+    <button data-v="tablet">Tablet</button>
+  </div>
+</div>
+<p class="caption" id="cap"></p>
+
+<div class="stage" id="stage-phone">
+  <div class="col"><span class="tag">1 · List</span><div class="phone"><div class="screen" id="s-list"></div></div></div>
+  <div class="col"><span class="tag">2 · Sort &amp; columns</span><div class="phone"><div class="screen" id="s-sheet"></div></div></div>
+  <div class="col" id="ph-edit"><span class="tag">3 · Add / Edit (full page)</span><div class="phone"><div class="screen" id="s-edit"></div></div></div>
+  <div class="col"><span class="tag">4 · Configuration</span><div class="phone"><div class="screen" id="s-cfg"></div></div></div>
+</div>
+
+<div class="stage" id="stage-tab">
+  <div class="twrap"><span class="tag" style="font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#7F90AA">1 · SETTINGS › PRODUCTS (FULL WIDTH) · TAP A HEADER TO SORT</span>
+    <div class="tablet"><div class="tscreen"><div class="tstat"><span>9:41 Mon 2 Nov</span><span><span class="ms">wifi</span> 100%</span></div>
+      <div class="tbody"><div class="rail" data-rail="catalog"></div><div class="pane full" id="t-list"></div></div></div></div></div>
+  <div class="twrap" id="tb-edit"><span class="tag" style="font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#7F90AA">2 · ADD / EDIT: FULL PAGE</span>
+    <div class="tablet"><div class="tscreen"><div class="tstat"><span>9:41 Mon 2 Nov</span><span><span class="ms">wifi</span> 100%</span></div>
+      <div class="tbody"><div class="rail" data-rail="catalog"></div><div class="pane full" id="t-edit"></div></div></div></div></div>
+  <div class="twrap"><span class="tag" style="font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#7F90AA">3 · SETTINGS › CATALOG · PRODUCTS AND SERVICES LIVE HERE</span>
+    <div class="tablet"><div class="tscreen"><div class="tstat"><span>9:41 Mon 2 Nov</span><span><span class="ms">wifi</span> 100%</span></div>
+      <div class="tbody"><div class="rail" data-rail="settings"></div><div class="setnav" id="t-nav"></div><div class="pane c" id="t-cfg"></div></div></div></div></div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- sample data (fields = web products table) */
+const G = [['#F472B6','#BE185D','brush'],['#FBBF24','#B45309','water_drop'],['#34D399','#047857','spa'],['#FCA5A5','#B91C1C','diamond'],['#F87171','#991B1B','colorize'],['#FDBA74','#C2410C','science'],['#C4B5FD','#6D28D9','bed'],['#93C5FD','#1E40AF','blur_on'],['#FDE68A','#A16207','edit']];
+const PRODUCTS = [
+  [124,'Velvet Matte Lipstick','أحمر شفاه مخملي','Beauty','Makeup','Lips','Pcs','Lumière','4g','VML-01','LS000124',42.5,85,{fav:1}],
+  [131,'Argan Repair Shampoo','شامبو الأرغان','Hair','Hair Care','Shampoo','Btl','Moroccan Gold','500ml','ARS-500','LS000131',57.6,120],
+  [138,'Keratin Hair Mask','قناع الكيراتين','Hair','Hair Care','Treatment','Jar','Moroccan Gold','250ml','KHM-250','LS000138',45.6,95],
+  [145,'Rose Gold Hair Clip','مشبك شعر ذهبي','Retail','Accessories','Clips','Pcs','Aurelia','One size','RGC-01','LS000145',16.8,35],
+  [152,'Ruby Gel Nail Polish','طلاء أظافر جل','Beauty','Nails','Gel','Btl','Lumière','15ml','RGN-15','LS000152',21.6,45,{fav:1}],
+  [159,'Vitamin C Glow Serum','سيروم فيتامين سي','Beauty','Skin','Serum','Btl','Dermaé','30ml','VCS-30','LS000159',79.2,165],
+  [166,'Silk Pillowcase','غطاء وسادة حرير','Retail','Accessories','Home','Pcs','Aurelia','Standard','SPC-01','LS000166',67.2,140,{off:1}],
+  [173,'Matte Setting Spray','بخاخ تثبيت المكياج','Beauty','Makeup','Face','Btl','Lumière','100ml','MSS-100','LS000173',37.4,78],
+  [180,'Cuticle Oil Pen','قلم زيت الجلد','Beauty','Nails','Care','Pcs','Dermaé','2ml','COP-02','LS000180',13.4,28],
+].map((r,i) => ({id:r[0],n:r[1],ar:r[2],dept:r[3],cat:r[4],sub:r[5],u:r[6],brand:r[7],size:r[8],code:r[9],barcode:r[10],cost:r[11],mrp:r[12],tax:5,g:G[i],...(r[13]||{})}));
+const GS = [['#60A5FA','#1D4ED8','content_cut'],['#A78BFA','#6D28D9','palette'],['#FB7185','#BE123C','back_hand'],['#5EEAD4','#0F766E','face_retouching_natural'],['#F9A8D4','#9D174D','auto_awesome'],['#94A3B8','#334155','face'],['#FCD34D','#B45309','spa'],['#F0ABFC','#A21CAF','footprint'],['#C084FC','#7E22CE','colors']];
+const SERVICES = [
+  [41,'Signature Haircut','قص شعر مميز','Salon','Hair','Cut','SRV-0041',1,60,45,{fav:1}],
+  [42,'Balayage Colour','بالاياج','Salon','Colour','Highlights','SRV-0042',3,450,150,{fav:1}],
+  [43,'Express Manicure','مانيكير سريع','Spa','Nails','Manicure','SRV-0043',2,40,30],
+  [44,'Hydra Facial','هيدرا فيشل','Spa','Skin','Facial','SRV-0044',4,280,60],
+  [45,'Bridal Makeup','مكياج العروس','Salon','Makeup','Bridal','SRV-0045',5,900,120,{fav:1}],
+  [46,'Beard Trim','تهذيب اللحية','Barber','Hair','Beard','SRV-0046',6,35,20,{off:1}],
+  [47,'Keratin Treatment','علاج الكيراتين','Salon','Hair','Treatment','SRV-0047',7,520,180],
+  [48,'Gel Pedicure','باديكير جل','Spa','Nails','Pedicure','SRV-0048',8,95,50],
+  [49,'Root Touch-up','صبغ الجذور','Salon','Colour','Roots','SRV-0049',9,180,75],
+].map((r,i) => ({id:r[0],n:r[1],ar:r[2],dept:r[3],cat:r[4],sub:r[5],code:r[6],pr:r[7],mrp:r[8],t:r[9],g:GS[i],...(r[10]||{})}));
+
+/* ---------------------------------------------------------------- columns (web: product_visible_column defaults / service table headers) */
+const COLS = {
+  p: [
+    {k:'product_name',l:'Product Name',f:'n',lock:1},
+    {k:'id',l:'ID',f:'id',num:1},
+    {k:'image',l:'Image',img:1,def:false},
+    {k:'department',l:'Department',f:'dept'},
+    {k:'main_category',l:'Main Category',f:'cat'},
+    {k:'sub_category',l:'Sub Category',f:'sub'},
+    {k:'unit',l:'Unit',f:'u'},
+    {k:'brand',l:'Brand',f:'brand'},
+    {k:'size',l:'Size',f:'size'},
+    {k:'code',l:'Code',f:'code',mono:1},
+    {k:'name_arabic',l:'Arabic Name',f:'ar',rtl:1},
+    {k:'barcode',l:'Barcode',f:'barcode',mono:1},
+    {k:'cost',l:'Cost',f:'cost',num:1,money:1,mut:1},
+    {k:'mrp',l:'MRP',f:'mrp',num:1,money:1,b:1},
+  ],
+  s: [
+    {k:'name',l:'Service Name',f:'n',lock:1},
+    {k:'id',l:'#',f:'id',num:1},
+    {k:'image',l:'Image',img:1,def:false},
+    {k:'department',l:'Department',f:'dept'},
+    {k:'main_category',l:'Main Category',f:'cat'},
+    {k:'sub_category',l:'Sub Category',f:'sub'},
+    {k:'code',l:'Code',f:'code',mono:1},
+    {k:'name_arabic',l:'Arabic Name',f:'ar',rtl:1},
+    {k:'priority',l:'Priority',f:'pr',num:1},
+    {k:'mrp',l:'Price',f:'mrp',num:1,money:1,b:1},
+    {k:'time',l:'Duration',f:'t',num:1,suffix:' min'},
+  ],
+};
+const defaults = pg => Object.fromEntries(COLS[pg].filter(c=>!c.lock).map(c => [c.k, c.def !== false]));
+const S = {
+  vis: {p: defaults('p'), s: defaults('s')},
+  sort: {p: {k:'id', d:'desc'}, s: {k:'id', d:'desc'}},
+  tab: 'columns', pop: false,
+  item: {p: 0, s: 1},
+};
+
+const pg = () => document.body.dataset.page;
+const isP = () => pg() === 'p';
+const isTable = () => document.body.dataset.view === 'table';
+const isNew = () => document.body.dataset.form === 'new';
+const isTab = () => document.body.dataset.device === 'tablet';
+const L = () => isP() ? PRODUCTS : SERVICES;
+const W = () => isP() ? 'Product' : 'Service';
+const w = () => W().toLowerCase();
+const ms = (n,f,c='') => `<span class="ms${f?' f':''}${c?' '+c:''}">${n}</span>`;
+const grad = it => `background:linear-gradient(140deg,${it.g[0]},${it.g[1]})`;
+const money = v => (+v).toFixed(2);
+const col = k => COLS[pg()].find(c => c.k === k);
+const status = `<div class="notch"></div><div class="status"><span>9:41</span><span>${ms('signal_cellular_alt')} ${ms('wifi')} ${ms('battery_full')}</span></div>`;
+const heroStatus = status.replace('class="status"','class="status" style="padding:0 6px 4px;color:#fff"');
+
+function sorted(){
+  const {k,d} = S.sort[pg()], f = col(k).f, dir = d === 'asc' ? 1 : -1;
+  return [...L()].sort((a,b) => (typeof a[f] === 'number' ? a[f]-b[f] : String(a[f]).localeCompare(String(b[f]))) * dir);
+}
+
+/* ---------------------------------------------------------------- list */
+const kpis = () => (isP() ? [['Products','128'],['Selling','112'],['Disabled','6','x']] : [['Services','36'],['Avg time','58m'],['Disabled','2','x']])
+  .map(x => `<div class="kpi ${x[2]||''}"><small>${x[0]}</small><b class="num">${x[1]}</b></div>`).join('');
+
+function cell(c, it){
+  const v = it[c.f];
+  if (c.lock) {
+    return `<td class="stk"><div class="ci">${S.vis[pg()].image ? `<div class="thumb" style="width:32px;height:32px;border-radius:10px;${grad(it)}">${ms(it.g[2])}</div>` : ''}<span class="nm">${v}</span>${it.fav ? ms('favorite',1,'fv') : ''}${it.off ? '<span class="tagoff">Disabled</span>' : ''}</div></td>`;
+  }
+  if (c.rtl) return `<td class="rtl">${v}</td>`;
+  if (c.k === 'id') return `<td class="num idc">${v}</td>`;
+  return `<td class="${c.num?'r num':''}${c.mono?' mono':''}${c.b?' b':''}${c.mut?' mut':''}">${c.money ? money(v) : v}${c.suffix||''}</td>`;
+}
+function table(){
+  const cols = COLS[pg()].filter(c => !c.img && (c.lock || S.vis[pg()][c.k])), so = S.sort[pg()];
+  const th = c => { const on = so.k === c.k; return `<th data-sort="${c.k}" class="${c.lock?'stk ':''}${c.num?'r ':''}${on?'on':''}">${c.l} ${on ? ms(so.d==='asc'?'arrow_upward':'arrow_downward') : ms('unfold_more',0,'dim')}</th>`; };
+  return `<div class="twrap2"><table class="tbl"><thead><tr>${cols.map(th).join('')}</tr></thead>
+    <tbody>${sorted().map(it => `<tr data-id="${it.id}" class="${it.off?'off':''}">${cols.map(c => cell(c,it)).join('')}</tr>`).join('')}</tbody></table>
+    <div class="tfoot">Showing ${L().length} of ${isP()?128:36} · ${COLS[pg()].filter(c => !c.lock && S.vis[pg()][c.k]).length} of ${COLS[pg()].length - 1} optional columns on</div></div>`;
+}
+const gTile = it => `<div class="gt" data-id="${it.id}"><div class="gi" style="${grad(it)}"><span class="ms ico">${it.g[2]}</span>${isP() ? `<span class="pill svc">${it.code}</span>` : `<span class="pill svc">${ms('schedule')}${it.t} min</span>`}${it.fav?'<span class="ms f fav">favorite</span>':''}${it.off?'<span class="offb">Disabled</span>':''}</div>
+  <div class="gb"><div class="nm">${it.n}</div><div class="gm"><span>${it.cat}</span><b class="num">${money(it.mrp)}</b></div></div></div>`;
+const gallery = () => `<div class="galw"><div class="gal">${sorted().map(gTile).join('')}</div></div>`;
+
+function viewOptions(){
+  const p = pg(), so = S.sort[p];
+  const colsBody = `<p class="shint">Choose what the table shows. ${W()} name is pinned on the left.</p>` + COLS[p].map(c => c.lock
+    ? `<div class="vrow"><span class="ms dg">push_pin</span><div class="lb">${c.l}<small>Always shown · pinned left</small></div>${ms('lock',0,'lk')}</div>`
+    : `<div class="vrow" data-col="${c.k}"><span class="ms dg">drag_indicator</span><div class="lb">${c.l}${c.img?'<small>Thumbnail beside the name</small>':''}</div><i class="toggle${S.vis[p][c.k]?' on':''}"></i></div>`).join('');
+  const sortBody = `<div class="seg" data-sortdir style="margin:6px 8px 6px"><span data-v="asc" class="${so.d==='asc'?'on':''}">${ms('arrow_upward')} Ascending</span><span data-v="desc" class="${so.d==='desc'?'on':''}">${ms('arrow_downward')} Descending</span></div>`
+    + COLS[p].filter(c => !c.img).map(c => `<div class="vrow${so.k===c.k?' on':''}" data-sortk="${c.k}"><div class="lb">${c.l}</div><i class="rd"></i></div>`).join('');
+  return `<div class="hdl"></div><div class="shd"><b>${isTable() ? 'View options' : 'Sort gallery'}</b><a data-reset>Reset to defaults</a></div>
+    ${isTable() ? `<div class="seg" data-sheettab><span data-v="columns" class="${S.tab==='columns'?'on':''}">${ms('view_column')} Columns</span><span data-v="sort" class="${S.tab==='sort'?'on':''}">${ms('swap_vert')} Sort</span></div>` : ''}
+    <div class="sbody">${isTable() && S.tab === 'columns' ? colsBody : sortBody}</div>
+    <div class="sfoot"><button class="save" data-done>Done</button></div>`;
+}
+
+function list(tab, withSheet){
+  const p = pg(), so = S.sort[p], shown = COLS[p].filter(c => !c.lock && S.vis[p][c.k]).length;
+  return `<div class="dir C">
+    <div class="hero">${tab ? '' : heroStatus}
+      <div class="row1"><button class="ibtn">${ms('arrow_back')}</button><span style="display:flex;gap:6px"><button class="ibtn">${ms('search')}</button>${isP()?`<button class="ibtn">${ms('qr_code_scanner')}</button>`:''}${tab?`<button class="ibtn solidw" data-new>${ms('add')} New ${w()}</button>`:''}</span></div>
+      <h2 class="serif">${W()}s</h2><p>Settings › Catalog · Main branch</p></div>
+    <div class="kpis">${kpis()}</div>
+    <div class="tbar">
+      <div class="tl"><span class="tchip" data-open="sort">${ms('swap_vert')}<b>${col(so.k).l}</b>${ms(so.d==='asc'?'arrow_upward':'arrow_downward')}</span>
+        ${isTable() ? `<span class="tchip" data-open="columns">${ms('view_column')}<i>Columns</i><em>${shown}</em></span>` : ''}</div>
+      <div class="vt" data-vt><span data-v="table" class="${isTable()?'on':''}">${ms('table_rows')}<i>Table</i></span><span data-v="gallery" class="${isTable()?'':'on'}">${ms('grid_view')}<i>Gallery</i></span></div>
+    </div>
+    <div class="fchips" data-fchips><span class="on">${ms('tune')}Filters <em>0</em></span><span>Department ${ms('expand_more')}</span><span>Main Category ${ms('expand_more')}</span>${isP()?`<span>Brand ${ms('expand_more')}</span>`:''}<span>Status ${ms('expand_more')}</span></div>
+    ${isTable() ? table() : gallery()}
+    ${tab ? '' : `<div class="fab" data-new>${ms('add')}New</div>`}
+    ${withSheet ? `<div class="sheetwrap"><div class="sheet">${viewOptions()}</div></div>` : ''}
+    ${tab && S.pop ? `<div class="popwrap" data-popclose></div><div class="sheet pop">${viewOptions()}</div>` : ''}</div>`;
+}
+
+/* ---------------------------------------------------------------- full-page Add / Edit (sections = web Product / Service form) */
+const fld = (label, val, o={}) => `<label class="fld"><small>${label}${o.req?' <i>*</i>':''}</small><input ${o.id?`id="${o.id}"`:''} value="${val ?? ''}" placeholder="${o.ph||''}" ${o.rtl?'dir="rtl"':''} ${o.num?'inputmode="decimal"':''}></label>`;
+const pick = (label, val, o={}) => `<label class="fld"><small>${label}${o.req?' <i>*</i>':''}</small><div class="pick${val?'':' ph'}"><span>${val || o.ph}</span>${ms('expand_more')}</div></label>`;
+const sec = (icon, title, body, right='') => `<div class="sec"><div class="sh"><span class="si">${ms(icon)}</span><b>${title}</b>${right?`<span class="sr">${right}</span>`:''}</div><div class="sb">${body}</div></div>`;
+const two = (a,b) => `<div class="two">${a}${b}</div>`;
+
+function calc(it){
+  const t = +it.tax || 0, cwt = it.cost/(1+t/100), swt = it.mrp/(1+t/100);
+  return {cwt, ctx: it.cost - cwt, swt, stx: it.mrp - swt, profit: swt - cwt, margin: swt ? (swt - cwt)/swt*100 : 0};
+}
+
+function editPage(tab){
+  const it = L()[S.item[pg()]], nw = isNew(), c = calc(it);
+  const blank = v => nw ? '' : v;
+  const details = isP() ? sec('sell','Product Details', `
+      ${fld('Product Name', it.n, {req:1, id:'in-n', ph:'Enter product name'})}
+      ${fld('Arabic Name', it.ar, {rtl:1, ph:'أدخل الاسم بالعربية'})}
+      ${two(fld('Code', blank(it.code), {ph:'Product code'}), `<label class="fld"><small>Status</small><div class="seg" data-seg><span class="${it.off?'':'on'}">Active</span><span class="${it.off?'on':''}">Disabled</span></div></label>`)}
+      ${pick('Department', it.dept, {ph:'Select department'})}
+      ${two(pick('Main Category', it.cat, {req:1}), pick('Sub Category', blank(it.sub), {ph:'Select'}))}
+      ${two(pick('Unit', it.u, {req:1}), fld('Priority', blank('3'), {num:1, ph:'0'}))}
+      ${two(pick('Brand', blank(it.brand), {ph:'Select brand'}), fld('Size', blank(it.size), {ph:'Size'}))}
+      ${fld('Size Category', '', {rtl:1, ph:'Size category name'})}
+      ${two(fld('HSN Code', '', {ph:'HSN code'}), fld('Tax %', it.tax, {id:'in-tax', num:1}))}
+      <label class="fld"><small>Barcode</small><div class="inbtn"><input value="${blank(it.barcode)}" placeholder="Scan or type a unique barcode"><span class="sq">${ms('qr_code_scanner')}</span></div></label>
+      <label class="fld"><small>Description</small><textarea placeholder="Enter product description">${nw?'':'Long-wear matte finish, 12-hour colour.'}</textarea></label>
+      <div class="trow">${ms('favorite',1)}<span>Favourite<small>Pinned to the top of the POS catalog</small></span><i class="toggle${it.fav?' on':''}"></i></div>`,
+      `Selling <i class="toggle on"></i>`)
+    : sec('content_cut','Service Details', `
+      ${fld('Service Name', it.n, {req:1, id:'in-n', ph:'Enter service name'})}
+      ${fld('Arabic Name', it.ar, {rtl:1})}
+      ${two(fld('Code', blank(it.code), {ph:'Service code'}), `<label class="fld"><small>Status</small><div class="seg" data-seg><span class="${it.off?'':'on'}">Active</span><span class="${it.off?'on':''}">Disabled</span></div></label>`)}
+      ${pick('Department', it.dept, {ph:'Select department'})}
+      ${two(pick('Main Category', it.cat, {req:1}), pick('Sub Category', blank(it.sub), {ph:'Select'}))}
+      ${fld('Priority', blank(it.pr), {num:1, ph:'0'})}
+      <label class="fld"><small>Description</small><textarea placeholder="Enter service description">${nw?'':'Hand-painted highlights with toner and blow-dry.'}</textarea></label>
+      <div class="trow">${ms('favorite',1)}<span>Favourite<small>Pinned to the top of the POS catalog</small></span><i class="toggle${it.fav?' on':''}"></i></div>`);
+
+  const live = `<div class="live"><div class="cap">${ms('visibility')} Live POS preview <span class="badge">${it.off?'Disabled':isP()?'Selling':'Active'}</span></div>
+      <div class="card"><div class="thumb" style="width:46px;height:46px;${nw?'background:rgba(255,255,255,.2)':grad(it)}">${ms(nw?(isP()?'inventory_2':'content_cut'):it.g[2])}</div>
+        <div style="flex:1;min-width:0"><div class="nm" id="lv-n">${it.n}</div><div class="sub" id="lv-s">${isP()?`${it.cat} · ${it.u}`:`${it.cat} · ${it.t} min`}</div></div>
+        <div class="pr num" id="lv-p">${money(it.mrp)}</div></div></div>`;
+
+  const pricing = isP()
+    ? sec('shopping_cart','Purchase Information', `${fld('Cost', money(it.cost), {id:'in-cost', num:1, req:1})}
+        <div class="calc"><div><small>Without tax</small><b class="num" id="c-wt">${money(c.cwt)}</b></div><div><small>Tax amount</small><b class="num" id="c-tx">${money(c.ctx)}</b></div><div><small>Cost</small><b class="num" id="c-c">${money(it.cost)}</b></div></div>`)
+      + sec('point_of_sale','Sales Information', `${fld('MRP (selling price)', money(it.mrp), {id:'in-p', num:1, req:1})}
+        <div class="calc"><div><small>Without tax</small><b class="num" id="s-wt">${money(c.swt)}</b></div><div class="g"><small>Profit</small><b class="num" id="s-pf">${money(c.profit)}</b></div><div><small>Tax amount</small><b class="num" id="s-tx">${money(c.stx)}</b></div></div>`, `<span id="s-mg">${c.margin.toFixed(0)}% margin</span>`)
+    : sec('payments','Service Pricing', fld('Price', money(it.mrp), {id:'in-p', num:1, req:1}))
+      + sec('schedule','Service Duration', `${fld('Duration (minutes)', it.t, {id:'in-d', num:1})}
+        <div class="qchips" data-qd>${[15,30,45,60,90,120,150,180].map(m=>`<span data-v="${m}" class="${m===it.t?'on':''}">${m<60?m+'m':Math.floor(m/60)+'h'+(m%60?' '+m%60+'m':'')}</span>`).join('')}</div>`);
+
+  const images = sec('photo_library', isP()?'Product Images':'Images', `<div class="imgs">${nw ? '' : [0,1,2].map(i=>`<div class="im" style="background:linear-gradient(${140+i*40}deg,${it.g[0]},${it.g[1]})">${ms(it.g[2])}${i?'':'<span class="cv">Cover</span>'}</div>`).join('')}
+      <div class="add">${ms('add_a_photo')}Add</div></div>`, nw ? '' : '3 photos');
+
+
+  return `<div class="dir C ed2">${tab ? '' : status}
+    <div class="ebar"><button class="ibtn">${ms('arrow_back')}</button><div class="et"><b>${nw?'New':'Edit'} ${w()}</b><small>${nw?`Settings › ${W()}s · not saved yet`:`Settings › ${W()}s · #${it.id} · ${it.code}`}</small></div>${nw?'':`<button class="ibtn">${ms('more_horiz')}</button>`}</div>
+    <div class="scroll"><div class="ebody">
+      <div class="cols"><div class="colL">${details}</div><div class="colR">${live}${pricing}${images}</div></div>
+    </div></div>
+    <div class="ebot">${nw ? `<div class="ghost2">${ms('add')}Save &amp; New</div><button class="save">${ms('check')}Save &amp; Edit</button>` : `<div class="del">${ms('delete')}</div><button class="save">${ms('check')}Save changes</button>`}</div></div>`;
+}
+
+/* ---------------------------------------------------------------- configuration (unchanged) */
+const cfg = () => `<div class="dir C"><div class="scroll">
+  <div class="hero" style="padding-bottom:26px">${heroStatus}
+    <div class="row1"><button class="ibtn">${ms('arrow_back')}</button></div>
+    <h2 class="serif">Product configuration</h2><p>Applies to every branch · saves instantly</p></div>
+  <div class="acc" style="margin-top:14px">
+    <div class="ctog" style="flex-wrap:wrap"><div class="ic">${ms('barcode')}</div><div class="tt">Barcode type<small>Per product, or auto-generated</small></div>
+      <div class="seg" style="width:100%;margin-top:10px" data-seg><span class="on">Product wise</span><span>System generated</span></div></div>
+    <div class="ctog"><div class="ic">${ms('label')}</div><div class="tt">Barcode prefix<small>Next: LS000141</small></div><b style="font-size:14px;letter-spacing:.08em">LS</b>${ms('chevron_right')}</div>
+    <div class="ctog"><div class="ic">${ms('link')}</div><div class="tt">Barcode = SKU<small>One value fills Barcode and UPC/EAN/SKU</small></div><i class="toggle on"></i></div>
+  </div>
+  <div class="acc"><div class="ctog"><div class="ic" style="background:var(--warn-tint);color:var(--warn)">${ms('visibility_off')}</div><div class="tt">Hide out-of-stock in POS<small>Zero-stock items vanish from New Sale and can’t be scanned</small></div><i class="toggle"></i></div></div>
+  </div><div class="toast">${ms('check_circle',1)}Barcode = SKU turned on</div></div>`;
+
+/* ---------------------------------------------------------------- tablet chrome */
+const RAIL = [['space_dashboard','Home'],['point_of_sale','Sale'],['receipt_long','Sales'],['bar_chart','Reports']];
+const rail = () => `<div class="logo">Q</div>${RAIL.map(r=>`<div class="ri">${ms(r[0])}${r[1]}</div>`).join('')}<div class="sp"></div><div class="ri on">${ms('settings')}Settings</div>`;
+const SETNAV = [['App',[['palette','Appearance'],['text_fields','Typography'],['payments','Currency']]],['Catalog',[['inventory_2','Products'],['content_cut','Services'],['tune','Product configuration',1]]],['Point of sale',[['print','Printers'],['cloud_off','Offline data']]],['Account',[['lock','Permissions'],['store','Branch']]]];
+const setnav = () => `<h3 class="serif">Settings</h3>${SETNAV.map(g=>`<div class="g">${g[0]}</div>${g[1].map(s=>`<div class="si${s[2]?' on':''}">${ms(s[0])}${s[1]}</div>`).join('')}`).join('')}`;
+
+/* ---------------------------------------------------------------- render + wiring */
+const $ = id => document.getElementById(id);
+function renderLists(){
+  if (isTab()) { $('t-list').innerHTML = list(true, false); }
+  else { $('s-list').innerHTML = list(false, false); $('s-sheet').innerHTML = list(false, true); }
+  strip(); wire();
+}
+function renderEdit(){
+  if (isTab()) $('t-edit').innerHTML = editPage(true); else $('s-edit').innerHTML = editPage(false);
+  strip(); wire();
+}
+function strip(){ document.querySelectorAll('#stage-tab .notch,#stage-tab .status').forEach(e => e.remove()); }
+function render(){
+  ['s-list','s-sheet','s-edit','s-cfg','t-list','t-edit','t-cfg'].forEach(id => $(id).innerHTML = '');
+  if (isTab()) {
+    $('t-cfg').innerHTML = cfg(); $('t-nav').innerHTML = setnav();
+    document.querySelectorAll('[data-rail]').forEach(r => r.innerHTML = rail());
+  } else { $('s-cfg').innerHTML = cfg(); }
+  $('cap').innerHTML = isTab()
+    ? '<b>Tablet:</b> Products and Services left the side-rail; they open from <b>Settings → Catalog</b> as full-width pages (back returns to Settings). The table spans the full width, so most columns fit; swipe sideways for the rest. <b>Tap a header</b> to sort (tap again to reverse). The <b>Sort</b> and <b>Columns</b> chips open a View options popover. Tap a row or <b>+ New</b> to open the full-page form, which uses two columns like the web form.'
+    : '<b>Phone:</b> opened from <b>Settings → Catalog</b>. Table | Gallery switch, plus a <b>Sort</b> chip and a <b>Columns</b> chip (table only). <b>Tap a header</b> to sort. Columns and sort live in one <b>View options</b> sheet (phone 2; toggles update phone 1 live). Tap a row, a tile or <b>+ New</b> to open the full-page form (phone 3).';
+  renderLists(); renderEdit();
+}
+function setGroup(k, v){ document.body.dataset[k] = v; document.querySelectorAll('#g-'+k+' button').forEach(x => x.classList.toggle('on', x.dataset.v === v)); }
+function openItem(id, nw){
+  if (id != null) S.item[pg()] = L().findIndex(it => it.id === +id);
+  setGroup('form', nw ? 'new' : 'edit'); renderEdit();
+  (isTab() ? $('tb-edit') : $('ph-edit')).scrollIntoView({behavior:'smooth', block:'center'});
+}
+function recalc(){
+  const it = {...L()[S.item[pg()]]};
+  const num = id => $(id) ? parseFloat($(id).value) || 0 : null;
+  if ($('in-p')) { it.mrp = num('in-p'); $('lv-p').textContent = money(it.mrp); }
+  if ($('in-cost')) it.cost = num('in-cost');
+  if ($('in-tax')) it.tax = num('in-tax');
+  if (isP() && $('c-wt')) {
+    const c = calc(it);
+    $('c-wt').textContent = money(c.cwt); $('c-tx').textContent = money(c.ctx); $('c-c').textContent = money(it.cost);
+    $('s-wt').textContent = money(c.swt); $('s-tx').textContent = money(c.stx); $('s-pf').textContent = money(c.profit); $('s-mg').textContent = c.margin.toFixed(0) + '% margin';
+  }
+}
+function wire(){
+  document.querySelectorAll('[data-seg],[data-fchips]').forEach(g => [...g.children].forEach(c => c.onclick = () => { [...g.children].forEach(x => x.classList.remove('on')); c.classList.add('on'); }));
+  document.querySelectorAll('.toggle').forEach(t => { if (!t.closest('[data-col]')) t.onclick = () => t.classList.toggle('on'); });
+  document.querySelectorAll('[data-vt] span').forEach(s => s.onclick = () => { setGroup('view', s.dataset.v); renderLists(); });
+  document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => {
+    const so = S.sort[pg()], k = th.dataset.sort;
+    S.sort[pg()] = so.k === k ? {k, d: so.d === 'asc' ? 'desc' : 'asc'} : {k, d: 'desc'};
+    renderLists();
+  });
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { S.tab = b.dataset.open; if (isTab()) S.pop = true; renderLists(); });
+  document.querySelectorAll('[data-sheettab] span').forEach(s => s.onclick = () => { S.tab = s.dataset.v; renderLists(); });
+  document.querySelectorAll('[data-col]').forEach(r => r.onclick = () => { const v = S.vis[pg()]; v[r.dataset.col] = !v[r.dataset.col]; renderLists(); });
+  document.querySelectorAll('[data-sortk]').forEach(r => r.onclick = () => { S.sort[pg()].k = r.dataset.sortk; renderLists(); });
+  document.querySelectorAll('[data-sortdir] span').forEach(s => s.onclick = () => { S.sort[pg()].d = s.dataset.v; renderLists(); });
+  document.querySelectorAll('[data-reset]').forEach(a => a.onclick = () => { S.vis[pg()] = defaults(pg()); S.sort[pg()] = {k:'id', d:'desc'}; renderLists(); });
+  document.querySelectorAll('[data-done],[data-popclose]').forEach(b => b.onclick = () => { S.pop = false; renderLists(); });
+  document.querySelectorAll('#s-list [data-id],#s-sheet .twrap2 [data-id],#t-list [data-id]').forEach(r => r.onclick = () => openItem(r.dataset.id, false));
+  document.querySelectorAll('[data-new]').forEach(b => b.onclick = () => openItem(null, true));
+  document.querySelectorAll('[data-qd] span').forEach(s => s.onclick = () => {
+    s.parentElement.querySelectorAll('span').forEach(x => x.classList.toggle('on', x === s));
+    $('in-d').value = s.dataset.v; $('lv-s').textContent = `${L()[S.item[pg()]].cat} · ${s.dataset.v} min`;
+  });
+  if ($('in-n')) $('in-n').oninput = e => $('lv-n').textContent = e.target.value || 'Item name';
+  ['in-p','in-cost','in-tax'].forEach(id => { if ($(id)) $(id).oninput = recalc; });
+  if ($('in-d')) $('in-d').oninput = e => $('lv-s').textContent = `${L()[S.item[pg()]].cat} · ${e.target.value || 0} min`;
+}
+['skin','mode'].forEach(k => document.querySelectorAll('#g-'+k+' button').forEach(b => b.onclick = () => setGroup(k, b.dataset.v)));
+['device','page'].forEach(k => document.querySelectorAll('#g-'+k+' button').forEach(b => b.onclick = () => { setGroup(k, b.dataset.v); S.pop = false; render(); }));
+document.querySelectorAll('#g-view button').forEach(b => b.onclick = () => { setGroup('view', b.dataset.v); renderLists(); });
+document.querySelectorAll('#g-form button').forEach(b => b.onclick = () => { setGroup('form', b.dataset.v); renderEdit(); });
+render();
+</script>
+</body>
+</html>

@@ -19,6 +19,9 @@ import 'package:invo/features/profile/screens/v3/profile_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/student_card/screens/link_card_screen.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/catalog/domain/models/catalog_models.dart';
+import 'package:invo/features/catalog/screens/v3/catalog_form_screen.dart';
+import 'package:invo/features/catalog/screens/v3/catalog_list_screen.dart';
 import 'package:invo/shared/domain/constants/global_variables.dart';
 import 'package:invo/shared/domain/constants/mobile_permissions.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
@@ -35,6 +38,16 @@ class HomeShell extends StatefulWidget {
 
   @override
   State<HomeShell> createState() => _HomeShellState();
+
+  /// Switch the live shell to [tab] — for a page pushed over it that wants to
+  /// go somewhere else in the app: it pops back to this shell, which swaps in
+  /// place and keeps every destination's state. False when no shell is
+  /// mounted (a deep link straight to the page), so the caller routes instead.
+  static bool selectTab(int tab) {
+    final select = _HomeShellState._live;
+    select?.call(tab);
+    return select != null;
+  }
 }
 
 class _HomeShellState extends State<HomeShell> {
@@ -46,6 +59,51 @@ class _HomeShellState extends State<HomeShell> {
   /// and three extra screens fetching on launch is a cost nobody asked for.
   /// The four phone tabs are always built, exactly as before.
   late final Set<int> _visited = {widget.initialTab};
+
+  /// The catalog page open under Settings, if any. Tapping Settings from
+  /// another module returns to it — the way a tab keeps its place — and its
+  /// own back button (or tapping Settings while it shows) clears it.
+  int? _settingsChild;
+
+  /// Bumped to send Settings back to its category list — see [SettingsScreen.rootRequest].
+  int _settingsRoot = 0;
+
+  /// The Add / Edit form open for each type (`id` null = new); a new [nonce]
+  /// gives a freshly opened form fresh fields.
+  final Map<CatalogType, ({int? id, int nonce})> _forms = {};
+  int _formNonce = 0;
+
+  /// Bumped when a form saved or deleted, so that type's list re-reads.
+  final Map<CatalogType, int> _listRevision = {};
+
+  static int _listTab(CatalogType t) => t.isProduct ? kProductsTab : kServicesTab;
+  static int _formTab(CatalogType t) => t.isProduct ? kProductFormTab : kServiceFormTab;
+
+  void _openForm(CatalogType t, int? id) {
+    _forms[t] = (id: id, nonce: ++_formNonce);
+    _goToTab(_formTab(t));
+  }
+
+  void _closeForm(CatalogType t, bool changed) {
+    _forms.remove(t);
+    if (changed) _listRevision[t] = (_listRevision[t] ?? 0) + 1;
+    _goToTab(_listTab(t));
+  }
+
+  /// The mounted shell's tab switch, for [HomeShell.selectTab].
+  static ValueChanged<int>? _live;
+
+  @override
+  void initState() {
+    super.initState();
+    _live = _goToTab;
+  }
+
+  @override
+  void dispose() {
+    if (_live == _goToTab) _live = null;
+    super.dispose();
+  }
 
   /// The shell's destinations. Returns / Stock Check / Day Session / Link Card
   /// are real tablet destinations (indices [kReturnsTab], [kStockCheckTab],
@@ -69,7 +127,7 @@ class _HomeShellState extends State<HomeShell> {
       DashboardScreen(onSelectTab: _goToTab, active: _index == 0),
       SalesListScreen(onSelectTab: _goToTab),
       const ReportsScreen(),
-      const SettingsScreen(),
+      SettingsScreen(onSelectTab: _goToTab, active: _index == 3, rootRequest: _settingsRoot),
       extra(kReturnsTab, PermissionSlug.saleReturnView, () => const SalesReturnListScreen()),
       extra(kStockCheckTab, PermissionSlug.stockCheck, () => const StockCheckListScreen()),
       extra(kDaySessionTab, PermissionSlug.daySession,
@@ -89,17 +147,50 @@ class _HomeShellState extends State<HomeShell> {
           ? const LinkCardScreen()
           : const SizedBox.shrink(),
       extra(kTokenTab, PermissionSlug.tokenIssue, () => TokenScreen(onClose: () => _goToTab(0))),
+      for (final t in CatalogType.values)
+        settingsChild(_listTab(t), t.viewPermission,
+            () => CatalogListScreen(type: t, onBack: _backToSettings, onOpen: (id) => _openForm(t, id), revision: _listRevision[t] ?? 0)),
+      for (final t in CatalogType.values) _formPage(t),
     ];
   }
 
+  Widget _formPage(CatalogType t) {
+    final form = _forms[t];
+    return form == null
+        ? const SizedBox.shrink()
+        : CatalogFormScreen(key: ValueKey(form.nonce), type: t, id: form.id, onClose: (changed) => _closeForm(t, changed));
+  }
+
+  /// Catalog pages, on both size classes, built once first opened.
+  Widget settingsChild(int tab, String slug, Widget Function() build) =>
+      context.read<AuthCubit>().hasPermission(slug) && _visited.contains(tab) ? build() : const SizedBox.shrink();
+
   void _goToTab(int i) => setState(() {
+        if (i == 3) {
+          // Settings while Settings or a page under it shows is a request for
+          // its category list.
+          if (_index == 3 || kSettingsChildTabs.contains(_index)) _settingsRoot++;
+          // Settings from elsewhere reopens the catalog page left open under
+          // it; Settings while that page shows goes back to Settings itself.
+          i = kSettingsChildTabs.contains(_index) ? 3 : (_settingsChild ?? 3);
+          if (i == 3) _settingsChild = null;
+        }
+        if (kSettingsChildTabs.contains(i)) _settingsChild = i;
         _index = i;
         _visited.add(i);
       });
 
+  void _backToSettings() => setState(() {
+        _settingsChild = null;
+        _index = 3;
+      });
+
+  /// The tab the rail and bottom nav light up: a catalog page counts as Settings.
+  int _highlight(int index) => kSettingsChildTabs.contains(index) ? 3 : index;
+
   /// Shared by the phone and tablet scaffolds — the frosted drawer that holds
   /// every module link (tab items switch the shell, the rest push routes).
-  Widget get _drawer => AstraDrawer(activeTab: _index, onSelectTab: _goToTab);
+  Widget get _drawer => AstraDrawer(activeTab: _highlight(_index), onSelectTab: _goToTab);
 
   static const _drawerScrim = Color(0x85040C09);
 
@@ -117,7 +208,7 @@ class _HomeShellState extends State<HomeShell> {
         // How the rail meets the pages is the device's own choice — see
         // AstraRailShell and Settings → Appearance.
         body: AstraRailShell(
-          activeIndex: index,
+          activeIndex: _highlight(index),
           onSelect: _goToTab,
           child: IndexedStack(index: index, children: pages),
         ),
@@ -136,7 +227,7 @@ class _HomeShellState extends State<HomeShell> {
         // Centred square "+" that docks into the gap in the middle of the bar
         // (matches the preview). Tap = New Sale.
         floatingActionButton: AstraNavFab(onTap: () => context.push(Routes.sale)),
-        bottomNavigationBar: AstraNavBar(activeIndex: index, onTap: _goToTab),
+        bottomNavigationBar: AstraNavBar(activeIndex: _highlight(index), onTap: _goToTab),
       ),
     );
   }

@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/shared/domain/helpers/responsive.dart';
 import 'package:invo/features/sale_return/logic/return_draft_cubit/return_draft_cubit.dart';
+import 'package:invo/features/sale_return/screens/v3/return_desk_tablet.dart';
 import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
@@ -19,7 +20,8 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 class NewSaleReturnScreen extends StatelessWidget {
   const NewSaleReturnScreen({super.key});
 
-  Future<void> _close(BuildContext context) async {
+  /// Leave the return — asking first when lines are already ticked.
+  static Future<void> close(BuildContext context) async {
     unawaited(HapticFeedback.selectionClick());
     final draft = context.read<ReturnDraftCubit>();
     if (!draft.isEmpty) {
@@ -71,6 +73,9 @@ class NewSaleReturnScreen extends StatelessWidget {
       );
     }
 
+    // Tablet: items and refund on one screen — no separate Review step.
+    if (context.isTablet) return const ReturnDeskTablet();
+
     return Scaffold(
       body: AstraBackground(
         child: Column(
@@ -83,7 +88,7 @@ class NewSaleReturnScreen extends StatelessWidget {
               titleWidget: Row(
                 children: [
                   Expanded(child: Text(draft.isEditing ? 'Edit Return' : 'New Return', style: serif(size: 23, color: Colors.white))),
-                  HeaderIconButton(icon: Icons.close, onTap: () => _close(context)),
+                  HeaderIconButton(icon: Icons.close, onTap: () => close(context)),
                 ],
               ),
               bottom: Row(
@@ -179,8 +184,11 @@ class NewSaleReturnScreen extends StatelessWidget {
                             ),
                             if (line.source.returnedQuantity > 0) ...[
                               const SizedBox(width: 6),
-                              Text('${_qty(line.source.returnedQuantity)} returned',
-                                  style: ui(size: 9.5, weight: FontWeight.w700, color: p.textMuted)),
+                              Flexible(
+                                child: Text('${_qty(line.source.returnedQuantity)} returned',
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                    style: ui(size: 9.5, weight: FontWeight.w700, color: p.textMuted)),
+                              ),
                             ],
                           ],
                         ),

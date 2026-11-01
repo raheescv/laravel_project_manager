@@ -285,6 +285,12 @@ class LocalStorageService {
   Future<void> setPosAskBranchOnUnlock(bool v) =>
       _prefs.setBool(LocalStorageKeys.posAskBranchOnUnlock, v);
 
+  // Where the tablet's floating New Sale button rests. Null until it is first
+  // dragged, so it starts in the bottom-right corner.
+  String? get railFabPosition => _prefs.getString(LocalStorageKeys.railFabPosition);
+  Future<void> setRailFabPosition(String v) =>
+      _prefs.setString(LocalStorageKeys.railFabPosition, v);
+
   // How many product tiles New Sale fits across in grid view. Null until the
   // till picks one, so the screen keeps its own default.
   int? get posGridColumns => _prefs.getInt(LocalStorageKeys.posGridColumns);
@@ -384,8 +390,21 @@ class LocalStorageService {
 
   // The Sales list tab and sorts [userId] last picked. Empty until they change
   // one; a bad value reads as empty.
-  Map<String, dynamic> salesListFor(String? userId) {
-    final key = userKey(LocalStorageKeys.userSalesList, userId);
+  Map<String, dynamic> salesListFor(String? userId) => _userJson(LocalStorageKeys.userSalesList, userId);
+
+  Future<void> setSalesListFor(String? userId, Map<String, dynamic> v) =>
+      _setUserJson(LocalStorageKeys.userSalesList, userId, v);
+
+  // The catalog table [userId] last set up for one type (`product`/`service`).
+  Map<String, dynamic> catalogListFor(String? userId, String type) =>
+      _userJson('${LocalStorageKeys.userCatalogList}.$type', userId);
+
+  Future<void> setCatalogListFor(String? userId, String type, Map<String, dynamic> v) =>
+      _setUserJson('${LocalStorageKeys.userCatalogList}.$type', userId, v);
+
+  // A per-user JSON object; empty until written, and a bad value reads as empty.
+  Map<String, dynamic> _userJson(String prefix, String? userId) {
+    final key = userKey(prefix, userId);
     final raw = key == null ? null : _prefs.getString(key);
     if (raw == null) return const {};
     try {
@@ -396,8 +415,8 @@ class LocalStorageService {
     }
   }
 
-  Future<void> setSalesListFor(String? userId, Map<String, dynamic> v) async {
-    final key = userKey(LocalStorageKeys.userSalesList, userId);
+  Future<void> _setUserJson(String prefix, String? userId, Map<String, dynamic> v) async {
+    final key = userKey(prefix, userId);
     if (key != null) await _prefs.setString(key, jsonEncode(v));
   }
 

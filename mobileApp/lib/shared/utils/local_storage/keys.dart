@@ -64,6 +64,10 @@ class LocalStorageKeys {
   /// Whether unlocking the till asks a multi-branch user which branch again.
   /// Off keeps the last chosen branch. A sign-in always asks.
   static const String posAskBranchOnUnlock = 'astra.pos.askBranchOnUnlock';
+  /// Where the tablet's floating New Sale button was left (`left|right:<0..1>`):
+  /// the edge it snapped to and how far down the free height it sits. Device-
+  /// local — it depends on the screen and on where this till's cashier reaches.
+  static const String railFabPosition = 'astra.rail.newSaleFab';
   // How many product tiles the New Sale catalog grid fits across (2 | 3 | 4).
   static const String posGridColumns = 'astra.pos.gridColumns';
   /// How the New Sale category rail is drawn (a `CategoryDisplay.key`).
@@ -99,6 +103,9 @@ class LocalStorageKeys {
   /// The Sales list tab and sorts this user last picked, as JSON. Filters and
   /// the date range are NOT kept: the list always opens on today, unfiltered.
   static const String userSalesList = 'astra.user.salesList';
+  /// The Products / Services table this user last set up — view, visible
+  /// columns and sort — as JSON, one entry per type. Filters are not kept.
+  static const String userCatalogList = 'astra.user.catalogList';
   /// How far this user's Office Bill count has got on this till, as
   /// `yyyy-MM-dd:n`. See `StaffBillCounter`.
   static const String userStaffBill = 'astra.user.staffBill';

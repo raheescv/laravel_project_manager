@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'features/catalog/logic/catalog_options_cubit/catalog_options_cubit.dart';
 import 'features/sale/logic/cart_cubit/cart_cubit.dart';
 import 'features/sale/logic/catalog_cubit/catalog_cubit.dart';
 import 'features/sale/logic/offline_sync_cubit/offline_sync_cubit.dart';
@@ -103,6 +104,7 @@ class _InvoAppState extends State<InvoApp> with WidgetsBindingObserver {
           BlocProvider.value(value: serviceLocator<PrintSettingsCubit>()),
           BlocProvider.value(value: serviceLocator<PosSettingsCubit>()),
           BlocProvider.value(value: serviceLocator<TokenCubit>()),
+          BlocProvider.value(value: serviceLocator<CatalogOptionsCubit>()),
           // Per-session feature cubits.
           BlocProvider(create: (_) => CartCubit()),
           BlocProvider(create: (_) => ReturnDraftCubit()),

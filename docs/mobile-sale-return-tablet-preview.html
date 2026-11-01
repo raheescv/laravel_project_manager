@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sale Return Tablet</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#F4EFE7; --card:#FFFFFF; --ink:#18241F; --text2:#5D6A64; --muted:#98A29D;
+  --hair:#E8E2D8; --primary:#2F6F5E; --primaryDark:#1F4A3F; --tint:#E6EFEB; --accent:#C9A24A; --gold:#B08A2E;
+  --hero1:#3B7F6B; --hero2:#285446; --warnTint:#FBF1DC; --warn:#9A6B12; --success:#3E9B62; --danger:#C0405A;
+  --field:rgba(0,0,0,.022); --paper:#FFFDF8;
+  --shadow:0 18px 40px -22px rgba(31,74,63,.45);
+}
+:root[data-theme="dark"]{
+  --canvas:#0E1513; --card:#161F1C; --ink:#E9EFEC; --text2:#A7B3AE; --muted:#6E7A75;
+  --hair:#26312D; --primary:#5FB39A; --primaryDark:#0F2A23; --tint:rgba(95,179,154,.13); --accent:#D8B45E; --gold:#D8B45E;
+  --hero1:#245446; --hero2:#163A30; --warnTint:rgba(216,180,94,.12); --warn:#D8B45E; --field:rgba(255,255,255,.04);
+  --paper:#1A2421; --shadow:0 18px 40px -22px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#d9d4cc;font-family:Inter,system-ui,sans-serif;color:var(--ink);padding:16px;overflow-x:hidden}
+:root[data-theme="dark"] body{background:#050807}
+.serif{font-family:Fraunces,Georgia,serif;font-weight:400}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:12px}
+.bar button{font:700 12.5px Inter;border:1px solid #bbb;background:#fff;color:#222;border-radius:999px;padding:8px 14px}
+.bar button.on{background:#1F4A3F;color:#fff;border-color:#1F4A3F}
+.bar .sep{width:1px;height:22px;background:#aaa;margin:0 4px}
+.note{max-width:1194px;margin:0 auto 12px;font:600 13px/1.55 Inter;color:#444;text-align:center}
+:root[data-theme="dark"] .note{color:#aaa}
+
+/* ---- device: task flow → no rail, full-bleed like New Sale ---- */
+.stage{display:flex;justify-content:center}
+.scaler{transform-origin:top center}
+.device{width:var(--w,1194px);height:var(--h,834px);border-radius:30px;overflow:hidden;background:var(--canvas);box-shadow:0 30px 80px -30px rgba(0,0,0,.5);position:relative}
+#content{height:100%}
+
+/* ---- atoms ---- */
+.card{background:var(--card);border:1px solid var(--hair);border-radius:20px}
+.k{font:800 9.5px Inter;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted)}
+.label{font:800 10.5px Inter;letter-spacing:1.6px;text-transform:uppercase;color:var(--primary)}
+.ib{width:40px;height:40px;border-radius:13px;border:1px solid var(--hair);background:var(--card);display:grid;place-items:center;font-size:17px;color:var(--ink);flex:none}
+.ichip{width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-size:18px;flex:none}
+.ghost{height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--hair);background:var(--card);font:800 12.5px Inter;display:inline-flex;align-items:center;gap:7px;color:var(--ink)}
+.ghost.p{color:var(--primary);background:var(--tint);border-color:transparent}
+.tag{font:800 9px Inter;letter-spacing:.6px;border-radius:7px;padding:3px 7px;background:var(--tint);color:var(--text2);text-transform:uppercase}
+.tag.done{background:var(--warnTint);color:var(--warn)}
+.fchip{height:34px;padding:0 13px;border-radius:11px;border:1px solid var(--hair);font:800 12px Inter;display:inline-flex;align-items:center;gap:6px;color:var(--text2)}
+.fchip b{font-weight:800;color:var(--muted)}
+.fchip.on{background:var(--ink);color:var(--card);border-color:var(--ink)}.fchip.on b{color:var(--card);opacity:.6}
+.hair{height:1px;background:var(--hair)}
+.gold{color:var(--gold)}
+.cta{height:58px;border-radius:17px;background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;font:800 15.5px Inter;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 16px 30px -14px var(--hero2);width:100%}
+.cta[disabled]{opacity:.45;box-shadow:none;cursor:default}
+.cta .amt{font:500 19px Fraunces,serif}
+
+/* stepper (big touch targets) */
+.step{display:inline-flex;align-items:center;border:1px solid var(--hair);border-radius:14px;background:var(--card);overflow:hidden;flex:none}
+.step button{width:44px;height:44px;display:grid;place-items:center;font:700 20px Inter;color:var(--primary)}
+.step button[disabled]{color:var(--muted);opacity:.35;cursor:default}
+.step span{min-width:40px;text-align:center;font:800 16px Inter;border-left:1px solid var(--hair);border-right:1px solid var(--hair);line-height:44px}
+.step.on{border-color:var(--primary);box-shadow:0 0 0 3px var(--tint)}
+.step.sm button{width:38px;height:38px;font-size:18px}.step.sm span{line-height:38px;min-width:34px;font-size:14.5px}
+
+/* refund method tiles */
+.methods{display:grid;gap:8px}
+.m{border:1px solid var(--hair);border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:10px;text-align:left;background:var(--card)}
+.m i{font-style:normal;width:32px;height:32px;border-radius:10px;background:var(--tint);color:var(--primary);display:grid;place-items:center;font-size:15px;flex:none}
+.m b{display:block;font:800 13px Inter}
+.m small{display:block;font:600 10.5px Inter;color:var(--muted);margin-top:1px}
+.m.on{border-color:var(--primary);background:var(--tint);box-shadow:inset 0 0 0 1px var(--primary)}
+.m.on i{background:var(--primary);color:#fff}
+.seg{display:inline-flex;background:var(--field);border:1px solid var(--hair);border-radius:14px;padding:4px;gap:4px}
+.seg button{height:42px;padding:0 16px;border-radius:11px;font:800 13px Inter;color:var(--text2);display:inline-flex;align-items:center;gap:7px}
+.seg button.on{background:var(--card);color:var(--primary);box-shadow:0 2px 10px -4px rgba(0,0,0,.25)}
+
+.sum{display:flex;justify-content:space-between;align-items:baseline;font:600 12.5px Inter;color:var(--text2);padding:4px 0}
+.sum b{font:800 13px Inter;color:var(--ink)}
+.status{display:flex;align-items:center;gap:10px;border-radius:13px;padding:10px 12px;font:800 12px Inter}
+.status.ok{background:rgba(62,155,98,.12);color:var(--success)}
+.status.acc{background:var(--warnTint);color:var(--warn)}
+.status span{margin-left:auto;font:800 13px Inter}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font:600 12.5px/1.5 Inter;gap:8px;padding:20px}
+.empty .ichip{width:56px;height:56px;font-size:24px}
+
+/* =========== A · TICKET RAIL =========== */
+.A{display:flex;height:100%}
+.A .main{flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 26px 0}
+.A .head{display:flex;align-items:center;gap:14px}
+.A .head h1{font:400 28px Fraunces,serif;line-height:1.05}
+.A .head p{font:600 12.5px Inter;color:var(--text2);margin-top:4px}
+.A .tools{display:flex;gap:8px;align-items:center;padding:16px 0 12px}
+.A .list{flex:1;overflow:auto;margin:0 -26px;padding:0 26px 24px}
+.row{display:grid;grid-template-columns:44px minmax(0,1fr) 92px auto 110px;gap:16px;align-items:center;padding:14px 16px 14px 16px;border-bottom:1px solid var(--hair);position:relative;cursor:pointer}
+.row.on{background:var(--tint);border-radius:14px;border-bottom-color:transparent;margin-bottom:1px}
+.row.on::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}
+.row.off{opacity:.5;cursor:default}
+.row .nm{font:400 16px Fraunces,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .mt{display:flex;gap:7px;align-items:center;margin-top:5px;font:700 10.5px Inter;color:var(--muted)}
+.row .up{text-align:right;font:700 12.5px Inter;color:var(--text2)}
+.row .up small{display:block;font:600 10px Inter;color:var(--muted)}
+.row .of{font:700 10px Inter;color:var(--muted);text-align:center;margin-top:4px}
+.row .rf{text-align:right;font:400 17px Fraunces,serif}
+.A .rail{width:clamp(340px,32%,400px);flex:none;background:var(--card);border-left:1px solid var(--hair);border-radius:26px 0 0 26px;display:flex;flex-direction:column;padding:20px 20px 18px;box-shadow:-20px 0 40px -34px rgba(0,0,0,.35)}
+.A .rhead{display:flex;align-items:center;gap:10px}
+.A .rhead h2{font:400 22px Fraunces,serif;flex:1}
+.pillg{font:800 10px Inter;letter-spacing:.6px;border-radius:999px;padding:5px 10px;background:var(--tint);color:var(--primary)}
+.who{display:flex;gap:12px;align-items:center;border:1px solid var(--hair);border-radius:16px;padding:12px;margin-top:14px;background:var(--field)}
+.av{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;display:grid;place-items:center;font:800 14px Inter;flex:none}
+.who b{font:800 13.5px Inter;display:block}
+.who small{font:600 11px Inter;color:var(--muted)}
+.A .rlines{flex:1;overflow:auto;margin:12px 0 0;min-height:60px}
+.rl{display:flex;gap:10px;align-items:baseline;font:600 12.5px Inter;padding:7px 0;border-bottom:1px dashed var(--hair)}
+.rl .q{font:800 11px Inter;color:var(--primary);background:var(--tint);border-radius:7px;padding:2px 6px;flex:none}
+.rl .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl .v{font:800 12.5px Inter}
+
+/* =========== B · LEDGER DESK =========== */
+.B{display:flex;flex-direction:column;height:100%;padding:18px 20px;gap:14px}
+.band{background:linear-gradient(135deg,var(--hero1),var(--hero2));border-radius:22px;color:#fff;padding:16px 18px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;box-shadow:var(--shadow);flex:none}
+.band::after{content:"";position:absolute;right:-60px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,74,.28),transparent 70%)}
+.band .ib{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);color:#fff}
+.band h1{font:400 26px Fraunces,serif;line-height:1}
+.band .eb{font:800 9.5px Inter;letter-spacing:2px;color:var(--accent)}
+.band .meta{display:flex;gap:0;margin-left:auto;position:relative;z-index:1}
+.band .meta>div{padding:0 18px;border-left:1px solid rgba(255,255,255,.16)}
+.band .meta .k{color:rgba(255,255,255,.6)}
+.band .meta b{display:block;font:800 13.5px Inter;margin-top:4px;white-space:nowrap}
+.band .meta b.g{font:400 17px Fraunces,serif;color:var(--accent)}
+.B .tbl{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.B .thead,.B .tr{display:grid;grid-template-columns:minmax(0,1fr) 90px 64px 78px 84px 150px 112px;gap:12px;align-items:center;padding:0 18px}
+.B .thead{height:42px;border-bottom:1px solid var(--hair);background:var(--field)}
+.B .thead div{font:800 9.5px Inter;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.B .tbody{flex:1;overflow:auto}
+.B .tr{min-height:66px;border-bottom:1px solid var(--hair)}
+.B .tr:nth-child(even){background:var(--field)}
+.B .tr.on{background:var(--tint)}
+.B .tr.off{opacity:.5}
+.B .tr .nm{display:flex;gap:12px;align-items:center;min-width:0}
+.B .tr .nm .ichip{width:36px;height:36px;border-radius:11px;font-size:15px}
+.B .tr .nm b{font:700 13.5px Inter;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.B .tr .nm small{font:600 10.5px Inter;color:var(--muted)}
+.B .c{font:700 13px Inter;color:var(--text2)}
+.B .c.r{text-align:right}
+.B .num{font:800 14px Inter}
+.B .max{font:800 10.5px Inter;color:var(--primary);margin-left:8px}
+.B .tfoot{display:flex;align-items:center;gap:8px;padding:10px 18px;border-top:1px solid var(--hair)}
+.dock{display:flex;align-items:center;gap:18px;padding:14px 14px 14px 18px;flex:none}
+.dock .tot{text-align:right;margin-left:auto}
+.dock .tot .serif{font-size:28px;line-height:1.1}
+.dock .cta{width:auto;padding:0 26px;height:56px}
+
+/* =========== C · RECEIPT MIRROR =========== */
+.C{display:flex;flex-direction:column;height:100%}
+.C .top{display:flex;align-items:center;gap:14px;padding:16px 22px 0}
+.C .top h1{font:400 24px Fraunces,serif}
+.dots{display:flex;gap:6px;align-items:center;margin-left:14px;font:700 11px Inter;color:var(--muted)}
+.dots i{width:22px;height:4px;border-radius:4px;background:var(--hair)}.dots i.on{background:var(--primary)}
+.C .desk{flex:1;min-height:0;display:flex;gap:0;align-items:stretch;padding:16px 22px 18px}
+.paper{background:var(--paper);border-radius:6px 6px 0 0;box-shadow:0 14px 34px -18px rgba(0,0,0,.35);position:relative;display:flex;flex-direction:column;min-height:0}
+.paper::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;background:linear-gradient(-45deg,transparent 7px,var(--paper) 0) 0 0/14px 10px,linear-gradient(45deg,transparent 7px,var(--paper) 0) 0 0/14px 10px;filter:drop-shadow(0 4px 3px rgba(0,0,0,.08))}
+.paper .ph{padding:18px 22px 12px;text-align:center;border-bottom:1px dashed var(--hair)}
+.paper .ph .k{letter-spacing:3px}
+.paper .ph h3{font:400 21px Fraunces,serif;margin-top:4px}
+.paper .ph p{font:600 11.5px Inter;color:var(--muted);margin-top:3px}
+.paper .pb{flex:1;overflow:auto;padding:6px 22px}
+.pl{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 8px;border-bottom:1px dotted var(--hair);cursor:pointer;border-radius:10px;position:relative}
+.pl .x{width:24px;height:24px;border-radius:8px;border:1.5px solid var(--hair);display:grid;place-items:center;font:800 12px Inter;color:#fff}
+.pl.on{background:var(--tint)}
+.pl.on .x{background:var(--primary);border-color:var(--primary)}
+.pl.off{cursor:default}.pl.off .nm{text-decoration:line-through;color:var(--muted)}
+.pl .nm{font:700 13px Inter;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl small{display:block;font:600 10.5px Inter;color:var(--muted);margin-top:2px}
+.pl .pr{text-align:right;font:800 13px Inter}
+.pl .ctrl{grid-column:2/4;display:flex;align-items:center;gap:10px;margin-top:4px}
+.pl .ctrl em{font:700 10.5px Inter;font-style:normal;color:var(--muted)}
+.pf{padding:12px 22px 18px;border-top:1px dashed var(--hair)}
+.bridge{width:76px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted)}
+.bridge .arr{width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--hair);display:grid;place-items:center;font-size:20px;color:var(--primary);box-shadow:var(--shadow)}
+.bridge b{font:800 11px Inter;color:var(--primary)}
+.slipwrap{flex:1.05;min-width:0;display:flex;flex-direction:column;gap:14px}
+.slipwrap{position:relative}
+/* split refund (same "Chip Rail" idiom as Review & Pay) */
+.spl{border:1px solid var(--hair);border-radius:16px;background:var(--card);padding:12px 14px}
+.spl .sh{display:flex;align-items:center;gap:8px}
+.even{font:800 11px Inter;border-radius:999px;padding:5px 10px;background:var(--tint);color:var(--primary)}
+.even.quiet{background:none;color:var(--muted);border:1px solid var(--hair)}
+.mchips{display:flex;gap:6px;margin-top:10px;flex-wrap:nowrap;overflow:auto}
+.mc{height:34px;padding:0 12px 0 6px;border-radius:11px;border:1px solid var(--hair);display:inline-flex;align-items:center;gap:7px;font:800 12px Inter;color:var(--text2);white-space:nowrap;flex:none}
+.mc i{font-style:normal;width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;background:var(--field);color:var(--muted)}
+.mc.on{border-color:var(--sw);color:var(--ink)}.mc.on i{background:var(--sw);color:#fff}
+.share{display:flex;height:7px;border-radius:7px;background:var(--hair);overflow:hidden;margin:12px 0 4px;gap:2px}
+.share i{display:block;height:100%}
+.sline{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--hair)}
+.sline:last-child{border-bottom:0}
+.sline .sw{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:13px;flex:none}
+.sline b{font:800 13px Inter;flex:1}
+.sline .tg{font:800 9px Inter;letter-spacing:.7px;border-radius:6px;padding:3px 6px;background:var(--field);color:var(--muted)}
+.sline .tg.set{background:var(--warnTint);color:var(--warn)}
+.amtbtn{min-width:118px;height:38px;border-radius:11px;border:1px solid var(--hair);background:var(--field);font:400 17px Fraunces,serif;text-align:right;padding:0 12px;color:var(--ink)}
+.amtbtn.edit{border-color:var(--primary);box-shadow:0 0 0 3px var(--tint)}
+.status.warn{background:var(--warnTint);color:var(--warn)}
+.status.bad{background:rgba(192,64,90,.12);color:var(--danger)}
+.cta.gold{background:linear-gradient(135deg,var(--accent),var(--gold));box-shadow:0 16px 30px -14px var(--gold)}
+/* floating cards over the slip (tablet sheets float, receipt stays in view) */
+.float-card{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;align-items:flex-end;z-index:5;background:rgba(10,20,16,.18);border-radius:8px}
+.float-card .fc{background:var(--card);border:1px solid var(--hair);border-radius:22px;width:100%;padding:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.fc h4{font:400 20px Fraunces,serif}
+.fc .sub2{font:600 12px Inter;color:var(--muted);margin-top:2px}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 10px}
+.slot{border:1.5px dashed var(--hair);border-radius:13px;padding:10px 12px;font:800 12.5px Inter;color:var(--muted)}
+.slot.full{border-style:solid;border-color:var(--primary);color:var(--ink);background:var(--tint)}
+.picks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.keys button{height:50px;border-radius:13px;border:1px solid var(--hair);font:700 19px Inter;background:var(--field)}
+.qk{display:flex;gap:6px;margin-top:12px}
+.qk button{flex:1;height:36px;border-radius:11px;background:var(--tint);color:var(--primary);font:800 12px Inter}
+.disp{display:flex;align-items:baseline;justify-content:space-between;border:1px solid var(--hair);border-radius:14px;padding:12px 14px;margin-top:12px}
+.disp .serif{font-size:30px}
+.slip.compact .pf{display:none}
+.slip.compact .ph{padding:12px 22px 8px}
+.slip .stamp{position:absolute;right:18px;top:16px;font:800 10px Inter;letter-spacing:2px;color:var(--gold);border:1.5px solid var(--gold);border-radius:6px;padding:4px 8px;transform:rotate(8deg);opacity:.8}
+
+/* =========== STEP 1 · PICK INVOICE =========== */
+.P{display:flex;height:100%}
+.P .lp{width:clamp(360px,36%,420px);flex:none;display:flex;flex-direction:column;border-right:1px solid var(--hair);background:var(--card)}
+.P .lh{padding:22px 22px 12px}
+.P .lh h1{font:400 26px Fraunces,serif}
+.srch{display:flex;align-items:center;gap:10px;height:46px;border:1px solid var(--hair);border-radius:14px;padding:0 14px;margin-top:14px;background:var(--field);font:600 13px Inter;color:var(--muted)}
+.srch .scan{margin-left:auto;width:32px;height:32px;border-radius:10px;background:var(--tint);color:var(--primary);display:grid;place-items:center}
+.P .ll{flex:1;overflow:auto;padding:0 10px 16px}
+.inv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:13px 14px;border-radius:14px;margin:2px 0;cursor:pointer;position:relative}
+.inv b{font:800 13.5px Inter}.inv .amt{font:400 16px Fraunces,serif;text-align:right}
+.inv small{font:600 11px Inter;color:var(--muted)}.inv small.r{text-align:right}
+.inv.on{background:var(--tint)}.inv.on::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--primary)}
+.P .rp{flex:1;min-width:0;display:flex;flex-direction:column;padding:22px 26px 20px}
+.P .rp h2{font:400 30px Fraunces,serif}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--hair);border-radius:16px;margin-top:16px;background:var(--card)}
+.kpis>div{padding:13px 16px}.kpis>div+div{border-left:1px solid var(--hair)}
+.kpis b{display:block;font:800 15px Inter;margin-top:4px}.kpis b.g{font:400 19px Fraunces,serif;color:var(--gold)}
+.P .pv{flex:1;overflow:auto;margin-top:14px}
+.pvr{display:grid;grid-template-columns:36px minmax(0,1fr) 120px 110px;gap:14px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--hair)}
+.pvr .ichip{width:36px;height:36px;border-radius:11px;font-size:15px}
+.pvr b{font:700 13.5px Inter}.pvr small{display:block;font:600 10.5px Inter;color:var(--muted);margin-top:2px}
+.bar2{height:6px;border-radius:6px;background:var(--hair);overflow:hidden;margin-top:6px}.bar2 i{display:block;height:100%;background:var(--accent)}
+.P .foot{display:flex;align-items:center;gap:14px;padding-top:14px}
+.P .foot .cta{width:auto;flex:1;max-width:420px;margin-left:auto}
+</style>
+</head>
+<body>
+<div class="bar">
+  <button data-step="pick">Step 1 · Pick invoice</button>
+  <button data-step="ret" class="on">Step 2 · Return &amp; refund</button>
+  <span class="sep"></span>
+  <button data-dir="A" class="on">A · Ticket Rail</button>
+  <button data-dir="B">B · Ledger Desk</button>
+  <button data-dir="C">C · Receipt Mirror</button>
+  <span class="sep"></span>
+  <button data-size="ipad" class="on">iPad 11″</button>
+  <button data-size="till">Till 1097×686</button>
+  <span class="sep"></span>
+  <button id="theme">Dark</button>
+</div>
+<p class="note" id="note"></p>
+<div class="stage"><div class="scaler" id="scaler"><div class="device" id="device"><div id="content"></div></div></div></div>
+
+<script>
+const S = {
+  step:'ret', dir:'A', theme:'light', size:'ipad', mode:'cash', filter:'all', inv:0, split:[], pick:null, pad:null, buf:null,
+  lines:[
+    {id:1,name:'Hydrating Facial',type:'service',staff:'Mariam',price:180,sold:1,returned:0,disc:0,qty:1},
+    {id:2,name:'Argan Oil Shampoo 250ml',type:'product',staff:'Aisha',price:65,sold:3,returned:1,disc:0,qty:2},
+    {id:3,name:'Keratin Repair Hair Mask',type:'product',staff:'Aisha',price:95,sold:2,returned:0,disc:10,qty:0},
+    {id:4,name:'Gel Polish — Rosewood',type:'product',staff:'Noor',price:35,sold:1,returned:1,disc:0,qty:0},
+    {id:5,name:'Silk Finish Hair Serum 100ml',type:'product',staff:'Aisha',price:120,sold:1,returned:0,disc:0,qty:0},
+  ],
+};
+const INV = {no:'INV-2026-0412',client:'Fatima Al-Kuwari',mobile:'+974 5512 3390',date:'28 Oct 2026',time:'6:42 PM',paid:'Card'};
+const INVOICES = [
+  {no:'INV-2026-0412',client:'Fatima Al-Kuwari',date:'28 Oct · 6:42 PM',total:740,items:8,ret:'2 returned'},
+  {no:'INV-2026-0409',client:'Walk-in Customer',date:'28 Oct · 4:15 PM',total:95,items:1,ret:''},
+  {no:'INV-2026-0401',client:'Hessa Al-Thani',date:'27 Oct · 7:58 PM',total:1260,items:5,ret:''},
+  {no:'INV-2026-0396',client:'Reem Saleh',date:'27 Oct · 1:20 PM',total:330,items:3,ret:'Fully returned'},
+  {no:'INV-2026-0388',client:'Walk-in Customer',date:'26 Oct · 8:05 PM',total:65,items:1,ret:''},
+  {no:'INV-2026-0372',client:'Lulwa Ahmed',date:'25 Oct · 5:30 PM',total:480,items:4,ret:''},
+  {no:'INV-2026-0365',client:'Dana Yousef',date:'24 Oct · 3:10 PM',total:215,items:2,ret:''},
+];
+const METHODS = [
+  {id:'cash',ic:'¤',label:'Cash',sub:'Hand back from till'},
+  {id:'card',ic:'▭',label:'Card',sub:'Reverse to card'},
+  {id:'credit',ic:'◎',label:'To account',sub:'Credit client balance'},
+  {id:'custom',ic:'⋔',label:'Split',sub:'Cash 200 · Card rest'},
+];
+const NOTES = {
+  pick:'<b>Shared by all three directions.</b> Today a tap opens a loader and jumps straight to the items. On tablet the invoice is <b>previewed first</b> in the right pane (sold / already returned per line), so the cashier confirms it\'s the right bill before starting.',
+  A:'<b>A · Ticket Rail</b> — mirrors the tablet New Sale: the sold lines on the left, a docked <b>refund rail</b> on the right holding client, returning lines, refund method, totals and the Refund button. <b>Items + Review become one screen</b> — no separate Review step on tablet. Tap a row to add one.',
+  B:'<b>B · Ledger Desk</b> — a slim invoice band, then a full-width <b>Sold / Returned / Returnable / Return qty</b> table (with a per-row <b>Max</b>), and a docked bottom bar with refund method, total and Refund. Densest; best for long invoices.',
+  C:'<b>C · Receipt Mirror</b> — the original invoice as paper on the left (tick lines to return, stepper opens inline), a <b>Return Slip</b> builds up on the right with refund method and the button under it. Most visual; reads like the printed receipt. <b>Tap Split</b> to try the split refund — same flow as Review &amp; Pay.',
+};
+
+const money = v => 'QAR ' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const ret = l => l.sold - l.returned;
+const lineTotal = l => l.qty ? l.price*l.qty - l.disc*l.qty/l.sold : 0;
+const returning = () => S.lines.filter(l => l.qty > 0);
+const totals = () => {
+  const r = returning();
+  const sub = r.reduce((a,l)=>a+l.price*l.qty,0), disc = r.reduce((a,l)=>a+l.disc*l.qty/l.sold,0);
+  return {sub, disc, total: sub-disc, count: r.reduce((a,l)=>a+l.qty,0)};
+};
+const ic = l => l.type==='service' ? '✂' : '◫';
+
+function stepper(l, sm){
+  const full = ret(l)===0;
+  return `<div class="step ${sm?'sm':''} ${l.qty?'on':''}" data-act="">
+    <button data-act="dec" data-id="${l.id}" ${full||!l.qty?'disabled':''}>−</button><span>${l.qty}</span>
+    <button data-act="inc" data-id="${l.id}" ${full||l.qty>=ret(l)?'disabled':''}>+</button></div>`;
+}
+function methodTiles(cols){
+  return `<div class="methods" style="grid-template-columns:repeat(${cols},1fr)">${METHODS.map(m=>`
+    <button class="m ${S.mode===m.id?'on':''}" data-act="mode" data-id="${m.id}"><i>${m.ic}</i><div><b>${m.label}</b><small>${m.sub}</small></div></button>`).join('')}</div>`;
+}
+function statusRow(t){
+  return S.mode==='credit'
+    ? `<div class="status acc">◎ Added to client balance<span>${money(t.total)}</span></div>`
+    : `<div class="status ok">✓ Refund settled<span>${money(0)}</span></div>`;
+}
+function cta(t){
+  const verb = S.mode==='credit' ? 'Credit' : 'Refund';
+  return `<button class="cta" ${t.count?'':'disabled'}>${t.count?`${verb} <span class="amt">${money(t.total)}</span> →`:'Pick items to return'}</button>`;
+}
+function filtered(){
+  return S.lines.filter(l => S.filter==='all' || (S.filter==='ret' ? l.qty>0 : l.type===S.filter));
+}
+function filterChips(){
+  const c = k => k==='all'?S.lines.length : k==='ret'?returning().length : S.lines.filter(l=>l.type===k).length;
+  return [['all','All'],['ret','Returning'],['product','Products'],['service','Services']]
+    .map(([k,n])=>`<button class="fchip ${S.filter===k?'on':''}" data-act="filter" data-id="${k}">${n} <b>${c(k)}</b></button>`).join('');
+}
+
+/* ---------- A ---------- */
+function dirA(){
+  const t = totals(), r = returning();
+  return `<div class="A">
+    <section class="main">
+      <div class="head">
+        <button class="ib">‹</button>
+        <div style="flex:1;min-width:0"><h1>New Return</h1><p>Against ${INV.no} · ${INV.date} · paid by ${INV.paid}</p></div>
+        <button class="ghost" data-act="all">⤺ Return all</button>
+        <button class="ghost" data-act="clear">Clear</button>
+      </div>
+      <div class="tools">${filterChips()}<span style="margin-left:auto;font:700 11.5px Inter;color:var(--muted)">Tap a line to add one</span></div>
+      <div class="hair" style="margin:0 -26px"></div>
+      <div class="list">${filtered().map(l=>{
+        const full = ret(l)===0;
+        return `<div class="row ${l.qty?'on':''} ${full?'off':''}" data-act="${full?'':'inc'}" data-id="${l.id}">
+          <div class="ichip">${ic(l)}</div>
+          <div style="min-width:0"><div class="nm">${l.name}</div>
+            <div class="mt"><span class="tag ${full?'done':''}">${full?'Fully returned':'Sold '+l.sold}</span>${l.returned&&!full?`<span>${l.returned} already returned</span>`:''}<span>· ${l.staff}</span></div></div>
+          <div class="up">${money(l.price)}<small>per unit${l.disc?' · −'+l.disc/l.sold+' disc':''}</small></div>
+          <div>${stepper(l)}<div class="of">${full?'—':'of '+ret(l)+' returnable'}</div></div>
+          <div class="rf ${l.qty?'gold':''}" style="${l.qty?'':'color:var(--muted)'}">${l.qty?'− '+money(lineTotal(l)):'—'}</div>
+        </div>`;}).join('') || '<div class="empty">Nothing in this filter.</div>'}</div>
+    </section>
+    <aside class="rail">
+      <div class="rhead"><h2>Refund</h2><span class="pillg">${t.count} ITEM${t.count===1?'':'S'}</span><button class="ib" style="width:36px;height:36px">✕</button></div>
+      <div class="who"><div class="av">FA</div><div style="min-width:0;flex:1"><b>${INV.client}</b><small>${INV.mobile}</small></div><div style="text-align:right"><div class="k">Invoice</div><small style="font:800 11px Inter;color:var(--text2)">${INV.no.slice(4)}</small></div></div>
+      <div class="rlines">${r.length ? r.map(l=>`<div class="rl"><span class="q">${l.qty}×</span><span class="n">${l.name}</span><span class="v">${money(lineTotal(l))}</span></div>`).join('')
+        : '<div class="empty"><div class="ichip">⤺</div>Tap lines on the left<br>to add them to the return.</div>'}</div>
+      <div class="k" style="margin:12px 0 8px">Refund via</div>
+      ${methodTiles(2)}
+      <div style="margin-top:12px">
+        <div class="sum">Subtotal<b>${money(t.sub)}</b></div>
+        <div class="sum">Discount (prorated)<b>− ${money(t.disc)}</b></div>
+        <div class="sum" style="align-items:center;padding-top:8px"><span style="font:800 13px Inter;color:var(--ink)">Refund total</span><span class="serif" style="font-size:26px">${money(t.total)}</span></div>
+      </div>
+      <div style="margin:8px 0 12px">${statusRow(t)}</div>
+      ${cta(t)}
+    </aside>
+  </div>`;
+}
+
+/* ---------- B ---------- */
+function dirB(){
+  const t = totals();
+  return `<div class="B">
+    <div class="band">
+      <button class="ib">‹</button>
+      <div style="position:relative;z-index:1"><div class="eb">SALE RETURN</div><h1 style="margin-top:4px">New Return</h1></div>
+      <div class="meta">
+        <div><div class="k">Invoice</div><b>${INV.no}</b></div>
+        <div><div class="k">Client</div><b>${INV.client}</b></div>
+        <div><div class="k">Sold on</div><b>${INV.date}</b></div>
+        <div><div class="k">Invoice total</div><b class="g">${money(740)}</b></div>
+      </div>
+      <button class="ib" style="position:relative;z-index:1">✕</button>
+    </div>
+    <div class="card tbl">
+      <div class="thead"><div>Item</div><div style="text-align:right">Unit</div><div style="text-align:center">Sold</div><div style="text-align:center">Returned</div><div style="text-align:center">Returnable</div><div style="text-align:center">Return qty</div><div style="text-align:right">Refund</div></div>
+      <div class="tbody">${S.lines.map(l=>{
+        const full = ret(l)===0;
+        return `<div class="tr ${l.qty?'on':''} ${full?'off':''}">
+          <div class="nm"><div class="ichip">${ic(l)}</div><div style="min-width:0"><b>${l.name}</b><small>${l.type==='service'?'Service':'Product'} · ${l.staff}${l.disc?' · disc '+money(l.disc):''}</small></div></div>
+          <div class="c r">${money(l.price)}</div>
+          <div class="c num" style="text-align:center">${l.sold}</div>
+          <div class="c" style="text-align:center">${l.returned||'—'}</div>
+          <div style="text-align:center">${full?'<span class="tag done">None</span>':`<span class="num">${ret(l)}</span>`}</div>
+          <div style="display:flex;align-items:center;justify-content:center">${stepper(l,true)}${full||l.qty>=ret(l)?'':`<button class="max" data-act="max" data-id="${l.id}">MAX</button>`}</div>
+          <div class="c r" style="font:400 16px Fraunces,serif;color:${l.qty?'var(--gold)':'var(--muted)'}">${l.qty?'− '+money(lineTotal(l)):'—'}</div>
+        </div>`;}).join('')}</div>
+      <div class="tfoot"><button class="ghost p" data-act="all">⤺ Return everything returnable</button><button class="ghost" data-act="clear">Clear</button>
+        <span style="margin-left:auto;font:700 12px Inter;color:var(--text2)">${returning().length} of ${S.lines.filter(l=>ret(l)>0).length} lines · ${t.count} units · discount − ${money(t.disc)}</span></div>
+    </div>
+    <div class="card dock">
+      <div><div class="k" style="margin-bottom:7px">Refund via</div>
+        <div class="seg">${METHODS.map(m=>`<button class="${S.mode===m.id?'on':''}" data-act="mode" data-id="${m.id}">${m.ic} ${m.label}</button>`).join('')}</div></div>
+      <div class="tot"><div class="k">${S.mode==='credit'?'Credited to '+INV.client.split(' ')[0]:'Refund total'}</div><div class="serif">${money(t.total)}</div></div>
+      ${cta(t)}
+    </div>
+  </div>`;
+}
+
+/* ---------- C ---------- */
+function dirC(){
+  const t = totals(), r = returning();
+  return `<div class="C">
+    <div class="top"><button class="ib">‹</button><h1>New Return</h1>
+      <div class="dots"><i class="on"></i><i class="on"></i><span style="margin-left:4px">Invoice · Items &amp; refund</span></div>
+      <button class="ghost" data-act="all" style="margin-left:auto">⤺ Return all</button><button class="ib">✕</button></div>
+    <div class="desk">
+      <div class="paper" style="flex:1;min-width:0">
+        <div class="ph"><div class="k">Original invoice</div><h3>${INV.no}</h3><p>${INV.client} · ${INV.date} · ${INV.time}</p></div>
+        <div class="pb">${S.lines.map(l=>{
+          const full = ret(l)===0;
+          return `<div class="pl ${l.qty?'on':''} ${full?'off':''}" data-act="${full?'':'toggle'}" data-id="${l.id}">
+            <div class="x">${l.qty?'✓':''}</div>
+            <div style="min-width:0"><div class="nm">${l.sold}× ${l.name}</div><small>${full?'Already returned in full':(l.returned?l.returned+' returned earlier · ':'')+money(l.price)+' each'}</small></div>
+            <div class="pr">${money(l.price*l.sold - l.disc)}</div>
+            ${l.qty?`<div class="ctrl">${stepper(l,true)}<em>of ${ret(l)} returnable</em><span style="margin-left:auto;font:400 15px Fraunces,serif;color:var(--gold)">− ${money(lineTotal(l))}</span></div>`:''}
+          </div>`;}).join('')}</div>
+        <div class="pf"><div class="sum">Invoice total<b>${money(740)}</b></div><div class="sum">Paid by<b>${INV.paid}</b></div></div>
+      </div>
+      <div class="bridge"><div class="arr">→</div><b>${t.count} item${t.count===1?'':'s'}</b></div>
+      <div class="slipwrap">
+        <div class="paper slip ${S.mode==='custom'&&S.split.length?'compact':''}" style="flex:1;min-height:0">
+          <span class="stamp">DRAFT</span>
+          <div class="ph"><div class="k">Return slip</div><h3>${money(t.total)}</h3><p>Refund to ${INV.client}</p></div>
+          <div class="pb">${r.length ? r.map(l=>`<div class="rl"><span class="q">${l.qty}×</span><span class="n">${l.name}</span><span class="v">${money(lineTotal(l))}</span></div>`).join('')
+            : '<div class="empty"><div class="ichip">✓</div>Tick lines on the invoice<br>to move them here.</div>'}</div>
+          <div class="pf"><div class="sum">Subtotal<b>${money(t.sub)}</b></div><div class="sum">Discount (prorated)<b>− ${money(t.disc)}</b></div>
+            <div class="sum" style="align-items:center"><span style="font:800 13px Inter;color:var(--ink)">Refund total</span><span class="serif" style="font-size:22px">${money(t.total)}</span></div></div>
+        </div>
+        ${S.mode==='custom' && S.split.length ? splitPanel(t) : `<div>${methodTiles(4).replace(/<small>.*?<\/small>/g,'')}</div>`}
+        ${S.mode==='custom' && S.split.length ? splitCta(t) : cta(t)}
+        ${S.pick ? pickCard() : ''}${S.pad!=null ? padCard(t) : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- C · split refund ---------- */
+const PMS = [
+  {id:1,name:'Cash',ic:'¤'},{id:2,name:'Card',ic:'▭'},{id:3,name:'Bank Transfer',ic:'⌂'},{id:4,name:'Cheque',ic:'✎'},
+];
+const SW = ['var(--primary)','var(--accent)','var(--gold)','var(--hero2)'];
+const pm = id => PMS.find(m=>m.id===id);
+const sw = id => SW[PMS.findIndex(m=>m.id===id) % SW.length];
+/** shareSplit(): typed rows keep their amount, the rest share what's left in whole fils, last row takes the remainder. */
+function reshare(){
+  const total = Math.round(totals().total*100), open = S.split.filter(r=>!r.typed);
+  if (!open.length) return;
+  const fixed = S.split.filter(r=>r.typed).reduce((a,r)=>a+Math.round(r.amount*100),0);
+  const rest = Math.max(0,total-fixed), each = Math.floor(rest/open.length);
+  open.forEach((r,i)=>r.amount=(i===open.length-1 ? rest-each*(open.length-1) : each)/100);
+}
+const splitSum = () => S.split.reduce((a,r)=>a+r.amount,0);
+function splitPanel(t){
+  const allAuto = S.split.every(r=>!r.typed);
+  return `<div class="spl">
+    <div class="sh"><span class="k">Split refund</span>
+      <button class="even ${allAuto?'quiet':''}" data-act="even" style="margin-left:auto">⇋ Even</button>
+      <button class="even quiet" data-act="unsplit">✕ Single method</button></div>
+    <div class="mchips">${PMS.map(m=>{const on=S.split.some(r=>r.id===m.id);
+      return `<button class="mc ${on?'on':''}" style="--sw:${sw(m.id)}" data-act="chip" data-id="${m.id}"><i>${on?m.ic:'+'}</i>${m.name}</button>`;}).join('')}</div>
+    <div class="share">${S.split.map(r=>`<i style="width:${t.total?r.amount/t.total*100:0}%;background:${sw(r.id)}"></i>`).join('')}</div>
+    ${S.split.map(r=>`<div class="sline"><span class="sw" style="background:${sw(r.id)}">${pm(r.id).ic}</span><b>${pm(r.id).name}</b>
+      <span class="tg ${r.typed?'set':''}">${r.typed?'SET':'AUTO'}</span>
+      <button class="amtbtn ${S.pad===r.id?'edit':''}" data-act="pad" data-id="${r.id}">${money(r.amount)}</button></div>`).join('')}
+  </div>`;
+}
+function splitCta(t){
+  const bal = Math.round((t.total - splitSum())*100)/100;
+  const st = Math.abs(bal)<0.005 ? `<div class="status ok">✓ Refund settled across ${S.split.length} methods<span>${money(splitSum())}</span></div>`
+    : bal>0 ? `<div class="status warn">◷ Partial refund — still owed to client<span>${money(bal)}</span></div>`
+    : `<div class="status bad">⚠ Over refunded — more than the return total<span>${money(-bal)}</span></div>`;
+  return `${st}<button class="cta ${Math.abs(bal)<0.005?'':'gold'}">${Math.abs(bal)<0.005?`Refund <span class="amt">${money(t.total)}</span> →`:'Confirm anyway'}</button>`;
+}
+function pickCard(){
+  return `<div class="float-card" data-act="pickbg"><div class="fc" data-act="">
+    <div style="display:flex;align-items:flex-start"><div style="flex:1"><h4>Split the refund between…</h4><div class="sub2">Tap two methods — it splits evenly on the second tap.</div></div><button class="ib" data-act="pickx" style="width:34px;height:34px">✕</button></div>
+    <div class="slots">${[0,1].map(i=>{const id=S.pick[i];return `<div class="slot ${id?'full':''}">${i+1} · ${id?pm(id).name:'Pick a method'}</div>`;}).join('')}</div>
+    <div class="picks">${PMS.map(m=>`<button class="m ${S.pick.includes(m.id)?'on':''}" data-act="pickm" data-id="${m.id}"><i>${m.ic}</i><div><b>${m.name}</b></div></button>`).join('')}</div>
+    <div style="text-align:center;margin-top:12px;font:700 12px Inter;color:var(--primary)">Need a third? Tap its chip after the split opens.</div>
+  </div></div>`;
+}
+function padCard(t){
+  const r = S.split.find(x=>x.id===S.pad), others = S.split.filter(x=>x!==r).reduce((a,x)=>a+x.amount,0);
+  return `<div class="float-card" data-act="padbg"><div class="fc" data-act="">
+    <div style="display:flex;align-items:center;gap:10px"><span class="sw" style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;background:${sw(r.id)}">${pm(r.id).ic}</span>
+      <div style="flex:1"><h4>${pm(r.id).name} pays</h4><div class="sub2">Others move as you type · refund total ${money(t.total)}</div></div></div>
+    <div class="disp"><span class="k">${S.buf==null?'Current':'Typed'}</span><span class="serif">${money(r.amount)}</span></div>
+    <div class="qk"><button data-act="qk" data-id="rest">Rest · ${money(Math.max(0,t.total-others))}</button><button data-act="qk" data-id="half">Half</button><button data-act="qk" data-id="all">All</button></div>
+    <div class="keys">${['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k=>`<button data-act="key" data-id="${k}">${k}</button>`).join('')}</div>
+    <button class="cta" data-act="padx" style="margin-top:10px;height:52px">Done</button>
+  </div></div>`;
+}
+function setAmount(v){ const r=S.split.find(x=>x.id===S.pad); r.amount=Math.round(v*100)/100; r.typed=true; reshare(); }
+
+/* ---------- Step 1 ---------- */
+function pick(){
+  const iv = INVOICES[S.inv], fully = iv.ret==='Fully returned';
+  return `<div class="P">
+    <section class="lp">
+      <div class="lh"><div style="display:flex;align-items:center;gap:12px"><button class="ib">‹</button><h1>Return against…</h1></div>
+        <div class="srch">⌕ Invoice no, client or mobile<span class="scan">⌗</span></div>
+        <div style="display:flex;gap:6px;margin-top:12px"><button class="fchip on">Last 30 days</button><button class="fchip">This month</button><button class="fchip">All</button></div>
+      </div>
+      <div class="ll">${INVOICES.map((v,i)=>`<div class="inv ${S.inv===i?'on':''}" data-act="inv" data-id="${i}">
+        <b>${v.no}</b><span class="amt">${money(v.total)}</span><small>${v.client} · ${v.date}</small>
+        <small class="r" style="${v.ret==='Fully returned'?'color:var(--warn);font-weight:800':''}">${v.ret||v.items+(v.items===1?' item':' items')}</small></div>`).join('')}</div>
+    </section>
+    <section class="rp">
+      <div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1"><div class="label">Selected invoice</div><h2 style="margin-top:4px">${iv.no}</h2>
+        <div style="font:600 12.5px Inter;color:var(--text2);margin-top:3px">${iv.client} · ${iv.date}</div></div><button class="ib">✕</button></div>
+      <div class="kpis"><div><div class="k">Invoice total</div><b class="g">${money(iv.total)}</b></div><div><div class="k">Items sold</div><b>${iv.items}</b></div>
+        <div><div class="k">Already returned</div><b>${fully?iv.items:iv.no===INV.no?2:0}</b></div><div><div class="k">Paid by</div><b>Card</b></div></div>
+      <div class="pv">${(iv.no===INV.no?S.lines:S.lines.slice(0,Math.min(iv.items,5))).map(l=>{
+        const r = fully?l.sold:(iv.no===INV.no?l.returned:0);
+        return `<div class="pvr"><div class="ichip">${ic(l)}</div><div style="min-width:0"><b>${l.name}</b><small>${l.staff} · ${money(l.price)} each</small></div>
+          <div><small style="margin:0">${r} of ${l.sold} returned</small><div class="bar2"><i style="width:${r/l.sold*100}%"></i></div></div>
+          <div style="text-align:right;font:800 12.5px Inter;color:${l.sold-r?'var(--primary)':'var(--muted)'}">${l.sold-r?(l.sold-r)+' returnable':'None left'}</div></div>`;}).join('')}</div>
+      <div class="foot">${fully?'<div class="status acc" style="flex:1">Every item on this invoice has already been returned.</div>'
+        :`<span style="font:600 12px Inter;color:var(--muted)">Lines open with nothing selected — tap the ones coming back.</span>`}
+        <button class="cta" ${fully?'disabled':''} data-act="go">Return items from this invoice →</button></div>
+    </section>
+  </div>`;
+}
+
+function render(){
+  document.getElementById('content').innerHTML = S.step==='pick' ? pick() : ({A:dirA,B:dirB,C:dirC})[S.dir]();
+  document.getElementById('note').innerHTML = NOTES[S.step==='pick'?'pick':S.dir];
+  document.querySelectorAll('[data-dir]').forEach(b=>b.classList.toggle('on',b.dataset.dir===S.dir));
+  document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('on',b.dataset.step===S.step));
+  document.querySelectorAll('[data-size]').forEach(b=>b.classList.toggle('on',b.dataset.size===S.size));
+  fit();
+}
+function fit(){
+  const d = document.getElementById('device'), sc = document.getElementById('scaler');
+  const [w,h] = S.size==='till' ? [1097,686] : [1194,834];
+  d.style.setProperty('--w',w+'px'); d.style.setProperty('--h',h+'px');
+  const k = Math.min(1,(window.innerWidth-32)/w);
+  sc.style.transform = `scale(${k})`; sc.style.height = (h*k)+'px';
+}
+document.addEventListener('click', e=>{
+  const bar = e.target.closest('.bar button');
+  if (bar){
+    if (bar.dataset.dir){S.dir=bar.dataset.dir;S.step='ret';}
+    if (bar.dataset.step) S.step=bar.dataset.step;
+    if (bar.dataset.size) S.size=bar.dataset.size;
+    if (bar.id==='theme'){S.theme=S.theme==='light'?'dark':'light';document.documentElement.dataset.theme=S.theme;bar.textContent=S.theme==='light'?'Dark':'Light';}
+    return render();
+  }
+  const el = e.target.closest('[data-act]'); if(!el || !el.dataset.act) return;
+  const id = el.dataset.id, l = S.lines.find(x=>String(x.id)===id);
+  switch(el.dataset.act){
+    case 'inc': if(l && l.qty<ret(l)) l.qty++; break;
+    case 'dec': if(l && l.qty>0) l.qty--; break;
+    case 'max': l.qty = ret(l); break;
+    case 'toggle': l.qty = l.qty ? l.qty : 1; break;
+    case 'all': S.lines.forEach(x=>x.qty=ret(x)); break;
+    case 'clear': S.lines.forEach(x=>x.qty=0); break;
+    case 'mode':
+      if (id==='custom' && S.dir==='C'){ if(!S.split.length){S.pick=[];} else S.mode='custom'; break; }
+      S.mode=id; break;
+    case 'pickm':
+      if(!S.pick.includes(+id)) S.pick.push(+id);
+      if(S.pick.length===2){ S.split=S.pick.map(i=>({id:i,amount:0,typed:false})); S.pick=null; S.mode='custom'; reshare(); }
+      break;
+    case 'pickx': S.pick=null; break;
+    case 'pickbg': if(e.target===el) S.pick=null; break;
+    case 'padbg': if(e.target===el){S.pad=null;S.buf=null;} break;
+    case 'chip': {
+      const at=S.split.findIndex(r=>r.id===+id);
+      if(at<0){ S.split.push({id:+id,amount:0,typed:false}); S.split.forEach(r=>r.typed=false); }
+      else { S.split.splice(at,1); if(!S.split.length){S.mode='cash';} }
+      reshare(); break; }
+    case 'even': S.split.forEach(r=>r.typed=false); reshare(); break;
+    case 'unsplit': S.split=[]; S.mode='cash'; break;
+    case 'pad': S.pad=+id; S.buf=null; break;
+    case 'padx': S.pad=null; S.buf=null; break;
+    case 'key': {
+      let b = S.buf ?? '';
+      if(id==='⌫') b=b.slice(0,-1); else if(id==='.'){ if(!b.includes('.')) b=(b||'0')+'.'; } else if(!/\.\d\d$/.test(b)) b+=id;
+      S.buf=b; setAmount(parseFloat(b||'0')); break; }
+    case 'qk': {
+      const t=totals().total, others=S.split.filter(x=>x.id!==S.pad).reduce((a,x)=>a+x.amount,0);
+      S.buf=null; setAmount(id==='rest'?Math.max(0,t-others):id==='half'?t/2:t); break; }
+    case 'filter': S.filter=id; break;
+    case 'inv': S.inv=+id; break;
+    case 'go': S.step='ret'; break;
+  }
+  if (S.split.length && ['inc','dec','max','toggle','all','clear'].includes(el.dataset.act)) reshare();
+  render();
+});
+window.addEventListener('resize', fit);
+render();
+</script>
+</body>
+</html>

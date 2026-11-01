@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Settings;
 
-use App\Models\Configuration;
-use App\Support\TenantCache;
+use App\Actions\Settings\UpdateProductConfigurationAction;
 use Livewire\Component;
 
 class ProductConfiguration extends Component
@@ -18,22 +17,20 @@ class ProductConfiguration extends Component
 
     public function mount()
     {
-        $this->barcode_type = Configuration::where('key', 'barcode_type')->value('value') ?? '';
-        $this->barcode_prefix = Configuration::where('key', 'barcode_prefix')->value('value') ?? '';
-        $this->sync_barcode_to_code = Configuration::where('key', 'sync_barcode_to_code')->value('value') ?? 'no';
-        $this->hide_out_of_stock_sale_items = Configuration::where('key', 'hide_out_of_stock_sale_items')->value('value') ?? 'no';
+        foreach (UpdateProductConfigurationAction::current() as $key => $value) {
+            $this->{$key} = $value;
+        }
     }
 
     public function save()
     {
         abort_unless(auth()->user()?->can('configuration.settings'), 403);
-        Configuration::updateOrCreate(['key' => 'barcode_type'], ['value' => $this->barcode_type ?? '']);
-        Configuration::updateOrCreate(['key' => 'barcode_prefix'], ['value' => $this->barcode_prefix ?? '']);
-        Configuration::updateOrCreate(['key' => 'sync_barcode_to_code'], ['value' => $this->sync_barcode_to_code ?? 'no']);
-        if (auth()->user()->can('sale.create')) {
-            Configuration::updateOrCreate(['key' => 'hide_out_of_stock_sale_items'], ['value' => $this->hide_out_of_stock_sale_items ?? 'no']);
-        }
-        TenantCache::forget('barcode_prefix');
+        (new UpdateProductConfigurationAction())->execute([
+            'barcode_type' => $this->barcode_type ?? '',
+            'barcode_prefix' => $this->barcode_prefix ?? '',
+            'sync_barcode_to_code' => $this->sync_barcode_to_code ?? 'no',
+            'hide_out_of_stock_sale_items' => $this->hide_out_of_stock_sale_items ?? 'no',
+        ], auth()->user());
         $this->dispatch('success', ['message' => 'Updated Successfully']);
     }
 

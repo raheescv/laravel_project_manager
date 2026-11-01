@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split Payment Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&display=swap" rel="stylesheet">
+<style>
+/* Astra tokens — Qloud Blue preset (same as mobile-review-pay-ticket-dock-preview.html) */
+.stage{
+  --canvas:#F3F7FD; --card:#FFFFFF; --ink:#161A2B; --text2:#4A4F63; --muted:#8A8FA3;
+  --hair:#E7E9F2; --tint:#E8F1FD; --primary:#0A62C8; --pdark:#01377F; --pink:#0A62C8;
+  --success:#1F9D63; --succ-tint:#E4F6EC; --danger:#D4546A; --danger-tint:#FBE9EC;
+  --warn:#9A6A00; --warn-tint:#FBF3DF; --track:rgba(0,0,0,.045);
+  --hero:linear-gradient(135deg,#0A62C8,#01377F);
+  --cta:linear-gradient(135deg,#3CBAFB,#0BA8FA); --cta-ink:#01377F;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.32);
+  --sheet-shadow:0 -14px 30px -18px rgba(1,55,127,.30);
+}
+.stage[data-theme="dark"]{
+  --canvas:#0E1220; --card:#171B2B; --ink:#EDEFF7; --text2:#ADB3C9; --muted:#767C92;
+  --hair:#272C3E; --tint:rgba(10,98,200,.24); --pink:#5FA6F2;
+  --succ-tint:rgba(31,157,99,.17); --danger-tint:rgba(212,84,106,.18);
+  --warn:#E6C16B; --warn-tint:rgba(201,162,75,.17); --track:rgba(255,255,255,.06);
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+  --sheet-shadow:0 -14px 30px -16px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:Inter,system-ui,sans-serif;background:#E9EDF4;color:#161A2B}
+.ms{font-family:'Material Symbols Rounded';font-weight:500;font-style:normal;line-height:1;letter-spacing:0;display:inline-block;white-space:nowrap;
+  -webkit-font-feature-settings:'liga';font-feature-settings:'liga';font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24}
+.ms.f{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.num{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* page chrome */
+.top{position:sticky;top:0;z-index:50;background:rgba(233,237,244,.92);backdrop-filter:blur(10px);border-bottom:1px solid #D9DFEA;
+  padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+.top h1{font-size:16px;font-weight:800;margin-right:auto}
+.top h1 small{display:block;font-size:11.5px;font-weight:600;color:#6B7280;margin-top:2px}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl label{font-size:10px;font-weight:800;color:#6B7280;letter-spacing:.8px;text-transform:uppercase}
+.seg{display:flex;background:#DCE2EC;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;font:700 12px Inter;color:#4A4F63;padding:6px 11px;border-radius:7px;cursor:pointer}
+.seg button.on{background:#fff;color:#0A62C8;box-shadow:0 2px 6px -2px rgba(0,0,0,.18)}
+.reset{border:0;background:#0A62C8;color:#fff;font:800 12px Inter;padding:8px 12px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.reset .ms{font-size:16px}
+.rules{max-width:1240px;margin:22px auto 0;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.rule{background:#fff;border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5;color:#4A4F63;box-shadow:0 8px 20px -16px rgba(1,55,127,.4)}
+.rule b{display:flex;align-items:center;gap:6px;color:#161A2B;font-size:12.5px;margin-bottom:3px}
+.rule .ms{font-size:17px;color:#0A62C8}
+.stage{display:flex;flex-wrap:wrap;gap:34px 30px;padding:26px 24px 60px;justify-content:center;background:transparent}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cap{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800}
+.fit{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+.fit.ok{background:#E4F6EC;color:#1F9D63}.fit.bad{background:#FBE9EC;color:#D4546A}
+
+/* device frame */
+.phone{border-radius:44px;padding:10px;background:#0B0E16;box-shadow:0 30px 60px -30px rgba(0,0,0,.5)}
+.small .phone{border-radius:22px;padding:8px}
+.scr{width:var(--w);height:var(--h);border-radius:34px;overflow:hidden;background:var(--canvas);display:flex;flex-direction:column;position:relative;color:var(--ink);user-select:none}
+.small .scr{border-radius:14px}
+.sb{height:var(--sb);flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 6px;font-size:13px;font-weight:700}
+.small .sb{padding:0 14px 4px;font-size:11px}
+.sb .ic{display:flex;gap:4px}.sb .ms{font-size:15px}
+.home{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:9px;background:var(--ink);opacity:.35;z-index:30}
+.small .home{display:none}
+.body{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+[data-act]{cursor:pointer}
+
+/* atoms */
+.row{display:flex;align-items:center}.sp{flex:1}
+.lbl{font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.sub{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--tint);color:var(--pink);border:0}
+.chip .ms{font-size:14px}
+.ghost{flex:none;height:54px;padding:0 17px;border-radius:14px;border:1.4px solid color-mix(in srgb,var(--pdark) 25%,transparent);background:var(--card);
+  font:800 14px Inter;color:var(--pink);display:flex;align-items:center}
+.stage[data-theme="dark"] .ghost{border-color:rgba(255,255,255,.14)}
+.cta{flex:1;height:54px;border-radius:14px;background:var(--cta);color:var(--cta-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 12px 22px -12px rgba(11,168,250,.7);min-width:0;padding:0 10px}
+.cta b{font-size:15.5px;font-weight:800}.cta small{font-size:10.5px;font-weight:700;opacity:.8;margin-top:1px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cta.warn{background:linear-gradient(135deg,#F3C766,#E0A93A);color:#4A3300;box-shadow:0 12px 22px -12px rgba(224,169,58,.7)}
+.cta.off{background:var(--track);color:var(--muted);box-shadow:none}
+.dock{flex:none;padding:10px 14px calc(var(--safe) + 6px);display:flex;gap:8px}
+
+/* ---- C · Terminal hero ---- */
+.c-hero{flex:none;background:var(--hero);color:#fff;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+.c-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 85% 0%,rgba(11,168,250,.55),transparent 45%),radial-gradient(circle at 0% 100%,rgba(255,255,255,.10),transparent 40%)}
+.c-hero>*{position:relative}
+.c-hero .in{padding:2px 16px 14px}
+.c-bar{display:flex;align-items:center;gap:10px;height:40px}
+.c-bar .b{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:20px}
+.c-bar h2{font-size:15px;font-weight:800;flex:1}
+.glass{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.16)}
+.glass .ms{font-size:13px}.glass.tap .ms{color:#7CF0B5}
+.c-amt{text-align:center;margin:0 0 10px}
+.c-amt .v{font-size:40px;font-weight:700;letter-spacing:-1.4px;line-height:1.05}
+.c-amt .v small{font-size:15px;font-weight:800;opacity:.7;letter-spacing:0;margin-right:6px;vertical-align:middle}
+.c-amt .s{font-size:11px;font-weight:600;color:rgba(255,255,255,.72);margin-top:3px}
+.small .c-amt .v{font-size:34px}
+.cg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;background:rgba(0,0,0,.16);border-radius:14px;padding:4px}
+.mt{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:800;border-radius:10px;min-width:0;padding:0 4px;
+  height:44px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.88);flex-direction:column;gap:2px;text-align:center}
+.mt span:last-child{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt .ms{font-size:17px}
+.mt.minor{height:32px;flex-direction:row;gap:5px;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.78)}
+.mt.minor .ms{font-size:15px}
+.mt.wide{grid-column:span 2}
+.mt.on{background:#fff;color:#0A62C8;border-color:transparent}
+.small .mt{height:40px}.small .mt.minor{height:30px}
+.c-status{margin-top:9px;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.12);font-size:12px;font-weight:700}
+.c-status .ms{font-size:17px}.c-status b{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap}
+.c-status span.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.c-status.ok .ms{color:#7CF0B5}.c-status.warn .ms{color:#F3C766}.c-status.bad .ms{color:#FFB3C0}
+.c-body{height:100%;padding:12px 14px 0;display:flex;flex-direction:column;gap:10px}
+.c-center{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:12px}
+.c-ring{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--pink);font-size:32px;
+  box-shadow:0 0 0 10px color-mix(in srgb,var(--tint) 50%,transparent);margin-bottom:8px}
+.c-ttl{font-size:15px;font-weight:800}
+.c-tools{flex:none;display:flex;gap:8px}
+.c-tools div{flex:1;height:36px;border-radius:11px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text2)}
+.c-tools .ms{font-size:16px;color:var(--pink)}
+
+/* ---- Split panel (shared by A and B) ---- */
+.sx{flex:1;min-height:0;padding:12px 12px 11px;display:flex;flex-direction:column;gap:9px}
+.sx-head{display:flex;align-items:center;gap:6px}
+.sx-head .lbl{white-space:nowrap}
+.sx-even{border:0;display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:5px 9px;border-radius:999px;background:var(--tint);color:var(--pink)}
+.sx-even .ms{font-size:14px}
+.sx-even.dim{background:var(--track);color:var(--muted)}
+.icon-btn{width:28px;height:28px;border-radius:9px;background:var(--track);display:grid;place-items:center;color:var(--text2);position:relative}
+.icon-btn .ms{font-size:16px}
+.icon-btn i{position:absolute;top:-3px;right:-3px;font:800 9px Inter;font-style:normal;background:var(--primary);color:#fff;border-radius:999px;padding:2px 4px}
+
+/* method rail: every available method, above the summary */
+.mrail{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px;flex:none}
+.mrail::-webkit-scrollbar{display:none}
+.mc{flex:none;height:34px;padding:0 11px 0 8px;border-radius:999px;display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;
+  background:var(--card);color:var(--text2);border:1.4px dashed color-mix(in srgb,var(--muted) 45%,transparent);transition:all .15s}
+.mc .ms{font-size:16px;color:var(--pink)}
+.mc .plus{font-size:15px;color:var(--muted)}
+.mc.on{background:var(--tint);color:var(--pink);border:1.4px solid var(--primary)}
+.mc.on .dot{width:16px;height:16px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center}
+.mc.on .dot .ms{font-size:12px;color:#fff}
+.mc.wal .ms{color:var(--success)}
+
+/* share bar */
+.share{display:flex;height:6px;border-radius:9px;overflow:hidden;background:var(--track);gap:2px;flex:none}
+.share div{height:100%;transition:width .25s}
+
+/* payment summary lines */
+.plist{flex:1;min-height:0;overflow:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:6px}
+.plist::-webkit-scrollbar{display:none}
+.pl{flex:none;display:flex;align-items:center;gap:9px;padding:7px 7px 7px 10px;border-radius:13px;background:var(--track);border:1.5px solid transparent;transition:all .15s}
+.pl .sw{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+.pl .sw .ms{font-size:16px}
+.pl .nm{flex:1;min-width:0}
+.pl .nm b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl .nm span{font-size:10px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden}
+.pl .nm span .ms{font-size:11px}
+.pl .nm span.over{color:var(--danger)}
+.pl .amt{height:34px;min-width:86px;padding:0 10px;border-radius:10px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:flex-end;gap:5px;
+  font-size:15px;font-weight:800}
+.pl .amt .ms{font-size:13px;color:var(--muted)}
+.pl .x{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.pl .x .ms{font-size:16px}
+.pl.act{background:var(--tint);border-color:var(--primary)}
+.pl.act .amt{box-shadow:0 0 0 1.5px var(--primary)}
+.caret{width:1.5px;height:16px;background:var(--primary);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.ledger{display:flex;border-radius:12px;background:var(--track);flex:none}
+.ledger div{flex:1;padding:7px 10px;display:flex;flex-direction:column;gap:2px}
+.ledger div+div{border-left:1px solid var(--hair)}
+.ledger span{font-size:9.5px;font-weight:800;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.ledger b{font-size:13.5px;font-weight:800}
+.ledger .g b{color:var(--success)}.ledger .d b{color:var(--danger)}.ledger .w b{color:var(--warn)}
+
+.empty{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border-radius:13px;
+  border:1.5px dashed var(--hair);padding:10px}
+.empty .ms{font-size:28px;color:var(--pink)}
+.empty b{font-size:13px}
+
+/* B · inline keypad */
+.kp{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.kp div{height:var(--kh,40px);border-radius:11px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;gap:3px}
+.kp div.q{font-size:11px;background:var(--tint);color:var(--pink);box-shadow:none}
+.kp div.q .ms{font-size:15px}
+.kp div .ms{font-size:20px}
+.kp{--kh:36px}.small .kp{--kh:30px}
+/* B keeps the summary rows compact so three ways fit above the keypad */
+.sx.b .plist{gap:5px}
+.sx.b .pl{padding:4px 5px 4px 8px}
+.sx.b .pl .sw{width:26px;height:26px;border-radius:8px}.sx.b .pl .sw .ms{font-size:15px}
+.sx.b .pl .amt{height:30px}
+.sx.b .pl .nm b{font-size:12.5px}
+
+/* sheets */
+.veil{position:absolute;inset:0;background:rgba(6,10,22,.45);z-index:20;display:flex;flex-direction:column;justify-content:flex-end;animation:fade .18s}
+.sheet{background:var(--canvas);border-radius:26px 26px 0 0;padding:8px 16px calc(var(--safe) + 12px);box-shadow:var(--sheet-shadow);animation:up .22s cubic-bezier(.2,.9,.3,1)}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40%)}}
+.grab{width:38px;height:4px;border-radius:9px;background:var(--hair);margin:0 auto 12px}
+.sh-t{display:flex;align-items:center;gap:9px}
+.sh-t .ic{width:36px;height:36px;border-radius:12px;background:var(--tint);color:var(--pink);display:grid;place-items:center}
+.sh-t .ic .ms{font-size:20px}
+.sh-t h3{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.sh-t .x{margin-left:auto;color:var(--muted);font-size:21px}
+.steps{display:flex;gap:6px;margin:12px 0 10px}
+.steps div{flex:1;height:44px;border-radius:12px;border:1.5px dashed var(--hair);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;color:var(--muted)}
+.steps div.on{border:1.5px solid var(--primary);background:var(--tint);color:var(--pink)}
+.steps div .n{width:18px;height:18px;border-radius:50%;background:var(--track);display:grid;place-items:center;font-size:10px}
+.steps div.on .n{background:var(--primary);color:#fff}
+.steps .vs{flex:none;width:auto;border:0;font-size:11px;color:var(--muted)}
+.mgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.mtile{height:58px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;padding:0 12px;border:1.5px solid transparent;position:relative}
+.mtile .sw{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+.mtile .sw .ms{font-size:18px}
+.mtile b{font-size:13px;font-weight:800;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtile small{font-size:10px;font-weight:700;color:var(--muted)}
+.mtile.on{border-color:var(--primary);background:var(--tint)}
+.mtile .badge{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;box-shadow:0 0 0 3px var(--canvas)}
+.sh-foot{display:flex;align-items:center;gap:8px;margin-top:12px}
+.sh-foot .more{font-size:11.5px;font-weight:800;color:var(--pink);display:flex;align-items:center;gap:4px}
+.sh-foot .more .ms{font-size:16px}
+.sh-go{margin-top:12px;height:50px;border-radius:14px;background:var(--cta);color:var(--cta-ink);display:flex;align-items:center;justify-content:center;font-size:14.5px;font-weight:800;gap:6px}
+.sh-go.off{background:var(--track);color:var(--muted)}
+
+/* A · amount keypad sheet */
+.kv{text-align:center;margin:14px 0 4px}
+.kv .who{font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+.kv .v{font-size:38px;font-weight:700;letter-spacing:-1.2px;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px}
+.kv .v small{font-size:14px;font-weight:800;color:var(--muted);letter-spacing:0;margin-right:4px}
+.kv .rest{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--text2);background:var(--track);padding:5px 10px;border-radius:999px}
+.kv .rest .ms{font-size:14px;color:var(--success)}
+.quick{display:flex;gap:6px;margin:12px 0 10px}
+.quick div{flex:1;height:34px;border-radius:10px;background:var(--tint);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800}
+.kp3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.kp3 div{height:46px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800}
+.kp3 div .ms{font-size:21px}
+
+/* ---- tablet: receipt paper left, pay rail right (as the approved Terminal) ---- */
+.tab .phone{border-radius:32px;padding:12px}
+.tab .scr{border-radius:20px}
+.tab .sb{padding:0 22px 2px;font-size:12px;align-items:center}
+.tab .home{width:180px;bottom:6px}
+.split{flex:1;min-height:0;display:flex}
+.tpane{flex:1;min-width:0;display:flex;flex-direction:column;padding:4px 24px 20px;gap:14px}
+.thead{flex:none;display:flex;align-items:center;gap:12px}
+.btn-sq{width:40px;height:40px;border-radius:12px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:22px;flex:none}
+.thead h2{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.paper{flex:1;min-height:0;display:flex;flex-direction:column;padding:18px 22px 16px;border-radius:0 0 16px 16px;
+  -webkit-mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x;mask:radial-gradient(circle 7px at 50% 0,transparent 98%,#000) 0 0/18px 100% repeat-x}
+.brand{text-align:center;flex:none;padding-bottom:12px;border-bottom:1px dashed var(--hair)}
+.brand .lg{width:34px;height:34px;border-radius:10px;margin:0 auto 6px;background:var(--hero);display:grid;place-items:center;color:#fff;font-size:19px}
+.brand b{font-size:11.5px;font-weight:800;letter-spacing:2.6px}
+.tr{display:grid;grid-template-columns:52px 1fr 96px 110px;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:13.5px;font-weight:600}
+.tr .r{text-align:right}.tr b{font-weight:800}.tr.h{padding:12px 0 8px}
+.till .tr{padding:7px 0}
+.tlist{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.qty{font-size:10.5px;font-weight:800;color:var(--pink);background:var(--tint);border-radius:6px;padding:2px 6px;flex:none}
+.b-sum{display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:var(--text2)}
+.b-tot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px;padding-top:10px;border-top:1px dashed var(--hair)}
+.b-tot .v{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1}
+.b-tot .v small{font-size:12px;font-weight:800;color:var(--muted);margin-right:5px;letter-spacing:0}
+.paidby{flex:none;margin-top:10px;padding:9px 11px;border-radius:12px;background:var(--track);display:flex;flex-direction:column;gap:5px}
+.pb{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.pb .dotc{width:8px;height:8px;border-radius:50%;flex:none}
+.pb.due{color:var(--danger)}
+.rail{flex:none;width:var(--rail);display:flex;flex-direction:column;background:var(--canvas);border-left:1px solid var(--hair)}
+.rail .c-hero{border-radius:0 0 24px 24px}
+.rail .c-hero .in{padding:14px 18px 16px}
+.rail .cg .mt{height:52px;font-size:11.5px}.rail .cg .mt .ms{font-size:19px}.rail .cg .mt.minor{height:38px}
+.till .rail .cg .mt{height:46px}.till .rail .cg .mt.minor{height:34px}
+.rail .c-body{padding:14px 18px 0}
+.rail .dock{padding:12px 18px calc(var(--safe) + 10px)}
+.tab .sx.a .mrail{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
+.tab .kp{--kh:50px}.till .kp{--kh:36px}
+.till .sx.a .mrail{flex-wrap:nowrap;overflow-x:auto}
+.sx-head .mrail{flex:1;min-width:0;margin:0;padding:0}
+.till .sx.b .share{display:none}
+.till .sx{gap:7px;padding:10px 12px}
+/* sheets dock over the rail as a floating card, the ticket stays visible */
+.tab .veil{align-items:flex-end;padding:0 14px 14px}
+.tab .sheet{width:calc(var(--rail) - 28px);border-radius:24px;padding-bottom:16px}
+.till .kv{margin:6px 0 2px}.till .kv .v{font-size:32px}.till .quick{margin:8px 0}.till .kp3 div{height:40px}.till .sh-go{height:44px;margin-top:8px}
+.tab .toast{left:auto;right:calc(var(--rail) / 2 - 140px);transform:none;bottom:96px}
+
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--safe) + 78px);z-index:25;background:#161A2B;color:#fff;border-radius:999px;
+  padding:9px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(0,0,0,.6);animation:up .22s}
+.toast .ms{font-size:16px;color:#7CF0B5}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Review &amp; Pay — Split payment<small>Tap <b>Split</b> on either phone. Both screens share one state — try 2 vs 5 methods.</small></h1>
+  <div class="ctl"><label>Device</label><div class="seg" id="segView"><button data-v="phone" class="on">Phone</button><button data-v="tablet">Tablet</button></div></div>
+  <div class="ctl"><label>Direction</label><div class="seg" id="segVar"><button data-v="a" class="on">A · Chip Rail</button><button data-v="b">B · Live Keypad</button></div></div>
+  <div class="ctl"><label>Methods</label><div class="seg" id="segMany"><button data-v="0">2 (Cash · Card)</button><button data-v="1" class="on">5 configured</button></div></div>
+  <div class="ctl"><label>Student card</label><div class="seg" id="segStu"><button data-v="0" class="on">Not tapped</button><button data-v="1">Tapped</button></div></div>
+  <div class="ctl"><label>Theme</label><div class="seg" id="segTheme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div></div>
+  <button class="reset" id="reset"><span class="ms">restart_alt</span>Start over</button>
+</div>
+
+<div class="rules">
+  <div class="rule"><b><span class="ms">call_split</span>1 · Tap Split</b>Only 2 methods available → split evenly at once, no question asked. More than 2 → a sheet asks <i>which two</i>; the second tap applies it (click-and-go). "Three or more ways" is one link away.</div>
+  <div class="rule"><b><span class="ms">view_week</span>2 · Methods above the summary</b>No dropdown, no "Add" button. Every available method is a chip above the payment summary — tap to add it to the list, tap again to take it out. Adding one re-splits evenly.</div>
+  <div class="rule"><b><span class="ms">edit</span>3 · Change one amount</b>Type what the customer gives on one method; the other methods share the rest automatically, so the split always lands on Bal 0.00. Lines you typed show "set", the rest "auto".</div>
+  <div class="rule"><b><span class="ms">balance</span>4 · Even split, anytime</b>"Even" resets every line to an equal share (last line takes the rounding cent). Wallet line shows what the card can spend and turns red if over.</div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+const TOTAL = 280;
+const ALL = [
+  {id:1, n:'Cash', i:'payments', c:'#0A62C8'},
+  {id:2, n:'Card', i:'credit_card', c:'#0BA8FA'},
+  {id:3, n:'Bank Transfer', i:'account_balance', c:'#1F9D63'},
+  {id:4, n:'Fawran', i:'bolt', c:'#E0A93A'},
+  {id:5, n:'Ooredoo Money', i:'smartphone', c:'#8B5CF6'},
+];
+const WALLET = {id:9, n:'Student Wallet', i:'school', c:'#13A38B', cap:184, wallet:true};
+const DEVICES = [
+  {id:'iphone', name:'iPhone 15 · 390×844', w:390, h:844, sb:47, safe:30},
+  {id:'small', name:'Small Android · 360×720', w:360, h:720, sb:28, safe:10},
+  {id:'ipad', name:'iPad · 1194×834', w:1194, h:834, sb:24, safe:14, tab:true},
+  {id:'till', name:'Till tablet · 1097×686', w:1097, h:686, sb:24, safe:4, tab:true},
+];
+let DEV = DEVICES[0];
+const VIEWS = {phone:['iphone','small'], tablet:['ipad','till']};
+
+const S = {view:'phone', variant:'a', many:true, student:false, theme:'light', mode:'cash', lines:[], active:0, sheet:null, pick:[], multi:false, buf:null, toast:null, clock:0};
+
+const fmt = v => (Math.round(v*100)/100).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+const r2 = v => Math.round(v*100)/100;
+const ms = (n, fill) => `<span class="ms${fill?' f':''}">${n}</span>`;
+const methods = () => [...(S.student ? [WALLET] : []), ...(S.many ? ALL : ALL.slice(0,2))];
+const byId = id => [WALLET, ...ALL].find(m => m.id === id);
+const paid = () => r2(S.lines.reduce((a, l) => a + l.amt, 0));
+const due = () => r2(TOTAL - paid());
+
+/* Lines you typed keep their amount; every "auto" line shares what's left. */
+function rebalance(){
+  const autos = S.lines.filter(l => !l.set);
+  if(!autos.length) return;
+  const fixed = S.lines.filter(l => l.set).reduce((a, l) => a + l.amt, 0);
+  const rest = Math.max(0, r2(TOTAL - fixed));
+  const each = Math.floor(rest / autos.length * 100) / 100;
+  autos.forEach((l, i) => l.amt = i === autos.length - 1 ? r2(rest - each * (autos.length - 1)) : each);
+}
+function evenOut(){ S.lines.forEach(l => l.set = false); rebalance(); }
+function setLine(i, v){
+  const l = S.lines[i]; if(!l) return;
+  l.amt = r2(v); l.set = true; l.t = ++S.clock;
+  // Something has to take the rest: if every line is now typed, the oldest other one goes back to auto.
+  if(S.lines.length > 1 && S.lines.every(x => x.set)){
+    const oldest = S.lines.filter((x, j) => j !== i).sort((a, b) => a.t - b.t)[0];
+    oldest.set = false;
+  }
+  rebalance();
+}
+function startSplit(ids){
+  S.lines = ids.map(id => ({id, amt:0, set:false}));
+  rebalance(); S.mode = 'split'; S.active = 0; S.sheet = null; S.buf = null;
+  flash(`Split evenly · ${S.lines.length} × ${fmt(S.lines[0].amt)}`);
+}
+function flash(t){ S.toast = t; clearTimeout(flash.h); flash.h = setTimeout(() => { S.toast = null; render(); }, 2200); }
+
+function tapSplit(){
+  if(S.mode === 'split'){ return; }
+  const m = methods();
+  if(m.length <= 2) return startSplit(m.map(x => x.id));
+  S.sheet = 'pick'; S.pick = []; S.multi = false;
+}
+function toggleChip(id){
+  const at = S.lines.findIndex(l => l.id === id);
+  if(at >= 0){
+    S.lines.splice(at, 1);
+    if(S.active >= S.lines.length) S.active = Math.max(0, S.lines.length - 1);
+  } else {
+    S.lines.forEach(l => l.set = false);   // a new method → everyone shares evenly again
+    S.lines.push({id, amt:0, set:false});
+  }
+  S.buf = null; rebalance();
+}
+function key(k){
+  const i = S.active, l = S.lines[i]; if(!l) return;
+  const others = S.lines.filter((x, j) => j !== i && x.set).reduce((a, x) => a + x.amt, 0);
+  if(k === 'half'){ S.buf = null; return setLine(i, TOTAL / 2); }
+  if(k === 'rest'){ S.buf = null; return setLine(i, Math.max(0, TOTAL - others)); }
+  if(k === 'even'){ S.buf = null; return evenOut(); }
+  if(k === 'clear'){ S.buf = ''; return setLine(i, 0); }
+  let b = S.buf ?? '';
+  if(k === 'del') b = b.slice(0, -1);
+  else if(k === '.') { if(!b.includes('.')) b = (b || '0') + '.'; }
+  else { if(/\.\d\d$/.test(b)) return; b = (b === '0' ? '' : b) + k; }
+  S.buf = b;
+  setLine(i, parseFloat(b) || 0);
+}
+
+/* ---------------- hero ---------------- */
+function statusBar(){ return `<div class="sb"><span>9:41</span><span class="ic">${ms('signal_cellular_alt')}${ms('wifi')}${ms('battery_full')}</span></div>`; }
+function status(){
+  if(S.mode === 'cash') return `<div class="c-status ok">${ms('payments')}<span class="t">Paid in cash · count the notes</span><b class="num">Bal 0.00</b></div>`;
+  if(S.mode === 'card') return `<div class="c-status ok">${ms('check_circle',1)}<span class="t">Fully paid by card</span><b class="num">Bal 0.00</b></div>`;
+  if(S.mode === 'credit') return `<div class="c-status warn">${ms('schedule')}<span class="t">On account · due</span><b class="num">${fmt(TOTAL)}</b></div>`;
+  if(typeof S.mode === 'number') return `<div class="c-status ok">${ms('check_circle',1)}<span class="t">Fully paid by ${byId(S.mode).n}</span><b class="num">Bal 0.00</b></div>`;
+  if(!S.lines.length) return `<div class="c-status">${ms('call_split')}<span class="t">Split · tap two methods below</span></div>`;
+  const d = due();
+  if(Math.abs(d) < .005) return `<div class="c-status ok">${ms('check_circle',1)}<span class="t">Fully paid · ${S.lines.map(l => byId(l.id).n).join(' + ')}</span><b class="num">Bal 0.00</b></div>`;
+  if(d > 0) return `<div class="c-status warn">${ms('schedule')}<span class="t">Part paid · still due</span><b class="num">${fmt(d)}</b></div>`;
+  return `<div class="c-status bad">${ms('warning',1)}<span class="t">Paid over the total by</span><b class="num">${fmt(-d)}</b></div>`;
+}
+function grid(){
+  const cfg = S.many ? ALL.slice(2,4) : [];
+  const t = (act, icon, label, on, cls='') => `<div class="mt ${cls} ${on?'on':''}" data-act="${act}">${ms(icon)}<span>${label}</span></div>`;
+  const row1 = [t('mode:cash','payments','Cash',S.mode==='cash', cfg.length?'':'wide'), t('mode:card','credit_card','Card',S.mode==='card', cfg.length?'':'wide'),
+    ...cfg.map(c => t('mode:'+c.id, c.i, c.n, S.mode===c.id))].join('');
+  const splitLabel = S.mode==='split' && S.lines.length ? `${S.lines.length} ways` : 'Split';
+  const row2 = S.student
+    ? t('mode:wallet','school','Wallet',false,'minor wide') + t('mode:credit','description','Credit',S.mode==='credit','minor') + t('split','call_split',splitLabel,S.mode==='split','minor')
+    : t('mode:credit','description','Credit',S.mode==='credit','minor wide') + t('split','call_split',splitLabel,S.mode==='split','minor wide');
+  return `<div class="cg">${row1}${row2}</div>`;
+}
+function hero(){
+  const who = S.student ? `<span class="glass tap">${ms('contactless')}Aisha R.</span>` : `<span class="glass">${ms('person')}Walk-in</span>`;
+  if(DEV.tab) return `<div class="c-hero"><div class="in">
+    <div class="row" style="margin-bottom:10px"><span class="lbl" style="color:rgba(255,255,255,.72)">Pay with</span><span class="sp"></span>${who}</div>
+    ${grid()}${status()}</div></div>`;
+  return `<div class="c-hero">${statusBar()}<div class="in">
+    <div class="c-bar"><span class="b">${ms('chevron_left')}</span><h2>Review &amp; Pay</h2>${who}</div>
+    <div class="c-amt"><div class="v num"><small>QAR</small>${fmt(TOTAL)}</div><div class="s">5 items · 20.00 off</div></div>
+    ${grid()}${status()}</div></div>`;
+}
+
+/* ---------------- split panel ---------------- */
+function rail(){
+  return `<div class="mrail">${methods().map(m => {
+    const on = S.lines.some(l => l.id === m.id);
+    return `<div class="mc ${on?'on':''} ${m.wallet?'wal':''}" data-act="chip:${m.id}">
+      ${on ? `<span class="dot">${ms('check')}</span>` : `<span class="plus ms">add</span>`}${ms(m.i)}${m.n}</div>`;
+  }).join('')}</div>`;
+}
+function shareBar(){
+  const tot = Math.max(TOTAL, paid());
+  return `<div class="share">${S.lines.map(l => `<div style="width:${l.amt / tot * 100}%;background:${byId(l.id).c}"></div>`).join('')}</div>`;
+}
+function lines(inlineKeys){
+  if(!S.lines.length) return `<div class="empty">${ms('touch_app')}<b>Tap the methods above</b><div class="sub">Two methods split the bill evenly.</div></div>`;
+  return `<div class="plist">${S.lines.map((l, i) => {
+    const m = byId(l.id), act = inlineKeys && i === S.active;
+    const typing = act && S.buf !== null;
+    const over = m.wallet && l.amt > m.cap + .004;
+    const tag = m.wallet ? `<span class="${over?'over':''}">${ms(over?'warning':'contactless')}${over?'over card balance':'can spend '+fmt(m.cap)}</span>`
+      : `<span>${l.set ? ms('lock')+'set' : ms('autorenew')+'auto · shares rest'}</span>`;
+    return `<div class="pl ${act?'act':''}" data-act="${inlineKeys?'focus':'edit'}:${i}">
+      <div class="sw" style="background:${m.c}">${ms(m.i)}</div>
+      <div class="nm"><b>${m.n}</b>${tag}</div>
+      <div class="amt num">${typing ? (S.buf || '0') + '<i class="caret"></i>' : fmt(l.amt)}${!inlineKeys ? ms('edit') : ''}</div>
+      <div class="x" data-act="chip:${l.id}">${ms('close')}</div></div>`;
+  }).join('')}</div>`;
+}
+function ledger(){
+  const d = due(), cls = Math.abs(d) < .005 ? 'g' : d > 0 ? 'd' : 'w';
+  return `<div class="ledger"><div><span>Total</span><b class="num">${fmt(TOTAL)}</b></div><div><span>Paid</span><b class="num">${fmt(paid())}</b></div>
+    <div class="${cls}"><span>${d < -.004 ? 'Over' : 'Balance'}</span><b class="num">${fmt(Math.abs(d))}</b></div></div>`;
+}
+const evenBtn = () => `<button class="sx-even ${S.lines.some(l => l.set)?'':'dim'}" data-act="even">${ms('balance')}Even</button>`;
+
+function panelA(){
+  return `<div class="card sx a">
+      <div class="sx-head"><span class="lbl">Pay with · tap to add</span><span class="sp"></span>${S.lines.length > 1 ? evenBtn() : ''}</div>
+      ${rail()}
+      ${S.lines.length ? `<div class="sx-head" style="margin-top:2px"><span class="lbl">Payment summary · ${S.lines.length}</span><span class="sp"></span><span class="sub" style="margin:0">Tap an amount to change it</span></div>${shareBar()}` : ''}
+      ${lines(false)}
+      ${S.lines.length ? ledger() : ''}
+    </div>
+    ${DEV.tab ? '' : `<div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`}`;
+}
+function panelB(){
+  const keys = [['1'],['2'],['3'],['half','Half','percent'],['4'],['5'],['6'],['rest','Rest','done_all'],['7'],['8'],['9'],['del','','backspace'],['.'],['0'],['00'],['clear','Clear','close']];
+  if(DEV.tab) return `<div class="card sx b">
+      <div class="sx-head">${rail()}${S.lines.length > 1 ? evenBtn() : ''}</div>
+      ${S.lines.length ? shareBar() : ''}
+      ${lines(true)}
+      ${S.lines.length ? `<div class="kp">${keys.map(([k, l, ic]) => `<div class="${l!==undefined&&k!=='del'?'q':''}" data-act="key:${k}">${ic?ms(ic):''}${l ?? k}</div>`).join('')}</div>` : ''}
+    </div>`;
+  return `<div class="card sx b">
+      <div class="sx-head"><span class="lbl">Pay with · tap to add</span><span class="sp"></span>${S.lines.length > 1 ? evenBtn() : ''}
+        ${DEV.tab ? '' : `<span class="icon-btn">${ms('receipt_long')}<i>5</i></span><span class="icon-btn">${ms('edit_note')}</span>`}</div>
+      ${rail()}
+      ${S.lines.length ? shareBar() : ''}
+      ${lines(true)}
+      ${S.lines.length ? `<div class="kp">${keys.map(([k, l, ic]) => `<div class="${l!==undefined&&k!=='del'?'q':''}" data-act="key:${k}">${ic?ms(ic):''}${l ?? k}</div>`).join('')}</div>` : ''}
+    </div>`;
+}
+function body(){
+  if(S.mode === 'split') return S.variant === 'a' ? panelA() : panelB();
+  const tools = DEV.tab ? '' : `<div class="c-tools"><div>${ms('receipt_long')}5 items</div><div>${ms('edit_note')}Note</div></div>`;
+  const c = (icon, t, s) => `<div class="card c-center"><div class="c-ring">${ms(icon)}</div><div class="c-ttl">${t}</div><div class="sub">${s}</div></div>${tools}`;
+  if(S.mode === 'cash') return c('payments', 'Cash tender pad', 'Unchanged in this preview — tap <b>Split</b> above');
+  if(S.mode === 'card') return c('contactless', 'Tap or insert on the card machine', `Charge QAR ${fmt(TOTAL)}, then confirm below`);
+  if(S.mode === 'credit') return c('description', 'Put the full amount on account', 'For a part payment, use Split.');
+  return c(byId(S.mode).i, `Paid by ${byId(S.mode).n}`, `QAR ${fmt(TOTAL)} is posted to its configured account`);
+}
+function dock(){
+  if(S.mode !== 'split') return `<div class="dock"><div class="ghost">Draft</div><div class="cta"><b>Charge QAR ${fmt(TOTAL)}</b><small>Prints the receipt</small></div></div>`;
+  const d = due();
+  if(!S.lines.length) return `<div class="dock"><div class="ghost">Draft</div><div class="cta off"><b>Pick the methods</b><small>Nothing to charge yet</small></div></div>`;
+  if(Math.abs(d) < .005) return `<div class="dock"><div class="ghost">Draft</div><div class="cta"><b>Charge QAR ${fmt(TOTAL)}</b><small>${S.lines.map(l => `${byId(l.id).n} ${fmt(l.amt)}`).join(' · ')}</small></div></div>`;
+  if(d > 0) return `<div class="dock"><div class="ghost">Draft</div><div class="cta warn"><b>Charge · ${fmt(d)} on account</b><small>Or tap Even to cover it all</small></div></div>`;
+  return `<div class="dock"><div class="ghost">Draft</div><div class="cta off"><b>Over by ${fmt(-d)}</b><small>Lower an amount or tap Even</small></div></div>`;
+}
+
+/* ---------------- sheets ---------------- */
+function pickSheet(){
+  const m = methods(), half = Math.floor(TOTAL / 2 * 100) / 100;
+  const n = S.multi ? Math.max(S.pick.length, 1) : 2;
+  const step = i => {
+    const id = S.pick[i];
+    return `<div class="${id?'on':''}"><span class="n">${i+1}</span>${id ? byId(id).n : 'Pick a method'}</div>`;
+  };
+  return `<div class="veil" data-act="close"><div class="sheet" data-act="stop">
+    <div class="grab"></div>
+    <div class="sh-t"><span class="ic">${ms('call_split')}</span><div><h3>Split between</h3>
+      <div class="sub">${S.multi ? `Pick as many as you need — split evenly` : `Pick two — QAR ${fmt(TOTAL)} → ${fmt(half)} each`}</div></div>
+      <span class="ms x" data-act="close">close</span></div>
+    ${S.multi ? '<div style="height:12px"></div>' : `<div class="steps">${step(0)}<span class="vs">+</span>${step(1)}</div>`}
+    <div class="mgrid">${m.map(x => {
+      const at = S.pick.indexOf(x.id);
+      return `<div class="mtile ${at>=0?'on':''}" data-act="pick:${x.id}"><span class="sw" style="background:${x.c}">${ms(x.i)}</span>
+        <div style="min-width:0"><b>${x.n}</b><small>${x.wallet ? 'can spend ' + fmt(x.cap) : at>=0 ? fmt(TOTAL / n) : 'Tap to pick'}</small></div>
+        ${at>=0 ? `<span class="badge">${S.multi ? ms('check') : at+1}</span>` : ''}</div>`;
+    }).join('')}</div>
+    ${S.multi
+      ? `<div class="sh-go ${S.pick.length<2?'off':''}" data-act="go">${ms('call_split')}${S.pick.length<2 ? 'Pick at least two' : `Split ${S.pick.length} ways · ${fmt(Math.floor(TOTAL/S.pick.length*100)/100)} each`}</div>`
+      : `<div class="sh-foot"><span class="sub" style="margin:0">Applies on the second tap</span><span class="sp"></span><span class="more" data-act="multi">${ms('add_circle')}Three or more ways</span></div>`}
+  </div></div>`;
+}
+function keySheet(){
+  const l = S.lines[S.active]; if(!l) return '';
+  const m = byId(l.id);
+  const others = S.lines.filter((x, j) => j !== S.active);
+  const restLine = others.length === 1 ? `${byId(others[0].id).n} gets ${fmt(others[0].amt)}` : `${others.length} others share ${fmt(others.reduce((a,x)=>a+x.amt,0))}`;
+  const d = due();
+  return `<div class="veil" data-act="close"><div class="sheet" data-act="stop">
+    <div class="grab"></div>
+    <div class="sh-t"><span class="ic" style="background:${m.c};color:#fff">${ms(m.i)}</span><div><h3>${m.n} pays</h3><div class="sub">The other ${others.length===1?'method takes':'methods share'} the rest</div></div>
+      <span class="ms x" data-act="close">close</span></div>
+    <div class="kv"><div class="v num"><small>QAR</small>${S.buf !== null ? (S.buf || '0') + '<i class="caret" style="height:30px"></i>' : fmt(l.amt)}</div>
+      <div class="rest">${ms(Math.abs(d)<.005?'check_circle':'warning',1)}${others.length ? restLine : 'Only method'} · ${Math.abs(d)<.005 ? 'Bal 0.00' : d>0 ? 'still due '+fmt(d) : 'over by '+fmt(-d)}</div></div>
+    <div class="quick"><div data-act="key:half">Half · ${fmt(TOTAL/2)}</div><div data-act="key:rest">All the rest</div><div data-act="key:even">Even</div></div>
+    <div class="kp3">${['1','2','3','4','5','6','7','8','9','.','0','del'].map(k => `<div data-act="key:${k}">${k==='del'?ms('backspace'):k}</div>`).join('')}</div>
+    <div class="sh-go" data-act="close">${ms('check')}Done</div>
+  </div></div>`;
+}
+
+/* ---------------- render + events ---------------- */
+const ITEMS = [[2,'Chicken Shawarma Wrap',72],[2,'Fresh Orange Juice',36],[1,'Club Sandwich',42],[1,'Caesar Salad',38],[1,'Family Platter',112]];
+/** Receipt-paper ticket; once split, its foot lists what each method pays. */
+function paperPane(){
+  const d = due();
+  const pays = S.mode === 'split' && S.lines.length ? `<div class="paidby"><span class="lbl">Paid by</span>
+      ${S.lines.map(l => { const m = byId(l.id); return `<div class="pb"><span class="dotc" style="background:${m.c}"></span>${m.n}<span class="sp"></span><b class="num">${fmt(l.amt)}</b></div>`; }).join('')}
+      ${d > .004 ? `<div class="pb due">${ms('schedule')}On account<span class="sp"></span><b class="num">${fmt(d)}</b></div>` : ''}</div>` : '';
+  return `<div class="tpane"><div class="thead"><span class="btn-sq">${ms('chevron_left')}</span>
+      <div class="sp"><h2>Review &amp; Pay</h2><div class="sub">${S.student ? 'Aisha R. · Grade 6B' : 'Walk-in Customer'} · Me</div></div>
+      <span class="btn-sq" style="color:var(--pink);font-size:20px">${ms('edit_note')}</span></div>
+    <div class="card paper">
+      <div class="brand"><div class="lg">${ms('cloud',1)}</div><b>QLOUD POS</b><div class="sub">${S.student ? 'Aisha R.' : 'Walk-in Customer'} · Me · 1 Nov 2026</div></div>
+      <div class="tr h lbl" style="font-size:10px"><span>Qty</span><span>Item</span><span class="r">Price</span><span class="r">Amount</span></div>
+      <div class="tlist">${ITEMS.map(([q, n, t]) => `<div class="tr"><span class="qty" style="justify-self:start">${q}×</span><span>${n}</span>
+        <span class="r num" style="color:var(--muted)">${fmt(t / q)}</span><b class="r num">${fmt(t)}</b></div>`).join('')}</div>
+      <div class="b-sum" style="margin-top:10px">Subtotal<span class="num">300.00</span></div>
+      <div class="b-sum" style="color:var(--warn);margin-top:4px">Discount<span class="num">− 20.00</span></div>
+      <div class="b-tot"><span class="lbl">Amount due</span><span class="v num"><small>QAR</small>${fmt(TOTAL)}</span></div>
+      ${pays}
+    </div></div>`;
+}
+function screen(){
+  if(DEV.tab) return `${statusBar()}<div class="split">${paperPane()}
+      <div class="rail">${hero()}<div class="body"><div class="c-body">${body()}</div></div>${dock()}</div></div>
+    ${S.sheet === 'pick' ? pickSheet() : S.sheet === 'key' ? keySheet() : ''}
+    ${S.toast && !S.sheet ? `<div class="toast">${ms('check_circle',1)}${S.toast}</div>` : ''}`;
+  return `${hero()}<div class="body"><div class="c-body">${body()}</div></div>${dock()}
+    ${S.sheet === 'pick' ? pickSheet() : S.sheet === 'key' ? keySheet() : ''}
+    ${S.toast && !S.sheet ? `<div class="toast">${ms('check_circle',1)}${S.toast}</div>` : ''}`;
+}
+function render(){
+  const stage = document.getElementById('stage');
+  stage.dataset.theme = S.theme;
+  stage.innerHTML = DEVICES.filter(d => VIEWS[S.view].includes(d.id)).map(d => { DEV = d;
+    const rail = Math.min(460, Math.max(340, d.w * 0.38)); // _payRail's width rule
+    return `<div class="col ${d.id==='small'?'small':''} ${d.tab?'tab':''} ${d.id==='till'?'till':''}">
+      <div class="phone"><div class="scr" data-id="${d.id}" style="--w:${d.w}px;--h:${d.h}px;--sb:${d.sb}px;--safe:${d.safe}px;--rail:${rail}px">${screen()}<div class="home"></div></div></div>
+      <div class="cap">${d.name}<span class="fit" data-fit="${d.id}"></span></div></div>`; }).join('');
+  requestAnimationFrame(() => document.querySelectorAll('.scr').forEach(scr => {
+    const over = Math.max(0, ...[...scr.querySelectorAll('.body')].map(b => b.scrollHeight - b.clientHeight));
+    const badge = document.querySelector(`[data-fit="${scr.dataset.id}"]`);
+    badge.className = 'fit ' + (over > 1 ? 'bad' : 'ok');
+    badge.textContent = over > 1 ? `Scrolls · +${over}px` : 'Fits — no scroll';
+  }));
+}
+
+document.getElementById('stage').addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const [act, arg] = el.dataset.act.split(':');
+  if(act === 'stop') return;
+  e.stopPropagation();
+  if(act === 'close'){ S.sheet = null; S.buf = null; }
+  else if(act === 'split') tapSplit();
+  else if(act === 'mode'){
+    S.lines = []; S.sheet = null;
+    S.mode = arg === 'cash' || arg === 'card' || arg === 'credit' ? arg : arg === 'wallet' ? 'cash' : Number(arg);
+  }
+  else if(act === 'pick'){
+    const id = Number(arg), at = S.pick.indexOf(id);
+    if(at >= 0) S.pick.splice(at, 1); else S.pick.push(id);
+    if(!S.multi && S.pick.length === 2) startSplit(S.pick);
+  }
+  else if(act === 'multi'){ S.multi = true; }
+  else if(act === 'go'){ if(S.pick.length >= 2) startSplit(S.pick); }
+  else if(act === 'chip'){ toggleChip(Number(arg)); }
+  else if(act === 'even'){ evenOut(); S.buf = null; }
+  else if(act === 'edit'){ S.active = Number(arg); S.buf = null; S.sheet = 'key'; }
+  else if(act === 'focus'){ S.active = Number(arg); S.buf = null; }
+  else if(act === 'key'){ key(arg); }
+  render();
+});
+
+function syncSegs(){
+  const on = (id, v) => document.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  on('segView', S.view); on('segVar', S.variant); on('segMany', S.many ? '1' : '0'); on('segStu', S.student ? '1' : '0'); on('segTheme', S.theme);
+}
+function bind(id, apply){
+  document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    apply(b.dataset.v); syncSegs(); render();
+  });
+}
+const restart = () => { S.mode = 'cash'; S.lines = []; S.sheet = null; S.buf = null; S.pick = []; };
+bind('segView', v => { S.view = v; });
+bind('segVar', v => { S.variant = v; S.sheet = null; S.buf = null; });
+bind('segMany', v => { S.many = v === '1'; restart(); });
+bind('segStu', v => { S.student = v === '1'; restart(); });
+bind('segTheme', v => { S.theme = v; });
+document.getElementById('reset').addEventListener('click', () => { restart(); render(); });
+document.fonts.ready.then(render); render();
+</script>
+</body>
+</html>

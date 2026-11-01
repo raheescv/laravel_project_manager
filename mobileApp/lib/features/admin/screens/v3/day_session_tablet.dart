@@ -463,9 +463,18 @@ extension _DaySessionTablet on _DaySessionScreenState {
             ),
           ),
           SizedBox(height: compact ? 10 : 14),
-          _choiceRow('Day', dayChoices, compact: compact),
-          SizedBox(height: compact ? 8 : 10),
-          _choiceRow('Time', timeChoices, compact: compact),
+          // Closing needs no presets: the till is closed now, or at a moment
+          // picked in full (date, then time).
+          if (c.isOpen)
+            _choiceRow('Close', [
+              _choice('Now', icon: Icons.bolt_outlined, selected: isNow, compact: compact, onTap: c.setNow),
+              _choice('Custom', icon: Icons.event_outlined, ghost: true, compact: compact, onTap: () => _pickMoment(c)),
+            ], compact: compact)
+          else ...[
+            _choiceRow('Day', dayChoices, compact: compact),
+            SizedBox(height: compact ? 8 : 10),
+            _choiceRow('Time', timeChoices, compact: compact),
+          ],
           SizedBox(height: compact ? 10 : 16),
           if (fill) const Spacer(),
           Container(

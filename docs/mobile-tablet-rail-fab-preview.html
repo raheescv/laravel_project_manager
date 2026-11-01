@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile · Tablet rail + floating New Sale</title>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Astra tokens — mirrors mobileApp/lib/shared/utils/components/theme/palette.dart
+   Driven by [data-preset] + [data-theme] on #stage.
+   ============================================================ */
+#stage{--success:#1F9D63;--danger:#D4546A}
+#stage[data-preset="qloud"]{
+  --primary:#0A62C8;--primary-dark:#01377F;--accent:#0BA8FA;
+  --canvas:#F3F7FD;--card:#FFFFFF;--ink:#101426;--text2:#4E5875;--muted:#98A0B8;
+  --hairline:#E6EAF3;--tint:#E8F1FD;--rail:#01377F;
+  --shadow:0 10px 24px -16px rgba(1,55,127,.30);
+}
+#stage[data-preset="qloud"][data-theme="dark"]{
+  --canvas:#0E1220;--card:#171B2B;--ink:#EDEFF7;--text2:#A3ABC2;--muted:#767E96;
+  --hairline:rgba(255,255,255,.09);--tint:rgba(10,98,200,.20);--rail:#161A28;
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+#stage[data-preset="aurora"]{
+  --primary:#4F46E5;--primary-dark:#3730A3;--accent:#38BDF8;
+  --canvas:#EEF1F7;--card:#FFFFFF;--ink:#13183A;--text2:#4C5580;--muted:#7F88B3;
+  --hairline:#E4E8F2;--tint:#EAF0FF;--rail:#3730A3;
+  --shadow:0 10px 24px -16px rgba(55,48,163,.30);
+}
+#stage[data-preset="aurora"][data-theme="dark"]{
+  --canvas:#0B0E1C;--card:#161A2E;--ink:#EAEDF9;--text2:#9AA3CC;--muted:#7079A6;
+  --hairline:rgba(255,255,255,.10);--tint:rgba(79,70,229,.22);--rail:#14172B;
+  --shadow:0 14px 28px -16px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:'Manrope',system-ui,sans-serif;background:#EFEFEF}
+button{font:inherit;border:0;background:none;color:inherit;cursor:pointer}
+.ms{font-family:'Material Symbols Outlined';font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;
+  text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:'liga';font-feature-settings:'liga';
+  font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+#stage{min-height:100vh;background:var(--canvas);color:var(--ink);padding:26px 20px 70px;transition:background .2s}
+
+/* ---- page chrome ---- */
+.top{max-width:1200px;margin:0 auto 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:'Marcellus',serif;font-size:28px;font-weight:400}
+.top p{font-size:13px;color:var(--text2);margin-top:5px;max-width:640px;line-height:1.55}
+.switches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{display:flex;background:var(--card);border:1px solid var(--hairline);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.sw button{font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:7px 13px;border-radius:999px;transition:.15s}
+.sw button.on{background:var(--primary);color:#fff}
+
+.dirs{max-width:1200px;margin:0 auto 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.dir{text-align:left;background:var(--card);border:1.5px solid var(--hairline);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);transition:.15s}
+.dir .n{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--primary);margin-bottom:4px}
+.dir h3{font-family:'Marcellus',serif;font-size:17px;font-weight:400;margin-bottom:5px}
+.dir p{font-size:12px;line-height:1.55;color:var(--text2)}
+.dir.on{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent),var(--shadow)}
+
+/* ============================================================
+   Tablet frame — I24T02 till, 1097×686 landscape
+   ============================================================ */
+.device{max-width:1200px;margin:0 auto;background:#0b0d14;border-radius:34px;padding:14px;box-shadow:0 30px 60px -30px rgba(0,0,0,.55)}
+.screen{position:relative;width:100%;aspect-ratio:1097/686;background:var(--canvas);border-radius:22px;overflow:hidden;display:flex}
+.screen.short{aspect-ratio:1097/520}
+
+/* ---- the rail: 92pt, AstraChrome.peers ---- */
+.rail{width:92px;flex:none;margin:14px 0 14px 14px;background:var(--rail);border-radius:26px;
+  display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;
+  box-shadow:0 14px 36px -14px rgba(0,0,0,.45)}
+
+/* pinned top: logo → Dashboard */
+.brand{flex:none;width:100%;display:flex;flex-direction:column;align-items:center;padding:18px 0 12px;position:relative;
+  -webkit-tap-highlight-color:transparent}
+.brand .mark{width:52px;height:40px;display:grid;place-items:center;transition:transform .15s}
+.brand .mark svg{width:50px;height:auto}
+.brand:active .mark{transform:scale(.92)}
+.brand .tip{position:absolute;left:84px;top:22px;background:var(--card);color:var(--ink);font-size:11px;font-weight:800;
+  padding:6px 10px;border-radius:9px;white-space:nowrap;box-shadow:var(--shadow);border:1px solid var(--hairline);
+  opacity:0;transform:translateX(-4px);transition:.15s;pointer-events:none}
+.brand:hover .tip{opacity:1;transform:none}
+
+/* scrolling middle */
+.scroll{flex:1;min-height:0;width:100%;overflow-y:auto;scrollbar-width:none;padding:4px 0;
+  -webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);
+          mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+.scroll::-webkit-scrollbar{display:none}
+
+.lnk{display:flex;flex-direction:column;align-items:center;padding:7px 0;width:100%;position:relative}
+.lnk .ic{width:46px;height:38px;border-radius:13px;display:grid;place-items:center;color:rgba(255,255,255,.55);transition:.15s}
+.lnk .ic .ms{font-size:21px}
+.lnk .tx{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.55);margin-top:3px}
+.lnk.on .ic{background:rgba(255,255,255,.12);color:var(--accent)}
+.lnk.on .ic .ms{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.lnk.on .tx{color:var(--accent);font-weight:700}
+
+/* pinned bottom: Settings + flat Log out */
+.foot{flex:none;width:100%;display:flex;flex-direction:column;align-items:center;padding:6px 0 14px}
+.tray{width:100%;display:flex;flex-direction:column;align-items:center}
+.brand.on .mark{background:rgba(255,255,255,.12);border-radius:14px}
+.rule{width:44px;height:1px;background:rgba(255,255,255,.14);margin:2px 0 4px}
+.out{display:flex;align-items:center;justify-content:center;gap:5px;color:#FF9AA8;border-radius:10px;transition:.15s}
+.out .ms{font-size:15px}
+.out span:last-child{font-size:8.5px;font-weight:700;letter-spacing:.2px}
+.out:hover{background:rgba(212,84,106,.12)}
+
+/* ---- content (stand-in dashboard) ---- */
+.content{flex:1;min-width:0;margin:14px 14px 14px 12px;background:var(--canvas);border-radius:26px;position:relative;overflow:hidden}
+.page{position:absolute;inset:0;overflow:auto;padding:18px 20px 90px;scrollbar-width:none}
+.page::-webkit-scrollbar{display:none}
+.hero{border-radius:20px;padding:16px 18px;color:#fff;display:flex;align-items:center;gap:14px;
+  background:linear-gradient(120deg,var(--primary-dark),var(--primary))}
+.hero b{font-family:'Marcellus',serif;font-weight:400;font-size:19px;display:block}
+.hero small{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.75}
+.chip{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:6px 10px;border-radius:999px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;gap:6px}
+.chip i{width:6px;height:6px;border-radius:50%;background:#5BE3A2}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.kpi{background:var(--card);border:1px solid var(--hairline);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.kpi small{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.kpi b{display:block;font-size:19px;font-weight:800;margin-top:4px}
+.kpi em{font-style:normal;font-size:10px;font-weight:700;color:var(--success)}
+.listc{background:var(--card);border:1px solid var(--hairline);border-radius:16px;margin-top:14px;box-shadow:var(--shadow)}
+.listc h4{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:12px 14px 6px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--hairline);font-size:12.5px;font-weight:700}
+.row .av{width:30px;height:30px;border-radius:10px;background:var(--tint);color:var(--primary);display:grid;place-items:center}
+.row .av .ms{font-size:16px}
+.row span{color:var(--muted);font-size:10.5px;font-weight:600;display:block}
+.row b{margin-left:auto}
+
+/* ---- the floating New Sale button (common) ---- */
+.fab{position:absolute;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;
+  display:flex;align-items:center;justify-content:center;gap:8px;color:var(--primary-dark);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 78%,#fff),var(--accent));
+  box-shadow:0 14px 28px -10px color-mix(in srgb,var(--accent) 70%,#000),0 2px 6px rgba(0,0,0,.18);
+  transition:left .32s cubic-bezier(.2,.9,.3,1.2),top .32s cubic-bezier(.2,.9,.3,1.2),transform .15s,border-radius .2s,width .2s,padding .2s}
+.fab.drag{transition:transform .15s;transform:scale(1.08);cursor:grabbing;
+  box-shadow:0 24px 40px -12px color-mix(in srgb,var(--accent) 70%,#000),0 4px 10px rgba(0,0,0,.22)}
+.fab .ms{font-size:26px;font-variation-settings:'FILL' 0,'wght' 600,'GRAD' 0,'opsz' 24}
+.fab .lbl{font-size:12.5px;font-weight:800;white-space:nowrap}
+.fab .grip{display:none}
+.ghost{position:absolute;z-index:4;border:1.5px dashed color-mix(in srgb,var(--accent) 60%,transparent);border-radius:999px;opacity:0;transition:opacity .15s;pointer-events:none}
+.ghost.show{opacity:1}
+
+/* ============================================================
+   A · Pinned Ends — closest to today's rail
+   ============================================================ */
+[data-dir="a"] .fab{width:60px;height:60px;border-radius:50%}
+[data-dir="a"] .fab .lbl{display:none}
+[data-dir="a"] .out{flex-direction:column;gap:2px;width:52px;padding:6px 0}
+
+/* ============================================================
+   B · Footer Tray — the bottom group reads as one inset tray
+   ============================================================ */
+[data-dir="b"] .brand .mark{width:58px;height:50px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10)}
+[data-dir="b"] .brand .mark svg{width:42px}
+[data-dir="b"] .foot{padding:6px 0 10px}
+[data-dir="b"] .tray{width:76px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
+[data-dir="b"] .tray .rule{width:40px;margin:0 0 4px}
+[data-dir="b"] .out{padding:5px 8px}
+[data-dir="b"] .fab{height:54px;padding:0 20px 0 12px;border-radius:999px}
+[data-dir="b"] .fab .grip{display:grid;grid-template-columns:repeat(2,3px);gap:3px;opacity:.45;margin-right:2px}
+[data-dir="b"] .fab .grip i{width:3px;height:3px;border-radius:50%;background:currentColor}
+[data-dir="b"] .fab.drag{width:54px!important;padding:0}
+[data-dir="b"] .fab.drag .lbl,[data-dir="b"] .fab.drag .grip{display:none}
+
+/* ============================================================
+   C · Ink Notch — no chips; an accent notch marks the active row
+   ============================================================ */
+[data-dir="c"] .brand{padding-bottom:16px}
+[data-dir="c"] .brand::after{content:"";width:22px;height:2px;border-radius:2px;background:var(--accent);margin-top:10px;opacity:.85}
+[data-dir="c"] .lnk.on .ic{background:transparent}
+[data-dir="c"] .lnk.on::before{content:"";position:absolute;left:0;top:12px;width:3.5px;height:30px;border-radius:0 4px 4px 0;background:var(--accent)}
+[data-dir="c"] .out{width:64px;padding:6px 0;border-radius:999px;border:1px solid rgba(255,154,168,.22)}
+[data-dir="c"] .out span:last-child{font-size:7.5px;letter-spacing:1.2px;text-transform:uppercase}
+[data-dir="c"] .fab{width:58px;height:58px;border-radius:19px}
+[data-dir="c"] .fab::after{content:"";position:absolute;inset:-6px;border-radius:24px;border:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+[data-dir="c"] .fab .lbl{display:none}
+[data-dir="c"] .ghost{border-radius:20px}
+
+/* ---- notes ---- */
+.notes{max-width:1200px;margin:18px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.note{background:var(--card);border:1px solid var(--hairline);border-radius:16px;padding:13px 15px;font-size:12px;line-height:1.6;color:var(--text2);box-shadow:var(--shadow)}
+.note b{color:var(--ink);display:block;font-size:12.5px;margin-bottom:3px}
+
+.toast{position:absolute;left:50%;bottom:22px;transform:translate(-50%,12px);background:var(--ink);color:var(--canvas);
+  font-size:12px;font-weight:800;padding:9px 15px;border-radius:999px;opacity:0;transition:.2s;z-index:9;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:760px){
+  .device{padding:8px;border-radius:22px}
+  .screen,.screen.short{aspect-ratio:auto;height:560px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion:reduce){.fab,.toast,.brand .mark{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage" data-preset="qloud" data-theme="light" data-dir="a">
+
+  <div class="top">
+    <div>
+      <h1>Tablet rail · floating New Sale</h1>
+      <p>Logo pinned at the top (tap → Dashboard). Modules scroll in between. Settings and a small, flat Log out are pinned at the bottom. New Sale leaves the rail and becomes a floating button: <b>drag it</b>, let go, and it snaps to the nearest edge. Tap it to start a sale.</p>
+    </div>
+    <div class="switches">
+      <div class="sw" data-sw="preset"><button data-v="qloud" class="on">Qloud</button><button data-v="aurora">Aurora</button></div>
+      <div class="sw" data-sw="theme"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+      <div class="sw" data-sw="height"><button data-v="tall" class="on">686pt</button><button data-v="short">Short</button></div>
+      <div class="sw" data-sw="dash"><button data-v="keep" class="on">Dashboard link</button><button data-v="logo">Logo only</button></div>
+    </div>
+  </div>
+
+  <div class="dirs">
+    <button class="dir on" data-dir="a">
+      <div class="n">A · Pinned Ends</div>
+      <h3>Today's rail, both ends fixed</h3>
+      <p>Same chips and type as now. Log out is a small red glyph with its label, no tile behind it. New Sale is a round gold button.</p>
+    </button>
+    <button class="dir" data-dir="b">
+      <div class="n">B · Footer Tray</div>
+      <h3>Logo tile + bottom tray</h3>
+      <p>The logo sits in a soft tile. Settings and Log out share one inset tray, so the bottom reads as a single group. New Sale is a labelled pill with a grip that shrinks to a circle while you drag it.</p>
+    </button>
+    <button class="dir" data-dir="c">
+      <div class="n">C · Ink Notch</div>
+      <h3>Chipless, editorial</h3>
+      <p>No active tile: an accent notch on the rail edge marks the current page, and an accent underline sits under the logo. Log out is a hairline capsule. New Sale is a rounded square with a halo ring.</p>
+    </button>
+  </div>
+
+  <div class="device">
+    <div class="screen" id="screen">
+      <aside class="rail">
+        <button class="brand" id="brand" aria-label="Go to Dashboard">
+          <span class="mark">
+            <svg viewBox="155 155 547 421" aria-hidden="true">
+              <defs>
+                <linearGradient id="gCloud" gradientUnits="userSpaceOnUse" x1="190" y1="250" x2="690" y2="430"><stop offset="0" stop-color="#5CCBFF"/><stop offset=".52" stop-color="#2BA6F5"/><stop offset="1" stop-color="#1A78DB"/></linearGradient>
+                <linearGradient id="gRing" gradientUnits="userSpaceOnUse" x1="315" y1="525" x2="565" y2="330"><stop offset="0" stop-color="#5CCBFF"/><stop offset=".48" stop-color="#2A93EC"/><stop offset="1" stop-color="#1A6CD0"/></linearGradient>
+                <linearGradient id="gTail" gradientUnits="userSpaceOnUse" x1="409" y1="443" x2="608" y2="570"><stop offset="0" stop-color="#2A86EE"/><stop offset=".5" stop-color="#3FA6FF"/><stop offset="1" stop-color="#2A86EE"/></linearGradient>
+                <mask id="mCloud"><rect width="900" height="900" fill="black"/><g fill="white"><circle cx="455" cy="324" r="163"/><circle cx="266" cy="388" r="105"/><circle cx="592" cy="390" r="103"/><rect x="266" y="324" width="326" height="169"/></g><g fill="black"><circle cx="448" cy="339" r="137"/><circle cx="305" cy="383" r="94"/><circle cx="592" cy="400" r="74"/><rect x="305" y="339" width="287" height="135"/><circle cx="433" cy="425" r="164"/></g></mask>
+                <mask id="mRing"><rect width="900" height="900" fill="black"/><circle cx="433" cy="425" r="147" fill="white"/><circle cx="433" cy="425" r="89" fill="black"/><polygon points="388,400 460,400 650,590 578,590" fill="black"/></mask>
+              </defs>
+              <rect width="900" height="900" fill="url(#gCloud)" mask="url(#mCloud)"/>
+              <rect width="900" height="900" fill="url(#gRing)" mask="url(#mRing)"/>
+              <polygon points="415,449 475,449 602,564 542,564" fill="url(#gTail)" stroke="url(#gTail)" stroke-width="12" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="tip">Dashboard</span>
+        </button>
+
+        <nav class="scroll" id="links"></nav>
+
+        <div class="foot">
+          <div class="tray">
+            <div class="rule"></div>
+            <button class="lnk" data-tab="settings"><span class="ic"><span class="ms">settings</span></span><span class="tx">Settings</span></button>
+            <button class="out" id="logout"><span class="ms">power_settings_new</span><span>Log out</span></button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content" id="content">
+        <div class="page">
+          <div class="hero">
+            <div><small>Main branch · Sun 1 Nov</small><b id="pageTitle">Good evening</b></div>
+            <div class="chip"><i></i>DAY OPEN</div>
+          </div>
+          <div class="kpis">
+            <div class="kpi"><small>Sales today</small><b>QAR 4,820</b><em>▲ 12%</em></div>
+            <div class="kpi"><small>Invoices</small><b>63</b><em>▲ 5</em></div>
+            <div class="kpi"><small>Avg ticket</small><b>QAR 76.5</b><em>▲ 3%</em></div>
+            <div class="kpi"><small>Returns</small><b>2</b><em style="color:var(--muted)">—</em></div>
+          </div>
+          <div class="listc">
+            <h4>Recent sales</h4>
+            <div class="row"><div class="av"><span class="ms">receipt_long</span></div><div>INV-2041<span>Walk-in · 3 items</span></div><b>QAR 142.00</b></div>
+            <div class="row"><div class="av"><span class="ms">receipt_long</span></div><div>INV-2040<span>Card · 1 item</span></div><b>QAR 38.50</b></div>
+            <div class="row"><div class="av"><span class="ms">receipt_long</span></div><div>INV-2039<span>Cash · 6 items</span></div><b>QAR 311.00</b></div>
+            <div class="row"><div class="av"><span class="ms">receipt_long</span></div><div>INV-2038<span>Wallet · 2 items</span></div><b>QAR 24.00</b></div>
+            <div class="row"><div class="av"><span class="ms">receipt_long</span></div><div>INV-2037<span>Cash · 4 items</span></div><b>QAR 96.75</b></div>
+          </div>
+        </div>
+        <div class="ghost" id="ghost"></div>
+        <button class="fab" id="fab" aria-label="New Sale">
+          <span class="grip"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="ms">add</span><span class="lbl">New Sale</span>
+        </button>
+        <div class="toast" id="toast"></div>
+      </main>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><b>Pinned ends</b>The logo and the Settings/Log out footer never scroll. Only the module list between them does, with soft fades at both edges. Switch to <em>Short</em> to see it.</div>
+    <div class="note"><b>Logo → Dashboard</b>Tapping the logo switches the shell to tab 0, an in-place swap like any other rail item. On a pushed screen it goes to <code>/home?tab=0</code>.</div>
+    <div class="note"><b>Floating New Sale</b>Tap starts a sale. Moving more than 6pt counts as a drag. On release it springs to the nearest left/right edge of the content, never over the rail. The position is saved on the device and clamped back on screen after a rotation.</div>
+    <div class="note"><b>Log out</b>Smaller and flat: no tile behind it, but the danger tint keeps it from reading as a place to go. Same confirmation dialog as now.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const screen = document.getElementById('screen');
+  const links = document.getElementById('links');
+  const content = document.getElementById('content');
+  const fab = document.getElementById('fab');
+  const ghost = document.getElementById('ghost');
+  const toast = document.getElementById('toast');
+  const title = document.getElementById('pageTitle');
+  const GUTTER = 18;
+
+  const modules = [
+    ['dashboard', 'grid_view', 'Dashboard'],
+    ['sales', 'receipt_long', 'Sales'],
+    ['returns', 'assignment_return', 'Returns'],
+    ['stock', 'fact_check', 'Stock Check'],
+    ['reports', 'bar_chart', 'Reports'],
+    ['day', 'schedule', 'Day Session'],
+    ['token', 'confirmation_number', 'Token'],
+    ['card', 'nfc', 'Link Card'],
+  ];
+  let active = 'dashboard';
+  let showDashLink = true;
+
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+
+  function renderLinks() {
+    links.innerHTML = modules
+      .filter(([id]) => showDashLink || id !== 'dashboard')
+      .map(([id, ic, tx]) => `<button class="lnk" data-tab="${id}"><span class="ic"><span class="ms">${ic}</span></span><span class="tx">${tx}</span></button>`)
+      .join('');
+    paintActive();
+  }
+  function paintActive() {
+    document.querySelectorAll('.lnk').forEach(el => el.classList.toggle('on', el.dataset.tab === active));
+    document.getElementById('brand').classList.toggle('on', !showDashLink && active === 'dashboard');
+  }
+  function go(tab, label) {
+    active = tab;
+    paintActive();
+    title.textContent = tab === 'dashboard' ? 'Good evening' : label;
+  }
+  function say(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(say.t);
+    say.t = setTimeout(() => toast.classList.remove('show'), 1300);
+  }
+
+  document.addEventListener('click', e => {
+    const l = e.target.closest('.lnk');
+    if (l) { go(l.dataset.tab, l.querySelector('.tx').textContent); }
+  });
+  document.getElementById('brand').addEventListener('click', () => { go('dashboard'); say('Logo → Dashboard'); });
+  document.getElementById('logout').addEventListener('click', () => say('Log out? (same confirm dialog)'));
+
+  // ---- switches ----
+  document.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    sw.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    const v = b.dataset.v;
+    switch (sw.dataset.sw) {
+      case 'preset': stage.dataset.preset = v; break;
+      case 'theme': stage.dataset.theme = v; break;
+      case 'height': screen.classList.toggle('short', v === 'short'); requestAnimationFrame(clampFab); break;
+      case 'dash': showDashLink = v === 'keep'; renderLinks(); break;
+    }
+  }));
+  document.querySelectorAll('.dir').forEach(d => d.addEventListener('click', () => {
+    document.querySelectorAll('.dir').forEach(x => x.classList.toggle('on', x === d));
+    stage.dataset.dir = d.dataset.dir;
+    requestAnimationFrame(() => place(loadPos(), false));
+  }));
+
+  // ---- draggable FAB ----
+  const posKey = () => 'rail-fab-pos-' + stage.dataset.dir;
+  const bounds = () => ({ w: content.clientWidth, h: content.clientHeight, fw: fab.offsetWidth, fh: fab.offsetHeight });
+  function loadPos() { return store.get(posKey()) || { side: 'right', y: 1 }; }
+  /** side = left|right, y = 0..1 fraction of the free height — survives resizes/rotation. */
+  function place(pos, save = true) {
+    const b = bounds();
+    const x = pos.side === 'left' ? GUTTER : b.w - b.fw - GUTTER;
+    const y = GUTTER + Math.min(1, Math.max(0, pos.y)) * (b.h - b.fh - GUTTER * 2);
+    fab.style.left = x + 'px'; fab.style.top = y + 'px';
+    if (save) store.set(posKey(), pos);
+  }
+  function clampFab() { place(loadPos(), false); }
+
+  let start = null, dragging = false;
+  fab.addEventListener('pointerdown', e => {
+    fab.setPointerCapture(e.pointerId);
+    start = { px: e.clientX, py: e.clientY, x: fab.offsetLeft, y: fab.offsetTop };
+    dragging = false;
+  });
+  fab.addEventListener('pointermove', e => {
+    if (!start) return;
+    const dx = e.clientX - start.px, dy = e.clientY - start.py;
+    if (!dragging && Math.hypot(dx, dy) < 6) return;
+    if (!dragging) { dragging = true; fab.classList.add('drag'); }
+    const b = bounds();
+    const x = Math.min(b.w - b.fw - 6, Math.max(6, start.x + dx));
+    const y = Math.min(b.h - b.fh - 6, Math.max(6, start.y + dy));
+    fab.style.left = x + 'px'; fab.style.top = y + 'px';
+    // ghost previews where it will land
+    const side = x + b.fw / 2 < b.w / 2 ? 'left' : 'right';
+    const cw = parseFloat(getComputedStyle(fab).width) || b.fw;
+    ghost.style.width = (cw + 8) + 'px'; ghost.style.height = (b.fh + 8) + 'px';
+    ghost.style.top = (y - 4) + 'px';
+    ghost.style.left = (side === 'left' ? GUTTER - 4 : b.w - cw - GUTTER - 4) + 'px';
+    ghost.classList.add('show');
+  });
+  const end = () => {
+    if (!start) return;
+    ghost.classList.remove('show');
+    if (dragging) {
+      fab.classList.remove('drag');
+      requestAnimationFrame(() => {
+        const b = bounds();
+        const side = fab.offsetLeft + b.fw / 2 < b.w / 2 ? 'left' : 'right';
+        const y = (fab.offsetTop - GUTTER) / Math.max(1, b.h - b.fh - GUTTER * 2);
+        place({ side, y });
+      });
+    } else {
+      say('New Sale →');
+    }
+    start = null;
+  };
+  fab.addEventListener('pointerup', end);
+  fab.addEventListener('pointercancel', end);
+  window.addEventListener('resize', clampFab);
+
+  renderLinks();
+  requestAnimationFrame(clampFab);
+})();
+</script>
+</body>
+</html>

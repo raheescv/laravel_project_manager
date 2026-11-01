@@ -319,16 +319,31 @@ class ProductThumb extends StatelessWidget {
     required this.fallbackIcon,
     this.size = 44,
     this.radius = 12,
+    this.width,
+    this.height,
   });
   final String url;
   final IconData fallbackIcon;
   final double size;
   final double radius;
 
+  /// A non-square box (a gallery tile's photo); [size] otherwise.
+  final double? width;
+  final double? height;
+
   @override
   Widget build(BuildContext context) {
     final p = context.astra;
-    final fallback = IconChip(icon: fallbackIcon, size: size, radius: radius);
+    final w = width ?? size;
+    final h = height ?? size;
+    final fallback = w == h
+        ? IconChip(icon: fallbackIcon, size: w, radius: radius)
+        : Container(
+            width: w,
+            height: h,
+            decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(radius)),
+            child: Icon(fallbackIcon, size: h * 0.32, color: p.primary),
+          );
     if (url.isEmpty) return fallback;
     // The API returns storage paths relative to the site root (e.g. `/storage/…`).
     // Resolve them onto the reachable baseUrl and attach the same host header the
@@ -341,23 +356,23 @@ class ProductThumb extends StatelessWidget {
         image: OfflineImage.provider(
           cfg.assetUrl(url),
           headers: cfg.assetHeaders,
-          cacheWidth: decodeWidthFor(context, size),
+          cacheWidth: decodeWidthFor(context, w),
         ),
-        width: size,
-        height: size,
+        width: w,
+        height: h,
         fit: BoxFit.cover,
         gaplessPlayback: true,
         errorBuilder: (_, __, ___) => fallback,
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
           return Container(
-            width: size,
-            height: size,
+            width: w,
+            height: h,
             decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(radius)),
             alignment: Alignment.center,
             child: SizedBox(
-              width: size * 0.38,
-              height: size * 0.38,
+              width: h * 0.38,
+              height: h * 0.38,
               child: CircularProgressIndicator(strokeWidth: 2, color: p.primary),
             ),
           );

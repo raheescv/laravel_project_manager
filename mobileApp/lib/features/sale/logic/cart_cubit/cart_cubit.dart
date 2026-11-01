@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:equatable/equatable.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/sale/domain/models/pending_sale.dart';
@@ -183,12 +185,40 @@ extension PayModeX on PayMode {
 }
 
 /// One row of a custom (split) payment — a configured method + the amount paid.
+///
+/// [typed] marks an amount the cashier keyed in. The split's other rows share
+/// whatever the typed ones leave of the total (see [shareSplit]).
 class CustomPayment {
   CustomPayment(
-      {required this.methodId, required this.methodName, required this.amount});
+      {required this.methodId, required this.methodName, required this.amount, this.typed = false});
   final int methodId;
   final String methodName;
   final double amount;
+  final bool typed;
+
+  CustomPayment copyWith({double? amount, bool? typed}) => CustomPayment(
+      methodId: methodId, methodName: methodName, amount: amount ?? this.amount, typed: typed ?? this.typed);
+}
+
+/// Shares what the typed rows leave of [total] evenly across the rows that
+/// aren't typed, in whole minor units — the last of them takes the remainder,
+/// so an even split of 280 three ways is 93.33 + 93.33 + 93.34. When the typed
+/// rows already pay the total or more, the others pay nothing.
+List<CustomPayment> shareSplit(List<CustomPayment> rows, double total, {int decimals = 2}) {
+  final open = rows.where((r) => !r.typed).length;
+  if (open == 0) return rows;
+  final unit = math.pow(10, decimals);
+  final fixed = rows.where((r) => r.typed).fold(0.0, (a, r) => a + r.amount);
+  final rest = math.max(0, ((total - fixed) * unit).round());
+  final each = rest ~/ open;
+  var seen = 0;
+  return [
+    for (final r in rows)
+      if (r.typed)
+        r
+      else
+        r.copyWith(amount: (++seen == open ? rest - each * (open - 1) : each) / unit),
+  ];
 }
 
 /// The live ticket. Holds a [CartState] and replaces it on every edit — no
@@ -504,6 +534,42 @@ class CartCubit extends Cubit<CartState> {
         payMode: PayMode.custom,
         clearPayMethod: true,
       ));
+
+  /// Splits the ticket evenly between [methods].
+  void splitBetween(List<PaymentMethod> methods) => setCustomPayments(_shared([
+        for (final m in methods) CustomPayment(methodId: m.id, methodName: m.name, amount: 0),
+      ]));
+
+  /// Adds [method] to the split, or takes it out when it is already in. A new
+  /// method evens the split out again; a removal keeps what was typed, unless
+  /// nothing would be left to take the rest.
+  void toggleSplitMethod(PaymentMethod method) {
+    final rows = state.customPayments;
+    final next = rows.any((r) => r.methodId == method.id)
+        ? [for (final r in rows) if (r.methodId != method.id) r]
+        : [for (final r in rows) r.copyWith(typed: false), CustomPayment(methodId: method.id, methodName: method.name, amount: 0)];
+    if (next.isNotEmpty && next.every((r) => r.typed)) next.last = next.last.copyWith(typed: false);
+    setCustomPayments(_shared(next));
+  }
+
+  /// Keys in what [methodId] pays; the rows not typed share the rest. With
+  /// every row typed, the last other one goes back to sharing — something has
+  /// to take the rest for the split to land on the total.
+  void setSplitAmount(int methodId, double amount) {
+    final rows = [
+      for (final r in state.customPayments) r.methodId == methodId ? r.copyWith(amount: amount, typed: true) : r,
+    ];
+    if (rows.length > 1 && rows.every((r) => r.typed)) {
+      final i = rows.lastIndexWhere((r) => r.methodId != methodId);
+      rows[i] = rows[i].copyWith(typed: false);
+    }
+    setCustomPayments(_shared(rows));
+  }
+
+  /// Every row back to an equal share.
+  void evenSplit() => setCustomPayments(_shared([for (final r in state.customPayments) r.copyWith(typed: false)]));
+
+  List<CustomPayment> _shared(List<CustomPayment> rows) => shareSplit(rows, state.total, decimals: Money.decimals);
 
   void setSendToWhatsapp(bool value) => emit(state.copyWith(sendToWhatsapp: value));
 

@@ -4,6 +4,9 @@ import 'package:invo/features/admin/domain/services/admin_service.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
 import 'package:invo/features/auth/domain/services/auth_service.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/catalog/domain/repository/catalog_repository.dart';
+import 'package:invo/features/catalog/domain/services/catalog_service.dart';
+import 'package:invo/features/catalog/logic/catalog_options_cubit/catalog_options_cubit.dart';
 import 'package:invo/features/profile/domain/repository/profile_repository.dart';
 import 'package:invo/features/profile/domain/services/profile_service.dart';
 import 'package:invo/features/sale/domain/repository/outbox_repository.dart';
@@ -83,6 +86,7 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<SaleRepository>(() => OfflineFirstSaleService(onlineSales))
     ..registerLazySingleton<SaleReturnRepository>(SaleReturnService.new)
     ..registerLazySingleton<StockCheckRepository>(StockCheckService.new)
+    ..registerLazySingleton<CatalogRepository>(CatalogService.new)
     ..registerLazySingleton<AdminRepository>(AdminService.new)
     ..registerLazySingleton<StudentCardRepository>(StudentCardService.new)
     ..registerLazySingleton<TokenRepository>(TokenService.new)
@@ -100,6 +104,7 @@ Future<void> setUpServiceLocator() async {
     ..registerLazySingleton<PosSettingsCubit>(PosSettingsCubit.new)
     // App-wide so the Token screen and Settings → Token share one state.
     ..registerLazySingleton<TokenCubit>(() => TokenCubit(serviceLocator()))
+    ..registerLazySingleton<CatalogOptionsCubit>(() => CatalogOptionsCubit(serviceLocator()))
     ..registerLazySingleton<OfflineSyncCubit>(() => OfflineSyncCubit(onlineSales))
     // One per tap sheet / Link Card screen; the owner closes it.
     ..registerFactory<StudentCardCubit>(() => StudentCardCubit(serviceLocator()));

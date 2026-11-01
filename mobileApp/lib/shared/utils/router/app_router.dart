@@ -3,6 +3,9 @@ import 'package:invo/features/admin/screens/v3/day_session_screen.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
 import 'package:invo/features/auth/screens/v3/branch_select_screen.dart';
 import 'package:invo/features/auth/screens/v3/login_screen.dart';
+import 'package:invo/features/catalog/domain/models/catalog_models.dart';
+import 'package:invo/features/catalog/screens/v3/catalog_form_screen.dart';
+import 'package:invo/features/catalog/screens/v3/catalog_list_screen.dart';
 import 'package:invo/features/profile/screens/v3/change_password_screen.dart';
 import 'package:invo/features/profile/screens/v3/change_pin_screen.dart';
 import 'package:invo/features/profile/screens/v3/edit_profile_screen.dart';
@@ -104,6 +107,16 @@ GoRouter createRouter(AuthCubit auth) {
       // Queue tokens — the screen and its settings share one gate.
       if (loc.startsWith(Routes.token) && !auth.hasPermission(PermissionSlug.tokenIssue)) {
         return Routes.sale;
+      }
+      // Settings → Catalog: each type is gated on its own web permissions, and
+      // adding one needs `.create` on top of `.view`.
+      if (loc.startsWith(Routes.catalogPrefix)) {
+        final segments = state.uri.pathSegments;
+        final type = CatalogType.fromKey(segments.length > 2 ? segments[2] : null);
+        if (type == null || !auth.hasPermission(type.viewPermission)) return Routes.homeTab(3);
+        if (segments.length > 3 && segments[3] == 'new' && !auth.hasPermission(type.createPermission)) {
+          return Routes.catalogList(type.key);
+        }
       }
       if (loc == Routes.linkStudentCard &&
           (!serviceLocator<LocalStorageService>().schoolEnabled ||
@@ -232,6 +245,22 @@ GoRouter createRouter(AuthCubit auth) {
       GoRoute(
           path: Routes.offlineData,
           builder: (_, __) => const TabletRailScaffold(child: OfflineDataScreen())),
+      // Settings → Catalog. These screens bring their own navigation (the
+      // rail on a tablet, the bottom nav on a phone) — see NavScaffold. The
+      // top-level redirect has already checked the type and the permission.
+      GoRoute(
+          path: '${Routes.catalogPrefix}/:type',
+          builder: (_, state) => CatalogListScreen(type: CatalogType.fromKey(state.pathParameters['type'])!)),
+      GoRoute(
+          path: '${Routes.catalogPrefix}/:type/new',
+          builder: (_, state) => CatalogFormScreen(type: CatalogType.fromKey(state.pathParameters['type'])!)),
+      GoRoute(
+          path: '${Routes.catalogPrefix}/:type/:id',
+          redirect: (_, state) => int.tryParse(state.pathParameters['id'] ?? '') == null
+              ? Routes.catalogList(state.pathParameters['type'] ?? '')
+              : null,
+          builder: (_, state) => CatalogFormScreen(
+              type: CatalogType.fromKey(state.pathParameters['type'])!, id: int.parse(state.pathParameters['id']!))),
     ],
   );
 }

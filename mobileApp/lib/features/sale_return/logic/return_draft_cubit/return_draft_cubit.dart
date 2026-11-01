@@ -1,6 +1,6 @@
 import 'package:invo/shared/domain/helpers/formatters.dart';
 import 'package:invo/features/sale/logic/cart_cubit/cart_cubit.dart'
-    show CustomPayment, PayMode, PayModeX;
+    show CustomPayment, PayMode, PayModeX, shareSplit;
 import 'package:invo/shared/domain/models/index.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -151,7 +151,26 @@ class ReturnDraftCubit extends Cubit<ReturnDraftState> {
     if (i == -1) return;
     final rows = [...state.lines];
     rows[i] = line.copyWith(returnQty: qty.clamp(0, line.returnable).toDouble());
-    emit(state.copyWith(lines: rows));
+    final next = state.copyWith(lines: rows);
+    // A split follows the total: the rows not typed re-share what's left.
+    emit(next.payMode == PayMode.custom
+        ? next.copyWith(customPayments: shareSplit(next.customPayments, next.total, decimals: Money.decimals))
+        : next);
+  }
+
+  /// Every returnable line at its full returnable quantity.
+  void returnAll() => _setAllQty(max: true);
+
+  /// Nothing returning.
+  void clearQtys() => _setAllQty(max: false);
+
+  void _setAllQty({required bool max}) {
+    final next = state.copyWith(lines: [
+      for (final l in state.lines) l.copyWith(returnQty: max && !l.fullyReturned ? l.returnable : 0),
+    ]);
+    emit(next.payMode == PayMode.custom
+        ? next.copyWith(customPayments: shareSplit(next.customPayments, next.total, decimals: Money.decimals))
+        : next);
   }
 
   void changeQty(ReturnLine line, double delta) =>
@@ -166,6 +185,45 @@ class ReturnDraftCubit extends Cubit<ReturnDraftState> {
         customPayments: payments,
         payMode: PayMode.custom,
       ));
+
+  // ---- Split refund: the same rules as the ticket's split (CartCubit) ----
+
+  /// Splits the refund evenly between [methods].
+  void splitBetween(List<PaymentMethod> methods) => setCustomPayments(_shared([
+        for (final m in methods) CustomPayment(methodId: m.id, methodName: m.name, amount: 0),
+      ]));
+
+  /// Adds [method] to the split, or takes it out when it is already in. A new
+  /// method evens the split out again; a removal keeps what was typed, unless
+  /// nothing would be left to take the rest. Removing the last one leaves the
+  /// split for a cash refund.
+  void toggleSplitMethod(PaymentMethod method) {
+    final rows = state.customPayments;
+    final next = rows.any((r) => r.methodId == method.id)
+        ? [for (final r in rows) if (r.methodId != method.id) r]
+        : [for (final r in rows) r.copyWith(typed: false), CustomPayment(methodId: method.id, methodName: method.name, amount: 0)];
+    if (next.isEmpty) return setPayMode(PayMode.cash);
+    if (next.every((r) => r.typed)) next.last = next.last.copyWith(typed: false);
+    setCustomPayments(_shared(next));
+  }
+
+  /// Keys in what [methodId] refunds; the rows not typed share the rest. With
+  /// every row typed, the last other one goes back to sharing.
+  void setSplitAmount(int methodId, double amount) {
+    final rows = [
+      for (final r in state.customPayments) r.methodId == methodId ? r.copyWith(amount: amount, typed: true) : r,
+    ];
+    if (rows.length > 1 && rows.every((r) => r.typed)) {
+      final i = rows.lastIndexWhere((r) => r.methodId != methodId);
+      rows[i] = rows[i].copyWith(typed: false);
+    }
+    setCustomPayments(_shared(rows));
+  }
+
+  /// Every row back to an equal share.
+  void evenSplit() => setCustomPayments(_shared([for (final r in state.customPayments) r.copyWith(typed: false)]));
+
+  List<CustomPayment> _shared(List<CustomPayment> rows) => shareSplit(rows, state.total, decimals: Money.decimals);
 
   void clear() => emit(const ReturnDraftState());
 

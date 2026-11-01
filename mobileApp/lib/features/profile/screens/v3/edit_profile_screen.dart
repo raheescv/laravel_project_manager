@@ -15,6 +15,7 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
+import 'package:invo/shared/widgets/image_source_sheet.dart';
 
 /// Edit Profile — the signed-in user updates their own name / phone / email and
 /// avatar. Wired to PUT /profile and POST /profile/photo; on success the cached
@@ -105,7 +106,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _changePhoto() async {
-    final source = await _pickSource();
+    final source = await showImageSourceSheet(context);
     if (source == null) return;
     final XFile? file = await ImagePicker().pickImage(
       source: source,
@@ -138,39 +139,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _snack(_profile.state.errorMessage ?? 'Could not update photo.');
     }
     if (mounted) setState(() => _photoBusy = false);
-  }
-
-  Future<ImageSource?> _pickSource() {
-    final p = context.astra;
-    return showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: p.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(width: 38, height: 4, decoration: BoxDecoration(color: p.hairline, borderRadius: BorderRadius.circular(3))),
-            const SizedBox(height: 10),
-            _sourceTile(ctx, Icons.camera_alt_outlined, 'Take photo', ImageSource.camera),
-            _sourceTile(ctx, Icons.photo_library_outlined, 'Choose from library', ImageSource.gallery),
-            const SizedBox(height: 6),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sourceTile(BuildContext ctx, IconData icon, String label, ImageSource source) {
-    final p = ctx.astra;
-    return ListTile(
-      leading: IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
-      title: Text(label, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
-      onTap: () => Navigator.pop(ctx, source),
-    );
   }
 
   @override

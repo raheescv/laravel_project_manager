@@ -368,8 +368,15 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
   }
 
   // -------------------------------------------------------- INTERACTIONS
+  /// The full custom moment: the calendar, then — unless it was cancelled —
+  /// the time wheel.
+  Future<void> _pickMoment(DaySessionCubit c) async {
+    if (await _pickDate(c) && mounted) await _pickTime(c);
+  }
+
   /// Themed calendar dialog with a one-tap **Today** button in its action bar.
-  Future<void> _pickDate(DaySessionCubit c) async {
+  /// True when a date was chosen.
+  Future<bool> _pickDate(DaySessionCubit c) async {
     final now = DateTime.now();
     final user = context.read<AuthCubit>().user;
     DateTime first;
@@ -423,7 +430,9 @@ class _DaySessionScreenState extends State<DaySessionScreen> with RouteAware {
         );
       },
     );
-    if (picked != null) c.setDate(picked);
+    if (picked == null) return false;
+    c.setDate(picked);
+    return true;
   }
 
   /// Themed time-wheel dialog with a one-tap **Now** button in its action bar.

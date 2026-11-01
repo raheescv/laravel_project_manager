@@ -20,14 +20,16 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/utils/local_storage/local_storage_service.dart';
 import 'package:invo/shared/utils/router/routes.dart';
 import 'package:invo/shared/widgets/app_version.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
 import 'package:invo/features/auth/widgets/v3/connection_sheet.dart';
+import 'package:invo/features/catalog/domain/models/catalog_models.dart';
+import 'package:invo/features/catalog/screens/v3/product_config_screen.dart';
 import 'package:invo/features/settings/screens/v3/offline_data_screen.dart';
 import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
-import 'package:invo/features/settings/widgets/v3/appearance_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/branch_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/category_display_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/currency_sheet.dart';
@@ -35,88 +37,192 @@ import 'package:invo/features/settings/widgets/v3/start_screen_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/theme_sheet.dart';
 import 'package:invo/features/settings/widgets/v3/typography_sheet.dart';
 
+/// The settings categories, in display order. [group] is the heading each one
+/// sits under — on the phone's category list and the tablet's rail alike.
+enum _Cat {
+  sale('Selling'),
+  productConfig('Selling'),
+  catalog('Selling'),
+  printer('Selling'),
+  appearance('You'),
+  startScreen('You'),
+  permissions('You'),
+  system('This device');
+
+  const _Cat(this.group);
+  final String group;
+}
+
+/// One category as the lists show it: `sub` is a short live state line.
+typedef _CatTile = ({_Cat cat, IconData icon, String title, String sub});
+
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.onSelectTab, this.active = true, this.rootRequest = 0});
+
+  /// Inside the home shell: opens a catalog page as a shell destination so it
+  /// keeps its place while the user visits other modules. Without it (a deep
+  /// link) the catalog pages are pushed as routes.
+  final ValueChanged<int>? onSelectTab;
+
+  /// Whether the shell is showing Settings. It keeps this screen alive behind
+  /// other tabs, so back may only close a category page while it is on show.
+  final bool active;
+
+  /// Bumped by the shell when Settings is tapped while Settings (or a page
+  /// under it) is already showing: back to the category list.
+  final int rootRequest;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  /// Tablet two-pane only: which settings category is open in the right panel.
-  /// Ignored on phones, which keep the single scrolling card list.
-  int _sel = 0;
+  /// Tablet two-pane only: which category is open in the right panel.
+  _Cat _sel = _Cat.sale;
+
+  /// Phones only: the category page open over the category list, or null for
+  /// the list itself.
+  _Cat? _phoneCat;
 
   /// Phones only: the card in the list pushes the permissions page. A tablet
   /// never gets here — the list is rendered inside the detail pane instead, so
-  /// it stays inside Settings (see [_panel] case 4).
+  /// it stays inside Settings (see [_body]).
   void _openPermissions() => context.push(Routes.permissions);
+
+  @override
+  void didUpdateWidget(SettingsScreen old) {
+    super.didUpdateWidget(old);
+    if (widget.rootRequest != old.rootRequest) _phoneCat = null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeCubit>();
     final currencyCtl = context.watch<CurrencyCubit>();
     final branch = context.watch<BranchCubit>();
+    final cats = _cats(context, theme, currencyCtl, branch);
+    final open = cats.where((t) => t.cat == _phoneCat).firstOrNull;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: AstraBackground(
-        // Tablet has no header band — the category rail carries the title
-        // (the preview's `.setnav`); the side-rail is the chrome.
-        child: context.isTablet
-            ? SafeArea(bottom: false, child: _tabletTwoPane(context, theme, currencyCtl, branch))
-            : Column(
-                children: [
-                  const EmeraldHeader(title: 'Settings'),
-                  Expanded(
-                    child: MaxWidthBox(
-                      maxWidth: 560,
-                      child: _phoneList(context, <Widget>[
-                        _presetCard(context, theme),
-                        _appearanceCard(context, theme),
-                        _typographyCard(context, theme),
-                        _hapticsCard(context),
-                        _currencyCard(context, currencyCtl),
-                        _branchCard(context, branch),
-                        _printerCard(context),
-                        _lockAfterSaleCard(context),
-                        _askBranchOnUnlockCard(context),
-                        _askClientCard(context),
-                        _tipCard(context),
-                        _gridColumnsCard(context),
-                        _productOrderCard(context),
-                        _categoryDisplayCard(context),
-                        _startScreenCard(context),
-                        _permissionsCard(context),
-                        _offlineDataCard(context),
-                        _serverCard(context),
-                      ]),
-                    ),
-                  ),
-                ],
-              ),
+    return PopScope(
+      // A category page is a step inside Settings: back closes it rather than
+      // leaving the shell.
+      canPop: context.isTablet || open == null || !widget.active,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => _phoneCat = null);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: AstraBackground(
+          // Tablet has no header band — the category rail carries the title
+          // (the preview's `.setnav`); the side-rail is the chrome.
+          child: context.isTablet
+              ? SafeArea(bottom: false, child: _tabletTwoPane(context, cats, theme, currencyCtl, branch))
+              : open == null
+                  ? _phoneHub(context, cats)
+                  : _phoneCategory(context, open, theme, currencyCtl, branch),
+        ),
       ),
     );
   }
 
-  /// Phone: a single scrolling column of cards (unchanged layout).
-  Widget _phoneList(BuildContext context, List<Widget> cards) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+  // ---- Phone: a list of categories, each opening a page of its own ----
+
+  Widget _phoneHub(BuildContext context, List<_CatTile> cats) {
+    return Column(
       children: [
-        for (final c in cards) ...[c, const SizedBox(height: 11)],
-        _logoutCard(context),
-        const SizedBox(height: 14),
-        _versionLine(context),
+        const EmeraldHeader(title: 'Settings', subtitle: 'Device and account preferences'),
+        Expanded(
+          child: MaxWidthBox(
+            maxWidth: 560,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+              children: [
+                ..._grouped(context, cats,
+                    (t) => Padding(padding: const EdgeInsets.only(bottom: 8), child: _catRow(context, t))),
+                const SizedBox(height: 8),
+                _logoutCard(context),
+                const SizedBox(height: 14),
+                _versionLine(context),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  // ---- Tablet two-pane: category nav (left) + live detail panel (right) ----
+  /// Printer & receipt and My permissions are full screens of their own, and
+  /// Start screen is a single pick — they open directly rather than through a
+  /// page holding one item.
+  void _openOnPhone(_Cat cat) {
+    switch (cat) {
+      case _Cat.printer:
+        context.push(Routes.printSettings);
+      case _Cat.permissions:
+        _openPermissions();
+      case _Cat.startScreen:
+        showStartScreenSheet(context);
+      default:
+        setState(() => _phoneCat = cat);
+    }
+  }
 
-  /// The settings categories, in nav order. `sub` is a short state line shown
-  /// under each nav label; the detail is rendered by [_panel].
-  List<(IconData, String, String)> _cats(BuildContext context, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
+  Widget _catRow(BuildContext context, _CatTile t) {
+    final p = context.astra;
+    return AstraCard(
+      radius: 15,
+      onTap: () => _openOnPhone(t.cat),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(gradient: p.primaryGradient, borderRadius: BorderRadius.circular(12)),
+            child: Icon(t.icon, size: 20, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.title, style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
+                Text(t.sub, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _phoneCategory(BuildContext context, _CatTile t, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
+    return Column(
+      children: [
+        EmeraldHeader(
+          title: t.title,
+          subtitle: _blurb(t.cat),
+          leading: HeaderIconButton(icon: Icons.arrow_back, onTap: () => setState(() => _phoneCat = null)),
+        ),
+        Expanded(
+          child: MaxWidthBox(
+            maxWidth: 560,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+              children: _body(context, t.cat, theme, currency, branch),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---- Shared by both size classes ----
+
+  /// The categories this account can see, in [_Cat] order.
+  List<_CatTile> _cats(BuildContext context, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
     final print = context.watch<PrintSettingsCubit>();
     final pos = context.watch<PosSettingsCubit>();
     final auth = context.watch<AuthCubit>();
@@ -124,25 +230,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // not every backend permission the account happens to hold.
     final permCount = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
     final sel = branch.selected;
+    final lists = [for (final type in CatalogType.values) if (auth.hasPermission(type.viewPermission)) type.plural];
     return [
+      // One category for the whole selling flow — opening the ticket, laying
+      // the catalog out, and what the till does once the sale is charged.
+      (cat: _Cat.sale, icon: Icons.point_of_sale_outlined, title: 'Sale Configuration',
+          sub: '${pos.askClientOnNewSale ? 'Asks for client' : 'No client prompt'} · ${_tipShown(context) ? 'tip on' : 'tip off'} · ${pos.lockAfterSale ? 'locks after sale' : 'stays unlocked'}'),
+      // Its own category, not a link inside Catalog: these are settings, and a
+      // till sets them where it sets everything else.
+      if (auth.hasPermission(PermissionSlug.settings))
+        (cat: _Cat.productConfig, icon: Icons.qr_code_2, title: 'Product configuration',
+            sub: 'Barcode type, prefix and out-of-stock items'),
+      if (lists.isNotEmpty)
+        (cat: _Cat.catalog, icon: Icons.inventory_2_outlined, title: 'Catalog', sub: lists.join(' · ')),
+      (cat: _Cat.printer, icon: Icons.receipt_long_outlined, title: 'Printer & receipt',
+          sub: '${print.style.label} · ${print.width.label}'),
       // Preset, brightness and typeface are one subject — how the app looks —
-      // so they are one category with three sections in the panel, not three
-      // entries in the rail. "Appearance" is now the group; the brightness
-      // switch inside it is "Light & dark".
-      (Icons.palette_outlined, 'Appearance',
-          '${theme.preset.name} · ${theme.mode.label} · ${theme.chrome.label}'),
-      (Icons.receipt_long_outlined, 'Printer & receipt', '${print.style.label} · ${print.width.label}'),
-      (Icons.point_of_sale_outlined, 'Sale Configuration',
-          '${pos.askClientOnNewSale ? 'Asks for client' : 'No client prompt'} · ${_tipShown(context) ? 'tip on' : 'tip off'} · ${pos.lockAfterSale ? 'locks after sale' : 'stays unlocked'}'),
-      (startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
-          'Opens on ${_effectiveStartScreen(context).label}'),
-      (Icons.verified_user_outlined, 'My permissions', '$permCount granted'),
+      // so they are one category with sections, not three entries.
+      (cat: _Cat.appearance, icon: Icons.palette_outlined, title: 'Appearance',
+          sub: '${theme.preset.name} · ${theme.mode.label} · ${theme.typeface.name}'),
+      (cat: _Cat.startScreen, icon: startScreenIcon(_effectiveStartScreen(context)), title: 'Start screen',
+          sub: 'Opens on ${_effectiveStartScreen(context).label}'),
+      (cat: _Cat.permissions, icon: Icons.verified_user_outlined, title: 'My permissions', sub: '$permCount granted'),
       // Haptics, currency, branch, offline data and the server are all "how
-      // this device is set up" — plumbing you visit once and leave alone, not
-      // five separate places. Grouped, the rail is a short list of subjects
-      // instead of a scroll of knobs.
-      (Icons.tune, 'System configuration', '${currency.currency.code} · ${sel == null ? 'No branch' : sel.name}'),
+      // this device is set up" — plumbing you visit once and leave alone.
+      (cat: _Cat.system, icon: Icons.tune, title: 'System configuration',
+          sub: '${currency.currency.code} · ${sel == null ? 'No branch' : sel.name}'),
     ];
+  }
+
+  /// [tiles] built by [build], with a group heading above the first of each group.
+  List<Widget> _grouped(BuildContext context, List<_CatTile> tiles, Widget Function(_CatTile) build) {
+    final out = <Widget>[];
+    String? group;
+    for (final t in tiles) {
+      if (t.cat.group != group) {
+        out.add(_groupLabel(context, t.cat.group, first: group == null));
+        group = t.cat.group;
+      }
+      out.add(build(t));
+    }
+    return out;
+  }
+
+  Widget _groupLabel(BuildContext context, String label, {required bool first}) {
+    final p = context.astra;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(6, first ? 0 : 12, 6, 8),
+      child: Text(label.toUpperCase(),
+          style: ui(size: 10.5, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 1.1)),
+    );
+  }
+
+  String _blurb(_Cat cat) => switch (cat) {
+        _Cat.sale => 'How this till rings a sale — from opening the ticket to locking up after it.',
+        _Cat.productConfig => 'Barcodes and stock rules — shared with the web, so a change applies on every till.',
+        _Cat.catalog => 'Products and services — each opens as a page of its own.',
+        _Cat.printer => 'Receipt style, paper width and print options.',
+        _Cat.appearance => 'Colour, brightness and type — how the app looks.',
+        _Cat.startScreen => 'Where this device opens for you once you sign in — and after an unlock.',
+        _Cat.permissions => 'What this account is allowed to do.',
+        _Cat.system => 'How this device is set up — feedback, money, branch, offline data and the server behind it.',
+      };
+
+  /// Settings → Catalog: Products and Services, each offered only to an
+  /// account with its permission.
+  List<Widget> _catalogCards(BuildContext context) {
+    final auth = context.watch<AuthCubit>();
+    return [
+      for (final type in CatalogType.values)
+        if (auth.hasPermission(type.viewPermission))
+          _linkCard(context, type.icon, type.plural, 'List, add and edit ${type.plural.toLowerCase()}',
+              () => _openCatalog(type.isProduct ? kProductsTab : kServicesTab, Routes.catalogList(type.key))),
+    ];
+  }
+
+  void _openCatalog(int tab, String route) =>
+      widget.onSelectTab != null ? widget.onSelectTab!(tab) : context.push(route);
+
+  Widget _linkCard(BuildContext context, IconData icon, String title, String subtitle, VoidCallback onTap) {
+    final p = context.astra;
+    return AstraCard(
+      radius: 14,
+      onTap: onTap,
+      child: Row(
+        children: [
+          IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
+                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
+        ],
+      ),
+    );
   }
 
   IconData _modeIcon(AstraMode m) => switch (m) {
@@ -151,15 +338,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AstraMode.system => Icons.brightness_auto_outlined,
       };
 
-  Widget _tabletTwoPane(BuildContext context, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
-    final cats = _cats(context, theme, currency, branch);
-    final sel = _sel.clamp(0, cats.length - 1);
+  // ---- Tablet two-pane: category nav (left) + live detail panel (right) ----
+
+  Widget _tabletTwoPane(BuildContext context, List<_CatTile> cats, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
+    final sel = cats.firstWhere((t) => t.cat == _sel, orElse: () => cats.first);
     return LayoutBuilder(
       builder: (ctx, c) => _twoPaneRow(context, cats, sel, theme, currency, branch, TabletMetrics.forWidth(c.maxWidth)),
     );
   }
 
-  Widget _twoPaneRow(BuildContext context, List<(IconData, String, String)> cats, int sel, ThemeCubit theme,
+  Widget _twoPaneRow(BuildContext context, List<_CatTile> cats, _CatTile sel, ThemeCubit theme,
       CurrencyCubit currency, BranchCubit branch, TabletMetrics m) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -176,9 +364,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                   children: [
-                    for (var i = 0; i < cats.length; i++)
-                      _navTile(context, cats[i].$1, cats[i].$2, cats[i].$3,
-                          active: i == sel, onTap: () => setState(() => _sel = i)),
+                    ..._grouped(context, cats, (t) => _navTile(context, t.icon, t.title, t.sub,
+                        active: t.cat == sel.cat, onTap: () => setState(() => _sel = t.cat))),
                     const SizedBox(height: 16),
                     _logoutCard(context),
                     const SizedBox(height: 14),
@@ -192,7 +379,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Expanded(
           child: SingleChildScrollView(
             padding: m.detailPadding.copyWith(top: 24, bottom: 40),
-            child: MaxWidthBox(maxWidth: 620, child: _panel(context, sel, theme, currency, branch)),
+            child: MaxWidthBox(
+                maxWidth: 620,
+                child: _panelShell(context, sel.icon, sel.title, _blurb(sel.cat), _body(context, sel.cat, theme, currency, branch))),
           ),
         ),
       ],
@@ -237,13 +426,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// The right detail panel for the selected category. Simple settings (mode,
-  /// haptics) get real inline controls; pickers reuse their existing sheet/route
-  /// so nothing loses functionality — just presented as a tablet detail pane.
-  Widget _panel(BuildContext context, int i, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
-    switch (i) {
-      case 0:
-        return _panelShell(context, Icons.palette_outlined, 'Appearance', 'Colour, brightness and type — how the app looks.', [
+  /// A category's settings — the tablet's detail panel and the phone's category
+  /// page alike. Simple settings (mode, haptics) get real inline controls;
+  /// pickers reuse their existing sheet so nothing loses functionality.
+  List<Widget> _body(BuildContext context, _Cat cat, ThemeCubit theme, CurrencyCubit currency, BranchCubit branch) {
+    switch (cat) {
+      case _Cat.appearance:
+        return [
           _panelSection(context, 'Colour preset', 'The accent palette used across the app.', top: 0),
           _presetCard(context, theme),
           const SizedBox(height: 12),
@@ -254,26 +443,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _typographyCard(context, theme),
           const SizedBox(height: 12),
           AstraButton(label: 'Choose a typeface', icon: Icons.text_fields_outlined, onTap: () => showTypographySheet(context)),
-          _panelSection(context, 'Window', 'Where the rail sits, and how the page is framed beside it.'),
-          for (final c in AstraChrome.values) _chromeRow(context, theme, c),
-        ]);
-      case 1:
+          // Only a tablet has the rail this frames.
+          if (context.isTablet) ...[
+            _panelSection(context, 'Window', 'Where the rail sits, and how the page is framed beside it.'),
+            for (final c in AstraChrome.values) _chromeRow(context, theme, c),
+          ],
+        ];
+      case _Cat.printer:
         // The real screen, hosted in the pane — not a summary card behind a
         // button that throws the whole window away to show it. Settings on a
         // tablet is one place you stay in; a category that pushes a page reads
         // as leaving, and losing the rail to change a paper width is a poor
         // trade. Phones still push it: there is no second pane to host it in.
-        return _panelShell(context, Icons.receipt_long_outlined, 'Printer & receipt',
-            'Receipt style, paper width and print options.', const [
-          PrintSettingsScreen(embedded: true),
-        ]);
-      case 2:
-        // One category for the whole selling flow — opening the ticket, laying
-        // the catalog out, and what the till does once the sale is charged. As
-        // two they read as unrelated, and "Shared till" hid a switch every
-        // counter has an opinion about behind a name only some of them own.
-        return _panelShell(context, Icons.point_of_sale_outlined, 'Sale Configuration',
-            'How this till rings a sale — from opening the ticket to locking up after it.', [
+        return const [PrintSettingsScreen(embedded: true)];
+      case _Cat.sale:
+        return [
           _askClientCard(context),
           const SizedBox(height: 11),
           _tipCard(context),
@@ -286,31 +470,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 11),
           _productOrderCard(context),
           const SizedBox(height: 11),
-          // Same card the phone list shows: it carries the lock chip and the
-          // auto-print caveat, which a bare toggle row here did not.
+          // It carries the lock chip and the auto-print caveat, which a bare
+          // toggle row did not.
           _lockAfterSaleCard(context),
           const SizedBox(height: 11),
           _askBranchOnUnlockCard(context),
-        ]);
-      case 3:
-        return _panelShell(context, startScreenIcon(_effectiveStartScreen(context)), 'Start screen',
-            'Where this device opens for you once you sign in — and after an unlock.', [
+        ];
+      case _Cat.productConfig:
+        return const [ProductConfigScreen()];
+      case _Cat.catalog:
+        // The lists open as full-width pages — a table needs the room.
+        return [for (final card in _catalogCards(context)) ...[card, const SizedBox(height: 11)]];
+      case _Cat.startScreen:
+        return [
           for (final option in startScreenOptions(context))
             _startScreenRow(context, option, option == _effectiveStartScreen(context)),
-        ]);
-      case 4:
+        ];
+      case _Cat.permissions:
         // The real list, hosted in the pane — same reasoning as the printer
-        // category above. Swapping the whole shell to the permissions
-        // destination threw the settings rail away just to read a list of
-        // gates, and there was no way back to the category you came from.
-        return _panelShell(context, Icons.verified_user_outlined, 'My permissions',
-            'What this account is allowed to do.', const [
-          PermissionsScreen(embedded: true),
-        ]);
-      default:
+        // category above.
+        return const [PermissionsScreen(embedded: true)];
+      case _Cat.system:
         final haptics = context.watch<HapticsCubit>();
-        return _panelShell(context, Icons.tune, 'System configuration',
-            'How this device is set up — feedback, money, branch, offline data and the server behind it.', [
+        return [
           _panelSection(context, 'Haptics', 'Vibration feedback on every tap.', top: 0),
           _toggleRow(context, 'Haptic feedback', haptics.enabled ? 'On — a tick on each tap' : 'Off', haptics.enabled,
               () => context.read<HapticsCubit>().toggle()),
@@ -323,12 +505,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 12),
           AstraButton(label: 'Switch branch', icon: Icons.swap_horiz, onTap: () => showBranchSheet(context)),
           // The live sync line, not a static blurb: it is the one thing on this
-          // panel that changes on its own, and the rail no longer carries it.
+          // panel that changes on its own.
           _panelSection(context, 'Offline data', _offlineSummary(_syncState)),
           const OfflineDataScreen(embedded: true),
           _panelSection(context, 'Server connection', 'The API base URL and tenant this app talks to.'),
           AstraButton(label: 'Connection settings', icon: Icons.cloud_outlined, onTap: () => ConnectionSheet.show(context)),
-        ]);
+        ];
     }
   }
 
@@ -603,22 +785,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _serverCard(BuildContext context) {
-    final p = context.astra;
-    return AstraCard(
-      radius: 14,
-      onTap: () => ConnectionSheet.show(context),
-      child: Row(
-        children: [
-          IconChip(icon: Icons.cloud_outlined, size: 28, radius: 8, bg: p.tint),
-          const SizedBox(width: 11),
-          Expanded(child: Text('Server connection', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink))),
-          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
-  }
-
   /// The sync engine is an app-wide singleton that boots with the session, so a
   /// widget test rendering this screen on its own has none. Guarded the same way
   /// [OfflineBanner] guards it — a settings list is not worth crashing over a
@@ -635,60 +801,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!sync.hasCatalog) return 'Not prepared — can’t sell offline';
     if (sync.provisionIncomplete.isNotEmpty) return 'Incomplete — reconnect to finish';
     return 'Synced ${catalogAgeLabel(sync.catalogSyncedAt)}';
-  }
-
-  Widget _offlineDataCard(BuildContext context) {
-    if (!_hasSync) return _offlineDataTile(context, const OfflineSyncState());
-    // Resolved from the locator rather than the widget tree: OfflineSyncCubit is
-    // an app-wide singleton that is deliberately not in the MultiBlocProvider,
-    // the same way the offline banner reaches it.
-    return BlocBuilder<OfflineSyncCubit, OfflineSyncState>(
-      bloc: serviceLocator<OfflineSyncCubit>(),
-      buildWhen: (a, b) =>
-          a.catalogSyncedAt != b.catalogSyncedAt ||
-          a.catalogRefreshing != b.catalogRefreshing ||
-          a.hasCatalog != b.hasCatalog ||
-          a.provisionIncomplete != b.provisionIncomplete,
-      builder: (context, sync) => _offlineDataTile(context, sync),
-    );
-  }
-
-  Widget _offlineDataTile(BuildContext context, OfflineSyncState sync) {
-    final p = context.astra;
-    final unready = !sync.hasCatalog || sync.provisionIncomplete.isNotEmpty;
-    return AstraCard(
-      radius: 14,
-      onTap: () => context.push(Routes.offlineData),
-      child: Row(
-        children: [
-          IconChip(
-            icon: sync.hasCatalog ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
-            size: 34,
-            radius: 9,
-            bg: unready ? AstraPalette.danger.withValues(alpha: 0.14) : p.tint,
-            fg: unready ? AstraPalette.danger : null,
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Offline data', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text(_offlineSummary(sync),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ui(
-                      size: 10,
-                      weight: FontWeight.w600,
-                      color: unready ? AstraPalette.danger : p.textMuted,
-                    )),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
   }
 
   Widget _logoutCard(BuildContext context) {
@@ -768,39 +880,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _appearanceCard(BuildContext context, ThemeCubit theme) {
-    final p = context.astra;
-    final mode = theme.mode;
-    final icon = switch (mode) {
-      AstraMode.light => Icons.light_mode_outlined,
-      AstraMode.dark => Icons.dark_mode_outlined,
-      AstraMode.system => Icons.brightness_auto_outlined,
-    };
-    final subtitle = mode == AstraMode.system
-        ? 'System · ${theme.isDark ? 'Dark' : 'Light'}'
-        : mode.label;
-    return AstraCard(
-      radius: 14,
-      onTap: () => showAppearanceSheet(context),
-      child: Row(
-        children: [
-          IconChip(icon: icon, size: 34, radius: 9, bg: p.tint),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Light & dark', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
-  }
-
   Widget _typographyCard(BuildContext context, ThemeCubit theme) {
     final p = context.astra;
     final face = theme.typeface;
@@ -832,38 +911,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
-  }
-
-  Widget _hapticsCard(BuildContext context) {
-    final p = context.astra;
-    final haptics = context.watch<HapticsCubit>();
-    final on = haptics.enabled;
-    return AstraCard(
-      radius: 14,
-      onTap: () => context.read<HapticsCubit>().toggle(),
-      child: Row(
-        children: [
-          IconChip(
-            icon: on ? Icons.vibration : Icons.smartphone_outlined,
-            size: 34,
-            radius: 9,
-            bg: p.tint,
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Haptics', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text(on ? 'Vibration feedback on tap' : 'Vibration feedback off',
-                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-              ],
-            ),
-          ),
-          _switch(context, on),
         ],
       ),
     );
@@ -1163,37 +1210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// What the device opens on after sign-in or an unlock.
   StartScreen _effectiveStartScreen(BuildContext context) => context.watch<PosSettingsCubit>().startScreen;
 
-  /// Where signing in lands. Device-local, so the counter tablet can open
-  /// straight on the POS while the same manager's phone still opens on the
-  /// dashboard — it takes effect on the next sign-in or unlock.
-  Widget _startScreenCard(BuildContext context) {
-    final p = context.astra;
-    final start = _effectiveStartScreen(context);
-    return AstraCard(
-      radius: 14,
-      onTap: () => showStartScreenSheet(context),
-      child: Row(
-        children: [
-          IconChip(icon: startScreenIcon(start), size: 34, radius: 9, bg: p.tint),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Start screen',
-                    style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text('Opens on ${start.label} after sign-in',
-                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: p.textMuted),
-        ],
-      ),
-    );
-  }
-
-  /// An inline start-screen option (tablet detail pane), click-and-go like the
+  /// An inline start-screen option, click-and-go like the
   /// appearance rows beside it.
   Widget _startScreenRow(BuildContext context, StartScreen screen, bool active) {
     final p = context.astra;
@@ -1308,59 +1325,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text('Branch',
                     style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
-  }
-
-  Widget _printerCard(BuildContext context) {
-    final p = context.astra;
-    final print = context.watch<PrintSettingsCubit>();
-    return AstraCard(
-      radius: 14,
-      onTap: () => context.push(Routes.printSettings),
-      child: Row(
-        children: [
-          IconChip(icon: Icons.receipt_long_outlined, size: 34, radius: 9, bg: p.tint),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Printer & receipt', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
-                Text('${print.style.label} · ${print.width.label}',
-                    style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: p.textMuted, size: 18),
-        ],
-      ),
-    );
-  }
-
-  Widget _permissionsCard(BuildContext context) {
-    final p = context.astra;
-    final auth = context.watch<AuthCubit>();
-    final count = mobilePermissions.where((m) => auth.hasPermission(m.slug)).length;
-    final subtitle = '$count of ${mobilePermissions.length} ${count == 1 ? 'permission' : 'permissions'} granted';
-    return AstraCard(
-      radius: 14,
-      onTap: _openPermissions,
-      child: Row(
-        children: [
-          IconChip(icon: Icons.verified_user_outlined, size: 34, radius: 9, bg: p.tint),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('My permissions', style: ui(size: 12.5, weight: FontWeight.w700, color: p.ink)),
                 Text(subtitle, style: ui(size: 10, weight: FontWeight.w600, color: p.textMuted)),
               ],
             ),

@@ -7,6 +7,8 @@ import 'package:invo/features/admin/logic/admin_cubit/admin_cubit.dart';
 import 'package:invo/features/admin/logic/day_session_cubit/day_session_cubit.dart';
 import 'package:invo/features/auth/domain/repository/auth_repository.dart';
 import 'package:invo/features/auth/logic/auth_cubit/auth_cubit.dart';
+import 'package:invo/features/catalog/domain/repository/catalog_repository.dart';
+import 'package:invo/features/catalog/logic/catalog_options_cubit/catalog_options_cubit.dart';
 import 'package:invo/features/profile/domain/repository/profile_repository.dart';
 import 'package:invo/features/profile/domain/services/profile_service.dart';
 import 'package:invo/features/sale/domain/repository/sale_repository.dart';
@@ -37,6 +39,7 @@ import 'package:invo/shared/utils/router/http_utils/http_service.dart';
 import 'package:invo/shared/utils/router/route_observer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'fake_catalog_repository.dart';
 import 'fake_lookup_repository.dart';
 import 'fake_repositories.dart';
 import 'fake_sale_return_repository.dart';
@@ -52,6 +55,8 @@ class TestHarness {
   late final FakeAuthRepository auth;
   late final FakeAdminRepository admin;
   late final FakeSaleReturnRepository saleReturn;
+  late final FakeCatalogRepository catalog;
+  late CatalogOptionsCubit catalogOptions;
 
   AuthCubit authCubit = AuthCubit();
   late CartCubit cart;
@@ -81,6 +86,7 @@ class TestHarness {
     auth = FakeAuthRepository();
     this.admin = FakeAdminRepository();
     saleReturn = FakeSaleReturnRepository();
+    catalog = FakeCatalogRepository();
 
     serviceLocator
       ..registerSingleton<LocalStorageService>(storage)
@@ -90,6 +96,7 @@ class TestHarness {
       ..registerLazySingleton<AuthRepository>(() => auth)
       ..registerLazySingleton<AdminRepository>(() => this.admin)
       ..registerLazySingleton<SaleReturnRepository>(() => saleReturn)
+      ..registerLazySingleton<CatalogRepository>(() => catalog)
       // Not exercised by the layout tests, but resolved from the locator when
       // the profile / stock-check screens build.
       ..registerLazySingleton<ProfileRepository>(ProfileService.new)
@@ -135,6 +142,7 @@ class TestHarness {
       ..registerSingleton<TokenCubit>(token);
 
     cart = CartCubit();
+    catalogOptions = CatalogOptionsCubit(catalog);
   }
 
   /// Convenience: the four demo catalog products (Signature Cut, etc).
@@ -155,6 +163,7 @@ class TestHarness {
         BlocProvider<PrintSettingsCubit>.value(value: printSettings),
         BlocProvider<PosSettingsCubit>.value(value: posSettings),
         BlocProvider<TokenCubit>.value(value: token),
+        BlocProvider<CatalogOptionsCubit>.value(value: catalogOptions),
         BlocProvider<CartCubit>.value(value: cart),
         BlocProvider<ReturnDraftCubit>(create: (_) => ReturnDraftCubit()),
         BlocProvider<CatalogCubit>(create: (_) => CatalogCubit()),
@@ -173,6 +182,7 @@ class TestHarness {
         GoRoute(path: '/', builder: (_, __) => child),
         GoRoute(path: '/invoice', builder: (_, __) => const Scaffold()),
         GoRoute(path: '/new-sale', builder: (_, __) => const Scaffold()),
+        GoRoute(path: '/sale', builder: (_, __) => const Scaffold(body: Text('sale route'))),
         GoRoute(path: '/cart', builder: (_, __) => const Scaffold()),
         GoRoute(path: '/review', builder: (_, __) => const Scaffold()),
         GoRoute(path: '/login', builder: (_, __) => const Scaffold()),

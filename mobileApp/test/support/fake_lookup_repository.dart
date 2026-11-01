@@ -108,12 +108,15 @@ class FakeLookupRepository implements LookupRepository {
   @override
   Future<List<Employee>> employees({String? search, int? branchId}) async => staff;
 
+  /// What paymentMethods() answers — the methods a split can pay with.
+  List<PaymentMethod> methods = const [
+    PaymentMethod(id: 1, name: 'Cash'),
+    PaymentMethod(id: 2, name: 'Card'),
+    PaymentMethod(id: 3, name: 'Bank Transfer'),
+  ];
+
   @override
-  Future<List<PaymentMethod>> paymentMethods() async => [
-        PaymentMethod(id: 1, name: 'Cash'),
-        PaymentMethod(id: 2, name: 'Card'),
-        PaymentMethod(id: 3, name: 'Bank Transfer'),
-      ];
+  Future<List<PaymentMethod>> paymentMethods() async => methods;
 
   @override
   Future<({String? baseCode, List<Currency> currencies})> currencies() async =>

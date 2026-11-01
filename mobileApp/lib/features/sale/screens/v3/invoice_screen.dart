@@ -239,10 +239,13 @@ class InvoiceScreen extends StatelessWidget {
                       if (!embedded)
                         TabletActionButton(
                             label: 'New Sale', icon: Icons.add, primary: true, onTap: () => _tap(() => context.go(Routes.sale))),
-                      TabletIconButton(
-                          icon: Icons.more_horiz,
-                          tooltip: 'More',
-                          onTap: () => _tap(() => _moreSheet(context, canEdit, canDelete))),
+                      // Return and Edit already sit in this header, so the
+                      // overflow only carries Delete — and hides when it can't.
+                      if (canDelete && _serverBacked)
+                        TabletIconButton(
+                            icon: Icons.more_horiz,
+                            tooltip: 'More',
+                            onTap: () => _tap(() => _moreSheet(context, canEdit, canDelete, inHeader: true))),
                     ],
                   ),
                   const SizedBox(height: 22),
@@ -671,7 +674,8 @@ class InvoiceScreen extends StatelessWidget {
 
   /// Overflow sheet holding the secondary invoice actions. Each row respects
   /// the same guards as the old inline buttons (edit/return/delete visibility).
-  Future<void> _moreSheet(BuildContext context, bool canEdit, bool canDelete) async {
+  /// [inHeader] drops Edit and Return, which the tablet header already shows.
+  Future<void> _moreSheet(BuildContext context, bool canEdit, bool canDelete, {bool inHeader = false}) async {
     final p = context.astra;
     await showModalBottomSheet(
       context: context,
@@ -711,7 +715,7 @@ class InvoiceScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_editable && canEdit)
+                      if (!inHeader && _editable && canEdit)
                         _sheetAction(
                             ctx,
                             p,
@@ -722,7 +726,7 @@ class InvoiceScreen extends StatelessWidget {
                                 ? 'Re-open this draft to change it or complete the sale'
                                 : 'Re-open this sale to change items',
                             () => _edit(context)),
-                      if (_returnable)
+                      if (!inHeader && _returnable)
                         _sheetAction(ctx, p, Icons.assignment_return_outlined, p.goldText, 'Return',
                             'Start a return against this invoice', () => _return(context)),
                       if (canDelete && _serverBacked)

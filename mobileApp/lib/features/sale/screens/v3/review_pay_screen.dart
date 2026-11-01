@@ -23,7 +23,7 @@ import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/qloud_logo.dart';
 import 'package:invo/shared/widgets/receipt_printer.dart';
 import 'package:invo/shared/widgets/tablet_widgets.dart';
-import 'package:invo/features/sale/widgets/v3/custom_payment_sheet.dart';
+import 'package:invo/features/sale/widgets/v3/split_payment.dart';
 import 'package:invo/features/sale/widgets/v3/cash_tender_card.dart';
 import 'package:invo/shared/widgets/astra_snack.dart';
 import 'package:invo/shared/logic/connectivity_cubit/connectivity_cubit.dart';
@@ -293,8 +293,30 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (mounted) setState(() => _busyDraft = false);
   }
 
-  Future<void> _openCustom() async {
+  /// What a split can pay with. A tapped student card can take part of a
+  /// split (card + cash). Without one the wallet has nothing to spend, so it
+  /// stays out of the list — and with one it is listed once, whether or not
+  /// Payment Methods has it too.
+  List<PaymentMethod> _splitMethods(CartCubit cart) {
+    final cardMethodId = cart.student?.cardMethodId;
+    return [
+      if (cardMethodId != null) PaymentMethod(id: cardMethodId, name: PayMode.studentCard.label),
+      ..._methods.where((m) => !_isWallet(m, cart)),
+    ];
+  }
+
+  /// Where a split sheet sits: a bottom sheet on a phone, a card over the pay
+  /// rail on a tablet — the rail's width, by the same rule as [_tabletScaffold].
+  double? get _sheetRail =>
+      context.isTablet ? (MediaQuery.sizeOf(context).width * 0.38).clamp(340.0, 460.0).toDouble() : null;
+
+  /// Split. With only two methods to pay with, the ticket splits evenly
+  /// between them at once; with more, the split card asks which (see
+  /// [showSplitSheet]). Once split, the panel is the editor, so the tile does
+  /// nothing more.
+  Future<void> _startSplit() async {
     final cart = context.read<CartCubit>();
+    if (cart.payMode == PayMode.custom) return;
     if (_methods.isEmpty) {
       await _loadMethods();
       if (_methods.isEmpty) {
@@ -303,23 +325,27 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       }
     }
     if (!mounted) return;
-    final cardMethodId = cart.student?.cardMethodId;
-    final result = await showCustomPaymentSheet(
-      context,
-      total: cart.total,
-      // A tapped student card can take part of a split (card + cash). Without
-      // one the wallet has nothing to spend, so it stays out of the list — and
-      // with one it is listed once, whether or not Payment Methods has it too.
-      methods: [
-        if (cardMethodId != null) PaymentMethod(id: cardMethodId, name: PayMode.studentCard.label),
-        ..._methods.where((m) => !_isWallet(m, cart)),
-      ],
-      initial: cart.customPayments,
-    );
-    if (result != null && result.isNotEmpty) {
-      cart.setCustomPayments(result);
+    final methods = _splitMethods(cart);
+    if (methods.length <= 2) {
+      cart.splitBetween(methods);
+    } else {
+      await _openSplit(cart);
     }
+    if (mounted) setState(() => _tendered = null);
   }
+
+  /// The split card — on [editMethodId]'s keypad when an amount was tapped.
+  Future<void> _openSplit(CartCubit cart, {int? editMethodId}) => showSplitSheet<CartState>(
+        context,
+        target: cartSplitTarget(cart),
+        methods: _splitMethods(cart),
+        walletId: cart.student?.cardMethodId,
+        walletCap: cart.student?.available,
+        railWidth: _sheetRail,
+        editMethodId: editMethodId,
+      );
+
+  Future<void> _editSplitAmount(CartCubit cart, CustomPayment row) => _openSplit(cart, editMethodId: row.methodId);
 
   /// Card pays what it can spend, cash the rest.
   Future<void> _splitCardAndCash(CartCubit cart) async {
@@ -329,7 +355,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (_methods.isEmpty) await _loadMethods();
     final cash = _methods.where((m) => m.name.toLowerCase().contains('cash')).firstOrNull;
     if (cash == null) {
-      _error('No Cash payment method is configured — use Custom to split.');
+      _error('No Cash payment method is configured — use Split instead.');
       return;
     }
     final onCard = student.available.clamp(0, cart.total).toDouble();
@@ -490,29 +516,6 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
 
   // ---- Payment methods ------------------------------------------------------
 
-  /// The icon for a configured payment button, from its system slug or name.
-  IconData _buttonIcon(PaymentMethod button) {
-    // The icon picked on the web — same keys as `posPaymentButtonIcons()`.
-    final picked = switch (button.icon) {
-      'money' => Icons.payments_outlined,
-      'credit-card' => Icons.credit_card,
-      'university' => Icons.account_balance_outlined,
-      'exchange' => Icons.swap_horiz,
-      'bolt' => Icons.bolt,
-      'mobile' => Icons.smartphone,
-      'qrcode' => Icons.qr_code_2,
-      'google-wallet' => Icons.account_balance_wallet_outlined,
-      'paper-plane' => Icons.send_outlined,
-      'gift' => Icons.card_giftcard,
-      _ => null,
-    };
-    if (picked != null) return picked;
-    final name = '${button.slug ?? ''} ${button.name}'.toLowerCase();
-    if (name.contains('cash')) return Icons.payments_outlined;
-    if (name.contains('bank') || name.contains('transfer')) return Icons.account_balance_outlined;
-    return Icons.credit_card;
-  }
-
   /// Whether [m] is the Student Wallet account — by id once a tapped card has
   /// named it, otherwise by the account's locked name.
   bool _isWallet(PaymentMethod m, CartCubit cart) =>
@@ -589,7 +592,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       ),
       for (final button in configured)
         _MethodTile(
-          icon: _buttonIcon(button),
+          icon: paymentMethodIcon(button),
           label: button.name,
           height: tall,
           configured: true,
@@ -623,7 +626,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
       height: short,
       minor: true,
       active: cart.payMode == PayMode.custom,
-      onTap: _openCustom,
+      onTap: _startSplit,
     );
 
     return Container(
@@ -720,7 +723,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         return (_Tone.ok, Icons.check_circle_rounded, 'Paid by student card · left', Money.plain(spend.after));
       case PayMode.custom:
         final balance = cart.balance;
-        if (cart.customPayments.isEmpty) return (_Tone.info, Icons.call_split_rounded, 'Split · add the methods', null);
+        if (cart.customPayments.isEmpty) return (_Tone.info, Icons.call_split_rounded, 'Split · tap two methods below', null);
         if (balance.abs() < 0.001) {
           final names = cart.customPayments.map((x) => x.methodName).join(' + ');
           return (_Tone.ok, Icons.check_circle_rounded, 'Fully paid · $names', settledLine);
@@ -780,7 +783,7 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         ),
       PayMode.method => _PayPrompt(
           tone: _Tone.ok,
-          icon: cart.payMethod == null ? Icons.credit_card : _buttonIcon(cart.payMethod!),
+          icon: cart.payMethod == null ? Icons.credit_card : paymentMethodIcon(cart.payMethod!),
           title: 'Paid by ${cart.payMethod?.name ?? 'this method'}',
           subtitle: '$total is posted to its configured account.',
         ),
@@ -790,14 +793,21 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
           title: 'Put the full amount on account',
           subtitle: 'Nothing is taken now. For a part payment, use Split.',
         ),
-      PayMode.custom when cart.customPayments.isEmpty => _PayPrompt(
-          tone: _Tone.info,
-          icon: Icons.call_split_rounded,
-          title: 'Split between methods',
-          subtitle: 'Tap here to set how much each method pays.',
-          onTap: _openCustom,
+      PayMode.custom => SplitPaymentPanel(
+          total: cart.total,
+          rows: cart.customPayments,
+          methods: _splitMethods(cart),
+          walletId: cart.student?.cardMethodId,
+          walletCap: cart.student?.available,
+          // A tall tablet rail shows every method; elsewhere they scroll on one row.
+          wrapChips: !phone && MediaQuery.sizeOf(context).height >= 760,
+          onToggle: (m) {
+            cart.toggleSplitMethod(m);
+            setState(() => _tendered = null);
+          },
+          onEdit: (row) => _editSplitAmount(cart, row),
+          onEven: cart.evenSplit,
         ),
-      PayMode.custom => _splitPanel(cart),
       PayMode.studentCard => _walletPanel(cart),
     };
 
@@ -831,84 +841,6 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
         lit: cart.notes.isNotEmpty,
         onTap: _openNote,
       );
-
-  /// A split, line by line, with the way back into the split sheet.
-  Widget _splitPanel(CartCubit cart) {
-    final p = context.astra;
-    final walletId = cart.student?.cardMethodId;
-    final n = cart.customPayments.length;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: p.card,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: context.astraTheme.softShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Text('SPLIT · $n METHOD${n == 1 ? '' : 'S'}',
-                  style: ui(size: 10, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.8)),
-              const Spacer(),
-              GestureDetector(
-                onTap: _openCustom,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: p.tint, borderRadius: BorderRadius.circular(999)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.edit_rounded, size: 12, color: p.primary),
-                      const SizedBox(width: 5),
-                      Text('Edit split', style: ui(size: 10.5, weight: FontWeight.w800, color: p.primary)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: n,
-              separatorBuilder: (_, __) => const SizedBox(height: 7),
-              itemBuilder: (_, i) {
-                final row = cart.customPayments[i];
-                final icon = row.methodId == walletId
-                    ? Icons.school_outlined
-                    : row.methodName.toLowerCase().contains('cash')
-                        ? Icons.payments_outlined
-                        : Icons.credit_card;
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                  decoration: BoxDecoration(
-                    color: p.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(icon, size: 17, color: p.primary),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(row.methodName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: ui(size: 13.5, weight: FontWeight.w700, color: p.ink)),
-                      ),
-                      Text(Money.plain(row.amount), style: ui(size: 15, weight: FontWeight.w800, color: p.ink)),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// The tapped card, and — when it can't cover the ticket — the card + cash
   /// split that can.
@@ -1518,13 +1450,12 @@ class _MethodTile extends StatelessWidget {
 /// title and a line under it, centred in the panel. It shrinks with the room
 /// it has, dropping the line first.
 class _PayPrompt extends StatelessWidget {
-  const _PayPrompt({required this.tone, required this.icon, required this.title, required this.subtitle, this.onTap});
+  const _PayPrompt({required this.tone, required this.icon, required this.title, required this.subtitle});
 
   final _Tone tone;
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1535,51 +1466,47 @@ class _PayPrompt extends StatelessWidget {
       _Tone.bad => (p.dangerTint, AstraPalette.danger),
       _Tone.info => (p.tint, p.primary),
     };
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: p.card,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: context.astraTheme.softShadow,
-        ),
-        child: LayoutBuilder(
-          builder: (context, c) {
-            final ring = (c.maxHeight * 0.36).clamp(36.0, 70.0);
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: ring,
-                  height: ring,
-                  decoration: BoxDecoration(
-                    color: tint,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.5), spreadRadius: ring > 50 ? 10 : 5)],
-                  ),
-                  child: Icon(icon, size: ring * 0.48, color: color),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: context.astraTheme.softShadow,
+      ),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final ring = (c.maxHeight * 0.36).clamp(36.0, 70.0);
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: ring,
+                height: ring,
+                decoration: BoxDecoration(
+                  color: tint,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.5), spreadRadius: ring > 50 ? 10 : 5)],
                 ),
-                SizedBox(height: ring > 50 ? 16 : 8),
-                Text(title,
+                child: Icon(icon, size: ring * 0.48, color: color),
+              ),
+              SizedBox(height: ring > 50 ? 16 : 8),
+              Text(title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: ui(size: 15, weight: FontWeight.w800, color: p.ink)),
+              if (c.maxHeight > 150) ...[
+                const SizedBox(height: 4),
+                Text(subtitle,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: ui(size: 15, weight: FontWeight.w800, color: p.ink)),
-                if (c.maxHeight > 150) ...[
-                  const SizedBox(height: 4),
-                  Text(subtitle,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: ui(size: 11.5, weight: FontWeight.w600, color: p.textMuted)),
-                ],
+                    style: ui(size: 11.5, weight: FontWeight.w600, color: p.textMuted)),
               ],
-            );
-          },
-        ),
+            ],
+          );
+        },
       ),
     );
   }

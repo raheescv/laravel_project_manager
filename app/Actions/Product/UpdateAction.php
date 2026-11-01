@@ -81,14 +81,7 @@ class UpdateAction
 
             if (isset($data['images']) && is_array($data['images'])) {
                 foreach ($data['images'] as $file) {
-                    $imageData = [
-                        'name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'type' => $file->getClientOriginalExtension(),
-                        'method' => 'normal',
-                        'path' => url('storage/'.$file->store('products/'.$model->id, 'public')),
-                    ];
-                    $model->images()->create($imageData);
+                    (new AddImageAction())->execute($model, $file);
                 }
                 if (! $model->thumbnail) {
                     $path = $model->images()->normal()->first()?->path;
