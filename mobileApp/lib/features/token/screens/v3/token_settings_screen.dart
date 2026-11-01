@@ -429,7 +429,9 @@ class _TokenSettingsScreenState extends State<TokenSettingsScreen> {
                 children: [
                   SizedBox(
                     width: previewWidth,
-                    child: AstraCard(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(bottom: 24 + MediaQuery.paddingOf(context).bottom),
+                      child: AstraCard(
                       radius: 22,
                       padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
                       child: Column(
@@ -445,6 +447,7 @@ class _TokenSettingsScreenState extends State<TokenSettingsScreen> {
                               style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted, height: 1.4)),
                         ],
                       ),
+                    ),
                     ),
                   ),
                   const SizedBox(width: 18),

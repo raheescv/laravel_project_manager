@@ -59,3 +59,33 @@ it('saves the exclusion on a branch created from the form', function (): void {
 
     expect(\App\Models\Branch::where('code', 'WH')->first()?->exclude_from_showcase)->toBeTrue();
 });
+
+it('allows a name and code another tenant already uses', function (): void {
+    \App\Models\Branch::create([
+        'tenant_id' => \App\Models\Tenant::factory()->create()->id,
+        'name' => 'Central Warehouse',
+        'code' => 'WH',
+    ]);
+
+    Livewire::test(Page::class)
+        ->set('branches.code', 'WH')
+        ->set('branches.name', 'Central Warehouse')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(\App\Models\Branch::where('code', 'WH')->count())->toBe(1);
+});
+
+it('rejects a name and code already used in the same tenant', function (): void {
+    Livewire::test(Page::class)
+        ->set('branches.code', $this->world->branch->code)
+        ->set('branches.name', $this->world->branch->name)
+        ->call('save')
+        ->assertHasErrors(['branches.name' => 'unique', 'branches.code' => 'unique']);
+});
+
+it('lets a branch keep its own name and code on edit', function (): void {
+    Livewire::test(Page::class, ['table_id' => $this->world->branch->id])
+        ->call('save')
+        ->assertHasNoErrors();
+});

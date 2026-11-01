@@ -766,6 +766,7 @@
                 $schedulerOk = $heartbeat && $heartbeat->gt(now()->subMinutes(3));
                 $oldestJob = $serverHealth['oldest_job'] ? \Illuminate\Support\Carbon::parse($serverHealth['oldest_job']) : null;
                 $queueStalled = $oldestJob && $oldestJob->lt(now()->subMinutes(5));
+                $actionRunning = $serverAction['running'] ?? false;
                 [$statusTone, $statusIcon, $statusLabel] = $domainStatus[$tenant->domain_status] ?? ['', 'fa-question', 'Not synced yet'];
             @endphp
             <div class="pane">
@@ -906,9 +907,81 @@
                                 <button type="button" class="btn btn-outline-primary bg-body" x-on:click="navigator.clipboard.writeText($refs.cmd.value); copied = true; setTimeout(() => copied = false, 2000)">
                                     <i class="fa" :class="copied ? 'fa-check' : 'fa-files-o'"></i> <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
                                 </button>
+                                <button type="button" class="btn btn-primary" wire:click="runServerAction('setup')" wire:loading.attr="disabled" wire:target="runServerAction" @disabled($actionRunning)
+                                    wire:confirm="Run the server setup as root now? It rewrites the Supervisor queue workers and the cron file.">
+                                    <i class="fa fa-play me-1"></i>Run
+                                </button>
                             </div>
-                            <div class="form-text">Preview first with <span class="mono">--dry-run</span>.</div>
+                            <div class="form-text">Preview first with <span class="mono">--dry-run</span>. Run needs a sudoers rule for {{ config('tenant_server.web_user') }}.</div>
                         </div>
+                        <div class="act">
+                            <h6><i class="fa fa-rocket me-1 text-primary"></i>Deploy</h6>
+                            <p>Runs on this server as the web user, in the background and one at a time. The output appears below.</p>
+                            <div class="d-flex flex-wrap align-items-center gap-2 small mb-2">
+                                @if ($pendingPull['error'])
+                                    <span class="text-danger-emphasis"><i class="fa fa-exclamation-triangle me-1"></i>{{ $pendingPull['error'] }}</span>
+                                @else
+                                    <span class="mono">{{ $pendingPull['branch'] }} ← {{ $pendingPull['upstream'] }}</span>
+                                    <span @class(['chip', 'ok' => !$pendingPull['behind']])>
+                                        <i class="fa {{ $pendingPull['behind'] ? 'fa-arrow-down' : 'fa-check' }}"></i>{{ $pendingPull['behind'] ? $pendingPull['behind'] . ' ' . Str::plural('commit', $pendingPull['behind']) . ' to pull' : 'Up to date' }}
+                                    </span>
+                                    <span class="text-body-secondary">{{ $pendingPull['fetched_at'] ? 'checked ' . $pendingPull['fetched_at']->diffForHumans() : 'never checked' }}</span>
+                                @endif
+                                <button type="button" class="btn btn-link btn-sm p-0" wire:click="checkForUpdates" wire:loading.attr="disabled" wire:target="checkForUpdates" @disabled($actionRunning)>
+                                    <i class="fa fa-refresh me-1" wire:loading.class="fa-spin" wire:target="checkForUpdates"></i>Check
+                                </button>
+                            </div>
+                            @if ($pendingPull['commits'])
+                                <details class="mb-2">
+                                    <summary class="small fw-medium">What Git pull brings in</summary>
+                                    <ul class="list-unstyled small mb-0 mt-2 p-2 rounded-3 bg-body-tertiary" style="max-height: 220px; overflow: auto">
+                                        @foreach ($pendingPull['commits'] as $commit)
+                                            <li wire:key="pull-commit-{{ $commit['hash'] }}" class="py-1">
+                                                <span class="mono text-primary">{{ $commit['hash'] }}</span> {{ $commit['subject'] }}
+                                                <span class="text-body-secondary">· {{ $commit['author'] }}, {{ $commit['when'] }}</span>
+                                            </li>
+                                        @endforeach
+                                        @if ($pendingPull['behind'] > count($pendingPull['commits']))
+                                            <li class="py-1 text-body-secondary">…and {{ $pendingPull['behind'] - count($pendingPull['commits']) }} more</li>
+                                        @endif
+                                    </ul>
+                                </details>
+                            @endif
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (\Illuminate\Support\Arr::except($serverActions, 'setup') as $key => $action)
+                                    <button type="button" wire:key="server-action-{{ $key }}" class="btn btn-sm btn-outline-primary" wire:click="runServerAction('{{ $key }}')" wire:loading.attr="disabled" wire:target="runServerAction" @disabled($actionRunning)
+                                        wire:confirm="{{ $key === 'pull' && $pendingPull['behind'] ? "Pull {$pendingPull['behind']} " . Str::plural('commit', $pendingPull['behind']) . ' onto the server now?' : 'Run ' . implode(' ', $action['command']) . ' on the server now?' }}">
+                                        <i class="fa {{ $action['icon'] }} me-1"></i>{{ $action['label'] }}
+                                        @if ($key === 'pull' && $pendingPull['behind'])
+                                            <span class="badge rounded-pill text-bg-primary ms-1">{{ $pendingPull['behind'] }}</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        @if ($serverAction)
+                            @php($actionFailed = !$serverAction['running'] && $serverAction['exit_code'] !== 0)
+                            <div class="act" @if ($actionRunning) wire:poll.2s @endif>
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <h6 class="mb-0"><i class="fa fa-file-text-o me-1 text-primary"></i>{{ $serverAction['label'] }}</h6>
+                                    @if ($actionRunning)
+                                        <span class="chip"><i class="fa fa-spinner fa-spin"></i>Running</span>
+                                    @elseif ($actionFailed)
+                                        <span class="chip text-danger-emphasis"><i class="fa fa-times-circle"></i>{{ $serverAction['exit_code'] === null ? 'Stopped' : 'Failed · exit ' . $serverAction['exit_code'] }}</span>
+                                    @else
+                                        <span class="chip ok"><i class="fa fa-check-circle"></i>Done</span>
+                                    @endif
+                                </div>
+                                <div class="small text-body-secondary mb-2">Started {{ $serverAction['started_at']->diffForHumans() }}{{ $serverAction['started_by'] ? ' by ' . $serverAction['started_by'] : '' }}</div>
+                                <pre class="mono small mb-0 p-2 rounded-3 bg-body-tertiary" style="max-height: 320px; overflow: auto; white-space: pre-wrap" wire:key="server-action-output-{{ strlen($serverAction['output']) }}" x-data x-init="$el.scrollTop = $el.scrollHeight">{{ $serverAction['output'] }}</pre>
+                                @if ($actionFailed && $serverAction['key'] === 'setup' && str_contains($serverAction['output'], 'password is required'))
+                                    <div class="form-text">
+                                        The web user may not run this as root yet. Add this line with <span class="mono">sudo visudo</span>, or run the command over SSH:
+                                        <div class="mono mt-1 user-select-all">{{ $sudoersLine }}</div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

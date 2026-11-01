@@ -26,6 +26,9 @@ return [
 
     'php_binary' => env('TENANT_SERVER_PHP', '/usr/bin/php'),
 
+    /* Used by the Server tab's "npm run build" button. */
+    'npm_binary' => env('TENANT_SERVER_NPM', 'npm'),
+
     'php_fpm_socket' => env('TENANT_SERVER_PHP_FPM_SOCKET', '/run/php/php8.4-fpm.sock'),
 
     /* A wildcard site + certificate already serves every tenant subdomain. */

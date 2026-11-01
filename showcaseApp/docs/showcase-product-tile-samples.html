@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product Tile Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0" rel="stylesheet">
+<style>
+/* ============================================================ PALETTES (lib/shared/utils/components/theme/pearl_theme.dart + theme_presets.dart) */
+:root,[data-pal="pearl"][data-mode="light"] .k{
+  --bg:#FFFFFF;--surface:#FFFFFF;--shotTop:#FFFFFF;--shotBottom:#E6E6EA;--ink:#191A1E;--muted:#6D6F78;--faint:#A7A9B2;--line:#E0E0E5;
+  --accent:#191A1E;--accentInk:#FAFAFB;--ok:#3E6152;--okBg:#E8EDEA;--wash:#F4F4F6;
+}
+[data-pal="pearl"][data-mode="dark"] .k{
+  --bg:#121316;--surface:#1A1B1F;--shotTop:#2A2C32;--shotBottom:#141519;--ink:#EFEFF2;--muted:#9A9CA5;--faint:#63656E;--line:#26272D;
+  --accent:#EFEFF2;--accentInk:#121316;--ok:#8FB3A2;--okBg:rgba(143,179,162,.14);--wash:#0D0E10;
+}
+[data-pal="sizerun"][data-mode="light"] .k{
+  --bg:#FFFFFF;--surface:#FFFFFF;--shotTop:#FFFFFF;--shotBottom:#EDEEF6;--ink:#000000;--muted:#5A5C6B;--faint:#9A9CAB;--line:#E2E3EC;
+  --accent:#101DC1;--accentInk:#FFFFFF;--ok:#0E7C4A;--okBg:#E3F3EA;--wash:#F5F6FB;
+}
+[data-pal="sizerun"][data-mode="dark"] .k{
+  --bg:#08080C;--surface:#121218;--shotTop:#1D1E2C;--shotBottom:#101017;--ink:#F4F4F8;--muted:#9C9EAE;--faint:#5E6072;--line:#22232E;
+  --accent:#4A57FF;--accentInk:#FFFFFF;--ok:#5FCB97;--okBg:rgba(95,203,151,.14);--wash:#040406;
+}
+
+/* ============================================================ HARNESS */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Jost',sans-serif;background:#0B0C0F;color:#fff;min-height:100vh;padding:24px 16px 70px}
+.head{max-width:1180px;margin:0 auto 14px;text-align:center}
+.head h1{font-size:22px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin:0 0 6px}
+.head p{margin:0;color:#8E909A;font-size:13px}
+.bar{position:sticky;top:10px;z-index:50;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1180px;margin:0 auto 14px;background:rgba(18,19,22,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);padding:9px}
+.grp{display:flex;align-items:center;gap:3px;padding:3px;background:rgba(255,255,255,.04);flex-wrap:wrap}
+.grp .lab{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#71737D;font-weight:500;padding:0 8px}
+.bar button{font:500 12px 'Jost',sans-serif;letter-spacing:.06em;color:#C6C8D0;cursor:pointer;background:none;border:0;padding:7px 12px;white-space:nowrap}
+.bar button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.bar button.on{background:#EFEFF2;color:#121316}
+.caption{max-width:800px;margin:0 auto 22px;color:#8E909A;font-size:13px;line-height:1.6;text-align:center;min-height:42px}
+.caption b{color:#EFEFF2;font-weight:600}
+.stage{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;max-width:1400px;margin:0 auto}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.col .tag{font-size:10.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#71737D}
+
+/* ============================================================ KIOSK (portrait panel, full bleed) */
+.kiosk{width:540px;height:960px;padding:14px;background:linear-gradient(160deg,#2a2c33,#111215);box-shadow:0 40px 100px -40px rgba(0,0,0,.9)}
+.k{width:100%;height:100%;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.ms{font-family:'Material Symbols Outlined';font-weight:300;font-style:normal;font-size:20px;line-height:1;display:inline-block;-webkit-font-smoothing:antialiased}
+.top{flex:none;display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.sq{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);color:var(--ink)}
+.sq.pro{border-color:var(--accent);color:var(--accent)}
+.crumbs{flex:1;display:flex;gap:8px;align-items:center;font-size:9.5px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden}
+.crumbs b{color:var(--ink);font-weight:500}
+.tools{flex:none;display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+.tools .n{font-size:9.5px;font-weight:500;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.tools .sort{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);font-size:9.5px;font-weight:500;letter-spacing:.26em;text-transform:uppercase}
+.tools .sort .ms{font-size:16px}
+.scroll{flex:1;overflow:auto;scrollbar-width:none;padding:0 18px 24px}
+.scroll::-webkit-scrollbar{display:none}
+.pin{flex:none;display:flex;gap:10px;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg)}
+.pin>span{flex:1;height:46px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:9.5px;font-weight:500;letter-spacing:.3em;text-transform:uppercase}
+.pin .fill{background:var(--accent);color:var(--accentInk)}
+.pin .ghost{border:1px solid var(--line)}
+.pin .ms{font-size:17px}
+
+/* ============================================================ SHARED TILE ATOMS */
+.grid{display:grid;gap:14px}
+.shot{position:relative;aspect-ratio:1;background:linear-gradient(180deg,var(--shotTop),var(--shotBottom));display:grid;place-items:center;overflow:hidden}
+.shot svg{width:78%;height:auto}
+.badge{position:absolute;padding:4px 7px;background:var(--bg);border:1px solid var(--line);font-size:8px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.badge .ms{font-size:11px}
+.b-tl{left:7px;top:7px}.b-br{right:7px;bottom:7px}.b-tr{right:7px;top:7px}
+.brand{font-size:var(--brandFs);font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name{font-size:var(--nameFs);font-weight:500;letter-spacing:.14em;text-transform:uppercase;line-height:1.3;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.price{font-size:var(--priceFs);font-weight:400;letter-spacing:.03em;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lbl{font-size:var(--brandFs);font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--faint)}
+.tile{cursor:pointer;min-width:0}
+.sold .shot svg{opacity:.35}
+
+/* ============================================================ 0 · TODAY (for comparison) */
+.Z .shot{border:1px solid var(--line)}
+.Z .cap{padding-top:9px;display:flex;flex-direction:column;gap:4px}
+.Z .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:1px}
+.Z .grid{row-gap:24px}
+
+/* ============================================================ A · FRAMED TILE */
+.A .tile{border:1px solid var(--line);background:var(--surface);transition:border-color .15s}
+.A .tile:hover{border-color:var(--ink)}
+.A .shot{border-bottom:1px solid var(--line)}
+.A .cap{padding:11px 12px 12px;display:flex;flex-direction:column;gap:4px}
+.A .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.A .sz{display:flex;align-items:center;gap:6px}
+.A .sz b{min-width:calc(var(--priceFs) * 2.1);height:calc(var(--priceFs) * 1.9);padding:0 7px;display:grid;place-items:center;background:var(--accent);color:var(--accentInk);font-size:var(--priceFs);font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ============================================================ B · SIZE CORNER */
+.B .tile{border:1px solid var(--line);background:var(--surface)}
+.B .tile:hover{border-color:var(--ink)}
+.B .shot{border-bottom:1px solid var(--line)}
+.B .corner{position:absolute;right:0;top:0;background:var(--accent);color:var(--accentInk);padding:7px 10px 8px;text-align:center;line-height:1}
+.B .corner small{display:block;font-size:7px;font-weight:500;letter-spacing:.26em;opacity:.7;margin-bottom:4px}
+.B .corner b{font-size:calc(var(--priceFs) * 1.25);font-weight:500;font-variant-numeric:tabular-nums}
+.B .cap{padding:11px 12px 12px;display:flex;flex-direction:column;gap:4px}
+.B .price{margin-top:4px}
+
+/* ============================================================ C · TICKET STUB */
+.C .tile{border:1px solid var(--line);background:var(--surface)}
+.C .tile:hover{border-color:var(--ink)}
+.C .shot{border-bottom:1px solid var(--line)}
+.C .cap{display:flex}
+.C .main{flex:1;min-width:0;padding:11px 12px 12px;display:flex;flex-direction:column;gap:4px}
+.C .main .price{margin-top:4px}
+.C .stub{flex:none;width:calc(var(--priceFs) * 3.6);border-left:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--wash)}
+.C .stub b{font-size:calc(var(--priceFs) * 1.55);font-weight:400;line-height:1;font-variant-numeric:tabular-nums}
+
+/* ============================================================ D · GALLERY CARD */
+.D .scroll{background:var(--wash)}
+.D .tools{background:var(--wash)}
+.D .grid{gap:12px}
+.D .tile{background:var(--surface);border:1px solid var(--line);box-shadow:0 14px 28px -22px rgba(0,0,0,.45);padding:8px;transition:transform .15s,box-shadow .15s}
+.D .tile:hover{transform:translateY(-2px);box-shadow:0 20px 36px -22px rgba(0,0,0,.55)}
+.D .cap{padding:10px 4px 2px;display:flex;flex-direction:column;gap:4px;text-align:center;align-items:center}
+.D .name{text-align:center}
+.D .band{margin-top:8px;display:flex;border-top:1px solid var(--line)}
+.D .band>span{flex:1;padding:9px 0 5px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.D .band>span+span{border-left:1px solid var(--line)}
+.D .band b{font-size:var(--priceFs);font-weight:500;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body data-pal="pearl" data-mode="light">
+
+<div class="head">
+  <h1>Results grid · product tile</h1>
+  <p>showcaseApp · step 3 results · the same shoe in 42 / 43 / 44 must never be confused</p>
+</div>
+
+<div class="bar">
+  <div class="grp"><span class="lab">Direction</span>
+    <button data-dir="Z">Today</button>
+    <button data-dir="A" class="on">A · Framed Tile</button>
+    <button data-dir="B">B · Size Corner</button>
+    <button data-dir="C">C · Ticket Stub</button>
+    <button data-dir="D">D · Gallery Card</button>
+  </div>
+  <div class="grp"><span class="lab">Palette</span>
+    <button data-pal="pearl" class="on">Pearl</button>
+    <button data-pal="sizerun">Sizerun</button>
+  </div>
+  <div class="grp"><span class="lab">Mode</span>
+    <button data-mode="light" class="on">Light</button>
+    <button data-mode="dark">Dark</button>
+  </div>
+</div>
+
+<div class="caption" id="caption"></div>
+
+<div class="stage">
+  <div class="col"><span class="tag">Kiosk · 2 per row (default)</span><div class="kiosk"><div class="k" data-cols="2"></div></div></div>
+  <div class="col"><span class="tag">Kiosk · 3 per row</span><div class="kiosk"><div class="k" data-cols="3"></div></div></div>
+</div>
+
+<script>
+const CAPTIONS = {
+  Z: '<b>Today</b>: only the photo has a frame. Brand, name, price and size sit loose underneath, so the <b>SIZE 43</b> line floats in the gap between two identical shoes.',
+  A: '<b>Framed Tile</b>: one hairline frame holds the photo <b>and</b> its caption, so every tile is one object. The size sits on the price line in a solid ink block, the way Pearl marks a selection. Hover/tap darkens the frame. Smallest change.',
+  B: '<b>Size Corner</b>: the tile is framed and the size moves onto the photo as a filled corner block (“SIZE 43”), so it is the first thing read across the shop floor. The caption is just brand, name, price.',
+  C: '<b>Ticket Stub</b>: a framed tile whose caption ends in a stub (dashed hairline, tinted) holding SIZE over a large number. The size has its own column, so it never shares a line with the price.',
+  D: '<b>Gallery Card</b>: tiles become raised white cards on a soft wash, with the caption centred. A footer band splits <b>Price | Size</b> into two equal cells. The most “premium boutique”, and the one furthest from today’s flat Pearl.'
+};
+
+const SHOE = c => `<svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg"><ellipse cx="102" cy="100" rx="88" ry="5" fill="#000" opacity=".08"/>
+  <path d="M14 78c0-10 6-16 16-18l38-8c8-2 14-8 20-16l10-14c3-4 8-5 12-3l14 8c4 2 6 6 8 10l6 14c3 6 9 10 16 12l22 6c10 3 14 9 14 17v4H14z" fill="${c[0]}"/>
+  <path d="M14 82h170v6c0 4-3 6-7 6H22c-5 0-8-3-8-7z" fill="${c[1]}"/>
+  <path d="M100 30l10 6M94 38l10 6M88 46l10 6" stroke="${c[1]}" stroke-width="3" stroke-linecap="round"/>
+  <path d="M120 58c14-2 30 4 40 14" stroke="${c[1]}" stroke-width="2.5" fill="none" opacity=".7"/></svg>`;
+
+const P = [];
+const add = (brand, name, sizes, price, colors, extra = {}) => sizes.forEach((s, i) => P.push({brand, name, size:s, price, colors, ...extra, ...(extra.at?.[i] || {})}));
+add('Nike', 'Air Runner Pro', ['42','43','44'], 459, ['#2F3C56','#E9E6DF'], {spin:true, at:[{},{left:2},{}]});
+add('Adidas', 'Court Classic Low', ['42','43'], 329, ['#F2F1EC','#1E1F24']);
+add('Salomon', 'Trail Ridge GTX', ['42','44'], 689, ['#5B6B4A','#2B2D27'], {at:[{},{sold:true}]});
+add('Puma', 'Street Suede', ['43'], 279, ['#9C3B2E','#F1EEE6'], {spin:true});
+add('New Balance', '574 Heritage', ['42','43','44'], 399, ['#8C8F96','#3A3C42']);
+
+const money = v => v.toLocaleString('en', {minimumFractionDigits:2});
+const badges = p => (p.sold ? `<span class="badge b-tl">Sold out</span>` : p.left ? `<span class="badge b-tl">Only ${p.left} left</span>` : '')
+  + (p.spin ? `<span class="badge b-br"><span class="ms">360</span>360</span>` : '');
+const shot = (p, extra = '') => `<div class="shot">${SHOE(p.colors)}${badges(p)}${extra}</div>`;
+const head = p => `<span class="brand">${p.brand}</span><span class="name">${p.name}</span>`;
+
+const T = {
+  Z: p => `${shot(p)}<div class="cap">${head(p)}<div class="row"><span class="price">${money(p.price)}</span><span><span class="lbl">Size </span><span class="price">${p.size}</span></span></div></div>`,
+  A: p => `${shot(p)}<div class="cap">${head(p)}<div class="row"><span class="price">${money(p.price)}</span><span class="sz"><span class="lbl">Size</span><b>${p.size}</b></span></div></div>`,
+  B: p => `${shot(p, `<span class="corner"><small>SIZE</small><b>${p.size}</b></span>`)}<div class="cap">${head(p)}<span class="price">${money(p.price)}</span></div>`,
+  C: p => `${shot(p)}<div class="cap"><div class="main">${head(p)}<span class="price">${money(p.price)}</span></div><div class="stub"><span class="lbl">Size</span><b>${p.size}</b></div></div>`,
+  D: p => `${shot(p)}<div class="cap">${head(p)}</div><div class="band"><span><span class="lbl">Price</span><b>${money(p.price)}</b></span><span><span class="lbl">Size</span><b>${p.size}</b></span></div>`,
+};
+
+/* Caption type grows with the tile, like product_card.dart's _brandSize/_nameSize/_priceSize. */
+const fs = (w) => `--brandFs:${Math.min(13, Math.max(8.5, w * .026))}px;--nameFs:${Math.min(17, Math.max(10.5, w * .034))}px;--priceFs:${Math.min(20, Math.max(12.5, w * .040))}px`;
+
+function kiosk(el, dir) {
+  const cols = +el.dataset.cols;
+  const tileW = (540 - 28 - 36 - 14 * (cols - 1)) / cols;
+  el.className = 'k ' + dir;
+  el.innerHTML = `<div class="top"><span class="sq pro"><span class="ms">arrow_back</span></span>
+      <div class="crumbs"><span>42 · 43 · 44</span><span>›</span><span>All brands</span><span>›</span><b>Results</b></div>
+      <span class="sq"><span class="ms">tune</span></span></div>
+    <div class="tools"><span class="n">${P.length} products</span><span class="sort">Newest<span class="ms">south</span></span></div>
+    <div class="scroll"><div class="grid" style="grid-template-columns:repeat(${cols},1fr);${fs(tileW)}">
+      ${P.map(p => `<div class="tile ${p.sold ? 'sold' : ''}">${T[dir](p)}</div>`).join('')}
+    </div></div>
+    <div class="pin"><span class="fill"><span class="ms">home</span>Back to home</span><span class="ghost"><span class="ms">tune</span>Filters</span></div>`;
+}
+
+let dir = 'A';
+function render() {
+  document.querySelectorAll('.k').forEach(k => kiosk(k, dir));
+  document.getElementById('caption').innerHTML = CAPTIONS[dir];
+}
+const wire = (attr, fn) => document.querySelectorAll(`[data-${attr}]`).forEach(b => { if (b.tagName !== 'BUTTON') return; b.onclick = () => {
+  document.querySelectorAll(`button[data-${attr}]`).forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset[attr]);
+}; });
+wire('dir', v => { dir = v; render(); });
+wire('pal', v => document.body.dataset.pal = v);
+wire('mode', v => document.body.dataset.mode = v);
+render();
+</script>
+</body>
+</html>

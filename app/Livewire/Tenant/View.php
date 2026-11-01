@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\TenantPayment;
 use App\Models\User;
 use App\Models\UserHasBranch;
+use App\Services\ServerActionService;
 use App\Services\TenantAnalyticsService;
 use App\Services\TenantServerService;
 use App\Services\TenantService;
@@ -136,6 +137,29 @@ class View extends Component
 
         Tenant::findOrFail($this->tenantId)->update(['domain' => null]);
         $this->dispatch('success', ['message' => 'Domain removed — its nginx site is taken down within a minute']);
+    }
+
+    /**
+     * Git pull, npm run build, migrate or the one-time setup, run in the
+     * background on this server; the Server tab polls its output.
+     */
+    public function runServerAction(string $action): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $response = app(ServerActionService::class)->start($action, Auth::user()->name);
+        $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
+    }
+
+    /**
+     * git fetch, so the Deploy card can show how many commits Git pull brings in.
+     */
+    public function checkForUpdates(): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $response = app(ServerActionService::class)->fetch();
+        $this->dispatch($response['success'] ? 'success' : 'error', ['message' => $response['message']]);
     }
 
     public function resetPaymentForm(): void
@@ -281,7 +305,7 @@ class View extends Component
         return User::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->findOrFail($userId);
     }
 
-    public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch, TenantServerService $server)
+    public function render(TenantAnalyticsService $analytics, TenantSwitchService $switch, TenantServerService $server, ServerActionService $serverActions)
     {
         $tenant = Tenant::withTrashed()->findOrFail($this->tenantId);
 
@@ -327,6 +351,10 @@ class View extends Component
             'serverHealth' => isset($this->loaded_tabs['server']) ? $server->health() : null,
             'nginxPreview' => isset($this->loaded_tabs['server']) && $tenant->hasCustomDomain() ? $server->renderSite($tenant, true) : null,
             'serverSetupCommand' => 'cd '.config('tenant_server.app_path').' && sudo '.config('tenant_server.php_binary').' artisan tenant:server-sync --shared',
+            'serverActions' => isset($this->loaded_tabs['server']) ? $serverActions->actions() : [],
+            'serverAction' => isset($this->loaded_tabs['server']) ? $serverActions->current() : null,
+            'pendingPull' => $this->selected_tab === 'server' ? $serverActions->pendingPull() : null,
+            'sudoersLine' => $serverActions->sudoersLine(),
         ]);
     }
 }

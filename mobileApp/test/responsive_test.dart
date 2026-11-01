@@ -23,6 +23,7 @@ import 'package:invo/features/settings/screens/v3/permissions_screen.dart';
 import 'package:invo/features/settings/screens/v3/print_settings_screen.dart';
 import 'package:invo/features/settings/screens/v3/settings_screen.dart';
 import 'package:invo/features/shell/screens/v3/home_shell.dart';
+import 'package:invo/shared/widgets/astra_side_rail.dart';
 import 'package:invo/features/stock_check/screens/v3/new_stock_check_screen.dart';
 import 'package:invo/features/stock_check/screens/v3/stock_check_list_screen.dart';
 import 'package:invo/features/token/screens/v3/token_screen.dart';
@@ -80,8 +81,8 @@ const tablet = Size(1194, 834);
 
 /// The sizes every screen must survive. Beyond the phone/landscape-iPad pair we
 /// cover the shapes that actually shipped bugs: portrait and landscape tablets,
-/// a small 8" tablet, and a phone in landscape. Tablet detection uses the
-/// shortest side, so rotation does not change a device's layout class.
+/// a small 8" tablet, and a phone in landscape. A landscape phone takes the
+/// tablet layouts, so it must fit them in ~390pt of height.
 const _viewports = <String, Size>{
   'phone': phone,
   'phone landscape': Size(844, 390),
@@ -345,7 +346,7 @@ void main() {
     expect(find.byType(AstraNewSaleFab), findsOneWidget);
   });
 
-  testWidgets('landscape phone keeps phone navigation', (tester) async {
+  testWidgets('landscape phone uses the tablet navigation rail', (tester) async {
     final d = TestHarness();
     await d.init(admin: true);
     addTearDown(d.dispose);
@@ -358,7 +359,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(AstraNavBar), findsOneWidget);
+    expect(find.byType(AstraNavBar), findsNothing);
+    expect(find.byType(AstraSideRail), findsOneWidget);
   });
 
   // Modal sheets are phone-shaped, so on a tablet they must stay a centred

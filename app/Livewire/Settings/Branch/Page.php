@@ -61,9 +61,11 @@ class Page extends Component
 
     protected function rules()
     {
+        $rules = Branch::rules($this->table_id);
+
         return [
-            'branches.name' => ['required', 'unique:branches,name,'.$this->table_id],
-            'branches.code' => ['required', 'unique:branches,code,'.$this->table_id],
+            'branches.name' => $rules['name'],
+            'branches.code' => $rules['code'],
         ];
     }
 

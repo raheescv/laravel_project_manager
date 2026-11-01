@@ -10,9 +10,15 @@ import '../../l10n/app_localizations.dart';
 
 /// The gaps down the caption block, named because [ProductCard.captionHeight]
 /// has to add up the same column that [ProductCard.build] lays out.
-const double _gapUnderStage = 9;
 const double _gapUnderBrand = 4;
 const double _gapUnderName = 5;
+
+/// The frame round the tile — top and bottom — and the rule between the photo
+/// and its caption: three hairlines the caption has to pay for.
+const double _frameLines = PearlMetrics.hairline * 3;
+
+/// Inside the frame the words keep off its edges, by more on a wider tile.
+double _captionPad(double width) => (width * .05).clamp(8.0, 14.0);
 
 /// The caption is set as a fraction of the tile it sits under.
 ///
@@ -31,7 +37,11 @@ double _priceSize(bool compact, double width) =>
 
 int _nameLines(bool compact) => compact ? 1 : 2;
 
-/// A product tile: stage, brand, name, price. Used at three sizes — grid card,
+/// A product tile: one hairline frame round the stage and its caption, the size
+/// as a filled block in the stage's corner, then brand, name and price. Framed
+/// as one object because a multi-size grid is rows of the same photograph, and
+/// a caption left loose under it read as belonging to the tile below or beside.
+/// Used at three sizes — grid card,
 /// preview card, related rail — so the type scale is a parameter rather than
 /// three near-identical widgets.
 ///
@@ -55,8 +65,8 @@ class ProductCard extends StatelessWidget {
   final bool compact;
   final VoidCallback? onTap;
 
-  /// How tall everything under the stage is: the brand line, the name lines,
-  /// the price, and the gaps between them.
+  /// How tall everything under the stage is: the frame and the rule, the
+  /// padding, the brand line, the name lines, the price, and the gaps between.
   ///
   /// Measured rather than assumed. A grid hands its tiles a height before the
   /// words inside them are laid out, so something has to ask — and the answer
@@ -88,7 +98,8 @@ class ProductCard extends StatelessWidget {
       return painter.height.ceilToDouble();
     }
 
-    return _gapUnderStage +
+    return _frameLines +
+        _captionPad(width) * 2 +
         lines(PearlText.brand.copyWith(fontSize: _brandSize(width)), 1) +
         _gapUnderBrand +
         lines(PearlText.productName(_nameSize(compact, width)),
@@ -100,66 +111,145 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.pearl;
-    return InkWell(
-      onTap: onTap,
+    final size = product.size.trim();
+    final pad = _captionPad(width);
+    return Material(
+      color: p.surface,
+      shape: Border.all(color: p.line, width: PearlMetrics.hairline),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(PearlMetrics.hairline),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // The stage gives up its room when the words want more than the box
+              // has. Whoever sized the box did it before the fonts finished
+              // downloading, and a photo a few pixels shorter than square is worth
+              // rather less than the price being painted over warning stripes.
+              Flexible(
+                child: Stage(
+                  aspectRatio: aspectRatio,
+                  border: false,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Photo(url: product.thumbnail, width: width),
+                      if (product.hasSpin)
+                        const Positioned(right: 7, bottom: 7, child: _SpinBadge()),
+                      if (product.isOutOfStock)
+                        Positioned(
+                          left: 7,
+                          top: 7,
+                          child: _Tag(text: L.of(context).soldOut, palette: p),
+                        )
+                      else if (product.totalStock > 0 && product.totalStock <= 2)
+                        Positioned(
+                          left: 7,
+                          top: 7,
+                          child: _Tag(
+                              text: L.of(context).onlyLeft(product.totalStock.toInt()),
+                              palette: p),
+                        ),
+                      // Right in both languages: the stock tag owns the left
+                      // corner whichever way the page reads.
+                      if (size.isNotEmpty)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: _SizeCorner(size: size, compact: compact, width: width),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(height: PearlMetrics.hairline, color: p.line),
+              Padding(
+                padding: EdgeInsets.all(pad),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (product.brandName.isNotEmpty)
+                      Text(
+                        product.brandName.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: PearlText.brand
+                            .copyWith(color: p.faint, fontSize: _brandSize(width)),
+                      ),
+                    const SizedBox(height: _gapUnderBrand),
+                    Text(
+                      product.name.toUpperCase(),
+                      maxLines: _nameLines(compact),
+                      overflow: TextOverflow.ellipsis,
+                      style: PearlText.productName(_nameSize(compact, width))
+                          .copyWith(color: p.ink),
+                    ),
+                    const SizedBox(height: _gapUnderName),
+                    Text(
+                      money(product.mrp),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PearlText.price(_priceSize(compact, width))
+                          .copyWith(color: p.ink),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The size this row is, as a filled block in the stage's top corner.
+///
+/// Each catalogue row is one size, and the size step takes several at once, so
+/// a grid for "42, 43 and 44" is three sizes of shoe that look identical in
+/// their photos. On the photo rather than in the caption, so it is the first
+/// thing read from across the shop floor and adds nothing to the caption's
+/// height. Filled in the accent — the ink block Pearl marks a choice with —
+/// because anything drawn over a catalogue shot on white has to be.
+class _SizeCorner extends StatelessWidget {
+  const _SizeCorner({required this.size, required this.compact, required this.width});
+
+  final String size;
+  final bool compact;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    return Container(
+      constraints: BoxConstraints(maxWidth: width * .5),
+      padding: EdgeInsets.symmetric(
+        horizontal: (width * .03).clamp(6.0, 12.0),
+        vertical: (width * .025).clamp(5.0, 10.0),
+      ),
+      color: p.accent,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // The stage gives up its room when the words want more than the box
-          // has. Whoever sized the box did it before the fonts finished
-          // downloading, and a photo a few pixels shorter than square is worth
-          // rather less than the price being painted over warning stripes.
-          Flexible(
-            child: Stage(
-              aspectRatio: aspectRatio,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Photo(url: product.thumbnail, width: width),
-                  if (product.hasSpin)
-                    const Positioned(right: 7, bottom: 7, child: _SpinBadge()),
-                  if (product.isOutOfStock)
-                    Positioned(
-                      left: 7,
-                      top: 7,
-                      child: _Tag(text: L.of(context).soldOut, palette: p),
-                    )
-                  else if (product.totalStock > 0 && product.totalStock <= 2)
-                    Positioned(
-                      left: 7,
-                      top: 7,
-                      child: _Tag(
-                          text: L.of(context).onlyLeft(product.totalStock.toInt()),
-                          palette: p),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: _gapUnderStage),
-          if (product.brandName.isNotEmpty)
-            Text(
-              product.brandName.toUpperCase(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: PearlText.brand
-                  .copyWith(color: p.faint, fontSize: _brandSize(width)),
-            ),
-          const SizedBox(height: _gapUnderBrand),
           Text(
-            product.name.toUpperCase(),
-            maxLines: _nameLines(compact),
-            overflow: TextOverflow.ellipsis,
-            style: PearlText.productName(_nameSize(compact, width))
-                .copyWith(color: p.ink),
-          ),
-          const SizedBox(height: _gapUnderName),
-          Text(
-            money(product.mrp),
+            L.of(context).fieldSize.toUpperCase(),
             maxLines: 1,
-            style:
-                PearlText.price(_priceSize(compact, width)).copyWith(color: p.ink),
+            overflow: TextOverflow.ellipsis,
+            style: PearlText.brand.copyWith(
+              color: p.accentInk.withValues(alpha: .7),
+              fontSize: _brandSize(width) * .85,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            size,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: PearlText.price(_priceSize(compact, width) * 1.2)
+                .copyWith(color: p.accentInk, fontWeight: FontWeight.w500, height: 1),
           ),
         ],
       ),
@@ -267,7 +357,9 @@ class ProductGrid extends StatelessWidget {
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: columns,
                   crossAxisSpacing: gap,
-                  mainAxisSpacing: 24,
+                  // Framed tiles sit on an even grid; the wider gap down was
+                  // there to keep a loose caption off the photo below it.
+                  mainAxisSpacing: gap,
                   // Stage, then however tall this locale's words turn out.
                   childAspectRatio: cardWidth / (cardWidth + caption),
                 ),

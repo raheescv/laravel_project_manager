@@ -8,6 +8,7 @@ import 'package:showcase/shared/domain/models/index.dart';
 import 'package:showcase/shared/logic/theme_cubit/theme_cubit.dart';
 import 'package:showcase/shared/utils/components/theme/pearl_theme.dart';
 import 'package:showcase/shared/utils/local_storage/local_storage_service.dart';
+import 'package:showcase/shared/widgets/photo.dart';
 import 'package:showcase/shared/widgets/product_card.dart';
 
 /// The grid gives every tile its height before the words inside it are laid
@@ -40,6 +41,9 @@ void main() {
       'name': 'Fresh Foam X 1080 v13 Running Shoe',
       'brand': {'id': 1, 'name': 'New Balance'},
       'mrp': 1249.5,
+      // Every row is one size, and the card says which — the widest label the
+      // catalogue carries, so the price line is tested at its fullest.
+      'size': '42.5',
       'total_stock': 2,
       'availability_status': 'in_stock',
     }),
@@ -159,6 +163,45 @@ void main() {
     await pumpGrid(tester,
         size: const Size(430, 932), locale: const Locale('ar'), textScale: 1.3);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('each card names its own size, so a multi-size grid can be told '
+      'apart', (tester) async {
+    await pumpGrid(tester, size: const Size(813, 1422));
+    expect(find.textContaining('42.5', findRichText: true), findsWidgets);
+    expect(find.textContaining('SIZE', findRichText: true), findsWidgets);
+  });
+
+  testWidgets('the size is drawn on its own photo, not in the gap under it',
+      (tester) async {
+    // A caption left loose under the photo read as belonging to the tile
+    // below — and a multi-size grid is rows of the same photograph.
+    await pumpGrid(tester, size: const Size(813, 1422));
+    final stage = tester.getRect(find.byType(Stage).first);
+    final size = tester.getRect(find.text('42.5').first);
+    expect(stage.contains(size.center), isTrue);
+  });
+
+  testWidgets('a row with no size says nothing about one', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: buildPearlTheme(PearlPalette.light),
+      supportedLocales: L.supportedLocales,
+      localizationsDelegates: L.localizationsDelegates,
+      home: Scaffold(
+        body: Builder(builder: (context) {
+          return SizedBox(
+            width: 200,
+            height: 200 + ProductCard.captionHeight(context, width: 200),
+            child: ProductCard(
+              product: Product.fromJson(const {'id': 1, 'name': 'Socks', 'mrp': 20}),
+              width: 200,
+            ),
+          );
+        }),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('SIZE', findRichText: true), findsNothing);
   });
 
   testWidgets('the card yields the photo when the box is short', (tester) async {

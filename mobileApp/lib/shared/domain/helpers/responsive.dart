@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-/// Layout breakpoints. Device class uses the shortest side so rotating a phone
-/// never turns it into a tablet, while 7–8" portrait tablets get tablet layouts.
+/// Layout breakpoints. A tablet (shortest side ≥ [tablet]) is a tablet in either
+/// orientation; a phone turned to landscape with at least [tablet] of width
+/// also takes the tablet layouts, so the wide window gets panes and the
+/// side-rail instead of a stretched phone column.
 class Breakpoints {
   static const double tablet = 600;
   static const double wide = 1200;
@@ -18,8 +20,10 @@ extension ResponsiveX on BuildContext {
   Size get screenSize => MediaQuery.sizeOf(this);
   double get screenWidth => screenSize.width;
 
-  /// Tablet device class in either orientation.
-  bool get isTablet => screenSize.shortestSide >= Breakpoints.tablet;
+  /// Tablet layout: a tablet in either orientation, or a landscape phone.
+  bool get isTablet =>
+      screenSize.shortestSide >= Breakpoints.tablet ||
+      (screenSize.width > screenSize.height && screenSize.width >= Breakpoints.tablet);
 
   /// A wide tablet/desktop viewport with enough horizontal room for dense
   /// multi-column content.
