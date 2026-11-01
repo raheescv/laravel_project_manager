@@ -11,6 +11,7 @@ use App\Http\Controllers\Property\RentOutChecklistController;
 use App\Http\Controllers\Property\RentOutController;
 use App\Http\Controllers\Property\RentOutReportController;
 use App\Http\Controllers\Property\RentOutTransactionController;
+use App\Http\Controllers\Property\ServiceRequestController;
 use App\Http\Controllers\Property\TenantDetailController;
 use App\Http\Controllers\Property\UtilityController;
 use Illuminate\Support\Facades\Route;
@@ -148,6 +149,14 @@ Route::middleware('auth')->group(function (): void {
             Route::get('assign/{id}', 'assign')->name('assign')->can('maintenance.assign');
             Route::get('technician', 'technician')->name('technician')->can('maintenance.technician view');
             Route::get('complaint/{id}', 'complaint')->name('complaint')->can('maintenance.view');
+        });
+
+        // Service Requests - utility connect / disconnect
+        Route::name('service_request::')->prefix('service-request')->controller(ServiceRequestController::class)->group(function (): void {
+            Route::get('', 'index')->name('index')->can('property service request.view');
+            Route::get('create', 'create')->name('create')->can('property service request.create');
+            Route::get('edit/{id}', 'edit')->name('edit')->can('property service request.view');
+            Route::get('report', 'report')->name('report')->can('property service request.report');
         });
     });
 });

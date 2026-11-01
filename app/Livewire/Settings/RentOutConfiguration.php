@@ -24,6 +24,9 @@ class RentOutConfiguration extends Component
 
     public $reservation_footer_height;
 
+    // Default charge pre-filled on a utility Connect service request for an occupied unit
+    public $service_request_connect_amount;
+
     // Logo Uploads (temporary files)
     public $rental_reservation_logo_file;
 
@@ -75,6 +78,7 @@ class RentOutConfiguration extends Component
         'reservation_bond_paper_mode',
         'reservation_logo_height',
         'reservation_footer_height',
+        'service_request_connect_amount',
     ];
 
     private array $logoKeys = [
@@ -167,6 +171,7 @@ class RentOutConfiguration extends Component
             'print_settings.lessor_email' => 'nullable|email|max:255',
             'print_settings.*' => 'nullable|string|max:2000',
             'appointment_slot_scope' => 'required|in:'.SlotService::SLOT_SCOPE_INDIVIDUAL.','.SlotService::SLOT_SCOPE_GLOBAL,
+            'service_request_connect_amount' => 'nullable|numeric|min:0',
         ], [
             'print_settings.*.regex' => 'Enter a colour as #RRGGBB, e.g. #1b7bbc.',
             'print_settings.lessor_email.email' => 'Enter a valid lessor email address.',

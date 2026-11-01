@@ -44,6 +44,14 @@
             'sub' => 'Decides whether a booked appointment date and time is blocked only for the selected employee, or for every customer whichever employee is selected.',
             'fields' => ['appointment_slot_scope'],
         ],
+        'service_requests' => [
+            'icon' => 'fa-plug',
+            'title' => 'Service Requests',
+            'status' => filled($service_request_connect_amount) ? currency($service_request_connect_amount) . ' connect' : 'No default',
+            'ok' => filled($service_request_connect_amount),
+            'sub' => 'The charge pre-filled on a utility Connect request for an occupied unit. Approving the request bills it to the tenant as a utility term when the rent excludes that utility.',
+            'fields' => ['service_request_connect_amount'],
+        ],
         'checklist' => [
             'icon' => 'fa-list-alt',
             'title' => 'Checklist Notes',
@@ -233,6 +241,22 @@
                         <div class="text-danger small mt-2">{{ $message }}</div>
                     @enderror
                     <div class="form-text mt-2 mb-0"><i class="fa fa-info-circle me-1"></i>Applies on save, to new bookings from the customer link and the agreement's Appointments tab.</div>
+                </section>
+
+                {{-- ============ SERVICE REQUESTS ============ --}}
+                <section x-show="tab === 'service_requests'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['service_requests']])
+
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label class="form-label fw-semibold small" for="service_request_connect_amount">Default connect charge</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa fa-money"></i></span>
+                                <input type="number" id="service_request_connect_amount" wire:model="service_request_connect_amount" class="form-control" min="0" step="any" placeholder="0">
+                            </div>
+                            <div class="form-text">Disconnects and vacant units always start at 0. The amount can still be changed on each request.</div>
+                        </div>
+                    </div>
                 </section>
 
                 {{-- ============ CHECKLIST NOTES ============ --}}

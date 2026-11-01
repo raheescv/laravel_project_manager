@@ -316,6 +316,9 @@ return [
     // Maintenance Module
     'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'technician view'],
 
+    // Service Requests (utility connect / disconnect)
+    'property service request' => ['create', 'view', 'edit', 'edit date', 'delete', 'delete note', 'approve', 'financial approve', 'complete', 'report'],
+
     // Supply Request Module
     'supply request' => [
         'create',

@@ -7,10 +7,19 @@ use App\Jobs\BranchProductCreationJob;
 use App\Models\Account;
 use App\Models\Branch;
 use App\Models\Configuration;
+use App\Models\DocumentType;
+use App\Models\Maintenance;
 use App\Models\Permission;
 use App\Models\Product;
+use App\Models\PropertyLead;
+use App\Models\PropertyServiceRequest;
 use App\Models\RentOut;
+use App\Models\RentOutCheque;
+use App\Models\RentOutPaymentTerm;
+use App\Models\RentOutSecurity;
+use App\Models\RentOutTransaction;
 use App\Models\Role;
+use App\Models\SupplyRequest;
 use App\Models\User;
 use App\Support\LeadOptions;
 use App\Support\RentOutPrintSettings;
@@ -172,9 +181,11 @@ class MigratePropertyDataCommand extends Command
 
         try {
             Configuration::updateOrCreate(['tenant_id' => 1, 'key' => 'active_module'], ['value' => 'Property Management Module']);
+            $this->migrateBranches();
             $this->rolesAndPermissions();
             $this->migrateDesignations();
             $this->migrateUsers();
+            $this->migrateUserBranches();
             $this->assignUserRoles();
             $this->migrateEmployeeTeams();
             $this->migrateAccountHeads();
@@ -209,7 +220,6 @@ class MigratePropertyDataCommand extends Command
 
             $this->migratePropertyLeads();
             $this->backfillLeadReassignedAt();
-            $this->migratePropertyLeadAudits();
             $this->migrateLeadDropdownOptions();
             $this->migrateRentOutPrintSettings();
             $this->migrateCompanyProfile();
@@ -223,6 +233,8 @@ class MigratePropertyDataCommand extends Command
             $this->migrateComplaints();
             $this->migrateMaintenances();
             $this->migrateMaintenanceComplaints();
+            $this->migrateServiceRequests();
+            $this->migrateAudits();
         } catch (\Exception $e) {
             $this->error("Migration failed: {$e->getMessage()}");
             Log::error('Property data migration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -1277,21 +1289,7 @@ class MigratePropertyDataCommand extends Command
                     $this->transactionSourceFor($row, $rentOut, $mode, $termDueDates, $utilityDates, $oldCheques, $isServiceCharge, $isMoneyIn)
                 );
 
-                $journals[] = [
-                    'id' => $row->id,
-                    'tenant_id' => $this->tenantId,
-                    'branch_id' => $branchId,
-                    'date' => $row->date,
-                    'description' => $transaction['group'],
-                    'remarks' => $row->remark ?? '',
-                    'reference_number' => $row->voucher_no ?? null,
-                    'source' => $isMoneyIn ? 'income' : 'expense',
-                    'model' => 'RentOut',
-                    'model_id' => $row->rentout_id,
-                    'created_by' => $transaction['created_by'],
-                    'created_at' => $row->created_at ?? now(),
-                    'updated_at' => $row->updated_at ?? now(),
-                ];
+                $journals[] = $this->journalFor($row, $isMoneyIn, $branchId, $transaction);
 
                 foreach ($this->entryPairFor($row, $accountId, $counterAccountId, $amount, $isMoneyIn, $branchId, $transaction) as $entry) {
                     $entries[] = $entry;
@@ -1404,6 +1402,29 @@ class MigratePropertyDataCommand extends Command
         }
 
         return [];
+    }
+
+    /**
+     * The journal header, dated exactly as the old journal so ledgers and
+     * day books read the same in both systems.
+     */
+    private function journalFor(object $row, bool $isMoneyIn, int $branchId, array $transaction): array
+    {
+        return [
+            'id' => $row->id,
+            'tenant_id' => $this->tenantId,
+            'branch_id' => $branchId,
+            'date' => $row->date,
+            'description' => $transaction['group'],
+            'remarks' => $row->remark ?? '',
+            'reference_number' => $row->voucher_no ?? null,
+            'source' => $isMoneyIn ? 'income' : 'expense',
+            'model' => 'RentOut',
+            'model_id' => $row->rentout_id,
+            'created_by' => $transaction['created_by'],
+            'created_at' => $row->created_at ?? now(),
+            'updated_at' => $row->updated_at ?? now(),
+        ];
     }
 
     /**
@@ -2197,69 +2218,363 @@ class MigratePropertyDataCommand extends Command
         );
     }
 
+    /** @var array<string, array<int, true>> target table => migrated ids, for the audit copy */
+    private array $auditTargetIds = [];
+
+    /** @var array<class-string, list<string>> target model => the columns its audits may carry */
+    private array $auditColumns = [];
+
+    private ?array $customerHeadById = null;     // source customers.id => account_heads.id
+
+    private ?array $creditTransactionIds = null; // target rent_out_transactions.id set where money came in
+
     /**
-     * Brings the lead history across so the lead page's activity timeline
-     * starts from the lead's real creation. Values are rewritten the same way
-     * the leads themselves were (salesman employee ids, Leasing type), and
-     * every copied row is tagged so a rerun replaces rather than duplicates.
+     * Brings accounts' audit history across for every record this command
+     * migrates, so each audit tab starts from the record's real creation.
+     * Every old model is mapped onto the model it became here: ids resolve the
+     * way the rows did, renamed columns take their new names, coded values go
+     * through the same maps, and anything that is not a column of the new
+     * table is dropped. Copied rows are tagged so a rerun replaces them.
      */
-    private function migratePropertyLeadAudits(): void
+    private function migrateAudits(): void
     {
         if (! $this->tableExists('audits')) {
             return;
         }
 
-        $auditable = 'App\\Models\\PropertyLead';
-        $tag = 'accounts-migration';
+        $maps = $this->auditMaps();
 
         if (! $this->dryRun) {
-            DB::table('audits')->where('auditable_type', $auditable)->where('tags', $tag)->delete();
+            DB::table('audits')
+                ->whereIn('auditable_type', array_unique(array_column($maps, 'model')))
+                ->where('tags', 'accounts-migration')
+                ->delete();
         }
 
-        $employeeUsers = $this->employeeUserMap();
-        $rewrite = function (?string $json) use ($employeeUsers): ?string {
-            $values = json_decode((string) $json, true);
-            if (! is_array($values)) {
-                return $json;
-            }
-            if (array_key_exists('assigned_to', $values)) {
-                $values['assigned_to'] = blank($values['assigned_to']) ? null : $employeeUsers['emp_'.$values['assigned_to']] ?? null;
-            }
-            if (($values['type'] ?? null) === 'Leasing') {
-                $values['type'] = 'Rentout';
-            }
+        foreach ($maps as $oldType => $map) {
+            $copied = 0;
+            $skipped = 0;
 
-            return json_encode($values);
-        };
+            DB::connection('mysql2')->table('audits')
+                ->where('auditable_type', $oldType)
+                ->orderBy('id')
+                ->chunkById(2000, function ($audits) use ($map, &$copied, &$skipped): void {
+                    $rows = $audits->map(fn ($audit) => $this->auditRow($audit, $map))->filter()->values()->all();
 
-        $copied = 0;
-        DB::connection('mysql2')->table('audits')
-            ->where('auditable_type', $auditable)
-            ->orderBy('id')
-            ->chunkById(2000, function ($audits) use ($rewrite, $auditable, $tag, &$copied): void {
-                $rows = $audits->map(fn ($audit) => [
-                    'user_type' => $audit->user_type,
-                    'user_id' => $audit->user_id,
-                    'event' => $audit->event,
-                    'auditable_type' => $auditable,
-                    'auditable_id' => $audit->auditable_id,
-                    'old_values' => $rewrite($audit->old_values),
-                    'new_values' => $rewrite($audit->new_values),
-                    'url' => $audit->url,
-                    'ip_address' => $audit->ip_address,
-                    'user_agent' => $audit->user_agent,
-                    'tags' => $tag,
-                    'created_at' => $audit->created_at,
-                    'updated_at' => $audit->updated_at,
-                ])->all();
+                    if (! $this->dryRun && $rows) {
+                        DB::table('audits')->insert($rows);
+                    }
+                    $copied += count($rows);
+                    $skipped += $audits->count() - count($rows);
+                });
 
-                if (! $this->dryRun) {
-                    DB::table('audits')->insert($rows);
+            $this->info(class_basename($oldType).' audits -> '.class_basename($map['model']).": {$copied} copied.".($skipped ? " Skipped {$skipped}." : ''));
+        }
+    }
+
+    /**
+     * accounts auditable type => the model it became, how its id resolves
+     * (same id when absent) and how its audited values read here.
+     *
+     * @return array<string, array{model: class-string, id?: callable(int): ?int, rewrite?: callable(array, int): array}>
+     */
+    private function auditMaps(): array
+    {
+        $account = fn ($id) => $this->accountId($id);
+        $user = fn ($id) => $this->userId($id);
+        $paymentMode = fn ($id) => $this->resolvePaymentMode((int) $id);
+
+        return [
+            'App\\Models\\PropertyLead' => [
+                'model' => PropertyLead::class,
+                'rewrite' => fn (array $values) => $this->translateValues($values, [
+                    'assigned_to' => fn ($id) => $this->employeeUserMap()['emp_'.$id] ?? null,
+                    'type' => fn ($type) => $type === 'Leasing' ? 'Rentout' : $type,
+                ]),
+            ],
+            'App\\Models\\PropertyServiceRequest' => [
+                'model' => PropertyServiceRequest::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'rentout_service_status' => 'rent_out_service_status',
+                ]), [
+                    'requested_by' => $user,
+                    'approved_by' => $user,
+                    'financial_approved_by' => $user,
+                    'completed_by' => $user,
+                    'status' => fn ($status) => str_replace(' ', '_', strtolower(trim((string) $status))),
+                ]),
+            ],
+            'App\\Models\\Rentout' => [
+                'model' => RentOut::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'customer_id' => 'account_id',
+                    'collection_payment_mode_id' => 'collection_payment_mode',
+                    'management_fee_payment_mode_id' => 'management_fee_payment_method_id',
+                    'down_payment_mode_id' => 'down_payment_payment_method_id',
+                ]), [
+                    'account_id' => $account,
+                    'collection_payment_mode' => $paymentMode,
+                    'management_fee_payment_method_id' => $account,
+                    'down_payment_payment_method_id' => $account,
+                    'status' => fn ($status) => $this->rentOutStatusMap[$status] ?? $status,
+                ]),
+            ],
+            'App\\Models\\RentoutCheque' => [
+                'model' => RentOutCheque::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'rentout_id' => 'rent_out_id',
+                    'remark' => 'remarks',
+                ]), [
+                    'status' => fn ($status) => $this->chequeStatusMap[$status] ?? $status,
+                ]),
+            ],
+            'App\\Models\\RentoutSecurity' => [
+                'model' => RentOutSecurity::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'rentout_id' => 'rent_out_id',
+                    'security_amount' => 'amount',
+                    'security_payment_mode_id' => 'payment_mode',
+                    'security_bank_name' => 'bank_name',
+                    'security_cheque_no' => 'cheque_no',
+                ]), [
+                    'payment_mode' => $paymentMode,
+                    'status' => fn ($status) => $this->securityStatusMap[$status] ?? $status,
+                    'type' => fn ($type) => strtolower($type) === 'guarantee' ? 'guarantee' : 'deposit',
+                ]),
+            ],
+            // accounts' term status is not the paid/pending the migration derives, so it is left out.
+            'App\\Models\\PaymentTerm' => [
+                'model' => RentOutPaymentTerm::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys(Arr::except($values, 'status'), [
+                    'rentout_id' => 'rent_out_id',
+                    'rent' => 'amount',
+                    'amount' => 'total',
+                    'date' => 'due_date',
+                    'remark' => 'remarks',
+                    'payment_mode_id' => 'payment_mode',
+                ]), [
+                    'payment_mode' => $paymentMode,
+                ]),
+            ],
+            'App\\Models\\Maintenance' => [
+                'model' => Maintenance::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'rentout_id' => 'rent_out_id',
+                    'customer_id' => 'account_id',
+                ]), [
+                    'account_id' => $account,
+                    'priority' => fn ($priority) => $this->priorityMap[$priority] ?? 'low',
+                    'segment' => fn ($segment) => $this->segmentMap[$segment] ?? strtolower($segment),
+                    'status' => fn ($status) => $this->maintenanceStatusMap[$status] ?? 'pending',
+                ]),
+            ],
+            'App\\Models\\PropertyAssetSupply' => [
+                'model' => SupplyRequest::class,
+                'rewrite' => fn (array $values) => $this->translateValues($values, [
+                    'payment_mode_id' => $account,
+                    'status' => fn ($status) => $this->assetSupplyStatusMap[$status] ?? 'requirement',
+                    'approved_by' => $user,
+                    'accounted_by' => $user,
+                    'final_approved_by' => $user,
+                    'completed_by' => $user,
+                    'created_by' => $user,
+                    'updated_by' => $user,
+                ]),
+            ],
+            'App\\Models\\DocumentType' => [
+                'model' => DocumentType::class,
+            ],
+            'App\\Models\\Customer' => [
+                'model' => Account::class,
+                'id' => fn (int $customerId) => $this->accountId($this->customerHeadId($customerId)),
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'whatsapp_no' => 'whatsapp_mobile',
+                ]), [
+                    'nationality' => fn ($nationality) => $this->normalizeNationality($nationality),
+                ]),
+            ],
+            'App\\Models\\Employee' => [
+                'model' => User::class,
+                'id' => fn (int $employeeId) => $this->employeeUserMap()['emp_'.$employeeId] ?? null,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'branch_id' => 'default_branch_id',
+                ]), [
+                    'designation_id' => fn ($id) => $this->designationId($id),
+                ]),
+            ],
+            'App\\Models\\User' => [
+                'model' => User::class,
+                'rewrite' => fn (array $values) => $this->translateValues($this->renameKeys($values, [
+                    'nick_name' => 'username',
+                ]), [
+                    'username' => fn ($nickName) => Str::lower(preg_replace('/\s+/', '.', trim($nickName))),
+                ]),
+            ],
+            // A migrated journal is the rent-out payment of the same id. Its debit and
+            // credit were account heads; here they are amounts, so the old amount
+            // lands on whichever side the payment was posted to.
+            'App\\Models\\Journal' => [
+                'model' => RentOutTransaction::class,
+                'rewrite' => fn (array $values, int $id) => $this->translateValues($this->renameKeys(Arr::except($values, ['debit', 'credit']), [
+                    'rentout_id' => 'rent_out_id',
+                    'user_id' => 'created_by',
+                    'amount' => $this->isCreditTransaction($id) ? 'credit' : 'debit',
+                ]), [
+                    'created_by' => $user,
+                ]),
+            ],
+        ];
+    }
+
+    /**
+     * One accounts audit as this app records it, or null when its record was
+     * never migrated or none of what it changed is a column here any more.
+     *
+     * @param  array{model: class-string, id?: callable(int): ?int, rewrite?: callable(array, int): array}  $map
+     */
+    private function auditRow(object $audit, array $map): ?array
+    {
+        $id = isset($map['id']) ? $map['id']((int) $audit->auditable_id) : (int) $audit->auditable_id;
+        if ($id === null || ! $this->auditTargetExists($map['model'], $id)) {
+            return null;
+        }
+
+        $old = $this->auditValues($audit->old_values, $map, $id);
+        $new = $this->auditValues($audit->new_values, $map, $id);
+
+        if ($audit->event === 'updated') {
+            foreach ($old as $column => $value) {
+                if (array_key_exists($column, $new) && $new[$column] == $value) {
+                    unset($old[$column], $new[$column]);
                 }
-                $copied += count($rows);
-            });
+            }
 
-        $this->info("Lead audits copied: {$copied}");
+            if ($old === [] && $new === []) {
+                return null;
+            }
+        }
+
+        return [
+            'user_type' => $audit->user_type,
+            'user_id' => $audit->user_id,
+            'event' => $audit->event,
+            'auditable_type' => $map['model'],
+            'auditable_id' => $id,
+            'old_values' => json_encode($old),
+            'new_values' => json_encode($new),
+            'url' => $audit->url,
+            'ip_address' => $audit->ip_address,
+            'user_agent' => $audit->user_agent,
+            'tags' => 'accounts-migration',
+            'created_at' => $audit->created_at,
+            'updated_at' => $audit->updated_at,
+        ];
+    }
+
+    /**
+     * @param  array{model: class-string, rewrite?: callable(array, int): array}  $map
+     * @return array<string, mixed>
+     */
+    private function auditValues(?string $json, array $map, int $id): array
+    {
+        $values = json_decode((string) $json, true);
+        if (! is_array($values)) {
+            return [];
+        }
+
+        $values = isset($map['rewrite']) ? $map['rewrite']($values, $id) : $values;
+        if (array_key_exists('id', $values)) {
+            $values['id'] = $id;
+        }
+
+        return array_map(
+            fn ($value) => is_string($value) && str_starts_with($value, '0000-00-00') ? null : $value,
+            Arr::only($values, $this->auditColumnsFor($map['model']))
+        );
+    }
+
+    /**
+     * The new table's columns, less what the model itself never audits
+     * (its audit exclusions, and the timestamps when the app leaves them out).
+     *
+     * @param  class-string  $model
+     * @return list<string>
+     */
+    private function auditColumnsFor(string $model): array
+    {
+        if (! isset($this->auditColumns[$model])) {
+            $instance = new $model();
+            $excluded = $instance->getAuditExclude();
+            if (! config('audit.timestamps')) {
+                array_push($excluded, 'created_at', 'updated_at', 'deleted_at');
+            }
+
+            $this->auditColumns[$model] = array_values(array_diff(
+                DB::getSchemaBuilder()->getColumnListing($instance->getTable()),
+                $excluded
+            ));
+        }
+
+        return $this->auditColumns[$model];
+    }
+
+    /** @param  class-string  $model */
+    private function auditTargetExists(string $model, int $id): bool
+    {
+        $table = (new $model())->getTable();
+        $this->auditTargetIds[$table] ??= DB::table($table)->pluck('id')->flip()->all();
+
+        return isset($this->auditTargetIds[$table][$id]);
+    }
+
+    /**
+     * Renames keys in one pass, so a swap such as rent -> amount -> total
+     * reads every value from its old key.
+     *
+     * @param  array<string, mixed>  $values
+     * @param  array<string, string>  $renames
+     * @return array<string, mixed>
+     */
+    private function renameKeys(array $values, array $renames): array
+    {
+        $renamed = [];
+        foreach ($values as $key => $value) {
+            $renamed[$renames[$key] ?? $key] = $value;
+        }
+
+        return $renamed;
+    }
+
+    /**
+     * Runs each present value through its translator; an empty value stays empty.
+     *
+     * @param  array<string, mixed>  $values
+     * @param  array<string, callable(mixed): mixed>  $translators
+     * @return array<string, mixed>
+     */
+    private function translateValues(array $values, array $translators): array
+    {
+        foreach ($translators as $column => $translate) {
+            if (array_key_exists($column, $values)) {
+                $values[$column] = blank($values[$column]) ? null : $translate($values[$column]);
+            }
+        }
+
+        return $values;
+    }
+
+    private function customerHeadId(int $customerId): ?int
+    {
+        $this->customerHeadById ??= DB::connection('mysql2')->table('customers')->pluck('account_head_id', 'id')->all();
+
+        return $this->customerHeadById[$customerId] ?? null;
+    }
+
+    private function isCreditTransaction(int $id): bool
+    {
+        $this->creditTransactionIds ??= DB::table('rent_out_transactions')->where('credit', '>', 0)->pluck('id')->flip()->all();
+
+        return isset($this->creditTransactionIds[$id]);
     }
 
     /**
@@ -2694,6 +3009,166 @@ class MigratePropertyDataCommand extends Command
                 'deleted_at' => $row->deleted_at ?? null,
             ];
         });
+    }
+
+    /**
+     * Accounts' branches keep their ids, so every branch_id the other steps copy
+     * (rent-outs, maintenances, leads, users' default branch) points at a real
+     * branch. The contact details come from each branch's company profile.
+     */
+    private function migrateBranches(): void
+    {
+        $profiles = $this->tableExists('profiles')
+            ? DB::connection('mysql2')->table('profiles')->get()->keyBy('branch_id')
+            : collect();
+        $records = DB::connection('mysql2')->table('branches')->whereNull('deleted_at')->orderBy('id')->get();
+        $existing = DB::table('branches')->where('tenant_id', $this->tenantId)->pluck('id')->flip();
+
+        $this->migrateTable('branches', $records, 'branches', fn ($row) => $this->branchRow($row, $profiles[$row->id] ?? null));
+
+        if ($this->dryRun) {
+            return;
+        }
+
+        Cache::forget(TenantCache::key('branches', $this->tenantId));
+
+        // A new branch needs its product rows, exactly as Settings → Branch creates them.
+        // Inventory rows require a creator, so they are stamped with the tenant's first user.
+        $creatorId = DB::table('users')->where('tenant_id', $this->tenantId)->orderBy('id')->value('id');
+        foreach ($records as $row) {
+            if (! isset($existing[$row->id])) {
+                BranchProductCreationJob::dispatch($row->id, $creatorId, null, $this->tenantId);
+            }
+        }
+    }
+
+    private function branchRow(object $row, ?object $profile): array
+    {
+        $location = collect([$profile->address_line_1 ?? null, $profile->address_line_2 ?? null, $profile->address_line_3 ?? null])
+            ->map(fn ($line) => trim((string) $line))
+            ->filter(fn ($line) => $line !== '' && ! preg_match('/^address_line_\d$/', $line))
+            ->implode(', ');
+
+        return [
+            'id' => $row->id,
+            'tenant_id' => $this->tenantId,
+            'name' => trim($row->name),
+            'code' => trim($row->code ?: $row->name),
+            'location' => $location,
+            'mobile' => $profile->mobile ?? null,
+            'created_at' => $row->created_at ?? now(),
+            'updated_at' => $row->updated_at ?? now(),
+        ];
+    }
+
+    /**
+     * Which branches each login user may work in. Rows for a user that did not
+     * migrate as a login user are skipped rather than pinned to another account.
+     */
+    private function migrateUserBranches(): void
+    {
+        $records = DB::connection('mysql2')->table('user_has_branches')->orderBy('id')->get();
+        $branchIds = DB::table('branches')->where('tenant_id', $this->tenantId)->pluck('id')->flip();
+
+        $this->migrateTable('user branches', $records, 'user_has_branches', function ($row) use ($branchIds) {
+            $userId = $this->userId($row->user_id);
+            if (! $userId || ! isset($branchIds[$row->branch_id])) {
+                return;
+            }
+
+            return [
+                'user_id' => $userId,
+                'branch_id' => (int) $row->branch_id,
+                'created_at' => $row->created_at ?? now(),
+                'updated_at' => $row->updated_at ?? now(),
+            ];
+        }, ['user_id', 'branch_id']);
+    }
+
+    /**
+     * Utility connect / disconnect requests. Ids are kept; the unit's location
+     * and branch come from the migrated property, and the rent-out is the one
+     * that occupied the unit on the request date.
+     */
+    private function migrateServiceRequests(): void
+    {
+        if (! $this->tableExists('property_service_requests')) {
+            $this->warn('Source table property_service_requests does not exist. Skipping.');
+
+            return;
+        }
+
+        $records = DB::connection('mysql2')->table('property_service_requests')->orderBy('id')->get();
+        $propertyBranches = DB::table('properties')->pluck('branch_id', 'id');
+        $rentOutsByProperty = DB::table('rent_outs')
+            ->whereNull('deleted_at')
+            ->whereIn('status', ['occupied', 'vacated', 'expired'])
+            ->orderByDesc('start_date')
+            ->get(['id', 'property_id', 'start_date', 'end_date'])
+            ->groupBy('property_id');
+
+        $this->migrateTable('service requests', $records, 'property_service_requests', function ($row) use ($propertyBranches, $rentOutsByProperty) {
+            $meta = $this->propertyMeta($row->property_id);
+            if (! $meta) {
+                return;
+            }
+
+            return $this->serviceRequestRow($row, $meta, (int) ($propertyBranches[$row->property_id] ?? 0) ?: 1, $rentOutsByProperty[$row->property_id] ?? collect());
+        });
+
+        if (! $this->dryRun && ! DB::table('configurations')->where('tenant_id', $this->tenantId)->where('key', 'service_request_connect_amount')->exists()) {
+            // accounts pre-filled every occupied-unit connect at 300.
+            $this->putConfiguration('service_request_connect_amount', '300');
+        }
+    }
+
+    private function serviceRequestRow(object $row, object $meta, int $branchId, Collection $rentOuts): array
+    {
+        $date = $this->normalizeDate($row->date);
+        $rentOut = $date ? $rentOuts->first(fn ($rentOut) => $rentOut->start_date <= $date && (! $rentOut->end_date || $rentOut->end_date >= $date)) : null;
+
+        $notes = collect(json_decode((string) $row->notes, true) ?: [])
+            ->filter(fn ($note) => filled($note['note'] ?? null))
+            ->map(fn ($note) => [
+                'note' => $note['note'],
+                'created_by' => $this->userId($note['created_by'] ?? null),
+                'creator' => $note['creator'] ?? null,
+                'created_at' => $note['created_at'] ?? null,
+            ])
+            ->values()
+            ->all();
+
+        $status = str_replace(' ', '_', strtolower(trim((string) $row->status)));
+
+        return [
+            'id' => $row->id,
+            'tenant_id' => $this->tenantId,
+            'branch_id' => $branchId,
+            'property_id' => $row->property_id,
+            'property_group_id' => $meta->property_group_id,
+            'property_building_id' => $meta->property_building_id,
+            'property_type_id' => $meta->property_type_id,
+            'rent_out_id' => $rentOut?->id,
+            'utility_id' => $row->utility_id,
+            'type' => $row->type === 'connect' ? 'connect' : 'disconnect',
+            'date' => $date ?? $this->normalizeDate($row->requested_at) ?? substr((string) $row->created_at, 0, 10),
+            'amount' => (float) ($row->amount ?? 0),
+            'rent_out_service_status' => filled($row->rentout_service_status) ? $row->rentout_service_status : null,
+            'status' => in_array($status, ['requested', 'approved', 'financial_approved', 'completed'], true) ? $status : 'requested',
+            'requested_by' => $this->userId($row->requested_by),
+            'requested_at' => $this->normalizeDate($row->requested_at),
+            'approved_by' => $this->userId($row->approved_by),
+            'approved_at' => $this->normalizeDate($row->approved_at),
+            'financial_approved_by' => $this->userId($row->financial_approved_by),
+            'financial_approved_at' => $this->normalizeDate($row->financial_approved_at),
+            'completed_by' => $this->userId($row->completed_by),
+            'completed_at' => $this->normalizeDate($row->completed_at),
+            'remarks' => $row->remarks,
+            'notes' => json_encode($notes),
+            'created_by' => $this->userId($row->requested_by),
+            'created_at' => $row->created_at ?? now(),
+            'updated_at' => $row->updated_at ?? now(),
+        ];
     }
 
     private function tableExists(string $table): bool
