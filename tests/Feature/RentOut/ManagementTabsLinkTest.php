@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\RentOut\BookingView;
 use App\Livewire\RentOut\View;
 use App\Models\Account;
 use App\Models\Branch;
@@ -62,4 +63,47 @@ it('maps every management tab to a url slug', function (): void {
         'cheques' => 'ChequeTab',
         'checklist' => 'ChecklistTab',
     ])->not->toHaveKey('utilities');
+});
+
+it('shows agreement points on the booking view even after the booking is confirmed', function (): void {
+    $tenant = Tenant::create(['name' => 'AP Tenant', 'subdomain' => 'ap'.uniqid(), 'is_active' => 1]);
+    app(TenantService::class)->setCurrentTenant($tenant);
+    session(['tenant_id' => $tenant->id, 'branch_code' => 'A']);
+
+    $user = User::create([
+        'tenant_id' => $tenant->id, 'name' => 'AP User', 'type' => 'employee', 'is_admin' => 1,
+        'email' => 'ap'.uniqid().'@example.test', 'password' => bcrypt('secret'),
+    ]);
+    $customer = Account::create(['tenant_id' => $tenant->id, 'account_type' => 'asset', 'name' => 'AP Customer']);
+    $branch = Branch::create(['tenant_id' => $tenant->id, 'name' => 'AP Branch', 'code' => 'AP']);
+    session(['branch_id' => $branch->id]);
+    $group = PropertyGroup::create(['tenant_id' => $tenant->id, 'name' => 'AP Group']);
+    $building = PropertyBuilding::create(['tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'property_group_id' => $group->id, 'name' => 'AP Building']);
+    $type = PropertyType::create(['tenant_id' => $tenant->id, 'name' => 'AP Type']);
+    $property = Property::create([
+        'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'property_group_id' => $group->id,
+        'property_building_id' => $building->id, 'property_type_id' => $type->id, 'number' => 'AP-101',
+    ]);
+    $rentOut = RentOut::create([
+        'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'account_id' => $customer->id,
+        'salesman_id' => $user->id, 'property_id' => $property->id, 'property_building_id' => $building->id,
+        'property_type_id' => $type->id, 'property_group_id' => $group->id, 'agreement_type' => 'lease',
+        'status' => 'occupied', 'reservation_fees_disclaimer_en' => ['Reservation is valid for 7 days.'],
+        'start_date' => now()->toDateString(), 'end_date' => now()->addYear()->toDateString(), 'created_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    $tabSlugs = function (string $html): array {
+        preg_match("/tabSlugs: JSON\.parse\('(.+?)'\)/", $html, $match);
+
+        return json_decode(json_decode('"'.$match[1].'"'), true);
+    };
+
+    $bookingHtml = Livewire::test(BookingView::class, ['id' => $rentOut->id, 'agreementType' => 'lease'])->html();
+    expect($tabSlugs($bookingHtml))->toHaveKey('agreement-points', 'AgreementPointsTab')
+        ->and($bookingHtml)->toContain('Reservation is valid for 7 days.');
+
+    $rentOutHtml = Livewire::test(View::class, ['id' => $rentOut->id, 'agreementType' => 'lease'])->html();
+    expect($tabSlugs($rentOutHtml))->not->toHaveKey('agreement-points');
 });
