@@ -36,8 +36,7 @@
     <div class="jt-wing jt-barcode {{ $jtBarcodeOnLeft ? 'jt-wing--left' : 'jt-wing--right' }}">
         @if ($jtBarcodeVisible && ! empty($barcode))
             <div class="jt-barcode__inner">
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $settings['barcode']['type'] ?? 'C128', $settings['barcode']['scale'] ?? 2, 40, [0, 0, 0], false) }}"
-                    alt="{{ $barcode }}">
+                {!! BarcodeLabel::barsSvg($barcode, $settings['barcode']['type'] ?? 'C128', $settings['barcode']['scale'] ?? 2, 40) !!}
                 @if ($jtShowValue)
                     <div class="jt-barcode__value">{{ $barcode }}</div>
                 @endif

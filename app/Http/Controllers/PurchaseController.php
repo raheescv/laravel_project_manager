@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Configuration;
+use App\Models\Inventory;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Support\BarcodeTemplateConfiguration;
@@ -63,8 +64,19 @@ class PurchaseController extends Controller
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
         $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
-        // Generate HTML using Blade view
-        $html = view('purchase.barcode-print', compact('purchaseItems', 'settings', 'company_name', 'company_logo'))->render();
+        // The print cart's view, so purchase stickers follow the template's type, fonts and currency.
+        $inventoryIds = Inventory::whereIn('product_id', $purchaseItems->pluck('product_id'))->orderByDesc('id')->pluck('id', 'product_id');
+        $cartItems = $purchaseItems
+            ->filter(fn (PurchaseItem $item): bool => $inventoryIds->has($item->product_id))
+            ->map(fn (PurchaseItem $item): array => [
+                'item_type' => 'inventory',
+                'inventory_id' => $inventoryIds[$item->product_id],
+                'quantity' => $item->quantity,
+            ])
+            ->values()
+            ->all();
+
+        $html = view('inventory.barcode-cart-print', compact('cartItems', 'settings', 'company_name', 'company_logo'))->render();
         // TSC printers take the label as TSPL; see RendersTsplLabels.
         if ($this->wantsTspl()) {
             return $this->tsplResponse($html, $settings);

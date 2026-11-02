@@ -144,14 +144,13 @@
 
     /* The bars take whatever height is left once the number has its line, so
        the number can never be pushed outside the wing and clipped away. */
-    .jt-barcode__inner img {
+    .jt-barcode__inner svg {
         display: block;
         flex: 1 1 auto;
         min-height: 0;
         width: 100%;
         height: 100%;
         max-height: {{ $jtBarcodeHeight }}mm;
-        object-fit: fill;
     }
 
     .jt-barcode__value {

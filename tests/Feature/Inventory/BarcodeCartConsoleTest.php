@@ -3,13 +3,16 @@
 use App\Http\Controllers\BarcodeController;
 use App\Livewire\Inventory\Barcode\CartPage;
 use App\Models\Configuration;
+use App\Models\Purchase;
 use App\Support\BarcodeFonts;
 use App\Support\BarcodeLabel;
 use App\Support\BarcodeTemplateConfiguration;
 use App\Support\TenantCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 use Tests\Support\PosWorld;
 
 /**
@@ -294,6 +297,55 @@ it('prints the barcode number as text in the label font, not the barcode image b
     expect($html)->toContain('<div class="barcode-value">'.$this->barcode.'</div>')
         ->toMatch('/\.barcode-value \{[^}]*font-size: 13px;[^}]*font-family: '.preg_quote(BarcodeFonts::elementStack($settings, 'barcode'), '/').';/');
 })->with(['single label' => 'inventory.barcode', 'print cart' => 'inventory.barcode-cart-print']);
+
+it('prints purchase stickers through the template label view, one per purchased unit', function (): void {
+    $purchase = Purchase::create([
+        'tenant_id' => $this->world->tenant->id,
+        'invoice_no' => 'PUR-'.uniqid(),
+        'branch_id' => $this->world->branch->id,
+        'account_id' => $this->world->accounts['general_customer'],
+        'date' => now()->toDateString(),
+        'gross_amount' => 30,
+        'total' => 30,
+        'status' => 'completed',
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+    $purchase->items()->create([
+        'product_id' => $this->world->product->id,
+        'unit_id' => $this->world->product->unit_id,
+        'unit_price' => 10,
+        'quantity' => 3,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+    ]);
+
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'purchase.barcode print', 'guard_name' => 'web']));
+
+    $rendered = null;
+    View::composer('inventory.barcode-cart-print', function ($view) use (&$rendered): void {
+        $rendered = $view->getData();
+    });
+
+    $this->get($this->world->url("/purchase/barcode-print/{$purchase->id}"))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
+
+    expect($rendered['cartItems'])->toEqual([
+        ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 3],
+    ]);
+});
+
+it('draws the barcode bars as vector SVG so printer drivers print them solid', function (): void {
+    $svg = BarcodeLabel::barsSvg('5010000053', 'C128', 4, 30);
+
+    expect($svg)->toStartWith('<svg viewBox="0 0 ')
+        ->toContain('preserveAspectRatio="none"')
+        ->toContain('shape-rendering="crispEdges"')
+        ->toContain('<rect ')
+        ->not->toContain('<text')
+        ->not->toContain('<?xml');
+});
 
 it('follows Quantity Label In Print for the qty caption', function (): void {
     expect(BarcodeLabel::quantityCaption())->toBe('Qty');

@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
+use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
 
 /**
  * Read helpers shared by every barcode label view (preview, single print and
@@ -15,6 +16,23 @@ class BarcodeLabel
     public static function type(array $settings): string
     {
         return BarcodeTemplateConfiguration::resolveType($settings);
+    }
+
+    /**
+     * The bars as inline SVG, without the number. A PDF printer driver draws vector
+     * bars as solid black at its own resolution; a PNG gets scaled and dithered,
+     * which prints grey, ragged bars. The bars stretch to whatever box CSS gives them.
+     */
+    public static function barsSvg(string $code, string $type, float $scale, float $height): string
+    {
+        $svg = DNS1D::getBarcodeSVG($code, $type, $scale, $height, '#000', false, true);
+
+        return preg_replace(
+            '/<svg width="([\d.]+)" height="([\d.]+)"/',
+            '<svg viewBox="0 0 $1 $2" width="$1" height="$2" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="'.e($code).'"',
+            trim($svg),
+            1,
+        );
     }
 
     /**

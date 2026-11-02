@@ -134,10 +134,9 @@
             max-width: 100%;
         }
 
-        .barcode-image img {
+        .barcode-image svg {
             display: block;
             max-width: 100%;
-            height: auto;
         }
 
         .barcode-value {
@@ -257,10 +256,9 @@
                                     $showCode = $settings['barcode']['show_value'] ?? true;
                                     $barsHeight = $showCode ? max(10, $height - (int) ($settings['barcode']['font_size'] ?? 12) - 2) : $height;
                                 @endphp
-                                {{-- The number is HTML text, not the barcode library's bitmap font, so it prints in the label's typeface. --}}
+                                {{-- Vector bars print solid; the number is HTML text so it prints in the label's typeface. --}}
                                 <div class="barcode-stack">
-                                    <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $barsHeight, [0, 0, 0], false) }}"
-                                        alt="{{ $barcode }}">
+                                    {!! BarcodeLabel::barsSvg($barcode, $barcodeType, $scale, $barsHeight) !!}
                                     @if ($showCode)
                                         <div class="barcode-value">{{ $barcode }}</div>
                                     @endif
