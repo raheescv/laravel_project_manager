@@ -158,14 +158,15 @@ it('locks a completed request against edits and deletion', function () {
 
 it('pairs each connect with the first disconnect that followed it', function () {
     ($this->request)(['date' => '2026-01-05']);
-    ($this->request)(['type' => 'disconnect', 'date' => '2026-02-01']);
-    ($this->request)(['type' => 'disconnect', 'date' => '2026-02-20']);
+    ($this->request)(['type' => 'disconnect', 'date' => '2026-02-01', 'remarks' => 'Tenant moved out']);
+    ($this->request)(['type' => 'disconnect', 'date' => '2026-02-20', 'remarks' => 'Duplicate']);
     ($this->request)(['date' => '2026-03-01']);
 
     $periods = PropertyServiceRequest::connectionPeriods()->orderBy('property_service_requests.date')->get();
 
     expect($periods)->toHaveCount(2)
         ->and($periods[0]->disconnect_date)->toBe('2026-02-01')
+        ->and($periods[0]->disconnect_remarks)->toBe('Tenant moved out')
         ->and($periods[1]->disconnect_date)->toBeNull();
 });
 

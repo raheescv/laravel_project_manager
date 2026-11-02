@@ -112,8 +112,7 @@ class PropertyServiceRequest extends Model implements AuditableContracts
      */
     public function scopeConnectionPeriods(Builder $query): Builder
     {
-        $disconnect = self::withoutGlobalScopes()
-            ->selectRaw('MIN(disconnects.date)')
+        $disconnects = fn () => self::withoutGlobalScopes()
             ->from('property_service_requests as disconnects')
             ->whereColumn('disconnects.tenant_id', 'property_service_requests.tenant_id')
             ->whereColumn('disconnects.property_id', 'property_service_requests.property_id')
@@ -125,7 +124,10 @@ class PropertyServiceRequest extends Model implements AuditableContracts
         return $query
             ->where('property_service_requests.type', ServiceRequestType::Connect)
             ->select('property_service_requests.*')
-            ->addSelect(['disconnect_date' => $disconnect]);
+            ->addSelect([
+                'disconnect_date' => $disconnects()->selectRaw('MIN(disconnects.date)'),
+                'disconnect_remarks' => $disconnects()->select('disconnects.remarks')->orderBy('disconnects.date')->orderBy('disconnects.id')->limit(1),
+            ]);
     }
 
     /** @return BelongsTo<Property, $this> */

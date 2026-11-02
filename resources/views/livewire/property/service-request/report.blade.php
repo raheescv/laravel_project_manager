@@ -67,7 +67,7 @@
                                         <span class="badge bg-success-subtle text-success-emphasis">Connected</span>
                                     @endif
                                 </td>
-                                <td><small class="text-muted">{{ $item->remarks }}</small></td>
+                                <td><small class="text-muted">{{ collect([$item->remarks, $item->disconnect_remarks])->filter()->implode(', ') }}</small></td>
                             </tr>
                         @empty
                             <tr>
