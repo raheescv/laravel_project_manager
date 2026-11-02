@@ -3,6 +3,7 @@
 use App\Http\Controllers\BarcodeController;
 use App\Livewire\Inventory\Barcode\CartPage;
 use App\Models\Configuration;
+use App\Support\BarcodeFonts;
 use App\Support\BarcodeLabel;
 use App\Support\BarcodeTemplateConfiguration;
 use App\Support\TenantCache;
@@ -274,6 +275,25 @@ it('prints the weight, the Settings currency and physical alignment on a standar
         ->not->toContain('justify-content: flex-end')->not->toContain('justify-content: flex-start')
         ->toContain('dir="rtl">ثوب سويسري 3.5 متر</bdi>')->not->toContain('<bdo');
 });
+
+it('prints the barcode number as text in the label font, not the barcode image bitmap font', function (string $view): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings(['barcode' => ['font_family' => '', 'font_size' => 13]], 'standard');
+
+    $html = view($view, [
+        'settings' => $settings,
+        'product' => $this->world->product,
+        'barcode' => $this->barcode,
+        'conversionFactor' => 1,
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => [
+            'a' => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 1, 'price' => 99],
+        ],
+    ])->render();
+
+    expect($html)->toContain('<div class="barcode-value">'.$this->barcode.'</div>')
+        ->toMatch('/\.barcode-value \{[^}]*font-size: 13px;[^}]*font-family: '.preg_quote(BarcodeFonts::elementStack($settings, 'barcode'), '/').';/');
+})->with(['single label' => 'inventory.barcode', 'print cart' => 'inventory.barcode-cart-print']);
 
 it('follows Quantity Label In Print for the qty caption', function (): void {
     expect(BarcodeLabel::quantityCaption())->toBe('Qty');

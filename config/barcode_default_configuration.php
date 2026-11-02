@@ -116,7 +116,7 @@ return [
                 ],
                 'barcode' => [
                     'font_size' => 12,
-                    'font_family' => 'mono',
+                    'font_family' => '',
                     'font_weight' => 400,
                     'align' => 'center',
                     'visible' => true,

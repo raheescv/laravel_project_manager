@@ -5,42 +5,44 @@
     use App\Support\BarcodeFonts;
     use App\Support\BarcodeLabel;
 
-    function convertToUnits($value)
-    {
-        if (is_numeric($value)) {
-            if ($value == 100) {
-                return $value . '%';
+    if (! function_exists('convertToUnits')) {
+        function convertToUnits($value)
+        {
+            if (is_numeric($value)) {
+                if ($value == 100) {
+                    return $value . '%';
+                }
+                return $value . 'px';
             }
-            return $value . 'px';
-        }
-        return $value;
-    }
-
-    function alignToFlex($align)
-    {
-        return match ($align ?? 'left') {
-            'right' => 'right',
-            'center' => 'center',
-            default => 'left',
-        };
-    }
-
-    function getElementStyle($element, $settings)
-    {
-        $style = [];
-        foreach (['top', 'left', 'width', 'height'] as $prop) {
-            $style[$prop] = convertToUnits($settings['elements'][$element][$prop] ?? 0);
+            return $value;
         }
 
-        $align = $settings[$element]['align'] ?? null;
-        if ($align) {
-            $style['display'] = 'flex';
-            $style['justify-content'] = alignToFlex($align);
+        function alignToFlex($align)
+        {
+            return match ($align ?? 'left') {
+                'right' => 'right',
+                'center' => 'center',
+                default => 'left',
+            };
         }
 
-        $value = implode('; ', array_map(fn($key, $value) => "$key: $value", array_keys($style), $style));
+        function getElementStyle($element, $settings)
+        {
+            $style = [];
+            foreach (['top', 'left', 'width', 'height'] as $prop) {
+                $style[$prop] = convertToUnits($settings['elements'][$element][$prop] ?? 0);
+            }
 
-        return $value;
+            $align = $settings[$element]['align'] ?? null;
+            if ($align) {
+                $style['display'] = 'flex';
+                $style['justify-content'] = alignToFlex($align);
+            }
+
+            $value = implode('; ', array_map(fn($key, $value) => "$key: $value", array_keys($style), $style));
+
+            return $value;
+        }
     }
 @endphp
 
@@ -155,9 +157,26 @@
             letter-spacing: 0.5px;
         }
 
+        .barcode-stack {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 100%;
+        }
+
         .barcode-image img {
+            display: block;
             max-width: 100%;
             height: auto;
+        }
+
+        .barcode-value {
+            text-align: center;
+            font-size: {{ $settings['barcode']['font_size'] ?? 12 }}px;
+            margin-top: 2px;
+            font-family: {!! BarcodeFonts::elementStack($settings, 'barcode') !!};
+            font-weight: {{ BarcodeFonts::elementWeight($settings, 'barcode', 400) }};
+            line-height: 1;
         }
 
         .price {
@@ -244,9 +263,16 @@
                     $scale = $settings['barcode']['scale'];
                     $height = $settings['elements']['barcode']['height'] ?? 40;
                     $showCode = $settings['barcode']['show_value'] ?? true;
+                    $barsHeight = $showCode ? max(10, $height - (int) ($settings['barcode']['font_size'] ?? 12) - 2) : $height;
                 @endphp
-                <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $height, [0, 0, 0], $showCode) }}"
-                    alt="{{ $barcode }}">
+                {{-- The number is HTML text, not the barcode library's bitmap font, so it prints in the label's typeface. --}}
+                <div class="barcode-stack">
+                    <img src="data:image/png;base64,{{ DNS1D::getBarcodePNG($barcode, $barcodeType, $scale, $barsHeight, [0, 0, 0], false) }}"
+                        alt="{{ $barcode }}">
+                    @if ($showCode)
+                        <div class="barcode-value">{{ $barcode }}</div>
+                    @endif
+                </div>
             </div>
         @endif
 
