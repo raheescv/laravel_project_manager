@@ -333,7 +333,7 @@
                                                 @endcan
                                             </td>
                                             <td>{{ $item['product'] }}</td>
-                                            <td class="text-end">{{ currency($item['quantity'], 0) }}</td>
+                                            <td class="text-end">{{ currency($item['quantity'], 3) }}</td>
                                             <td class="text-end">{{ currency($item['unit_price'], 2) }}</td>
                                             <td class="text-end">{{ currency($item['discount'], 2) }}</td>
                                             <td class="text-end text-success">{{ currency($item['total'], 2) }}</td>
@@ -343,7 +343,7 @@
                                 <tfoot class="table-light fw-semibold">
                                     <tr>
                                         <td colspan="3">{{ count($categoryDetails['items']) }} items</td>
-                                        <td class="text-end">{{ currency($categoryDetails['quantity'], 0) }}</td>
+                                        <td class="text-end">{{ currency($categoryDetails['quantity'], 3) }}</td>
                                         <td colspan="2"></td>
                                         <td class="text-end text-success">{{ currency($categoryDetails['total'], 2) }}</td>
                                     </tr>
