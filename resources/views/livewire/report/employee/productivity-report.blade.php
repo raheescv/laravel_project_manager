@@ -278,7 +278,7 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($topCategories[$employee['id']]->take(3) as $category)
-                                                    <tr class="border-bottom">
+                                                    <tr class="border-bottom" role="button" title="View items" wire:click="showCategoryDetails({{ $employee['id'] }}, {{ $category->category_id }})">
                                                         <td class="border-end">{{ $category->category }}</td>
                                                         <td class="text-end border-end text-info">{{ currency($category->count, 0) }}</td>
                                                         <td class="text-end text-success">{{ currency($category->total, 2) }}</td>
@@ -295,4 +295,69 @@
             </div>
         </div>
     </div>
+
+    @if ($categoryDetails)
+        <div class="modal show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fa fa-tag me-1"></i>{{ $categoryDetails['category'] }}
+                            <small class="text-muted ms-1">— {{ $categoryDetails['employee'] }}</small>
+                        </h5>
+                        <button type="button" class="btn-close" wire:click="closeCategoryDetails"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Invoice</th>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Unit Price</th>
+                                        <th class="text-end">Discount</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($categoryDetails['items'] as $item)
+                                        <tr>
+                                            <td class="text-nowrap">{{ systemDate($item['date']) }}</td>
+                                            <td>
+                                                @can('sale.view')
+                                                    <a href="{{ route('sale::view', $item['sale_id']) }}" target="_blank" class="text-primary fw-semibold text-decoration-none">{{ $item['invoice_no'] }}</a>
+                                                @else
+                                                    {{ $item['invoice_no'] }}
+                                                @endcan
+                                            </td>
+                                            <td>{{ $item['product'] }}</td>
+                                            <td class="text-end">{{ currency($item['quantity'], 0) }}</td>
+                                            <td class="text-end">{{ currency($item['unit_price'], 2) }}</td>
+                                            <td class="text-end">{{ currency($item['discount'], 2) }}</td>
+                                            <td class="text-end text-success">{{ currency($item['total'], 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-light fw-semibold">
+                                    <tr>
+                                        <td colspan="3">{{ count($categoryDetails['items']) }} items</td>
+                                        <td class="text-end">{{ currency($categoryDetails['quantity'], 0) }}</td>
+                                        <td colspan="2"></td>
+                                        <td class="text-end text-success">{{ currency($categoryDetails['total'], 2) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" wire:click="closeCategoryDetails">
+                            <i class="fa fa-times me-1"></i> Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

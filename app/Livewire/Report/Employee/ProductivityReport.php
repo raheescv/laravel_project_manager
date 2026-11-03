@@ -39,6 +39,8 @@ class ProductivityReport extends Component
 
     public $perPage = 10;
 
+    public $categoryDetails = [];
+
     protected $paginationTheme = 'bootstrap';
 
     public function mount()
@@ -158,10 +160,11 @@ class ProductivityReport extends Component
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->join('categories', 'categories.id', '=', 'products.main_category_id')
             ->join('users', 'users.id', '=', 'sale_items.employee_id')
-            ->groupBy('sale_items.employee_id', 'categories.name', 'users.name')
+            ->groupBy('sale_items.employee_id', 'categories.id', 'categories.name', 'users.name')
             ->select(
                 'sale_items.employee_id',
                 'users.name as employee_name',
+                'categories.id as category_id',
                 'categories.name as category',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('SUM(sale_items.total) as total')
@@ -169,6 +172,44 @@ class ProductivityReport extends Component
             ->orderBy('total', 'desc')
             ->get()
             ->groupBy('employee_id');
+    }
+
+    public function showCategoryDetails($employeeId, $categoryId)
+    {
+        $items = $this->getSalesQuery()
+            ->join('products', 'products.id', '=', 'sale_items.product_id')
+            ->join('categories', 'categories.id', '=', 'products.main_category_id')
+            ->join('users', 'users.id', '=', 'sale_items.employee_id')
+            ->where('sale_items.employee_id', $employeeId)
+            ->where('products.main_category_id', $categoryId)
+            ->select(
+                'sale_items.sale_id',
+                'sales.invoice_no',
+                'sales.date',
+                'products.name as product',
+                'sale_items.quantity',
+                'sale_items.unit_price',
+                'sale_items.discount',
+                'sale_items.total',
+                'categories.name as category',
+                'users.name as employee',
+            )
+            ->orderBy('sales.date', 'desc')
+            ->orderBy('sale_items.id', 'desc')
+            ->get();
+
+        $this->categoryDetails = [
+            'employee' => $items->first()?->employee,
+            'category' => $items->first()?->category,
+            'items' => $items->toArray(),
+            'quantity' => $items->sum('quantity'),
+            'total' => $items->sum('total'),
+        ];
+    }
+
+    public function closeCategoryDetails()
+    {
+        $this->categoryDetails = [];
     }
 
     public function downloadReport()

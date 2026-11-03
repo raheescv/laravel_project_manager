@@ -71,3 +71,21 @@ it('sums only completed sales', function (): void {
         ->and((int) $categories->first()->count)->toBe(1)
         ->and((float) $categories->first()->total)->toEqual(100.0);
 });
+
+it('lists the completed sale items behind a category card row', function (): void {
+    ($this->sell)(2, 'completed');
+    ($this->sell)(3, 'cancelled');
+
+    $categoryId = $this->world->product->main_category_id;
+
+    $component = Livewire::test(ProductivityReport::class)
+        ->call('showCategoryDetails', $this->world->user->id, $categoryId);
+
+    $details = $component->get('categoryDetails');
+
+    expect($details['items'])->toHaveCount(1)
+        ->and((float) $details['items'][0]['quantity'])->toEqual(2.0)
+        ->and((float) $details['total'])->toEqual(100.0);
+
+    $component->call('closeCategoryDetails')->assertSet('categoryDetails', []);
+});
