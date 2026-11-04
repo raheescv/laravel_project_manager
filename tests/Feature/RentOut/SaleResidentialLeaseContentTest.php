@@ -175,8 +175,8 @@ it('keeps a hyphenated ID inside the CR text whole and left-to-right', function 
         ->toContain('42463 رقم تعريف مؤسسة الشركة: <span class="ltr-id">10-3804-00</span>');
 });
 
-it('frames the seller, purchaser and project details as separate groups', function (): void {
-    expect(substr_count(renderSaleLease(), '<table class="reg group">'))->toBe(3);
+it('frames the seller, purchaser, project details and disclosure statement as separate groups', function (): void {
+    expect(substr_count(renderSaleLease(), '<table class="reg group">'))->toBe(4);
 });
 
 it('heads each group with an English and Arabic title band', function (): void {
@@ -185,4 +185,9 @@ it('heads each group with an English and Arabic title band', function (): void {
         ->toContain('<span>The First Party (Seller)</span><span lang="ar">الطرف الأول (البائع)</span>')
         ->toContain('<span>The Second Party (Purchaser)</span><span lang="ar">الطرف الثاني (المشتري)</span>')
         ->toContain('<span>Project Details</span><span lang="ar">تفاصيل المشروع</span>');
+});
+
+it('starts the disclosure statement on its own page as a separate group', function (): void {
+    expect(renderSaleLease())
+        ->toContain("<div class=\"page-break\"></div>\n    <table class=\"reg group\">\n        <tr class=\"group-head\">\n            <td colspan=\"2\"><div><span>Disclosure Statement</span>");
 });

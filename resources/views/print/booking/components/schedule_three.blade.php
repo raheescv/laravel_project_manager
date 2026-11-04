@@ -139,11 +139,13 @@
             </td>
         </tr>
 
-        <!-- Disclosure Statement -->
-        <tr>
-            <td colspan="2" class="text-center" style="border-top: 2.4pt double #222; border-bottom: 2.4pt double #222;">
-                <strong>DISCLOSURE STATEMENT / بيان الافصاح عن معلومات</strong>
-            </td>
+    </table>
+
+    <!-- Disclosure Statement: its own page, framed as one group -->
+    <div class="page-break"></div>
+    <table class="reg group">
+        <tr class="group-head">
+            <td colspan="2"><div><span>Disclosure Statement</span><span lang="ar">بيان الافصاح عن معلومات</span></div></td>
         </tr>
 
         <!-- Building Description -->
