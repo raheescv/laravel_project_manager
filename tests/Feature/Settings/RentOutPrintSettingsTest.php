@@ -165,9 +165,9 @@ it('prints the configured seller details verbatim on the sale agreement', functi
         'numberToWord' => ['english' => 'one thousand', 'arabic' => 'one thousand'],
     ])->render();
 
-    expect($html)->toContain('<span class="underline">13321, Doha , State of Qatar</span> &nbsp;|')
-        ->toContain('<span class="underline">13321  الدوحة  دولة قطر</span> &nbsp;|')
-        ->toContain('يمثلها: السيد حسن محسن')
+    expect($html)->toContain('<span class="lbl">P.O. Box:</span> <b>13321, Doha , State of Qatar</b>')
+        ->toContain('<span class="lbl">صندوق البريد:</span> <b>13321  الدوحة  دولة قطر</b>')
+        ->toContain('<span class="lbl">ويمثلها:</span> <b>السيد حسن محسن</b>')
         ->not->toContain('State of Qatar</span>, Doha, Qatar')
         ->not->toContain('السيد/ السيد');
 });

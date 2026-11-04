@@ -3,6 +3,7 @@
 namespace App\Actions\RentOut;
 
 use App\Enums\RentOut\AgreementType;
+use App\Models\Configuration;
 use App\Models\RentOut;
 use App\Support\RentOutPrintSettings;
 use App\Traits\UsesBrowsershot;
@@ -20,17 +21,21 @@ class GenerateResidentialLeaseAction
             ->withTrashed()
             ->findOrFail($id);
 
-        if ($rentOut->agreement_type === AgreementType::Rental) {
-            $html = $this->buildRentalLeaseHtml($rentOut, $type);
-        } else {
-            $html = $this->buildSaleLeaseHtml($rentOut);
-        }
+        $isRental = $rentOut->agreement_type === AgreementType::Rental;
+        $html = $isRental ? $this->buildRentalLeaseHtml($rentOut, $type) : $this->buildSaleLeaseHtml($rentOut);
 
-        $pdf = $this->makeBrowsershot($html)
+        $browsershot = $this->makeBrowsershot($html)
             ->format('A4')
             ->margins(15, 15, 15, 15)
-            ->showBackground()
-            ->pdf();
+            ->showBackground();
+
+        if (! $isRental) {
+            $browsershot->showBrowserHeaderAndFooter()
+                ->headerHtml('<div></div>')
+                ->footerHtml($this->saleFooterHtml());
+        }
+
+        $pdf = $browsershot->pdf();
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
@@ -64,15 +69,32 @@ class GenerateResidentialLeaseAction
 
     private function buildSaleLeaseHtml(RentOut $rentOut): string
     {
-        $words = convert_number_to_words(round((float) $rentOut->rent));
+        $price = (int) round((float) $rentOut->rent);
         $numberToWord = [
-            'english' => $words,
-            'arabic' => $words, // Arabic translation can be added later if needed
+            'english' => convert_number_to_words($price),
+            'arabic' => convert_number_to_arabic_words($price),
         ];
 
         return view('print.booking.sale-residential-lease', compact(
             'rentOut', 'numberToWord'
         ))->render();
+    }
+
+    /**
+     * "Page X of Y", drawn by Chrome at the bottom edge of the page margin the
+     * template reserves. On bond paper it is lifted clear of the pre-printed
+     * footer by that footer's configured height.
+     */
+    public function saleFooterHtml(): string
+    {
+        $bondPaperMode = Configuration::where('key', 'reservation_bond_paper_mode')->value('value') === 'yes';
+        $footerHeight = (int) (Configuration::where('key', 'reservation_footer_height')->value('value') ?: 30);
+        $liftPx = $bondPaperMode ? $footerHeight : 14;
+
+        return '<div style="width: 100%; padding-bottom: '.$liftPx.'px; font-family: \'Times New Roman\', serif; font-size: 9px; color: #222; text-align: center;">'
+            .'Page <span class="pageNumber"></span> of <span class="totalPages"></span>'
+            .' &nbsp;·&nbsp; <span dir="rtl">صفحة <span class="pageNumber"></span> من <span class="totalPages"></span></span>'
+            .'</div>';
     }
 
     // ─── Shared Data Builders ────────────────────────────────────────

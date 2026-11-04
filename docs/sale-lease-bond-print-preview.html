@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sale Agreement — Bond Paper Layouts</title>
+<style>
+    /* ============================================================
+       PREVIEW CHROME (not part of the printed document)
+       ============================================================ */
+    :root {
+        --host-bg: #e9ebef;
+        --host-ink: #1f2430;
+        --host-muted: #6b7280;
+        --host-panel: #ffffff;
+        --host-line: #d5d9e0;
+        --host-active: #1f2430;
+        --host-active-ink: #ffffff;
+    }
+    [data-host="dark"] {
+        --host-bg: #15171c;
+        --host-ink: #e8eaee;
+        --host-muted: #9aa1ad;
+        --host-panel: #20232a;
+        --host-line: #343842;
+        --host-active: #e8eaee;
+        --host-active-ink: #15171c;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--host-bg); color: var(--host-ink); font: 13px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .host-bar {
+        position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+        padding: 10px 16px; background: var(--host-panel); border-bottom: 1px solid var(--host-line);
+    }
+    .host-bar h1 { font-size: 14px; margin: 0 8px 0 0; }
+    .seg { display: inline-flex; border: 1px solid var(--host-line); border-radius: 8px; overflow: hidden; }
+    .seg button { border: 0; background: transparent; color: var(--host-ink); padding: 6px 12px; cursor: pointer; font: inherit; }
+    .seg button + button { border-left: 1px solid var(--host-line); }
+    .seg button.on { background: var(--host-active); color: var(--host-active-ink); }
+    .host-label { color: var(--host-muted); font-size: 12px; margin-right: 4px; }
+    .host-note { padding: 10px 16px 0; color: var(--host-muted); max-width: 900px; }
+    .host-note b { color: var(--host-ink); }
+    .sheets { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 22px 12px 60px; }
+
+    /* ============================================================
+       A4 SHEET + BOND-PAPER BANDS
+       ============================================================ */
+    .sheet {
+        width: 210mm; height: 297mm; background: #fff; color: #111; position: relative; overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.08);
+        display: flex; flex-direction: column;
+    }
+    .band-top { height: 34mm; flex: none; }
+    .band-bottom { height: 16mm; flex: none; }
+    .bond .band-top, .bond .band-bottom {
+        background: repeating-linear-gradient(135deg, #f6f1e4 0 6px, #efe7d3 6px 12px);
+        display: flex; align-items: center; justify-content: center;
+        color: #a08b5a; font: 600 10px/1 -apple-system, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .bond .band-top::after { content: "Pre-printed letterhead — left blank"; }
+    .bond .band-bottom::after { content: "Pre-printed footer — left blank"; }
+    .plain .band-top { height: 30mm; display: flex; align-items: center; justify-content: space-between; padding: 0 16mm; border-bottom: 0; }
+    .plain .band-bottom { height: 8mm; }
+    .logo-en { font: 700 15px/1.1 Georgia, serif; color: #6b4e1f; letter-spacing: .02em; }
+    .logo-en small { display: block; font: 400 8px/1.4 Georgia, serif; color: #777; letter-spacing: 0; }
+    .logo-ar { font: 700 17px/1.1 "Geeza Pro", "Traditional Arabic", Tahoma, serif; color: #6b4e1f; direction: rtl; }
+    .logo-mark { width: 40px; height: 40px; border: 1.5px solid #6b4e1f; border-radius: 50%; display: grid; place-items: center; font: 700 15px Georgia, serif; color: #6b4e1f; }
+    .bond .logo-en, .bond .logo-ar, .bond .logo-mark { display: none; }
+
+    .body { flex: 1; padding: 0 15mm; overflow: hidden; display: flex; flex-direction: column; }
+    .flow { flex: 1; }
+    .foot { flex: none; padding: 4mm 0 2mm; display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 10mm; font-size: 7.5pt; }
+    .foot .sig { text-align: center; }
+    .foot .sig i { display: block; border-top: .6pt solid #333; margin-bottom: 2px; }
+    .foot .pg { text-align: center; color: #555; white-space: nowrap; }
+
+    [lang="ar"], .ar { direction: rtl; text-align: right; }
+    p { margin: 0 0 1.6mm; }
+    h1, h2, h3, h4 { margin: 0; }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ============================================================
+       DOCUMENT — shared structure
+       ============================================================ */
+    .meta { display: grid; grid-template-columns: 1fr 19mm; gap: 3mm; margin-bottom: 4mm; }
+    .meta table { width: 100%; border-collapse: collapse; }
+    .meta td { padding: 1.2mm 2mm; font-size: 8pt; }
+    .qr { width: 19mm; height: 19mm; }
+    .qr small { display: block; font-size: 6pt; text-align: center; margin-top: .5mm; }
+    .title { text-align: center; margin-bottom: 4mm; }
+    .clause, .party { display: grid; grid-template-columns: 1fr 1fr; }
+    .c-no { display: none; }
+    .c-en, .c-ar { min-width: 0; }
+    dl { margin: 0; }
+    .sched { width: 100%; border-collapse: collapse; }
+    .sched th, .sched td { padding: 1.3mm 2mm; font-size: 8pt; }
+    .sched td.r { text-align: right; }
+    .sched td.c { text-align: center; }
+    .sched th span, .lbl-ar { display: block; font-weight: 400; }
+    .boxes { display: grid; grid-template-columns: 2fr 1fr 1fr; margin-top: 4mm; }
+    .boxes > div { padding: 2mm 3mm; min-height: 22mm; }
+    .signs { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 6mm; }
+    .signs .line { height: 18mm; }
+    ul.ob { margin: 1mm 0 0; padding-inline-start: 5mm; }
+    ul.ob li { margin-bottom: .8mm; }
+
+    /* ============================================================
+       A — CLASSIC LEGAL (serif, ink only, no boxes)
+       ============================================================ */
+    .skin-classic .sheet { font: 9.4pt/1.45 "Times New Roman", Times, serif; }
+    .skin-classic [lang="ar"], .skin-classic .ar { font-family: "Traditional Arabic", "Geeza Pro", "Amiri", "Noto Naskh Arabic", Tahoma, serif; font-size: 10.4pt; line-height: 1.6; }
+    .skin-classic .meta td { border-bottom: .5pt solid #999; }
+    .skin-classic .meta tr:first-child td { border-top: .5pt solid #999; }
+    .skin-classic .meta td.k { color: #555; width: 22%; }
+    .skin-classic .qr { border: .5pt solid #999; padding: 1mm; }
+    .skin-classic .title { border-top: 1.4pt solid #111; border-bottom: .5pt solid #111; padding: 3mm 0 2.5mm; }
+    .skin-classic .title h1 { font-size: 13.5pt; letter-spacing: .08em; }
+    .skin-classic .title h2 { font-size: 13pt; margin-top: 1mm; }
+    .skin-classic .title .sub { font-size: 9pt; font-style: italic; margin-top: 1.2mm; }
+    .skin-classic .clause, .skin-classic .party { column-gap: 0; padding: 2.4mm 0; border-bottom: .4pt solid #c9c9c9; }
+    .skin-classic .c-en { padding-right: 5mm; border-right: .5pt solid #888; }
+    .skin-classic .c-ar { padding-left: 5mm; }
+    .skin-classic h3 { font-size: 9pt; font-variant: small-caps; letter-spacing: .06em; margin-bottom: 1.4mm; text-decoration: underline; text-underline-offset: 2px; }
+    .skin-classic .c-ar h3 { font-variant: normal; letter-spacing: 0; font-size: 11pt; }
+    .skin-classic dt { display: inline; color: #444; }
+    .skin-classic dt::after { content: ": "; }
+    .skin-classic dd { display: inline; margin: 0; font-weight: 700; }
+    .skin-classic dd::after { content: ""; display: block; }
+    .skin-classic .here { font-style: italic; margin-top: 1mm; }
+    .skin-classic .sched th { border-top: 1pt solid #111; border-bottom: .6pt solid #111; text-align: left; }
+    .skin-classic .sched th.r { text-align: right; }
+    .skin-classic .sched td { border-bottom: .4pt solid #ccc; }
+    .skin-classic .sched tr.total td { border-top: .6pt solid #111; border-bottom: 1pt solid #111; font-weight: 700; }
+    .skin-classic .boxes > div { border: .5pt solid #888; }
+    .skin-classic .boxes > div + div { border-left: 0; }
+    .skin-classic .signs .line { border-bottom: .6pt solid #111; }
+    .skin-classic .sched-title { text-align: center; margin: 1mm 0 3mm; }
+    .skin-classic .sched-title h2 { font-size: 12pt; letter-spacing: .08em; }
+    .skin-classic .sched-title .sub { font-style: italic; }
+
+    /* ============================================================
+       B — OFFICIAL REGISTER (ruled grid, centre article number)
+       ============================================================ */
+    .skin-register .sheet { font: 9pt/1.42 "Times New Roman", Times, serif; }
+    .skin-register [lang="ar"], .skin-register .ar { font-family: "Traditional Arabic", "Geeza Pro", "Amiri", "Noto Naskh Arabic", Tahoma, serif; font-size: 10.2pt; line-height: 1.55; }
+    .skin-register .meta td { border: .6pt solid #222; }
+    .skin-register .meta td.k { font-weight: 700; width: 22%; }
+    .skin-register .qr { border: .6pt solid #222; padding: 1mm; }
+    .skin-register .title { border: 1.2pt solid #111; outline: .5pt solid #111; outline-offset: 1mm; padding: 2.5mm; margin: 1mm 1mm 5mm; }
+    .skin-register .title h1 { font-size: 12.5pt; letter-spacing: .04em; }
+    .skin-register .title h2 { font-size: 12.5pt; }
+    .skin-register .title .sub { font-size: 8.5pt; font-weight: 700; text-decoration: underline; margin-top: 1mm; }
+    .skin-register .flow > .clause, .skin-register .flow > .party { border: .6pt solid #222; border-top: 0; }
+    .skin-register .flow > :is(.clause, .party):first-of-type,
+    .skin-register .flow > .title + :is(.clause, .party) { border-top: .6pt solid #222; }
+    .skin-register .clause { grid-template-columns: 1fr 10mm 1fr; }
+    .skin-register .c-en { order: 1; padding: 2mm 3mm; }
+    .skin-register .c-no { order: 2; display: flex; justify-content: center; padding-top: 2mm; border-left: .6pt solid #222; border-right: .6pt solid #222; font-weight: 700; font-size: 9pt; }
+    .skin-register .c-no span { width: 6.5mm; height: 6.5mm; border: .6pt solid #222; border-radius: 50%; display: grid; place-items: center; }
+    .skin-register .c-ar { order: 3; padding: 2mm 3mm; }
+    .skin-register .party .c-en, .skin-register .clause:not(:has(.c-no)) .c-en { border-right: .6pt solid #222; }
+    .skin-register .clause:not(:has(.c-no)) { grid-template-columns: 1fr 1fr; }
+    .skin-register h3 { font-size: 9pt; text-transform: uppercase; letter-spacing: .03em; padding-bottom: 1mm; margin-bottom: 1.5mm; border-bottom: 1.4pt double #222; display: inline-block; }
+    .skin-register .c-ar h3 { text-transform: none; font-size: 10.5pt; }
+    .skin-register dl { display: grid; grid-template-columns: 26mm 1fr; border-top: .4pt solid #999; }
+    .skin-register .c-ar dl { grid-template-columns: 24mm 1fr; }
+    .skin-register dt, .skin-register dd { margin: 0; padding: .7mm 0; border-bottom: .4pt solid #bbb; }
+    .skin-register dd { font-weight: 700; }
+    .skin-register .here { font-weight: 700; margin-top: 1.4mm; }
+    .skin-register .sched th, .skin-register .sched td { border: .6pt solid #222; }
+    .skin-register .sched thead th { border-bottom: 1.6pt double #222; }
+    .skin-register .sched tr.total td { font-weight: 700; border-top: 1.6pt double #222; }
+    .skin-register .boxes { border: .6pt solid #222; }
+    .skin-register .boxes > div + div { border-left: .6pt solid #222; }
+    .skin-register .boxes h4 { border-bottom: .6pt solid #222; margin: -2mm -3mm 2mm; padding: 1.2mm 3mm; font-size: 8.5pt; text-align: center; }
+    .skin-register .signs { border: .6pt solid #222; gap: 0; }
+    .skin-register .signs > div { padding: 2mm 3mm; }
+    .skin-register .signs > div + div { border-left: .6pt solid #222; }
+    .skin-register .sched-title { text-align: center; margin: 1mm 0 3mm; border: .6pt solid #222; padding: 2mm; }
+    .skin-register .sched-title h2 { font-size: 11.5pt; }
+    .skin-register .sched-title .sub { text-decoration: underline; font-weight: 700; }
+
+    /* ============================================================
+       C — CONTEMPORARY (sans, one navy ink, gutter numbers)
+       ============================================================ */
+    .skin-modern .sheet { --ink: #1d3557; font: 8.8pt/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1c1f24; }
+    .skin-modern [lang="ar"], .skin-modern .ar { font-family: "Geeza Pro", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; font-size: 9.6pt; line-height: 1.7; }
+    .skin-modern .body { padding: 0 15mm 0 22mm; }
+    .skin-modern .meta td { border-bottom: .5pt solid #d4d9e1; }
+    .skin-modern .meta td.k { color: #6a7280; text-transform: uppercase; font-size: 6.8pt; letter-spacing: .08em; width: 22%; }
+    .skin-modern .meta td.v { font-weight: 700; color: var(--ink); }
+    .skin-modern .qr { padding: 0; }
+    .skin-modern .title { text-align: left; display: grid; grid-template-columns: 1fr auto; align-items: end; border-bottom: 1.6pt solid var(--ink); padding-bottom: 2.5mm; }
+    .skin-modern .title h1 { font-size: 13pt; color: var(--ink); letter-spacing: .02em; }
+    .skin-modern .title h2 { font-size: 13pt; color: var(--ink); grid-row: 1; grid-column: 2; }
+    .skin-modern .title .sub { grid-column: 1 / -1; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .14em; color: #6a7280; margin-top: 1.4mm; }
+    .skin-modern .clause, .skin-modern .party { column-gap: 8mm; padding: 2.6mm 0; position: relative; border-bottom: .4pt solid #e3e6eb; }
+    .skin-modern .c-no { display: block; position: absolute; left: -9mm; top: 2.4mm; width: 6mm; text-align: right; font: 700 13pt/1 "Helvetica Neue", Arial, sans-serif; color: var(--ink); opacity: .35; }
+    .skin-modern h3 { font-size: 7.4pt; text-transform: uppercase; letter-spacing: .12em; color: var(--ink); margin-bottom: 1.4mm; }
+    .skin-modern .c-ar h3 { font-size: 9.6pt; letter-spacing: 0; }
+    .skin-modern .party { border: .6pt solid #d4d9e1; border-left: 2pt solid var(--ink); padding: 2.6mm 3.5mm; margin: 0 0 3mm; }
+    .skin-modern dl { display: grid; grid-template-columns: 22mm 1fr; row-gap: .6mm; }
+    .skin-modern .c-ar dl { grid-template-columns: 22mm 1fr; }
+    .skin-modern dt { color: #6a7280; }
+    .skin-modern dd { margin: 0; font-weight: 700; }
+    .skin-modern .here { color: #6a7280; font-style: italic; margin-top: 1.4mm; }
+    .skin-modern .sched th { color: var(--ink); border-bottom: 1.2pt solid var(--ink); text-align: left; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .06em; }
+    .skin-modern .sched th span { text-transform: none; letter-spacing: 0; color: #6a7280; }
+    .skin-modern .sched th.r { text-align: right; }
+    .skin-modern .sched td { border-bottom: .4pt solid #e3e6eb; }
+    .skin-modern .sched tr.total td { border-top: 1.2pt solid var(--ink); border-bottom: 0; font-weight: 700; color: var(--ink); }
+    .skin-modern .boxes { gap: 3mm; }
+    .skin-modern .boxes > div { border: .6pt solid #d4d9e1; border-top: 2pt solid var(--ink); }
+    .skin-modern .boxes h4 { font-size: 7.2pt; text-transform: uppercase; letter-spacing: .1em; color: var(--ink); margin-bottom: 2mm; }
+    .skin-modern .signs .line { border-bottom: .8pt solid var(--ink); }
+    .skin-modern .sched-title { margin: 1mm 0 3mm; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.6pt solid var(--ink); padding-bottom: 2mm; }
+    .skin-modern .sched-title h2 { font-size: 12pt; color: var(--ink); }
+    .skin-modern .sched-title .sub { font-size: 7.4pt; text-transform: uppercase; letter-spacing: .12em; color: #6a7280; }
+    .skin-modern .foot .sig i { border-color: var(--ink); }
+</style>
+</head>
+<body class="skin-classic" data-host="light">
+
+<div class="host-bar">
+    <h1>Sale Agreement · bond paper</h1>
+    <span class="host-label">Layout</span>
+    <div class="seg" id="skin">
+        <button data-v="skin-classic" class="on">A · Classic Legal</button>
+        <button data-v="skin-register">B · Official Register</button>
+        <button data-v="skin-modern">C · Contemporary</button>
+    </div>
+    <span class="host-label">Paper</span>
+    <div class="seg" id="paper">
+        <button data-v="bond" class="on">Bond (letterhead pre-printed)</button>
+        <button data-v="plain">Plain (logo printed)</button>
+    </div>
+    <span class="host-label">Screen</span>
+    <div class="seg" id="host">
+        <button data-v="light" class="on">Light</button>
+        <button data-v="dark">Dark</button>
+    </div>
+</div>
+<p class="host-note">
+    <b>A · Classic Legal</b>: serif type and black ink only, no boxes or shading. Hairline rules and a centre divider, like a lawyer-drafted contract.
+    <b>B · Official Register</b>: a ruled grid like the client's Word draft, with the article number in a centre column and double-ruled headings.
+    <b>C · Contemporary</b>: sans-serif type in one navy ink, article numbers in the margin, and party details as label/value pairs.
+    None of them uses grey fills, which print blotchy on bond paper. The hatched bands mark the space left blank for the pre-printed letterhead and footer.
+</p>
+
+<div class="sheets" id="sheets"></div>
+
+<template id="tpl">
+    <!-- ======================= PAGE 1 ======================= -->
+    <div class="sheet">
+        <div class="band-top"><div class="logo-en">BIN AL SHEIKH HOLDING CO. W.L.L<small>Capital: QAR 65,000,000 · P.O. Box 13321, Doha</small></div><div class="logo-mark">ب</div><div class="logo-ar">شركة بن الشيخ القابضة ذ.م.م</div></div>
+        <div class="body">
+            <div class="flow">
+                <div class="meta">
+                    <table>
+                        <tr><td class="k">Sales Order No.</td><td class="v num">BASL/L/26-1928</td><td class="k ar">رقم أمر البيع</td></tr>
+                        <tr><td class="k">Customer No.</td><td class="v num">1928</td><td class="k ar">رقم العميل</td></tr>
+                        <tr><td class="k">Location Code</td><td class="v">Bin Al Sheikh Marina Tower</td><td class="k ar">الموقع</td></tr>
+                    </table>
+                    <div class="qr">
+                        <svg viewBox="0 0 21 21" width="100%" shape-rendering="crispEdges"><path fill="#111" d="M0 0h7v7H0zM1 1v5h5V1zM2 2h3v3H2zM14 0h7v7h-7zM15 1v5h5V1zM16 2h3v3h-3zM0 14h7v7H0zM1 15v5h5v-5zM2 16h3v3H2zM8 0h1v1H8zM10 1h2v1h-2zM9 3h1v2H9zM11 4h2v1h-2zM8 8h3v1H8zM12 8h1v3h-1zM14 9h2v1h-2zM17 8h1v2h-1zM19 9h2v1h-2zM9 10h2v2H9zM15 11h3v1h-3zM8 13h1v2H8zM10 14h3v1h-3zM14 13h1v3h-1zM16 14h2v2h-2zM19 13h2v1h-2zM9 16h2v1H9zM12 16h1v3h-1zM15 17h1v2h-1zM17 18h3v1h-3zM9 19h2v2H9zM19 16h1v2h-1zM14 20h2v1h-2z"/></svg>
+                        <small class="num">969897909-1928</small>
+                    </div>
+                </div>
+
+                <div class="title">
+                    <h1>AGREEMENT FOR SALE OF SINGLE UNIT – OFF PLAN</h1>
+                    <h2 lang="ar">عقد بيع شقة واحدة – على الخارطة</h2>
+                    <div class="sub">Particulars of Sale and Purchase · <span lang="ar">تفاصيل البيع والشراء</span></div>
+                </div>
+
+                <section class="clause">
+                    <div class="c-en"><p>On <b>31 August 2026</b> this contract has been issued between both parties.</p></div>
+                    <div class="c-ar" lang="ar"><p>أنه في يوم <b>31 أغسطس 2026</b> تحرر هذا العقد بين كل من الطرفين.</p></div>
+                </section>
+
+                <section class="party">
+                    <div class="c-en">
+                        <h3>The First Party (Seller)</h3>
+                        <p><b>BIN AL SHEIKH HOLDING COMPANY W.L.L</b></p>
+                        <dl>
+                            <dt>Capital</dt><dd>65.000.000 QAR</dd>
+                            <dt>P.O. Box</dt><dd>13321, Doha, State of Qatar</dd>
+                            <dt>CR No.</dt><dd>42463 · Est ID 10-3804-00</dd>
+                            <dt>Authorized by</dt><dd>Mr. Muhsin Mubarak M Abad</dd>
+                            <dt>QID / Nat.</dt><dd>25163400081 · Qatar</dd>
+                            <dt>Email / Tel</dt><dd>info@binalsheikh.com · 44503928</dd>
+                        </dl>
+                        <p class="here">{Hereinafter referred to as the first party or Seller}</p>
+                    </div>
+                    <div class="c-ar" lang="ar">
+                        <h3>الطرف الأول (البائع)</h3>
+                        <p><b>شركة بن الشيخ القابضة ذ.م.م</b></p>
+                        <dl>
+                            <dt>رأس المال</dt><dd>65.000.000 ريال قطري</dd>
+                            <dt>صندوق البريد</dt><dd>13321، الدوحة، دولة قطر</dd>
+                            <dt>السجل التجاري</dt><dd>42463 · قيد المنشأة 10-3804-00</dd>
+                            <dt>ويمثلها</dt><dd>السيد / محسن مبارك محسن عباد</dd>
+                            <dt>بطاقة / جنسية</dt><dd>25163400081 · قطري</dd>
+                            <dt>هاتف / بريد</dt><dd>33670325 · 44503928</dd>
+                        </dl>
+                        <p class="here">{ويشار إليها فيما بعد بالطرف الأول أو البائع}</p>
+                    </div>
+                </section>
+
+                <section class="party">
+                    <div class="c-en">
+                        <h3>The Second Party (Purchaser)</h3>
+                        <p><b>Mr./Mrs. Badr Abdulrub Abdulla Alyazidi</b></p>
+                        <dl>
+                            <dt>QID / Nat.</dt><dd>26288600051 · Yemen</dd>
+                            <dt>Mobile</dt><dd>30300887</dd>
+                            <dt>Email</dt><dd>q77n@hotmail.com</dd>
+                            <dt>P.O. Box</dt><dd>Doha, Qatar</dd>
+                        </dl>
+                        <p class="here">{Hereinafter referred to as the second party – Purchaser}</p>
+                    </div>
+                    <div class="c-ar" lang="ar">
+                        <h3>الطرف الثاني (المشتري)</h3>
+                        <p><b>السيد/ة بدر عبدالرب عبدالله اليزيدي</b></p>
+                        <dl>
+                            <dt>بطاقة / جنسية</dt><dd>26288600051 · يمني</dd>
+                            <dt>الجوال</dt><dd>30300887</dd>
+                            <dt>البريد</dt><dd>q77n@hotmail.com</dd>
+                            <dt>ص.ب</dt><dd>الدوحة، قطر</dd>
+                        </dl>
+                        <p class="here">{ويشار إليه فيما بعد بالطرف الثاني أو المشتري}</p>
+                    </div>
+                </section>
+
+                <section class="clause">
+                    <div class="c-en"><h3>Project</h3><p>Project Land: <b>Bin Al Sheikh Marina Tower</b><br>Building: <b>MARINA TOWER</b> · Unit <b>1002</b> · Floor <b>10</b> · One Parking</p></div>
+                    <div class="c-ar" lang="ar"><h3>المشروع</h3><p>أرض المشروع: <b>برج بن الشيخ مارينا</b><br>المبنى: <b>برج مارينا</b> · الوحدة <b>1002</b> · الطابق <b>10</b> · موقف عدد 1</p></div>
+                </section>
+
+            </div>
+            <div class="foot"><div class="sig"><i></i>First Party · الطرف الأول</div><div class="pg num">Page 1 of 9 · صفحة 1 من 9</div><div class="sig"><i></i>Second Party · الطرف الثاني</div></div>
+        </div>
+        <div class="band-bottom"></div>
+    </div>
+
+    <!-- ======================= PAGE 2 · SCHEDULE 1 ======================= -->
+    <div class="sheet">
+        <div class="band-top"><div class="logo-en">BIN AL SHEIKH HOLDING CO. W.L.L<small>Capital: QAR 65,000,000 · P.O. Box 13321, Doha</small></div><div class="logo-mark">ب</div><div class="logo-ar">شركة بن الشيخ القابضة ذ.م.م</div></div>
+        <div class="body">
+            <div class="flow">
+                <div class="sched-title">
+                    <h2>SCHEDULE 1 · <span lang="ar">الجدول 1</span></h2>
+                    <div class="sub">Schedule of Instalment Payments · <span lang="ar">جدول تقسيط الدفعات</span></div>
+                </div>
+                <table class="sched" style="margin-bottom: 3mm;">
+                    <tr><td><b>Project</b> Bin Al Sheikh Marina Tower</td><td><b>Building</b> MARINA TOWER</td><td><b>Unit</b> 1002 – 1 Bedroom Apartment</td></tr>
+                </table>
+                <table class="sched">
+                    <thead><tr><th>Instalment<span lang="ar">رقم القسط</span></th><th class="r">Percentage<span lang="ar">النسبة (%)</span></th><th>Date<span lang="ar">التاريخ</span></th><th class="r">Amount (QAR)<span lang="ar">القيمة (ريال قطري)</span></th></tr></thead>
+                    <tbody>
+                        <tr><td>Reservation Down Payment <span lang="ar">الدفعة المقدمة للحجز</span></td><td class="r num">10.00%</td><td class="num">01-08-2026</td><td class="r num">186,100.00</td></tr>
+                        <tr><td>2nd Installment</td><td class="r num">1.84%</td><td class="num">01-09-2026</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>3rd Installment</td><td class="r num">1.84%</td><td class="num">01-10-2026</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>4th Installment</td><td class="r num">1.84%</td><td class="num">01-11-2026</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>5th Installment</td><td class="r num">1.84%</td><td class="num">01-12-2026</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>6th Installment</td><td class="r num">1.84%</td><td class="num">01-01-2027</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>7th Installment</td><td class="r num">1.84%</td><td class="num">01-02-2027</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>8th Installment</td><td class="r num">1.84%</td><td class="num">01-03-2027</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>9th Installment</td><td class="r num">1.84%</td><td class="num">01-04-2027</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>10th Installment</td><td class="r num">1.84%</td><td class="num">01-05-2027</td><td class="r num">34,444.44</td></tr>
+                        <tr><td>Handover Payment <span lang="ar">دفعة التسليم</span></td><td class="r num">73.43%</td><td class="num">31-12-2029</td><td class="r num">1,366,555.04</td></tr>
+                        <tr class="total"><td>Total · <span lang="ar">الإجمالي</span></td><td class="r num">100%</td><td></td><td class="r num">1,861,000.00</td></tr>
+                    </tbody>
+                </table>
+                <div class="boxes">
+                    <div><h4>Purchase Price in Words · <span lang="ar">سعر الشراء كتابة</span></h4><p>One Million, Eight Hundred And Sixty-One Thousand Qatari Riyals Only</p><p lang="ar">فقط مليون وثمانمائة وواحد وستون ألف ريال قطري لا غير</p></div>
+                    <div><h4>Purchase Price · <span lang="ar">سعر الشراء</span></h4><p class="num" style="font-size: 12pt; font-weight: 700; text-align: center; margin-top: 3mm;">QAR 1,861,000.00</p></div>
+                    <div><h4>Stamp · <span lang="ar">ختم</span></h4></div>
+                </div>
+                <div class="signs">
+                    <div><b>Authorized signatory for and on behalf of the First Party</b><div class="lbl-ar" lang="ar">المفوض بالتوقيع عن الطرف الأول</div><div class="line"></div></div>
+                    <div><b>Handwritten signature – Second Party</b><div class="lbl-ar" lang="ar">توقيع الطرف الثاني بخط اليد</div><div class="line"></div></div>
+                </div>
+            </div>
+            <div class="foot"><div class="sig"><i></i>First Party · الطرف الأول</div><div class="pg num">Page 3 of 9 · صفحة 3 من 9</div><div class="sig"><i></i>Second Party · الطرف الثاني</div></div>
+        </div>
+        <div class="band-bottom"></div>
+    </div>
+
+    <!-- ======================= PAGE 2 · PRELIMINARY + ARTICLES ======================= -->
+    <div class="sheet">
+        <div class="band-top"><div class="logo-en">BIN AL SHEIKH HOLDING CO. W.L.L<small>Capital: QAR 65,000,000 · P.O. Box 13321, Doha</small></div><div class="logo-mark">ب</div><div class="logo-ar">شركة بن الشيخ القابضة ذ.م.م</div></div>
+        <div class="body">
+            <div class="flow">
+                <section class="clause">
+                    <div class="c-en"><h3>Preliminary Clause</h3><p>The First Party owns the plot of land located in the Lusail area, registered under number (69060039) in the Real Estate Registry, with a total area of (25,500) square meters, and covered by Building Permit. The land is designated for the Bin Al Sheikh Marina Tower residential tower project, in accordance with the architectural drawings and specifications approved by the official authorities. The entire project shall be completed, and a Building Completion Certificate shall be obtained in accordance with the provisions of Law No. (6) of 2014 concerning the regulation of real estate development.</p></div>
+                    <div class="c-ar" lang="ar"><h3>بند تمهيدي</h3><p>يمتلك الطرف الأول قطعة الأرض الكائنة في منطقة لوسيل المشهرة برقم (69060039) في السجل العقاري والبالغ مساحتها (25,500) متر مربع بترخيص بناء الموصوف بمشروع برج بن الشيخ مارينا برج سكني – وذلك وفق الرسومات والمواصفات الهندسية التي تم اعتمادها من الجهات الرسمية، سوف يتم الانتهاء من كامل المشروع واستخراج شهادة اتمام بناء وفق أحكام القانون رقم (6) لسنة 2014 الخاص بتنظيم التطوير العقاري.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>1</span></div>
+                    <div class="c-en"><h3>Article One</h3><p>The preliminary section is considered an integral part of this contract and is complement to its provisions, in addition to the approved plans and architecture drawings from the relevant authorities, as well as the appendixes accompanying this contract.</p></div>
+                    <div class="c-ar" lang="ar"><h3>البند الأول</h3><p>يعتبر الجزء التمهيدي جزء لا يتجزأ من هذا العقد متمماً له ولبنوده – اضافة الى المخططات والرسومات الهندسية المعتمدة من الجهات المختصة والملاحق المرفقة لهذا العقد.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>2</span></div>
+                    <div class="c-en"><h3>Article Two</h3><p>The first party has sold, transferred, and relinquished with all legal and actual warranties to the second party, a specified-bounded unit described in the sales map (off plan sale) for the project of Bin Al Sheikh Marina Tower in the Lusail area, on the land plot number (69060039) registered in the real estate registry. The unit is complete with doors, windows, outlets, and services such as water, lighting, sewage, and gas, with a fully furnished finishing system.</p><p>The area of the property sold is approximately (126.70 sqm) square meters, subject to deficiency and excess based on engineering and architectural design.</p></div>
+                    <div class="c-ar" lang="ar"><h3>البند الثاني</h3><p>باع وأسقط وتنازل الطرف الأول بكافة الضمانات القانونية والفعلية للطرف الثاني القابل لذلك ما هو عبارة عن الوحدة محددة الحدود مع الأوصاف بنظام البيع على الخارطة في مشروع برج بن الشيخ مارينا بمنطقة لوسيل على قطعة الأرض رقم (69060039) المشهرة في التسجيل العقاري. مستكملة الأبواب والنوافذ والمنافذ والخدمات من مياه وإنارة وصرف صحي وغاز بنظام تشطيب كامل مفروش.</p><p>ومساحة العقار الذي يقع للوحدة المباعة (126.70 متر مربع) متر مربع تقريباً تحت العجز والزيادة.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>3</span></div>
+                    <div class="c-en"><h3>Article Three</h3><p>This sale has been finalized for a total amount of (1,861,000.00) – only (One Million, Eight Hundred And Sixty-One Thousand Qatari Riyals). The second party has made a payment following the specified installment plan, as agreed between both parties in this contract. The first party acknowledges receiving the down payment, according to the installment schedule attached to this contract. The signing of this contract is not considered a final settlement of the agreed-upon price until all installments are paid.</p></div>
+                    <div class="c-ar" lang="ar"><h3>البند الثالث</h3><p>تم هذا البيع نظير مبلغ اجمالي وقدره (1,861,000.00) – فقط (مليون وثمانمائة وواحد وستون ألف ريال قطري) لا غير وقد قام الطرف الثاني بدفع المبلغ ثمن الوحدة وبالنظام المحدد بطريقة أقساط الى الطرف الأول بموجب هذا العقد ويقر الأخير باستلامه الدفعة المقدمة حسب نظام جدول الأقساط المرفقة لهذا العقد ويعتبر التوقيع على هذا العقد ليس بمخالصة نهائية بالثمن إلا بعد سداد كامل الأقساط.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>4</span></div>
+                    <div class="c-en"><h3>Article Four</h3><p>The first party acknowledges that the ownership of the land on which the project is established, registered under number (69060039) in the real estate registry or in the Lusail area, has been transferred to the property developer through purchase. Both parties are aware that the ownership of the second party for the sold unit, after its completion and handover, is subject to the provisions of real estate ownership stipulated by civil law.</p></div>
+                    <div class="c-ar" lang="ar"><h3>البند الرابع</h3><p>يقر الطرف الأول بأن ملكية الأرض المقام عليها المشروع المشهرة برقم (69060039) بالسجل العقاري أو منطقة لوسيل – لدى المطور العقاري لها – قد الت اليه عن طريق الشراء كما أنه من المعلوم للطرفين أن تملك الطرف الثاني للوحدة المباعة بعد استلامها بعد اتمام المشروع يخضع لأحكام ملكية الطبقات المنصوص عليها بالقانون المدني.</p></div>
+                </section>
+            </div>
+            <div class="foot"><div class="sig"><i></i>First Party · الطرف الأول</div><div class="pg num">Page 4 of 9 · صفحة 4 من 9</div><div class="sig"><i></i>Second Party · الطرف الثاني</div></div>
+        </div>
+        <div class="band-bottom"></div>
+    </div>
+
+    <!-- ======================= PAGE 4 · TERMS ======================= -->
+    <div class="sheet">
+        <div class="band-top"><div class="logo-en">BIN AL SHEIKH HOLDING CO. W.L.L<small>Capital: QAR 65,000,000 · P.O. Box 13321, Doha</small></div><div class="logo-mark">ب</div><div class="logo-ar">شركة بن الشيخ القابضة ذ.م.م</div></div>
+        <div class="body">
+            <div class="flow">
+                <div class="sched-title">
+                    <h2>UNIT TERMS AND CONDITIONS OF SALE</h2>
+                    <div class="sub" lang="ar">شروط وأحكام بيع الشقة</div>
+                </div>
+                <section class="clause">
+                    <div class="c-no"><span>§</span></div>
+                    <div class="c-en"><h3>Definitions</h3><p>In this Agreement where the context allows the following words shall have the following meaning:</p></div>
+                    <div class="c-ar" lang="ar"><h3>التعاريف</h3><p>يكون للعبارات والكلمات التالية اينما وجدت في نص الاتفاقية المعنى التالي:</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>a</span></div>
+                    <div class="c-en"><p><b>Real Estate Development:</b> Construction of multi-story buildings or complexes for residential or commercial purposes with the intention of selling their individual units as delineated on the map.</p></div>
+                    <div class="c-ar" lang="ar"><p><b>التطوير العقاري:</b> أعمال تشييد الأبنية متعددة الطوابق أو المجمعات للأغراض السكنية أو التجارية بهدف بيع وحداتها المفرزة على الخارطة.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>b</span></div>
+                    <div class="c-en"><p><b>Agreement:</b> Means the Agreement of sale of the Unit comprising the Particulars of Sale and Purchase, Schedule of Instalment Payments, these Unit Terms and Conditions of Sale and the Schedules from 1 to 3 attached herewith.</p></div>
+                    <div class="c-ar" lang="ar"><p><b>الاتفاقية:</b> وتعني اتفاقية بيع الشقة وتشمل تفاصيل البيع والشراء وجدول تقسيط الدفعات وشروط واحكام بيع الشقة هذه والجداول من 1 الى 3 المرفقة بهذه الاتفاقية.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>c</span></div>
+                    <div class="c-en"><p><b>Common Areas:</b> Means those parts of the building and the facilities contained therein and being capable of and intended for common use by the owners and occupiers (excluding any exclusive rights to use) as determined by the First Party in its absolute discretion.</p></div>
+                    <div class="c-ar" lang="ar"><p><b>الأجزاء المشتركة:</b> وتعني أجزاء المبنى والمرافق الموجودة فيها والتي اعدت للاستخدام المشترك من قبل الملاك والشاغلين (باستثناء أي حقوق حصرية للاستخدام) كما هو محدد من قبل الطرف الأول طبقا لتقديره المطلق.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>d</span></div>
+                    <div class="c-en"><p><b>Earnest Money:</b> An amount paid by the second party upon signing this contract, which is counted towards the total price of the unit in accordance with the provisions of Law No. 22 of 2004 issuing the Civil Code.</p></div>
+                    <div class="c-ar" lang="ar"><p><b>العربون:</b> مبلغ يسدده الطرف الثاني عند التوقيع على هذا العقد ويحتسب من اجمالي ثمن الوحدة وفقا لأحكام القانون رقم 22 لسنة 2004 بإصدار القانون المدني.</p></div>
+                </section>
+                <section class="clause">
+                    <div class="c-no"><span>§</span></div>
+                    <div class="c-en"><h3>Obligations of the First Party</h3><p>The first party must:</p><ul class="ob"><li>Hold a valid license from the Licensing Committee that permits it to carry out real estate development activities.</li><li>Commence and complete the works within the timeline specified in the contract.</li><li>Utilize the funds deposited in the account for their designated purposes.</li><li>Deliver the reserved unit to the second party on the date specified in the contract and take the necessary steps to register it in the second party’s name.</li></ul></div>
+                    <div class="c-ar" lang="ar"><h3>التزامات الطرف الأول</h3><p>على المطور الالتزام بما يلي:</p><ul class="ob"><li>أن يكون حاصلا على ترخيص من لجنة التراخيص ساري المفعول يسمح له بممارسة أعمال التطوير العقاري.</li><li>بدء الأعمال وإنهائها في الموعد المحدد في العقد.</li><li>استخدام الأموال المودعة في الحساب للأغراض المخصصة لها.</li><li>تسليم الطرف الثاني الوحدة المحجوزة في التاريخ المحدد في العقد واتخاذ الإجراءات اللازمة لتسجيلها باسمه.</li></ul></div>
+                </section>
+            </div>
+            <div class="foot"><div class="sig"><i></i>First Party · الطرف الأول</div><div class="pg num">Page 6 of 9 · صفحة 6 من 9</div><div class="sig"><i></i>Second Party · الطرف الثاني</div></div>
+        </div>
+        <div class="band-bottom"></div>
+    </div>
+</template>
+
+<script>
+    const sheets = document.getElementById('sheets');
+    sheets.appendChild(document.getElementById('tpl').content.cloneNode(true));
+
+    const state = { skin: 'skin-classic', paper: 'bond', host: 'light' };
+    try { Object.assign(state, JSON.parse(localStorage.getItem('saleLeasePreview') || '{}')); } catch (e) {}
+    for (const part of location.hash.slice(1).split(',').filter(Boolean)) {
+        if (part.startsWith('skin-')) state.skin = part;
+        else if (part === 'bond' || part === 'plain') state.paper = part;
+    }
+
+    function apply() {
+        document.body.className = state.skin;
+        document.body.dataset.host = state.host;
+        sheets.querySelectorAll('.sheet').forEach(s => { s.classList.toggle('bond', state.paper === 'bond'); s.classList.toggle('plain', state.paper === 'plain'); });
+        for (const id of ['skin', 'paper', 'host']) {
+            document.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle('on', b.dataset.v === state[id]));
+        }
+        try { localStorage.setItem('saleLeasePreview', JSON.stringify(state)); } catch (e) {}
+    }
+    for (const id of ['skin', 'paper', 'host']) {
+        document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener('click', () => { state[id] = b.dataset.v; apply(); }));
+    }
+    apply();
+</script>
+</body>
+</html>

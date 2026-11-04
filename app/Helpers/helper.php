@@ -280,7 +280,7 @@ if (! function_exists('convert_number_to_words')) {
                 }
                 break;
             case $number < 1000:
-                $hundreds = $number / 100;
+                $hundreds = intdiv((int) $number, 100);
                 $remainder = $number % 100;
                 $string = $dictionary[$hundreds].' '.$dictionary[100];
                 if ($remainder) {
@@ -309,6 +309,65 @@ if (! function_exists('convert_number_to_words')) {
         }
 
         return $string;
+    }
+}
+
+if (! function_exists('convert_number_to_arabic_words')) {
+    /**
+     * Whole number in Arabic words as written on Gulf contracts, e.g.
+     * 1861000 → "مليون وثمانمائة وواحد وستون ألف". NumberFormatter's Arabic
+     * spell-out is ungrammatical ("ثمانية مائة"), so the rules live here.
+     */
+    function convert_number_to_arabic_words(int $number): string
+    {
+        if ($number === 0) {
+            return 'صفر';
+        }
+
+        $ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+        $tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+        $hundreds = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+        /** Per scale: [one, two, 3-10 plural, 11+ singular]. */
+        $scales = [
+            1000000000 => ['مليار', 'ملياران', 'مليارات', 'مليار'],
+            1000000 => ['مليون', 'مليونان', 'ملايين', 'مليون'],
+            1000 => ['ألف', 'ألفان', 'آلاف', 'ألف'],
+        ];
+
+        $belowThousand = function (int $value) use ($ones, $tens, $hundreds): string {
+            $parts = [];
+            if ($value >= 100) {
+                $parts[] = $hundreds[intdiv($value, 100)];
+                $value %= 100;
+            }
+            if ($value >= 20) {
+                $parts[] = $value % 10 ? $ones[$value % 10].' و'.$tens[intdiv($value, 10)] : $tens[intdiv($value, 10)];
+            } elseif ($value > 0) {
+                $parts[] = $ones[$value];
+            }
+
+            return implode(' و', $parts);
+        };
+
+        $parts = [];
+        foreach ($scales as $scale => [$single, $dual, $plural, $many]) {
+            $count = intdiv($number, $scale);
+            $number %= $scale;
+            if ($count === 1) {
+                $parts[] = $single;
+            } elseif ($count === 2) {
+                $parts[] = $dual;
+            } elseif ($count >= 3 && $count <= 10) {
+                $parts[] = $belowThousand($count).' '.$plural;
+            } elseif ($count > 10) {
+                $parts[] = $belowThousand($count).' '.$many;
+            }
+        }
+        if ($number > 0) {
+            $parts[] = $belowThousand($number);
+        }
+
+        return implode(' و', $parts);
     }
 }
 

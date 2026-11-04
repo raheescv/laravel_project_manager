@@ -1,186 +1,113 @@
+{{-- "Official Register" print style for the off-plan sale agreement: a ruled
+     grid in black ink only, built for bond paper. No background fills — grey
+     shading prints blotchy on bond stock. Page margins (the letterhead and
+     footer bands) are set per mode in the template's @page rule.
+
+     Arabic is set in Noto Naskh Arabic, a serif Naskh drawn to sit beside
+     Times. Browsershot blocks every external request, so the bundled font
+     files are embedded as data URIs rather than loaded by URL. --}}
+@php
+    $naskhFont = fn (string $weight): string => 'data:font/ttf;base64,' . base64_encode(file_get_contents(public_path("assets/fonts/print/NotoNaskhArabic-{$weight}.ttf")));
+@endphp
 <style type="text/css">
-    /* Arabic Font Support */
-    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+    @font-face {
+        font-family: "Print Naskh";
+        font-weight: 400;
+        src: url("{{ $naskhFont('Regular') }}") format("truetype");
+    }
+
+    @font-face {
+        font-family: "Print Naskh";
+        font-weight: 700;
+        src: url("{{ $naskhFont('Bold') }}") format("truetype");
+    }
 
     * {
         margin: 0;
         padding: 0;
-        text-indent: 0;
         box-sizing: border-box;
     }
 
-    /* A4 sheet. Horizontal margins are 0 (the .container supplies them). The
-       top band reserved for the letterhead is set per-mode in the template via
-       @page margin-top; the bottom band is reserved by the .doc-wrap table's
-       repeating <tfoot> signature strip, so content can never overlap it. */
     @page {
         size: A4;
-        margin: 0;
     }
 
     body {
-        margin: 0;
-        padding: 0;
-        font-family: "Times New Roman", serif;
-        font-size: 9pt;
-        line-height: 1.35;
-        color: #1b1b1b;
-        background: #ffffff;
+        font-family: "Times New Roman", Times, "Liberation Serif", serif;
+        font-size: 8.6pt;
+        line-height: 1.42;
+        color: #111;
+        background: #fff;
         width: 210mm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    /* ── Arabic text ───────────────────────────────────────────── */
-    .arabic-text,
-    [lang="ar"],
-    .cell-ar p,
-    .cell-ar div,
-    .cell-ar span {
-        font-family: "Traditional Arabic", "Simplified Arabic", "Arabic Typesetting", "Tahoma", "Arial Unicode MS", "Segoe UI", "Amiri", "Scheherazade New", "Noto Sans Arabic", Arial, sans-serif !important;
+    [lang="ar"] {
+        font-family: "Print Naskh", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif !important;
         direction: rtl;
         text-align: right;
-        unicode-bidi: embed;
-        font-feature-settings: "liga" 1, "kern" 1;
-        -webkit-font-feature-settings: "liga" 1, "kern" 1;
+        font-size: 9.5pt;
+        line-height: 1.45;
     }
 
-    *:lang(ar) {
-        font-family: "Traditional Arabic", "Simplified Arabic", "Arabic Typesetting", "Tahoma", "Arial Unicode MS", "Segoe UI", "Amiri", "Scheherazade New", "Noto Sans Arabic", Arial, sans-serif !important;
-        direction: rtl;
-        text-align: right;
+    [lang="ar"] [lang="ar"] {
+        font-size: inherit;
     }
 
-    [lang="ar"] b,
-    [lang="ar"] strong {
+    p {
+        margin: 0 0 1.4mm;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+
+    b,
+    strong {
         font-weight: bold;
     }
 
-    /* ── Layout ────────────────────────────────────────────────── */
     .container {
         width: 100%;
         padding: 0 10mm;
     }
 
-    .row {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
-        border-collapse: collapse;
+    .page-break {
+        page-break-before: always;
     }
 
-    .cell {
-        display: table-cell;
-        padding: 3px 4px;
-        vertical-align: top;
-        width: 50%;
-    }
-
-    .cell-en {
-        border-right: 1px solid #555;
-        padding-right: 8px;
-    }
-
-    .cell-ar {
-        text-align: right;
-        direction: rtl;
-        padding-left: 8px;
-        unicode-bidi: embed;
-    }
-
-    .section {
-        margin-bottom: 5px;
-        border: 1px solid #333;
-        padding: 4px 6px;
-        page-break-inside: auto;
-    }
-
-    /* Never split a single bilingual row (article, party block…) across pages;
-       the section itself may flow so pages stay full. */
-    .section .row {
+    .avoid-break {
         page-break-inside: avoid;
     }
 
-    .section-title {
-        font-weight: bold;
-        font-size: 9.5pt;
-        letter-spacing: 0.3px;
-        background: #f1f3f5;
-        border-left: 3px solid #1b1b1b;
-        padding: 2px 6px;
-        margin-bottom: 3px;
+    .underline {
+        text-decoration: underline;
     }
 
-    .cell-ar .section-title {
-        border-left: none;
-        border-right: 3px solid #1b1b1b;
-    }
-
-    /* ── Document title band ───────────────────────────────────── */
-    .doc-title {
-        border: 1px solid #333;
-        border-bottom: 2px solid #1b1b1b;
-        background: #f1f3f5;
-        text-align: center;
-        padding: 5px 6px;
-        margin-bottom: 6px;
-    }
-
-    .doc-title-en {
-        font-size: 12pt;
-        font-weight: bold;
-        letter-spacing: 0.5px;
-    }
-
-    .doc-title-ar {
-        font-size: 11pt;
-        font-weight: bold;
+    .text-center {
         text-align: center !important;
     }
 
-    .doc-subtitle {
-        font-size: 9pt;
-        margin-top: 2px;
+    .text-right {
+        text-align: right;
     }
 
-    /* ── Header meta table & QR ────────────────────────────────── */
-    .header-table {
-        width: 100%;
-        border-collapse: collapse;
+    .bold {
+        font-weight: bold;
     }
 
-    .header-table td {
-        border: 1px solid #333;
-        padding: 3px 5px;
-        font-size: 8pt;
+    .num {
+        font-variant-numeric: tabular-nums;
     }
 
-    .qr-box {
-        flex-shrink: 0;
-        border: 1px solid #333;
-        padding: 3px;
-        text-align: center;
-        background: #fff;
-    }
-
-    .qr-box img {
-        width: 56px;
-        height: 56px;
-        display: block;
-        margin: 0 auto;
-    }
-
-    .qr-box small {
-        font-size: 7pt;
-        display: block;
-        margin-top: 1px;
-    }
-
-    /* ── Tables ────────────────────────────────────────────────── */
+    /* ── Tables: every ruled grid in the document ─────────────────── */
     table {
         border-collapse: collapse;
     }
 
-    /* Rows never split across a page boundary — except the .doc-wrap wrapper
-       table's single body row, which holds the whole document and must flow. */
+    /* Rows never split across a page boundary — except the .doc-wrap
+       wrapper's single body row, which holds the whole document. */
     table:not(.doc-wrap) tr {
         page-break-inside: avoid;
     }
@@ -189,103 +116,357 @@
         display: table-header-group;
     }
 
-    .data-table {
+    table.reg {
         width: 100%;
-        border: 2px solid #1b1b1b;
+        table-layout: fixed;
+        margin-bottom: 3mm;
     }
 
-    .data-table th,
-    .data-table td {
-        border: 1px solid #333;
-        padding: 3px 5px;
+    table.reg > tbody > tr > td,
+    table.reg > thead > tr > th,
+    table.reg > tr > td {
+        border: 0.6pt solid #222;
+        padding: 2mm 2.5mm;
+        vertical-align: top;
+    }
+
+    /* A row that continues the article above it: a faint dotted rule rather
+       than none, so a box split at a page break still closes on both pages. */
+    table.reg tr:has(+ tr.cont) > td {
+        border-bottom: 0.4pt dotted #999;
+    }
+
+    table.reg tr.cont > td {
+        border-top: 0.4pt dotted #999;
+    }
+
+    table.reg col.no {
+        width: 10mm;
+    }
+
+    table.reg td.no {
+        text-align: center;
+        font-weight: bold;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    table.reg td.no span {
+        display: inline-block;
+        width: 6.5mm;
+        height: 6.5mm;
+        line-height: 6.2mm;
+        border: 0.6pt solid #222;
+        border-radius: 50%;
         font-size: 8.5pt;
     }
 
-    .data-table th {
-        font-weight: bold;
-        background-color: #f1f3f5;
-        text-align: center;
+    table.reg h3 {
+        display: inline-block;
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding-bottom: 0.8mm;
+        margin-bottom: 1.6mm;
+        border-bottom: 2.4pt double #222;
     }
 
-    .data-table .total-row td {
-        font-weight: bold;
-        background-color: #f1f3f5;
+    table.reg td[lang="ar"] h3 {
+        text-transform: none;
+        letter-spacing: 0;
+        font-size: 10.5pt;
     }
 
-    .avoid-break {
+    .here {
+        font-weight: bold;
+        margin-top: 1.4mm;
+    }
+
+    /* Label / value rows inside a party or specification cell. */
+    table.reg-kv {
+        width: 100%;
+        margin: 1mm 0;
+    }
+
+    table.reg-kv td {
+        border: 0;
+        border-bottom: 0.4pt solid #bbb;
+        padding: 0.7mm 0;
+        vertical-align: top;
+    }
+
+    table.reg-kv tr:first-child td {
+        border-top: 0.4pt solid #999;
+    }
+
+    table.reg-kv td.k {
+        width: 32%;
+        padding-inline-end: 2mm;
+        white-space: nowrap;
+    }
+
+    table.reg-kv td.v {
+        font-weight: bold;
+    }
+
+    /* Party and project groups: each its own framed box, kept on one page. */
+    table.reg.group {
         page-break-inside: avoid;
     }
 
-    /* ── Schedule / appendix headings ──────────────────────────── */
-    .sched-head {
-        border: 1px solid #333;
-        background: #f1f3f5;
-        text-align: center;
-        padding: 4px 6px;
-        margin-bottom: 6px;
-        page-break-inside: avoid;
+    /* Boxes that follow one another stack with no gap; the -0.6pt margin lays
+       the shared edges on top of each other so they print as one rule. */
+    table.reg:has(+ table.reg) {
+        margin-bottom: -0.6pt;
     }
 
-    .sched-head .main {
-        font-size: 12pt;
+    /* Group header band: English title left, Arabic right, across the whole
+       box. A soft grey band (light enough to print clean on bond stock), a
+       short ink bar marking each title, and a single rule joining it to the rows. */
+    table.reg.group tr.group-head > td {
+        background: #ececec;
+        border-bottom: 0.8pt solid #222;
+        padding: 1.6mm 3mm 1.4mm;
+    }
+
+    tr.group-head div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-weight: bold;
-        letter-spacing: 0.5px;
     }
 
-    .sched-head .sub {
-        font-size: 9.5pt;
+    tr.group-head span:first-child {
+        font-size: 9.2pt;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding-left: 2.2mm;
+        border-left: 3pt solid #111;
+        line-height: 1.15;
+    }
+
+    tr.group-head span[lang="ar"] {
+        font-size: 10.8pt;
+        padding-right: 2.2mm;
+        border-right: 3pt solid #111;
+        line-height: 1.3;
+    }
+
+    /* One detail per row inside a group. No cell rules between rows — a short
+       light hairline, inset from the cell edges, keeps each English line level
+       with its Arabic one without drawing a full grid. */
+    table.reg tr:has(+ tr.line) > td {
+        border-bottom: 0;
+    }
+
+    table.reg tr.line > td {
+        border-top: 0;
+        border-bottom: 0;
+        padding-top: 0.8mm;
+        padding-bottom: 0.8mm;
+        vertical-align: middle;
+        background: linear-gradient(#cfcfcf, #cfcfcf) no-repeat center bottom / calc(100% - 5mm) 0.5pt;
+    }
+
+    table.reg tr.line:last-child > td {
+        background: none;
+        border-bottom: 0.6pt solid #222;
+        padding-bottom: 2mm;
+    }
+
+    table.reg tr.line .here {
+        margin: 0;
+    }
+
+    .lbl {
+        font-weight: normal;
+    }
+
+    /* Hyphenated IDs (10-3804-00) stay left-to-right and on one line, even
+       inside Arabic text, instead of breaking at a hyphen and reordering. */
+    .ltr-id {
+        direction: ltr;
+        unicode-bidi: isolate;
+        white-space: nowrap;
+    }
+
+    /* Figures table (instalments): double rule under the header and above the total. */
+    table.reg-data {
+        width: 100%;
+        margin-bottom: 3mm;
+    }
+
+    table.reg-data th,
+    table.reg-data td {
+        border: 0.6pt solid #222;
+        padding: 1.3mm 2mm;
+        font-size: 8.5pt;
+        vertical-align: middle;
+    }
+
+    table.reg-data thead th {
+        border-bottom: 2.4pt double #222;
+        text-align: center;
+    }
+
+    table.reg-data th span {
+        display: block;
+        font-weight: normal;
+    }
+
+    table.reg-data tr.total td {
+        font-weight: bold;
+        border-top: 2.4pt double #222;
+    }
+
+    table.reg-data td.r {
+        text-align: right;
+    }
+
+    table.reg-data td.c {
+        text-align: center;
+    }
+
+    table.reg-data td h4 {
+        font-size: 8.5pt;
+        text-align: center;
+    }
+
+    /* ── Header block: contract meta + QR ────────────────────────── */
+    .reg-meta {
+        display: flex;
+        align-items: stretch;
+        gap: 3mm;
+        margin-bottom: 3mm;
+    }
+
+    .reg-meta table {
+        flex: 1;
+    }
+
+    .reg-meta td {
+        border: 0.6pt solid #222;
+        padding: 1.1mm 2mm;
+        font-size: 8pt;
+    }
+
+    .reg-meta td.k {
+        font-weight: bold;
+        width: 20%;
+    }
+
+    .reg-meta .qr {
+        flex: none;
+        border: 0.6pt solid #222;
+        padding: 1mm;
+        text-align: center;
+    }
+
+    .reg-meta .qr img {
+        width: 17mm;
+        height: 17mm;
+        display: block;
+    }
+
+    .reg-meta .qr small {
+        font-size: 6pt;
+        display: block;
+    }
+
+    /* ── Framed titles ────────────────────────────────────────────── */
+    .reg-title {
+        border: 3pt double #111;
+        text-align: center;
+        padding: 2.5mm 3mm;
+        margin-bottom: 3mm;
+        page-break-inside: avoid;
+        page-break-after: avoid;
+    }
+
+    .reg-title .en {
+        font-size: 12.5pt;
+        font-weight: bold;
+        letter-spacing: 0.04em;
+    }
+
+    .reg-title .ar {
+        font-size: 12.5pt;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .reg-title .sub {
+        font-size: 8.5pt;
         font-weight: bold;
         text-decoration: underline;
-        margin-top: 1px;
+        margin-top: 1mm;
     }
 
-    hr {
-        border: none;
-        border-top: 1px solid #999;
-        margin: 4px 0;
+    .reg-title .sub [lang="ar"] {
+        display: inline;
+        font-size: 9.5pt;
     }
 
-    /* ── Utilities ─────────────────────────────────────────────── */
-    .bold { font-weight: bold; }
-    .underline { text-decoration: underline; }
-    .text-center { text-align: center; }
-    .small-text { font-size: 8pt; }
-    .normal-text { font-size: 9pt; }
-    .large-text { font-size: 10pt; }
-
-    p {
-        margin: 1.5px 0;
-        line-height: 1.35;
+    .reg-sched-title {
+        border: 0.6pt solid #222;
+        text-align: center;
+        padding: 2mm;
+        margin-bottom: 3mm;
+        page-break-after: avoid;
     }
 
-    .page-break {
-        page-break-before: always;
+    .reg-sched-title .main {
+        font-size: 11.5pt;
+        font-weight: bold;
     }
 
-    /* ── Repeating signature strip (lives in the .doc-wrap <tfoot>) ── */
-    /* The <tfoot> repeats at the bottom of every printed page and the table
-       layout reserves its height, so body content can never render into it.
-       The top padding leaves a blank band to sign/initial in. */
-    .signature-row {
+    .reg-sched-title .sub {
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    .reg-sched-title [lang="ar"] {
+        display: inline;
+        font-size: inherit;
+    }
+
+    /* ── Signature boxes ──────────────────────────────────────────── */
+    .sign-space {
+        height: 20mm;
+    }
+
+    /* ── Initials strip, repeated at the foot of every page ───────── */
+    .reg-initials {
         display: table;
         width: 100%;
         table-layout: fixed;
-        padding: 22px 20mm 4px;
+        padding: 8mm 10mm 2mm;
     }
 
-    .signature-row > div {
+    .reg-initials > div {
         display: table-cell;
         text-align: center;
+        font-size: 7.5pt;
+        padding: 0 10mm;
     }
 
-    .signature-line {
-        border-top: 1px solid #1b1b1b;
-        width: 65%;
-        margin: 0 auto;
+    .reg-initials i {
+        display: block;
+        border-top: 0.6pt solid #111;
+        margin-bottom: 0.6mm;
     }
 
-    .signature-label {
+    .reg-initials [lang="ar"] {
+        display: inline;
         font-size: 8pt;
-        padding-top: 2px;
+    }
+
+    ul.reg-list {
+        margin: 1mm 0 0;
+        padding-inline-start: 5mm;
+    }
+
+    ul.reg-list li {
+        margin-bottom: 0.8mm;
     }
 </style>

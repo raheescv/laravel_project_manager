@@ -66,6 +66,9 @@ class RentOutPrintSettings
         return [
             'lessor_name_en' => 'Name (English)',
             'lessor_name_ar' => 'Name (Arabic)',
+            'lessor_capital_english' => 'Capital (English)',
+            'lessor_capital_arabic' => 'Capital (Arabic)',
+            'lessor_establishment_id' => 'Company Est ID',
             'lessor_po_box_english' => 'P.O Box (English)',
             'lessor_po_box_arabic' => 'P.O Box (Arabic)',
             'lessor_cr_no_english' => 'CR No (English)',
@@ -74,6 +77,7 @@ class RentOutPrintSettings
             'lessor_authorized_by_arabic' => 'Authorized By (Arabic)',
             'lessor_qid_no' => 'QID No',
             'lessor_nationality' => 'Nationality',
+            'lessor_mobile' => 'Mobile',
             'lessor_email' => 'Email',
             'lessor_tel_fax' => 'Tel/Fax/Call Centre',
         ];
