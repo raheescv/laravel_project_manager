@@ -96,6 +96,7 @@ class SaleItemReport extends Component
             'total' => $totals->sum('sale_items.total'),
             'effective_total' => $totals->get()->sum('effective_total'),
         ];
+        $total['display_discount'] = round($total['discount'] + $total['total'] - $total['effective_total'], 3);
 
         return view('livewire.report.sale-item-report', [
             'total' => $total,

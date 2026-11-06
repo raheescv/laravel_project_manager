@@ -127,4 +127,21 @@ class SaleItem extends Model implements AuditableContracts
             return $this->total;
         }
     }
+
+    /**
+     * This line's share of the invoice-level other discount (total − effective total).
+     * Display-only: never feeds back into net amount, tax or totals.
+     */
+    public function getOtherDiscountShareAttribute(): float
+    {
+        return round((float) $this->total - (float) $this->effective_total, 3);
+    }
+
+    /**
+     * Line discount plus its share of the invoice-level other discount, for display.
+     */
+    public function getDisplayDiscountAttribute(): float
+    {
+        return round((float) $this->discount + $this->other_discount_share, 3);
+    }
 }

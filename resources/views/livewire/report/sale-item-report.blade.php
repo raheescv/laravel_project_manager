@@ -152,7 +152,7 @@
                                 <div class="text-end fw-medium">{{ currency($item->gross_amount) }}</div>
                             </td>
                             <td>
-                                <div class="text-end text-danger fw-medium">{{ $item->discount != 0 ? '-' : '' }}{{ $item->discount != 0 ? currency($item->discount) : '_' }}</div>
+                                <div class="text-end text-danger fw-medium">{{ $item->display_discount != 0 ? '-' . currency($item->display_discount) : '_' }}</div>
                             </td>
                             <td>
                                 <div class="text-end fw-medium">{{ currency($item->net_amount) }}</div>
@@ -177,7 +177,7 @@
                             <div class="text-end fw-bold">{{ currency($total['gross_amount']) }}</div>
                         </th>
                         <th>
-                            <div class="text-end text-danger fw-bold">-{{ currency($total['discount']) }}</div>
+                            <div class="text-end text-danger fw-bold">{{ $total['display_discount'] != 0 ? '-' . currency($total['display_discount']) : '_' }}</div>
                         </th>
                         <th>
                             <div class="text-end fw-bold">{{ currency($total['net_amount']) }}</div>
