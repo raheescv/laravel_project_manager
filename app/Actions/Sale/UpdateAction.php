@@ -5,6 +5,7 @@ namespace App\Actions\Sale;
 use App\Actions\Student\Card\GuardCardPaymentAction;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\Migration\BulkImport;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,6 +91,7 @@ class UpdateAction
                 if ($updateData) {
                     $this->model->update($updateData);
                 }
+                $this->reconcileRoundOff(array_diff_key($updateData, ['paid' => true]));
 
                 $this->model->refresh();
                 $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
@@ -215,6 +217,28 @@ class UpdateAction
             if (! $response['success']) {
                 throw new Exception($response['message'], 1);
             }
+        }
+    }
+
+    /**
+     * The caller worked out round_off against its own totals. When the amounts
+     * re-summed from the saved items differ from those (a client rounding
+     * 38.745 down to 38.74 while PHP rounds it up), the stored grand_total would
+     * no longer be whole — 1,300.01 against a 1,300.00 the cashier collected —
+     * so the round off is recalculated from the saved totals.
+     *
+     * @param  array<string, mixed>  $resyncedAmounts
+     */
+    private function reconcileRoundOff(array $resyncedAmounts): void
+    {
+        if (! $resyncedAmounts || BulkImport::replayingHistory() || ! saleRoundOffEnabled()) {
+            return;
+        }
+        $this->model->refresh();
+        $base = (float) $this->model->total - (float) $this->model->other_discount + (float) $this->model->freight;
+        $roundOff = saleRoundOffFor($base);
+        if (round((float) $this->model->round_off, 2) != $roundOff) {
+            $this->model->update(['round_off' => $roundOff]);
         }
     }
 }

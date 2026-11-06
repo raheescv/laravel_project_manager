@@ -956,6 +956,21 @@ if (! function_exists('saleRoundOffEnabled')) {
         return (Configuration::where('key', 'round_off_enabled')->value('value') ?? 'yes') === 'yes';
     }
 }
+if (! function_exists('saleRoundOffFor')) {
+    /**
+     * The round off that brings a sale's pre-rounding amount (total - other
+     * discount + freight) to a whole number, or 0 when Round Off is disabled.
+     */
+    function saleRoundOffFor(float $amount): float
+    {
+        if (! saleRoundOffEnabled()) {
+            return 0.0;
+        }
+        $amount = round($amount, 2);
+
+        return round(round($amount) - $amount, 2);
+    }
+}
 if (! function_exists('posPaymentButtonIcons')) {
     /**
      * The icons a POS payment button can wear, keyed by Font Awesome 4.3 name

@@ -331,6 +331,7 @@ import {
 import {
     calculateItemTotals,
     calculateCartTotals,
+    roundToTwoDecimals,
     applyComboOfferPricing,
     resetComboOfferPricing
 } from '@/utils/itemCalculations'
@@ -979,11 +980,11 @@ export default {
 
             // Calculate grand total with discount and round off
             const otherDiscount = Number(form.other_discount) || 0
-            const grandTotal = parseFloat(form.total) - otherDiscount
+            const grandTotal = roundToTwoDecimals(parseFloat(form.total) - otherDiscount)
             // Settings → Sale Configuration → Round Off
-            const roundedTotal = props.roundOffEnabled ? Math.round(grandTotal) : Math.round(grandTotal * 100) / 100
+            const roundedTotal = props.roundOffEnabled ? Math.round(grandTotal) : grandTotal
 
-            form.round_off = Math.round((roundedTotal - grandTotal) * 100) / 100
+            form.round_off = roundToTwoDecimals(roundedTotal - grandTotal)
             form.grand_total = roundedTotal
         }
 
@@ -1057,8 +1058,8 @@ export default {
                 const item = editItemData.value
                 item.gross_amount = item.unit_price * item.quantity
                 item.net_amount = item.gross_amount - item.discount
-                item.tax_amount = Math.round(item.net_amount * (item.tax / 100) * 100) / 100
-                item.total = Math.round((item.net_amount + item.tax_amount) * 100) / 100
+                item.tax_amount = roundToTwoDecimals(item.net_amount * (item.tax / 100))
+                item.total = roundToTwoDecimals(item.net_amount + item.tax_amount)
 
                 // Save back to cart
                 form.items[editItemKey.value] = {

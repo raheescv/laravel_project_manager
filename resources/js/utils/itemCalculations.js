@@ -4,15 +4,20 @@
  */
 
 /**
- * Rounds a number to 2 decimal places
+ * Rounds a number to 2 decimal places the way PHP's round() does, so the POS
+ * and the server agree: binary float noise is dropped first (1291.5 * 0.03 is
+ * 38.744999… in JS, which plain Math.round turns into 38.74 while PHP gives
+ * 38.75), and halves round away from zero (-0.245 → -0.25, not -0.24).
  * @param {number} value - The value to round
  * @returns {number} Rounded value to 2 decimal places
  */
-const roundToTwoDecimals = (value) => {
+export const roundToTwoDecimals = (value) => {
+    value = Number(value)
     if (!isFinite(value)) {
         return 0
     }
-    return Math.round(value * 100) / 100
+    const scaled = Number((Math.abs(value) * 100).toPrecision(15))
+    return (Math.sign(value) * Math.round(scaled)) / 100 || 0
 }
 
 /**
