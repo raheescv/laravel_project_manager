@@ -152,7 +152,10 @@
                                 <div class="text-end fw-medium">{{ currency($item->gross_amount) }}</div>
                             </td>
                             <td>
-                                <div class="text-end text-danger fw-medium">{{ $item->display_discount != 0 ? '-' . currency($item->display_discount) : '_' }}</div>
+                                <div class="text-end text-danger fw-medium">{{ $item->discount != 0 ? '-' . currency($item->discount) : '_' }}</div>
+                                @if ($item->other_discount_share != 0)
+                                    <div class="text-end text-muted small text-nowrap" title="Share of invoice discount">Inv: -{{ currency($item->other_discount_share) }}</div>
+                                @endif
                             </td>
                             <td>
                                 <div class="text-end fw-medium">{{ currency($item->net_amount) }}</div>
@@ -177,7 +180,10 @@
                             <div class="text-end fw-bold">{{ currency($total['gross_amount']) }}</div>
                         </th>
                         <th>
-                            <div class="text-end text-danger fw-bold">{{ $total['display_discount'] != 0 ? '-' . currency($total['display_discount']) : '_' }}</div>
+                            <div class="text-end text-danger fw-bold">{{ $total['discount'] != 0 ? '-' . currency($total['discount']) : '_' }}</div>
+                            @if ($total['other_discount_share'] != 0)
+                                <div class="text-end text-muted small text-nowrap" title="Share of invoice discount">Inv: -{{ currency($total['other_discount_share']) }}</div>
+                            @endif
                         </th>
                         <th>
                             <div class="text-end fw-bold">{{ currency($total['net_amount']) }}</div>
