@@ -32,6 +32,7 @@ return [
         'Tailor Module' => [
             'core',
             'product_management',
+            'inventory_management',
             'sales',
             'simple_purchase_management',
             'tailoring',
