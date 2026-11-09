@@ -1,5 +1,6 @@
 <?php
 
+use App\Exports\SaleItemReportExport;
 use App\Livewire\Report\SaleItemReport;
 use App\Models\UserHasBranch;
 use Illuminate\Support\Facades\DB;
@@ -77,4 +78,21 @@ it('shows the item discount and the invoice discount share separately', function
     Livewire::test(SaleItemReport::class)
         ->assertSeeInOrder(['-'.currency(4), 'Inv: -'.currency(10)])
         ->assertViewHas('total', fn (array $total): bool => (float) $total['discount'] === 4.0 && (float) $total['other_discount_share'] === 10.0);
+});
+
+it('exports the invoice discount share and effective total like the table', function (): void {
+    $saleIds = DB::table('sales')->where('branch_id', $this->world->branch->id)->pluck('id');
+    DB::table('sale_items')->whereIn('sale_id', $saleIds)->update(['unit_price' => 52, 'discount' => 4]);
+    DB::table('sales')->whereIn('id', $saleIds)->update(['gross_amount' => 104, 'item_discount' => 4, 'tax_amount' => 0, 'other_discount' => 10]);
+
+    $export = new SaleItemReportExport(['branch_id' => $this->world->branch->id]);
+    $saleItem = $export->query()->sole();
+    $row = array_combine($export->headings(), $export->map($saleItem));
+
+    expect((float) $row['Discount'])->toBe(4.0)
+        ->and((float) $row['Invoice Discount'])->toBe(10.0)
+        ->and((float) $row['Total'])->toBe(100.0)
+        ->and((float) $row['Effective Total'])->toBe(90.0)
+        ->and((float) $row['Invoice Discount'])->toBe((float) $saleItem->other_discount_share)
+        ->and((float) $row['Effective Total'])->toBe((float) $saleItem->effective_total);
 });

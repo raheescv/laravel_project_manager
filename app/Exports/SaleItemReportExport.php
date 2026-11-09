@@ -21,7 +21,8 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
 
     public function query(): Builder
     {
-        $query = SaleItem::join('sales', 'sales.id', '=', 'sale_items.sale_id')
+        $query = SaleItem::with(['sale:id,other_discount,total', 'employee:id,name', 'product:id,name'])
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->when($this->filters['from_date'] ?? '', function ($query, $value) {
                 return $query->where('date', '>=', date('Y-m-d', strtotime($value)));
             })
@@ -40,6 +41,7 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
             ->where('sales.status', 'completed')
             ->select(
                 'sale_items.id',
+                'sale_items.sale_id',
                 'sale_items.employee_id',
                 'sale_items.product_id',
                 'sale_items.unit_price',
@@ -68,9 +70,11 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
             'Quantity',
             'Gross Amount',
             'Discount',
+            'Invoice Discount',
             'Net Amount',
             'Tax Amount',
             'Total',
+            'Effective Total',
         ];
     }
 
@@ -91,9 +95,11 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
             $row->quantity,
             $row->gross_amount,
             $row->discount,
+            $row->other_discount_share,
             $row->net_amount,
             $row->tax_amount,
             $row->total,
+            $row->effective_total,
         ];
     }
 
@@ -105,6 +111,8 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
             'J' => NumberFormat::FORMAT_NUMBER_00,
             'K' => NumberFormat::FORMAT_NUMBER_00,
             'L' => NumberFormat::FORMAT_NUMBER_00,
+            'M' => NumberFormat::FORMAT_NUMBER_00,
+            'N' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
@@ -127,6 +135,8 @@ class SaleItemReportExport implements FromQuery, WithColumnFormatting, WithEvent
                 $sheet->setCellValue("J{$totalRows}", "=SUM(J2:J{$endRow})");
                 $sheet->setCellValue("K{$totalRows}", "=SUM(K2:K{$endRow})");
                 $sheet->setCellValue("L{$totalRows}", "=SUM(L2:L{$endRow})");
+                $sheet->setCellValue("M{$totalRows}", "=SUM(M2:M{$endRow})");
+                $sheet->setCellValue("N{$totalRows}", "=SUM(N2:N{$endRow})");
             },
         ];
     }
