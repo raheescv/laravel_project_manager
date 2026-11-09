@@ -77,6 +77,15 @@ export function startCheckout(payload) {
 }
 
 /**
+ * POST /storefront/coupons/search — codes matching q (3+ characters), quoted against
+ * the bag: { total, results: [{ code, title, title_arabic, state, saving, short,
+ * new_total, is_private }] }. Nothing is listed without a search.
+ */
+export function searchCoupons(q, items) {
+  return client.post('/storefront/coupons/search', { q, items })
+}
+
+/**
  * GET /storefront/checkout/{reference} — re-checks the charge with Tap (recording
  * the sale once it is paid) and returns { reference, status: pending|paid|failed|review,
  * gateway_status, fulfilment, amount, currency, payment_url, invoice_no, branch }.

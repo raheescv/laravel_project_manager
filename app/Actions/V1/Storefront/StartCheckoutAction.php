@@ -5,6 +5,7 @@ namespace App\Actions\V1\Storefront;
 use App\Exceptions\StorefrontCheckoutException;
 use App\Http\Requests\V1\Storefront\StartCheckoutRequest;
 use App\Models\Branch;
+use App\Models\Coupon;
 use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\StorefrontCheckout;
@@ -12,6 +13,7 @@ use App\Services\Payment\TapClient;
 use App\Services\Payment\TapException;
 use App\Services\QnasAddressService;
 use App\Services\TenantService;
+use App\Support\Storefront\CouponBag;
 use App\Support\Storefront\TapSettings;
 use Illuminate\Support\Str;
 
@@ -47,6 +49,9 @@ class StartCheckoutAction
             throw new StorefrontCheckoutException('There is nothing in your bag to pay for.');
         }
 
+        [$coupon, $discount] = $this->couponDiscount($request->validated('couponCode'), $items, $request->validated('customerMobile'));
+        $amount = round($amount - $discount, 2);
+
         $address = $fulfilment === 'delivery' ? $this->deliveryAddress($request) : [];
         $pin = $address ? app(QnasAddressService::class)->cachedLocation(
             $address['zone_number'],
@@ -77,6 +82,9 @@ class StartCheckoutAction
             'items' => $items,
             'amount' => $amount,
             'currency' => $currency,
+            'coupon_id' => $coupon?->id,
+            'coupon_code' => $coupon?->code,
+            'coupon_discount' => $discount,
             'gateway' => 'tap',
             'status' => StorefrontCheckout::STATUS_PENDING,
         ]);
@@ -105,6 +113,35 @@ class StartCheckoutAction
         }
 
         return $checkout;
+    }
+
+    /**
+     * Re-check the customer's promo code against the bag as priced here. What the
+     * browser showed is never trusted.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array{0: Coupon|null, 1: float}
+     */
+    private function couponDiscount(?string $code, array $items, string $mobile): array
+    {
+        if (blank($code)) {
+            return [null, 0.0];
+        }
+
+        $code = Coupon::normalizeCode($code);
+        $coupon = Coupon::query()->withCount('redemptions')->where('code', $code)->first();
+
+        if (! $coupon) {
+            throw new StorefrontCheckoutException("{$code} is not a valid promo code.");
+        }
+
+        $quote = CouponBag::fromPricedLines($items)->quote($coupon, $mobile);
+
+        if (! $quote->isReady()) {
+            throw new StorefrontCheckoutException($quote->message($coupon->code));
+        }
+
+        return [$coupon, $quote->saving];
     }
 
     /**
@@ -182,9 +219,6 @@ class StartCheckoutAction
     /**
      * Price every line from the catalogue and check [branch] can fill it.
      *
-     * The amounts mirror the sale_items generated columns (net = price × qty, tax
-     * on net, each at 2 dp) so the charge equals the grand total the sale carries.
-     *
      * @param  array<int, array{productId: int, quantity: int}>  $lines
      * @return array<int, array<string, mixed>>
      */
@@ -228,11 +262,6 @@ class StartCheckoutAction
                     : "{$label} is sold out at {$branch->name}.");
             }
 
-            $unitPrice = round((float) $product->mrp, 2);
-            $taxRate = (float) ($product->tax ?? 0);
-            $net = round($unitPrice * $quantity, 2);
-            $tax = round($net * $taxRate / 100, 2);
-
             $items[] = [
                 'product_id' => $product->id,
                 'inventory_id' => $inventory->id,
@@ -240,13 +269,25 @@ class StartCheckoutAction
                 'name' => $product->name,
                 'size' => $product->size,
                 'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'tax' => $taxRate,
-                'total' => round($net + $tax, 2),
+                'unit_price' => round((float) $product->mrp, 2),
+                'tax' => (float) ($product->tax ?? 0),
+                'total' => self::lineTotal($product, $quantity),
             ];
         }
 
         return $items;
+    }
+
+    /**
+     * What a line costs, mirroring the sale_items generated columns: net = price ×
+     * qty, tax on net, each at 2 dp.
+     */
+    public static function lineTotal(Product $product, int $quantity): float
+    {
+        $net = round(round((float) $product->mrp, 2) * $quantity, 2);
+        $tax = round($net * (float) ($product->tax ?? 0) / 100, 2);
+
+        return round($net + $tax, 2);
     }
 
     /**

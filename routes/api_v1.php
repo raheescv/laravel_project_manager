@@ -96,6 +96,10 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.storefront.address.buildings');
         });
 
+        Route::post('storefront/coupons/search', [StorefrontCheckoutController::class, 'coupons'])
+            ->middleware('throttle:60,1')
+            ->name('api.v1.storefront.coupons.search');
+
         // Storefront checkout through Tap Payments (Settings → Online Payments)
         Route::prefix('storefront/checkout')->group(function () {
             Route::get('config', [StorefrontCheckoutController::class, 'config'])->name('api.v1.storefront.checkout.config');

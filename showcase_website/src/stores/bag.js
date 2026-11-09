@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 
-import { fetchCheckout, fetchCheckoutConfig, startCheckout } from '@/api/resources'
+import { fetchCheckout, fetchCheckoutConfig, searchCoupons, startCheckout } from '@/api/resources'
 import { t } from '@/i18n'
 
 const STORAGE_KEY = 'sr.bag'
+const COUPON_KEY = 'sr.bag.coupon'
 // Checkout form and the payment in flight live in sessionStorage: they must
 // survive the round trip to Tap, but a shared device forgets them with the tab.
 const CUSTOMER_KEY = 'sr.checkout.customer'
@@ -85,9 +86,13 @@ export const useBagStore = defineStore('bag', () => {
   const error = ref('')
   const reference = ref(null)
   const result = ref(null) // the checkout as the API last reported it
+  const coupon = ref(load('local', COUPON_KEY, null)) // the code on the bag, as the API last quoted it
+  let couponCheck = 0
 
   const count = computed(() => lines.value.reduce((n, l) => n + l.qty, 0))
   const total = computed(() => lines.value.reduce((n, l) => n + l.qty * (Number(l.price) || 0), 0))
+  const discount = computed(() => (coupon.value?.state === 'ready' ? Number(coupon.value.saving) || 0 : 0))
+  const payable = computed(() => Math.max(total.value - discount.value, 0))
 
   function save() {
     keep('local', STORAGE_KEY, lines.value)
@@ -108,6 +113,7 @@ export const useBagStore = defineStore('bag', () => {
     if (line) line.qty = Math.min(MAX_QTY, line.qty + qty)
     else lines.value.push({ key, qty: Math.min(MAX_QTY, Math.max(1, qty)), ...item })
     save()
+    refreshCoupon()
     reset()
     open.value = true
   }
@@ -124,12 +130,40 @@ export const useBagStore = defineStore('bag', () => {
       outcome = 'removed'
     }
     save()
+    refreshCoupon()
     return outcome
   }
 
   function remove(key) {
     lines.value = lines.value.filter((l) => l.key !== key)
     save()
+    refreshCoupon()
+  }
+
+  /** Codes matching what the customer typed, each quoted against this bag. */
+  function searchCodes(query) {
+    return searchCoupons(query, lines.value.map((l) => ({ productId: l.id, quantity: l.qty })))
+  }
+
+  /** row: one search result, or null to take the code off the bag. */
+  function applyCoupon(row) {
+    couponCheck++
+    coupon.value = row
+    keep('local', COUPON_KEY, row)
+  }
+
+  /** The bag changed, or was reopened: ask the API what the code is worth now. */
+  async function refreshCoupon() {
+    if (!coupon.value) return
+    if (!lines.value.length) return applyCoupon(null)
+    const check = ++couponCheck
+    const { code } = coupon.value
+    try {
+      const { results } = await searchCodes(code)
+      if (check === couponCheck) applyCoupon(results.find((r) => r.code === code) ?? null)
+    } catch {
+      /* keep the last quote: the checkout re-checks the code anyway */
+    }
   }
 
   /** Whether (and how) this store takes payment. Best-effort: checkout stays off if it fails. */
@@ -184,6 +218,7 @@ export const useBagStore = defineStore('bag', () => {
           ADDRESS_PARTS.map((k) => [k, fulfilment.value === 'delivery' ? String(customer[k]).trim() : null]),
         ),
         items: lines.value.map((l) => ({ productId: l.id, quantity: l.qty })),
+        couponCode: discount.value ? coupon.value.code : null,
         // Tap brings the customer back here. No hash: the API appends
         // ?checkout=REF, which a #/route would swallow.
         returnUrl: window.location.origin + window.location.pathname,
@@ -195,6 +230,7 @@ export const useBagStore = defineStore('bag', () => {
     } catch (e) {
       error.value = e?.message || t('payStartError')
       submitting.value = false
+      refreshCoupon()
     }
   }
 
@@ -224,6 +260,7 @@ export const useBagStore = defineStore('bag', () => {
       // The money is in — this bag is spent.
       lines.value = []
       save()
+      applyCoupon(null)
       keep('session', PENDING_KEY, null)
     }
     step.value = 'result'
@@ -289,6 +326,12 @@ export const useBagStore = defineStore('bag', () => {
     result,
     count,
     total,
+    coupon,
+    discount,
+    payable,
+    searchCodes,
+    applyCoupon,
+    refreshCoupon,
     add,
     setQty,
     remove,

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\V1\Storefront\SearchCouponsAction;
 use App\Actions\V1\Storefront\StartCheckoutAction;
 use App\Actions\V1\Storefront\SyncCheckoutAction;
 use App\Actions\V1\Storefront\SyncRefundAction;
 use App\Exceptions\StorefrontCheckoutException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\Storefront\SearchCouponsRequest;
 use App\Http\Requests\V1\Storefront\StartCheckoutRequest;
 use App\Http\Resources\V1\Storefront\CheckoutResource;
 use App\Models\StorefrontCheckout;
@@ -61,6 +63,23 @@ class StorefrontCheckoutController extends Controller
             report($e);
 
             return $this->sendServerError($e->getMessage() ?: 'Checkout could not be started. Please try again.');
+        }
+    }
+
+    /**
+     * Search promo codes.
+     *
+     * Finds the codes matching what the customer typed and quotes each against
+     * their bag. Nothing is listed without a search of at least 3 characters.
+     */
+    public function coupons(SearchCouponsRequest $request, SearchCouponsAction $action): JsonResponse
+    {
+        try {
+            return $this->sendSuccess($action->execute($request->validated('q'), $request->validated('items')), 'Promo codes retrieved successfully');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->sendServerError('Promo codes could not be searched. Please try again.');
         }
     }
 

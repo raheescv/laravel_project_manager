@@ -286,6 +286,7 @@ return [
                 'customer type',
                 'appointment',
                 'sale',
+                'coupon',
                 'sales return',
                 'day session',
                 'day close',

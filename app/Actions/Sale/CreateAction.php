@@ -14,6 +14,9 @@ class CreateAction
 
     public $userId;
 
+    /** Off only for server-side callers whose discount no staff member chose. */
+    public bool $enforceDiscountLimit = true;
+
     public function execute($data, $userId)
     {
         $this->userId = $userId;
@@ -59,7 +62,7 @@ class CreateAction
             $totalDiscount = ($this->model->item_discount ?? 0) + ($this->model->other_discount ?? 0);
             // Validate max_discount_per_sale
             $user = User::find($this->userId);
-            if ($totalDiscount) {
+            if ($totalDiscount && $this->enforceDiscountLimit) {
                 User::validateMaxDiscount($user->max_discount_per_sale, $this->model->gross_amount, $totalDiscount);
             }
 

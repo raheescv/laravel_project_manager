@@ -25,6 +25,7 @@ return [
     'service' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'combo offer' => ['create', 'view', 'edit', 'delete'],
     'product offer' => ['create', 'view', 'edit', 'delete'],
+    'coupon' => ['create', 'view', 'edit', 'delete'],
     'package category' => ['create', 'view', 'edit', 'delete'],
     'package' => [
         'create',

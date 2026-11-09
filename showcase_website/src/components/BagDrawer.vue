@@ -2,13 +2,14 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { field, money, t } from '@/i18n'
+import { field, money, percentOff, t } from '@/i18n'
 import { useBagStore } from '@/stores/bag'
 import { useCatalogStore } from '@/stores/catalog'
 import { useShopsStore } from '@/stores/shops'
 import { toast } from '@/toast'
 import { initialOf } from '@/utils/catalog'
 import DeliveryAddress from './DeliveryAddress.vue'
+import PromoCode from './PromoCode.vue'
 
 const bag = useBagStore()
 const catalog = useCatalogStore()
@@ -25,6 +26,7 @@ watch(
     if (open) {
       // Retry a config that failed at boot (flaky network) before deciding checkout is off.
       bag.loadConfig()
+      bag.refreshCoupon()
       lastFocus = document.activeElement
       await nextTick()
       closeBtn.value?.focus()
@@ -211,11 +213,18 @@ function keepShopping() {
               </div>
             </div>
             <div class="line__side">
-              <span class="price">{{ money(l.price * l.qty) }}</span>
+              <!-- With one line the whole saving is that line's, so it can be struck through. -->
+              <template v-if="bag.discount && bag.lines.length === 1">
+                <span class="price price--was">{{ money(l.price * l.qty) }}</span>
+                <span class="price price--now">{{ money(bag.payable) }}</span>
+              </template>
+              <span v-else class="price">{{ money(l.price * l.qty) }}</span>
               <button class="linkbtn" @click="remove(l.key)">{{ t('remove') }}</button>
             </div>
           </div>
         </div>
+
+        <PromoCode v-if="bag.config.enabled" />
 
         <!-- Delivery is offered only when the store set a branch to ship from. -->
         <div v-if="bag.config.enabled && bag.config.delivery" class="ful">
@@ -241,9 +250,19 @@ function keepShopping() {
     </div>
 
     <div v-if="bag.lines.length && (bag.step === 'bag' || bag.step === 'details')" class="bag__foot">
+      <div v-if="bag.discount" class="bagsum">
+        <div class="bagsum__row">
+          <span>{{ t('promoSubtotal') }}</span>
+          <span class="price">{{ money(bag.total) }}</span>
+        </div>
+        <div class="bagsum__row is-save">
+          <span>{{ t('promoLine') }} <bdi dir="ltr">{{ bag.coupon.code }}</bdi></span>
+          <span class="price">&minus; {{ money(bag.discount) }} <bdi dir="ltr">{{ percentOff(bag.coupon) }}</bdi></span>
+        </div>
+      </div>
       <div class="total">
         <span>{{ t('total') }}</span>
-        <span class="price price--lg">{{ money(bag.total) }}</span>
+        <span class="price price--lg">{{ money(bag.payable) }}</span>
       </div>
       <template v-if="!bag.config.checked" />
       <p v-else-if="!bag.config.enabled" class="fineprint">{{ t('checkoutOff') }}</p>
@@ -253,7 +272,7 @@ function keepShopping() {
       </template>
       <template v-else>
         <button class="btn btn--primary btn--block" type="submit" form="checkoutForm" :disabled="bag.submitting">
-          {{ bag.submitting ? t('redirecting') : t('payNow', { total: money(bag.total) }) }}
+          {{ bag.submitting ? t('redirecting') : t('payNow', { total: money(bag.payable) }) }}
         </button>
         <p class="fineprint">{{ t('payFine') }}</p>
       </template>

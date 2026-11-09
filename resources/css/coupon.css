@@ -1,0 +1,76 @@
+/* =====================================================================
+   .cpx — Coupons. Built on the .ofx atoms in product-offer.css; only what
+   those do not cover lives here.
+   ===================================================================== */
+.ofx .cpx-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 0; border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+
+.cpx-tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 700; letter-spacing: .02em;
+    color: var(--acc-ink); background: var(--acc-soft); padding: 2px 7px; border-radius: 6px; white-space: nowrap;
+}
+.cpx-lock { margin-left: 5px; }
+.cpx-sub { display: block; margin-top: 3px; color: var(--mute); font-size: 11px; font-weight: 600; }
+.cpx-scope { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpx-bar { width: 84px; height: 4px; margin-top: 4px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.cpx-bar i { display: block; height: 100%; background: var(--acc); border-radius: 4px; }
+
+.cpx-sw { position: relative; display: inline-block; flex: none; width: 34px; height: 20px; margin: 0; vertical-align: middle; }
+.cpx-sw input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.cpx-sw i { position: absolute; inset: 0; border-radius: 99px; background: var(--line-strong); transition: background .16s; }
+.cpx-sw i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .16s; }
+.cpx-sw input:checked + i { background: var(--acc); }
+.cpx-sw input:checked + i::after { transform: translateX(14px); }
+.cpx-sw input:focus-visible + i { outline: 3px solid var(--acc-tint); outline-offset: 2px; }
+
+/* ---------- slide-over form ---------- */
+.cpx-overlay { position: fixed; inset: 0; z-index: 1060; }
+.cpx-scrim { position: absolute; inset: 0; background: rgba(15, 23, 42, .45); animation: cpx-fade .2s ease both; }
+.cpx-sheet { position: absolute; inset-block: 0; right: 0; width: min(900px, 100%); display: flex; flex-direction: column; background: var(--panel); box-shadow: -20px 0 50px -25px rgba(0, 0, 0, .5); animation: cpx-slide .28s cubic-bezier(.3, .8, .3, 1) both; }
+@keyframes cpx-fade { from { opacity: 0; } }
+@keyframes cpx-slide { from { transform: translateX(100%); } }
+.cpx-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.cpx-sheet-head h3 { margin: 0; font-size: 15px; font-weight: 800; color: var(--ink); }
+.cpx-sheet-body { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
+.cpx-sheet-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--line); }
+.cpx-form { padding: 6px 20px 20px; }
+.cpx-form .ofx-eyebrow { margin: 14px 0 4px; }
+.cpx-row { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: start; padding: 5px 0; }
+.cpx-label { padding-top: 8px; font-weight: 700; }
+.cpx-label em { color: var(--bad); font-style: normal; }
+.cpx-field { min-width: 0; }
+.cpx-field > .ofx-inp, .cpx-field > .ofx-inp-group, .cpx-field .ofx-inp-group .ofx-inp { width: 100%; }
+.cpx-field > .ofx-inp-group { display: flex; }
+.cpx-inline { display: flex; gap: 6px; }
+.cpx-inline .ofx-inp { flex: 1; }
+.cpx-inline .ofx-icon { height: 32px; width: 32px; flex: none; }
+.cpx-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .03em; text-transform: uppercase; }
+.cpx-seg { display: flex; }
+.cpx-seg button { flex: 1; }
+.cpx-mt { margin-top: 8px; }
+.cpx-err { display: block; margin-top: 4px; color: var(--bad); font-weight: 700; font-size: 11.5px; }
+.cpx-hint { display: flex; align-items: center; gap: 9px; min-height: 32px; color: var(--mute); font-weight: 600; }
+.cpx-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+.cpx-chip-x { border: 0; background: none; color: inherit; padding: 0 0 0 2px; cursor: pointer; font-size: 10px; }
+.ofx .cpx-menu { left: 0; right: 0; top: 36px; width: auto; max-height: 240px; }
+
+.cpx-side { padding: 20px; background: var(--panel-2); border-left: 1px solid var(--line); }
+.cpx-preview { margin-top: 10px; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); }
+.cpx-preview-top, .cpx-preview-sub { display: flex; justify-content: space-between; gap: 10px; }
+.cpx-preview-top { color: var(--ink); font-size: 13px; }
+.cpx-preview-top span { color: var(--ok); font-weight: 800; white-space: nowrap; }
+.cpx-preview-sub { margin-top: 3px; color: var(--mute); font-weight: 600; font-size: 11.5px; }
+.cpx-preview-sub span:last-child:not(:first-child) { white-space: nowrap; }
+.cpx-note { margin: 10px 0 0; color: var(--mute); font-weight: 600; line-height: 1.45; }
+
+@media (max-width: 991px) {
+    .cpx-sheet-body { grid-template-columns: 1fr; }
+    .cpx-side { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 575px) {
+    .cpx-row { grid-template-columns: 1fr; gap: 3px; }
+    .cpx-label { padding-top: 0; }
+    .ofx .cpx-kpis .ofx-kpi { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cpx-scrim, .cpx-sheet { animation: none; }
+}

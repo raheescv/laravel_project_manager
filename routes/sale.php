@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\POSController;
 use App\Http\Controllers\ComboOfferController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\SaleReturnController;
@@ -35,6 +36,16 @@ Route::middleware('auth')->group(function (): void {
         Route::get('day-management', 'dayManagement')->name('day-management')->can('day session.create');
         Route::get('day-session/{id}', 'daySession')->name('day-session')->can('day session.view');
         Route::get('day-sessions-report', 'daySessionsReport')->name('day-sessions-report')->can('day session.list');
+    });
+    Route::name('sale::coupon::')->prefix('sale/coupon')->controller(CouponController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('coupon.view');
+        Route::name('api::')->prefix('api')->group(function (): void {
+            Route::get('', 'list')->name('list')->can('coupon.view');
+            Route::post('', 'store')->name('store')->can('coupon.create');
+            Route::put('{id}', 'update')->whereNumber('id')->name('update')->can('coupon.edit');
+            Route::patch('{id}/toggle', 'toggle')->whereNumber('id')->name('toggle')->can('coupon.edit');
+            Route::delete('{id}', 'destroy')->whereNumber('id')->name('destroy')->can('coupon.delete');
+        });
     });
     Route::name('sale_return::')->prefix('sale_return')->controller(SaleReturnController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('sales return.view');

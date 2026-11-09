@@ -7,6 +7,16 @@ use Illuminate\Foundation\Http\FormRequest;
 class StartCheckoutRequest extends FormRequest
 {
     /**
+     * Ids and quantities only — prices are always read from the catalogue, never
+     * taken from the browser.
+     */
+    public const ITEM_RULES = [
+        'items' => ['required', 'array', 'min:1', 'max:30'],
+        'items.*.productId' => ['required', 'integer'],
+        'items.*.quantity' => ['required', 'integer', 'min:1', 'max:9'],
+    ];
+
+    /**
      * Public endpoint: the storefront has no signed-in customer.
      */
     public function authorize(): bool
@@ -37,11 +47,8 @@ class StartCheckoutRequest extends FormRequest
             'streetNumber' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:10'],
             'buildingNumber' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:10'],
             'city' => ['nullable', 'required_if:fulfilment,delivery', 'string', 'max:100'],
-            // Ids and quantities only — prices are always read from the catalogue,
-            // never taken from the browser.
-            'items' => ['required', 'array', 'min:1', 'max:30'],
-            'items.*.productId' => ['required', 'integer'],
-            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:9'],
+            ...self::ITEM_RULES,
+            'couponCode' => ['nullable', 'string', 'max:24'],
             // The storefront page Tap sends the customer back to.
             'returnUrl' => ['required', 'string', 'url:http,https', 'max:2000'],
         ];

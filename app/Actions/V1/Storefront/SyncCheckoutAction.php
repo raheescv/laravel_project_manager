@@ -163,7 +163,7 @@ class SyncCheckoutAction
             'gross_amount' => 0,
             'item_discount' => 0,
             'tax_amount' => 0,
-            'other_discount' => 0,
+            'other_discount' => (float) $checkout->coupon_discount,
             'freight' => 0,
             'tip' => 0,
             'round_off' => 0,
@@ -186,7 +186,11 @@ class SyncCheckoutAction
             'comboOffers' => [],
         ];
 
-        $response = (new SaleCreateAction())->execute($data, (int) $user->id);
+        // The promo code set this discount and the money is already taken, so the
+        // recording user's own discount limit has no say in it.
+        $saleAction = new SaleCreateAction();
+        $saleAction->enforceDiscountLimit = false;
+        $response = $saleAction->execute($data, (int) $user->id);
 
         if (! $response['success']) {
             throw new RuntimeException($response['message']);
