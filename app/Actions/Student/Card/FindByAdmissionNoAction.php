@@ -20,7 +20,7 @@ class FindByAdmissionNoAction
             return null;
         }
 
-        $detail = StudentDetail::with('account')->where('admission_no', $admissionNo)->first();
+        $detail = StudentDetail::with('account')->where('admission_no', $admissionNo)->where('status', '!=', StudentDetail::PENDING)->first();
         if (! $detail || ! $detail->account) {
             return null;
         }

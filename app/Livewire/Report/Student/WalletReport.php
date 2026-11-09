@@ -145,6 +145,7 @@ class WalletReport extends Component
             ->selectRaw("{$periodIn} as period_in", $b3)
             ->selectRaw("{$periodOut} as period_out", $b4)
             ->selectRaw("{$closing} as closing_balance", [...$b5, ...$b6])
+            ->where('student_details.status', '!=', StudentDetail::PENDING)
             ->when($filters['search'] ?? '', function ($q, $value) {
                 $value = trim($value);
 

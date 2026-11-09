@@ -248,6 +248,24 @@ it('lists parents with their linked students and filters by search and status', 
     $this->get($this->world->url('/student/guardians'))->assertOk();
 });
 
+it('counts parents for the tiles and filters them by the status chips', function (): void {
+    Guardian::create(['name' => 'Off Parent', 'mobile' => '70001111', 'status' => 'disabled']);
+    Guardian::create(['name' => 'Waiting Parent', 'mobile' => '70002222', 'status' => 'active']);
+    Guardian::create(['name' => 'Ready Parent', 'mobile' => '70003333', 'status' => 'active', 'password' => 'secret-password']);
+    Guardian::create(['name' => 'Form Parent', 'mobile' => '70004444', 'status' => Guardian::PENDING]);
+
+    $counted = Guardian::where('status', '!=', Guardian::PENDING);
+
+    Livewire::test(GuardianTable::class)
+        ->assertViewHas('stats', fn (array $stats): bool => $stats['total'] === (clone $counted)->count()
+            && $stats['disabled'] === 1
+            && $stats['waiting'] === (clone $counted)->where('status', 'active')->whereNull('password')->count())
+        ->assertDontSee('Form Parent')
+        ->set('status', 'disabled')
+        ->assertSee('Off Parent')
+        ->assertDontSee('Ready Parent');
+});
+
 it('invites a parent from the guardians list and shows the link', function (): void {
     Mail::fake();
     $guardian = $this->student->guardians->first();
@@ -329,6 +347,7 @@ it('saves the student card and QPay settings', function (): void {
         ->assertDispatched('student-status', statuses: [
             'card' => ['text' => 'Top-up 20–500', 'tone' => 'info'],
             'canteen' => ['text' => 'Off', 'tone' => 'off'],
+            'registration' => ['text' => 'Closed', 'tone' => 'off'],
         ]);
 
     expect(StudentSettings::current()->overdraftLimit)->toBe(25.0)

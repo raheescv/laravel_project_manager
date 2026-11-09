@@ -54,4 +54,10 @@ class StudentController extends Controller
     {
         return view('student.guardians');
     }
+
+    /** Forms sent from the public registration page, for staff to approve or reject. */
+    public function registrations()
+    {
+        return view('student.registrations');
+    }
 }

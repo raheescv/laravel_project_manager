@@ -129,6 +129,7 @@ class Table extends Component
     {
         return Account::student()
             ->join('student_details', 'student_details.account_id', '=', 'accounts.id')
+            ->where('student_details.status', '!=', StudentDetail::PENDING)
             ->when($filters['search'] ?? '', function ($query, $value) {
                 $value = trim($value);
 

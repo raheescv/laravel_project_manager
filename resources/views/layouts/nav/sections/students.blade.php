@@ -22,6 +22,11 @@
                     <a href="{{ route('student::guardians') }}" class="nav-link {{ request()->is(['student/guardians']) ? 'active' : '' }}">Parents</a>
                 </li>
             @endcan
+            @can('student registration.view')
+                <li class="nav-item">
+                    <a href="{{ route('student::registrations') }}" class="nav-link {{ request()->is(['student/registrations']) ? 'active' : '' }}">Registrations</a>
+                </li>
+            @endcan
             @can('student menu.view')
                 <li class="nav-item">
                     <a href="{{ route('student::canteen-menu') }}" class="nav-link {{ request()->is(['student/canteen-menu']) ? 'active' : '' }}">Canteen Menu</a>

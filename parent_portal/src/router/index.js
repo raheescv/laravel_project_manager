@@ -18,6 +18,8 @@ const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { guest: true } },
     { path: '/forgot-password', name: 'forgot', component: () => import('@/views/ForgotPasswordView.vue'), meta: { guest: true } },
+    // Public: a shared link must work for a parent who is already signed in with another child.
+    { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { public: true } },
     // Reachable signed in too: a reset link must work without signing out first.
     { path: '/set-password/:token', name: 'set-password', component: () => import('@/views/SetPasswordView.vue'), meta: { public: true } },
 

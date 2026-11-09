@@ -49,6 +49,42 @@
             </div>
         </div>
 
+        {{-- Public registration page --}}
+        <div class="scx-body" x-show="pane === 'registration'" x-cloak>
+            <div class="sct-pane-head">
+                <div>
+                    <h6>Public registration page</h6>
+                    <p>Parents register their children from the parent portal, without signing in. Each form waits under Students → Registrations until you approve it.</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="sc_registration_schools">Schools</label>
+                    <textarea id="sc_registration_schools" class="form-control" rows="7" wire:model="registration_schools" placeholder="AIA - Doha"></textarea>
+                    <div class="form-text">One per line. Leave empty to close the page.</div>
+                    @error('registration_schools')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="sc_registration_classes">Classes</label>
+                    <textarea id="sc_registration_classes" class="form-control" rows="7" wire:model="registration_classes"></textarea>
+                    <div class="form-text">One per line.</div>
+                    @error('registration_classes')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label" for="sc_registration_divisions">Divisions</label>
+                    <textarea id="sc_registration_divisions" class="form-control" rows="7" wire:model="registration_divisions"></textarea>
+                    <div class="form-text">One per line.</div>
+                    @error('registration_divisions')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         {{-- Canteen pre-orders --}}
         <div class="scx-body" x-show="pane === 'canteen'" x-cloak>
             <div class="sct-pane-head">
@@ -251,14 +287,17 @@
             $cardErrors = $errors->hasAny(['overdraft_limit', 'topup_min', 'topup_max', 'portal_url']);
             $canteenErrors = $errors->hasAny(['school_days', 'school_days.*', 'pre_order_cutoff', 'pre_order_category_ids', 'pre_order_category_ids.*']);
         @endphp
-        <div class="scx-foot" x-show="pane === 'card' || pane === 'canteen'">
+        <div class="scx-foot" x-show="pane === 'card' || pane === 'canteen' || pane === 'registration'">
+            @if ($errors->hasAny(['registration_schools', 'registration_classes', 'registration_divisions']))
+                <button type="button" class="btn btn-link btn-sm text-danger p-0 me-auto" x-show="pane !== 'registration'" x-on:click="pane = 'registration'"><i class="fa fa-exclamation-circle me-1"></i>Fix Registration</button>
+            @endif
             @if ($cardErrors)
                 <button type="button" class="btn btn-link btn-sm text-danger p-0 me-auto" x-show="pane !== 'card'" x-on:click="pane = 'card'"><i class="fa fa-exclamation-circle me-1"></i>Fix Card &amp; Portal</button>
             @endif
             @if ($canteenErrors)
                 <button type="button" class="btn btn-link btn-sm text-danger p-0 me-auto" x-show="pane !== 'canteen'" x-on:click="pane = 'canteen'"><i class="fa fa-exclamation-circle me-1"></i>Fix Canteen</button>
             @endif
-            <span class="scx-foot-note">Card &amp; Portal and Canteen save together.</span>
+            <span class="scx-foot-note">Card &amp; Portal, Canteen and Registration save together.</span>
             <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
                 <span wire:loading.remove wire:target="save"><i class="fa fa-save me-1"></i> Save</span>
                 <span wire:loading wire:target="save"><i class="fa fa-spinner fa-spin me-1"></i> Saving…</span>

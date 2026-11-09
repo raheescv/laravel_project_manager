@@ -12,10 +12,12 @@ use App\Actions\Parent\ListStudentsAction;
 use App\Actions\QPay\HandleReturnAction;
 use App\Actions\Student\Guardian\SendInviteAction;
 use App\Actions\Student\Guardian\SetPasswordAction as GuardianSetPasswordAction;
+use App\Actions\Student\Registration\CreateAction as RegistrationCreateAction;
 use App\Actions\V1\Parent\BlockCardAction;
 use App\Actions\V1\Parent\CancelTopupAction;
 use App\Actions\V1\Parent\ChangePasswordAction;
 use App\Actions\V1\Parent\ForgotPasswordAction;
+use App\Actions\V1\Parent\GetRegistrationFormAction;
 use App\Actions\V1\Parent\GetStudentAction;
 use App\Actions\V1\Parent\GetTopupAction;
 use App\Actions\V1\Parent\LoginAction;
@@ -30,6 +32,7 @@ use App\Http\Requests\V1\Parent\LoginRequest;
 use App\Http\Requests\V1\Parent\PeriodRequest;
 use App\Http\Requests\V1\Parent\SetPasswordRequest;
 use App\Http\Requests\V1\Parent\StartTopupRequest;
+use App\Http\Requests\V1\Parent\StoreRegistrationRequest;
 use App\Http\Resources\V1\Parent\BillDetailResource;
 use App\Http\Resources\V1\Parent\BillResource;
 use App\Http\Resources\V1\Parent\GuardianResource;
@@ -63,7 +66,8 @@ class ParentPortalController extends Controller
      * School branding.
      *
      * Public. The school's name, logo, theme colour and currency — what the portal
-     * paints before anyone signs in.
+     * paints before anyone signs in. `registration_open` says whether new parents
+     * can register their children yet.
      */
     public function school(): JsonResponse
     {
@@ -81,7 +85,43 @@ class ParentPortalController extends Controller
                 'mobile' => tenant_cache('mobile', null) ?: null,
                 'email' => tenant_cache('email', null) ?: null,
             ],
+            'registration_open' => StudentSettings::current()->registrationSchools !== [],
         ], 'School retrieved successfully');
+    }
+
+    /**
+     * Registration form choices.
+     *
+     * Public. The schools, classes and divisions a new parent can pick from. No
+     * schools means registration is closed.
+     */
+    public function registrationForm(GetRegistrationFormAction $action): JsonResponse
+    {
+        return $this->sendSuccess($action->execute(), 'Registration form retrieved successfully');
+    }
+
+    /**
+     * Register children.
+     *
+     * Public. Saves each child as a pending student under the parent; none of it
+     * counts until staff approve, and only then does the parent get a portal link.
+     */
+    public function register(StoreRegistrationRequest $request, RegistrationCreateAction $action): JsonResponse
+    {
+        // A hidden field only a bot fills in. It is told the form went through.
+        if ($request->filled('contact_ref')) {
+            return $this->sendSuccess(null, 'Registration received');
+        }
+
+        $response = $action->execute($request->validated());
+
+        if (! $response['success']) {
+            Log::error('Public student registration failed', ['error' => $response['message']]);
+
+            return $this->sendServerError('We could not save this registration.');
+        }
+
+        return $this->sendSuccess(null, $response['message'], Response::HTTP_CREATED);
     }
 
     /**

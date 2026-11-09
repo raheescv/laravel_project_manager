@@ -81,6 +81,7 @@ class GuardianTable extends Component
     private function query()
     {
         return Guardian::query()
+            ->where('guardians.status', '!=', Guardian::PENDING)
             ->when($this->search, function ($query, $value) {
                 $value = trim($value);
 
@@ -103,9 +104,17 @@ class GuardianTable extends Component
 
         $hiddenCount = $data->total() === 0 ? Guardian::query()->count() : 0;
 
+        $parents = Guardian::query()->where('guardians.status', '!=', Guardian::PENDING);
+
         return view('livewire.student.guardian-table', [
             'data' => $data,
             'hiddenCount' => $hiddenCount,
+            'stats' => [
+                'total' => (clone $parents)->count(),
+                'active' => (clone $parents)->where('guardians.status', Guardian::ACTIVE)->count(),
+                'waiting' => (clone $parents)->where('guardians.status', Guardian::ACTIVE)->whereNull('guardians.password')->count(),
+                'disabled' => (clone $parents)->where('guardians.status', '!=', Guardian::ACTIVE)->count(),
+            ],
         ]);
     }
 }

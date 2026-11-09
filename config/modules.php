@@ -337,6 +337,7 @@ return [
                 'student card',
                 'student topup',
                 'student guardian',
+                'student registration',
                 'student settings',
                 'student menu',
                 // Reports are declared one by one (dot notation), like every other

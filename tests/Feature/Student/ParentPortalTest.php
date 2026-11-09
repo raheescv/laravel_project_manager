@@ -3,10 +3,12 @@
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\Guardian\SendInviteAction;
 use App\Actions\Student\PostTopupJournalAction;
+use App\Models\Configuration;
 use App\Models\Guardian;
 use App\Models\StudentDetail;
 use App\Models\Tenant;
 use App\Services\TenantService;
+use App\Support\Student\StudentSettings;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\Support\PosWorld;
@@ -47,6 +49,23 @@ it('serves the school branding before sign-in', function (): void {
         ->assertOk()
         ->assertJsonPath('success', true)
         ->assertJsonStructure(['data' => ['name', 'logo', 'accent', 'currency' => ['code', 'decimals']]]);
+});
+
+it('says registration is closed until the school lists a school', function (): void {
+    portalJson($this, 'GET', 'school')
+        ->assertOk()
+        ->assertJsonPath('data.registration_open', false);
+});
+
+it('says registration is open once the school lists a school', function (): void {
+    Configuration::updateOrCreate(
+        ['tenant_id' => $this->world->tenant->id, 'key' => StudentSettings::KEY],
+        ['value' => json_encode(['registration_schools' => ['AIA - Doha']])],
+    );
+
+    portalJson($this, 'GET', 'school')
+        ->assertOk()
+        ->assertJsonPath('data.registration_open', true);
 });
 
 it('signs a parent in with mobile and password and issues a portal token', function (): void {

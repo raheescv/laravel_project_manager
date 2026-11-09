@@ -48,7 +48,7 @@ class LoginAction
         $login = trim($login);
 
         return str_contains($login, '@')
-            ? Guardian::where('email', $login)->first()
+            ? Guardian::where('email', $login)->where('status', '!=', Guardian::PENDING)->first()
             : Guardian::where('mobile', SyncAction::normalizeMobile($login))->first();
     }
 }

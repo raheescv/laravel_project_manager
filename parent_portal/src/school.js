@@ -25,6 +25,7 @@ export const school = reactive({
   logo: null,
   currency: { code: 'QAR', decimals: 2 },
   contact: { mobile: null, email: null },
+  registrationOpen: false,
   loaded: false,
   error: null,
 })
@@ -35,6 +36,7 @@ function apply(data) {
     logo: data.logo || null,
     currency: { code: data.currency?.code || 'QAR', decimals: Number.isInteger(data.currency?.decimals) ? data.currency.decimals : 2 },
     contact: { mobile: data.contact?.mobile || null, email: data.contact?.email || null },
+    registrationOpen: Boolean(data.registration_open),
   })
   if (school.name) document.title = `${school.name} · Parent Portal`
   if (school.logo) document.querySelector('link[rel="icon"]')?.setAttribute('href', school.logo)

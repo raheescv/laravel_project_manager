@@ -28,6 +28,10 @@ Route::prefix('v1/parent')
     ->group(function (): void {
         Route::get('school', 'school')->name('school');
 
+        // Public: a new parent registers their children. Each one waits for staff.
+        Route::get('registration', 'registrationForm')->middleware('throttle:60,1')->name('registration.form');
+        Route::post('registration', 'register')->middleware('throttle:10,1')->name('registration.store');
+
         Route::post('login', 'login')->middleware('throttle:20,1')->name('login');
         Route::post('forgot-password', 'forgotPassword')->middleware('throttle:10,1')->name('password.forgot');
         Route::get('set-password/{token}', 'passwordLink')->middleware('throttle:30,1')->name('password.link');

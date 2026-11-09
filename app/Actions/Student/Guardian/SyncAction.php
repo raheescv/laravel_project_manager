@@ -19,7 +19,7 @@ use Illuminate\Validation\Rule;
  */
 class SyncAction
 {
-    public function execute(int $accountId, array $guardians, int $userId): array
+    public function execute(int $accountId, array $guardians, ?int $userId): array
     {
         try {
             $account = Account::student()->find($accountId);
@@ -40,12 +40,20 @@ class SyncAction
 
                 $guardian = Guardian::where('mobile', $row['mobile'])->first();
                 if ($guardian) {
-                    $guardian->fill(['name' => $row['name'], 'email' => $row['email'] ?? $guardian->email, 'updated_by' => $userId])->save();
+                    $guardian->fill([
+                        'name' => $row['name'],
+                        'email' => $row['email'] ?? $guardian->email,
+                        'id_no' => $row['id_no'] ?? $guardian->id_no,
+                        // Staff entering this parent vouches for them; the public form (no user) does not.
+                        'status' => $userId && $guardian->isPendingApproval() ? Guardian::ACTIVE : $guardian->status,
+                        'updated_by' => $userId,
+                    ])->save();
                 } else {
                     $guardian = Guardian::create([
                         'name' => $row['name'],
                         'mobile' => $row['mobile'],
                         'email' => $row['email'],
+                        'id_no' => $row['id_no'] ?? null,
                         'status' => 'active',
                         'created_by' => $userId,
                         'updated_by' => $userId,
@@ -86,6 +94,7 @@ class SyncAction
             'name' => ['required', 'max:100'],
             'mobile' => ['required', 'max:20'],
             'email' => ['nullable', 'email', 'max:150'],
+            'id_no' => ['nullable', 'max:30'],
             'relation' => ['required', Rule::in(array_keys(Guardian::RELATIONS))],
         ];
     }

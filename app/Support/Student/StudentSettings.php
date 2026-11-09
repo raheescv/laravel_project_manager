@@ -24,6 +24,10 @@ final class StudentSettings
     /** How far ahead a parent can pre-order a day. */
     public const PRE_ORDER_DAYS_AHEAD = 30;
 
+    public const DEFAULT_REGISTRATION_CLASSES = ['KG1', 'KG2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+
+    public const DEFAULT_REGISTRATION_DIVISIONS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
     public function __construct(
         /** How far below zero a card may go on a purchase (school-wide). */
         public readonly float $overdraftLimit,
@@ -43,6 +47,10 @@ final class StudentSettings
         public readonly string $preOrderCutoff = self::DEFAULT_PRE_ORDER_CUTOFF,
         /** ISO weekdays the canteen serves. */
         public readonly array $schoolDays = self::DEFAULT_SCHOOL_DAYS,
+        /** Schools on the public registration page. None = the page is closed. */
+        public readonly array $registrationSchools = [],
+        public readonly array $registrationClasses = self::DEFAULT_REGISTRATION_CLASSES,
+        public readonly array $registrationDivisions = self::DEFAULT_REGISTRATION_DIVISIONS,
     ) {}
 
     public static function current(): self
@@ -68,12 +76,31 @@ final class StudentSettings
             preOrderCategoryIds: array_values(array_unique(array_filter(array_map('intval', (array) ($config['pre_order_category_ids'] ?? []))))),
             preOrderCutoff: preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $cutoff) ? $cutoff : self::DEFAULT_PRE_ORDER_CUTOFF,
             schoolDays: $days ?: self::DEFAULT_SCHOOL_DAYS,
+            registrationSchools: self::listFrom($config['registration_schools'] ?? []),
+            registrationClasses: self::listFrom($config['registration_classes'] ?? []) ?: self::DEFAULT_REGISTRATION_CLASSES,
+            registrationDivisions: self::listFrom($config['registration_divisions'] ?? []) ?: self::DEFAULT_REGISTRATION_DIVISIONS,
         );
+    }
+
+    /**
+     * A saved list, or the one-per-line text from the settings box.
+     *
+     * @param  array<int, string>|string  $value
+     * @return array<int, string>
+     */
+    private static function listFrom(array|string $value): array
+    {
+        $items = is_array($value) ? $value : preg_split('/\R/', $value);
+
+        return array_values(array_unique(array_filter(array_map(fn ($item) => trim((string) $item), $items), fn (string $item) => $item !== '')));
     }
 
     public function toArray(): array
     {
         return [
+            'registration_schools' => $this->registrationSchools,
+            'registration_classes' => $this->registrationClasses,
+            'registration_divisions' => $this->registrationDivisions,
             'overdraft_limit' => $this->overdraftLimit,
             'topup_min' => $this->topupMin,
             'topup_max' => $this->topupMax,

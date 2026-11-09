@@ -31,6 +31,12 @@ class StudentDetail extends Model implements AuditableContracts
         'female' => 'Female',
     ];
 
+    /**
+     * Sent from the public registration page and not yet approved. Kept out of
+     * STATUSES because staff cannot choose it on a form.
+     */
+    public const PENDING = 'pending';
+
     public const CARD_ACTIVE = 'active';
 
     public const CARD_BLOCKED = 'blocked';
@@ -39,6 +45,7 @@ class StudentDetail extends Model implements AuditableContracts
         'tenant_id',
         'account_id',
         'admission_no',
+        'school',
         'gender',
         'grade',
         'section',
@@ -64,10 +71,11 @@ class StudentDetail extends Model implements AuditableContracts
         return array_merge([
             'account_id' => ['required'],
             'admission_no' => ['required', 'max:30', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
+            'school' => ['nullable', 'max:100'],
             'gender' => ['nullable', Rule::in(array_keys(self::GENDERS))],
             'grade' => ['nullable', 'max:30'],
             'section' => ['nullable', 'max:30'],
-            'status' => ['required', Rule::in(array_keys(self::STATUSES))],
+            'status' => ['required', Rule::in([...array_keys(self::STATUSES), self::PENDING])],
             'card_uid' => ['nullable', 'max:40', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
         ], $merge);
     }

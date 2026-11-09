@@ -5,8 +5,14 @@ import client from './client'
  * Every function resolves to the envelope's `data`.
  */
 
-/** { name, logo, accent, currency: { code, decimals }, contact: { mobile, email } } */
+/** { name, logo, accent, currency: { code, decimals }, contact: { mobile, email }, registration_open } */
 export const fetchSchool = () => client.get('/school')
+
+/** { schools: [{ value, group, place, initial }], classes: [], divisions: [] } */
+export const fetchRegistrationForm = () => client.get('/registration')
+
+/** { school, parent: { name, qid, phone, email }, students: [{ name, qid, class, div, reg }], contact_ref } */
+export const submitRegistration = (payload) => client.post('/registration', payload)
 
 /** { token, token_type, expires_at, parent } */
 export const login = (payload) => client.post('/login', payload)

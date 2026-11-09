@@ -50,6 +50,9 @@
                             @if ($detail?->classLabel())
                                 <span class="chip"><i class="fa fa-graduation-cap"></i>{{ $detail->classLabel() }}</span>
                             @endif
+                            @if ($detail?->school)
+                                <span class="chip"><i class="fa fa-map-marker"></i>{{ $detail->school }}</span>
+                            @endif
                             @if ($detail?->gender)
                                 <span class="chip"><i class="fa {{ $detail->gender === 'male' ? 'fa-mars' : 'fa-venus' }}"></i>{{ StudentDetail::GENDERS[$detail->gender] ?? $detail->gender }}</span>
                             @endif

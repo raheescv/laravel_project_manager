@@ -167,6 +167,7 @@ return [
     'student card' => ['assign', 'block', 'unblock'],
     'student topup' => ['view', 'create', 'refund', 'release'],
     'student guardian' => ['view', 'invite'],
+    'student registration' => ['view', 'approve'],
     'student settings' => ['edit'],
     'student menu' => ['view', 'edit'],
 

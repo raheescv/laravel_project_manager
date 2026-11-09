@@ -26,6 +26,11 @@ class Guardian extends Authenticatable implements AuditableContracts
     use HasApiTokens;
     use SoftDeletes;
 
+    public const ACTIVE = 'active';
+
+    /** Came from the public registration page; cannot sign in until staff approve. */
+    public const PENDING = 'pending';
+
     public const RELATIONS = [
         'father' => 'Father',
         'mother' => 'Mother',
@@ -37,6 +42,7 @@ class Guardian extends Authenticatable implements AuditableContracts
         'name',
         'mobile',
         'email',
+        'id_no',
         'password',
         'status',
         'invite_token_hash',
@@ -70,20 +76,42 @@ class Guardian extends Authenticatable implements AuditableContracts
             'name' => ['required', 'max:100'],
             'mobile' => ['required', 'max:20', Rule::unique(self::class)->where('tenant_id', $tenantId)->whereNull('deleted_at')->ignore($id)],
             'email' => ['nullable', 'email', 'max:150'],
-            'status' => ['required', Rule::in(['active', 'disabled'])],
+            'status' => ['required', Rule::in([self::ACTIVE, 'disabled', self::PENDING])],
         ], $merge);
     }
 
     /**
-     * The student accounts this parent may see.
+     * The student accounts this parent may see: never one still waiting for
+     * approval, since anyone can type this parent's number on the public form.
      *
      * @return BelongsToMany<Account, $this>
      */
     public function students(): BelongsToMany
     {
+        return $this->linkedAccounts()->whereDoesntHave('studentDetail', fn ($detail) => $detail->where('status', StudentDetail::PENDING));
+    }
+
+    /**
+     * Children from the public registration form waiting for the school office.
+     *
+     * @return BelongsToMany<Account, $this>
+     */
+    public function pendingStudents(): BelongsToMany
+    {
+        return $this->linkedAccounts()->whereHas('studentDetail', fn ($detail) => $detail->where('status', StudentDetail::PENDING));
+    }
+
+    /** @return BelongsToMany<Account, $this> */
+    private function linkedAccounts(): BelongsToMany
+    {
         return $this->belongsToMany(Account::class, 'guardian_student', 'guardian_id', 'account_id')
             ->withPivot(['relation', 'is_primary'])
             ->withTimestamps();
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === self::PENDING;
     }
 
     public function isActive(): bool

@@ -15,6 +15,7 @@ computer it becomes a web page (see [On a computer](#on-a-computer)).
 | ------------------------ | ------------------------------------------------------------- |
 | `#/login`                | Sign in with mobile number (or email) + password              |
 | `#/forgot-password`      | Ask for a new set-password link (mobile number or email)      |
+| `#/register`             | Public form: a new parent registers their children for the office to approve |
 | `#/set-password/:token`  | The link from the invite / reset email — choose a password    |
 | `#/`                     | My children — balance and card status for each child          |
 | `#/students/:id`         | One child — balance, top up, block a lost card, bills, statement |
@@ -141,6 +142,8 @@ client unwraps it).
 | Endpoint                                 | Used for                                  |
 | ---------------------------------------- | ----------------------------------------- |
 | `GET  /school`                           | Name, logo, currency (the palette is the portal's own) |
+| `GET  /registration`                     | Schools, classes and divisions for the public form |
+| `POST /registration`                     | Save the children as pending students for the office to approve |
 | `POST /login`                            | Sign in → token                           |
 | `POST /forgot-password`                  | Send a new set-password link (`login` = mobile or email) |
 | `GET  /set-password/{token}`             | Is the link still valid?                  |

@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parent form · three directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#20231c;font:14px/1.45 Manrope,system-ui,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.host{height:100%;display:flex;flex-direction:column}
+.host-bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 16px;background:#14160f;color:#eee}
+.seg{display:inline-flex;padding:3px;border-radius:9px;background:#2a2e24}
+.seg button{border:0;background:none;color:#b5b9aa;padding:5px 12px;border-radius:7px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.seg button.on{background:#fff;color:#14160f}
+.host-wrap{flex:1;min-height:0;display:flex;justify-content:center}
+.stage{width:100%;height:100%;overflow:hidden;container-type:inline-size}
+.stage.phone{width:390px;max-width:100%}
+.stage.tablet{width:768px;max-width:100%}
+
+/* the portal's Canteen tokens */
+.reg{
+  --accent:#B94421;--accent-deep:#7c2b14;--on:#fff;
+  --amber:#FFE2AE;--amber-2:#FFF0DB;--amber-ink:#8A5700;
+  --bg:#FFFCF5;--surface:#fff;--surface-2:#FFF6E8;--fill:rgba(46,57,45,.06);
+  --ink:#2E392D;--ink-2:#666C60;--line:#E9E4D7;--field:#d6d1c2;
+  --pos:#167A55;--avatar:#F5D987;--avatar-ink:#574721;
+  --accent-ink:#a53c1c;--accent-soft:#fbeee8;--ring:rgba(185,68,33,.22);
+  height:100%;overflow:auto;background:var(--bg);color:var(--ink);font-size:15px;
+}
+.reg[data-theme="dark"]{
+  --bg:#14160F;--surface:#1E211A;--surface-2:#2A2E24;--fill:rgba(244,241,230,.08);
+  --ink:#F4F1E6;--ink-2:#A8AC9E;--line:rgba(244,241,230,.14);--field:rgba(244,241,230,.26);
+  --amber:#4a3f22;--amber-2:#33301F;--amber-ink:#F0D9A8;--pos:#5FB489;
+  --accent-ink:#ee9c82;--accent-soft:#3a2219;--ring:rgba(238,120,90,.3);
+}
+.logo{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:14px;background:#fff;color:#666;font:800 12px Manrope;box-shadow:0 8px 18px -10px rgba(60,40,10,.6)}
+.logo em{font-style:normal;color:#b5722d}
+.brand{display:flex;align-items:center;gap:12px;position:relative}
+.brand b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.brand small{display:block;font-size:12.5px;opacity:.75}
+.copy{position:relative}
+.copy h2{margin:0;font-weight:800;letter-spacing:-.025em;line-height:1.08}
+.copy p{margin:8px 0 0}
+.steps{position:relative;list-style:none;margin:0;padding:0;display:flex}
+.steps li{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.steps i{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;font-style:normal;font-size:13px;font-weight:800}
+.plate{position:absolute;pointer-events:none;color:currentColor;opacity:.13}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.022em;line-height:1.15}
+.sub{margin:6px 0 18px;color:var(--ink-2);font-size:14.5px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-bottom:6px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:150px;padding:18px;border:0;border-radius:18px;background:var(--surface);box-shadow:0 0 0 1px var(--field);color:var(--ink);text-align:left}
+.tile:hover{box-shadow:0 0 0 2px var(--accent)}
+.tile.on{background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent)}
+.mono{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--amber-2);color:var(--amber-ink);font-size:21px;font-weight:800}
+.tile small{display:block;font:500 11px/1 "DM Mono",monospace;letter-spacing:.14em;color:var(--ink-2);margin-bottom:5px}
+.tile b{font-size:20px;font-weight:800}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 14px}
+.span{grid-column:1/-1}
+.f label,.lbl{display:block;margin-bottom:6px;font-size:13.5px;font-weight:700}
+.ctl{display:flex;align-items:center;height:50px;border-radius:13px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--field);transition:box-shadow .14s}
+.ctl:focus-within{box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 4px var(--ring)}
+.ctl input{flex:1;min-width:0;height:100%;border:0;background:none;outline:0;padding:0 14px;color:var(--ink);font-size:16px;font-weight:600}
+.ctl input::placeholder{color:var(--ink-2);opacity:.6;font-weight:500}
+.ctl .pre{padding:0 12px 0 14px;font:500 15px "DM Mono",monospace;color:var(--ink-2);border-right:1px solid var(--line)}
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.sum button{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-height:40px;padding:0 14px;border:0;border-radius:999px;background:var(--surface-2);color:var(--ink);font-size:13.5px;font-weight:700}
+.sum .fa{color:var(--ink-2)}
+.sum u{text-decoration:none;color:var(--accent-ink);font-size:12.5px;font-weight:800}
+.kid{display:grid;gap:16px}
+.pass{position:relative;display:flex;align-items:center;gap:13px}
+.pass-av{flex:none;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:var(--avatar);color:var(--avatar-ink);font-size:17px;font-weight:800}
+.pass-name{font-size:17px;font-weight:800;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pass-info{flex:1;min-width:0}
+.pass-meta{display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:3px;font:500 12px/1.3 "DM Mono",monospace;color:var(--ink-2)}
+.pass-top,.pass-bar,.pass-tiles{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.grp{display:contents}
+.grp small{display:none}
+.chip{min-width:46px;height:44px;padding:0 10px;border:0;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--field);color:var(--ink);font-size:14px;font-weight:700}
+.chip:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.chip.on{background:var(--accent);color:var(--on);box-shadow:0 8px 14px -8px var(--accent)}
+.add{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;margin-top:16px;border:1.5px dashed var(--field);border-radius:14px;background:none;color:var(--accent-ink);font-size:14.5px;font-weight:800}
+.act{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 22px;border:0;border-radius:14px;font-size:15.5px;font-weight:800}
+.btn-go{flex:0 1 240px;background:var(--accent);color:var(--on);box-shadow:0 14px 22px -14px var(--accent)}
+.btn-back{background:var(--fill);color:var(--ink)}
+.foot{margin:16px 0 0;text-align:center;font-size:13.5px;color:var(--ink-2)}
+.foot a{color:var(--accent-ink);font-weight:800;text-decoration:none}
+
+/* ---- A · Welcome Mat: warm hero on top, numbered path, soft name tag ---- */
+.reg[data-dir="a"]{background:radial-gradient(70% 50% at 10% 0,var(--amber-2),transparent 70%),var(--bg)}
+.reg[data-dir="a"] .shell{max-width:720px;margin:0 auto;padding:26px 16px 30px;overflow-x:clip}
+.reg[data-dir="a"] .side{position:relative;overflow:hidden;padding:24px 28px 58px;border-radius:26px 26px 0 0;background:linear-gradient(150deg,var(--amber) 0%,var(--amber-2) 100%);color:var(--ink)}
+.reg[data-dir="a"] .copy{margin-top:18px}
+.reg[data-dir="a"] .copy h2{font-size:32px}
+.reg[data-dir="a"] .copy p{color:var(--ink-2);opacity:.95}
+.reg[data-dir="a"] .plate-1{width:250px;top:-70px;right:-60px}
+.reg[data-dir="a"] .plate-2{display:none}
+.reg[data-dir="a"] .steps{position:absolute;left:28px;right:28px;bottom:-1px;justify-content:space-between;background:none;transform:translateY(50%);padding:8px 14px;border-radius:999px;background:var(--surface);box-shadow:0 12px 26px -16px rgba(60,40,10,.55),0 0 0 1px var(--line);z-index:2;}
+.reg[data-dir="a"] .side{overflow:visible}
+.reg[data-dir="a"] .steps i{background:var(--fill);color:var(--ink-2)}
+.reg[data-dir="a"] .steps li{color:var(--ink-2)}
+.reg[data-dir="a"] .steps .on{color:var(--ink)}
+.reg[data-dir="a"] .steps .on i,.reg[data-dir="a"] .steps .done i{background:var(--accent);color:#fff}
+.reg[data-dir="a"] .card{padding:50px 28px 26px;border-radius:0 0 26px 26px;background:var(--surface);box-shadow:0 36px 70px -46px rgba(60,40,10,.55),0 0 0 1px var(--line)}
+.reg[data-dir="a"] .pass{padding:12px 14px;border-radius:16px;background:var(--surface-2);border:1.5px dashed color-mix(in srgb,var(--amber-ink) 35%,transparent)}
+.reg[data-dir="a"] .grp{display:block;flex:1 1 100%}
+.reg[data-dir="a"] .grp small{display:block;margin-bottom:6px;font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.reg[data-dir="a"] .grp div{display:flex;flex-wrap:wrap;gap:8px}
+.reg[data-dir="a"] .chip{border-radius:999px;min-width:46px}
+.reg[data-dir="a"] .btn{border-radius:999px}
+
+/* ---- B · Warm Split: brick panel beside the form ---- */
+.reg[data-dir="b"] .shell{display:grid;grid-template-columns:minmax(300px,38%) minmax(0,1fr);min-height:100%}
+.reg[data-dir="b"] .side{position:sticky;top:0;align-self:start;height:100cqh;min-height:100%;overflow:hidden;display:flex;flex-direction:column;gap:32px;padding:34px 36px;background:linear-gradient(160deg,var(--accent) 0%,var(--accent-deep) 100%);color:#fff}
+.reg[data-dir="b"] .copy{margin-top:auto}
+.reg[data-dir="b"] .copy h2{font-size:38px}
+.reg[data-dir="b"] .copy p{opacity:.85}
+.reg[data-dir="b"] .plate-1{width:360px;top:-120px;right:-130px;opacity:.16}
+.reg[data-dir="b"] .plate-2{width:300px;bottom:-140px;left:-110px;opacity:.12}
+.reg[data-dir="b"] .steps{flex-direction:column;gap:14px;margin-bottom:auto}
+.reg[data-dir="b"] .steps i{background:rgba(255,255,255,.16);color:#fff}
+.reg[data-dir="b"] .steps li{color:rgba(255,255,255,.72)}
+.reg[data-dir="b"] .steps .on{color:#fff}
+.reg[data-dir="b"] .steps .on i{background:#fff;color:var(--accent)}
+.reg[data-dir="b"] .steps .done i{background:var(--amber);color:#574721}
+.reg[data-dir="b"] .main{padding:42px 40px;display:flex;flex-direction:column;justify-content:center}
+.reg[data-dir="b"] .card,.reg[data-dir="b"] .foot{width:100%;max-width:600px;margin-inline:auto}
+.reg[data-dir="b"] .foot{margin-top:16px}
+.reg[data-dir="b"] .pass{padding:12px 14px;border-radius:16px;background:var(--amber-2);color:var(--ink)}
+.reg[data-dir="b"] .chip{background:var(--surface-2);box-shadow:none}
+.reg[data-dir="b"] .chip.on{background:var(--accent)}
+
+/* ---- C · Student Pass: a real ID card fills in beside the form ---- */
+.reg[data-dir="c"]{background:repeating-linear-gradient(135deg,transparent 0 22px,color-mix(in srgb,var(--amber) 16%,transparent) 22px 23px),var(--bg)}
+.reg[data-dir="c"] .shell{max-width:980px;margin:0 auto;padding:22px 18px 30px}
+.reg[data-dir="c"] .side{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.reg[data-dir="c"] .copy,.reg[data-dir="c"] .plate{display:none}
+.reg[data-dir="c"] .steps{gap:6px;padding:5px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.reg[data-dir="c"] .steps li{padding:5px 14px 5px 5px;border-radius:999px;color:var(--ink-2)}
+.reg[data-dir="c"] .steps i{width:26px;height:26px;background:var(--fill)}
+.reg[data-dir="c"] .steps .on{background:var(--accent);color:#fff}
+.reg[data-dir="c"] .steps .on i{background:rgba(255,255,255,.22);color:#fff}
+.reg[data-dir="c"] .steps .done i{background:var(--pos);color:#fff}
+.reg[data-dir="c"] .card{padding:26px 28px;border-radius:24px;background:var(--surface);box-shadow:0 36px 70px -46px rgba(60,40,10,.55),0 0 0 1px var(--line)}
+.reg[data-dir="c"] .kid{grid-template-columns:minmax(0,1fr) 270px;gap:26px;align-items:start}
+.reg[data-dir="c"] .pass{order:2;position:sticky;top:16px;flex-direction:column;gap:10px;padding:0 0 16px;border-radius:20px;overflow:hidden;text-align:center;background:linear-gradient(180deg,var(--surface-2),var(--surface));box-shadow:0 26px 40px -26px rgba(60,40,10,.75),0 0 0 1px var(--line)}
+.reg[data-dir="c"] .pass::before{content:"";position:absolute;z-index:2;top:9px;left:50%;width:46px;height:9px;margin-left:-23px;border-radius:9px;background:var(--bg);box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+.reg[data-dir="c"] .pass-top{display:block;width:100%;padding:28px 12px 34px;background:linear-gradient(140deg,var(--accent),var(--accent-deep));color:#fff;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+.reg[data-dir="c"] .pass-av{width:84px;height:84px;margin-top:-52px;font-size:28px;box-shadow:0 0 0 4px var(--surface)}
+.reg[data-dir="c"] .pass-info{flex:none;width:100%;padding:0 14px}
+.reg[data-dir="c"] .pass-name{white-space:normal;font-size:19px}
+.reg[data-dir="c"] .pass-meta{display:none}
+.reg[data-dir="c"] .pass-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;padding:0 14px}
+.reg[data-dir="c"] .pass-tiles div{padding:8px 6px;border-radius:11px;background:var(--fill)}
+.reg[data-dir="c"] .pass-tiles small{display:block;font-size:10.5px;color:var(--ink-2)}
+.reg[data-dir="c"] .pass-tiles b{font-size:16px;font-weight:800}
+.reg[data-dir="c"] .pass-bar{display:block;width:calc(100% - 28px);height:34px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 5px,var(--ink) 5px 6px,transparent 6px 10px,var(--ink) 10px 13px,transparent 13px 16px)}
+.reg[data-dir="c"] .chip{border-radius:10px}
+.reg[data-dir="c"] .card:has(.tiles),.reg[data-dir="c"] .card:has(.fields--p){max-width:680px;margin-inline:auto}
+
+/* tablet and phone */
+@container (max-width:860px){
+  .reg[data-dir="b"] .shell{grid-template-columns:minmax(0,1fr)}
+  .reg[data-dir="b"] .side{position:relative;height:auto;gap:16px;padding:20px 20px 40px}
+  .reg[data-dir="b"] .copy{margin-top:0}
+  .reg[data-dir="b"] .copy h2{font-size:26px}
+  .reg[data-dir="b"] .copy p{display:none}
+  .reg[data-dir="b"] .steps{flex-direction:row;justify-content:space-between;margin:0}
+  .reg[data-dir="b"] .main{padding:0;justify-content:flex-start}
+  .reg[data-dir="b"] .card{position:relative;margin-top:-22px;max-width:none;padding:24px 20px;border-radius:24px 24px 0 0;background:var(--bg)}
+  .reg[data-dir="b"] .foot{padding-bottom:20px}
+}
+@container (max-width:640px){
+  .reg[data-dir="a"] .shell{padding:10px 10px 22px}
+  .reg[data-dir="a"] .side{padding:18px 18px 52px;border-radius:22px 22px 0 0}
+  .reg[data-dir="a"] .copy h2{font-size:25px}
+  .reg[data-dir="a"] .copy p{font-size:13.5px}
+  .reg[data-dir="a"] .steps{left:14px;right:14px;padding:6px 10px}
+  .reg[data-dir="a"] .card{padding:44px 16px 20px;border-radius:0 0 22px 22px}
+  .reg[data-dir="c"] .shell{padding:12px 10px 22px}
+  .reg[data-dir="c"] .side{flex-direction:column;align-items:stretch;gap:10px}
+  .reg[data-dir="c"] .steps{justify-content:space-between}
+  .reg[data-dir="c"] .steps li{padding:4px 10px 4px 4px;font-size:12px}
+  .reg[data-dir="c"] .card{padding:18px 15px}
+  .reg[data-dir="c"] .kid{grid-template-columns:minmax(0,1fr)}
+  .reg[data-dir="c"] .pass{order:0;position:relative;top:0;flex-direction:row;flex-wrap:wrap;text-align:left;gap:10px;padding:0 0 12px}
+  .reg[data-dir="c"] .pass::before{display:none}
+  .reg[data-dir="c"] .pass-top{padding:9px 14px;text-align:left}
+  .reg[data-dir="c"] .pass-av{width:50px;height:50px;margin:0 0 0 14px;font-size:17px;box-shadow:none}
+  .reg[data-dir="c"] .pass-info{flex:1;width:auto;padding:0 14px 0 0}
+  .reg[data-dir="c"] .pass-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .reg[data-dir="c"] .pass-bar{display:none}
+  .steps span{font-size:12px}
+  .steps li{gap:6px}
+  .fields{grid-template-columns:minmax(0,1fr)}
+  .tiles{grid-template-columns:minmax(0,1fr)}
+  .tile{flex-direction:row;align-items:center;min-height:84px}
+  .act{position:sticky;bottom:0;margin-inline:-4px;padding:10px 4px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px)}
+  .btn-go{flex:1}
+  h1{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div class="host">
+  <div class="host-bar">
+    <b>Parent form</b>
+    <div class="seg" id="dirSeg"><button data-v="a" class="on">A · Welcome Mat</button><button data-v="b">B · Warm Split</button><button data-v="c">C · Student Pass</button></div>
+    <div class="seg" id="stepSeg"><button data-v="1">School</button><button data-v="2">Parent</button><button data-v="3" class="on">Students</button></div>
+    <div class="seg" id="sizeSeg"><button data-v="desk" class="on">Computer</button><button data-v="tablet">Tablet</button><button data-v="phone">Phone</button></div>
+    <div class="seg" id="themeSeg"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+  </div>
+  <div class="host-wrap"><div class="stage" id="stage">
+    <div class="reg" id="reg" data-dir="a" data-theme="light">
+      <div class="shell">
+        <aside class="side">
+          <svg class="plate plate-1" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="100" cy="100" r="98" stroke-width="2"/><circle cx="100" cy="100" r="70" stroke-width="2"/><circle cx="100" cy="100" r="64" stroke-width=".8"/></svg>
+          <svg class="plate plate-2" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="100" cy="100" r="98" stroke-width="2"/><circle cx="100" cy="100" r="70" stroke-width="2"/></svg>
+          <div class="brand"><span class="logo">n<em>≡</em>w</span><div><b>NEWREST GULF</b><small>Student registration</small></div></div>
+          <div class="copy"><h2>Let's get your children registered</h2><p>It takes about two minutes. The office checks every form before a child is added.</p></div>
+          <ol class="steps" id="steps"></ol>
+        </aside>
+        <main class="main">
+          <div class="card"><div id="panel"></div>
+            <div class="act" id="act"><button class="btn btn-back" data-back><i class="fa fa-angle-left"></i>Back</button><button class="btn btn-go" data-next><span id="go"></span><i class="fa fa-arrow-right"></i></button></div>
+          </div>
+          <p class="foot">Already registered? <a href="#">Sign in to the parent portal</a></p>
+        </main>
+      </div>
+    </div>
+  </div></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+const CLASSES = ['KG1','KG2','1','2','3','4','5','6','7','8','9','10','11','12'];
+const DIVS = ['A','B','C','D','E','F'];
+const s = { step:3, school:'Lusail', name:'Aisha Rahman', qid:'31563401287', cls:'5', div:'B', reg:'REG-0187' };
+const initials = (n) => { const p = n.trim().split(/\s+/).filter(Boolean); return p.length ? (p[0][0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase() : '?'; };
+const classText = () => /^\d+$/.test(s.cls) ? `Grade ${s.cls}` : (s.cls || '—');
+const field = (label, id, value, extra = '', pre = '', span = false) => `<div class="f ${span ? 'span' : ''}"><label for="${id}">${label}</label><div class="ctl">${pre ? `<span class="pre">${pre}</span>` : ''}<input id="${id}" value="${value}" ${extra}></div></div>`;
+const chip = (group, value) => `<button class="chip ${s[group] === value ? 'on' : ''}" data-chip="${group}" data-value="${value}">${value}</button>`;
+function passHtml() {
+  return `<div class="pass-top">AIA ${s.school}</div><div class="pass-av">${initials(s.name)}</div>
+    <div class="pass-info"><div class="pass-name">${s.name || "Your child's name"}</div><div class="pass-meta"><span>${classText()} · ${s.div}</span><span>Reg ${s.reg}</span></div></div>
+    <div class="pass-tiles"><div><small>Class</small><b>${classText()}</b></div><div><small>Division</small><b>${s.div || '—'}</b></div></div>
+    <div class="pass-bar"></div>`;
+}
+function render() {
+  $('steps').innerHTML = ['School','Parent','Students'].map((label, i) => `<li class="${i + 1 === s.step ? 'on' : i + 1 < s.step ? 'done' : ''}"><i>${i + 1 < s.step ? '<span class="fa fa-check"></span>' : i + 1}</i><span>${label}</span></li>`).join('');
+  $('go').textContent = s.step === 3 ? 'Submit registration' : 'Continue';
+  $('act').style.display = s.step === 1 ? 'none' : '';
+  if (s.step === 1) {
+    $('panel').innerHTML = `<h1>Which school?</h1><p class="sub">Tap your child's school to begin.</p><div class="tiles">${['Doha','Lusail'].map((p) => `<button class="tile ${s.school === p ? 'on' : ''}" data-school="${p}"><span class="mono">${p[0]}</span><span><small>AIA</small><b>${p}</b></span></button>`).join('')}</div>`;
+  } else if (s.step === 2) {
+    $('panel').innerHTML = `<h1>Your details</h1><p class="sub">Your mobile number will be your sign-in for the parent portal.</p><div class="fields fields--p">${field('Full name','p_n','Mohammed Rahman','','',true)}${field('QID number','p_q','28463401234')}${field('Mobile number','p_m','55123344','','+974')}${field('Email','p_e','mohammed@example.com','','',true)}</div>`;
+  } else {
+    const kg = CLASSES.filter((c) => !/^\d+$/.test(c)), grades = CLASSES.filter((c) => /^\d+$/.test(c));
+    $('panel').innerHTML = `<h1>Your children</h1><p class="sub">Add each child who goes to this school.</p>
+      <div class="sum"><button data-go="1"><i class="fa fa-map-marker"></i>${s.school} <u>Change</u></button><button data-go="2"><i class="fa fa-user"></i>Mohammed Rahman <u>Change</u></button></div>
+      <div class="kid"><div class="pass" id="pass">${passHtml()}</div>
+        <div class="fields">
+          ${field('Student name','s_n',s.name,'data-bind="name" placeholder="As on the QID"','',true)}
+          ${field('QID number','s_q',s.qid,'placeholder="11 digits"')}
+          ${field('Registration number','s_r',s.reg,'data-bind="reg" placeholder="From the school"')}
+          <div class="f span"><div class="lbl">Class</div><div class="chips"><div class="grp"><small>Kindergarten</small><div class="chips">${kg.map((c) => chip('cls', c)).join('')}</div></div><div class="grp"><small>Classes</small><div class="chips">${grades.map((c) => chip('cls', c)).join('')}</div></div></div></div>
+          <div class="f span"><div class="lbl">Division</div><div class="chips">${DIVS.map((d) => chip('div', d)).join('')}</div></div>
+        </div></div>
+      <button class="add"><i class="fa fa-plus"></i>Add next student</button>`;
+  }
+}
+function seg(id, fn) { $(id).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); }
+function goStep(n) { s.step = n; $('stepSeg').querySelectorAll('button').forEach((x) => x.classList.toggle('on', +x.dataset.v === n)); render(); $('reg').scrollTop = 0; }
+seg('dirSeg', (v) => { $('reg').dataset.dir = v; });
+seg('stepSeg', (v) => goStep(+v));
+seg('themeSeg', (v) => { $('reg').dataset.theme = v; });
+seg('sizeSeg', (v) => { $('stage').classList.toggle('phone', v === 'phone'); $('stage').classList.toggle('tablet', v === 'tablet'); });
+$('reg').addEventListener('input', (e) => { const k = e.target.dataset.bind; if (k) { s[k] = e.target.value; $('pass').innerHTML = passHtml(); } });
+$('reg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.chip) { s[b.dataset.chip] = b.dataset.value; const scroll = $('reg').scrollTop; render(); $('reg').scrollTop = scroll; }
+  if (b.dataset.school) { s.school = b.dataset.school; goStep(2); }
+  if (b.dataset.go) goStep(+b.dataset.go);
+  if (b.hasAttribute('data-back')) goStep(s.step - 1);
+  if (b.hasAttribute('data-next') && s.step < 3) goStep(s.step + 1);
+});
+render();
+</script>
+</body>
+</html>

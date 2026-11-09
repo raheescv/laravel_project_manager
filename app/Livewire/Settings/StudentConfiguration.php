@@ -34,6 +34,12 @@ class StudentConfiguration extends Component
 
     public $pre_order_category_ids = [];
 
+    public $registration_schools = '';
+
+    public $registration_classes = '';
+
+    public $registration_divisions = '';
+
     public function mount(): void
     {
         $settings = StudentSettings::current();
@@ -45,6 +51,9 @@ class StudentConfiguration extends Component
         $this->school_days = array_map('strval', $settings->schoolDays);
         $this->pre_order_cutoff = $settings->preOrderCutoff;
         $this->pre_order_category_ids = array_map('strval', $settings->preOrderCategoryIds);
+        $this->registration_schools = implode("\n", $settings->registrationSchools);
+        $this->registration_classes = implode("\n", $settings->registrationClasses);
+        $this->registration_divisions = implode("\n", $settings->registrationDivisions);
     }
 
     public function save(): void
@@ -62,7 +71,12 @@ class StudentConfiguration extends Component
             'pre_order_cutoff' => ['required', 'date_format:H:i'],
             'pre_order_category_ids' => ['array', $this->pre_orders_enabled ? 'min:1' : 'min:0'],
             'pre_order_category_ids.*' => ['integer'],
+            'registration_schools' => ['nullable', 'string', 'max:2000'],
+            'registration_classes' => ['required', 'string', 'max:1000'],
+            'registration_divisions' => ['required', 'string', 'max:500'],
         ], [
+            'registration_classes.required' => 'List at least one class.',
+            'registration_divisions.required' => 'List at least one division.',
             'topup_max.gte' => 'The largest top-up must be at least the smallest top-up.',
             'portal_url.url' => 'Enter the full address, starting with https://',
             'school_days.required' => 'Pick the days the canteen is open.',
@@ -83,6 +97,9 @@ class StudentConfiguration extends Component
                 'school_days' => $this->school_days,
                 'pre_order_cutoff' => $this->pre_order_cutoff,
                 'pre_order_category_ids' => $this->pre_order_category_ids,
+                'registration_schools' => (string) $this->registration_schools,
+                'registration_classes' => (string) $this->registration_classes,
+                'registration_divisions' => (string) $this->registration_divisions,
             ]);
             Configuration::updateOrCreate(['key' => StudentSettings::KEY], ['value' => json_encode($settings->toArray())]);
             DB::commit();
@@ -110,6 +127,9 @@ class StudentConfiguration extends Component
             'canteen' => $settings->preOrdersEnabled
                 ? ['text' => 'On · '.count($settings->schoolDays).' days', 'tone' => 'live']
                 : ['text' => 'Off', 'tone' => 'off'],
+            'registration' => $settings->registrationSchools
+                ? ['text' => 'Open · '.count($settings->registrationSchools).' schools', 'tone' => 'live']
+                : ['text' => 'Closed', 'tone' => 'off'],
         ];
     }
 

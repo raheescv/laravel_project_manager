@@ -8,6 +8,7 @@
     $studentCardPanes = [
         ['key' => 'card', 'icon' => 'fa-sliders', 'label' => 'Card & Portal'],
         ['key' => 'canteen', 'icon' => 'fa-cutlery', 'label' => 'Canteen'],
+        ['key' => 'registration', 'icon' => 'fa-pencil-square-o', 'label' => 'Registration'],
         ['key' => 'qpay', 'icon' => 'fa-globe', 'label' => 'Debit · QPay'],
         ['key' => 'mpgs', 'icon' => 'fa-credit-card', 'label' => 'Credit · MPGS'],
     ];

@@ -90,8 +90,11 @@ async function submit() {
           <p v-if="!form.remember" class="pp-group__foot">You'll be signed out when you close this page.</p>
         </div>
 
-        <div class="pp-auth__actions">
+        <div class="pp-auth__actions pp-auth__actions--row">
           <RouterLink class="pp-link" :to="{ name: 'forgot' }">Forgot password?</RouterLink>
+          <span v-if="school.registrationOpen" class="pp-auth__register">
+            New parent? <RouterLink class="pp-link" :to="{ name: 'register' }">Register</RouterLink>
+          </span>
         </div>
       </form>
 

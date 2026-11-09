@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrations · three directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:14px/1.45 Poppins,system-ui,sans-serif;background:#1d2230;color:#e8ebf2}
+button,input,select{font:inherit}
+button{cursor:pointer}
+
+/* harness only */
+.host{height:100%;display:flex;flex-direction:column}
+.host-bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 16px;background:#141824}
+.host-bar b{font-weight:600}
+.seg{display:inline-flex;padding:3px;border-radius:9px;background:#262c3c}
+.seg button{border:0;background:none;color:#aeb6c7;padding:5px 12px;border-radius:7px;font-size:12.5px;font-weight:500;white-space:nowrap}
+.seg button.on{background:#fff;color:#141824}
+.host-note{margin-left:auto;font-size:12px;color:#8d96a9}
+.host-wrap{flex:1;min-height:0;display:flex;justify-content:center}
+.stage{position:relative;width:100%;height:100%;overflow:hidden;container-type:inline-size}
+.stage.phone{width:390px;max-width:100%}
+
+/* the design: colours come from the app's settings theme */
+.rgx{
+  --bs-primary:#25457f;
+  --brand:var(--bs-primary);
+  --brand-soft:color-mix(in srgb,var(--brand) 11%,var(--surface));
+  --brand-line:color-mix(in srgb,var(--brand) 26%,var(--line));
+  --brand-ink:var(--brand);
+  --page:#eceff5;--surface:#fff;--surface-2:#f6f7fb;
+  --ink:#1c2333;--ink-2:#667085;--line:#e4e7ee;
+  --pos:#127a55;--pos-soft:#e3f4ec;--neg:#b42318;--neg-soft:#fdecea;--info:#0b6a8a;--info-soft:#e2f3f9;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 14px 30px -20px rgba(16,24,40,.28);
+  height:100%;background:var(--page);color:var(--ink);font-size:13.5px;
+}
+.rgx[data-theme="dark"]{
+  --bs-primary:#6f93d6;
+  --page:#12151d;--surface:#1b202c;--surface-2:#232937;
+  --ink:#eef0f6;--ink-2:#9aa3b5;--line:#2f3646;
+  --brand-ink:color-mix(in srgb,var(--brand),white 28%);
+  --pos:#55c29a;--pos-soft:#17352b;--neg:#f0877c;--neg-soft:#3a201e;--info:#6cc7e6;--info-soft:#16323d;
+  --shadow:0 18px 34px -22px #000;
+}
+.rgx-scroll{height:100%;overflow:auto;padding:22px 24px 96px}
+.rgx-inner{max-width:1240px;margin:0 auto}
+
+.rgx-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:16px}
+.rgx-head h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.rgx-head p{margin:2px 0 0;color:var(--ink-2)}
+.stats{display:flex;gap:10px}
+.stat b{display:block;font-size:20px;font-weight:600;line-height:1.1}
+.stat span{font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+
+.search{position:relative;display:block;flex:1;min-width:0}
+.search .fa{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-2)}
+.search input{width:100%;height:42px;padding:0 14px 0 38px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--ink);outline:0}
+.search input:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:500;white-space:nowrap}
+.chip i{font-style:normal;font-size:11px;opacity:.75}
+.chip:hover{border-color:var(--brand-line);color:var(--ink)}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.facet-title{display:none}
+
+.av{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-size:13px;font-weight:600}
+.check{appearance:none;display:block;width:18px;height:18px;margin:0;border:1.5px solid color-mix(in srgb,var(--ink-2) 55%,var(--surface));border-radius:5px;background:var(--surface);cursor:pointer}
+.check:checked{background:var(--brand);border-color:var(--brand);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E")}
+.check:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.list{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.headrow,.fam{display:grid;grid-template-columns:48px minmax(230px,1fr) minmax(0,1.45fr) 104px 232px;align-items:center}
+.headrow{padding:10px 0;background:var(--surface-2);color:var(--ink-2);font-size:11.5px;font-weight:600;letter-spacing:.02em;border-bottom:1px solid var(--line)}
+.headrow>*:first-child,.fam-check{justify-self:center}
+.fam{padding:13px 0;border-bottom:1px solid var(--line);transition:background .12s}
+.fam:last-child{border-bottom:0}
+.fam:hover{background:var(--surface-2)}
+.fam.sel{background:var(--brand-soft)}
+.fam-parent{display:flex;align-items:flex-start;gap:11px;min-width:0;padding-right:14px}
+.fam-parent>div{min-width:0}
+.fam-parent b{display:block;font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.fam-parent small{display:block;color:var(--ink-2);font-size:12px;overflow-wrap:anywhere}
+.flag{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:2px 8px;border-radius:7px;background:var(--info-soft);color:var(--info);font-size:11px;font-style:normal;font-weight:500}
+.fam-kids{display:grid;gap:7px;min-width:0;padding-right:14px}
+.kid{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;min-width:0}
+.kid b{font-weight:500}
+.tag{padding:1px 7px;border-radius:6px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-2);font-size:11px;white-space:nowrap}
+.fam.sel .tag,.fam.sel .av{background:var(--surface)}
+.kid-note{flex-basis:100%;color:var(--info);font-size:11.5px}
+.fam-when{color:var(--ink-2);font-size:12px;white-space:nowrap}
+.fam-acts{display:flex;justify-content:flex-end;gap:6px;padding-right:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font-size:12.5px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--brand-line)}
+.btn-go{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-go:hover{background:color-mix(in srgb,var(--brand),black 12%)}
+.btn-view{color:var(--brand-ink)}
+.btn-bad:hover{border-color:var(--neg);color:var(--neg)}
+.empty{padding:56px 16px;text-align:center;color:var(--ink-2)}
+.empty .fa{display:block;margin-bottom:8px;font-size:28px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;color:var(--ink-2);font-size:12px}
+.foot select{height:32px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+
+/* floating bar */
+.float{position:absolute;z-index:20;left:50%;bottom:20px;transform:translate(-50%,0);display:flex;align-items:center;gap:16px;width:max-content;max-width:calc(100% - 24px);padding:9px 10px 9px 20px;border-radius:999px;background:var(--brand);color:#fff;box-shadow:0 18px 38px -14px rgba(10,20,50,.6);animation:rise .24s cubic-bezier(.2,.9,.25,1)}
+@keyframes rise{from{opacity:0;transform:translate(-50%,14px)}}
+.float[hidden]{display:none}
+.float span{white-space:nowrap}
+.float em{font-style:normal;opacity:.75}
+.float-acts{display:flex;align-items:center;gap:4px}
+.float .clear{border:0;background:none;color:#fff;opacity:.85;padding:7px 12px;font-size:12.5px}
+.float .do{height:36px;padding:0 16px;border:0;border-radius:999px;background:#fff;color:#16294e;font-size:12.5px;font-weight:600;white-space:nowrap}
+
+/* modal */
+.back{position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:20px;background:rgba(14,19,32,.5);backdrop-filter:blur(3px);animation:fade .18s}
+@keyframes fade{from{opacity:0}}
+.back[hidden]{display:none}
+.sheet{display:flex;flex-direction:column;width:100%;max-width:640px;max-height:100%;border-radius:18px;background:var(--surface);box-shadow:0 34px 70px -24px rgba(5,10,25,.65);overflow:hidden;animation:pop .22s cubic-bezier(.2,.9,.25,1)}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.985)}}
+.sheet-hero{position:relative;display:flex;align-items:center;gap:14px;padding:20px 52px 20px 22px;background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand),black 28%));color:#fff}
+.sheet-hero .av{width:52px;height:52px;background:rgba(255,255,255,.18);color:#fff;font-size:16px}
+.sheet-hero h2{margin:0;font-size:18px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.sheet-hero p{margin:3px 0 0;font-size:12px;opacity:.85}
+.x{position:absolute;top:14px;right:14px;width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.16);color:#fff}
+.sheet-body{flex:1;min-height:0;overflow:auto;padding:18px 22px;display:grid;gap:18px;align-content:start}
+.sec-t{margin:0 0 8px;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+.grid small{display:block;color:var(--ink-2);font-size:11.5px}
+.grid span{font-weight:500;overflow-wrap:anywhere}
+.dk{padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2)}
+.dk+.dk{margin-top:9px}
+.dk-name{display:flex;align-items:center;gap:10px;margin-bottom:11px;font-weight:600}
+.dk-name .av{width:32px;height:32px;font-size:11.5px}
+.dk .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.note{display:flex;gap:7px;margin-top:11px;padding:8px 10px;border-radius:9px;background:var(--info-soft);color:var(--info);font-size:12px}
+.sheet-foot{flex:none;display:flex;justify-content:flex-end;gap:8px;padding:12px 22px;border-top:1px solid var(--line)}
+
+.toast{position:absolute;z-index:40;top:16px;left:50%;transform:translateX(-50%);max-width:calc(100% - 24px);padding:9px 16px;border-radius:11px;background:var(--pos);color:#fff;font-size:12.5px;font-weight:500;box-shadow:var(--shadow)}
+.toast[hidden]{display:none}
+
+/* ---- A · Soft Ledger ---- */
+.rgx[data-dir="a"] .stat{min-width:104px;padding:9px 14px;border-radius:13px;background:var(--surface);box-shadow:var(--shadow)}
+.rgx[data-dir="a"] .filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;margin-bottom:12px;border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
+.rgx[data-dir="a"] .search{flex:1 1 300px}
+
+/* ---- B · Family Cards ---- */
+.rgx[data-dir="b"] .stats{gap:22px}
+.rgx[data-dir="b"] .stat{text-align:right}
+.rgx[data-dir="b"] .filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.rgx[data-dir="b"] .search{flex:1 1 280px}
+.rgx[data-dir="b"] .search input{height:46px;border-radius:999px;border-color:transparent;box-shadow:var(--shadow)}
+.rgx[data-dir="b"] .chip{border-radius:999px;border-color:transparent;box-shadow:var(--shadow)}
+.rgx[data-dir="b"] .chip.on{box-shadow:none}
+.rgx[data-dir="b"] .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;background:none;box-shadow:none;overflow:visible;border-radius:0}
+.rgx[data-dir="b"] .headrow{display:none}
+.rgx[data-dir="b"] .empty{grid-column:1/-1}
+.rgx[data-dir="b"] .fam{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"check parent when" "kids kids kids" "acts acts acts";gap:12px 12px;align-content:start;padding:16px;border:0;border-radius:18px;background:var(--surface);box-shadow:var(--shadow)}
+.rgx[data-dir="b"] .fam.sel{box-shadow:0 0 0 2px var(--brand),var(--shadow);background:var(--surface)}
+.rgx[data-dir="b"] .fam-check{grid-area:check;align-self:start;margin-top:11px}
+.rgx[data-dir="b"] .fam-parent{grid-area:parent;padding:0}
+.rgx[data-dir="b"] .fam-when{grid-area:when;align-self:start}
+.rgx[data-dir="b"] .fam-kids{grid-area:kids;padding:11px 13px;border-radius:13px;background:var(--surface-2)}
+.rgx[data-dir="b"] .fam-acts{grid-area:acts;padding:0}
+.rgx[data-dir="b"] .fam-acts .btn{flex:1}
+.rgx[data-dir="b"] .float{border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 22px 44px -16px rgba(10,20,50,.5)}
+.rgx[data-dir="b"] .float .clear{color:var(--ink-2)}
+.rgx[data-dir="b"] .float .do{border-radius:11px;background:var(--brand);color:#fff}
+.rgx[data-dir="b"] .back{place-items:stretch end;padding:0}
+.rgx[data-dir="b"] .sheet{max-width:500px;height:100%;max-height:none;border-radius:20px 0 0 20px;animation:slide .26s cubic-bezier(.2,.9,.25,1)}
+@keyframes slide{from{transform:translateX(40px);opacity:0}}
+.rgx[data-dir="b"] .sheet-hero{background:var(--brand-soft);color:var(--ink);padding-top:26px;padding-bottom:22px}
+.rgx[data-dir="b"] .sheet-hero .av{background:var(--brand);color:#fff}
+.rgx[data-dir="b"] .x{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.rgx[data-dir="b"] .dk .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* ---- C · Facet Register ---- */
+.rgx[data-dir="c"] .stats{gap:0}
+.rgx[data-dir="c"] .stat{display:flex;align-items:baseline;gap:6px;padding:0 16px;border-left:1px solid var(--line)}
+.rgx[data-dir="c"] .stat:first-child{border-left:0}
+.rgx[data-dir="c"] .stat b{font-size:17px}
+.rgx[data-dir="c"] .layout{display:grid;grid-template-columns:232px minmax(0,1fr);gap:14px;align-items:start}
+.rgx[data-dir="c"] .filters{display:grid;gap:14px;padding:14px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+.rgx[data-dir="c"] .search input{height:38px;border-radius:9px;background:var(--surface-2)}
+.rgx[data-dir="c"] .facet-title{display:block;margin:0 0 5px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.rgx[data-dir="c"] .chips{display:grid;gap:2px}
+.rgx[data-dir="c"] .chip{justify-content:space-between;height:34px;border:0;border-radius:8px;background:none}
+.rgx[data-dir="c"] .chip:hover{background:var(--surface-2)}
+.rgx[data-dir="c"] .chip.on{background:var(--brand-soft);color:var(--brand-ink);font-weight:600}
+.rgx[data-dir="c"] .list{border-radius:14px}
+.rgx[data-dir="c"] .headrow,.rgx[data-dir="c"] .fam{grid-template-columns:44px minmax(190px,1fr) minmax(0,1.4fr) 88px 196px}
+.rgx[data-dir="c"] .headrow{background:none;text-transform:uppercase;letter-spacing:.05em;font-size:10.5px}
+.rgx[data-dir="c"] .fam{padding:10px 0}
+.rgx[data-dir="c"] .av{display:none}
+.rgx[data-dir="c"] .fam-acts .btn{height:30px;padding:0 9px;font-size:12px}
+.rgx[data-dir="c"] .float{left:24px;right:24px;width:auto;max-width:none;transform:none;justify-content:space-between;border-radius:13px;background:#171c29;animation:none}
+.rgx[data-dir="c"] .float .do{border-radius:9px;background:var(--brand);color:#fff}
+.rgx[data-dir="c"] .sheet{max-width:860px;display:grid;grid-template-columns:270px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+.rgx[data-dir="c"] .sheet-hero{grid-column:1;grid-row:1;flex-direction:column;align-items:flex-start;padding:24px 22px;background:var(--surface-2);color:var(--ink);border-right:1px solid var(--line)}
+.rgx[data-dir="c"] .sheet-hero .av{display:grid;background:var(--brand);color:#fff}
+.rgx[data-dir="c"] .sheet-hero .hero-extra{display:block}
+.rgx[data-dir="c"] .sec-parent{display:none}
+.rgx[data-dir="c"] .x{background:var(--surface-2);color:var(--ink)}
+.rgx[data-dir="c"] .sheet-body{grid-column:2;grid-row:1}
+.rgx[data-dir="c"] .sheet-foot{grid-column:1/-1}
+.hero-extra{display:none;margin-top:14px;width:100%}
+.hero-extra small{display:block;margin-top:9px;color:var(--ink-2);font-size:11.5px}
+.hero-extra span{font-weight:500;overflow-wrap:anywhere}
+
+/* phone */
+@container (max-width:760px){
+  .rgx-scroll{padding:14px 12px 104px}
+  .stats{width:100%}
+  .rgx[data-dir] .stat{flex:1;min-width:0}
+  .rgx[data-dir="b"] .stat{text-align:left}
+  .rgx[data-dir="c"] .stat{padding:0 10px}
+  .rgx[data-dir="c"] .stat:first-child{padding-left:0}
+  .rgx[data-dir="c"] .stat span{white-space:normal}
+  .rgx[data-dir] .filters{gap:9px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-2px;padding:2px}
+  .rgx[data-dir="c"] .layout{grid-template-columns:minmax(0,1fr)}
+  .rgx[data-dir="c"] .chips{display:flex}
+  .rgx[data-dir="c"] .chip{flex:none;background:var(--surface-2)}
+  .rgx[data-dir] .search{flex-basis:100%}
+  .rgx[data-dir] .headrow{display:none}
+  .rgx[data-dir="b"] .list{grid-template-columns:minmax(0,1fr)}
+  .rgx[data-dir] .fam{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"check parent when" "kids kids kids" "acts acts acts";gap:11px 10px;padding:14px}
+  .rgx[data-dir] .fam-check{grid-area:check;align-self:start;margin-top:3px}
+  .rgx[data-dir] .fam-parent{grid-area:parent;padding:0}
+  .rgx[data-dir] .fam-when{grid-area:when;align-self:start;font-size:11px}
+  .rgx[data-dir] .fam-kids{grid-area:kids;padding:0}
+  .rgx[data-dir="b"] .fam-kids{padding:10px 12px}
+  .rgx[data-dir] .fam-acts{grid-area:acts;padding:0}
+  .rgx[data-dir] .fam-acts .btn{flex:1;height:40px}
+  .rgx[data-dir] .float{left:10px;right:10px;bottom:10px;width:auto;max-width:none;transform:none;justify-content:space-between;gap:8px;padding:8px 8px 8px 14px;border-radius:14px;animation:none}
+  .float em{display:block}
+  .rgx[data-dir] .back{padding:0;place-items:end stretch}
+  .rgx[data-dir] .sheet{display:flex;max-width:none;width:100%;height:auto;max-height:92%;border-radius:18px 18px 0 0;animation:pop .22s}
+  .rgx[data-dir="c"] .sheet-hero{flex-direction:row;align-items:center;border-right:0}
+  .rgx[data-dir="c"] .hero-extra{display:none}
+  .rgx[data-dir="c"] .sec-parent{display:block}
+  .sheet-body{padding:15px}
+  .dk .grid,.rgx[data-dir="b"] .dk .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sheet-foot{padding:10px 15px}
+  .sheet-foot .btn{flex:1;height:42px}
+}
+</style>
+</head>
+<body>
+<div class="host">
+  <div class="host-bar">
+    <b>Registrations</b>
+    <div class="seg" id="dirSeg">
+      <button data-v="a" class="on">A · Soft Ledger</button>
+      <button data-v="b">B · Family Cards</button>
+      <button data-v="c">C · Facet Register</button>
+    </div>
+    <div class="seg" id="sizeSeg"><button data-v="desk" class="on">Computer</button><button data-v="phone">Phone</button></div>
+    <div class="seg" id="themeSeg"><button data-v="light" class="on">Light</button><button data-v="dark">Dark</button></div>
+    <span class="host-note">Sample data. Tick rows, search, filter, press View.</span>
+  </div>
+  <div class="host-wrap">
+    <div class="stage" id="stage">
+      <div class="rgx" id="rgx" data-dir="a" data-theme="light">
+        <div class="rgx-scroll">
+          <div class="rgx-inner">
+            <header class="rgx-head">
+              <div><h1>Registrations</h1><p>Forms parents sent from the parent portal. Students are added when you approve.</p></div>
+              <div class="stats">
+                <div class="stat"><b id="sFam"></b><span>Families waiting</span></div>
+                <div class="stat"><b id="sKid"></b><span>Students</span></div>
+                <div class="stat"><b id="sOld"></b><span>Existing parents</span></div>
+              </div>
+            </header>
+            <div class="layout">
+              <aside class="filters">
+                <label class="search"><i class="fa fa-search"></i><input id="q" placeholder="Parent, mobile, QID, email or student…" aria-label="Search"></label>
+                <div><p class="facet-title">School</p><div class="chips" id="schoolChips"></div></div>
+                <div><p class="facet-title">Parent</p><div class="chips" id="typeChips"></div></div>
+              </aside>
+              <div>
+                <div class="list" id="list"></div>
+                <div class="foot"><span id="count"></span><select aria-label="Rows per page"><option>25</option><option>100</option><option>500</option></select></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="float" id="float" hidden role="region" aria-label="Bulk approval">
+          <span><b id="fFam"></b> <em id="fKid"></em></span>
+          <div class="float-acts"><button class="clear" id="fClear">Clear</button><button class="do" id="fDo"><i class="fa fa-check"></i> Approve selected</button></div>
+        </div>
+        <div class="back" id="back" hidden><div class="sheet" role="dialog" aria-modal="true" aria-label="Registration details" id="sheet"></div></div>
+        <div class="toast" id="toast" hidden></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const seed = [
+  { id:1, parent:'Mohammed Abdul Rahman', mobile:'5512 3344', qid:'28463401234', email:'mohammed.rahman@example.com', existing:false, when:'12 min ago', date:'09 Nov 2026, 01:42 PM', kids:[
+    { name:'Aisha Rahman', school:'Doha', cls:'Grade 5', div:'B', reg:'REG-0187', qid:'31563401287' },
+    { name:'Yusuf Rahman', school:'Doha', cls:'KG1', div:'A', reg:'REG-0342', qid:'31763401555' } ] },
+  { id:2, parent:'Fatima Noor', mobile:'6677 8899', qid:'28563407711', email:'fatima.noor@example.com', existing:false, when:'48 min ago', date:'09 Nov 2026, 01:06 PM', kids:[
+    { name:'Omar Noor', school:'Lusail', cls:'Grade 2', div:'D', reg:'REG-0900', qid:'31563409999' } ] },
+  { id:3, parent:'Sara Al Kuwari', mobile:'3344 2211', qid:'28763400012', email:'sara.alkuwari@example.com', existing:true, when:'2 hours ago', date:'09 Nov 2026, 11:50 AM', kids:[
+    { name:'Hamad Al Kuwari', school:'Doha', cls:'Grade 9', div:'A', reg:'REG-1104', qid:'30963400871', note:'Registered online. Parent entered: S. Kuwari, 28763400012, sara.k@example.com' } ] },
+  { id:4, parent:'Anil Thomas', mobile:'7001 2288', qid:'27863404455', email:'anil.thomas@example.com', existing:false, when:'3 hours ago', date:'09 Nov 2026, 10:38 AM', kids:[
+    { name:'Riya Thomas', school:'Lusail', cls:'Grade 7', div:'C', reg:'REG-0611', qid:'31163402210' },
+    { name:'Rohan Thomas', school:'Lusail', cls:'Grade 3', div:'C', reg:'REG-0612', qid:'31563402288' },
+    { name:'Maya Thomas', school:'Lusail', cls:'KG2', div:'B', reg:'REG-0613', qid:'31963402299' } ] },
+  { id:5, parent:'Layla Hassan', mobile:'5566 7788', qid:'28663409120', email:'layla.hassan@example.com', existing:false, when:'Yesterday', date:'08 Nov 2026, 06:12 PM', kids:[
+    { name:'Zain Hassan', school:'Doha', cls:'Grade 11', div:'C', reg:'REG-1450', qid:'30863401777' } ] },
+  { id:6, parent:'Khalid Mansoor', mobile:'3090 1122', qid:'28163405501', email:'khalid.m@example.com', existing:true, when:'Yesterday', date:'08 Nov 2026, 04:27 PM', kids:[
+    { name:'Noor Mansoor', school:'Doha', cls:'Grade 1', div:'F', reg:'REG-0077', qid:'31863400654', note:'Registered online. Parent entered: Khalid M, 28163405501, khalid@example.com' } ] },
+];
+let fams = seed.map((f) => ({ ...f }));
+const $ = (id) => document.getElementById(id);
+const state = { q:'', school:'All', type:'All', sel:new Set() };
+const initials = (name) => { const p = name.trim().split(/\s+/); return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase(); };
+const plural = (n, one, many) => n === 1 ? `1 ${one}` : `${n} ${many}`;
+const schoolOf = (f) => f.kids[0].school;
+
+function visible() {
+  const q = state.q.trim().toLowerCase();
+  return fams.filter((f) => (state.school === 'All' || schoolOf(f) === state.school)
+    && (state.type === 'All' || (state.type === 'Existing') === f.existing)
+    && (!q || [f.parent, f.mobile, f.qid, f.email, ...f.kids.map((k) => k.name)].join(' ').toLowerCase().includes(q)));
+}
+function chips(el, list, current, key) {
+  el.innerHTML = list.map(([value, label, n]) => `<button class="chip ${current === value ? 'on' : ''}" data-key="${key}" data-value="${value}">${label}<i>${n}</i></button>`).join('');
+}
+function render() {
+  const rows = visible();
+  $('sFam').textContent = fams.length;
+  $('sKid').textContent = fams.reduce((s, f) => s + f.kids.length, 0);
+  $('sOld').textContent = fams.filter((f) => f.existing).length;
+  const count = (fn) => fams.filter(fn).length;
+  chips($('schoolChips'), [['All','All schools',fams.length],['Doha','AIA Doha',count((f) => schoolOf(f) === 'Doha')],['Lusail','AIA Lusail',count((f) => schoolOf(f) === 'Lusail')]], state.school, 'school');
+  chips($('typeChips'), [['All','All parents',fams.length],['New','New',count((f) => !f.existing)],['Existing','Existing',count((f) => f.existing)]], state.type, 'type');
+  const allOn = rows.length > 0 && rows.every((f) => state.sel.has(f.id));
+  $('list').innerHTML = `<div class="headrow"><input type="checkbox" class="check" id="all" aria-label="Select all" ${allOn ? 'checked' : ''}><span>Parent</span><span>Students</span><span>Received</span><span style="text-align:right;padding-right:16px">Actions</span></div>`
+    + (rows.length ? rows.map(row).join('') : '<div class="empty"><i class="fa fa-inbox"></i>No registrations match these filters.</div>');
+  $('count').textContent = `Showing ${rows.length} of ${fams.length} families`;
+  const chosen = fams.filter((f) => state.sel.has(f.id));
+  $('float').hidden = chosen.length === 0;
+  $('fFam').textContent = `${plural(chosen.length, 'family', 'families')} selected`;
+  $('fKid').textContent = `· ${plural(chosen.reduce((s, f) => s + f.kids.length, 0), 'student', 'students')}`;
+}
+function row(f) {
+  return `<article class="fam ${state.sel.has(f.id) ? 'sel' : ''}">
+    <div class="fam-check"><input type="checkbox" class="check" data-pick="${f.id}" aria-label="Select ${f.parent}" ${state.sel.has(f.id) ? 'checked' : ''}></div>
+    <div class="fam-parent"><span class="av">${initials(f.parent)}</span><div><b>${f.parent}</b><small>${f.mobile} · QID ${f.qid}</small><small>${f.email}</small>${f.existing ? '<em class="flag"><i class="fa fa-user"></i>Existing parent · check note</em>' : ''}</div></div>
+    <div class="fam-kids">${f.kids.map((k) => `<div class="kid"><b>${k.name}</b><span class="tag">${k.school}</span><span class="tag">${k.cls} · ${k.div}</span><span class="tag">${k.reg}</span>${k.note ? '<span class="kid-note"><i class="fa fa-info-circle"></i> Details differ from our records</span>' : ''}</div>`).join('')}</div>
+    <div class="fam-when">${f.when}</div>
+    <div class="fam-acts"><button class="btn btn-view" data-view="${f.id}"><i class="fa fa-eye"></i>View</button><button class="btn btn-go" data-approve="${f.id}"><i class="fa fa-check"></i>Approve</button><button class="btn btn-bad" data-reject="${f.id}" aria-label="Reject ${f.parent}">Reject</button></div>
+  </article>`;
+}
+function openSheet(id) {
+  const f = fams.find((x) => x.id === id);
+  const field = (label, value) => `<div><small>${label}</small><span>${value}</span></div>`;
+  $('sheet').innerHTML = `
+    <div class="sheet-hero">
+      <span class="av">${initials(f.parent)}</span>
+      <div><h2>${f.parent}</h2><p>${f.existing ? 'Existing parent' : 'New parent'} · Received ${f.date}</p>
+        <div class="hero-extra"><small>Mobile</small><span>${f.mobile}</span><small>QID</small><span>${f.qid}</span><small>Email</small><span>${f.email}</span></div>
+      </div>
+      <button class="x" data-close aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="sheet-body">
+      <section class="sec-parent"><p class="sec-t">Parent</p><div class="grid">${field('Mobile', f.mobile)}${field('QID', f.qid)}<div style="grid-column:1/-1"><small>Email</small><span>${f.email}</span></div></div></section>
+      <section><p class="sec-t">${plural(f.kids.length, 'student', 'students')}</p>
+        ${f.kids.map((k) => `<div class="dk"><div class="dk-name"><span class="av">${initials(k.name)}</span>${k.name}</div><div class="grid">${field('School', 'AIA - ' + k.school)}${field('Class', k.cls)}${field('Division', k.div)}${field('Registration no.', k.reg)}${field('QID', k.qid)}</div>${k.note ? `<div class="note"><i class="fa fa-info-circle"></i><span>${k.note}</span></div>` : ''}</div>`).join('')}
+      </section>
+    </div>
+    <div class="sheet-foot"><button class="btn" data-close>Close</button><button class="btn btn-bad" data-reject="${f.id}">Reject</button><button class="btn btn-go" data-approve="${f.id}"><i class="fa fa-check"></i>Approve</button></div>`;
+  $('back').hidden = false;
+}
+function closeSheet() { $('back').hidden = true; }
+function toast(message) { const t = $('toast'); t.textContent = message; t.hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { t.hidden = true; }, 2400); }
+function remove(ids, message) { fams = fams.filter((f) => !ids.includes(f.id)); ids.forEach((id) => state.sel.delete(id)); closeSheet(); render(); toast(message); }
+function pickSeg(seg, fn) { $(seg).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; $(seg).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); }
+
+pickSeg('dirSeg', (v) => { $('rgx').dataset.dir = v; closeSheet(); });
+pickSeg('themeSeg', (v) => { $('rgx').dataset.theme = v; });
+pickSeg('sizeSeg', (v) => { $('stage').classList.toggle('phone', v === 'phone'); });
+$('q').addEventListener('input', (e) => { state.q = e.target.value; state.sel.clear(); render(); });
+$('fClear').addEventListener('click', () => { state.sel.clear(); render(); });
+$('fDo').addEventListener('click', () => { const ids = [...state.sel]; remove(ids, `${plural(ids.length, 'family', 'families')} approved`); });
+$('rgx').addEventListener('change', (e) => {
+  if (e.target.id === 'all') { visible().forEach((f) => (e.target.checked ? state.sel.add(f.id) : state.sel.delete(f.id))); render(); }
+  if (e.target.dataset.pick) { const id = +e.target.dataset.pick; e.target.checked ? state.sel.add(id) : state.sel.delete(id); render(); }
+});
+$('rgx').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (e.target.id === 'back') { closeSheet(); return; }
+  if (!b) return;
+  if (b.dataset.key) { state[b.dataset.key] = b.dataset.value; state.sel.clear(); render(); }
+  if (b.dataset.view) openSheet(+b.dataset.view);
+  if (b.hasAttribute('data-close')) closeSheet();
+  if (b.dataset.approve) remove([+b.dataset.approve], 'Family approved');
+  if (b.dataset.reject) remove([+b.dataset.reject], 'Registration rejected');
+});
+render();
+</script>
+</body>
+</html>

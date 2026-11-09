@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Student registration preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<style>
+/* ---- Preview harness only: none of this ships ---- */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Manrope",system-ui,sans-serif}
+.host{--h-bg:#E6E2D6;--h-bar:#FFFDF7;--h-ink:#2E392D;--h-mute:#666C60;--h-line:#D8D3C4;--h-on:#2E392D;--h-on-ink:#FFFCF5;
+  height:100%;display:flex;flex-direction:column;background:var(--h-bg);color:var(--h-ink)}
+.host[data-theme="dark"]{--h-bg:#0D0F0A;--h-bar:#1E211A;--h-ink:#F4F1E6;--h-mute:#A8AC9E;--h-line:rgba(244,241,230,.16);--h-on:#F4F1E6;--h-on-ink:#14160F}
+.hbar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 16px;background:var(--h-bar);border-bottom:1px solid var(--h-line)}
+.hbar b{font-size:14px;font-weight:800;margin-inline-end:auto}
+.hseg{display:inline-flex;padding:3px;border-radius:9px;box-shadow:inset 0 0 0 1px var(--h-line)}
+.hseg button,.hbtn{appearance:none;border:0;background:none;color:var(--h-mute);font:700 12.5px/1 "Manrope",sans-serif;padding:8px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.hseg button[aria-pressed="true"]{background:var(--h-on);color:var(--h-on-ink)}
+.hbtn{box-shadow:inset 0 0 0 1px var(--h-line);color:var(--h-ink)}
+.hbtn i,.hseg i{margin-inline-end:5px}
+.stage{flex:1;min-height:0;display:flex;justify-content:center;align-items:center;padding:18px}
+.frame{display:grid;grid-template-rows:minmax(100%,auto);overflow:auto;background:#000;transition:width .3s,height .3s;scrollbar-width:thin}
+.frame[data-view="phone"]{width:390px;height:min(100%,844px);border-radius:30px;box-shadow:0 0 0 9px #1b1c18,0 40px 70px -30px rgba(0,0,0,.6)}
+.frame[data-view="tablet"]{width:768px;max-width:100%;height:100%;border-radius:20px;box-shadow:0 0 0 9px #1b1c18}
+.frame[data-view="computer"]{width:100%;height:100%;border-radius:10px;box-shadow:0 0 0 1px var(--h-line)}
+@media (max-width:620px){
+  .hviews,.hbar b{display:none}
+  .hbar{padding:8px 10px;gap:6px}
+  .stage{padding:0}
+  .frame[data-view]{width:100%;height:100%;border-radius:0;box-shadow:none}
+}
+
+/* ---- The page: scope .srx (tokens are the parent portal's Canteen theme) ---- */
+.srx{
+  --accent:#B94421;--accent-hover:#9E371B;--on-accent:#fff;
+  --amber:#FFE2AE;--amber-ink:#8A5700;
+  --bg:#FFFCF5;--surface:#fff;--surface-2:#FFF0DB;--fill:rgba(46,57,45,.06);
+  --ink:#2E392D;--ink-2:#666C60;--line:#E9E4D7;--field:#CFCABB;
+  --pos:#167A55;--neg:#A33A2B;
+  --pos-soft:color-mix(in oklab,var(--pos) 13%,var(--surface));
+  --neg-soft:color-mix(in oklab,var(--neg) 10%,var(--surface));
+  --accent-ink:color-mix(in oklab,var(--accent),black 8%);
+  --accent-soft:color-mix(in oklab,var(--accent) 10%,var(--surface));
+  --accent-hi:color-mix(in oklab,var(--accent),white 24%);
+  --accent-lo:color-mix(in oklab,var(--accent),black 42%);
+  --ring:color-mix(in oklab,var(--accent) 30%,transparent);
+  --glass:color-mix(in oklab,var(--surface) 82%,transparent);
+  --bar:rgba(255,253,247,.9);
+  --avatar:#F5D987;--avatar-ink:#574721;
+  --font:"Manrope","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.2,.9,.25,1);
+  --pad:18px;
+  container-type:inline-size;display:flex;flex-direction:column;min-width:0;
+  color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;color-scheme:light;-webkit-font-smoothing:antialiased;
+}
+.srx[data-theme="dark"]{
+  --bg:#14160F;--surface:#1E211A;--surface-2:#2A2E24;--fill:rgba(244,241,230,.08);
+  --ink:#F4F1E6;--ink-2:#A8AC9E;--line:rgba(244,241,230,.14);--field:rgba(244,241,230,.28);
+  --pos:#5FB489;--neg:#E8766A;--amber:#E8CE97;--amber-ink:#F0D9A8;
+  --accent-ink:color-mix(in oklab,var(--accent),white 45%);
+  --accent-soft:color-mix(in oklab,var(--accent) 20%,var(--surface));
+  --accent-hi:color-mix(in oklab,var(--accent),white 30%);
+  --ring:color-mix(in oklab,var(--accent) 55%,transparent);
+  --bar:rgba(30,33,26,.92);
+  color-scheme:dark;
+}
+.srx *,.srx *::before,.srx *::after{box-sizing:border-box}
+.srx button,.srx input{font-family:inherit}
+.srx button{cursor:pointer}
+.srx [hidden]{display:none!important}
+.srx[dir="rtl"] .flip{transform:scaleX(-1)}
+
+.srx-page{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;padding:16px 10px 20px;overflow:clip;
+  background:
+    radial-gradient(60cqw 46cqw at 4% -6%,color-mix(in oklab,var(--amber) 80%,transparent),transparent 72%),
+    radial-gradient(70cqw 60cqw at 104% 100%,color-mix(in oklab,var(--accent) 17%,transparent),transparent 70%),
+    radial-gradient(40cqw 32cqw at 98% 2%,color-mix(in oklab,var(--pos) 11%,transparent),transparent 72%),
+    var(--bg)}
+.srx-plate{position:absolute;pointer-events:none;color:var(--ink);opacity:.07}
+.srx-plate--a{width:340px;inset-block-start:-120px;inset-inline-end:-130px}
+.srx-plate--b{width:420px;inset-block-end:-170px;inset-inline-start:-190px}
+
+.srx-head{position:relative;display:flex;align-items:center;gap:11px;width:100%;max-width:600px;padding:2px 8px 14px}
+.srx-mark{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--accent);color:var(--on-accent);font-size:18px;box-shadow:0 10px 18px -10px var(--accent)}
+.srx-head strong{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.srx-head span{display:block;font-size:13px;color:var(--ink-2)}
+
+.srx-card{position:relative;width:100%;max-width:600px;padding:18px var(--pad) 0;border-radius:22px;background:var(--glass);
+  -webkit-backdrop-filter:blur(26px) saturate(1.5);backdrop-filter:blur(26px) saturate(1.5);
+  box-shadow:0 0 0 1px var(--line),0 36px 70px -46px rgba(60,40,10,.55)}
+
+/* progress */
+.srx-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:20px}
+.srx-step{appearance:none;border:0;background:none;padding:0 0 3px;color:var(--ink-2);font-size:12.5px;font-weight:700;text-align:start;min-height:34px}
+.srx-step:disabled{cursor:default}
+.srx-step i{display:block;height:5px;border-radius:9px;background:var(--fill);margin-bottom:7px;overflow:hidden;position:relative}
+.srx-step i::after{content:"";position:absolute;inset:0;background:var(--accent);border-radius:9px;transform:scaleX(0);transform-origin:left;transition:transform .36s var(--ease)}
+.srx[dir="rtl"] .srx-step i::after{transform-origin:right}
+.srx-step.is-on i::after,.srx-step.is-done i::after{transform:scaleX(1)}
+.srx-step.is-on{color:var(--ink);font-weight:800}
+.srx-step.is-done{color:var(--accent-ink)}
+
+/* panels */
+.srx-panel{animation:srx-in .3s var(--ease) both}
+.srx-panel:focus{outline:0}
+@keyframes srx-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.srx h1{margin:0;font-size:25px;line-height:1.15;font-weight:800;letter-spacing:-.022em}
+.srx-sub{margin:6px 0 18px;color:var(--ink-2);font-size:14.5px}
+
+/* school tiles */
+.srx-schools{display:grid;gap:10px;padding-bottom:20px}
+.srx-school{position:relative;display:flex;align-items:center;gap:14px;min-height:88px;padding:14px 16px;border-radius:16px;background:var(--surface);box-shadow:0 0 0 1px var(--field);cursor:pointer;transition:box-shadow .16s,transform .16s var(--ease),background .16s}
+.srx-school input{position:absolute;opacity:0;pointer-events:none}
+.srx-school__mono{flex:none;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--surface-2);color:var(--amber-ink);font-size:22px;font-weight:800}
+.srx-school__tx{flex:1;min-width:0}
+.srx-school__tx small{display:block;font:500 11px/1 var(--mono);letter-spacing:.14em;color:var(--ink-2);margin-bottom:6px}
+.srx-school__tx b{display:block;font-size:20px;font-weight:800;letter-spacing:-.015em;line-height:1.1}
+.srx-school__go{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:var(--ink-2);background:var(--fill);font-size:17px;transition:.16s}
+.srx-school:hover{box-shadow:0 0 0 1.5px var(--accent);transform:translateY(-1px)}
+.srx-school:active{transform:scale(.985)}
+.srx-school:has(input:focus-visible){box-shadow:0 0 0 2px var(--accent),0 0 0 6px var(--ring)}
+.srx-school:has(input:checked){background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent)}
+.srx-school:has(input:checked) .srx-school__mono{background:var(--accent);color:var(--on-accent)}
+.srx-school:has(input:checked) .srx-school__go{background:var(--accent);color:var(--on-accent)}
+
+/* fields */
+.srx-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:15px}
+.srx-f{min-width:0}
+.srx-f label,.srx-lbl{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
+.srx-ctl{position:relative;display:flex;align-items:center;min-height:52px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--field);transition:box-shadow .14s}
+.srx-ctl:focus-within{box-shadow:inset 0 0 0 1.5px var(--accent),0 0 0 4px var(--ring)}
+.srx-ctl input{flex:1;min-width:0;width:100%;height:52px;border:0;background:none;outline:0;padding-inline:14px;color:var(--ink);font-size:16px;font-weight:600;border-radius:11px}
+.srx-ctl input::placeholder{color:var(--ink-2);opacity:.65;font-weight:500}
+.srx-pre{flex:none;align-self:stretch;display:flex;align-items:center;padding-inline:14px 12px;font:500 15px/1 var(--mono);color:var(--ink-2);border-inline-end:1px solid var(--line)}
+.srx-end{flex:none;display:flex;align-items:center;gap:7px;padding-inline-end:13px;font:500 12px/1 var(--mono);color:var(--ink-2)}
+.srx-end .fa{display:none;color:var(--pos);font-size:15px}
+.srx-f.is-ok .srx-end .fa{display:inline-block}
+.srx-f.is-ok .srx-count{display:none}
+.srx-f.is-bad .srx-ctl{box-shadow:inset 0 0 0 1.5px var(--neg);background:var(--neg-soft)}
+.srx-help{margin:5px 0 0;font-size:12.5px;color:var(--ink-2)}
+.srx-err{display:none;align-items:flex-start;gap:6px;margin:6px 0 0;font-size:13px;font-weight:700;color:var(--neg)}
+.srx-err .fa{margin-top:2px}
+.srx-f.is-bad .srx-err{display:flex}
+.srx-f.is-bad .srx-help{display:none}
+
+/* chips */
+.srx-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:7px}
+.srx-chips--six{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+.srx-chip{position:relative;display:block;cursor:pointer}
+.srx-chip input{position:absolute;opacity:0;pointer-events:none}
+.srx-chip span{display:grid;place-items:center;height:46px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--field);font-size:14.5px;font-weight:700;transition:.14s}
+.srx-chip:hover span{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.srx-chip input:checked + span{background:var(--accent);color:var(--on-accent);box-shadow:none}
+.srx-chip input:focus-visible + span{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--accent)}
+.srx-f.is-bad .srx-chip span{box-shadow:inset 0 0 0 1px var(--neg)}
+
+/* summary strip */
+.srx-sum{border-radius:13px;background:var(--fill);margin-bottom:16px}
+.srx-sum button{appearance:none;display:flex;align-items:center;gap:11px;width:100%;min-height:50px;padding:7px 13px;border:0;background:none;color:var(--ink);text-align:start;font-size:14px;font-weight:700}
+.srx-sum button + button{border-top:1px solid var(--line)}
+.srx-sum .fa{flex:none;width:16px;text-align:center;color:var(--ink-2)}
+.srx-sum span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srx-sum em{flex:none;font-style:normal;font-size:13px;font-weight:800;color:var(--accent-ink)}
+
+/* the student card that fills in as they type */
+.srx-pc{position:relative;display:flex;align-items:center;gap:13px;min-height:92px;padding:14px 16px;margin-bottom:16px;border-radius:15px;overflow:hidden;color:#fff;
+  background:linear-gradient(150deg,var(--accent-hi) 0%,var(--accent) 48%,var(--accent-lo) 100%);box-shadow:0 18px 30px -22px var(--accent-lo)}
+.srx-pc::after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;inset-inline-end:-80px;inset-block-start:-130px;background:rgba(255,255,255,.12)}
+.srx-pc__av{position:relative;z-index:1;flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--avatar);color:var(--avatar-ink);font-size:18px;font-weight:800}
+.srx-pc__tx{position:relative;z-index:1;flex:1;min-width:0}
+.srx-pc__name{font-size:18px;font-weight:800;letter-spacing:-.012em;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srx-pc__name.is-empty{opacity:.72;font-weight:600}
+.srx-pc__meta{margin-top:5px;display:flex;flex-wrap:wrap;gap:3px 12px;font:500 12px/1.3 var(--mono);color:rgba(255,255,255,.85)}
+
+/* finished children */
+.srx-kids{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.srx-kid{display:flex;align-items:center;gap:4px;padding:6px;border-radius:13px;background:var(--surface);box-shadow:0 0 0 1px var(--line);animation:srx-in .26s var(--ease) both}
+.srx-kid__open{appearance:none;flex:1;min-width:0;display:flex;align-items:center;gap:11px;min-height:50px;padding:2px 6px;border:0;background:none;color:var(--ink);text-align:start}
+.srx-kid__av{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--avatar);color:var(--avatar-ink);font-size:14px;font-weight:800}
+.srx-kid b{display:block;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srx-kid small{display:block;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srx-kid__tx{min-width:0;flex:1}
+.srx-ico{appearance:none;flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:10px;background:none;color:var(--ink-2);font-size:16px}
+.srx-ico:hover{background:var(--fill);color:var(--ink)}
+.srx-ico--bad:hover{background:var(--neg-soft);color:var(--neg)}
+.srx-kid.is-bad{box-shadow:0 0 0 1.5px var(--neg)}
+.srx-open{padding:14px 0 4px;animation:srx-in .26s var(--ease) both}
+.srx-open__top{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin-bottom:9px}
+.srx-open__top b{font-size:15px;font-weight:800}
+.srx-link{appearance:none;border:0;background:none;padding:6px 2px;color:var(--neg);font-size:13px;font-weight:800}
+.srx-undo{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:48px;padding:4px 14px;border-radius:13px;background:var(--surface-2);font-size:14px;font-weight:600;animation:srx-in .2s var(--ease) both}
+.srx-undo button{appearance:none;border:0;background:none;padding:8px 2px;font-size:14px;font-weight:800;color:var(--accent-ink)}
+.srx-add{appearance:none;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:54px;margin-top:14px;border:1.5px dashed color-mix(in oklab,var(--accent) 55%,var(--line));border-radius:13px;background:none;color:var(--accent-ink);font-size:15px;font-weight:800;transition:.15s}
+.srx-add:hover{background:var(--accent-soft)}
+
+/* action bar: rides above the bottom of a phone screen */
+.srx-act{position:sticky;bottom:0;z-index:5;display:flex;gap:9px;margin:18px calc(var(--pad) * -1) 0;padding:11px var(--pad) calc(11px + env(safe-area-inset-bottom,0px));background:var(--bar);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);border-radius:0 0 22px 22px}
+.srx-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 20px;border:0;border-radius:12px;font-size:16px;font-weight:800;transition:background .14s,transform .12s var(--ease)}
+.srx-btn:active{transform:scale(.98)}
+.srx-btn--go{flex:1;min-width:0;background:var(--accent);color:var(--on-accent);box-shadow:0 12px 20px -14px var(--accent)}
+.srx-btn--go:hover{background:var(--accent-hover)}
+.srx-btn--back{flex:none;background:var(--fill);color:var(--ink)}
+.srx :focus-visible:is(button){outline:2px solid var(--accent);outline-offset:2px}
+
+/* done */
+.srx-done{padding:10px 0 26px;text-align:center;animation:srx-in .4s var(--ease) both}
+.srx-done:focus{outline:0}
+.srx-done__ic{display:grid;place-items:center;width:72px;height:72px;margin:6px auto 16px;border-radius:50%;background:var(--pos-soft);color:var(--pos);font-size:30px;animation:srx-pop .5s .1s var(--ease) both}
+@keyframes srx-pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}
+.srx-done .srx-sub{margin-bottom:20px}
+.srx-slip{text-align:start;border-radius:15px;background:var(--surface);box-shadow:0 0 0 1px var(--line);overflow:hidden}
+.srx-slip__row{display:flex;justify-content:space-between;gap:14px;padding:12px 15px;font-size:14px;border-top:1px solid var(--line)}
+.srx-slip__row:first-child{border-top:0}
+.srx-slip__row span{color:var(--ink-2);flex:none}
+.srx-slip__row b{font-weight:800;text-align:end;min-width:0;overflow-wrap:anywhere}
+.srx-next{margin:16px 0 0;padding:12px 14px;border-radius:12px;background:var(--surface-2);font-size:14px;text-align:start;display:flex;gap:10px}
+.srx-next .fa{margin-top:3px;color:var(--amber-ink)}
+
+.srx-foot{position:relative;margin:14px 0 0;font-size:13.5px;color:var(--ink-2);text-align:center}
+.srx-foot a{color:var(--accent-ink);font-weight:800;text-decoration:none}
+.srx-foot a:hover{text-decoration:underline}
+
+@container (max-width:350px){
+  .srx-school{min-height:78px}
+  .srx h1{font-size:22px}
+  .srx-btn{padding:0 15px}
+  .srx-btn--back span,.srx-btn--go .fa{display:none}
+  .srx-btn--back{width:52px;padding:0;font-size:20px}
+  .srx-foot a{display:block}
+}
+@container (min-width:560px){
+  .srx{--pad:32px}
+  .srx-page{justify-content:center;padding:34px 24px}
+  .srx-head{padding-inline:4px}
+  .srx-card{padding-top:26px}
+  .srx h1{font-size:29px}
+  .srx-schools{grid-template-columns:1fr 1fr;gap:14px}
+  .srx-school{flex-direction:column;align-items:flex-start;min-height:158px;padding:18px}
+  .srx-school__go{position:absolute;inset-block-start:16px;inset-inline-end:16px}
+  .srx-fields--two{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 14px}
+  .srx-span{grid-column:1 / -1}
+  .srx-chips{grid-template-columns:repeat(auto-fill,minmax(54px,1fr))}
+  .srx-act{position:static;justify-content:space-between;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding-top:18px;padding-bottom:26px}
+  .srx-btn--go{flex:0 1 auto;min-width:230px}
+  .srx-done{padding-inline:30px}
+}
+@media (prefers-reduced-motion:reduce){
+  .srx *,.srx *::before,.srx *::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="host" id="host" data-theme="light">
+  <div class="hbar">
+    <b>Student registration sample</b>
+    <div class="hseg hviews" role="group" aria-label="Screen size">
+      <button data-view="phone" aria-pressed="true"><i class="fa fa-mobile"></i>Phone</button>
+      <button data-view="tablet" aria-pressed="false"><i class="fa fa-tablet"></i>Tablet</button>
+      <button data-view="computer" aria-pressed="false"><i class="fa fa-desktop"></i>Computer</button>
+    </div>
+    <div class="hseg" role="group" aria-label="Theme">
+      <button data-theme-set="light" aria-pressed="true">Light</button>
+      <button data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+    <div class="hseg" role="group" aria-label="Text direction">
+      <button data-dir="ltr" aria-pressed="true">LTR</button>
+      <button data-dir="rtl" aria-pressed="false">RTL</button>
+    </div>
+    <button class="hbtn" id="fill"><i class="fa fa-magic"></i>Fill sample</button>
+    <button class="hbtn" id="reset"><i class="fa fa-refresh"></i>Start over</button>
+  </div>
+
+  <div class="stage">
+    <div class="frame" id="frame" data-view="phone">
+      <div class="srx" id="srx" data-theme="light" dir="ltr">
+        <div class="srx-page">
+          <svg class="srx-plate srx-plate--a" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="100" cy="100" r="98" stroke-width="2"/><circle cx="100" cy="100" r="70" stroke-width="2"/><circle cx="100" cy="100" r="64" stroke-width=".8"/></svg>
+          <svg class="srx-plate srx-plate--b" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="100" cy="100" r="98" stroke-width="2"/><circle cx="100" cy="100" r="70" stroke-width="2"/><circle cx="100" cy="100" r="64" stroke-width=".8"/></svg>
+
+          <header class="srx-head">
+            <div class="srx-mark"><i class="fa fa-cutlery"></i></div>
+            <div><strong>New Rest</strong><span>Student registration</span></div>
+          </header>
+
+          <main class="srx-card">
+            <nav class="srx-steps" id="steps" aria-label="Progress">
+              <button type="button" class="srx-step" data-go="1"><i></i>School</button>
+              <button type="button" class="srx-step" data-go="2"><i></i>Parent</button>
+              <button type="button" class="srx-step" data-go="3"><i></i>Students</button>
+            </nav>
+
+            <form id="form" novalidate autocomplete="on">
+              <section class="srx-panel" data-panel="1" tabindex="-1">
+                <h1>Which school?</h1>
+                <p class="srx-sub">Tap your child's school to begin. If your children go to different schools, send one form for each school.</p>
+                <div class="srx-schools">
+                  <label class="srx-school">
+                    <input type="radio" name="school" value="AIA - Doha">
+                    <span class="srx-school__mono">D</span>
+                    <span class="srx-school__tx"><small>AIA</small><b>Doha</b></span>
+                    <span class="srx-school__go"><i class="fa fa-angle-right flip"></i></span>
+                  </label>
+                  <label class="srx-school">
+                    <input type="radio" name="school" value="AIA - Lusail">
+                    <span class="srx-school__mono">L</span>
+                    <span class="srx-school__tx"><small>AIA</small><b>Lusail</b></span>
+                    <span class="srx-school__go"><i class="fa fa-angle-right flip"></i></span>
+                  </label>
+                </div>
+              </section>
+
+              <section class="srx-panel" data-panel="2" tabindex="-1" hidden>
+                <h1>Your details</h1>
+                <p class="srx-sub">Please fill in every box. Your mobile number will be your sign-in for the parent portal.</p>
+                <div class="srx-fields srx-fields--two">
+                  <div class="srx-f srx-span" data-field="parent.name">
+                    <label for="p_name">Full name</label>
+                    <div class="srx-ctl"><input id="p_name" data-path="parent.name" autocomplete="name" enterkeyhint="next" maxlength="100" placeholder="As on your QID"><span class="srx-end"><i class="fa fa-check"></i></span></div>
+                    <p class="srx-err" role="alert"></p>
+                  </div>
+                  <div class="srx-f" data-field="parent.qid">
+                    <label for="p_qid">QID number</label>
+                    <div class="srx-ctl"><input id="p_qid" dir="ltr" data-path="parent.qid" inputmode="numeric" autocomplete="off" enterkeyhint="next" maxlength="11" placeholder="11 digits"><span class="srx-end"><span class="srx-count"></span><i class="fa fa-check"></i></span></div>
+                    <p class="srx-err" role="alert"></p>
+                  </div>
+                  <div class="srx-f" data-field="parent.phone">
+                    <label for="p_phone">Mobile number</label>
+                    <div class="srx-ctl" dir="ltr"><span class="srx-pre">+974</span><input id="p_phone" data-path="parent.phone" type="tel" inputmode="numeric" autocomplete="tel-national" enterkeyhint="next" maxlength="8" placeholder="5512 3456"><span class="srx-end"><i class="fa fa-check"></i></span></div>
+                    <p class="srx-err" role="alert"></p>
+                  </div>
+                  <div class="srx-f srx-span" data-field="parent.email">
+                    <label for="p_email">Email</label>
+                    <div class="srx-ctl"><input id="p_email" dir="ltr" data-path="parent.email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" enterkeyhint="done" maxlength="150" placeholder="name@example.com"><span class="srx-end"><i class="fa fa-check"></i></span></div>
+                    <p class="srx-help">We'll send your portal sign-in link here.</p>
+                    <p class="srx-err" role="alert"></p>
+                  </div>
+                </div>
+              </section>
+
+              <section class="srx-panel" data-panel="3" tabindex="-1" hidden>
+                <h1>Your children</h1>
+                <p class="srx-sub">Add each child who goes to this school.</p>
+                <div class="srx-sum">
+                  <button type="button" data-go="1"><i class="fa fa-map-marker"></i><span id="sumSchool"></span><em>Change</em></button>
+                  <button type="button" data-go="2"><i class="fa fa-user"></i><span id="sumParent"></span><em>Change</em></button>
+                </div>
+                <div class="srx-kids" id="kids"></div>
+                <button type="button" class="srx-add" data-act="add"><i class="fa fa-plus"></i>Add next student</button>
+              </section>
+
+              <section id="done" hidden></section>
+
+              <div class="srx-act" id="act">
+                <button type="button" class="srx-btn srx-btn--back" data-act="back" aria-label="Back"><i class="fa fa-angle-left flip"></i><span>Back</span></button>
+                <button type="button" class="srx-btn srx-btn--go" data-act="next"><span id="goLabel">Continue</span><i class="fa fa-arrow-right flip"></i></button>
+              </div>
+            </form>
+          </main>
+
+          <p class="srx-foot" id="foot">Already registered? <a href="#" onclick="return false">Sign in to the parent portal</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const CLASSES = ['KG1', 'KG2', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  const DIVS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const $ = (selector, scope = document) => scope.querySelector(selector);
+  const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+  const root = $('#srx'), frame = $('#frame'), kidsEl = $('#kids');
+  const blank = () => ({ name: '', qid: '', class: '', div: '', reg: '' });
+  const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let state, touched;
+  function fresh() {
+    state = { step: 1, reached: 1, school: '', parent: { name: '', qid: '', phone: '', email: '' }, students: [blank()], open: 0, removed: null };
+    touched = new Set();
+  }
+
+  const read = (path) => {
+    const [a, b, c] = path.split('.');
+    return a === 'parent' ? state.parent[b] : state.students[+b][c];
+  };
+  const write = (path, value) => {
+    const [a, b, c] = path.split('.');
+    if (a === 'parent') { state.parent[b] = value; } else { state.students[+b][c] = value; }
+  };
+
+  function checkQid(value) {
+    if (!value) return 'Enter the QID number.';
+    return value.length === 11 ? '' : `A QID has 11 digits. This one has ${value.length}.`;
+  }
+  function problem(path) {
+    const value = String(read(path) ?? '').trim();
+    const [a, b, c] = path.split('.');
+    if (a === 'parent') {
+      if (b === 'name') return value.length >= 2 ? '' : 'Enter your full name.';
+      if (b === 'qid') return checkQid(value);
+      if (b === 'phone') return /^\d{8}$/.test(value) ? '' : 'Enter your 8-digit mobile number.';
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'Enter a full email, like name@example.com.';
+    }
+    const index = +b;
+    const twin = (field) => state.students.some((s, i) => i !== index && String(s[field]).trim() === value);
+    if (c === 'name') return value.length >= 2 ? '' : "Enter your child's full name.";
+    if (c === 'qid') return checkQid(value) || (twin('qid') ? 'You already added a child with this QID.' : '');
+    if (c === 'class') return value ? '' : 'Choose a class.';
+    if (c === 'div') return value ? '' : 'Choose a division.';
+    if (!value) return 'Enter the registration number.';
+    return twin('reg') ? 'You already added a child with this number.' : '';
+  }
+
+  function paint(path) {
+    const field = $(`[data-field="${path}"]`);
+    if (!field) return;
+    const message = touched.has(path) ? problem(path) : '';
+    const value = String(read(path) ?? '');
+    const isChoice = /\.(class|div)$/.test(path);
+    field.classList.toggle('is-bad', !!message);
+    field.classList.toggle('is-ok', !isChoice && !problem(path) && value !== '');
+    const err = $('.srx-err', field);
+    err.innerHTML = message ? `<i class="fa fa-exclamation-circle"></i><span>${esc(message)}</span>` : '';
+    const input = $('input[data-path]', field);
+    if (input) { input.setAttribute('aria-invalid', message ? 'true' : 'false'); }
+    const count = $('.srx-count', field);
+    if (count) { count.textContent = value ? `${value.length}/11` : ''; }
+  }
+
+  const initials = (name) => {
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+    return parts.length ? (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() : '';
+  };
+  const classText = (s) => {
+    const label = /^\d+$/.test(s.class) ? `Grade ${s.class}` : s.class;
+    return [label, s.div].filter(Boolean).join(' · ');
+  };
+  const studentPaths = (i) => ['name', 'qid', 'class', 'div', 'reg'].map((f) => `s.${i}.${f}`);
+  const ordinal = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
+
+  function card(i) {
+    const s = state.students[i];
+    const meta = [classText(s), s.reg ? `Reg ${s.reg}` : ''].filter(Boolean);
+    return `<div class="srx-pc__av">${esc(initials(s.name)) || '<i class="fa fa-graduation-cap"></i>'}</div>
+      <div class="srx-pc__tx">
+        <div class="srx-pc__name ${s.name.trim() ? '' : 'is-empty'}">${esc(s.name.trim() || "Your child's name")}</div>
+        <div class="srx-pc__meta">${meta.length ? meta.map((m) => `<span>${esc(m)}</span>`).join('') : `<span>${esc(state.school)}</span>`}</div>
+      </div>`;
+  }
+  function chips(i, field, list) {
+    return list.map((value) => `<label class="srx-chip"><input type="radio" name="${field}_${i}" data-path="s.${i}.${field}" value="${value}" ${state.students[i][field] === value ? 'checked' : ''}><span>${value}</span></label>`).join('');
+  }
+  function openForm(s, i) {
+    const many = state.students.length > 1;
+    return `<div class="srx-open">
+      ${many ? `<div class="srx-open__top"><b>${ordinal[i] || `Student ${i + 1}:`} child</b><button type="button" class="srx-link" data-act="remove" data-i="${i}">Remove</button></div>` : ''}
+      <div class="srx-pc" id="pc">${card(i)}</div>
+      <div class="srx-fields">
+        <div class="srx-f" data-field="s.${i}.name">
+          <label for="s_name_${i}">Student name</label>
+          <div class="srx-ctl"><input id="s_name_${i}" data-path="s.${i}.name" value="${esc(s.name)}" autocomplete="off" enterkeyhint="next" maxlength="100" placeholder="As on the QID"><span class="srx-end"><i class="fa fa-check"></i></span></div>
+          <p class="srx-err" role="alert"></p>
+        </div>
+        <div class="srx-f" data-field="s.${i}.qid">
+          <label for="s_qid_${i}">QID number</label>
+          <div class="srx-ctl"><input id="s_qid_${i}" dir="ltr" data-path="s.${i}.qid" value="${esc(s.qid)}" inputmode="numeric" autocomplete="off" enterkeyhint="next" maxlength="11" placeholder="11 digits"><span class="srx-end"><span class="srx-count"></span><i class="fa fa-check"></i></span></div>
+          <p class="srx-err" role="alert"></p>
+        </div>
+        <div class="srx-f" data-field="s.${i}.class">
+          <div class="srx-lbl" id="lc_${i}">Class</div>
+          <div class="srx-chips" role="radiogroup" aria-labelledby="lc_${i}">${chips(i, 'class', CLASSES)}</div>
+          <p class="srx-err" role="alert"></p>
+        </div>
+        <div class="srx-f" data-field="s.${i}.div">
+          <div class="srx-lbl" id="ld_${i}">Division</div>
+          <div class="srx-chips srx-chips--six" role="radiogroup" aria-labelledby="ld_${i}">${chips(i, 'div', DIVS)}</div>
+          <p class="srx-err" role="alert"></p>
+        </div>
+        <div class="srx-f" data-field="s.${i}.reg">
+          <label for="s_reg_${i}">Registration number</label>
+          <div class="srx-ctl"><input id="s_reg_${i}" dir="ltr" data-path="s.${i}.reg" value="${esc(s.reg)}" autocomplete="off" autocapitalize="characters" enterkeyhint="done" maxlength="30" placeholder="From the school"><span class="srx-end"><i class="fa fa-check"></i></span></div>
+          <p class="srx-help">The number the school gave your child.</p>
+          <p class="srx-err" role="alert"></p>
+        </div>
+      </div>
+    </div>`;
+  }
+  function row(s, i) {
+    const bad = studentPaths(i).some((p) => problem(p));
+    const detail = [classText(s), s.reg ? `Reg ${s.reg}` : ''].filter(Boolean).join(' · ');
+    return `<div class="srx-kid ${bad ? 'is-bad' : ''}">
+      <button type="button" class="srx-kid__open" data-act="open" data-i="${i}">
+        <span class="srx-kid__av">${esc(initials(s.name)) || '<i class="fa fa-graduation-cap"></i>'}</span>
+        <span class="srx-kid__tx"><b>${esc(s.name.trim() || 'Student ' + (i + 1))}</b><small>${esc(bad ? 'Some details are missing. Tap to finish.' : detail)}</small></span>
+      </button>
+      <button type="button" class="srx-ico" data-act="open" data-i="${i}" aria-label="Edit ${esc(s.name)}"><i class="fa fa-pencil"></i></button>
+      <button type="button" class="srx-ico srx-ico--bad" data-act="remove" data-i="${i}" aria-label="Remove ${esc(s.name)}"><i class="fa fa-trash-o"></i></button>
+    </div>`;
+  }
+  function renderKids() {
+    const undo = state.removed ? `<div class="srx-undo"><span>Removed ${esc(state.removed.student.name.trim() || 'student')}</span><button type="button" data-act="undo"><i class="fa fa-undo"></i> Undo</button></div>` : '';
+    kidsEl.innerHTML = state.students.map((s, i) => (i === state.open ? openForm(s, i) : row(s, i))).join('') + undo;
+    studentPaths(state.open).forEach(paint);
+    updateGo();
+  }
+  function updateGo() {
+    const n = state.students.length;
+    $('#goLabel').textContent = state.step === 3 ? (n > 1 ? `Submit ${n} students` : 'Submit registration') : 'Continue';
+  }
+
+  function scrollTop() { frame.scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }
+  function show(step) {
+    state.step = step;
+    state.reached = Math.max(state.reached, step);
+    $$('[data-panel]').forEach((panel) => { panel.hidden = +panel.dataset.panel !== step; });
+    $$('.srx-step').forEach((button) => {
+      const n = +button.dataset.go;
+      button.classList.toggle('is-on', n === step);
+      button.classList.toggle('is-done', n < step);
+      button.disabled = n > state.reached || n === step;
+      if (n === step) { button.setAttribute('aria-current', 'step'); } else { button.removeAttribute('aria-current'); }
+    });
+    $('#act').hidden = step === 1;
+    if (step === 2) { Object.keys(state.parent).forEach((k) => paint(`parent.${k}`)); }
+    if (step === 3) {
+      $('#sumSchool').textContent = state.school;
+      $('#sumParent').textContent = state.parent.name;
+      renderKids();
+    }
+    updateGo();
+    scrollTop();
+    $(`[data-panel="${step}"]`).focus({ preventScroll: true });
+  }
+
+  function failOn(paths) {
+    paths.forEach((p) => { touched.add(p); paint(p); });
+    const first = paths.find((p) => problem(p));
+    if (!first) return false;
+    const field = $(`[data-field="${first}"]`);
+    field.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const input = $('input', field);
+    if (input && input.type !== 'radio') { input.focus({ preventScroll: true }); }
+    return true;
+  }
+  function openStudent(i) { state.open = i; state.removed = null; renderKids(); }
+  function submit() {
+    if (failOn(studentPaths(state.open))) return;
+    const wrong = state.students.findIndex((_, i) => studentPaths(i).some((p) => problem(p)));
+    if (wrong >= 0) { openStudent(wrong); failOn(studentPaths(wrong)); return; }
+    $$('[data-panel]').forEach((p) => { p.hidden = true; });
+    $('#act').hidden = true;
+    $('#steps').hidden = true;
+    $('#foot').hidden = true;
+    const done = $('#done');
+    const list = state.students.map((s) => `<div class="srx-slip__row"><span>${esc(classText(s))}</span><b>${esc(s.name)}</b></div>`).join('');
+    done.innerHTML = `<div class="srx-done" tabindex="-1">
+      <div class="srx-done__ic"><i class="fa fa-check"></i></div>
+      <h1>Registration received</h1>
+      <p class="srx-sub">Thank you, ${esc(state.parent.name.trim().split(/\s+/)[0])}. Your details are with the ${esc(state.school)} office.</p>
+      <div class="srx-slip">
+        <div class="srx-slip__row"><span>School</span><b>${esc(state.school)}</b></div>
+        ${list}
+      </div>
+      <p class="srx-next"><i class="fa fa-info-circle"></i><span>Once the office has checked them, we'll email <b>${esc(state.parent.email)}</b> a link to set your parent portal password.</span></p>
+    </div>`;
+    done.hidden = false;
+    scrollTop();
+    $('.srx-done').focus({ preventScroll: true });
+  }
+
+  root.addEventListener('input', (event) => {
+    const input = event.target;
+    const path = input.dataset.path;
+    if (!path) return;
+    if (/\.(qid|phone)$/.test(path)) { input.value = input.value.replace(/\D/g, ''); }
+    write(path, input.value);
+    if (/\.qid$/.test(path) && input.value.length === 11) { touched.add(path); }
+    if (/\.phone$/.test(path) && input.value.length === 8) { touched.add(path); }
+    paint(path);
+    if (path.startsWith('s.') && $('#pc')) { $('#pc').innerHTML = card(state.open); }
+  });
+  root.addEventListener('focusout', (event) => {
+    const path = event.target.dataset.path;
+    if (path && event.target.type !== 'radio' && String(read(path)).trim() !== '') { touched.add(path); paint(path); }
+  });
+  root.addEventListener('change', (event) => {
+    const input = event.target;
+    if (input.name === 'school') {
+      state.school = input.value;
+      setTimeout(() => show(2), 240);
+      return;
+    }
+    if (input.type === 'radio' && input.dataset.path) {
+      write(input.dataset.path, input.value);
+      touched.add(input.dataset.path);
+      paint(input.dataset.path);
+      $('#pc').innerHTML = card(state.open);
+    }
+  });
+  root.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    if (button.dataset.go) { show(+button.dataset.go); return; }
+    const act = button.dataset.act;
+    const i = +button.dataset.i;
+    if (act === 'back') { show(state.step - 1); }
+    if (act === 'next') {
+      if (state.step === 2) {
+        if (!failOn(Object.keys(state.parent).map((k) => `parent.${k}`))) { show(3); }
+      } else { submit(); }
+    }
+    if (act === 'add' && !failOn(studentPaths(state.open))) {
+      state.students.push(blank());
+      state.open = state.students.length - 1;
+      state.removed = null;
+      renderKids();
+      const added = $('.srx-open');
+      added.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+    if (act === 'open') {
+      if (!failOn(studentPaths(state.open))) { openStudent(i); }
+    }
+    if (act === 'remove') {
+      state.removed = { student: state.students[i], at: i };
+      state.students.splice(i, 1);
+      if (!state.students.length) { state.students.push(blank()); }
+      state.open = Math.min(state.open > i ? state.open - 1 : state.open, state.students.length - 1);
+      renderKids();
+    }
+    if (act === 'undo') {
+      state.students.splice(state.removed.at, 0, state.removed.student);
+      state.open = state.removed.at;
+      state.removed = null;
+      renderKids();
+    }
+  });
+  root.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.target.tagName !== 'INPUT' || event.target.type === 'radio') return;
+    event.preventDefault();
+    const inputs = $$('input[data-path]:not([type=radio])', $(`[data-panel="${state.step}"]`));
+    const next = inputs[inputs.indexOf(event.target) + 1];
+    if (next) { next.focus(); } else { event.target.blur(); }
+  });
+  $('#form').addEventListener('submit', (event) => event.preventDefault());
+
+  function reset() {
+    fresh();
+    $('#form').reset();
+    $('#done').hidden = true;
+    $('#done').innerHTML = '';
+    $('#steps').hidden = false;
+    $('#foot').hidden = false;
+    show(1);
+  }
+  function setToggle(attr, value) {
+    $$(`[${attr}]`).forEach((b) => b.setAttribute('aria-pressed', b.getAttribute(attr) === value ? 'true' : 'false'));
+  }
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.hbar button');
+    if (!button) return;
+    if (button.dataset.view) { frame.dataset.view = button.dataset.view; setToggle('data-view', button.dataset.view); $('#frame').setAttribute('data-view', button.dataset.view); }
+    if (button.dataset.themeSet) { root.dataset.theme = button.dataset.themeSet; $('#host').dataset.theme = button.dataset.themeSet; setToggle('data-theme-set', button.dataset.themeSet); }
+    if (button.dataset.dir) { root.dir = button.dataset.dir; setToggle('data-dir', button.dataset.dir); }
+    if (button.id === 'reset') { reset(); }
+    if (button.id === 'fill') {
+      reset();
+      state.school = 'AIA - Doha';
+      $('input[name=school]').checked = true;
+      state.parent = { name: 'Mohammed Rahman', qid: '28463401234', phone: '55123344', email: 'mohammed@example.com' };
+      Object.entries(state.parent).forEach(([k, v]) => { $(`[data-path="parent.${k}"]`).value = v; touched.add(`parent.${k}`); });
+      state.students = [
+        { name: 'Aisha Rahman', qid: '31563401287', class: '5', div: 'B', reg: 'ADM-2024-0187' },
+        { name: 'Yusuf Rahman', qid: '31763401555', class: '2', div: 'A', reg: 'ADM-2025-0342' },
+      ];
+      state.open = 1;
+      state.reached = 3;
+      show(3);
+    }
+  });
+
+  fresh();
+  show(1);
+  window.__srx = { get state() { return state; } };
+})();
+</script>
+</body>
+</html>

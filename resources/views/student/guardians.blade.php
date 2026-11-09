@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-student.registrations-premium />
     <div class="content__header content__boxed overlapping">
         <div class="content__wrap">
             <nav aria-label="breadcrumb">
@@ -14,9 +15,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
-                @livewire('student.guardian-table')
-            </div>
+            @livewire('student.guardian-table')
         </div>
     </div>
 </x-app-layout>

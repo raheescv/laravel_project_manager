@@ -249,6 +249,9 @@ dl.pp-group__body dd.pp-mono{font-weight:500}
 .pp-auth__arabic{margin-top:2px; font-size:15px; color:var(--ink-2)}
 .pp-auth__tag{display:inline-flex; align-items:center; gap:7px; margin-top:12px; padding:6px 11px; border-radius:999px; background:var(--fill); color:var(--ink-2); font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase}
 .pp-auth__actions{display:flex; flex-direction:column; align-items:center; gap:6px; padding:0 16px}
+.pp-auth__actions--row{flex-direction:row; flex-wrap:wrap; justify-content:center; gap:0 18px}
+.pp-auth__register{display:inline-flex; align-items:center; gap:5px; color:var(--ink-2); font-size:14px}
+.pp-auth__register .pp-link{padding:0; font-size:inherit}
 .pp-auth__foot{margin-top:auto; padding:28px 24px 0; text-align:center; font-size:13px; color:var(--ink-2)}
 .pp-auth__lede{margin-top:8px; font-size:16px; line-height:1.45; color:var(--ink-2)}
 .pp-auth__sig{padding:24px 24px 0; text-align:center; font:500 11px/1.5 var(--mono); color:var(--ink-3); text-transform:uppercase; letter-spacing:.14em}
