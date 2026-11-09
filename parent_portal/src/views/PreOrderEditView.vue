@@ -23,7 +23,7 @@ import MealOption from '@/components/MealOption.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
 import { date as longDate, dayName, firstName, isToday, money, shortDate, sortWeekdays, time, weekdayName, weekdaysLabel } from '@/utils/format'
-import { dishesOn, flattenMenu, isoWeekday, mealThumbStyle, servedOn } from '@/utils/meals'
+import { BOOKING_WINDOW_DAYS, dishesOn, flattenMenu, isoWeekday, mealThumbStyle, servedOn } from '@/utils/meals'
 import { goBackOr } from '@/utils/nav'
 
 /**
@@ -105,7 +105,7 @@ const saveLabel = computed(() => {
 async function load() {
   status.value = 'loading'
   try {
-    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id), fetchPreOrderMenu()])
+    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id, weekly ? undefined : BOOKING_WINDOW_DAYS), fetchPreOrderMenu()])
     ;[student.value, schedule.value, meals.value, menuGroups.value] = [s, sch, flattenMenu(menu), menu || []]
     refreshChild(s)
 

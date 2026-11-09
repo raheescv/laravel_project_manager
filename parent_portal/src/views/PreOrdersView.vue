@@ -8,7 +8,7 @@ import LoadError from '@/components/LoadError.vue'
 import MealCalendar from '@/components/MealCalendar.vue'
 import { refreshChild } from '@/children'
 import { dateTile, dayName, firstName, isToday, money, time, weekdaysLabel } from '@/utils/format'
-import { flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
+import { BOOKING_WINDOW_DAYS, flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
 import { bigScreen, desktop } from '@/utils/viewport'
 
 /**
@@ -16,8 +16,6 @@ import { bigScreen, desktop } from '@/utils/viewport'
  * school days. Nothing is charged here — the meal is paid from the card when the
  * child taps it at the canteen.
  */
-const CALENDAR_DAYS = 31
-
 const route = useRoute()
 const id = Number(route.params.id)
 
@@ -37,7 +35,7 @@ function mealName(order) {
 async function load() {
   status.value = 'loading'
   try {
-    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? CALENDAR_DAYS : undefined), fetchPreOrderMenu()])
+    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? BOOKING_WINDOW_DAYS : undefined), fetchPreOrderMenu()])
     ;[student.value, schedule.value, meals.value] = [s, sch, flattenMenu(menu)]
     refreshChild(s)
     status.value = 'ready'
@@ -82,7 +80,7 @@ const board = computed(() => (schedule.value?.days || []).map((day) => ({ day, c
 watch(bigScreen, async (isBig) => {
   if (!isBig || status.value !== 'ready') return
   try {
-    schedule.value = await fetchPreOrders(id, CALENDAR_DAYS)
+    schedule.value = await fetchPreOrders(id, BOOKING_WINDOW_DAYS)
   } catch {
     // The days already on screen stay; the calendar just ends sooner.
   }

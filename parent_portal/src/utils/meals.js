@@ -5,6 +5,9 @@ import { resolveImage } from '@/api/client'
  * of its category, with the weekly dishes the school entered.
  */
 
+/** Every day a parent can book: today plus the 30 days after it. */
+export const BOOKING_WINDOW_DAYS = 31
+
 /** Inline style that shows a meal's photo on a .pp-thumb; null when it has none. */
 export function mealThumbStyle(meal) {
   const image = resolveImage(meal.thumbnail)
