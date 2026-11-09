@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Sale\View as SaleView;
 use App\Models\Brand;
 use App\Models\Configuration;
 use App\Models\Coupon;
@@ -11,6 +12,7 @@ use App\Support\Storefront\TapSettings;
 use App\Support\TenantCache;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
@@ -209,6 +211,55 @@ it('charges the discounted amount and records a matching sale with the discount 
     $entries = JournalEntry::withoutGlobalScopes()->where('model', 'Sale')->where('model_id', $sale->id)->get();
     expect(round($entries->sum('debit'), 2))->toBe(round($entries->sum('credit'), 2))
         ->and($entries->where('account_id', $this->world->accounts['discount'])->sum('debit'))->toEqual(149);
+});
+
+it('shows the coupon on the sale page', function (): void {
+    Coupon::factory()->create(['code' => 'SAVE20', 'discount_value' => 20, 'title' => 'Twenty off everything']);
+    ($this->capture)(596);
+
+    $reference = ($this->checkout)(['couponCode' => 'SAVE20'])->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('Coupon discount')
+        ->assertSee('SAVE20')
+        ->assertSee('Twenty off everything')
+        ->assertSee('(20%)')
+        ->assertDontSee('Other discount');
+});
+
+it('keeps the coupon code on the sale page after the coupon is gone', function (): void {
+    $coupon = Coupon::factory()->create(['code' => 'GONE20', 'discount_value' => 20, 'title' => 'Twenty off everything']);
+    ($this->capture)(596);
+
+    $reference = ($this->checkout)(['couponCode' => 'GONE20'])->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+    $coupon->delete();
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('GONE20')
+        ->assertDontSee('Twenty off everything')
+        ->assertDontSee('(20%)');
+});
+
+it('leaves a sale with no coupon showing as before', function (): void {
+    ($this->capture)(745);
+
+    $reference = ($this->checkout)()->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('Online order')
+        ->assertDontSee('Coupon discount');
 });
 
 it('records the sale even when the recording user has a low discount limit', function (): void {

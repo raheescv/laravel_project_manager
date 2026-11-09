@@ -241,6 +241,18 @@
                     @endif
                     <div class="s-dr"><span class="l"><i class="fa fa-clock-o"></i>Paid at</span><span class="v">{{ $checkout->paid_at ? systemDateTime($checkout->paid_at) : '—' }}</span></div>
                     <div class="s-dr"><span class="l"><i class="fa fa-envelope-o"></i>Customer email</span><span class="v">{{ $checkout->customer_email ?: '—' }}</span></div>
+                    @if ($checkout->coupon_code)
+                        <div class="s-dr">
+                            <span class="l"><i class="fa fa-ticket"></i>Coupon</span>
+                            <span class="v">
+                                <span class="mono s-copy" title="Click to copy" onclick="navigator.clipboard?.writeText(this.textContent.trim())">{{ $checkout->coupon_code }}</span>
+                                @if ($checkout->coupon)
+                                    <span style="color:var(--mut)">{{ $checkout->coupon->title }}</span>
+                                @endif
+                            </span>
+                        </div>
+                        <div class="s-dr"><span class="l"><i class="fa fa-tag"></i>Coupon discount</span><span class="v mono" style="color:var(--ok)">-{{ currency($checkout->coupon_discount) }} {{ $checkout->couponPercentLabel() }}</span></div>
+                    @endif
                     @if ($checkout->refund_id)
                         <div class="s-dr">
                             <span class="l"><i class="fa fa-undo"></i>Refund</span>
@@ -558,7 +570,10 @@
                 @endif
                 <div class="s-sr"><span class="l">Sale total</span><span class="v mono">{{ currency($sale->total) }}</span></div>
                 @if ($sale->other_discount != 0)
-                    <div class="s-sr neg"><span class="l">Other discount</span><span class="v mono">-{{ currency($sale->other_discount) }}</span></div>
+                    <div class="s-sr neg">
+                        <span class="l">@if ($checkout?->coupon_code)Coupon <span class="mono">{{ $checkout->coupon_code }}</span>@else Other discount @endif</span>
+                        <span class="v mono">-{{ currency($sale->other_discount) }} {{ $checkout?->couponPercentLabel() }}</span>
+                    </div>
                 @endif
                 @if ($sale->freight != 0)
                     <div class="s-sr"><span class="l">Freight</span><span class="v mono">{{ currency($sale->freight) }}</span></div>

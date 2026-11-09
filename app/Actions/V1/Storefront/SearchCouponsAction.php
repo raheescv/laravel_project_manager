@@ -56,26 +56,10 @@ class SearchCouponsAction
             'title_arabic' => $coupon->title_arabic,
             'state' => $quote->state,
             'saving' => $quote->saving,
-            'percent' => $this->percent($coupon, $quote),
+            'percent' => $coupon->percentFor($quote->saving),
             'short' => $quote->short,
             'new_total' => round($total - $quote->saving, 2),
             'is_private' => ! $coupon->is_searchable,
         ];
-    }
-
-    /**
-     * The percent to show beside the saving. Hidden when the maximum discount cut
-     * the saving, since it is then no longer that percent; the 1 allows for the
-     * store's round off moving the saving just below the maximum.
-     */
-    private function percent(Coupon $coupon, CouponQuote $quote): ?float
-    {
-        if ($coupon->discount_type !== Coupon::TYPE_PERCENT) {
-            return null;
-        }
-
-        $isCapped = $coupon->max_discount !== null && $quote->saving >= (float) $coupon->max_discount - 1;
-
-        return $isCapped ? null : (float) $coupon->discount_value;
     }
 }

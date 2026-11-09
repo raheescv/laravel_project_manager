@@ -194,6 +194,22 @@ class Coupon extends Model implements AuditableContracts
         return (int) ($this->redemptions_count ?? $this->redemptions()->count());
     }
 
+    /**
+     * The percent to show beside a saving. Null for a fixed amount, and when the
+     * maximum discount cut the saving, since it is then no longer that percent;
+     * the 1 allows for the store's round off moving it just below the maximum.
+     */
+    public function percentFor(float $saving): ?float
+    {
+        if ($this->discount_type !== self::TYPE_PERCENT) {
+            return null;
+        }
+
+        $isCapped = $this->max_discount !== null && $saving >= (float) $this->max_discount - 1;
+
+        return $isCapped ? null : (float) $this->discount_value;
+    }
+
     /** Where the coupon is in its life. Mirrors scopeInState() for a single row. */
     public function state(): string
     {

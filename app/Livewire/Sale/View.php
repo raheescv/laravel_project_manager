@@ -136,7 +136,7 @@ class View extends Component
         }
 
         return StorefrontCheckout::withoutGlobalScope(AssignedBranchScope::class)
-            ->with('branch:id,name')
+            ->with(['branch:id,name', 'coupon'])
             ->where('sale_id', $this->sale->id)
             ->first();
     }

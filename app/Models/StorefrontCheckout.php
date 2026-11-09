@@ -116,6 +116,20 @@ class StorefrontCheckout extends Model implements AuditableContracts
         return $this->belongsTo(Sale::class);
     }
 
+    /** @return BelongsTo<Coupon, $this> */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    /** "(20%)" for a straight percent coupon, otherwise nothing. */
+    public function couponPercentLabel(): string
+    {
+        $percent = $this->coupon?->percentFor((float) $this->coupon_discount);
+
+        return $percent ? "({$percent}%)" : '';
+    }
+
     /** @return BelongsTo<User, $this> */
     public function refundRequestedBy(): BelongsTo
     {
