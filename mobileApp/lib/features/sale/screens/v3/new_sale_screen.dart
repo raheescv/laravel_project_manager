@@ -489,11 +489,8 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   Future<void> _tapStudentCard({String? uid}) async {
     final card = await showTapCardSheet(context, uid: uid, onBack: _pickClient);
     if (card == null || !mounted) return;
-    final cart = context.read<CartCubit>();
-    cart.setStudent(card);
-    final order = card.preOrder;
-    if (order != null && order.items.isNotEmpty && cart.preOrder?.id != order.id) {
-      cart.applyPreOrder(order);
+    final order = context.read<CartCubit>().tapStudentCard(card);
+    if (order != null) {
       AstraSnack.success(context, '${card.name} · pre-order added (${order.count} ${order.count == 1 ? 'item' : 'items'})');
       return;
     }

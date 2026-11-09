@@ -590,9 +590,25 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-row__icon--accent{background:var(--accent-soft); color:var(--accent-ink)}
 .pp-thumb{display:grid; place-items:center; flex:none; width:46px; height:46px; overflow:hidden; border-radius:11px; background:var(--bg) center/cover no-repeat; color:var(--ink-3); font-size:18px}
 .pp-meal-row{--sep:74px}
-.pp-meal-row .pp-check{flex:none; display:grid; place-items:center; width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 2px var(--ink-3); color:transparent; font-size:13px; transition:background-color .15s,box-shadow .15s}
-.pp-meal-row[aria-checked="true"] .pp-check{background:var(--accent); box-shadow:none; color:var(--on-accent)}
-.pp-meal-row[aria-disabled="true"]{opacity:.45; pointer-events:none}
+.pp-meal-row.is-max .pp-meal-row__hit{cursor:default}
+.pp-meal-count{display:grid; flex:none; place-items:center; min-width:26px; height:26px; padding:0 7px; border-radius:13px; background:var(--accent); color:var(--on-accent); font-size:13px; font-weight:700; font-variant-numeric:tabular-nums}
+.pp-meal-tools{display:grid; gap:10px; margin-bottom:12px}
+.pp-meal-search{display:flex; align-items:center; gap:10px; min-height:44px; padding:0 14px; border-radius:12px; background:var(--surface); box-shadow:0 0 0 1px var(--line); color:var(--ink-3)}
+.pp-meal-search input{flex:1; min-width:0; border:0; outline:none; background:none; color:var(--ink); font:inherit; font-size:16px}
+.pp-meal-search:focus-within{box-shadow:0 0 0 2px var(--accent-ring)}
+.pp-meal-cats{display:flex; gap:8px; overflow-x:auto; padding:2px; scrollbar-width:none}
+.pp-meal-cats::-webkit-scrollbar{display:none}
+.pp-meal-cats .pp-chip{flex:none; min-height:38px; padding:0 16px; border-radius:19px; font-size:14px; font-weight:650; white-space:nowrap}.pp-meal-none{padding:28px 16px; color:var(--ink-2); font-size:15px; text-align:center}
+.pp-meals--grid .pp-meal-count{position:absolute; top:8px; right:8px}
+.pp-meal-row.is-disabled{opacity:.45; pointer-events:none}
+.pp-meal-row__hit{position:absolute; inset:0; z-index:0; padding:0; border:0; border-radius:inherit; background:none; cursor:pointer}
+.pp-meal-row__hit:focus-visible{outline:2px solid var(--accent-ring); outline-offset:-2px}
+.pp-qty{position:relative; z-index:1; display:inline-flex; flex:none; align-items:center; gap:2px; padding:2px; border-radius:11px; background:var(--surface); box-shadow:inset 0 0 0 1px var(--line)}
+.pp-qty button{display:grid; place-items:center; width:32px; height:32px; border:0; border-radius:9px; background:none; color:var(--accent-ink); font-size:12px; transition:background-color .15s}
+.pp-qty button:hover:not(:disabled){background:var(--accent-soft)}
+.pp-qty button:disabled{opacity:.35}
+.pp-qty b{min-width:20px; color:var(--ink); font-size:15px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums}
+.pp-meals--list .pp-meal-row.is-selected{background:var(--accent-soft)}
 .pp-dish{position:relative; padding:12px 16px}
 .pp-dish + .pp-dish::before{content:""; position:absolute; top:0; right:0; left:16px; height:1px; background:var(--line)}
 .pp-dish__course{display:block; font:500 10px/1.2 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
@@ -603,8 +619,8 @@ a.pp-child-card:active{transform:translateY(-8px)}
 .pp-daychips .pp-chip{min-height:52px; font-size:15px}
 .pp-daychips .pp-chip:disabled{opacity:.35}
 .pp-order-sum{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; font-size:14px; color:var(--ink-2)}
-.pp-order-sum b{color:var(--ink); font-size:17px; font-weight:700; font-variant-numeric:tabular-nums}
 .pp-day-row{--sep:72px}
+.pp-day-row .pp-row__sub,.pp-weekly-row .pp-row__sub{display:-webkit-box; overflow:hidden; white-space:normal; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2}
 .pp-day-row .pp-date.is-today{background:var(--accent); color:var(--on-accent)}
 .pp-day-row .pp-date.is-today small{color:inherit; opacity:.85}
 .pp-tag--muted{background:var(--fill); color:var(--ink-2)}
@@ -963,21 +979,43 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-weekly__main small{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
   .pp-weekly__main b{display:block; margin-top:6px; font-size:19px; font-weight:700; letter-spacing:-.01em}
   .pp-weekly__main span{display:block; margin-top:2px; font-size:14px; color:var(--ink-2)}
-  .pp-week{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:12px}
-  .pp-dayc{display:flex; flex-direction:column; min-height:204px; padding:14px 14px 12px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line); transition:transform .25s var(--ease),box-shadow .2s ease}
+  .pp-week{display:grid; grid-template-columns:repeat(auto-fill,minmax(164px,1fr)); grid-auto-rows:1fr; gap:12px}
+  .pp-dayc{display:flex; flex-direction:column; min-width:0; padding:14px 14px 12px; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line); transition:transform .25s var(--ease),box-shadow .2s ease}
   .pp-dayc.is-today{box-shadow:0 0 0 2px var(--accent)}
-  .pp-dayc__head{display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px}
+  .pp-dayc__head{display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:24px auto; align-items:center; column-gap:8px}
   .pp-dayc__wd{display:block; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink)}
-  .pp-dayc__num{display:block; margin-top:6px; font-size:30px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+  .pp-dayc__num{grid-area:2 / 1 / 3 / -1; margin-top:4px; font-size:30px; font-weight:750; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
   .pp-dayc__num small{margin-left:4px; font-size:13px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
-  .pp-dayc__meal{margin-top:auto; padding-top:16px; font-size:15px; font-weight:650; line-height:1.25}
-  .pp-dayc__sub{margin-top:3px; font-size:13px; color:var(--ink-2)}
-  .pp-dayc__foot{display:flex; align-items:center; justify-content:space-between; gap:6px; min-height:33px; margin-top:12px; padding-top:10px; border-top:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--accent-ink)}
+  .pp-dayc__meal{display:-webkit-box; overflow:hidden; margin-top:14px; font-size:15px; font-weight:650; line-height:1.25; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:3}
+  .pp-dayc__sub{margin:3px 0 12px; font-size:13px; color:var(--ink-2)}
+  .pp-dayc__foot{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:2px 6px; min-height:33px; margin-top:auto; padding-top:10px; border-top:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--accent-ink)}
   .pp-dayc__foot span{color:var(--ink); white-space:nowrap}
   .pp-dayc__foot.is-muted{color:var(--ink-3)}
   .pp-dayc--skipped{background:transparent; box-shadow:inset 0 0 0 1.5px var(--line)}
   .pp-dayc--skipped .pp-dayc__meal,.pp-dayc--empty .pp-dayc__meal{color:var(--ink-2)}
   .pp-dayc--empty .pp-dayc__meal{font-weight:550}
+
+  /* Meals on a big screen: the booking window as a calendar */
+  .pp-cal{overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+  .pp-cal__weekdays{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); border-bottom:1px solid var(--line)}
+  .pp-cal__weekdays span{padding:11px 10px; font:500 10.5px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+  .pp-cal__grid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); grid-auto-rows:minmax(116px,1fr); gap:1px; background:var(--line)}
+  .pp-cal__day{display:flex; flex-direction:column; min-width:0; padding:9px 10px; background:var(--surface); transition:background .15s ease}
+  .pp-cal__day--off,.pp-cal__day--skipped{background:var(--bg)}
+  .pp-cal__day.is-today{position:relative; box-shadow:inset 0 0 0 2px var(--accent)}
+  .pp-cal__top{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px; min-height:24px}
+  .pp-cal__top .pp-tag{flex:none; height:20px; padding:0 7px; font-size:11.5px}
+  .pp-cal__num{white-space:nowrap; font-size:16px; font-weight:750; line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+  .pp-cal__num small{margin-left:3px; font-size:11.5px; font-weight:600; letter-spacing:0; color:var(--ink-2)}
+  .pp-cal__day.is-today .pp-cal__num{color:var(--accent-ink)}
+  .pp-cal__day--off .pp-cal__num{font-weight:550; color:var(--ink-3)}
+  .pp-cal__day--off .pp-cal__num small{color:inherit}
+  .pp-cal__meal{display:-webkit-box; overflow:hidden; margin-top:8px; font-size:13px; font-weight:600; line-height:1.3; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2}
+  .pp-cal__day--empty .pp-cal__meal,.pp-cal__day--skipped .pp-cal__meal{font-weight:500; color:var(--ink-2)}
+  .pp-cal__foot{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:2px 6px; margin-top:auto; padding-top:6px; font-size:12px; font-weight:600; white-space:nowrap}
+  .pp-cal__action{color:var(--accent-ink)}
+  .pp-cal__closed{color:var(--ink-3)}
+  .pp-cal__marks{display:inline-flex; gap:6px; margin-left:auto; font-size:11px; color:var(--ink-3)}
 
   /* Sign in: the same canvas, with room for a wider card and a bigger wash. */
   .pp-signin{min-height:100dvh; padding:40px}
@@ -995,6 +1033,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-link:not(:disabled):hover{text-decoration:underline; text-underline-offset:3px}
   .pp-menu__item:hover{background:var(--fill)}
   a.pp-child-card:hover{transform:translateY(-6px)}
+  a.pp-cal__day:hover{background:color-mix(in oklab,var(--surface),var(--accent) 7%)}
   a.pp-dayc:hover{transform:translateY(-3px); box-shadow:0 0 0 1.5px var(--accent-ring),0 18px 30px -22px rgba(0,0,0,.45)}
   .pp-checkout .pp-chip:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1.5px var(--accent-ring)}
   .pp-back:hover{text-decoration:underline; text-underline-offset:3px}
@@ -1019,4 +1058,94 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-bill-layout > *{max-width:540px}
   .pp-summary{position:static}
   .pp-signin{padding:28px}
+}
+
+/* ---- Meal picker: list or grid, sized by the room the page actually has ----
+   Container queries rather than viewport ones: a 1024px laptop has less room
+   here (the wallet takes 360px) than a tablet held upright. */
+.pp-app:has(> .pp-order),.pp-detail:has(> .pp-order){container-type:inline-size}
+.pp-order__layout{display:grid; grid-template-columns:minmax(0,1fr)}
+.pp-order .pp-daychips{grid-template-columns:repeat(auto-fit,minmax(46px,1fr))}
+.pp-meals-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px}
+.pp-meals-head .pp-group__head{min-width:0; padding-top:0; padding-bottom:0; line-height:1.3}
+.pp-viewswitch{display:flex; flex:none; gap:2px; padding:2px; border-radius:11px; background:var(--fill)}
+.pp-viewswitch button{display:grid; place-items:center; width:42px; height:36px; border:0; border-radius:9px; background:none; color:var(--ink-2); font-size:15px; transition:background-color .2s,color .2s,box-shadow .2s}
+.pp-viewswitch button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+.pp-order-sum{align-items:center; width:100%; padding:0; border:0; background:none; font:inherit; font-size:14px; text-align:left}
+.pp-order + .pp-actionbar{display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px 12px}
+.pp-order + .pp-actionbar .pp-order-sum{margin:0}
+.pp-order + .pp-actionbar .pp-btn{grid-column:1 / -1}
+.pp-order-total{text-align:right}
+.pp-order-total span{display:block; color:var(--ink-2); font-size:12px; font-weight:600}
+.pp-order-total b{color:var(--ink); font-size:18px; font-weight:750; font-variant-numeric:tabular-nums; white-space:nowrap}
+.pp-order-total small{font-size:13px; font-weight:500}
+.pp-order-sum__thumbs{display:flex; flex:none}
+.pp-order-sum__thumbs .pp-thumb{width:34px; height:34px; border-radius:10px; font-size:13px; box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line)}
+.pp-order-sum__thumbs .pp-thumb + .pp-thumb{margin-left:-8px}
+.pp-order-sum__label{flex:1; min-width:0}
+.pp-order-sum__label span,.pp-order-sum__label small{display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+.pp-order-sum__label span{color:var(--ink); font-weight:650}
+.pp-order-sum__label small{margin-top:1px; font-size:12px}
+
+/* The order as a cart: a side panel when there is room, otherwise a sheet off the order bar. */
+.pp-cart-panel{display:none}
+.pp-cart-panel .pp-group__head span{letter-spacing:.08em}
+.pp-cart{overflow:hidden; border-radius:var(--radius); background:var(--surface); box-shadow:0 0 0 1px var(--line)}
+.pp-cart__empty{display:grid; justify-items:center; gap:8px; padding:26px 20px; color:var(--ink-2); font-size:14px; text-align:center}
+.pp-cart__empty .fa{display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:var(--fill); color:var(--ink-3); font-size:18px}
+.pp-cart__lines{margin:0; padding:0; list-style:none}
+.pp-cart__line{display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:6px 10px; padding:11px 6px 11px 12px}
+.pp-cart__line + .pp-cart__line{border-top:1px solid var(--line)}
+.pp-cart__line .pp-thumb{grid-row:1 / 3; align-self:start; width:44px; height:44px; border-radius:11px; font-size:15px}
+.pp-cart__name{min-width:0; font-size:14px; font-weight:600; line-height:1.25; overflow-wrap:anywhere}
+.pp-cart__qty{grid-column:2 / 4; display:flex; align-items:center; justify-content:space-between; gap:10px; padding-right:8px}
+.pp-cart__price{flex:none; color:var(--ink); font-size:14px; font-weight:650; font-variant-numeric:tabular-nums}
+.pp-cart__remove{display:grid; flex:none; place-items:center; width:32px; height:32px; border:0; border-radius:50%; background:none; color:var(--ink-3); font-size:13px; transition:background-color .15s,color .15s}
+.pp-cart__remove:hover{background:var(--fill); color:var(--neg)}
+.pp-cart__totals{display:grid; gap:6px; margin:0; padding:12px 14px; border-top:1px dashed var(--line); font-size:13px; color:var(--ink-2)}
+.pp-cart__totals > div{display:flex; justify-content:space-between; gap:12px}
+.pp-cart__totals dd{margin:0; font-variant-numeric:tabular-nums}
+.pp-cart__total{align-items:baseline; color:var(--ink); font-size:15px; font-weight:650}
+.pp-cart__total dd{font-size:18px; font-weight:700}
+.pp-cart__note{padding:9px 14px; background:var(--fill); color:var(--ink-2); font-size:12px}
+.pp-sheet__panel .pp-cart{margin:0 16px}
+.pp-cart-sheet__bar{grid-template-columns:auto 1fr; padding:0 8px 0 18px}
+.pp-cart-sheet__bar .pp-navbtn{justify-self:end}
+
+.pp-group__body.pp-meals--grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(136px,1fr)); gap:10px; overflow:visible; border-radius:0; background:none; box-shadow:none}
+.pp-meals--grid .pp-meal-row{flex-direction:column; align-items:stretch; gap:0; padding:0; overflow:hidden; border-radius:14px; background:var(--surface); box-shadow:0 0 0 1px var(--line); transition:box-shadow .15s}
+.pp-meals--grid .pp-meal-row::before{content:none}
+.pp-meals--grid .pp-meal-row.is-selected{box-shadow:0 0 0 2px var(--accent)}
+.pp-meals--grid .pp-thumb{width:100%; height:auto; aspect-ratio:4/3; border-radius:0; font-size:26px}
+.pp-meals--grid .pp-row__main{display:block; padding:9px 11px 11px}
+.pp-meals--grid .pp-row__title{display:-webkit-box; overflow:hidden; font-size:15px; line-height:1.25; white-space:normal; -webkit-box-orient:vertical; -webkit-line-clamp:2}
+
+@container (min-width:720px){
+  .pp-order__layout{grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; margin-inline:16px}
+  .pp-order__layout .pp-group,.pp-order__side .pp-alert{margin-inline:0}
+  .pp-cart-panel{display:block}
+  .pp-order-sum{pointer-events:none}
+  .pp-order-sum .fa-angle-up{display:none}
+  .pp-order__side{position:sticky; top:64px; max-height:calc(100dvh - 220px); padding:1px; overflow-y:auto}
+  .pp-order__side .pp-group:last-child{margin-bottom:0}
+}
+
+/* Tablet: this page takes the whole screen instead of the phone-width column. */
+@media (min-width:600px) and (max-width:1023.98px){
+  .pp-app:has(.pp-order){max-width:960px}
+}
+@media (min-width:600px){
+  .pp-order + .pp-actionbar{grid-template-columns:minmax(0,1fr) 280px; gap:6px 20px}
+  .pp-order + .pp-actionbar .pp-order-sum{grid-row:1 / 3}
+  .pp-order-total{grid-column:2; grid-row:1; display:flex; align-items:baseline; justify-content:space-between; gap:12px; text-align:left}
+  .pp-order-total span{font-size:14px}
+  .pp-order + .pp-actionbar .pp-btn{grid-column:2; grid-row:2}
+}
+@media (min-width:1024px){
+  .pp-detail .pp-order + .pp-actionbar{max-width:var(--detail); margin-top:8px}
+  .pp-detail .pp-order__layout{margin-inline:0}
+  .pp-detail .pp-order__side{top:20px}
+}
+@media (hover:hover){
+  .pp-meals--grid .pp-meal-row:not(.is-selected):hover{box-shadow:0 0 0 1.5px var(--accent-ring)}
 }

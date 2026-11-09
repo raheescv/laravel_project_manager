@@ -9,6 +9,7 @@ use App\Actions\Student\PreOrder\ScheduleAction;
 use App\Actions\Student\PreOrder\SetDayAction;
 use App\Actions\Student\PreOrder\SetWeeklyStatusAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\V1\Parent\PreOrderScheduleRequest;
 use App\Http\Requests\V1\Parent\SavePreOrderRequest;
 use App\Models\Guardian;
 use App\Models\StudentPreOrder;
@@ -50,14 +51,15 @@ class ParentPreOrderController extends Controller
      *
      * The weekly order and what happens on each of the next school days
      * (`source`: day · weekly · skipped · null). `locked` days can no longer be
-     * changed (the school's cut-off has passed).
+     * changed (the school's cut-off has passed). `days` asks for more of them,
+     * up to the booking window.
      */
-    public function schedule(Request $request, int $account): JsonResponse
+    public function schedule(PreOrderScheduleRequest $request, int $account): JsonResponse
     {
         return $this->attempt(function () use ($request, $account) {
             $student = $this->student($request, $account);
 
-            return $this->sendSuccess((new ScheduleAction())->execute($student->id), 'Pre-orders retrieved successfully');
+            return $this->sendSuccess((new ScheduleAction())->execute($student->id, $request->integer('days', ScheduleAction::DAYS)), 'Pre-orders retrieved successfully');
         });
     }
 

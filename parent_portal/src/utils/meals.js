@@ -1,7 +1,16 @@
+import { resolveImage } from '@/api/client'
+
 /**
  * Helpers over the pre-order menu (GET /pre-order-menu): every meal flattened out
  * of its category, with the weekly dishes the school entered.
  */
+
+/** Inline style that shows a meal's photo on a .pp-thumb; null when it has none. */
+export function mealThumbStyle(meal) {
+  const image = resolveImage(meal.thumbnail)
+  return image ? { backgroundImage: `url("${image}")` } : null
+}
+
 export const flattenMenu = (groups) => (groups || []).flatMap((group) => group.items || [])
 
 /** Whether a meal is served on an ISO weekday (no menu = every school day). */

@@ -15,18 +15,20 @@ import {
   skipDayPreOrder,
 } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import DayMenu from '@/components/DayMenu.vue'
 import LoadError from '@/components/LoadError.vue'
+import MealCart from '@/components/MealCart.vue'
 import MealOption from '@/components/MealOption.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
 import { date as longDate, dayName, firstName, isToday, money, shortDate, sortWeekdays, time, weekdayName, weekdaysLabel } from '@/utils/format'
-import { dishesOn, flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
+import { dishesOn, flattenMenu, isoWeekday, mealThumbStyle, servedOn } from '@/utils/meals'
 import { goBackOr } from '@/utils/nav'
 
 /**
- * Order a meal for one day (`pre-order-day`) or every week (`pre-order-weekly`).
- * One meal per day; the card is charged when the child taps it at the canteen.
+ * Order meals for one day (`pre-order-day`) or every week (`pre-order-weekly`).
+ * Any number of items and quantities; those lines become the sale when the child taps the card at the canteen.
  */
 const route = useRoute()
 const router = useRouter()
@@ -39,10 +41,24 @@ const listRoute = { name: 'pre-orders', params: { id } }
 const student = ref(null)
 const schedule = ref(null)
 const meals = ref([])
+const menuGroups = ref([])
+const mealSearch = ref('')
+const mealCategory = ref(null)
 const status = ref('loading')
 const loadError = ref('')
 
-const mealId = ref(null)
+const MEAL_VIEW_KEY = 'pp.mealView'
+function savedMealView() {
+  try {
+    return localStorage.getItem(MEAL_VIEW_KEY) === 'list' ? 'list' : 'grid'
+  } catch {
+    return 'grid'
+  }
+}
+
+const mealView = ref(savedMealView())
+const cartOpen = ref(false)
+const quantities = ref({})
 const days = ref([])
 const note = ref('')
 const busy = ref('')
@@ -51,15 +67,32 @@ const error = ref('')
 const first = computed(() => firstName(student.value?.name))
 const day = computed(() => (weekly ? null : schedule.value?.days.find((d) => d.date === date) || null))
 const current = computed(() => (weekly ? schedule.value?.weekly : day.value?.order) || null)
-const meal = computed(() => meals.value.find((m) => m.id === mealId.value) || null)
+const maxQuantity = computed(() => schedule.value?.max_quantity || 10)
+const selectedMeals = computed(() => meals.value.filter((m) => quantities.value[m.id] > 0))
+const selectedTotal = computed(() => selectedMeals.value.reduce((sum, m) => sum + Number(m.mrp) * quantities.value[m.id], 0))
+const selectedCount = computed(() => selectedMeals.value.reduce((sum, m) => sum + quantities.value[m.id], 0))
+const selectedLabel = computed(() => (selectedCount.value === 1 ? selectedMeals.value[0].name : `${selectedCount.value} items`))
+const dayDishes = computed(() => selectedMeals.value.flatMap((m) => dishesOn(m, weekday)))
+const weekMenu = computed(() => {
+  const dishes = new Map()
+  selectedMeals.value.flatMap((m) => m.menu || []).forEach((entry) => dishes.set(entry.weekday, [...(dishes.get(entry.weekday) || []), ...entry.dishes]))
+  return sortWeekdays([...dishes.keys()]).map((d) => ({ weekday: d, dishes: dishes.get(d) }))
+})
 const offered = computed(() => (weekly ? meals.value : meals.value.filter((m) => servedOn(m, weekday))))
+const categories = computed(() => menuGroups.value.filter((group) => (group.items || []).some((item) => offered.value.some((m) => m.id === item.id))))
+const shownMeals = computed(() => {
+  const search = mealSearch.value.trim().toLowerCase()
+  const inCategory = mealCategory.value === null ? null : categories.value.find((group) => group.id === mealCategory.value)?.items.map((item) => item.id)
+  return offered.value.filter((m) => (!inCategory || inCategory.includes(m.id)) && (!search || m.name.toLowerCase().includes(search)))
+})
 const schoolDays = computed(() => sortWeekdays(schedule.value?.school_days || []))
 const locked = computed(() => !weekly && (day.value?.locked ?? false))
 const weeklyCoversDay = computed(() => {
   const w = schedule.value?.weekly
   return !weekly && w?.status === 'active' && w.weekdays.includes(weekday)
 })
-const lowBalance = computed(() => meal.value && Number(student.value?.available ?? 0) < Number(meal.value.mrp))
+const lowBalance = computed(() => selectedMeals.value.length > 0 && Number(student.value?.available ?? 0) < selectedTotal.value)
+const servedOnSelected = (d) => selectedMeals.value.every((m) => servedOn(m, d))
 
 const title = computed(() => (weekly ? 'Every week' : isToday(date) ? 'Today' : shortDate(date)))
 const saveLabel = computed(() => {
@@ -73,7 +106,7 @@ async function load() {
   status.value = 'loading'
   try {
     const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id), fetchPreOrderMenu()])
-    ;[student.value, schedule.value, meals.value] = [s, sch, flattenMenu(menu)]
+    ;[student.value, schedule.value, meals.value, menuGroups.value] = [s, sch, flattenMenu(menu), menu || []]
     refreshChild(s)
 
     if (!weekly && !day.value) {
@@ -82,10 +115,11 @@ async function load() {
       return
     }
 
-    // Start from what is ordered; otherwise the first meal served that day.
-    mealId.value = current.value?.items?.[0]?.product_id ?? offered.value[0]?.id ?? null
+    // Start from what is ordered and still offered; a new order starts with nothing ticked.
+    const offeredIds = offered.value.map((m) => m.id)
+    quantities.value = Object.fromEntries((current.value?.items || []).filter((item) => offeredIds.includes(item.product_id)).map((item) => [item.product_id, item.quantity]))
     note.value = current.value?.note || ''
-    days.value = weekly ? [...(current.value?.weekdays || schoolDays.value.filter((d) => servedOn(meal.value, d)))] : []
+    days.value = weekly ? [...(current.value?.weekdays || schoolDays.value.filter(servedOnSelected))] : []
     status.value = 'ready'
   } catch (e) {
     loadError.value = e.status === 404 ? "This child isn't linked to your login." : e.message
@@ -93,12 +127,28 @@ async function load() {
   }
 }
 
-function selectMeal(next) {
-  mealId.value = next.id
-  error.value = ''
-  // Days the new meal is not served drop off the weekly order.
-  if (weekly) days.value = days.value.filter((d) => servedOn(next, d))
+function setMealView(next) {
+  mealView.value = next
+  try {
+    localStorage.setItem(MEAL_VIEW_KEY, next)
+  } catch {
+    // Storage blocked: the choice lasts for this visit.
+  }
 }
+
+function setQuantity(option, quantity) {
+  const adding = !quantities.value[option.id] && quantity > 0
+  const next = { ...quantities.value }
+  if (quantity > 0) next[option.id] = Math.min(quantity, maxQuantity.value)
+  else delete next[option.id]
+  quantities.value = next
+  error.value = ''
+  // Days an added meal is not served drop off the weekly order.
+  if (weekly && adding) days.value = days.value.filter((d) => servedOn(option, d))
+  if (!selectedMeals.value.length) cartOpen.value = false
+}
+
+const addMeal = (option) => setQuantity(option, (quantities.value[option.id] || 0) + 1)
 
 function toggleDay(d) {
   days.value = days.value.includes(d) ? days.value.filter((x) => x !== d) : [...days.value, d]
@@ -121,19 +171,19 @@ async function run(kind, request, message) {
 }
 
 function save() {
-  if (!meal.value) {
-    error.value = 'Choose a meal.'
+  if (!selectedMeals.value.length) {
+    error.value = 'Choose at least one item.'
     return
   }
   if (weekly && !days.value.length) {
     error.value = 'Pick at least one day.'
     return
   }
-  const payload = { items: [{ product_id: meal.value.id, quantity: 1 }], note: note.value.trim() || null }
+  const payload = { items: selectedMeals.value.map((m) => ({ product_id: m.id, quantity: quantities.value[m.id] })), note: note.value.trim() || null }
   if (weekly) {
-    run('save', () => saveWeeklyPreOrder(id, { ...payload, weekdays: sortWeekdays(days.value) }), `${first.value}'s weekly meal is set`)
+    run('save', () => saveWeeklyPreOrder(id, { ...payload, weekdays: sortWeekdays(days.value) }), `${first.value}'s weekly order is set`)
   } else {
-    run('save', () => saveDayPreOrder(id, date, payload), `Meal ordered for ${isToday(date) ? 'today' : dayName(date)}`)
+    run('save', () => saveDayPreOrder(id, date, payload), `Ordered for ${isToday(date) ? 'today' : dayName(date)}`)
   }
 }
 
@@ -163,10 +213,10 @@ onMounted(load)
   </main>
 
   <template v-else>
-    <main class="pp-narrow">
+    <main class="pp-order">
       <div class="pp-largetitle">
         <h1>{{ weekly ? 'Every week' : dayName(date) }}</h1>
-        <p v-if="weekly">Pick {{ first }}'s meal and the days. It's ordered automatically until you pause it.</p>
+        <p v-if="weekly">Pick {{ first }}'s meals and the days. They're ordered automatically until you pause it.</p>
         <p v-else>{{ longDate(date) }} · orders close at {{ time(day.deadline) }}</p>
       </div>
 
@@ -190,14 +240,32 @@ onMounted(load)
         <span class="pp-alert__main">{{ weekly ? 'There are no meals to order right now.' : `No meal is served on ${dayName(date)}.` }}</span>
       </div>
 
-      <template v-else>
-        <section class="pp-group">
-          <h2 class="pp-group__head">Meal</h2>
-          <div class="pp-group__body" role="radiogroup" aria-label="Meal">
-            <MealOption v-for="option in offered" :key="option.id" :meal="option" :selected="option.id === mealId" @select="selectMeal" />
+      <div v-else class="pp-order__layout">
+        <section class="pp-group pp-order__meals">
+          <div class="pp-meals-head">
+            <h2 class="pp-group__head">Meals · add one or more</h2>
+            <div class="pp-viewswitch" role="group" aria-label="Show meals as">
+              <button type="button" aria-label="List" title="List" :aria-pressed="mealView === 'list'" @click="setMealView('list')"><i class="fa fa-list"></i></button>
+              <button type="button" aria-label="Grid" title="Grid" :aria-pressed="mealView === 'grid'" @click="setMealView('grid')"><i class="fa fa-th-large"></i></button>
+            </div>
           </div>
+          <div class="pp-meal-tools">
+            <label class="pp-meal-search">
+              <i class="fa fa-search" aria-hidden="true"></i>
+              <input v-model="mealSearch" type="search" placeholder="Search meals" aria-label="Search meals" autocomplete="off" />
+            </label>
+            <div v-if="categories.length > 1" class="pp-meal-cats" role="group" aria-label="Categories">
+              <button class="pp-chip" type="button" :aria-pressed="mealCategory === null" @click="mealCategory = null">All</button>
+              <button v-for="group in categories" :key="group.id" class="pp-chip" type="button" :aria-pressed="mealCategory === group.id" @click="mealCategory = group.id">{{ group.name }}</button>
+            </div>
+          </div>
+          <div v-if="shownMeals.length" class="pp-group__body" :class="`pp-meals--${mealView}`" role="group" aria-label="Meals">
+            <MealOption v-for="option in shownMeals" :key="option.id" :meal="option" :quantity="quantities[option.id] || 0" :max="maxQuantity" @add="addMeal" />
+          </div>
+          <p v-else class="pp-meal-none">No meals match your search.</p>
         </section>
 
+        <div class="pp-order__side">
         <section v-if="weekly" class="pp-group">
           <h2 class="pp-group__head">Days</h2>
           <div class="pp-daychips" role="group" aria-label="Days">
@@ -207,7 +275,7 @@ onMounted(load)
               class="pp-chip"
               type="button"
               :aria-pressed="days.includes(d)"
-              :disabled="!servedOn(meal, d)"
+              :disabled="!servedOnSelected(d)"
               :aria-label="weekdayName(d, true)"
               @click="toggleDay(d)"
             >
@@ -215,19 +283,24 @@ onMounted(load)
             </button>
           </div>
           <p class="pp-group__foot">
-            {{ days.length ? `${weekdaysLabel(days)} · ${money((meal?.mrp || 0) * days.length)} a week` : 'Tap the days to order.' }}
+            {{ days.length ? `${weekdaysLabel(days)} · ${money(selectedTotal * days.length)} a week` : 'Tap the days to order.' }}
           </p>
         </section>
 
-        <section v-if="!weekly && meal" class="pp-group">
-          <h2 class="pp-group__head">On the menu</h2>
-          <DayMenu :dishes="dishesOn(meal, weekday)" />
+        <section class="pp-group pp-cart-panel">
+          <h2 class="pp-group__head">Your order<span v-if="selectedCount">{{ selectedCount }} {{ selectedCount === 1 ? 'item' : 'items' }}</span></h2>
+          <MealCart :meals="selectedMeals" :quantities="quantities" :total="selectedTotal" :max="maxQuantity" :days="weekly ? days.length : null" @quantity="setQuantity" />
         </section>
 
-        <section v-if="weekly && meal?.menu?.length" class="pp-group pp-week-menu">
+        <section v-if="!weekly && dayDishes.length" class="pp-group">
+          <h2 class="pp-group__head">On the menu</h2>
+          <DayMenu :dishes="dayDishes" />
+        </section>
+
+        <section v-if="weekly && weekMenu.length" class="pp-group pp-week-menu">
           <h2 class="pp-group__head">This week's dishes</h2>
           <div class="pp-group__body">
-            <div v-for="entry in meal.menu" :key="entry.weekday" class="pp-row">
+            <div v-for="entry in weekMenu" :key="entry.weekday" class="pp-row">
               <span class="pp-row__main">
                 <span class="pp-row__title">{{ weekdayName(entry.weekday, true) }}</span>
                 <span class="pp-row__sub">{{ entry.dishes.map((dish) => dish.name).join(' · ') || 'No dishes listed' }}</span>
@@ -250,12 +323,13 @@ onMounted(load)
         <div v-if="lowBalance" class="pp-alert pp-alert--warn">
           <i class="fa fa-exclamation-triangle"></i>
           <span class="pp-alert__main">
-            <span class="pp-alert__title">Top up before the day</span>{{ first }}'s card can spend {{ money(student.available) }} now, and the meal is
-            {{ money(meal.mrp) }}.
+            <span class="pp-alert__title">Top up before the day</span>{{ first }}'s card can spend {{ money(student.available) }} now, and the order is
+            {{ money(selectedTotal) }}.
           </span>
           <RouterLink class="pp-alert__btn" :to="{ name: 'topup', params: { id } }">Top up</RouterLink>
         </div>
-      </template>
+        </div>
+      </div>
 
       <div class="pp-inline-actions">
         <template v-if="weekly && current">
@@ -276,13 +350,31 @@ onMounted(load)
     </main>
 
     <footer v-if="offered.length && !locked" class="pp-actionbar">
-      <div v-if="meal" class="pp-order-sum">
-        <span>{{ meal.name }} · paid at the canteen</span>
-        <b>{{ money(weekly ? meal.mrp * days.length : meal.mrp) }}<small v-if="weekly" style="font-weight: 500"> /wk</small></b>
+      <button v-if="selectedMeals.length" class="pp-order-sum" type="button" :aria-label="`Review your order: ${selectedLabel}`" @click="cartOpen = true">
+        <span class="pp-order-sum__thumbs" aria-hidden="true">
+          <span v-for="option in selectedMeals.slice(0, 3)" :key="option.id" class="pp-thumb" :style="mealThumbStyle(option)"><i v-if="!mealThumbStyle(option)" class="fa fa-cutlery"></i></span>
+        </span>
+        <span class="pp-order-sum__label">
+          <span>{{ selectedLabel }} <i class="fa fa-angle-up" aria-hidden="true"></i></span>
+          <small>Paid at the canteen</small>
+        </span>
+      </button>
+      <div v-if="selectedMeals.length" class="pp-order-total">
+        <span>Grand total</span>
+        <b>{{ money(weekly ? selectedTotal * days.length : selectedTotal) }}<small v-if="weekly"> /wk</small></b>
       </div>
-      <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !meal" @click="save">
+      <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !selectedMeals.length" @click="save">
         <span v-if="busy === 'save'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save' ? 'Saving…' : saveLabel }}
       </button>
     </footer>
+
+    <BottomSheet :open="cartOpen" label="Your order" @close="cartOpen = false">
+      <div class="pp-sheet__grabber"></div>
+      <div class="pp-sheet__bar pp-cart-sheet__bar">
+        <div class="pp-sheet__title">Your order</div>
+        <button class="pp-navbtn" type="button" @click="cartOpen = false">Done</button>
+      </div>
+      <MealCart :meals="selectedMeals" :quantities="quantities" :total="selectedTotal" :max="maxQuantity" :days="weekly ? days.length : null" @quantity="setQuantity" />
+    </BottomSheet>
   </template>
 </template>

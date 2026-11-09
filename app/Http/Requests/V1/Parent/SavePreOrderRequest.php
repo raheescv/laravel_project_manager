@@ -34,6 +34,7 @@ class SavePreOrderRequest extends FormRequest
         return [
             'items.required' => 'Add at least one item to the order.',
             'items.min' => 'Add at least one item to the order.',
+            'items.max' => 'An order can have up to '.StudentPreOrder::MAX_LINES.' different items.',
             'items.*.quantity.max' => 'You can order up to '.StudentPreOrder::MAX_QUANTITY.' of one item.',
         ];
     }

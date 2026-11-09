@@ -77,7 +77,7 @@ export const cancelTopup = (pun) => client.post(`/topups/${encodeURIComponent(pu
 export const fetchPreOrderMenu = () => client.get('/pre-order-menu')
 
 /** { enabled, cutoff, school_days, max_quantity, weekly, days: [{ date, source, locked, deadline, collected, order }] } */
-export const fetchPreOrders = (id) => client.get(`/students/${id}/pre-orders`)
+export const fetchPreOrders = (id, days) => client.get(`/students/${id}/pre-orders`, { params: { days } })
 
 /** Each save / change answers with the refreshed schedule. */
 export const saveWeeklyPreOrder = (id, payload) => client.put(`/students/${id}/pre-orders/weekly`, payload)

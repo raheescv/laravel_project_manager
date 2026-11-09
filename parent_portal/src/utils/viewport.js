@@ -12,3 +12,12 @@ export const desktop = ref(query.matches)
 query.addEventListener('change', (event) => {
   desktop.value = event.matches
 })
+
+/** A laptop or larger: enough room beside the wallet for seven calendar columns. */
+const bigScreenQuery = window.matchMedia('(min-width: 1280px)')
+
+export const bigScreen = ref(bigScreenQuery.matches)
+
+bigScreenQuery.addEventListener('change', (event) => {
+  bigScreen.value = event.matches
+})

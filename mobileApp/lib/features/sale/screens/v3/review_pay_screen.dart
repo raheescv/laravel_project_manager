@@ -534,7 +534,10 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
     if (cart.student == null) {
       final card = await showTapCardSheet(context);
       if (card == null || !mounted) return;
-      cart.setStudent(card);
+      final order = cart.tapStudentCard(card);
+      if (order != null) {
+        AstraSnack.success(context, '${card.name} · pre-order added (${order.count} ${order.count == 1 ? 'item' : 'items'})');
+      }
     } else {
       cart.setPayMode(PayMode.studentCard);
     }

@@ -1,20 +1,23 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { fetchPreOrderMenu, fetchPreOrders, fetchStudent } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import LoadError from '@/components/LoadError.vue'
+import MealCalendar from '@/components/MealCalendar.vue'
 import { refreshChild } from '@/children'
 import { dateTile, dayName, firstName, isToday, money, time, weekdaysLabel } from '@/utils/format'
 import { flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
-import { desktop } from '@/utils/viewport'
+import { bigScreen, desktop } from '@/utils/viewport'
 
 /**
  * A child's canteen meals: the weekly order and what happens on each of the next
  * school days. Nothing is charged here — the meal is paid from the card when the
  * child taps it at the canteen.
  */
+const CALENDAR_DAYS = 31
+
 const route = useRoute()
 const id = Number(route.params.id)
 
@@ -25,12 +28,16 @@ const status = ref('loading')
 const error = ref('')
 
 const first = computed(() => firstName(student.value?.name))
-const mealName = (order) => order?.items?.map((item) => item.name).join(', ') || 'Meal'
+function mealName(order) {
+  const names = (order?.items || []).map((item) => (item.quantity > 1 ? `${item.quantity} × ${item.name}` : item.name))
+  if (names.length > 2) return `${names.slice(0, 2).join(', ')} +${names.length - 2} more`
+  return names.join(', ') || 'Meal'
+}
 
 async function load() {
   status.value = 'loading'
   try {
-    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id), fetchPreOrderMenu()])
+    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? CALENDAR_DAYS : undefined), fetchPreOrderMenu()])
     ;[student.value, schedule.value, meals.value] = [s, sch, flattenMenu(menu)]
     refreshChild(s)
     status.value = 'ready'
@@ -70,6 +77,16 @@ function dayCard(day) {
   return { meal: 'Not ordered', note: open ? 'Ordering open' : 'Ordering closed', kind: 'empty', action: open && 'Order a meal' }
 }
 const board = computed(() => (schedule.value?.days || []).map((day) => ({ day, card: dayCard(day) })))
+
+/** A window dragged wider needs the rest of the days the calendar shows. */
+watch(bigScreen, async (isBig) => {
+  if (!isBig || status.value !== 'ready') return
+  try {
+    schedule.value = await fetchPreOrders(id, CALENDAR_DAYS)
+  } catch {
+    // The days already on screen stay; the calendar just ends sooner.
+  }
+})
 
 onMounted(load)
 </script>
@@ -123,8 +140,9 @@ onMounted(load)
       </section>
 
       <section>
-        <h2 class="pp-group__head">Next school days</h2>
-        <div class="pp-week">
+        <h2 class="pp-group__head">{{ bigScreen ? 'Meal calendar' : 'Next school days' }}</h2>
+        <MealCalendar v-if="bigScreen" :board="board" :student-id="id" />
+        <div v-else class="pp-week">
           <component
             :is="day.locked ? 'div' : 'RouterLink'"
             v-for="{ day, card } in board"
@@ -134,13 +152,11 @@ onMounted(load)
             :to="day.locked ? undefined : { name: 'pre-order-day', params: { id, date: day.date } }"
           >
             <span class="pp-dayc__head">
-              <span>
-                <span class="pp-dayc__wd">{{ isToday(day.date) ? 'Today' : dayName(day.date).slice(0, 3) }}</span>
-                <span class="pp-dayc__num">{{ dateTile(day.date).day }}<small>{{ dateTile(day.date).month }}</small></span>
-              </span>
+              <span class="pp-dayc__wd">{{ isToday(day.date) ? 'Today' : dayName(day.date).slice(0, 3) }}</span>
               <span v-if="card.tag" class="pp-tag" :class="`pp-tag--${card.tag[0]}`">{{ card.tag[1] }}</span>
+              <span class="pp-dayc__num">{{ dateTile(day.date).day }}<small>{{ dateTile(day.date).month }}</small></span>
             </span>
-            <span class="pp-dayc__meal">{{ card.meal }}</span>
+            <span class="pp-dayc__meal" :title="card.meal">{{ card.meal }}</span>
             <span class="pp-dayc__sub">{{ card.note }}</span>
             <span class="pp-dayc__foot" :class="{ 'is-muted': !card.action }">
               {{ card.action || (day.locked ? 'Closed' : '') }}
@@ -158,7 +174,7 @@ onMounted(load)
       <section class="pp-group">
         <h2 class="pp-group__head">Every week</h2>
         <div class="pp-group__body">
-          <RouterLink class="pp-row pp-row--icon" :to="{ name: 'pre-order-weekly', params: { id } }">
+          <RouterLink class="pp-row pp-row--icon pp-weekly-row" :to="{ name: 'pre-order-weekly', params: { id } }">
             <template v-if="schedule.weekly">
               <span class="pp-row__icon" :class="schedule.weekly.status === 'paused' ? 'pp-row__icon--muted' : 'pp-row__icon--pos'"><i class="fa fa-refresh"></i></span>
               <span class="pp-row__main">

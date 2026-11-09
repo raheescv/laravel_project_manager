@@ -367,6 +367,16 @@ class CartCubit extends Cubit<CartState> {
     ));
   }
 
+  /// A card tapped at the till, on any screen: the student goes on the ticket and
+  /// today's pre-order goes in the cart. Returns the pre-order if this tap added it.
+  CardPreOrder? tapStudentCard(StudentCard card) {
+    setStudent(card);
+    final order = card.preOrder;
+    if (order == null || order.items.isEmpty || state.preOrder?.id == order.id) return null;
+    applyPreOrder(order);
+    return order;
+  }
+
   /// Take the tapped card off the ticket; it goes back to a walk-in cash sale.
   void clearStudent() => emit(state.copyWith(
         clearStudent: true,

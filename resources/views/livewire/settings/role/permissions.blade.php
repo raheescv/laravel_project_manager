@@ -20,8 +20,8 @@
 
     <div class="card shadow-sm">
         <div class="card-header bg-light py-3">
-            <div class="row mt-3">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 fs-6">
                         <i class="fa fa-user-shield me-1"></i> {{ $role->name }}
                     </span>
@@ -41,7 +41,7 @@
                         <span class="d-none d-md-inline">Remove All</span>
                     </button>
                 </div>
-                <div class="col-md-6">
+                <div class="ms-md-auto">
                     <div class="d-flex flex-wrap gap-2 align-items-center justify-content-md-end">
                         {{-- Filter: every ability, or only the ones the mobile app checks --}}
                         <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Filter by app">
@@ -66,7 +66,7 @@
                             </span>
                             <span class="badge rounded-pill {{ $only_not_granted ? 'bg-warning text-dark' : 'bg-secondary bg-opacity-25 text-body' }}">{{ $not_granted_count }}</span>
                         </label>
-                        <div class="input-group input-group-sm" style="max-width: 260px;">
+                        <div class="input-group input-group-sm" style="width: 220px; max-width: 100%;">
                             <span class="input-group-text bg-white border-secondary-subtle">
                                 <i class="fa fa-search"></i>
                             </span>

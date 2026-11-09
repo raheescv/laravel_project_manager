@@ -167,6 +167,16 @@ void main() {
       expect(cart.toPayload()['preOrderId'], 77);
     });
 
+    test('a tapped card adds its pre-order once, each product at its quantity', () {
+      expect(cart.tapStudentCard(withOrder)?.id, 77);
+      expect(cart.tapStudentCard(withOrder), isNull, reason: 'a second tap adds nothing more');
+
+      expect(cart.student?.accountId, 14);
+      expect(cart.lines.map((l) => '${l.productId}x${l.qty}'), ['50x1.0', '51x2.0']);
+      expect(cart.toPayload()['preOrderId'], 77);
+      expect(cart.tapStudentCard(card), isNull, reason: 'no pre-order, nothing to add');
+    });
+
     test('taking the card or the pre-order off leaves what the cashier added', () {
       cart.setStudent(withOrder);
       cart.add(Product.fromJson(product(51, 'Apple Juice', 5)));

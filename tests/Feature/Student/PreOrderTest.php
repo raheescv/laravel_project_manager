@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Student\PreOrder\ScheduleAction;
 use App\Livewire\Settings\StudentConfiguration;
 use App\Livewire\Student\CanteenMenu;
 use App\Models\Product;
@@ -62,6 +63,22 @@ it('shows parents only the categories the school put on the menu', function (): 
     expect($ids)->toContain($this->world->product->id)->not->toContain($this->offMenu->id);
 });
 
+it('gives the calendar every school day in the booking window, and the list only the next ten', function (): void {
+    $list = preOrderJson($this, 'GET', "students/{$this->student->id}/pre-orders")->assertOk();
+    expect($list->json('data.days'))->toHaveCount(ScheduleAction::DAYS);
+
+    $calendar = preOrderJson($this, 'GET', "students/{$this->student->id}/pre-orders", ['days' => 31])->assertOk();
+    $dates = collect($calendar->json('data.days'))->pluck('date');
+
+    expect($dates->count())->toBeGreaterThan(ScheduleAction::DAYS)
+        ->and($dates->first())->toBe(today()->toDateString())
+        ->and($dates->last() <= today()->addDays(StudentSettings::PRE_ORDER_DAYS_AHEAD)->toDateString())->toBeTrue();
+
+    preOrderJson($this, 'GET', "students/{$this->student->id}/pre-orders", ['days' => 32])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('days');
+});
+
 it('shows no menu and refuses orders while pre-orders are off', function (): void {
     StudentWorld::enablePreOrders($this->world, [$this->menuCategory], ['pre_orders_enabled' => false]);
 
@@ -89,6 +106,32 @@ it('saves a day order and a weekly order, and the day order wins on its day', fu
         ->and($days['2026-09-22']['source'])->toBe('weekly')
         // Friday and Saturday are not school days.
         ->and($days->has('2026-09-25'))->toBeFalse();
+});
+
+it('orders several meals with quantities and the till gets each product and quantity for the sale', function (): void {
+    $second = $this->world->product->replicate()->fill(['name' => 'Muffin Banana', 'code' => 'MUF1', 'mrp' => 8]);
+    $second->save();
+
+    $response = preOrderJson($this, 'PUT', "students/{$this->student->id}/pre-orders/days/2026-09-20", [
+        'items' => [
+            ['product_id' => $this->world->product->id, 'quantity' => 1],
+            ['product_id' => $second->id, 'quantity' => 3],
+        ],
+    ])->assertOk();
+
+    $today = collect($response->json('data.days'))->firstWhere('date', '2026-09-20');
+    expect(collect($today['order']['items'])->pluck('quantity', 'product_id')->all())->toEqual([$this->world->product->id => 1, $second->id => 3])
+        ->and($today['order']['items_count'])->toBe(4)
+        ->and($today['order']['total'])->toEqual(29);
+
+    $preOrder = tillLookup($this)->assertOk()->json('data.pre_order');
+    expect(collect($preOrder['items'])->pluck('quantity', 'product.id')->all())->toEqual([$this->world->product->id => 1, $second->id => 3])
+        ->and($preOrder['total'])->toEqual(29);
+
+    $tooMany = collect(range(1, StudentPreOrder::MAX_LINES + 1))->map(fn (int $id) => ['product_id' => $id, 'quantity' => 1])->all();
+    preOrderJson($this, 'PUT', "students/{$this->student->id}/pre-orders/days/2026-09-20", ['items' => $tooMany])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'An order can have up to '.StudentPreOrder::MAX_LINES.' different items.');
 });
 
 it('skips a day of the weekly order and can bring it back', function (): void {
