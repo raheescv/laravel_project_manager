@@ -152,7 +152,8 @@ class Table extends Component
                     $q->where('name', 'like', "%{$value}%")
                         ->orWhere('code', 'like', "%{$value}%")
                         ->orWhere('subdomain', 'like', "%{$value}%")
-                        ->orWhere('domain', 'like', "%{$value}%");
+                        ->orWhere('domain', 'like', "%{$value}%")
+                        ->orWhere('domain_aliases', 'like', "%{$value}%");
                 });
             });
     }

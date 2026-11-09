@@ -7,6 +7,7 @@ use App\Actions\Tenant\UpdateAction;
 use App\Models\Tenant;
 use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class Page extends Component
@@ -19,6 +20,9 @@ class Page extends Component
     public $tenants = [];
 
     public $table_id;
+
+    /** The alias hosts as typed in the form, separated by commas. */
+    public string $aliasDomains = '';
 
     public function create()
     {
@@ -66,6 +70,7 @@ class Page extends Component
                 'amc_amount' => '',
                 'amc_cycle' => 'yearly',
             ];
+            $this->aliasDomains = '';
         } else {
             $tenant = Tenant::withoutGlobalScopes()->find($this->table_id);
             if (! $tenant) {
@@ -76,6 +81,7 @@ class Page extends Component
             $this->tenants = $tenant->toArray();
             $this->tenants['started_on'] = $tenant->started_on?->toDateString();
             $this->tenants['renews_on'] = $tenant->renews_on?->toDateString();
+            $this->aliasDomains = implode(', ', $tenant->aliasHosts());
         }
     }
 
@@ -86,6 +92,10 @@ class Page extends Component
         foreach ($tenantRules as $key => $rule) {
             $rules["tenants.{$key}"] = $rule;
         }
+        $rules['tenants.domain_aliases.*'][] = Rule::notIn(array_filter([
+            Tenant::normalizeHost($this->tenants['domain'] ?? null),
+            Tenant::normalizeHost(($this->tenants['subdomain'] ?? '').Tenant::subdomainSuffix()),
+        ]));
         $rules['tenants.description'] = ['nullable', 'string'];
         if (filled($this->tenants['started_on'] ?? null)) {
             $rules['tenants.renews_on'][] = 'after_or_equal:tenants.started_on';
@@ -103,6 +113,9 @@ class Page extends Component
         'tenants.domain.regex' => 'Enter a domain like shop.example.com',
         'tenants.domain.unique' => 'This domain already belongs to another tenant',
         'tenants.domain.not_in' => 'That is the main app address. Leave the domain empty; the tenant is reached by its subdomain',
+        'tenants.domain_aliases.*.regex' => 'Enter each alias like newrest.example.com',
+        'tenants.domain_aliases.*.unique' => 'An alias already belongs to another tenant',
+        'tenants.domain_aliases.*.not_in' => 'An alias repeats the main app address or this tenant\'s own address',
         'tenants.renews_on.after_or_equal' => 'The renewal date cannot be before the start date',
         'tenants.amc_amount.numeric' => 'Enter the AMC amount as a number',
         'tenants.amc_amount.min' => 'The AMC amount cannot be negative',
@@ -116,6 +129,7 @@ class Page extends Component
                 $this->tenants[$key] = null;
             }
         }
+        $this->tenants['domain_aliases'] = Tenant::parseHosts($this->aliasDomains) ?: null;
         $this->validate();
         try {
             if (! $this->table_id) {

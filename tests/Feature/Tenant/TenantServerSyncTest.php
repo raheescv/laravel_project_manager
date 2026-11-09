@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Middleware\IdentifyTenant;
+use App\Livewire\Tenant\Page;
 use App\Livewire\Tenant\View;
 use App\Models\Tenant;
 use App\Services\TenantServerService;
 use App\Services\TenantService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Validator;
@@ -287,6 +290,242 @@ it('never overwrites a hand-written site with the same name', function (): void 
     expect(File::get("{$this->etc}/available/solan"))->toBe("# hand-written\n")
         ->and($tenant->fresh())->domain_status->toBe(Tenant::DOMAIN_FAILED)
         ->domain_error->toContain('not written by Tenant Control');
+});
+
+/** @param  list<string>  $aliases */
+function tenantWithAliases(array $aliases, array $attributes = []): Tenant
+{
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => null, ...$attributes]);
+    $tenant->domain_aliases = $aliases;
+    $tenant->save();
+
+    return $tenant;
+}
+
+function superAdminOnServerTab(Tenant $tenant): \Livewire\Features\SupportTesting\Testable
+{
+    $world = PosWorld::create();
+    $world->user->forceFill(['is_super_admin' => true])->save();
+
+    return Livewire::actingAs($world->user)->test(View::class, ['tenantId' => $tenant->id])->call('selectTab', 'server');
+}
+
+it('opens the same tenant from its subdomain and an alias under the same domain', function (): void {
+    config(['app.url' => 'https://app.astraqatar.com', 'tenant_server.wildcard_site' => true]);
+    $tenant = tenantWithAliases(['newrest.astraqatar.com'], ['subdomain' => 'spa']);
+    $resolve = function (string $url): ?int {
+        $service = new TenantService();
+        (new IdentifyTenant($service))->handle(Request::create($url), fn () => response('ok'));
+
+        return $service->getCurrentTenantId();
+    };
+
+    expect($resolve('https://spa.astraqatar.com/'))->toBe($tenant->id)
+        ->and($resolve('https://newrest.astraqatar.com/'))->toBe($tenant->id)
+        ->and($tenant->fresh()->needsServerSite())->toBeFalse()
+        ->and($tenant->fresh()->domain_status)->toBeNull();
+});
+
+it('drops a remembered miss as soon as the alias is added, and the hit once removed', function (): void {
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => null]);
+    $service = app(TenantService::class);
+    expect($service->findTenantByDomain('shop.acme.com'))->toBeNull();
+
+    $tenant->domain_aliases = ['shop.acme.com'];
+    $tenant->save();
+    expect($service->findTenantByDomain('shop.acme.com')?->id)->toBe($tenant->id);
+
+    $tenant->domain_aliases = null;
+    $tenant->save();
+    expect($service->findTenantByDomain('shop.acme.com'))->toBeNull();
+});
+
+it('does not resolve an alias of a deactivated tenant', function (): void {
+    tenantWithAliases(['shop.acme.com'], ['is_active' => false]);
+
+    expect(app(TenantService::class)->findTenantByDomain('shop.acme.com'))->toBeNull();
+});
+
+it('serves the domain and its aliases from one site and one certificate', function (): void {
+    fakeServer($this->etc);
+    $tenant = tenantWithAliases(['other.acme.com'], ['domain' => 'shop.acme.com']);
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect(File::get("{$this->etc}/available/acme"))
+        ->toContain('server_name shop.acme.com other.acme.com;')
+        ->toContain("ssl_certificate {$this->etc}/live/shop.acme.com/fullchain.pem;")
+        ->and($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_ACTIVE);
+
+    Process::assertRan(fn ($process) => str_contains(implode(' ', (array) $process->command), '--cert-name shop.acme.com -d shop.acme.com -d other.acme.com'));
+});
+
+it('gives a tenant with only an outside alias its own site', function (): void {
+    fakeServer($this->etc);
+    $tenant = tenantWithAliases(['client.example.com']);
+    expect($tenant->domain_status)->toBe(Tenant::DOMAIN_PENDING);
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect(File::get("{$this->etc}/available/acme"))->toContain('server_name client.example.com;')
+        ->and($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_ACTIVE);
+});
+
+it('keeps an outside alias in the site when the custom domain is removed', function (): void {
+    fakeServer($this->etc);
+    $tenant = tenantWithAliases(['client.example.com'], ['domain' => 'shop.acme.com']);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    $tenant->refresh()->update(['domain' => null]);
+    expect($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_PENDING);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect(File::get("{$this->etc}/available/acme"))->toContain('server_name client.example.com;');
+});
+
+it('expands an existing certificate when an alias is added', function (): void {
+    fakeServer($this->etc);
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => 'shop.acme.com']);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    $tenant->refresh();
+    $tenant->domain_aliases = ['other.acme.com'];
+    $tenant->save();
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    Process::assertRan(fn ($process) => str_contains(implode(' ', (array) $process->command), '-d shop.acme.com -d other.acme.com'));
+    expect($tenant->fresh()->domain_status)->toBe(Tenant::DOMAIN_ACTIVE);
+});
+
+it('keeps HTTPS and names every host when expanding the certificate fails', function (): void {
+    fakeServer($this->etc);
+    $tenant = Tenant::factory()->create(['subdomain' => 'acme', 'domain' => 'shop.acme.com']);
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    Process::swap(new \Illuminate\Process\Factory());
+    fakeServer($this->etc, certbotSucceeds: false);
+    $tenant->refresh();
+    $tenant->domain_aliases = ['other.acme.com'];
+    $tenant->save();
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+
+    expect($tenant->fresh())->domain_status->toBe(Tenant::DOMAIN_FAILED)
+        ->domain_error->toContain('shop.acme.com, other.acme.com have DNS A records')
+        ->domain_error->toContain('existing certificate stays in use')
+        ->and(File::get("{$this->etc}/available/acme"))->toContain('listen 443 ssl');
+});
+
+it('adds and removes aliases from the Server tab', function (): void {
+    fakeServer($this->etc);
+    $tenant = Tenant::factory()->create(['subdomain' => 'orga', 'domain' => null]);
+
+    $component = superAdminOnServerTab($tenant)
+        ->set('aliasDomain', 'https://NewRest.test/')
+        ->call('addDomainAlias')
+        ->assertHasNoErrors()
+        ->assertSet('aliasDomain', '')
+        ->assertSee('newrest.test')
+        ->assertSee('Served by the wildcard site')
+        ->set('aliasDomain', 'shop.orga.com')
+        ->call('addDomainAlias')
+        ->assertHasNoErrors()
+        ->assertSee('Waiting for the server');
+
+    expect($tenant->fresh()->aliasHosts())->toBe(['newrest.test', 'shop.orga.com']);
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+    expect(File::get("{$this->etc}/available/orga"))->toContain('server_name shop.orga.com;');
+
+    $component->call('removeDomainAlias', 'shop.orga.com')->call('removeDomainAlias', 'newrest.test')->assertDispatched('success');
+    expect($tenant->fresh())->domain_aliases->toBeNull();
+
+    $this->artisan('tenant:server-sync')->assertSuccessful();
+    expect(File::exists("{$this->etc}/available/orga"))->toBeFalse();
+});
+
+it('refuses an alias that already opens this tenant or belongs to another', function (string $alias, array|string $error): void {
+    tenantWithAliases(['taken.acme.com'], ['subdomain' => 'other', 'domain' => 'owned.acme.com']);
+    $tenant = tenantWithAliases(['mine.orga.com'], ['subdomain' => 'orga', 'domain' => 'shop.orga.com']);
+
+    superAdminOnServerTab($tenant)->set('aliasDomain', $alias)->call('addDomainAlias')->assertHasErrors($error);
+
+    expect($tenant->fresh()->aliasHosts())->toBe(['mine.orga.com']);
+})->with([
+    'the app address' => ['app.test', ['aliasDomain' => 'not_in']],
+    'its own subdomain' => ['orga.test', 'aliasDomain'],
+    'its own domain' => ['shop.orga.com', 'aliasDomain'],
+    'its own alias' => ['mine.orga.com', 'aliasDomain'],
+    'another domain' => ['owned.acme.com', 'aliasDomain'],
+    'another alias' => ['taken.acme.com', 'aliasDomain'],
+    'another subdomain address' => ['other.test', 'aliasDomain'],
+    'not a host name' => ['not a host', ['aliasDomain' => 'regex']],
+]);
+
+function superAdminOnEditForm(Tenant $tenant): \Livewire\Features\SupportTesting\Testable
+{
+    $world = PosWorld::create();
+    $world->user->forceFill(['is_super_admin' => true])->save();
+
+    return Livewire::actingAs($world->user)->test(Page::class, ['table_id' => $tenant->id]);
+}
+
+it('saves, shows and clears aliases from the Edit tenant form', function (): void {
+    $tenant = Tenant::factory()->create(['subdomain' => 'orga', 'domain' => null]);
+
+    superAdminOnEditForm($tenant)
+        ->assertSet('aliasDomains', '')
+        ->assertSee('Alias domains')
+        ->set('aliasDomains', 'https://NewRest.test/, shop.orga.com newrest.test')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('aliasDomains', 'newrest.test, shop.orga.com');
+
+    expect($tenant->fresh())->aliasHosts()->toBe(['newrest.test', 'shop.orga.com'])
+        ->domain_status->toBe(Tenant::DOMAIN_PENDING);
+
+    superAdminOnEditForm($tenant->fresh())
+        ->assertSet('aliasDomains', 'newrest.test, shop.orga.com')
+        ->set('aliasDomains', '')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($tenant->fresh()->domain_aliases)->toBeNull();
+});
+
+it('keeps saved aliases when the form changes something else', function (): void {
+    $tenant = tenantWithAliases(['shop.orga.com'], ['subdomain' => 'orga']);
+    Tenant::whereKey($tenant->id)->update(['domain_status' => Tenant::DOMAIN_ACTIVE]);
+
+    superAdminOnEditForm($tenant->fresh())->set('tenants.name', 'Renamed')->call('save')->assertHasNoErrors();
+
+    expect($tenant->fresh())->name->toBe('Renamed')
+        ->aliasHosts()->toBe(['shop.orga.com'])
+        ->domain_status->toBe(Tenant::DOMAIN_ACTIVE);
+});
+
+it('refuses a bad alias on the Edit tenant form', function (string $alias): void {
+    tenantWithAliases(['taken.acme.com'], ['subdomain' => 'other', 'domain' => 'owned.acme.com']);
+    $tenant = Tenant::factory()->create(['subdomain' => 'orga', 'domain' => 'shop.orga.com']);
+
+    superAdminOnEditForm($tenant)->set('aliasDomains', $alias)->call('save')->assertHasErrors('tenants.domain_aliases.0');
+
+    expect($tenant->fresh()->domain_aliases)->toBeNull();
+})->with([
+    'the app address' => ['app.test'],
+    'its own subdomain' => ['orga.test'],
+    'its own domain' => ['shop.orga.com'],
+    'another domain' => ['owned.acme.com'],
+    'another alias' => ['taken.acme.com'],
+    'another subdomain address' => ['other.test'],
+    'not a host name' => ['nothost'],
+]);
+
+it('stops a domain or subdomain from taking over another tenant alias', function (): void {
+    tenantWithAliases(['shop.acme.com', 'newrest.test']);
+
+    expect(Validator::make(['domain' => 'shop.acme.com'], ['domain' => Tenant::rules()['domain']])->fails())->toBeTrue()
+        ->and(Validator::make(['subdomain' => 'newrest'], ['subdomain' => Tenant::rules()['subdomain']])->fails())->toBeTrue()
+        ->and(Validator::make(['subdomain' => 'fresh'], ['subdomain' => Tenant::rules()['subdomain']])->fails())->toBeFalse();
 });
 
 it('renames the site when the subdomain changes', function (): void {

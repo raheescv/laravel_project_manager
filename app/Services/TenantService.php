@@ -120,9 +120,9 @@ class TenantService
     }
 
     /**
-     * Find an active tenant by its custom domain (an exact host match). The app
-     * host itself is never a custom domain, so it always falls through to the
-     * subdomain lookup.
+     * Find an active tenant by its custom domain or an alias (an exact host
+     * match). The app host itself is never a custom domain, so it always falls
+     * through to the subdomain lookup.
      */
     public function findTenantByDomain(string $host): ?Tenant
     {
@@ -134,7 +134,7 @@ class TenantService
         // `false` marks "no tenant here" — Cache::remember never stores null, and
         // every ordinary subdomain request passes through this lookup first.
         return Cache::remember("tenant_domain_{$host}", now()->addHours(24), function () use ($host) {
-            return Tenant::where('domain', $host)
+            return Tenant::where(fn ($query) => $query->where('domain', $host)->orWhereJsonContains('domain_aliases', $host))
                 ->where('is_active', true)
                 ->first() ?? false;
         }) ?: null;

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\CarbonInterface;
+use Closure;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +21,7 @@ class Tenant extends Model
         'code',
         'subdomain',
         'domain',
+        'domain_aliases',
         'is_active',
         'description',
         'started_on',
@@ -30,6 +32,7 @@ class Tenant extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'domain_aliases' => 'array',
         'domain_synced_at' => 'datetime',
         'started_on' => 'date',
         'renews_on' => 'date',
@@ -68,7 +71,8 @@ class Tenant extends Model
             foreach (array_unique(array_filter([$tenant->subdomain, $tenant->getOriginal('subdomain')])) as $subdomain) {
                 Cache::forget("tenant_subdomain_{$subdomain}");
             }
-            foreach (array_unique(array_filter([$tenant->domain, $tenant->getOriginal('domain')])) as $domain) {
+            $hosts = [$tenant->domain, $tenant->getOriginal('domain'), ...$tenant->aliasHosts(), ...($tenant->getOriginal('domain_aliases') ?? [])];
+            foreach (array_unique(array_filter($hosts)) as $domain) {
                 Cache::forget("tenant_domain_{$domain}");
             }
         };
@@ -78,15 +82,15 @@ class Tenant extends Model
         static::saving(function (Tenant $tenant): void {
             // Only touch the sync columns when there is something to record: the
             // migration that seeds the first tenant runs before they exist.
-            if ($tenant->isDirty('domain') && ($tenant->hasCustomDomain() || $tenant->getOriginal('domain_status') !== null)) {
-                $tenant->domain_status = $tenant->hasCustomDomain() ? self::DOMAIN_PENDING : null;
+            if ($tenant->isDirty(['domain', 'domain_aliases']) && ($tenant->needsServerSite() || $tenant->getOriginal('domain_status') !== null)) {
+                $tenant->domain_status = $tenant->needsServerSite() ? self::DOMAIN_PENDING : null;
                 $tenant->domain_error = null;
-            } elseif ($tenant->isDirty(['is_active', 'subdomain']) && $tenant->hasCustomDomain()) {
+            } elseif ($tenant->isDirty(['is_active', 'subdomain']) && $tenant->needsServerSite()) {
                 $tenant->domain_status = self::DOMAIN_PENDING;
             }
         });
         $markForRemoval = function (Tenant $tenant): void {
-            if ($tenant->hasCustomDomain()) {
+            if ($tenant->needsServerSite()) {
                 $tenant->newQueryWithoutScopes()->whereKey($tenant->id)->update(['domain_status' => self::DOMAIN_PENDING]);
             }
         };
@@ -103,9 +107,107 @@ class Tenant extends Model
      */
     public function setDomainAttribute(?string $value): void
     {
+        $this->attributes['domain'] = self::normalizeHost($value);
+    }
+
+    public static function normalizeHost(?string $value): ?string
+    {
         $host = strtolower(trim((string) $value));
         $host = (string) preg_replace('#^[a-z]+://#', '', $host);
-        $this->attributes['domain'] = rtrim(explode('/', $host)[0], '.') ?: null;
+
+        return rtrim(explode('/', $host)[0], '.') ?: null;
+    }
+
+    /**
+     * Bare, unique hosts from a typed list separated by commas or spaces.
+     *
+     * @return list<string>
+     */
+    public static function parseHosts(string $value): array
+    {
+        $hosts = array_map(self::normalizeHost(...), preg_split('/[\s,;]+/', $value, -1, PREG_SPLIT_NO_EMPTY));
+
+        return array_values(array_unique(array_filter($hosts)));
+    }
+
+    /**
+     * Extra addresses that open this same tenant.
+     *
+     * @return list<string>
+     */
+    public function aliasHosts(): array
+    {
+        return $this->domain_aliases ?? [];
+    }
+
+    /**
+     * Whether the shared wildcard site and certificate already answer this
+     * host. A wildcard certificate only covers a single label.
+     */
+    public function isServedByWildcard(string $host): bool
+    {
+        if (! config('tenant_server.wildcard_site')) {
+            return false;
+        }
+
+        $suffix = self::subdomainSuffix();
+
+        return str_ends_with($host, $suffix) && ! str_contains(substr($host, 0, -strlen($suffix)), '.');
+    }
+
+    /**
+     * Hosts that need this tenant's own nginx site and certificate; the first
+     * one names the certificate.
+     *
+     * @return list<string>
+     */
+    public function serverHosts(): array
+    {
+        $aliases = array_filter($this->aliasHosts(), fn (string $host): bool => ! $this->isServedByWildcard($host));
+
+        return array_values(array_unique([...($this->hasCustomDomain() ? [$this->domain] : []), ...$aliases]));
+    }
+
+    public function needsServerSite(): bool
+    {
+        return $this->serverHosts() !== [];
+    }
+
+    /**
+     * Why another tenant blocks this host, or null when it is free. Soft
+     * deleted tenants still count: restoring one must not collide.
+     */
+    public static function hostConflict(string $host, int $ignoreId = 0): ?string
+    {
+        $otherTenants = self::withTrashed()->whereKeyNot($ignoreId);
+
+        $claimed = (clone $otherTenants)
+            ->where(fn ($query) => $query->where('domain', $host)->orWhereJsonContains('domain_aliases', $host))
+            ->exists();
+        if ($claimed) {
+            return 'Another tenant already uses this domain';
+        }
+
+        $suffix = self::subdomainSuffix();
+        if (str_ends_with($host, $suffix) && (clone $otherTenants)->where('subdomain', substr($host, 0, -strlen($suffix)))->exists()) {
+            return "That is another tenant's own address";
+        }
+
+        return null;
+    }
+
+    /**
+     * Host lookups match the exact domain before reading a subdomain, so a
+     * host claimed by two tenants would silently send one to the other.
+     */
+    private static function hostAvailable(int $ignoreId, string $hostSuffix = ''): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($ignoreId, $hostSuffix): void {
+            $conflict = self::hostConflict((string) self::normalizeHost($value.$hostSuffix), $ignoreId);
+            if ($conflict) {
+                $fail($conflict);
+            }
+        };
     }
 
     /**
@@ -129,16 +231,21 @@ class Tenant extends Model
 
     public static function rules($id = 0, $merge = [])
     {
+        $domainRules = [
+            'nullable', 'string', 'max:255',
+            'regex:/^(https?:\/\/)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\/?$/i',
+            Rule::notIn([parse_url(config('app.url'), PHP_URL_HOST)]),
+            Rule::unique(self::class, 'domain')->ignore($id),
+            self::hostAvailable((int) $id),
+        ];
+
         return array_merge([
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:50', Rule::unique(self::class, 'code')->ignore($id)],
-            'subdomain' => ['required', 'string', 'max:255', Rule::unique(self::class, 'subdomain')->ignore($id)],
-            'domain' => [
-                'nullable', 'string', 'max:255',
-                'regex:/^(https?:\/\/)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\/?$/i',
-                Rule::notIn([parse_url(config('app.url'), PHP_URL_HOST)]),
-                Rule::unique(self::class, 'domain')->ignore($id),
-            ],
+            'subdomain' => ['required', 'string', 'max:255', Rule::unique(self::class, 'subdomain')->ignore($id), self::hostAvailable((int) $id, self::subdomainSuffix())],
+            'domain' => $domainRules,
+            'domain_aliases' => ['nullable', 'array'],
+            'domain_aliases.*' => $domainRules,
             'is_active' => ['boolean'],
             'started_on' => ['nullable', 'date'],
             'renews_on' => ['nullable', 'date'],

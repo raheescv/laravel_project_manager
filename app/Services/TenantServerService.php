@@ -36,22 +36,27 @@ class TenantServerService
      */
     public function syncTenant(Tenant $tenant): array
     {
-        $domain = $tenant->domain;
-        $hasCertificate = $this->certificateExists($domain);
+        $hosts = $tenant->serverHosts();
+        $hasCertificate = $this->certificateExists($hosts[0]);
 
         $error = $this->writeSite($tenant, $hasCertificate);
         if ($error) {
             return ['status' => Tenant::DOMAIN_FAILED, 'error' => $error];
         }
-        if ($hasCertificate) {
+        // With several hosts the certificate may predate one of them; certbot
+        // leaves an unchanged name list alone, so asking again is free.
+        if ($hasCertificate && count($hosts) === 1) {
             return ['status' => Tenant::DOMAIN_ACTIVE, 'error' => null];
         }
 
-        $certbot = $this->run($this->certbotCommand($domain));
+        $certbot = $this->run($this->certbotCommand($hosts));
         if (! $certbot->successful()) {
+            $dns = count($hosts) === 1 ? 'has a DNS A record' : 'have DNS A records';
+            $meanwhile = $hasCertificate ? 'The existing certificate stays in use meanwhile.' : 'The site is live over HTTP meanwhile.';
+
             return [
                 'status' => Tenant::DOMAIN_FAILED,
-                'error' => "Certificate not issued — check that {$domain} has a DNS A record pointing to this server. The site is live over HTTP meanwhile.\n".$this->tail($certbot),
+                'error' => 'Certificate not issued — check that '.implode(', ', $hosts)." {$dns} pointing to this server. {$meanwhile}\n".$this->tail($certbot),
             ];
         }
 
@@ -131,14 +136,16 @@ class TenantServerService
      */
     public function renderSite(Tenant $tenant, bool $withSsl): string
     {
-        $domain = $tenant->domain;
+        $hosts = $tenant->serverHosts();
+        $domain = implode(' ', $hosts);
+        $hostList = implode(', ', $hosts);
         $root = rtrim(config('tenant_server.app_path'), '/').'/public';
-        $live = rtrim(config('tenant_server.certbot.live_path'), '/').'/'.$domain;
+        $live = rtrim(config('tenant_server.certbot.live_path'), '/').'/'.$hosts[0];
         $app = $this->appLocations();
         $name = $this->siteName($tenant);
         $logs = "    access_log /var/log/nginx/{$name}.access.log;\n    error_log  /var/log/nginx/{$name}.error.log;";
         $header = <<<NGINX
-{$this->marker($tenant)} ({$tenant->code}), {$domain}.
+{$this->marker($tenant)} ({$tenant->code}), {$hostList}.
 # Do not edit: it is rewritten by `php artisan tenant:server-sync`.
 #
 # Served from {$root}. The app resolves the tenant from
@@ -404,16 +411,21 @@ CRON;
     }
 
     /**
+     * One certificate per tenant, named after its first host, so adding or
+     * removing an alias updates it in place.
+     *
+     * @param  list<string>  $hosts
      * @return list<string>
      */
-    private function certbotCommand(string $domain): array
+    private function certbotCommand(array $hosts): array
     {
         $email = config('tenant_server.certbot.email');
 
         return [
             config('tenant_server.certbot.binary'), 'certonly', '--webroot',
             '-w', rtrim(config('tenant_server.app_path'), '/').'/public',
-            '-d', $domain,
+            '--cert-name', $hosts[0],
+            ...collect($hosts)->flatMap(fn (string $host): array => ['-d', $host])->all(),
             '--non-interactive', '--agree-tos', '--keep-until-expiring',
             ...($email ? ['-m', $email] : ['--register-unsafely-without-email']),
         ];

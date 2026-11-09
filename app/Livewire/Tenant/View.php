@@ -45,6 +45,8 @@ class View extends Component
 
     public string $customDomain = '';
 
+    public string $aliasDomain = '';
+
     /** @var array{paid_on: string, type: string, amount: string, method: string, reference: string, note: string}|array{} */
     public array $payment = [];
 
@@ -89,7 +91,7 @@ class View extends Component
         abort_unless(Auth::user()?->is_super_admin, 403);
 
         $tenant = Tenant::findOrFail($this->tenantId);
-        if (! $tenant->hasCustomDomain()) {
+        if (! $tenant->needsServerSite()) {
             $this->dispatch('error', ['message' => 'Set a custom domain on this tenant first.']);
 
             return;
@@ -137,6 +139,52 @@ class View extends Component
 
         Tenant::findOrFail($this->tenantId)->update(['domain' => null]);
         $this->dispatch('success', ['message' => 'Domain removed — its nginx site is taken down within a minute']);
+    }
+
+    /**
+     * Add another address for this same tenant. One the wildcard site already
+     * answers works at once; any other joins the tenant's nginx site.
+     */
+    public function addDomainAlias(): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $tenant = Tenant::findOrFail($this->tenantId);
+        $this->validate([
+            'aliasDomain' => ['required', ...Tenant::rules($tenant->id)['domain']],
+        ], [
+            'aliasDomain.required' => 'Enter the alias address',
+            'aliasDomain.regex' => 'Enter a host name such as newrest.example.com',
+            'aliasDomain.not_in' => 'That is the main app address, which already has its own site',
+            'aliasDomain.unique' => 'Another tenant already uses this domain',
+        ]);
+
+        $host = (string) Tenant::normalizeHost($this->aliasDomain);
+        if (in_array($host, [$tenant->domain, parse_url($tenant->url(), PHP_URL_HOST), ...$tenant->aliasHosts()], true)) {
+            $this->addError('aliasDomain', 'This address already opens this tenant');
+
+            return;
+        }
+
+        $tenant->domain_aliases = [...$tenant->aliasHosts(), $host];
+        $tenant->save();
+
+        $this->aliasDomain = '';
+        $this->dispatch('success', ['message' => $tenant->isServedByWildcard($host)
+            ? "{$host} now opens this tenant"
+            : "Saved — the server sets up {$host} within a minute"]);
+    }
+
+    public function removeDomainAlias(string $host): void
+    {
+        abort_unless(Auth::user()?->is_super_admin, 403);
+
+        $tenant = Tenant::findOrFail($this->tenantId);
+        $remaining = array_values(array_diff($tenant->aliasHosts(), [$host]));
+        $tenant->domain_aliases = $remaining ?: null;
+        $tenant->save();
+
+        $this->dispatch('success', ['message' => "{$host} no longer opens this tenant"]);
     }
 
     /**
@@ -349,7 +397,7 @@ class View extends Component
             'isCurrentTenant' => $tenant->id === app(TenantService::class)->getCurrentTenantId(),
             'systems' => array_keys(config('modules.systems', [])),
             'serverHealth' => isset($this->loaded_tabs['server']) ? $server->health() : null,
-            'nginxPreview' => isset($this->loaded_tabs['server']) && $tenant->hasCustomDomain() ? $server->renderSite($tenant, true) : null,
+            'nginxPreview' => isset($this->loaded_tabs['server']) && $tenant->needsServerSite() ? $server->renderSite($tenant, true) : null,
             'serverSetupCommand' => 'cd '.config('tenant_server.app_path').' && sudo '.config('tenant_server.php_binary').' artisan tenant:server-sync --shared',
             'serverActions' => isset($this->loaded_tabs['server']) ? $serverActions->actions() : [],
             'serverAction' => isset($this->loaded_tabs['server']) ? $serverActions->current() : null,

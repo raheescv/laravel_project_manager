@@ -193,6 +193,7 @@
                                 ['fa-hashtag', 'Code', $tenant->code],
                                 ['fa-sitemap', 'Subdomain', $tenant->subdomain],
                                 ['fa-link', 'Domain', $tenant->domain],
+                                ['fa-share-alt', 'Aliases', implode(', ', $tenant->aliasHosts())],
                                 ['fa-play-circle', 'Start date', $tenant->started_on?->format('d M Y')],
                                 ['fa-refresh', 'Renewal date', $tenant->renews_on ? $tenant->renews_on->format('d M Y') . ' · ' . $tenant->renewalCountdown() : null],
                                 ['fa-money', 'AMC', $tenant->amc_amount !== null ? number_format((float) $tenant->amc_amount, 2) . ($tenant->amcCycleLabel() ? ' · ' . $tenant->amcCycleLabel() : '') : null],
@@ -859,6 +860,51 @@
                                 </details>
                             @endif
                         @endif
+
+                        <div class="ph mt-4">
+                            <span class="pi"><i class="fa fa-share-alt"></i></span>
+                            <div>
+                                <h6>Alias domains</h6>
+                                <div class="hint">Other addresses that open this same tenant</div>
+                            </div>
+                        </div>
+                        @foreach ($tenant->aliasHosts() as $alias)
+                            @php([$aliasTone, $aliasIcon, $aliasLabel] = $tenant->isServedByWildcard($alias) ? ['ok', 'fa-lock', 'Served by the wildcard site'] : [$statusTone, $statusIcon, $statusLabel])
+                            <div class="fld d-flex align-items-center justify-content-between gap-2 mb-2" wire:key="alias-{{ $alias }}">
+                                <div class="overflow-hidden">
+                                    <div class="v mono text-truncate"><a href="https://{{ $alias }}" target="_blank" rel="noopener">{{ $alias }}</a></div>
+                                    <span @class(['chip mt-1', $aliasTone => $aliasTone])><i class="fa {{ $aliasIcon }}"></i>{{ $aliasLabel }}</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Remove alias" wire:click="removeDomainAlias(@js($alias))" wire:loading.attr="disabled" wire:target="removeDomainAlias" @disabled($tenant->deleted_at)
+                                    wire:confirm="Remove {{ $alias }}? The tenant is no longer reachable at that address.">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        @endforeach
+                        @if ($tenant->needsServerSite() && !$tenant->hasCustomDomain())
+                            @if ($tenant->domain_error)
+                                <div class="fld note mb-2">
+                                    <div class="k"><i class="fa fa-exclamation-triangle"></i>Last error</div>
+                                    <div class="v small" style="white-space: pre-wrap">{{ $tenant->domain_error }}</div>
+                                </div>
+                            @endif
+                            <button type="button" class="btn btn-sm btn-primary mb-2" wire:click="requestDomainSync" wire:loading.attr="disabled" wire:target="requestDomainSync" @disabled($tenant->deleted_at)>
+                                <i class="fa fa-refresh me-1"></i>{{ $tenant->domain_status === \App\Models\Tenant::DOMAIN_FAILED ? 'Retry now' : 'Sync again' }}
+                            </button>
+                        @endif
+                        @unless ($tenant->deleted_at)
+                            <form wire:submit="addDomainAlias">
+                                <label for="aliasDomain" class="form-label small fw-medium mb-1">Add an alias</label>
+                                <div class="input-group input-group-sm">
+                                    <input id="aliasDomain" type="text" class="form-control font-monospace" wire:model="aliasDomain" placeholder="newrest.example.com" autocomplete="off">
+                                    <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="addDomainAlias">
+                                        <i class="fa fa-plus me-1"></i>Add
+                                    </button>
+                                </div>
+                                @error('aliasDomain') <div class="small text-danger mt-1">{{ $message }}</div> @enderror
+                                <div class="small text-muted mt-1">Point a DNS <b>A record</b> for the alias to this server. SSL is automatic.</div>
+                            </form>
+                        @endunless
                     </div>
                     <div class="col-lg-6">
                         <div class="ph">

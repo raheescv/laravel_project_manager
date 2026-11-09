@@ -196,6 +196,21 @@
             </div>
 
             <div class="row g-2 mb-2">
+                <div class="col-12">
+                    <label class="tm-lab" for="tm_aliases">Alias domains</label>
+                    <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.domain_aliases.*')])>
+                        <i class="fa fa-share-alt"></i>
+                        <input id="tm_aliases" type="text" class="mono ps-0" wire:model="aliasDomains" placeholder="Optional · newrest.example.com, other.example.com" autocomplete="off">
+                    </div>
+                    @error('tenants.domain_aliases.*')
+                        <div class="tm-err">{{ $message }}</div>
+                    @else
+                        <div class="tm-help">Other addresses that open this same tenant · separate with commas</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="row g-2 mb-2">
                 <div class="col-6 col-md-3">
                     <label class="tm-lab" for="tm_started_on">Start date</label>
                     <div @class(['tm-in', 'is-invalid' => $errors->has('tenants.started_on')])>

@@ -56,12 +56,13 @@ class TenantServerSyncCommand extends Command
         $tenants = Tenant::withTrashed()->whereIn('domain_status', $statuses)->orderBy('id')->get();
 
         foreach ($tenants as $tenant) {
-            $wanted = ! $tenant->trashed() && $tenant->is_active && $tenant->hasCustomDomain();
+            $wanted = ! $tenant->trashed() && $tenant->is_active && $tenant->needsServerSite();
+            $hosts = implode(', ', $tenant->serverHosts());
 
             if ($dryRun) {
                 $this->line("<comment>#{$tenant->id} {$tenant->name}</comment> → ".($wanted ? "write {$server->sitePath($tenant)}" : 'remove site'));
                 if ($wanted) {
-                    $this->line($server->renderSite($tenant, $server->certificateExists($tenant->domain)));
+                    $this->line($server->renderSite($tenant, $server->certificateExists($tenant->serverHosts()[0])));
                 }
 
                 continue;
@@ -78,8 +79,8 @@ class TenantServerSyncCommand extends Command
             $result = $server->syncTenant($tenant);
             $this->record($tenant, $result);
             $result['status'] === Tenant::DOMAIN_ACTIVE
-                ? $this->info("#{$tenant->id} {$tenant->domain}: active")
-                : $this->warn("#{$tenant->id} {$tenant->domain}: {$result['error']}");
+                ? $this->info("#{$tenant->id} {$hosts}: active")
+                : $this->warn("#{$tenant->id} {$hosts}: {$result['error']}");
         }
 
         if (! $dryRun) {
@@ -117,7 +118,7 @@ class TenantServerSyncCommand extends Command
         }
 
         $keep = Tenant::whereIn('id', $siteIds)->where('is_active', true)->get()
-            ->filter(fn (Tenant $tenant): bool => $tenant->hasCustomDomain())
+            ->filter(fn (Tenant $tenant): bool => $tenant->needsServerSite())
             ->pluck('id')
             ->all();
 
