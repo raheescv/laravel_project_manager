@@ -206,7 +206,7 @@
                                 <td>
                                     <h3>Preliminary Clause</h3>
                                     <p>
-                                        The First Party owns the plot of land located in the Lusail area, registered under number (69060039) in the Real Estate Registry, with a total area of (25,500) square meters,
+                                        The First Party owns the plot of land located in the Lusail area, registered under number (69060039) in the Real Estate Registry, with a total area of (25,120) square meters,
                                         and covered by Building Permit. The land is designated for the {{ $rentOut->group?->name }} residential tower project, in accordance with the architectural drawings and
                                         specifications approved by the official authorities. The entire project shall be completed, and a Building Completion Certificate shall be obtained in accordance with the
                                         provisions of Law No. (6) of 2014 concerning the regulation of real estate development, as stipulated in Chapter One under the Definitions section.
@@ -215,7 +215,7 @@
                                 <td lang="ar">
                                     <h3>بند تمهيدي</h3>
                                     <p>
-                                        يمتلك الطرف الأول قطعة الأرض الكائنة في منطقة لوسيل المشهرة برقم (69060039) في السجل العقاري والبالغ مساحتها (25,500) متر مربع بترخيص بناء الموصوف بمشروع {{ $rentOut->group?->arabic_name }} برج سكني – وذلك وفق الرسومات والمواصفات الهندسية التي تم اعتمادها من الجهات الرسمية، سوف يتم الانتهاء من كامل المشروع واستخراج شهادة اتمام بناء وفق أحكام القانون رقم (6) لسنة 2014 الخاص بتنظيم التطوير العقاري الوارد في الفصل الأول من باب التعاريف.
+                                        يمتلك الطرف الأول قطعة الأرض الكائنة في منطقة لوسيل المشهرة برقم (69060039) في السجل العقاري والبالغ مساحتها (25,120) متر مربع بترخيص بناء الموصوف بمشروع {{ $rentOut->group?->arabic_name }} برج سكني – وذلك وفق الرسومات والمواصفات الهندسية التي تم اعتمادها من الجهات الرسمية، سوف يتم الانتهاء من كامل المشروع واستخراج شهادة اتمام بناء وفق أحكام القانون رقم (6) لسنة 2014 الخاص بتنظيم التطوير العقاري الوارد في الفصل الأول من باب التعاريف.
                                     </p>
                                 </td>
                             </tr>
