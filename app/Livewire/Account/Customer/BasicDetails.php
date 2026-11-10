@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Account\Customer;
 
+use App\Enums\Account\EntityType;
 use App\Models\Account;
 use App\Models\Sale;
 use App\Traits\HasDocumentExpiryState;
@@ -61,7 +62,9 @@ class BasicDetails extends Component
             'CR' => $account?->cr_expiry_date,
             'CP' => $account?->cp_expiry_date,
             'EID' => $account?->eid_expiry_date,
-        ])->map(fn ($date, $label) => $this->expiryState($date));
+        ])
+            ->reject(fn ($date, $label) => $label === 'CR' && $account?->entity_type === EntityType::Individual->value)
+            ->map(fn ($date, $label) => $this->expiryState($date));
 
         return view('livewire.account.customer.basic-details', [
             'account' => $account,

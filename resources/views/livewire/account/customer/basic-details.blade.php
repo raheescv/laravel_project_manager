@@ -7,6 +7,7 @@
     $identity = [
         ['Name', $account?->name],
         ['Customer Type', $account?->customerType?->name],
+        ['Entity', \App\Enums\Account\EntityType::tryFrom((string) $account?->entity_type)?->label()],
         ['Date of Birth', ! empty($account?->dob) ? systemDate($account->dob) : null],
         ['ID No', $account?->id_no],
         ['Passport No', $account?->passport_no],
@@ -26,6 +27,7 @@
 
     $company = [
         ['Company', $account?->company],
+        ['Authorized By', $account?->authorized_by],
         ['Tax No', $account?->tax_no],
         ['Occupation', $account?->occupation],
         [
@@ -36,6 +38,21 @@
         ],
         ['Registered On', $account?->created_at ? systemDate($account->created_at) : null],
     ];
+
+    $documentDate = fn ($value) => ! empty($value) ? systemDate($value) : null;
+    $isIndividualCustomer = $account?->entity_type === \App\Enums\Account\EntityType::Individual->value;
+    $registrationSections = array_filter([
+        $isIndividualCustomer ? null : ['Commercial Registration', 'fa-file-text-o', [
+            ['CR Number', $account?->cr_number],
+            ['CR Issue Date', $documentDate($account?->cr_issue_date)],
+            ['CR Expiry Date', $documentDate($account?->cr_expiry_date)],
+        ]],
+        ['EID', 'fa-credit-card', [
+            ['EID Number', $account?->eid_number],
+            ['EID Issue Date', $documentDate($account?->eid_issue_date)],
+            ['EID Expiry Date', $documentDate($account?->eid_expiry_date)],
+        ]],
+    ]);
 
     // HasDocumentExpiryState class → Bootstrap badge colour
     $badgeMap = ['ok' => 'text-bg-success', 'warn' => 'text-bg-warning', 'bad' => 'text-bg-danger', 'mute' => 'text-bg-secondary'];
@@ -133,6 +150,26 @@
                                 <div class="{{ filled($account?->employer_address) ? 'fw-semibold text-body-emphasis' : 'text-secondary' }}">{{ $account?->employer_address ?: '—' }}</div>
                             </div>
                         </div>
+                    </div>
+
+                    <hr class="my-3 opacity-25">
+
+                    <div class="row g-4">
+                        @foreach ($registrationSections as [$sectionTitle, $sectionIcon, $sectionRows])
+                            <div class="col-12 col-md-6">
+                                <div class="small fw-bold text-uppercase text-body-secondary mb-2">
+                                    <i class="fa {{ $sectionIcon }} fa-fw text-primary me-1"></i> {{ $sectionTitle }}
+                                </div>
+                                <dl class="row g-0 mb-0">
+                                    @foreach ($sectionRows as [$label, $value])
+                                        <dt class="col-5 text-secondary fw-normal py-2 {{ ! $loop->last ? 'border-bottom' : '' }}">{{ $label }}</dt>
+                                        <dd class="col-7 text-end fw-semibold py-2 mb-0 text-break {{ ! $loop->last ? 'border-bottom' : '' }} {{ filled($value) ? 'text-body-emphasis' : 'text-secondary' }}">
+                                            {{ filled($value) ? $value : '—' }}
+                                        </dd>
+                                    @endforeach
+                                </dl>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
