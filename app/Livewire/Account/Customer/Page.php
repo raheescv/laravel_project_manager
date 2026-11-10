@@ -17,6 +17,17 @@ class Page extends Component
 {
     use WithFileUploads;
 
+    private const NULL_WHEN_BLANK_FIELDS = [
+        'po_box',
+        'cr_number',
+        'cr_issue_date',
+        'cr_expiry_date',
+        'eid_number',
+        'eid_issue_date',
+        'eid_expiry_date',
+        'authorized_by',
+    ];
+
     protected $listeners = [
         'Customer-Page-Create-Component' => 'create',
         'Customer-Page-Update-Component' => 'edit',
@@ -88,6 +99,14 @@ class Page extends Component
                 'nationality' => null,
                 'company' => '',
                 'tax_no' => '',
+                'po_box' => '',
+                'cr_number' => '',
+                'cr_issue_date' => null,
+                'cr_expiry_date' => null,
+                'eid_number' => '',
+                'eid_issue_date' => null,
+                'eid_expiry_date' => null,
+                'authorized_by' => '',
                 'image' => null,
                 'credit_period_days' => null,
                 'model' => 'customer',
@@ -119,6 +138,14 @@ class Page extends Component
             'accounts.email' => ['email', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
             'accounts.tax_no' => ['nullable', 'max:30'],
+            'accounts.po_box' => ['nullable', 'max:20'],
+            'accounts.cr_number' => ['nullable', 'max:50'],
+            'accounts.cr_issue_date' => ['nullable', 'date'],
+            'accounts.cr_expiry_date' => ['nullable', 'date'],
+            'accounts.eid_number' => ['nullable', 'max:50'],
+            'accounts.eid_issue_date' => ['nullable', 'date'],
+            'accounts.eid_expiry_date' => ['nullable', 'date'],
+            'accounts.authorized_by' => ['nullable', 'max:100'],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
     }
@@ -131,6 +158,14 @@ class Page extends Component
         'accounts.email.max' => 'The name field must not be greater than 50 characters',
         'accounts.email.email' => 'The email field must be a valid email address.',
         'accounts.tax_no.max' => 'The tax number must not be greater than 30 characters',
+        'accounts.po_box.max' => 'The PO box must not be greater than 20 characters',
+        'accounts.cr_number.max' => 'The CR number must not be greater than 50 characters',
+        'accounts.cr_issue_date.date' => 'The CR issue date must be a valid date',
+        'accounts.cr_expiry_date.date' => 'The CR expiry date must be a valid date',
+        'accounts.eid_number.max' => 'The EID number must not be greater than 50 characters',
+        'accounts.eid_issue_date.date' => 'The EID issue date must be a valid date',
+        'accounts.eid_expiry_date.date' => 'The EID expiry date must be a valid date',
+        'accounts.authorized_by.max' => 'The authorized by field must not be greater than 100 characters',
         'photo.image' => 'The profile photo must be an image',
         'photo.mimes' => 'The photo must be a JPG, PNG or WEBP file',
         'photo.max' => 'The photo size must not exceed 5MB',
@@ -165,6 +200,11 @@ class Page extends Component
         // TODO(C7): review save authz — inline quick-add via customerSelect TomSelect (Customer-Page-Create-Component) is embedded in many unrelated forms (POS, sale-return, etc.); gating with customer.create would break legitimate quick-create. Edit path (table_id) is reachable from the standalone customer screen.
         $this->validate();
         try {
+            foreach (self::NULL_WHEN_BLANK_FIELDS as $field) {
+                if (($this->accounts[$field] ?? null) === '') {
+                    $this->accounts[$field] = null;
+                }
+            }
             if ($this->photo) {
                 $this->accounts['image'] = $this->storeOptimizedPhoto($this->photo);
             }

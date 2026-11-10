@@ -133,12 +133,19 @@
                                     [$field('Tel.', e($cfg('lessor_tel_fax'))), $field('تليفون', e($cfg('lessor_tel_fax')))],
                                 ]);
                                 $customer = $rentOut->customer;
+                                $purchaserCrNumber = $withLtrIds((string) $customer?->cr_number);
+                                $purchaserEstId = $customer?->eid_number;
                                 $purchaserLines = [
-                                    [$field('QID', e($customer?->id_no)), $field('البطاقة الشخصية', e($customer?->id_no))],
+                                    [$field('P.O. Box', e($customer?->po_box)), $field('صندوق البريد', e($customer?->po_box))],
+                                    [
+                                        $field('CR No.', $purchaserCrNumber) . ($purchaserEstId ? ' · <span class="lbl">Est ID:</span> <b class="ltr-id">' . e($purchaserEstId) . '</b>' : ''),
+                                        $field('السجل التجاري', $purchaserCrNumber) . ($purchaserEstId ? ' · <span class="lbl">قيد المنشأة:</span> <b class="ltr-id">' . e($purchaserEstId) . '</b>' : ''),
+                                    ],
+                                    [$field('Authorized by', e($customer?->authorized_by)), $field('ويمثلها', e($customer?->authorized_by))],
+                                    [$field('QID No.', e($customer?->id_no)), $field('بطاقة شخصية رقم', e($customer?->id_no))],
                                     [$field('Nationality', e($customer?->nationality)), $field('الجنسية', e($customer?->nationality))],
                                     [$field('Mobile', e($customer?->mobile)), $field('الجوال', e($customer?->mobile))],
                                     [$field('Email', e($customer?->email)), $field('البريد الإلكتروني', e($customer?->email))],
-                                    [$field('P.O. Box', e($customer?->po_box)), $field('ص.ب', e($customer?->po_box))],
                                 ];
                                 $parking = $rentOut->property?->parking ? ' (' . e($rentOut->property->parking) . ')' : '';
                                 $projectLines = [

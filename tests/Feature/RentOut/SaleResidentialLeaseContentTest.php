@@ -2,6 +2,7 @@
 
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
 use App\Enums\RentOut\AgreementType;
+use App\Models\Account;
 use App\Models\Configuration;
 use App\Models\Property;
 use App\Models\PropertyBuilding;
@@ -20,7 +21,7 @@ beforeEach(function (): void {
     $this->actingAs($this->world->user);
 });
 
-function renderSaleLease(): string
+function renderSaleLease(?Account $customer = null): string
 {
     $property = new Property(['number' => '1002', 'floor' => '10', 'size' => '126.70']);
     $type = new PropertyType(['name' => '1 Bedroom', 'arabic_name' => 'غرفة وصالة']);
@@ -33,6 +34,9 @@ function renderSaleLease(): string
     $rentOut->setRelation('building', new PropertyBuilding(['name' => 'MARINA TOWER', 'arabic_name' => 'برج مارينا']));
     $rentOut->setRelation('group', new PropertyGroup(['name' => 'Bin Al Sheikh Marina Tower', 'arabic_name' => 'برج بن الشيخ مارينا']));
     $rentOut->setRelation('paymentTerms', collect());
+    if ($customer) {
+        $rentOut->setRelation('customer', $customer);
+    }
 
     return view('print.booking.sale-residential-lease', [
         'rentOut' => $rentOut,
@@ -80,6 +84,44 @@ it('leaves out optional seller lines that are not configured', function (): void
         ->not->toContain('<span class="lbl">Capital:</span>')
         ->not->toContain('Est ID:')
         ->not->toContain('<span class="lbl">رقم هاتف:</span>');
+});
+
+it('prints the same party details for the purchaser as for the seller', function (): void {
+    $html = renderSaleLease(new Account([
+        'name' => 'Doha Trading LLC',
+        'po_box' => '4471',
+        'cr_number' => '128844',
+        'eid_number' => '10-3804-00',
+        'authorized_by' => 'Hassan Ali',
+        'id_no' => '25163400081',
+        'nationality' => 'Qatar',
+        'mobile' => '55512345',
+        'email' => 'info@dohatrading.test',
+    ]));
+
+    expect($html)
+        ->toContain('<span class="lbl">P.O. Box:</span> <b>4471</b>')
+        ->toContain('<span class="lbl">CR No.:</span> <b>128844</b> · <span class="lbl">Est ID:</span> <b class="ltr-id">10-3804-00</b></td>')
+        ->toContain('<span class="lbl">السجل التجاري:</span> <b>128844</b> · <span class="lbl">قيد المنشأة:</span> <b class="ltr-id">10-3804-00</b></td>')
+        ->toContain('<span class="lbl">Authorized by:</span> <b>Hassan Ali</b>')
+        ->toContain('<span class="lbl">ويمثلها:</span> <b>Hassan Ali</b>')
+        ->toContain('<span class="lbl">QID No.:</span> <b>25163400081</b>')
+        ->toContain('<span class="lbl">Nationality:</span> <b>Qatar</b>')
+        ->toContain('<span class="lbl">Mobile:</span> <b>55512345</b>')
+        ->toContain('<span class="lbl">Email:</span> <b>info@dohatrading.test</b>');
+});
+
+it('keeps the CR and authorized by lines for a purchaser without those details', function (): void {
+    $purchaserBlock = str(renderSaleLease(new Account(['name' => 'Fatima Noor', 'id_no' => '28800112233'])))
+        ->after('The Second Party (Purchaser)')
+        ->before('Hereinafter referred to as the second party')
+        ->toString();
+
+    expect($purchaserBlock)
+        ->toContain('<span class="lbl">QID No.:</span> <b>28800112233</b>')
+        ->toContain('<span class="lbl">CR No.:</span> <b></b></td>')
+        ->toContain('<span class="lbl">Authorized by:</span> <b></b>')
+        ->not->toContain('Est ID');
 });
 
 it('lists only the recorded instalments, without an invented monthly balance row', function (): void {

@@ -34,7 +34,7 @@
 
     body {
         font-family: "Times New Roman", Times, "Liberation Serif", serif;
-        font-size: 8.6pt;
+        font-size: 8pt;
         line-height: 1.42;
         color: #111;
         background: #fff;
@@ -47,7 +47,7 @@
         font-family: "Print Naskh", "Noto Naskh Arabic", "Traditional Arabic", "Times New Roman", serif !important;
         direction: rtl;
         text-align: right;
-        font-size: 9.5pt;
+        font-size: 8.8pt;
         line-height: 1.45;
     }
 
@@ -163,7 +163,7 @@
 
     table.reg h3 {
         display: inline-block;
-        font-size: 9pt;
+        font-size: 8.4pt;
         text-transform: uppercase;
         letter-spacing: 0.03em;
         padding-bottom: 0.8mm;
@@ -174,7 +174,7 @@
     table.reg td[lang="ar"] h3 {
         text-transform: none;
         letter-spacing: 0;
-        font-size: 10.5pt;
+        font-size: 9.8pt;
     }
 
     .here {
@@ -237,7 +237,7 @@
     }
 
     tr.group-head span:first-child {
-        font-size: 9.2pt;
+        font-size: 8.6pt;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         padding-left: 2.2mm;
@@ -246,7 +246,7 @@
     }
 
     tr.group-head span[lang="ar"] {
-        font-size: 10.8pt;
+        font-size: 10.1pt;
         padding-right: 2.2mm;
         border-right: 3pt solid #111;
         line-height: 1.3;
@@ -300,7 +300,7 @@
     table.reg-data td {
         border: 0.6pt solid #222;
         padding: 1.3mm 2mm;
-        font-size: 8.5pt;
+        font-size: 8pt;
         vertical-align: middle;
     }
 
@@ -328,7 +328,7 @@
     }
 
     table.reg-data td h4 {
-        font-size: 8.5pt;
+        font-size: 8pt;
         text-align: center;
     }
 

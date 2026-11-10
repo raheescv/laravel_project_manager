@@ -139,6 +139,65 @@
                             <label><i class="fa fa-file-text-o me-1 text-muted"></i> Tax Number</label>
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->input('po_box')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.po_box')->placeholder('PO Box') }}
+                            <label><i class="fa fa-envelope-o me-1 text-muted"></i> PO Box</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->input('authorized_by')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.authorized_by')->placeholder('Authorized By') }}
+                            <label><i class="fa fa-user me-1 text-muted"></i> Authorized By</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- CR & EID Details --}}
+            <div class="mb-3">
+                <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
+                    <i class="fa fa-file-text-o me-1"></i> CR &amp; EID Details
+                </h6>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->input('cr_number')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.cr_number')->placeholder('CR Number') }}
+                            <label><i class="fa fa-file-text-o me-1 text-muted"></i> CR Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->date('cr_issue_date')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.cr_issue_date')->placeholder('CR Issue Date') }}
+                            <label><i class="fa fa-calendar me-1 text-muted"></i> CR Issue Date</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->date('cr_expiry_date')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.cr_expiry_date')->placeholder('CR Expiry Date') }}
+                            <label><i class="fa fa-calendar me-1 text-muted"></i> CR Expiry Date</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->input('eid_number')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.eid_number')->placeholder('EID Number') }}
+                            <label><i class="fa fa-credit-card me-1 text-muted"></i> EID Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->date('eid_issue_date')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.eid_issue_date')->placeholder('EID Issue Date') }}
+                            <label><i class="fa fa-calendar me-1 text-muted"></i> EID Issue Date</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            {{ html()->date('eid_expiry_date')->value('')->class('form-control form-control-sm')->attribute('wire:model', 'accounts.eid_expiry_date')->placeholder('EID Expiry Date') }}
+                            <label><i class="fa fa-calendar me-1 text-muted"></i> EID Expiry Date</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 

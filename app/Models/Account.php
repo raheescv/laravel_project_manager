@@ -45,6 +45,7 @@ use RuntimeException;
  * @property string|null $cp_expiry_date
  * @property string|null $eid_issue_date
  * @property string|null $eid_expiry_date
+ * @property string|null $authorized_by
  * @property string|null $tax_card_issue_date
  * @property string|null $kyc_confirmed_at
  * @property int|null $kyc_confirmed_by
@@ -100,6 +101,7 @@ class Account extends Model implements AuditableContracts
         'eid_number',
         'eid_issue_date',
         'eid_expiry_date',
+        'authorized_by',
         'tax_card_no',
         'tax_card_issue_date',
         'kyc_confirmed_at',
