@@ -46,6 +46,7 @@ use RuntimeException;
  * @property string|null $eid_issue_date
  * @property string|null $eid_expiry_date
  * @property string|null $authorized_by
+ * @property string|null $entity_type
  * @property string|null $tax_card_issue_date
  * @property string|null $kyc_confirmed_at
  * @property int|null $kyc_confirmed_by
@@ -67,6 +68,7 @@ class Account extends Model implements AuditableContracts
         'whatsapp_mobile',
         'model',
         'vendor_type',
+        'entity_type',
         'email',
         'place',
 

@@ -23,6 +23,7 @@ it('creates a customer with the CR, EID and authorized by details', function ():
     Livewire::test(Page::class)
         ->set('accounts.name', 'Doha Trading LLC')
         ->set('accounts.mobile', '55512345')
+        ->set('accounts.entity_type', 'company')
         ->set('accounts.po_box', '4471')
         ->set('accounts.cr_number', 'CR-128844')
         ->set('accounts.cr_issue_date', '2025-01-15')
@@ -37,7 +38,8 @@ it('creates a customer with the CR, EID and authorized by details', function ():
 
     $customer = Account::where('name', 'Doha Trading LLC')->firstOrFail();
 
-    expect($customer->po_box)->toBe('4471')
+    expect($customer->entity_type)->toBe('company')
+        ->and($customer->po_box)->toBe('4471')
         ->and($customer->cr_number)->toBe('CR-128844')
         ->and($customer->cr_issue_date)->toBe('2025-01-15')
         ->and($customer->cr_expiry_date)->toBe('2027-01-14')
@@ -106,6 +108,52 @@ it('stores cleared details as null', function (): void {
         ->and($customer->cr_expiry_date)->toBeNull()
         ->and($customer->eid_issue_date)->toBeNull()
         ->and($customer->authorized_by)->toBeNull();
+});
+
+it('hides only the CR inputs while individual is selected', function (): void {
+    $crNumberInput = 'wire:model="accounts.cr_number"';
+    $eidNumberInput = 'wire:model="accounts.eid_number"';
+
+    Livewire::test(Page::class)
+        ->assertSeeHtml('wire:model.live="accounts.entity_type"')
+        ->assertSeeHtml($crNumberInput)
+        ->assertSee('CR & EID Details')
+        ->set('accounts.entity_type', 'individual')
+        ->assertDontSeeHtml($crNumberInput)
+        ->assertDontSeeHtml('wire:model="accounts.cr_issue_date"')
+        ->assertDontSeeHtml('wire:model="accounts.cr_expiry_date"')
+        ->assertSeeHtml($eidNumberInput)
+        ->assertSee('EID Details')
+        ->assertDontSee('CR & EID Details')
+        ->set('accounts.entity_type', 'company')
+        ->assertSeeHtml($crNumberInput)
+        ->assertSeeHtml($eidNumberInput);
+});
+
+it('accepts only company or individual as the entity', function (string $entityType, bool $isValid): void {
+    $component = Livewire::test(Page::class)
+        ->set('accounts.name', 'Entity Check')
+        ->set('accounts.mobile', '55000333')
+        ->set('accounts.entity_type', $entityType)
+        ->call('save');
+
+    $isValid ? $component->assertHasNoErrors() : $component->assertHasErrors(['accounts.entity_type']);
+})->with([
+    'company' => ['company', true],
+    'individual' => ['individual', true],
+    'anything else' => ['partnership', false],
+]);
+
+it('keeps the existing customer type relation separate from the entity', function (): void {
+    $customer = Account::create([
+        'account_type' => 'asset',
+        'model' => 'customer',
+        'name' => 'Separate Fields',
+        'mobile' => '55000444',
+        'entity_type' => 'individual',
+    ]);
+
+    expect($customer->fresh()->toArray())->toHaveKey('entity_type', 'individual');
 });
 
 it('rejects invalid details', function (string $field, string $value, string $rule): void {

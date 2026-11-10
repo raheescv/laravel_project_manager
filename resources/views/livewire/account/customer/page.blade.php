@@ -67,6 +67,17 @@
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small text-secondary"><i class="fa fa-building-o me-1"></i> Entity</span>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Company or individual">
+                                        @foreach (\App\Enums\Account\EntityType::cases() as $entityType)
+                                            <input type="radio" class="btn-check" name="entity_type" id="customer_entity_{{ $entityType->value }}" value="{{ $entityType->value }}" wire:model.live="accounts.entity_type">
+                                            <label class="btn btn-outline-primary" for="customer_entity_{{ $entityType->value }}">{{ $entityType->label() }}</label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -155,10 +166,14 @@
             </div>
 
             {{-- CR & EID Details --}}
+            @php
+                $isIndividualCustomer = ($accounts['entity_type'] ?? null) === \App\Enums\Account\EntityType::Individual->value;
+            @endphp
             <div class="mb-3">
                 <h6 class="text-secondary fw-semibold border-bottom pb-2 mb-3">
-                    <i class="fa fa-file-text-o me-1"></i> CR &amp; EID Details
+                    <i class="fa fa-file-text-o me-1"></i> {{ $isIndividualCustomer ? 'EID Details' : 'CR & EID Details' }}
                 </h6>
+                @unless ($isIndividualCustomer)
                 <div class="row g-2 mb-2">
                     <div class="col-md-4">
                         <div class="form-floating">
@@ -179,6 +194,7 @@
                         </div>
                     </div>
                 </div>
+                @endunless
                 <div class="row g-2">
                     <div class="col-md-4">
                         <div class="form-floating">

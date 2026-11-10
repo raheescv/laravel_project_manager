@@ -4,12 +4,14 @@ namespace App\Livewire\Account\Customer;
 
 use App\Actions\Account\CreateAction;
 use App\Actions\Account\UpdateAction;
+use App\Enums\Account\EntityType;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\Country;
 use App\Models\CustomerType;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -18,6 +20,7 @@ class Page extends Component
     use WithFileUploads;
 
     private const NULL_WHEN_BLANK_FIELDS = [
+        'entity_type',
         'po_box',
         'cr_number',
         'cr_issue_date',
@@ -110,6 +113,7 @@ class Page extends Component
                 'image' => null,
                 'credit_period_days' => null,
                 'model' => 'customer',
+                'entity_type' => null,
             ];
         } else {
             $account = Account::with('customerType:id,name')->find($this->table_id);
@@ -138,6 +142,7 @@ class Page extends Component
             'accounts.email' => ['email', 'max:50'],
             'accounts.mobile' => ['required', 'max:15'],
             'accounts.tax_no' => ['nullable', 'max:30'],
+            'accounts.entity_type' => ['nullable', Rule::enum(EntityType::class)],
             'accounts.po_box' => ['nullable', 'max:20'],
             'accounts.cr_number' => ['nullable', 'max:50'],
             'accounts.cr_issue_date' => ['nullable', 'date'],
@@ -158,6 +163,7 @@ class Page extends Component
         'accounts.email.max' => 'The name field must not be greater than 50 characters',
         'accounts.email.email' => 'The email field must be a valid email address.',
         'accounts.tax_no.max' => 'The tax number must not be greater than 30 characters',
+        'accounts.entity_type.enum' => 'Please choose either Company or Individual',
         'accounts.po_box.max' => 'The PO box must not be greater than 20 characters',
         'accounts.cr_number.max' => 'The CR number must not be greater than 50 characters',
         'accounts.cr_issue_date.date' => 'The CR issue date must be a valid date',
