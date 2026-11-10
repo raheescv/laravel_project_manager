@@ -111,6 +111,43 @@ it('prints the same party details for the purchaser as for the seller', function
         ->toContain('<span class="lbl">Email:</span> <b>info@dohatrading.test</b>');
 });
 
+function salePurchaserBlock(Account $customer): string
+{
+    return str(renderSaleLease($customer))
+        ->after('The Second Party (Purchaser)')
+        ->before('Hereinafter referred to as the second party')
+        ->toString();
+}
+
+it('leaves the CR number off an individual purchaser but keeps the rest', function (): void {
+    $purchaserBlock = salePurchaserBlock(new Account([
+        'name' => 'Fatima Noor',
+        'entity_type' => 'individual',
+        'cr_number' => '128844',
+        'eid_number' => '10-3804-00',
+        'authorized_by' => 'Hassan Ali',
+    ]));
+
+    expect($purchaserBlock)
+        ->not->toContain('CR No.')
+        ->not->toContain('السجل التجاري')
+        ->not->toContain('128844')
+        ->toContain('<td><span class="lbl">Est ID:</span> <b class="ltr-id">10-3804-00</b></td>')
+        ->toContain('<span class="lbl">Authorized by:</span> <b>Hassan Ali</b>');
+});
+
+it('prints no registration row for an individual purchaser without an Est ID', function (): void {
+    expect(salePurchaserBlock(new Account(['name' => 'Fatima Noor', 'entity_type' => 'individual'])))
+        ->not->toContain('CR No.')
+        ->not->toContain('Est ID')
+        ->not->toContain('<tr class="line"><td></td>');
+});
+
+it('keeps the CR number for a company purchaser', function (): void {
+    expect(salePurchaserBlock(new Account(['name' => 'Doha Trading LLC', 'entity_type' => 'company', 'cr_number' => '128844'])))
+        ->toContain('<span class="lbl">CR No.:</span> <b>128844</b></td>');
+});
+
 it('keeps the CR and authorized by lines for a purchaser without those details', function (): void {
     $purchaserBlock = str(renderSaleLease(new Account(['name' => 'Fatima Noor', 'id_no' => '28800112233'])))
         ->after('The Second Party (Purchaser)')

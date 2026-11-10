@@ -135,18 +135,21 @@
                                 $customer = $rentOut->customer;
                                 $purchaserCrNumber = $withLtrIds((string) $customer?->cr_number);
                                 $purchaserEstId = $customer?->eid_number;
-                                $purchaserLines = [
+                                $purchaserIsIndividual = $customer?->entity_type === \App\Enums\Account\EntityType::Individual->value;
+                                $purchaserRegistration = fn (string $crLabel, string $estLabel): string => implode(' · ', array_filter([
+                                    $purchaserIsIndividual ? null : $field($crLabel, $purchaserCrNumber),
+                                    $purchaserEstId ? '<span class="lbl">' . e($estLabel) . ':</span> <b class="ltr-id">' . e($purchaserEstId) . '</b>' : null,
+                                ]));
+                                $purchaserLines = array_filter([
                                     [$field('P.O. Box', e($customer?->po_box)), $field('صندوق البريد', e($customer?->po_box))],
-                                    [
-                                        $field('CR No.', $purchaserCrNumber) . ($purchaserEstId ? ' · <span class="lbl">Est ID:</span> <b class="ltr-id">' . e($purchaserEstId) . '</b>' : ''),
-                                        $field('السجل التجاري', $purchaserCrNumber) . ($purchaserEstId ? ' · <span class="lbl">قيد المنشأة:</span> <b class="ltr-id">' . e($purchaserEstId) . '</b>' : ''),
-                                    ],
+                                    (! $purchaserIsIndividual || $purchaserEstId)
+                                        ? [$purchaserRegistration('CR No.', 'Est ID'), $purchaserRegistration('السجل التجاري', 'قيد المنشأة')] : null,
                                     [$field('Authorized by', e($customer?->authorized_by)), $field('ويمثلها', e($customer?->authorized_by))],
                                     [$field('QID No.', e($customer?->id_no)), $field('بطاقة شخصية رقم', e($customer?->id_no))],
                                     [$field('Nationality', e($customer?->nationality)), $field('الجنسية', e($customer?->nationality))],
                                     [$field('Mobile', e($customer?->mobile)), $field('الجوال', e($customer?->mobile))],
                                     [$field('Email', e($customer?->email)), $field('البريد الإلكتروني', e($customer?->email))],
-                                ];
+                                ]);
                                 $parking = $rentOut->property?->parking ? ' (' . e($rentOut->property->parking) . ')' : '';
                                 $projectLines = [
                                     [$field('Project Land', e($rentOut->group?->name)), $field('أرض المشروع', e($rentOut->group?->arabic_name))],
