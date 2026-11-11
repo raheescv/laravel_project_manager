@@ -106,7 +106,7 @@ export const useBagStore = defineStore('bag', () => {
     submitting.value = false
   }
 
-  /** item: { id, size, price, name, name_arabic, brand, img } */
+  /** item: { id, size, price, was?, name, name_arabic, brand, img } — `was` is the MRP an offer strikes out */
   function add(item, qty = 1) {
     const key = `${item.id}|${item.size || ''}`
     const line = lines.value.find((l) => l.key === key)

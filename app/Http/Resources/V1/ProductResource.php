@@ -49,6 +49,10 @@ class ProductResource extends JsonResource
             'hsn_code' => $this->hsn_code,
             // 'cost' => $this->cost,
             'mrp' => $this->mrp,
+            // The online storefront's price while a Product Offer runs below MRP;
+            // null otherwise. The POS and the kiosk ignore it.
+            'online_price' => $this->onlineUnitDiscount() > 0 ? $this->onlinePrice() : null,
+            'online_discount_percent' => $this->onlineDiscountPercent(),
             'tax' => $this->tax, // percentage; the app adds this to the line total so its grand total matches the server
             'location' => $this->location,
             // 'reorder_level' => $this->reorder_level,
@@ -212,6 +216,18 @@ class ProductResource extends JsonResource
         $path = $this->brand?->image_path;
 
         return $path ? url('storage/'.$path) : null;
+    }
+
+    /**
+     * The offer as a whole percentage of MRP, for the storefront's "−15%"
+     * tag; null when no offer is running.
+     */
+    private function onlineDiscountPercent(): ?int
+    {
+        $discount = $this->onlineUnitDiscount();
+        $mrp = (float) $this->mrp;
+
+        return $discount > 0 && $mrp > 0 ? (int) round($discount / $mrp * 100) : null;
     }
 
     /**

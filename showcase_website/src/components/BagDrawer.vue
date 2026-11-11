@@ -214,9 +214,14 @@ function keepShopping() {
             </div>
             <div class="line__side">
               <!-- With one line the whole saving is that line's, so it can be struck through. -->
+              <!-- An offer strikes the line's MRP the same way. -->
               <template v-if="bag.discount && bag.lines.length === 1">
-                <span class="price price--was">{{ money(l.price * l.qty) }}</span>
+                <span class="price price--was">{{ money((l.was || l.price) * l.qty) }}</span>
                 <span class="price price--now">{{ money(bag.payable) }}</span>
+              </template>
+              <template v-else-if="l.was > l.price">
+                <span class="price price--was">{{ money(l.was * l.qty) }}</span>
+                <span class="price price--now">{{ money(l.price * l.qty) }}</span>
               </template>
               <span v-else class="price">{{ money(l.price * l.qty) }}</span>
               <button class="linkbtn" @click="remove(l.key)">{{ t('remove') }}</button>

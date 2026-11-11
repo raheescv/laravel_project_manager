@@ -28,6 +28,9 @@ class ProductOffer extends Model
     use BelongsToTenant;
     use HasFactory;
 
+    /** Most products one offer holds — also the most a whole category adds at once. */
+    public const MAX_PRODUCTS = 10000;
+
     protected $fillable = [
         'tenant_id',
         'type',

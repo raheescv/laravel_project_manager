@@ -24,7 +24,7 @@ class ProductOfferRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'status' => ['required', Rule::in(array_keys(ProductOffer::statuses()))],
-            'items' => ['required', 'array', 'min:1', 'max:2000'],
+            'items' => ['required', 'array', 'min:1', 'max:'.ProductOffer::MAX_PRODUCTS],
             'items.*.product_id' => ['required', 'integer', 'distinct'],
             'items.*.amount' => ['required', 'numeric', 'min:0'],
         ];
@@ -42,7 +42,7 @@ class ProductOfferRequest extends FormRequest
             'end_date.after_or_equal' => 'The offer must end on or after its start date.',
             'items.required' => 'Add at least one product to the offer.',
             'items.min' => 'Add at least one product to the offer.',
-            'items.max' => 'An offer can hold at most 2000 products.',
+            'items.max' => 'An offer can hold at most '.number_format(ProductOffer::MAX_PRODUCTS).' products.',
             'items.*.product_id.distinct' => 'A product can only appear once in an offer.',
             'items.*.amount.required' => 'Every product needs an offer price.',
             'items.*.amount.min' => 'Offer prices cannot be negative.',

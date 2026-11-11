@@ -62,7 +62,9 @@ final class CouponBag
         return Product::query()
             ->whereIn('id', $ids)
             ->where('type', 'product')
-            ->get(['id', 'mrp', 'tax', 'brand_id', 'main_category_id', 'sub_category_id'])
+            ->select(['id', 'mrp', 'tax', 'brand_id', 'main_category_id', 'sub_category_id'])
+            ->withOnlinePrice()
+            ->get()
             ->keyBy('id');
     }
 

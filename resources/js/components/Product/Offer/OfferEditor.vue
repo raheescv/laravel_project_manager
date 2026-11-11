@@ -447,7 +447,7 @@ async function addCategory(mainId, subId = null) {
         const added = addProducts(result.products)
         if (added === 1) toast.success(`Added 1 ${noun.one} at ${ruleLabel.value}.`)
         if (!added) toast.info(`Every ${noun.one} in that category is already in the offer.`)
-        if (result.truncated) toast.warning(`That category is very large; only the first 1000 ${noun.many} were added.`)
+        if (result.truncated) toast.warning(`That category is very large; only the first ${result.products.length} ${noun.many} were added.`)
         rail.value = subId ? `s:${mainId}:${subId}` : `m:${mainId}`
         picker.open = false
     } catch (error) {

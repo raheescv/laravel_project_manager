@@ -14,7 +14,7 @@ class GetProductAction
     public function execute(GetProductRequest $request): ProductResource
     {
         $filters = $request->validatedWithDefaults();
-        $product = Product::query()->where($filters)->first();
+        $product = Product::query()->where($filters)->withOnlinePrice()->first();
         if (! $product) {
             throw new \Exception('Product not found');
         }

@@ -178,6 +178,51 @@ it('lists categories with product counts and loads products by category or searc
     expect(collect($search)->pluck('name')->all())->toBe(['Slide']);
 });
 
+it('adds and saves a whole category beyond the old 1000-product limit', function (): void {
+    $now = now();
+    Product::query()->insert(collect(range(1, 1500))->map(fn (int $n): array => [
+        'tenant_id' => $this->world->tenant->id,
+        'type' => 'product',
+        'name' => sprintf('Bulk shoe %04d', $n),
+        'code' => sprintf('BULK%04d', $n),
+        'unit_id' => $this->world->product->unit_id,
+        'department_id' => $this->world->product->department_id,
+        'main_category_id' => $this->sandals->parent_id,
+        'sub_category_id' => $this->sandals->id,
+        'mrp' => 100,
+        'cost' => 60,
+        'is_selling' => true,
+        'created_by' => $this->world->user->id,
+        'updated_by' => $this->world->user->id,
+        'created_at' => $now,
+        'updated_at' => $now,
+    ])->all());
+
+    $loaded = $this->getJson(($this->api)("/products?main_category_id={$this->footwear->id}&sub_category_id={$this->sandals->id}"))
+        ->assertOk()->json('data');
+
+    expect($loaded['products'])->toHaveCount(1500)
+        ->and($loaded['truncated'])->toBeFalse();
+
+    $id = $this->postJson(($this->api)(), ($this->payload)(
+        collect($loaded['products'])->map(fn (array $product): array => ['product_id' => $product['id'], 'amount' => 80])->all(),
+    ))->assertCreated()->json('data.id');
+
+    expect(ProductOffer::findOrFail($id)->prices()->count())->toBe(1500);
+
+    $endDate = now()->addMonth()->toDateString();
+    $this->putJson(($this->api)("/{$id}"), ($this->payload)(
+        collect($loaded['products'])->map(fn (array $product, int $i): array => ['product_id' => $product['id'], 'amount' => $i % 2 ? 75 : 70])->all(),
+        ['end_date' => $endDate],
+    ))->assertOk();
+
+    $prices = ProductOffer::findOrFail($id)->prices()->get();
+    expect($prices)->toHaveCount(1500)
+        ->and($prices->every(fn (ProductPrice $price): bool => $price->end_date === $endDate || str_starts_with((string) $price->end_date, $endDate)))->toBeTrue()
+        ->and($prices->where('amount', 75)->count())->toBe(750)
+        ->and($prices->where('amount', 70)->count())->toBe(750);
+});
+
 it('lists offers with their running state', function (): void {
     $product = ($this->product)();
     $make = fn (array $state) => ProductOffer::factory()->create($state + ['created_by' => $this->world->user->id, 'updated_by' => $this->world->user->id]);

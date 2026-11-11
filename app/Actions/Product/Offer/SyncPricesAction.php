@@ -2,17 +2,19 @@
 
 namespace App\Actions\Product\Offer;
 
-use App\Actions\Product\ProductPrice\CreateAction as PriceCreateAction;
-use App\Actions\Product\ProductPrice\DeleteAction as PriceDeleteAction;
-use App\Actions\Product\ProductPrice\UpdateAction as PriceUpdateAction;
 use App\Models\Product;
 use App\Models\ProductOffer;
+use App\Models\ProductPrice;
 use Exception;
 
 /**
  * Make the offer's `product_prices` rows match [items]: one offer price per
  * product, carrying the offer's dates and status. Unchanged rows are left
  * alone, products dropped from the list lose their row.
+ *
+ * Rows are written in batches: an offer can hold a whole category of
+ * thousands of products, and changing its dates touches every row. Changed
+ * rows that share a price are updated together.
  *
  * Throws on failure; the caller's transaction rolls everything back.
  */
@@ -41,6 +43,9 @@ class SyncPricesAction
         $existing = $offer->prices()->get()->keyBy('product_id');
         $startDate = $offer->start_date->toDateString();
         $endDate = $offer->end_date->toDateString();
+        $now = now();
+        $inserts = [];
+        $updates = [];
 
         foreach ($items as $item) {
             $productId = (int) $item['product_id'];
@@ -55,23 +60,36 @@ class SyncPricesAction
             ];
 
             $price = $existing->pull($productId);
-            if ($price && $this->isUnchanged($price->toArray(), $data)) {
+            if (! $price) {
+                $inserts[] = $data + ['created_at' => $now, 'updated_at' => $now];
+
+                continue;
+            }
+            if ($this->isUnchanged($price->toArray(), $data)) {
                 continue;
             }
 
-            $response = $price
-                ? (new PriceUpdateAction())->execute($data, $price->id)
-                : (new PriceCreateAction())->execute($data);
-            if (! $response['success']) {
-                throw new Exception($response['message'], 1);
+            $updates[(string) $data['amount']][] = $price->id;
+        }
+
+        foreach ($updates as $amount => $ids) {
+            foreach (array_chunk($ids, 500) as $chunk) {
+                ProductPrice::query()->whereIn('id', $chunk)->update([
+                    'amount' => (float) $amount,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'status' => $offer->status,
+                    'updated_at' => $now,
+                ]);
             }
         }
 
-        foreach ($existing as $price) {
-            $response = (new PriceDeleteAction())->execute($price->id);
-            if (! $response['success']) {
-                throw new Exception($response['message'], 1);
-            }
+        foreach (array_chunk($inserts, 500) as $chunk) {
+            ProductPrice::query()->insert($chunk);
+        }
+
+        if ($existing->isNotEmpty()) {
+            ProductPrice::query()->whereIn('id', $existing->pluck('id'))->delete();
         }
     }
 

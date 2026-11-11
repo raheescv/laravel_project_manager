@@ -10,6 +10,21 @@ export function stockPill(n) {
   return { cls: 'pill--ok', text: t('inStock') }
 }
 
+/**
+ * What the online store sells a product at. `online_price` is set by the API
+ * only while a Product Offer runs below MRP; `was` is then the struck-out MRP.
+ * Display only — checkout re-prices every line on the server.
+ */
+export function priceOf(p) {
+  const mrp = Number(p?.mrp) || 0
+  const online = Number(p?.online_price)
+  if (online > 0 && online < mrp) {
+    const percent = Number(p.online_discount_percent) || Math.round((1 - online / mrp) * 100)
+    return { now: online, was: mrp, percent }
+  }
+  return { now: mrp, was: null, percent: null }
+}
+
 /** "36.5" / "41.5" style half sizes get the shorter ruler tick. */
 export function isHalfSize(size) {
   return /\.\d+$/.test(String(size))

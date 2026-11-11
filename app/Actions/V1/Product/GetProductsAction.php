@@ -50,7 +50,7 @@ class GetProductsAction
             'brand:id,name,image_path',
             'mainCategory:id,name',
             'subCategory:id,name',
-        ]);
+        ])->withOnlinePrice();
 
         $this->addThumbnailFallback($query);
         $this->addStockAggregates($query, $branchId);

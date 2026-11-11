@@ -220,6 +220,8 @@ html[dir="rtl"] .backlink__arrow{transform:scaleX(-1)}
 .pdp__title{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(1.7rem,3.6vw,2.6rem);line-height:1;letter-spacing:-.03em;margin-block:.3em .24em}
 .pdp__colour{color:var(--ink-50);font-size:.94rem}
 .pdp__pricerow{display:flex;align-items:center;gap:14px;margin-block:18px 0}
+.pdp__prices{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.pdp__prices .price--was{font-size:.95rem}
 .pdp__note{font-family:var(--mono);font-size:.74rem;margin-block-start:10px}
 .pdp__note--ok{color:var(--green)}
 .pdp__note--warn{color:var(--amber)}
@@ -512,6 +514,12 @@ html[dir="rtl"] .h-sm{letter-spacing:0;text-transform:none;font-size:.95rem}
 .card__ph img{width:42%;height:42%;object-fit:contain;opacity:.5;filter:grayscale(1);background:none}
 .card__ph span{font-family:var(--display);font-weight:800;font-size:2.6rem;letter-spacing:-.04em;line-height:1}
 .card__ph--sm span{font-size:1.2rem}
+/* Online offer: filled, so it stays legible over a white product shot. */
+.card__sale,.sale-tag{font-family:var(--mono);font-size:.66rem;font-weight:500;letter-spacing:.04em;background:var(--green);color:#fff;padding:4px 8px;border-radius:5px;white-space:nowrap}
+.card__sale{position:absolute;inset-block-start:12px;inset-inline-start:12px}
+.sale-tag{align-self:center}
+.card__prices{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;min-width:0}
+.price--sale{color:var(--green)}
 .card__tag{position:absolute;inset-block-start:12px;inset-inline-end:12px;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:4px 8px;border-radius:5px}
 
 /* --- loading skeletons ----------------------------------------------------- */

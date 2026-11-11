@@ -672,4 +672,59 @@ class Product extends Model implements AuditableContracts
     {
         return $this->prices()->offer()->latest()->value('amount');
     }
+
+    /**
+     * Select the running offer price (Product Offers) as `online_offer_amount`,
+     * so a page of storefront products reads it in the same query instead of
+     * one per row.
+     */
+    public function scopeWithOnlinePrice(Builder $query): Builder
+    {
+        if (is_null($query->getQuery()->columns)) {
+            $query->select($query->getModel()->getTable().'.*');
+        }
+
+        return $query->addSelect(['online_offer_amount' => ProductPrice::query()
+            ->select('amount')
+            ->whereColumn('product_prices.product_id', 'products.id')
+            ->offer()
+            ->latest()
+            ->limit(1),
+        ]);
+    }
+
+    /**
+     * What the online storefront sells one unit at: the running offer price when
+     * one is below MRP, otherwise MRP. (The POS applies offers only under the
+     * "Offer" sale type; the storefront always does.) Rounded to the 2 dp a sale
+     * line is priced at.
+     */
+    public function onlinePrice(): float
+    {
+        $mrp = round((float) $this->mrp, 2);
+        $offer = $this->onlineOfferAmount();
+
+        return $offer !== null && $offer < $mrp ? $offer : $mrp;
+    }
+
+    /**
+     * How much the offer takes off one unit online; 0 when there is none.
+     */
+    public function onlineUnitDiscount(): float
+    {
+        return round(round((float) $this->mrp, 2) - $this->onlinePrice(), 2);
+    }
+
+    /**
+     * The running offer price, from the `withOnlinePrice()` column when the
+     * query selected it, otherwise looked up.
+     */
+    private function onlineOfferAmount(): ?float
+    {
+        $amount = array_key_exists('online_offer_amount', $this->attributes)
+            ? $this->attributes['online_offer_amount']
+            : $this->prices()->offer()->latest()->value('amount');
+
+        return is_numeric($amount) && (float) $amount > 0 ? round((float) $amount, 2) : null;
+    }
 }

@@ -179,7 +179,7 @@ class SyncCheckoutAction
                 'unit_price' => $line['unit_price'],
                 'quantity' => $line['quantity'],
                 'conversion_factor' => 1,
-                'discount' => 0,
+                'discount' => $line['discount'] ?? 0,
                 'tax' => $line['tax'],
             ], $lines),
             'payments' => [['payment_method_id' => $account->id, 'amount' => $amount]],

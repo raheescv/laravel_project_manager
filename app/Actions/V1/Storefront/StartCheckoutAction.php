@@ -51,6 +51,9 @@ class StartCheckoutAction
 
         [$coupon, $discount] = $this->couponDiscount($request->validated('couponCode'), $items, $request->validated('customerMobile'));
         $amount = round($amount - $discount, 2);
+        // The sale rounds its own total; an offer price can leave cents,
+        // and Tap must charge what the sale will total. A coupon quote is already rounded.
+        $amount = round($amount + saleRoundOffFor($amount), 2);
 
         $address = $fulfilment === 'delivery' ? $this->deliveryAddress($request) : [];
         $pin = $address ? app(QnasAddressService::class)->cachedLocation(
@@ -235,6 +238,7 @@ class StartCheckoutAction
         $products = Product::query()
             ->whereIn('id', array_keys($quantities))
             ->where('type', 'product')
+            ->withOnlinePrice()
             ->get()
             ->keyBy('id');
         $inventories = Inventory::query()
@@ -270,6 +274,7 @@ class StartCheckoutAction
                 'size' => $product->size,
                 'quantity' => $quantity,
                 'unit_price' => round((float) $product->mrp, 2),
+                'discount' => round($product->onlineUnitDiscount() * $quantity, 2),
                 'tax' => (float) ($product->tax ?? 0),
                 'total' => self::lineTotal($product, $quantity),
             ];
@@ -280,11 +285,13 @@ class StartCheckoutAction
 
     /**
      * What a line costs, mirroring the sale_items generated columns: net = price ×
-     * qty, tax on net, each at 2 dp.
+     * qty − discount, tax on net, each at 2 dp. The offer is the line's
+     * discount, so the sale keeps MRP as the price and shows the saving.
      */
     public static function lineTotal(Product $product, int $quantity): float
     {
-        $net = round(round((float) $product->mrp, 2) * $quantity, 2);
+        $gross = round(round((float) $product->mrp, 2) * $quantity, 2);
+        $net = round($gross - round($product->onlineUnitDiscount() * $quantity, 2), 2);
         $tax = round($net * (float) ($product->tax ?? 0) / 100, 2);
 
         return round($net + $tax, 2);

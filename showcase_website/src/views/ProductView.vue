@@ -10,7 +10,7 @@ import { useBagStore } from '@/stores/bag'
 import { useCatalogStore } from '@/stores/catalog'
 import { useShopsStore } from '@/stores/shops'
 import { toast } from '@/toast'
-import { initialOf, sortSizes, stockPill } from '@/utils/catalog'
+import { initialOf, priceOf, sortSizes, stockPill } from '@/utils/catalog'
 
 const route = useRoute()
 const catalog = useCatalogStore()
@@ -62,6 +62,8 @@ const galleryLabel = computed(() =>
 
 const sizes = computed(() => variants.value)
 const selected = computed(() => sizes.value.find((v) => v.size === size.value) || null)
+// Each size is its own product row, so an offer may cover only some of them.
+const price = computed(() => priceOf(selected.value?.mrp !== undefined ? selected.value : product.value))
 const modelStock = computed(() =>
   sizes.value.length
     ? sizes.value.reduce((n, v) => n + v.stock, 0)
@@ -183,7 +185,14 @@ async function loadVariants() {
       })
       list = (res?.data || [])
         .filter((v) => v.code === p.code && v.size !== null && String(v.size).trim() !== '')
-        .map((v) => ({ id: v.id, size: String(v.size).trim(), stock: Number(v.total_stock) || 0 }))
+        .map((v) => ({
+          id: v.id,
+          size: String(v.size).trim(),
+          stock: Number(v.total_stock) || 0,
+          mrp: v.mrp,
+          online_price: v.online_price,
+          online_discount_percent: v.online_discount_percent,
+        }))
     } catch {
       list = []
     }
@@ -247,7 +256,8 @@ function add() {
     {
       id: selected.value?.id || p.id,
       size: selected.value?.size || (p.size ? String(p.size).trim() : ''),
-      price: Number(p.mrp) || 0,
+      price: price.value.now,
+      was: price.value.was,
       name: p.name,
       name_arabic: p.name_arabic,
       brand: brandName.value,
@@ -382,7 +392,12 @@ onBeforeUnmount(stopSpin)
         <h1 class="pdp__title">{{ name }}</h1>
         <p v-if="product.color" class="pdp__colour">{{ t('colour') }}: {{ product.color }}</p>
         <div class="pdp__pricerow">
-          <span class="price price--lg">{{ money(product.mrp) }}</span>
+          <span v-if="price.was" class="pdp__prices">
+            <span class="price price--lg price--sale">{{ money(price.now) }}</span>
+            <span class="price price--was">{{ money(price.was) }}</span>
+            <span class="sale-tag"><bdi dir="ltr">&minus;{{ price.percent }}%</bdi></span>
+          </span>
+          <span v-else class="price price--lg">{{ money(price.now) }}</span>
           <span class="pill" :class="overallPill.cls">{{ overallPill.text }}</span>
         </div>
         <p class="pdp__note" :class="note.cls">{{ note.text }}</p>

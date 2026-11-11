@@ -21,7 +21,7 @@ class ProductOfferController extends Controller
     use ApiResponseTrait;
 
     /** Products sent when a whole category is opened or added at once. */
-    public const CATEGORY_LIMIT = 1000;
+    public const CATEGORY_LIMIT = ProductOffer::MAX_PRODUCTS;
 
     /** Products sent for a free-text search. */
     public const SEARCH_LIMIT = 40;
@@ -122,7 +122,7 @@ class ProductOfferController extends Controller
         }
 
         $prices = $offer->prices()->pluck('amount', 'product_id');
-        $products = $this->catalog()->whereIn('products.id', $prices->keys())->get();
+        $products = $this->catalog()->whereIn('products.id', $offer->prices()->select('product_id'))->get();
 
         return $this->sendSuccess([
             'id' => $offer->id,
