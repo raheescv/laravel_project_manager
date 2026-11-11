@@ -69,8 +69,9 @@ class StorefrontCheckoutController extends Controller
     /**
      * Search promo codes.
      *
-     * Finds the codes matching what the customer typed and quotes each against
-     * their bag. Nothing is listed without a search of at least 3 characters.
+     * Finds the codes matching what the customer typed (at least 3 characters) and
+     * quotes each against their bag. Without `q`, lists the open codes the bag can
+     * use now or once it holds more; private codes are never listed.
      */
     public function coupons(SearchCouponsRequest $request, SearchCouponsAction $action): JsonResponse
     {

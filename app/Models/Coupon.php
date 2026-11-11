@@ -260,4 +260,19 @@ class Coupon extends Model implements AuditableContracts
                 fn (Builder $query) => $query->where('is_searchable', true)->where('code', 'like', "%{$search}%"),
             ));
     }
+
+    /**
+     * What the storefront's "available codes" list may show: running codes open to
+     * searching. Private codes stay hidden; they only work when typed in full.
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeListable(Builder $query): Builder
+    {
+        return $query->where('is_searchable', true)
+            ->where('is_active', true)
+            ->where('starts_on', '<=', now()->toDateString())
+            ->where(fn (Builder $query) => $query->whereNull('ends_on')->orWhere('ends_on', '>=', now()->toDateString()));
+    }
 }

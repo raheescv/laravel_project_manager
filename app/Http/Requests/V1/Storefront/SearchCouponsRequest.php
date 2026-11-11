@@ -17,7 +17,9 @@ class SearchCouponsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['q' => Coupon::normalizeCode($this->input('q'))]);
+        $code = Coupon::normalizeCode($this->input('q'));
+
+        $this->merge(['q' => $code === '' ? null : $code]);
     }
 
     /**
@@ -26,8 +28,9 @@ class SearchCouponsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // At least 3 characters, so nobody can walk the codes letter by letter.
-            'q' => ['required', 'string', 'min:3', 'max:24', 'regex:/^[A-Z0-9-]+$/'],
+            // No q lists the open codes. A search needs at least 3 characters, so
+            // nobody can walk the private codes letter by letter.
+            'q' => ['nullable', 'string', 'min:3', 'max:24', 'regex:/^[A-Z0-9-]+$/'],
             ...StartCheckoutRequest::ITEM_RULES,
         ];
     }

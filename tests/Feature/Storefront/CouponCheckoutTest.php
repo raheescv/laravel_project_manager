@@ -90,6 +90,24 @@ it('finds codes only from a search of 3 characters, best saving first', function
         ->and($response->json('data.total'))->toEqual(745);
 });
 
+it('lists the open codes the bag can use when asked, without a search', function (): void {
+    Coupon::factory()->fixed(50)->create(['code' => 'RUN50']);
+    Coupon::factory()->create(['code' => 'BIG20', 'discount_value' => 20]);
+    Coupon::factory()->create(['code' => 'PAIR15', 'discount_value' => 15, 'min_bag_total' => 1200]);
+    Coupon::factory()->private()->create(['code' => 'VIP25']);
+    Coupon::factory()->paused()->create(['code' => 'PAUSE10']);
+    Coupon::factory()->expired()->create(['code' => 'OLD10']);
+    Coupon::factory()->scheduled()->create(['code' => 'SOON10']);
+    Coupon::factory()->create(['code' => 'NOTHERE', 'applies_to' => Coupon::SCOPE_PRODUCT, 'applies_to_ids' => [999999]]);
+    $usedUp = Coupon::factory()->create(['code' => 'GONE10', 'usage_limit' => 1]);
+    ($this->paidCheckout)($usedUp, '55000000');
+
+    $response = ($this->search)('')->assertOk();
+
+    expect($response->json('data.results.*.code'))->toBe(['BIG20', 'RUN50', 'PAIR15'])
+        ->and($response->json('data.results.2.state'))->toBe('locked');
+});
+
 it('shows a private code only when typed in full', function (): void {
     Coupon::factory()->private()->create(['code' => 'VIP25']);
 
