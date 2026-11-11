@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>You Saved Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* Storefront tokens, copied from showcase_website/src/assets/app.css */
+:root{
+  --ink:#0B0D17;--ink-70:#3A3F55;--ink-50:#6B7189;--ink-30:#9BA1B5;
+  --blue:#1E2ED6;--blue-600:#2C3BF0;
+  --paper:#FFFFFF;--mist:#F2F4FA;--mist-2:#E8EBF5;--line:#DEE2EF;
+  --green:#0E7A45;--green-bg:#E3F4EA;--mint:#5BE3A0;
+  --r:14px;--r-pill:999px;
+  --display:"Archivo","Arial Black",Impact,sans-serif;
+  --body:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--mist);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+p{margin:0}
+
+/* harness */
+.top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.top__in{max-width:1500px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.top__t{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;background:var(--mist);padding:4px;border-radius:var(--r-pill);margin-inline-start:auto}
+.tabs button{background:none;border:0;padding:7px 14px;border-radius:var(--r-pill);font-size:.82rem;font-weight:600;color:var(--ink-50)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.grid{max-width:1500px;margin:0 auto;padding:28px 24px 60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px}
+.opt__head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.opt__k{font-family:var(--mono);font-size:.72rem;background:var(--ink);color:#fff;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;flex:none}
+.opt__n{font-weight:700}
+.opt__d{font-size:.8rem;color:var(--ink-50);margin:-4px 0 12px;min-height:2.6em}
+
+/* bag (shared) */
+.bag{background:var(--paper);border-radius:18px;box-shadow:0 1px 2px rgba(11,13,23,.05),0 10px 30px -16px rgba(11,13,23,.25);overflow:hidden}
+.line{display:grid;grid-template-columns:62px 1fr auto;gap:12px;padding:14px 20px;align-items:center}
+.line+.line{border-top:1px solid var(--mist-2)}
+.ph{width:62px;height:44px;border-radius:8px;background:linear-gradient(135deg,#eef0f6,#dfe3ee)}
+.brand{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;color:var(--ink-50)}
+.name{font-weight:600;font-size:.92rem}
+.side{text-align:end;display:grid}
+.price{font-family:var(--mono);font-weight:500;font-size:.95rem;letter-spacing:-.01em;white-space:nowrap}
+.was{color:var(--ink-30);font-size:.72rem;text-decoration:line-through}
+.now{color:var(--green)}
+.foot{border-top:1px solid var(--line);padding:16px 20px 20px;display:grid;gap:12px}
+.total{display:flex;align-items:baseline;justify-content:space-between;color:var(--ink-50)}
+.total .price{font-size:1.45rem;color:var(--ink)}
+.cta{border:0;background:var(--blue);color:#fff;border-radius:var(--r-pill);padding:13px;font-weight:600;font-size:.95rem}
+
+/* A · Receipt ------------------------------------------------------------ */
+.a-rows{display:grid;gap:6px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
+.a-row{display:flex;align-items:baseline;gap:8px;font-size:.82rem;color:var(--ink-50)}
+.a-row::after{content:"";order:1;flex:1;border-bottom:1px dotted var(--ink-30);opacity:.6;transform:translateY(-3px)}
+.a-row span:last-child{order:2}
+.a-row .price{font-size:.82rem}
+.a-row.save{color:var(--green);font-weight:600}
+.a-pct{font-family:var(--mono);font-size:.62rem;font-weight:500;margin-inline-start:4px;opacity:.85}
+
+/* B · Whisper under the total ------------------------------------------- */
+.b-total{display:grid;grid-template-columns:1fr auto;align-items:end;row-gap:2px}
+.b-total .lbl{color:var(--ink-50)}
+.b-was{grid-column:2;justify-self:end;font-family:var(--mono);font-size:.74rem;color:var(--ink-30);text-decoration:line-through}
+.b-now{grid-column:2;justify-self:end;font-family:var(--mono);font-size:1.45rem;font-weight:500}
+.b-save{grid-column:1/-1;justify-self:end;font-size:.78rem;color:var(--green);letter-spacing:.01em}
+.b-save b{font-family:var(--mono);font-weight:600}
+
+/* C · Ink strip --------------------------------------------------------- */
+.c-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ink);color:#fff;border-radius:10px;padding:8px 14px}
+.c-lbl{font-family:var(--mono);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+.c-val{display:flex;align-items:center;gap:9px}
+.c-val .price{font-size:.86rem;color:var(--mint)}
+.c-pct{font-family:var(--mono);font-size:.6rem;color:var(--ink);background:var(--mint);border-radius:var(--r-pill);padding:2px 7px;font-weight:600}
+
+/* D · Meter ------------------------------------------------------------- */
+.d-meter{display:grid;gap:7px}
+.d-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem}
+.d-top .saved{color:var(--green);font-weight:600}
+.d-top .saved .price{font-size:.84rem}
+.d-top .off{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-50)}
+.d-bar{height:3px;border-radius:3px;background:var(--mist-2);overflow:hidden}
+.d-bar i{display:block;height:100%;width:20%;background:linear-gradient(90deg,var(--green),#22b06b);border-radius:3px}
+</style>
+</head>
+<body>
+<header class="top"><div class="top__in">
+  <span class="top__t">“You saved” — 4 directions</span>
+  <div class="tabs" role="group" aria-label="Language">
+    <button type="button" aria-pressed="true" data-lang="en">English</button>
+    <button type="button" aria-pressed="false" data-lang="ar">العربية</button>
+  </div>
+</div></header>
+
+<main class="grid" id="grid"></main>
+
+<template id="lines">
+  <div class="line"><div class="ph"></div><div><p class="brand">ON</p><p class="name">On 6 bw 12 · ×2</p></div>
+    <div class="side"><span class="price was">QAR 1,490</span><span class="price now">QAR 1,192</span></div></div>
+  <div class="line"><div class="ph"></div><div><p class="brand">ON</p><p class="name">On 6 grey 12</p></div>
+    <div class="side"><span class="price was">QAR 745</span><span class="price now">QAR 596</span></div></div>
+</template>
+
+<script>
+const T = {
+  en: { total: 'Total', checkout: 'Checkout', subtotal: 'Subtotal', savings: 'Savings', youSaved: 'You saved', save: 'You save', off: 'off', saved: 'saved' },
+  ar: { total: 'الإجمالي', checkout: 'إتمام الشراء', subtotal: 'المجموع الفرعي', savings: 'التوفير', youSaved: 'وفّرت', save: 'وفّرت', off: 'خصم', saved: 'وفّرت' },
+}
+const opts = [
+  { k: 'A', n: 'Receipt', d: 'Subtotal and savings as quiet dotted-leader rows above a dashed tear line, like a printed receipt.',
+    foot: (t) => `<div class="a-rows">
+        <div class="a-row"><span>${t.subtotal}</span><span class="price">QAR 2,235</span></div>
+        <div class="a-row save"><span>${t.savings}<span class="a-pct" dir="ltr">−20%</span></span><span class="price">− QAR 447</span></div>
+      </div>
+      <div class="total"><span>${t.total}</span><span class="price">QAR 1,788</span></div>` },
+  { k: 'B', n: 'Whisper', d: 'No box at all: the full price is struck above the total and one small green line sits under it.',
+    foot: (t) => `<div class="b-total">
+        <span class="lbl" style="grid-row:2">${t.total}</span>
+        <span class="b-was">QAR 2,235</span>
+        <span class="b-now">QAR 1,788</span>
+        <span class="b-save">${t.save} <b dir="ltr">QAR 447</b> · <b dir="ltr">20%</b></span>
+      </div>` },
+  { k: 'C', n: 'Ink strip', d: 'A slim black strip with mint figures, so the saving reads like a premium membership card.',
+    foot: (t) => `<div class="c-strip"><span class="c-lbl">${t.youSaved}</span>
+        <span class="c-val"><span class="price" dir="ltr">QAR 447</span><span class="c-pct" dir="ltr">−20%</span></span></div>
+      <div class="total"><span>${t.total}</span><span class="price">QAR 1,788</span></div>` },
+  { k: 'D', n: 'Meter', d: 'Saving on the left, % on the right, and a hairline bar that fills to the share of the price saved.',
+    foot: (t) => `<div class="d-meter">
+        <div class="d-top"><span class="saved"><span class="price" dir="ltr">QAR 447</span> ${t.saved}</span><span class="off" dir="ltr">20% ${t.off}</span></div>
+        <div class="d-bar"><i></i></div>
+      </div>
+      <div class="total"><span>${t.total}</span><span class="price">QAR 1,788</span></div>` },
+]
+const lines = document.getElementById('lines').innerHTML
+function render(lang) {
+  const t = T[lang]
+  document.documentElement.lang = lang
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  document.getElementById('grid').innerHTML = opts.map((o) => `
+    <section>
+      <div class="opt__head"><span class="opt__k">${o.k}</span><span class="opt__n">${o.n}</span></div>
+      <p class="opt__d">${o.d}</p>
+      <div class="bag">${lines}<div class="foot">${o.foot(t)}<button class="cta" type="button">${t.checkout}</button></div></div>
+    </section>`).join('')
+}
+document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-lang]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+  render(b.dataset.lang)
+}))
+render('en')
+</script>
+</body>
+</html>

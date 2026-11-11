@@ -267,8 +267,15 @@ function keepShopping() {
       </div>
       <div class="total">
         <span>{{ t('total') }}</span>
-        <span class="price price--lg">{{ money(bag.payable) }}</span>
+        <span class="total__amt">
+          <span v-if="bag.saved > 0" class="price total__was">{{ money(bag.fullTotal) }}</span>
+          <span class="price price--lg">{{ money(bag.payable) }}</span>
+        </span>
       </div>
+      <!-- "Whisper": no box, one small green line under the total. -->
+      <p v-if="bag.saved > 0" class="saved">
+        {{ t('youSaved') }} <b>{{ money(bag.saved) }}</b><template v-if="bag.savedPercent"> · <bdi dir="ltr">{{ bag.savedPercent }}%</bdi></template>
+      </p>
       <template v-if="!bag.config.checked" />
       <p v-else-if="!bag.config.enabled" class="fineprint">{{ t('checkoutOff') }}</p>
       <template v-else-if="bag.step === 'bag'">

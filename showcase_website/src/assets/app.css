@@ -622,6 +622,12 @@ button.promo__row:hover{background:var(--mist)}
 .bagsum__row{display:flex;align-items:baseline;justify-content:space-between;font-size:.84rem;color:var(--ink-50)}
 .bagsum__row .price{font-size:.84rem}
 .bagsum__row.is-save{color:var(--green);font-weight:600}
+/* "You save" (Whisper): the full price struck above the total, one green line under it. */
+.total__amt{display:grid;justify-items:end;line-height:1.15}
+.total:has(.total__was){align-items:flex-end}
+.total__was{font-size:.74rem;color:var(--ink-30);text-decoration:line-through}
+.saved{margin:-8px 0 0;text-align:end;font-size:.78rem;letter-spacing:.01em;color:var(--green)}
+.saved b{font-family:var(--mono);font-weight:600}
 @keyframes promo-rise{from{opacity:0;transform:translateY(8px)}}
 @keyframes promo-shimmer{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.promo__box,.promo__row,.promo__on,.bagsum{animation:none}.promo__row.is-sk span{animation:none}}

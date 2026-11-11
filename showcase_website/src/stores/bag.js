@@ -93,6 +93,16 @@ export const useBagStore = defineStore('bag', () => {
   const total = computed(() => lines.value.reduce((n, l) => n + l.qty * (Number(l.price) || 0), 0))
   const discount = computed(() => (coupon.value?.state === 'ready' ? Number(coupon.value.saving) || 0 : 0))
   const payable = computed(() => Math.max(total.value - discount.value, 0))
+  // Offer savings (MRP struck on a line) plus the promo code: the "You saved" note.
+  const offerSaving = computed(() =>
+    lines.value.reduce((n, l) => n + (Number(l.was) > Number(l.price) ? l.qty * (Number(l.was) - Number(l.price)) : 0), 0),
+  )
+  const saved = computed(() => offerSaving.value + discount.value)
+  // The bag at full price (MRP), struck above the total; the % is of this.
+  const fullTotal = computed(() =>
+    lines.value.reduce((n, l) => n + l.qty * (Number(l.was) > Number(l.price) ? Number(l.was) : Number(l.price) || 0), 0),
+  )
+  const savedPercent = computed(() => (fullTotal.value > 0 ? Math.round((saved.value / fullTotal.value) * 100) : 0))
 
   function save() {
     keep('local', STORAGE_KEY, lines.value)
@@ -329,6 +339,9 @@ export const useBagStore = defineStore('bag', () => {
     coupon,
     discount,
     payable,
+    saved,
+    savedPercent,
+    fullTotal,
     searchCodes,
     applyCoupon,
     refreshCoupon,
