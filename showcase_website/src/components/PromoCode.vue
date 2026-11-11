@@ -68,6 +68,9 @@ function load(what, delay) {
 }
 
 function search(now = false) {
+  // Field cleared: back to the list of codes on offer.
+  if (!code.value) return browse()
+
   browsing.value = false
 
   if (code.value.length < MIN_CHARS) {
@@ -100,6 +103,8 @@ async function toggle() {
   isOpen.value = !isOpen.value
   clear()
   if (isOpen.value) {
+    // Opening shows the codes on offer straight away; typing narrows to a search.
+    browse()
     await nextTick()
     input.value?.focus()
   }

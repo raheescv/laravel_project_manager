@@ -80,10 +80,10 @@
                         </CouponRow>
 
                         <p class="ofx-eyebrow">Visibility</p>
-                        <CouponRow label="Search match">
+                        <CouponRow label="Show in bag list">
                             <div class="cpx-hint">
-                                <CouponSwitch v-model="form.is_searchable" label="Find this coupon by part of its code" />
-                                <span>{{ form.is_searchable ? 'Found by part of the code, from 3 letters.' : 'Private. Found only when the full code is typed.' }}</span>
+                                <CouponSwitch v-model="form.is_searchable" label="Show this coupon in the bag's list" />
+                                <span>{{ form.is_searchable ? 'Listed in the bag before the customer types, and found by part of the code.' : 'Private. Not listed; works only when the full code is typed.' }}</span>
                             </div>
                         </CouponRow>
                         <CouponRow label="Active">
@@ -106,7 +106,7 @@
                                 <span v-if="Number(form.min_bag_total) > 0">Min. {{ money(form.min_bag_total) }}</span>
                             </div>
                         </div>
-                        <p class="cpx-note">This is how the code appears in the bag once a customer searches for it.</p>
+                        <p class="cpx-note">This is how the code appears in the bag's code list.</p>
                     </div>
                 </div>
 
