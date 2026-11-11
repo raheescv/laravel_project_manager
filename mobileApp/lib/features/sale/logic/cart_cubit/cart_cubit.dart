@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:equatable/equatable.dart';
@@ -230,7 +231,35 @@ List<CustomPayment> shareSplit(List<CustomPayment> rows, double total, {int deci
 /// `BlocSelector<CartCubit, CartState, T>` to rebuild on one field instead of
 /// the whole ticket — which the old tick-based base class made impossible.
 class CartCubit extends Cubit<CartState> {
-  CartCubit() : super(_freshTicket());
+  CartCubit() : super(_freshTicket()) {
+    if (!serviceLocator.isRegistered<AuthCubit>()) return;
+    final auth = serviceLocator<AuthCubit>();
+    _cashierId = auth.user?.id;
+    _authSub = auth.stream.listen(_onAuth);
+  }
+
+  StreamSubscription<AuthState>? _authSub;
+
+  /// Whose till this ticket is on. Kept through a sign-out, so the next sign-in
+  /// can tell a handover from the same person coming back.
+  String? _cashierId;
+
+  /// Provided once for the life of the app, so the ticket outlives the session.
+  /// An edit in progress must not pass to the next cashier: it would open as
+  /// their New Sale, and because an edit keeps its own staff, a user who may only
+  /// sell as themselves would be locked to the previous cashier's name.
+  void _onAuth(AuthState s) {
+    final id = s.user?.id;
+    if (id == null || id == _cashierId) return;
+    _cashierId = id;
+    if (state.isEditing || state.isEditingPending) clear();
+  }
+
+  @override
+  Future<void> close() async {
+    await _authSub?.cancel();
+    return super.close();
+  }
 
   /// An empty ticket, paid by the first configured payment button.
   static CartState _freshTicket() {

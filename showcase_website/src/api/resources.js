@@ -78,8 +78,8 @@ export function startCheckout(payload) {
 
 /**
  * POST /storefront/coupons/search — codes matching q (3+ characters), quoted against
- * the bag: { total, results: [{ code, title, title_arabic, state, saving, short,
- * new_total, is_private }] }. Nothing is listed without a search.
+ * the bag: { total, results: [{ code, title, title_arabic, state, saving, percent,
+ * short, new_total, is_private }] }. An empty q lists the open codes on offer.
  */
 export function searchCoupons(q, items) {
   return client.post('/storefront/coupons/search', { q, items })

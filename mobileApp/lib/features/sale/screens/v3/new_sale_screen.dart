@@ -93,6 +93,9 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
       // Default stylist = logged-in user.
       final user = context.read<AuthCubit>().user;
       final cart = context.read<CartCubit>();
+      // An edit emptied and then left has nothing to resume — leaving with no
+      // lines asks no discard question, so nothing else ends it.
+      if (cart.isEmpty && (cart.isEditing || cart.state.isEditingPending)) cart.clear();
       // Pull the latest sale settings (Settings → Sale Configuration) so the
       // default quantity, tip availability and default Product/Service filter
       // reflect the current web setting; then preselect that type on the catalog.

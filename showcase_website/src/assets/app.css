@@ -579,7 +579,10 @@ html[dir="rtl"] .h-sm{letter-spacing:0;text-transform:none;font-size:.95rem}
 html[dir="rtl"] .promo__form input{text-align:right}
 .promo__search{flex:none;border:0;border-radius:9px;padding:8px 16px;background:var(--ink);color:#fff;font-size:.82rem;font-weight:600}
 .promo__search:disabled{background:var(--mist-2);color:var(--ink-30);cursor:default}
-.promo__hint{padding-inline:14px;padding-block-end:11px;font-size:.78rem;color:var(--ink-50)}
+.promo__meta{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-inline:14px;padding-block-end:11px}
+.promo__hint{font-size:.78rem;color:var(--ink-50)}
+.promo__browse{flex:none;background:none;border:0;padding:0;font-size:.78rem;font-weight:600;color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+.promo__browse:hover{color:var(--blue-900)}
 .promo__hint.is-err{color:#B42318;font-weight:500}
 .promo__list{border-block-start:1px solid var(--line)}
 .promo__row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"code amt" "title after";gap:1px 12px;align-items:baseline;width:100%;background:none;border:0;padding:12px 14px;color:inherit;text-align:start;transition:background .14s;animation:promo-rise .24s cubic-bezier(.3,.8,.3,1) both;animation-delay:calc(var(--i,0)*45ms)}
