@@ -4,7 +4,6 @@ use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
 use App\Livewire\Sale\Table;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
 use Tests\Support\PosWorld;
@@ -132,6 +131,7 @@ it('shows the result count even when everything fits on one page', function (): 
 it('exports only the sales the list filters show', function (): void {
     $this->freezeTime();
     Excel::fake();
+    $this->world->user->givePermissionTo(config('permission.models.permission')::firstOrCreate(['name' => 'sale.export', 'guard_name' => 'web']));
     $cardSale = insertListedSale($this->world, 'INVCARD', now()->toDateString(), now()->toDateTimeString());
     insertListedSale($this->world, 'INVCASH', now()->toDateString(), now()->toDateTimeString());
     DB::table('sales')->where('id', $cardSale)->update(['payment_method_ids' => '7,9', 'sale_type' => 'home_service']);
@@ -141,8 +141,8 @@ it('exports only the sales the list filters show', function (): void {
         ->set('payment_method_id', '9')
         ->set('sale_type', 'home_service')
         ->set('search', 'INVCARD')
-        ->call('export');
-    dump((fn () => $this->downloads)->call(Excel::getFacadeRoot()), now()->timestamp);
+        ->call('export')
+        ->assertOk();
 
     Excel::assertDownloaded('Sale_'.now()->timestamp.'.xlsx', function (SaleExport $export): bool {
         return $export->query()->pluck('invoice_no')->all() === ['INVCARD']
@@ -152,7 +152,6 @@ it('exports only the sales the list filters show', function (): void {
 });
 
 it('hands the list filters to the queued export job', function (): void {
-    Queue::fake();
     insertListedSale($this->world, 'INVQUEUED', now()->toDateString(), now()->toDateTimeString());
     $job = new ExportSaleJob($this->world->user, ['search' => 'INVQUEUED', 'status' => 'completed']);
 
