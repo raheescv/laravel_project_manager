@@ -19,13 +19,13 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
 
     public function __construct(public array $filters = []) {}
 
+    /**
+     * Runs on the same Sale::filter() scope as the sale list, so the sheet holds
+     * exactly the rows the user is looking at.
+     */
     public function query(): Builder
     {
-        // Matches the list's "Based On" selector: the invoice date or the row's
-        // creation timestamp.
-        $dateColumn = ($this->filters['based_on'] ?? '') === 'created_at' ? 'created_at' : 'date';
-
-        $query = Sale::query()
+        return Sale::query()
             ->with([
                 'branch:id,name',
                 'account:id,name',
@@ -33,28 +33,9 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
             ])
-            ->when($this->filters['branch_id'] ?? null, function ($query, $value) {
-                return $query->where('branch_id', $value);
-            })
-            ->when($this->filters['customer_id'] ?? null, function ($query, $value) {
-                return $query->where('account_id', $value);
-            })
-            ->when($this->filters['status'] ?? null, function ($query, $value) {
-                return $query->where('status', $value);
-            })
-            ->when($this->filters['source'] ?? null, function ($query, $value) {
-                return $query->where('source', $value);
-            })
-            ->when($this->filters['from_date'] ?? null, function ($query, $value) use ($dateColumn) {
-                return $query->whereDate($dateColumn, '>=', $value);
-            })
-            ->when($this->filters['to_date'] ?? null, function ($query, $value) use ($dateColumn) {
-                return $query->whereDate($dateColumn, '<=', $value);
-            })
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc');
-
-        return $query;
+            ->filter($this->filters)
+            ->orderBy('sales.date', 'desc')
+            ->orderBy('sales.id', 'desc');
     }
 
     public function headings(): array

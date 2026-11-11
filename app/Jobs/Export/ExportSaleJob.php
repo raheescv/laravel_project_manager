@@ -17,12 +17,10 @@ class ExportSaleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $user;
-
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
+    /**
+     * @param  array<string, mixed>  $filters  the sale list's filters, as passed to Sale::filter()
+     */
+    public function __construct(protected User $user, protected array $filters = []) {}
 
     /**
      * @return array<int, object>
@@ -35,7 +33,7 @@ class ExportSaleJob implements ShouldQueue
     public function handle()
     {
         $exportFileName = 'exports/Sale_'.now()->timestamp.'.xlsx';
-        Excel::store(new SaleExport(), $exportFileName, 'public');
+        Excel::store(new SaleExport($this->filters), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Sale', $exportFileName));
     }
 }

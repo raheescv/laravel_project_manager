@@ -1,8 +1,12 @@
 <?php
 
+use App\Exports\SaleExport;
+use App\Jobs\Export\ExportSaleJob;
 use App\Livewire\Sale\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
+use Maatwebsite\Excel\Facades\Excel;
 use Tests\Support\PosWorld;
 
 /**
@@ -119,4 +123,41 @@ it('shows the result count even when everything fits on one page', function (): 
         ->assertDontSeeHtml('class="pagination"')
         ->set('limit', 1)
         ->assertSeeHtml('class="pagination"');
+});
+
+/**
+ * The Excel download carries every filter on the list — search, sale type,
+ * created by, payment method — not just the date/branch/status subset.
+ */
+it('exports only the sales the list filters show', function (): void {
+    $this->freezeTime();
+    Excel::fake();
+    $cardSale = insertListedSale($this->world, 'INVCARD', now()->toDateString(), now()->toDateTimeString());
+    insertListedSale($this->world, 'INVCASH', now()->toDateString(), now()->toDateTimeString());
+    DB::table('sales')->where('id', $cardSale)->update(['payment_method_ids' => '7,9', 'sale_type' => 'home_service']);
+
+    Livewire::test(Table::class)
+        ->set('status', 'completed')
+        ->set('payment_method_id', '9')
+        ->set('sale_type', 'home_service')
+        ->set('search', 'INVCARD')
+        ->call('export');
+    dump((fn () => $this->downloads)->call(Excel::getFacadeRoot()), now()->timestamp);
+
+    Excel::assertDownloaded('Sale_'.now()->timestamp.'.xlsx', function (SaleExport $export): bool {
+        return $export->query()->pluck('invoice_no')->all() === ['INVCARD']
+            && $export->filters['payment_method_id'] === '9'
+            && $export->filters['created_by'] === '';
+    });
+});
+
+it('hands the list filters to the queued export job', function (): void {
+    Queue::fake();
+    insertListedSale($this->world, 'INVQUEUED', now()->toDateString(), now()->toDateTimeString());
+    $job = new ExportSaleJob($this->world->user, ['search' => 'INVQUEUED', 'status' => 'completed']);
+
+    $filters = (fn () => $this->filters)->call($job);
+
+    expect($filters)->toBe(['search' => 'INVQUEUED', 'status' => 'completed'])
+        ->and((new SaleExport($filters))->query()->pluck('invoice_no')->all())->toBe(['INVQUEUED']);
 });

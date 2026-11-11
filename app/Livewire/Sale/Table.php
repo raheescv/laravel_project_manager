@@ -182,18 +182,10 @@ class Table extends Component
     public function export()
     {
         abort_unless(auth()->user()?->can('sale.export'), 403);
-        $filters = [
-            'branch_id' => $this->branch_id,
-            'customer_id' => $this->customer_id,
-            'source' => $this->source,
-            'status' => $this->status,
-            'based_on' => $this->based_on,
-            'from_date' => $this->from_date,
-            'to_date' => $this->to_date,
-        ];
+        $filters = $this->filters();
         $count = $this->getBaseQuery()->count();
         if ($count > 2000) {
-            ExportSaleJob::dispatch(Auth::user());
+            ExportSaleJob::dispatch(Auth::user(), $filters);
             $this->dispatch('success', ['message' => 'You will get your file in your mailbox.']);
         } else {
             $exportFileName = 'Sale_'.now()->timestamp.'.xlsx';
