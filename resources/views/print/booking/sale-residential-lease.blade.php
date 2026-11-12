@@ -29,35 +29,65 @@
     @include('print.booking.components.styles')
     {{-- Page bands. Top: the pre-printed letterhead (bond) or a breathing gap;
          in plain mode page 1 draws the logo inline, so its top margin is zero.
-         Bottom: the pre-printed footer (bond) plus the strip where Chrome prints
-         the page number (GenerateResidentialLeaseAction::saleFooterHtml). The
-         initials strip in the .doc-wrap <tfoot> repeats just above it, on every
-         page except the closing Disclosure Statement. --}}
+         Bottom: the initials strip (First Party / Second Party), drawn by Chrome
+         in the @page margin boxes so it sits at the very bottom of EVERY page —
+         even a short last page — then the pre-printed footer (bond) and the strip
+         where Chrome prints the page number (GenerateResidentialLeaseAction::saleFooterHtml).
+         The closing Disclosure Statement is a named page without the strip. --}}
+    @php
+        $initialsBand = 45;
+    @endphp
     <style>
         @page {
-            margin: {{ $bondPaperMode ? $logoHeight : 45 }}px 0 {{ $bondPaperMode ? $footerHeight + 30 : 45 }}px 0;
+            margin: {{ $bondPaperMode ? $logoHeight : 45 }}px 0 {{ ($bondPaperMode ? $footerHeight + 30 : 45) + $initialsBand }}px 0;
+
+            @bottom-left {
+                content: "First Party · الطرف الأول";
+                width: 35%;
+                margin: 6mm 0 0 20mm;
+                padding-top: 0.6mm;
+                border-top: 0.6pt solid #111;
+                vertical-align: top;
+                text-align: center;
+                font-family: "Times New Roman", Times, "Print Naskh", "Noto Naskh Arabic", serif;
+                font-size: 7.5pt;
+            }
+
+            @bottom-right {
+                content: "Second Party · الطرف الثاني";
+                width: 35%;
+                margin: 6mm 20mm 0 0;
+                padding-top: 0.6mm;
+                border-top: 0.6pt solid #111;
+                vertical-align: top;
+                text-align: center;
+                font-family: "Times New Roman", Times, "Print Naskh", "Noto Naskh Arabic", serif;
+                font-size: 7.5pt;
+            }
         }
 
         @page :first {
             margin-top: {{ $bondPaperMode ? $logoHeight : 0 }}px;
         }
+
+        @page disclosure {
+            @bottom-left {
+                content: none;
+            }
+
+            @bottom-right {
+                content: none;
+            }
+        }
+
+        .disclosure-page {
+            page: disclosure;
+        }
     </style>
 </head>
 
 <body>
-    {{-- The whole document sits in one table so the initials strip in <tfoot>
-         repeats at the bottom of EVERY page and the browser reserves its height. --}}
     <table class="doc-wrap" style="width: 100%; border: 0;">
-        <tfoot>
-            <tr>
-                <td style="border: 0; padding: 0;">
-                    <div class="reg-initials">
-                        <div><i></i>First Party · <span lang="ar">الطرف الأول</span></div>
-                        <div><i></i>Second Party · <span lang="ar">الطرف الثاني</span></div>
-                    </div>
-                </td>
-            </tr>
-        </tfoot>
         <tbody>
             <tr>
                 <td style="border: 0; padding: 0;">
@@ -619,10 +649,10 @@
         </tbody>
     </table>
 
-    {{-- The closing Disclosure Statement sits outside .doc-wrap so the initials
-         strip does not print on its page — it carries both signatures itself. --}}
-    <div class="page-break"></div>
-    <div class="container">
+    {{-- The closing Disclosure Statement prints on the "disclosure" named page,
+         which drops the initials strip — it carries both signatures itself.
+         Switching to a named page starts a new sheet, so no page-break is needed. --}}
+    <div class="container disclosure-page">
         @include('print.booking.components.disclosure_statement')
     </div>
 </body>
