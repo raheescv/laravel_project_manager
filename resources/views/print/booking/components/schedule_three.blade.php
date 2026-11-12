@@ -164,11 +164,11 @@
         <tr>
             <td>
                 <strong>Intended land uses within the Building or Project:</strong><br>
-                Residential Tower
+                Residential and Commercial Towers
             </td>
             <td lang="ar">
                 <strong>الاستخدام المفروض للمبنى والمشروع:</strong><br>
-                برج شقق سكنية
+                ابراج سكنية وتجارية
             </td>
         </tr>
 
