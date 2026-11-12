@@ -60,6 +60,7 @@
                             </th>
                             <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Name" /> </th>
                             <th class="fw-semibold">Arabic Name</th>
+                            <th class="fw-semibold">Location Code</th>
                             <th class="fw-semibold">Description</th>
                             <th class="fw-semibold">Lease Agreement Year</th>
                             <th class="fw-semibold text-center">Actions</th>
@@ -87,6 +88,13 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if($item->location_code)
+                                        <i class="fa fa-map-marker me-1 text-muted"></i>{{ $item->location_code }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
                                     @if($item->description)
                                         <i class="fa fa-file-text-o me-1 text-muted"></i>{{ $item->description }}
                                     @else
@@ -104,7 +112,7 @@
                                     <div class="btn-group btn-group-sm" role="group">
                                         @can('property group.edit')
                                             <button table_id="{{ $item->id }}" class="btn btn-light btn-sm edit" title="Edit" data-bs-toggle="tooltip">
-                                                <i class="fa fa-eye"></i>
+                                                <i class="fa fa-pencil"></i>
                                             </button>
                                         @endcan
                                     </div>

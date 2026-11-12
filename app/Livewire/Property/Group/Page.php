@@ -44,6 +44,7 @@ class Page extends Component
             $this->formData = [
                 'name' => $name,
                 'arabic_name' => '',
+                'location_code' => '',
                 'lease_agreement_no' => '',
                 'year' => '',
                 'description' => '',

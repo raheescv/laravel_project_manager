@@ -21,7 +21,7 @@ beforeEach(function (): void {
     $this->actingAs($this->world->user);
 });
 
-function renderSaleLease(?Account $customer = null): string
+function renderSaleLease(?Account $customer = null, ?PropertyGroup $group = null): string
 {
     $property = new Property(['number' => '1002', 'floor' => '10', 'size' => '126.70']);
     $type = new PropertyType(['name' => '1 Bedroom', 'arabic_name' => 'غرفة وصالة']);
@@ -32,7 +32,7 @@ function renderSaleLease(?Account $customer = null): string
     $rentOut->setRelation('property', $property);
     $rentOut->setRelation('type', $type);
     $rentOut->setRelation('building', new PropertyBuilding(['name' => 'MARINA TOWER', 'arabic_name' => 'برج مارينا']));
-    $rentOut->setRelation('group', new PropertyGroup(['name' => 'Bin Al Sheikh Marina Tower', 'arabic_name' => 'برج بن الشيخ مارينا']));
+    $rentOut->setRelation('group', $group ?? new PropertyGroup(['name' => 'Bin Al Sheikh Marina Tower', 'arabic_name' => 'برج بن الشيخ مارينا']));
     $rentOut->setRelation('paymentTerms', collect());
     if ($customer) {
         $rentOut->setRelation('customer', $customer);
@@ -269,4 +269,16 @@ it('heads each group with an English and Arabic title band', function (): void {
 it('starts the disclosure statement on its own page as a separate group', function (): void {
     expect(renderSaleLease())
         ->toContain("<div class=\"page-break\"></div>\n    <table class=\"reg group\">\n        <tr class=\"group-head\">\n            <td colspan=\"2\"><div><span>Disclosure Statement</span>");
+});
+
+it('prints the property group location code in the contract meta', function (): void {
+    $group = new PropertyGroup(['name' => 'Bin Al Sheikh Marina Tower', 'arabic_name' => 'برج بن الشيخ مارينا', 'location_code' => 'LSL-MT-01']);
+
+    expect(renderSaleLease(group: $group))
+        ->toMatch('/Location Code<\/td>\s*<td class="text-center bold">LSL-MT-01<\/td>/');
+});
+
+it('falls back to the property group name when no location code is set', function (): void {
+    expect(renderSaleLease())
+        ->toMatch('/Location Code<\/td>\s*<td class="text-center bold">Bin Al Sheikh Marina Tower<\/td>/');
 });

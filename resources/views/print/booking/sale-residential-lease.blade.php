@@ -84,7 +84,7 @@
                                 </tr>
                                 <tr>
                                     <td class="k">Location Code</td>
-                                    <td class="text-center bold">{{ $rentOut->group?->name }}</td>
+                                    <td class="text-center bold">{{ $rentOut->group?->location_code ?: $rentOut->group?->name }}</td>
                                     <td class="k" lang="ar">الموقع</td>
                                 </tr>
                             </table>

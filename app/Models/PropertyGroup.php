@@ -18,6 +18,7 @@ class PropertyGroup extends Model implements AuditableContracts
         'branch_id',
         'name',
         'arabic_name',
+        'location_code',
         'description',
         'lease_agreement_years',
         'created_by',
@@ -28,6 +29,7 @@ class PropertyGroup extends Model implements AuditableContracts
     {
         return [
             'name' => 'required|string|max:255',
+            'location_code' => 'nullable|string|max:255',
         ];
     }
 

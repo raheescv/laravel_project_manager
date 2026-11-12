@@ -42,7 +42,18 @@
                     </div>
                 </div>
 
-                {{-- Row 3: Lease Agreement No, Year --}}
+                {{-- Row 3: Location Code --}}
+                <div class="col-md-12">
+                    <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.location_code') is-invalid @enderror" id="location_code" placeholder="Location Code" wire:model="formData.location_code">
+                        <label for="location_code">Location Code</label>
+                        @error('formData.location_code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Row 4: Lease Agreement No, Year --}}
                 <div class="col-md-12">
                     <div class="form-floating">
                         <input type="number" class="form-control @error('formData.lease_agreement_years') is-invalid @enderror" id="lease_agreement_years" placeholder="Lease Agreement Years" wire:model="formData.year" min="0" step="1">
@@ -53,7 +64,7 @@
                     </div>
                 </div>
 
-                {{-- Row 4: Description --}}
+                {{-- Row 5: Description --}}
                 <div class="col-md-12">
                     <div class="form-floating">
                         <textarea class="form-control @error('formData.description') is-invalid @enderror" id="description" placeholder="Description" wire:model="formData.description" style="height: 100px"></textarea>
