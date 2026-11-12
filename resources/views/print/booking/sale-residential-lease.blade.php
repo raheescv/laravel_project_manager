@@ -31,7 +31,8 @@
          in plain mode page 1 draws the logo inline, so its top margin is zero.
          Bottom: the pre-printed footer (bond) plus the strip where Chrome prints
          the page number (GenerateResidentialLeaseAction::saleFooterHtml). The
-         initials strip in the .doc-wrap <tfoot> repeats just above it. --}}
+         initials strip in the .doc-wrap <tfoot> repeats just above it, on every
+         page except the closing Disclosure Statement. --}}
     <style>
         @page {
             margin: {{ $bondPaperMode ? $logoHeight : 45 }}px 0 {{ $bondPaperMode ? $footerHeight + 30 : 45 }}px 0;
@@ -617,6 +618,13 @@
             </tr>
         </tbody>
     </table>
+
+    {{-- The closing Disclosure Statement sits outside .doc-wrap so the initials
+         strip does not print on its page — it carries both signatures itself. --}}
+    <div class="page-break"></div>
+    <div class="container">
+        @include('print.booking.components.disclosure_statement')
+    </div>
 </body>
 
 </html>

@@ -65,7 +65,9 @@ it('prints the contract date, the full seller block and the draft particulars on
         ->toContain('<span class="lbl">رقم هاتف:</span> <b>33670325</b>')
         ->toContain('{Hereinafter referred to as the first party or Seller}')
         ->toContain('{Hereinafter referred to as the second party – Purchaser}')
-        ->toContain('registered under number (69060039) in the Real Estate Registry, with a total area of (25,500) square meters')
+        ->toContain('registered under number (69060039) in the Real Estate Registry, with a total area of (25,120) square meters,')
+        ->toContain('and covered by Building Permit Number (70701).')
+        ->toContain('بترخيص بناء رقم (70701) الموصوف')
         ->toContain('Unit No.: MARINA TOWER – Unit (1002) – 10th Floor – 1 Bedroom Apartment.')
         ->toContain('<h3>Expected Completion Period</h3>')
         ->toContain('<b>Last quarter of 2029</b>')
@@ -215,6 +217,18 @@ it('prints in the ruled register layout with no grey fills for bond paper', func
         ->not->toContain('fonts.googleapis.com');
 });
 
+it('repeats the initials strip on every page except the closing disclosure statement', function (): void {
+    $html = renderSaleLease();
+    $docWrapEnd = strpos($html, "        </tbody>\n    </table>");
+
+    expect($docWrapEnd)->not->toBeFalse()
+        ->and(substr_count($html, '<div class="reg-initials">'))->toBe(1)
+        ->and(strpos($html, '<!-- Schedule 2 Component -->'))->toBeLessThan($docWrapEnd)
+        ->and(strpos($html, '<!-- Schedule 3 Component -->'))->toBeLessThan($docWrapEnd)
+        ->and(strpos($html, '<!-- Disclosure Statement Component'))->toBeGreaterThan($docWrapEnd)
+        ->and(strrpos($html, 'Disclosure Statement'))->toBeGreaterThan($docWrapEnd);
+});
+
 it('reserves the letterhead and footer bands on bond paper', function (): void {
     Configuration::updateOrCreate(['key' => 'reservation_bond_paper_mode'], ['value' => 'yes']);
     Configuration::updateOrCreate(['key' => 'reservation_logo_height'], ['value' => '90']);
@@ -268,7 +282,7 @@ it('heads each group with an English and Arabic title band', function (): void {
 
 it('starts the disclosure statement on its own page as a separate group', function (): void {
     expect(renderSaleLease())
-        ->toContain("<div class=\"page-break\"></div>\n    <table class=\"reg group\">\n        <tr class=\"group-head\">\n            <td colspan=\"2\"><div><span>Disclosure Statement</span>");
+        ->toMatch('/<div class="page-break"><\/div>\s*<div class="container">\s*<!-- Disclosure Statement Component[^>]*-->\s*<table class="reg group">\s*<tr class="group-head">\s*<td colspan="2"><div><span>Disclosure Statement<\/span>/');
 });
 
 it('prints the property group location code in the contract meta', function (): void {
