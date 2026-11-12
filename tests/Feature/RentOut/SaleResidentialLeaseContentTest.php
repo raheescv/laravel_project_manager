@@ -212,21 +212,20 @@ it('prints in the ruled register layout with no grey fills for bond paper', func
         ->toContain('<div class="reg-title">')
         ->toContain('<td class="no"><span>17</span></td>')
         ->toContain('<td class="no"><span>41</span></td>')
-        ->toContain('<div class="reg-initials">')
         ->not->toContain('#f1f3f5')
         ->not->toContain('fonts.googleapis.com');
 });
 
-it('repeats the initials strip on every page except the closing disclosure statement', function (): void {
+it('prints the initials strip at the foot of every page except the closing disclosure statement', function (): void {
     $html = renderSaleLease();
-    $docWrapEnd = strpos($html, "        </tbody>\n    </table>");
 
-    expect($docWrapEnd)->not->toBeFalse()
-        ->and(substr_count($html, '<div class="reg-initials">'))->toBe(1)
-        ->and(strpos($html, '<!-- Schedule 2 Component -->'))->toBeLessThan($docWrapEnd)
-        ->and(strpos($html, '<!-- Schedule 3 Component -->'))->toBeLessThan($docWrapEnd)
-        ->and(strpos($html, '<!-- Disclosure Statement Component'))->toBeGreaterThan($docWrapEnd)
-        ->and(strrpos($html, 'Disclosure Statement'))->toBeGreaterThan($docWrapEnd);
+    expect($html)
+        ->toMatch('/@bottom-left \{\s*content: "First Party · الطرف الأول";/')
+        ->toMatch('/@bottom-right \{\s*content: "Second Party · الطرف الثاني";/')
+        ->toMatch('/@page disclosure \{\s*@bottom-left \{\s*content: none;\s*\}\s*@bottom-right \{\s*content: none;\s*\}/')
+        ->toMatch('/<div class="container disclosure-page">\s*<!-- Disclosure Statement Component/')
+        ->not->toContain('reg-initials')
+        ->and(strpos($html, '<!-- Schedule 3 Component -->'))->toBeLessThan(strpos($html, '<!-- Disclosure Statement Component'));
 });
 
 it('reserves the letterhead and footer bands on bond paper', function (): void {
@@ -282,7 +281,7 @@ it('heads each group with an English and Arabic title band', function (): void {
 
 it('starts the disclosure statement on its own page as a separate group', function (): void {
     expect(renderSaleLease())
-        ->toMatch('/<div class="page-break"><\/div>\s*<div class="container">\s*<!-- Disclosure Statement Component[^>]*-->\s*<table class="reg group">\s*<tr class="group-head">\s*<td colspan="2"><div><span>Disclosure Statement<\/span>/');
+        ->toMatch('/<div class="container disclosure-page">\s*<!-- Disclosure Statement Component[^>]*-->\s*<table class="reg group">\s*<tr class="group-head">\s*<td colspan="2"><div><span>Disclosure Statement<\/span>/');
 });
 
 it('prints the property group location code in the contract meta', function (): void {

@@ -435,32 +435,6 @@
         height: 20mm;
     }
 
-    /* ── Initials strip, repeated at the foot of every page ───────── */
-    .reg-initials {
-        display: table;
-        width: 100%;
-        table-layout: fixed;
-        padding: 8mm 10mm 2mm;
-    }
-
-    .reg-initials > div {
-        display: table-cell;
-        text-align: center;
-        font-size: 7.5pt;
-        padding: 0 10mm;
-    }
-
-    .reg-initials i {
-        display: block;
-        border-top: 0.6pt solid #111;
-        margin-bottom: 0.6mm;
-    }
-
-    .reg-initials [lang="ar"] {
-        display: inline;
-        font-size: 8pt;
-    }
-
     ul.reg-list {
         margin: 1mm 0 0;
         padding-inline-start: 5mm;
