@@ -233,7 +233,7 @@ it('reserves the letterhead and footer bands on bond paper', function (): void {
     Configuration::updateOrCreate(['key' => 'reservation_logo_height'], ['value' => '90']);
     Configuration::updateOrCreate(['key' => 'reservation_footer_height'], ['value' => '40']);
 
-    expect(renderSaleLease())->toMatch('/margin: 90px 0 70px 0;/')
+    expect(renderSaleLease())->toMatch('/margin: 90px 0 115px 0;/')
         ->and((new GenerateResidentialLeaseAction())->saleFooterHtml())
         ->toContain('padding-bottom: 40px;')
         ->toContain('<span class="pageNumber"></span> of <span class="totalPages"></span>');
