@@ -8,6 +8,7 @@ use App\Livewire\Student\RegistrationTable;
 use App\Livewire\Student\Table as StudentTable;
 use App\Mail\AppointmentMail;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Guardian;
 use App\Models\StudentDetail;
@@ -21,9 +22,14 @@ use Tests\Support\StudentWorld;
 beforeEach(function (): void {
     $this->world = PosWorld::create();
     StudentWorld::enableSchool($this->world);
+    // The schools are the branches on the showcase; the till's own branch is not one of them.
+    $this->world->branch->update(['exclude_from_showcase' => true]);
+    $this->doha = Branch::create(['tenant_id' => $this->world->tenant->id, 'name' => 'AIA - Doha', 'code' => 'AIAD']);
+    $this->lusail = Branch::create(['tenant_id' => $this->world->tenant->id, 'name' => 'AIA - Lusail', 'code' => 'AIAL']);
+    // The office-approval flow; automatic approval is covered by its own tests below.
     Configuration::updateOrCreate(
         ['tenant_id' => $this->world->tenant->id, 'key' => StudentSettings::KEY],
-        ['value' => json_encode(['registration_schools' => ['AIA - Doha', 'AIA - Lusail']])],
+        ['value' => json_encode(['registration_enabled' => true, 'registration_auto_approve' => false])],
     );
     $this->formUrl = $this->world->url(route('api.v1.parent.registration.form', [], false));
     $this->storeUrl = $this->world->url(route('api.v1.parent.registration.store', [], false));
@@ -32,7 +38,7 @@ beforeEach(function (): void {
 function registrationPayload(array $overrides = []): array
 {
     return array_replace_recursive([
-        'school' => 'AIA - Doha',
+        'school' => test()->doha->id,
         'parent' => ['name' => 'Mohammed Rahman', 'qid' => '28463401234', 'phone' => '55123344', 'email' => 'mohammed@example.com'],
         'students' => [
             ['name' => 'Aisha Rahman', 'qid' => '31563401287', 'class' => '5', 'div' => 'B', 'reg' => 'REG-0187'],
@@ -51,8 +57,10 @@ function allowRegistrations(PosWorld $world): void
 it('gives a guest the schools, classes and divisions from settings', function (): void {
     $this->getJson($this->formUrl)
         ->assertSuccessful()
-        ->assertJsonPath('data.schools.0', ['value' => 'AIA - Doha', 'group' => 'AIA', 'place' => 'Doha', 'initial' => 'D'])
-        ->assertJsonPath('data.schools.1.place', 'Lusail')
+        // No location set on these branches: the tile falls back to the branch name.
+        ->assertJsonPath('data.schools.0', ['value' => (string) $this->doha->id, 'name' => 'AIA - Doha', 'group' => '', 'place' => 'AIA - Doha', 'initial' => 'A'])
+        ->assertJsonCount(2, 'data.schools')
+        ->assertJsonPath('data.schools.1.place', 'AIA - Lusail')
         ->assertJsonPath('data.divisions', StudentSettings::DEFAULT_REGISTRATION_DIVISIONS);
 });
 
@@ -84,6 +92,7 @@ it('saves each child as a pending student under a pending parent', function (): 
     expect(Account::student()->count())->toBe(2)
         ->and($detail->status)->toBe(StudentDetail::PENDING)
         ->and($detail->school)->toBe('AIA - Doha')
+        ->and($detail->branch_id)->toBe($this->doha->id)
         ->and($detail->grade)->toBe('KG1')
         ->and($detail->section)->toBe('A')
         ->and($detail->account->id_no)->toBe('31763401555')
@@ -101,7 +110,7 @@ it('rejects a form with a bad value', function (string $errorKey, array $overrid
     expect(Account::student()->count())->toBe(0)
         ->and(Guardian::count())->toBe(0);
 })->with([
-    'unknown school' => ['school', ['school' => 'Some Other School']],
+    'unknown school' => ['school', ['school' => 999999]],
     'parent QID too short' => ['parent.qid', ['parent' => ['qid' => '123']]],
     'mobile not 8 digits' => ['parent.phone', ['parent' => ['phone' => '5512']]],
     'bad email' => ['parent.email', ['parent' => ['email' => 'nope']]],
@@ -247,7 +256,7 @@ it('needs the approve permission', function (): void {
 function secondFamilyPayload(array $overrides = []): array
 {
     return registrationPayload(array_replace_recursive([
-        'school' => 'AIA - Lusail',
+        'school' => test()->lusail->id,
         'parent' => ['name' => 'Fatima Noor', 'phone' => '66778899', 'email' => 'fatima@example.com'],
         'students' => [
             ['name' => 'Omar Noor', 'qid' => '31563409999', 'reg' => 'REG-0900'],
@@ -343,7 +352,7 @@ it('selects only the families the filters show and forgets the ticks when a filt
     $lusail = Guardian::where('mobile', '66778899')->sole();
 
     Livewire::actingAs($this->world->user)->test(RegistrationTable::class)
-        ->set('school', 'AIA - Lusail')
+        ->set('school', (string) $this->lusail->id)
         ->set('selectAll', true)
         ->assertSet('selected', [(string) $lusail->id])
         ->set('school', '')
@@ -359,7 +368,7 @@ it('filters by new or existing parents and counts what is waiting', function ():
 
     Livewire::actingAs($this->world->user)->test(RegistrationTable::class)
         ->assertViewHas('stats', ['families' => 2, 'students' => 4, 'existing' => 1])
-        ->assertViewHas('schools', fn ($schools) => $schools->all() === ['AIA - Doha' => 1, 'AIA - Lusail' => 1])
+        ->assertViewHas('schools', fn ($schools) => $schools->pluck('count', 'name')->all() === ['AIA - Doha' => 1, 'AIA - Lusail' => 1])
         ->set('parentType', 'existing')
         ->assertSee('Real Parent')
         ->assertDontSee('Mohammed Rahman')
@@ -441,11 +450,12 @@ it('keeps the public page address off the staff screens', function (): void {
         ->assertDontSee('student-registration', false);
 });
 
-it('saves the schools, classes and divisions from settings without touching other settings', function (): void {
+it('saves the registration switch, classes and divisions from settings without touching other settings', function (): void {
     $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student settings.edit', 'guard_name' => 'web']));
 
     Livewire::actingAs($this->world->user)->test(StudentConfiguration::class)
-        ->set('registration_schools', "AIA - Doha\n\n AIA - Lusail \n")
+        ->assertSee('AIA - Doha')
+        ->set('registration_enabled', false)
         ->set('registration_classes', "1\n2")
         ->set('registration_divisions', "A\nB")
         ->set('topup_min', 25)
@@ -453,8 +463,186 @@ it('saves the schools, classes and divisions from settings without touching othe
         ->assertHasNoErrors();
 
     $settings = StudentSettings::current();
-    expect($settings->registrationSchools)->toBe(['AIA - Doha', 'AIA - Lusail'])
+    expect($settings->registrationOpen)->toBeFalse()
         ->and($settings->registrationClasses)->toBe(['1', '2'])
         ->and($settings->registrationDivisions)->toBe(['A', 'B'])
         ->and($settings->topupMin)->toBe(25.0);
+});
+
+function approveAutomatically(PosWorld $world): void
+{
+    Configuration::updateOrCreate(
+        ['tenant_id' => $world->tenant->id, 'key' => StudentSettings::KEY],
+        ['value' => json_encode(['registration_enabled' => true, 'registration_auto_approve' => true])],
+    );
+}
+
+it('approves a new parent on the spot and emails their set-password link', function (): void {
+    Mail::fake();
+    approveAutomatically($this->world);
+
+    $this->postJson($this->storeUrl, registrationPayload())
+        ->assertCreated()
+        ->assertJsonPath('data.approved', true)
+        ->assertJsonPath('data.email', 'mohammed@example.com');
+
+    $parent = Guardian::where('mobile', '55123344')->sole();
+    expect(StudentDetail::where('status', 'active')->count())->toBe(2)
+        ->and($parent->status)->toBe(Guardian::ACTIVE)
+        ->and($parent->pendingStudents()->count())->toBe(0)
+        ->and($parent->invite_token_hash)->not->toBeNull();
+    Mail::assertSent(AppointmentMail::class, fn ($mail) => $mail->hasTo('mohammed@example.com'));
+});
+
+it('still keeps a form that names an existing parent for the office', function (): void {
+    Mail::fake();
+    approveAutomatically($this->world);
+    $existing = Guardian::create([
+        'name' => 'Real Parent', 'mobile' => '55123344', 'email' => 'real@example.com', 'id_no' => '11111111111',
+        'password' => 'secret-password', 'status' => 'active',
+    ]);
+
+    $this->postJson($this->storeUrl, registrationPayload())
+        ->assertCreated()
+        ->assertJsonPath('data.approved', false)
+        ->assertJsonPath('data.email', null)
+        ->assertJsonPath('data.existing_parent', true);
+
+    expect($existing->fresh()->pendingStudents()->count())->toBe(2)
+        ->and($existing->fresh()->students()->count())->toBe(0);
+    Mail::assertNothingSent();
+});
+
+it('waits for the office when there is no portal address to link to', function (): void {
+    Mail::fake();
+    approveAutomatically($this->world);
+    config(['services.parent_portal.url' => null]);
+
+    $this->postJson($this->storeUrl, registrationPayload())->assertCreated()->assertJsonPath('data.approved', false);
+
+    expect(Guardian::where('mobile', '55123344')->sole()->status)->toBe(Guardian::PENDING);
+    Mail::assertNothingSent();
+});
+
+it('saves the automatic approval switch from settings', function (): void {
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student settings.edit', 'guard_name' => 'web']));
+
+    Livewire::actingAs($this->world->user)->test(StudentConfiguration::class)
+        ->assertSet('registration_auto_approve', false)
+        ->set('registration_auto_approve', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(StudentSettings::current()->registrationAutoApprove)->toBeTrue();
+});
+
+it('adds children at once when the signed-in parent registers them under their own number', function (): void {
+    Mail::fake();
+    approveAutomatically($this->world);
+    $existing = Guardian::create([
+        'name' => 'Real Parent', 'mobile' => '55123344', 'email' => 'real@example.com', 'id_no' => '11111111111',
+        'password' => 'secret-password', 'status' => 'active',
+    ]);
+
+    $this->withToken(StudentWorld::parentToken($existing))
+        ->postJson($this->storeUrl, registrationPayload())
+        ->assertCreated()
+        ->assertJsonPath('data.approved', true)
+        ->assertJsonPath('data.email', null)
+        ->assertJsonPath('data.existing_parent', false);
+
+    expect($existing->fresh()->students()->count())->toBe(2)
+        ->and($existing->fresh()->pendingStudents()->count())->toBe(0)
+        ->and(Account::student()->first()->description)->toBeNull();
+    Mail::assertNothingSent();
+});
+
+it('does not let another parent\'s sign-in approve children under someone else\'s number', function (): void {
+    approveAutomatically($this->world);
+    $owner = Guardian::create(['name' => 'Real Parent', 'mobile' => '55123344', 'email' => 'real@example.com', 'password' => 'secret-password', 'status' => 'active']);
+    $stranger = Guardian::create(['name' => 'Someone Else', 'mobile' => '66554433', 'email' => 'else@example.com', 'password' => 'secret-password', 'status' => 'active']);
+
+    $this->withToken(StudentWorld::parentToken($stranger))
+        ->postJson($this->storeUrl, registrationPayload())
+        ->assertCreated()
+        ->assertJsonPath('data.approved', false)
+        ->assertJsonPath('data.existing_parent', true);
+
+    expect($owner->fresh()->pendingStudents()->count())->toBe(2);
+});
+
+it('offers only the branches on the showcase as schools', function (): void {
+    $this->lusail->update(['exclude_from_showcase' => true]);
+
+    $this->getJson($this->formUrl)
+        ->assertSuccessful()
+        ->assertJsonCount(1, 'data.schools')
+        ->assertJsonPath('data.schools.0.name', 'AIA - Doha');
+
+    $this->postJson($this->storeUrl, registrationPayload(['school' => $this->lusail->id]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('school');
+});
+
+it('keeps a school that listed schools before the switch open', function (): void {
+    expect(StudentSettings::fromArray(['registration_schools' => ['AIA - Doha']])->registrationOpen)->toBeTrue()
+        ->and(StudentSettings::fromArray([])->registrationOpen)->toBeFalse();
+});
+
+it('shows a branch by its location and keeps that as the child\'s school', function (): void {
+    $this->doha->update(['location' => 'Doha - B2']);
+
+    $this->getJson($this->formUrl)
+        ->assertSuccessful()
+        ->assertJsonPath('data.schools.0.name', 'Doha - B2')
+        ->assertJsonPath('data.schools.0.place', 'Doha - B2')
+        ->assertJsonPath('data.schools.0.group', '');
+
+    $this->postJson($this->storeUrl, registrationPayload())->assertCreated();
+
+    $detail = StudentDetail::where('admission_no', 'REG-0187')->sole();
+    expect($detail->school)->toBe('Doha - B2')
+        ->and($detail->branch_id)->toBe($this->doha->id)
+        // Only the branch is stored; the school is read from it.
+        ->and(Illuminate\Support\Facades\Schema::hasColumn('student_details', 'school'))->toBeFalse();
+});
+
+it('saves names with a capital letter on each word', function (string $typed, string $saved): void {
+    $this->postJson($this->storeUrl, registrationPayload(['parent' => ['name' => 'fathima  rahman'], 'students' => [['name' => $typed]]]))->assertCreated();
+
+    expect(StudentDetail::where('admission_no', 'REG-0187')->sole()->account->name)->toBe($saved)
+        ->and(Guardian::where('mobile', '55123344')->sole()->name)->toBe('Fathima Rahman');
+})->with([
+    'all small' => ['thameem', 'Thameem'],
+    'all capitals' => ['THAMEEM RAHMAN', 'Thameem Rahman'],
+    'hyphenated' => ['thameem al-rashid', 'Thameem Al-Rashid'],
+    'own capitals kept' => ['Thameem McDonald', 'Thameem McDonald'],
+    'arabic unchanged' => ['ثميم رحمن', 'ثميم رحمن'],
+]);
+
+it('moves each saved school onto the matching branch before the school column goes', function (): void {
+    $migration = require database_path('migrations/2026_11_15_142314_drop_school_from_student_details_table.php');
+    $migration->down();
+
+    $this->doha->update(['location' => 'Doha']);
+    $b2 = Branch::create(['tenant_id' => $this->world->tenant->id, 'name' => 'AIA-DOHA B2', 'code' => 'B2', 'location' => 'Doha - B2']);
+    $student = function (string $no, string $school): int {
+        $account = StudentWorld::enrol($this->world, ['name' => 'Student '.$no, 'admission_no' => $no, 'card_uid' => null, 'guardians' => []]);
+        Illuminate\Support\Facades\DB::table('student_details')->where('account_id', $account->id)->update(['school' => $school, 'branch_id' => null]);
+
+        return (int) Illuminate\Support\Facades\DB::table('student_details')->where('account_id', $account->id)->value('id');
+    };
+    $byLocation = $student('M-1', 'DOHA');
+    $byName = $student('M-2', 'aia - lusail');
+    $contained = $student('M-3', 'AIA - Doha - B2');
+    $unknown = $student('M-4', 'Somewhere Else');
+
+    $migration->up();
+
+    $branchOf = fn (int $id) => Illuminate\Support\Facades\DB::table('student_details')->where('id', $id)->value('branch_id');
+    expect($branchOf($byLocation))->toBe($this->doha->id)
+        ->and($branchOf($byName))->toBe($this->lusail->id)
+        ->and($branchOf($contained))->toBe($b2->id)
+        ->and($branchOf($unknown))->toBeNull()
+        ->and(Illuminate\Support\Facades\Schema::hasColumn('student_details', 'school'))->toBeFalse();
 });

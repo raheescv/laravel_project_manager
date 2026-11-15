@@ -42,7 +42,7 @@ defineEmits(['quantity'])
           <dd>{{ money(days === null ? total : total * days) }}</dd>
         </div>
       </dl>
-      <p class="pp-cart__note">Paid from the card at the canteen.</p>
+      <p class="pp-cart__note">{{ days === null ? 'Paid when you place the order.' : 'Paid from the card each day when orders close.' }}</p>
     </template>
   </div>
 </template>

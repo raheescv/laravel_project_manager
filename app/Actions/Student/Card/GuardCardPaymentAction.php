@@ -47,7 +47,9 @@ class GuardCardPaymentAction
                 throw new Exception('Student Card can only pay for a student\'s own purchase. Choose the student as the customer.', 1);
             }
 
-            if ($isStudent && $sale instanceof Sale) {
+            // A canteen pre-order's money is checked by PreOrder\ChargeAction: the full balance,
+            // never the overdraft, or the bank card payment made for that very order.
+            if ($isStudent && $sale instanceof Sale && $sale->source !== 'pre_order') {
                 $otherPaid = (float) $payments->sum('amount') - $cardAmount;
                 // What lands on the student's balance: the card payment plus anything left unpaid.
                 $charge = round((float) $sale->grand_total - $otherPaid, 2);

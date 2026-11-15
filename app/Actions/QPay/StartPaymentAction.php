@@ -63,7 +63,11 @@ class StartPaymentAction
     /** How long the portal asks the parent to wait after an inquiry that answered nothing. */
     public const RETRY_AFTER_INQUIRY_MINUTES = 2;
 
-    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En', string $gateway = QpayTransaction::GATEWAY_QPAY, bool $confirmPending = false): array
+    /**
+     * [$preOrderId]: the payment is for that canteen pre-order and [$amount] is its
+     * exact total, worked out by the caller; the top-up range does not apply to it.
+     */
+    public function execute(Guardian $guardian, Account $student, float $amount, string $lang = 'En', string $gateway = QpayTransaction::GATEWAY_QPAY, bool $confirmPending = false, ?int $preOrderId = null): array
     {
         try {
             $creditCard = $gateway === QpayTransaction::GATEWAY_MPGS;
@@ -75,7 +79,7 @@ class StartPaymentAction
 
             $limits = StudentSettings::current();
             $amount = round($amount, 2);
-            if ($amount < $limits->topupMin || $amount > $limits->topupMax) {
+            if ($amount <= 0 || (! $preOrderId && ($amount < $limits->topupMin || $amount > $limits->topupMax))) {
                 throw new Exception('Enter an amount between '.currency($limits->topupMin).' and '.currency($limits->topupMax).'.', 1);
             }
 
@@ -87,6 +91,7 @@ class StartPaymentAction
                 'pun' => self::newPun(),
                 'account_id' => $student->id,
                 'guardian_id' => $guardian->id,
+                'student_pre_order_id' => $preOrderId,
                 'amount' => $amount,
                 'currency_code' => QPayClient::CURRENCY_QAR,
                 'lang' => $lang === 'Ar' ? 'Ar' : 'En',

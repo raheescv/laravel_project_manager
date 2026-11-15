@@ -6,6 +6,7 @@ use App\Actions\PurchaseVendor\BuildStatementDataAction;
 use App\Actions\RentOut\Checklist\GeneratePdfAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
+use App\Actions\Student\PreOrder\PrintListAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
 use App\Models\Configuration;
@@ -437,6 +438,21 @@ class PrintController extends Controller
         $this->authorizeBookingPrint($id, 'bookingReservationFormPermission');
 
         return (new GenerateReservationFormAction())->execute($id);
+    }
+
+    /**
+     * The kitchen and delivery list for one day's pre-orders: what to prepare, then
+     * every child with school, grade, class and registration number and what they
+     * ordered (names and quantities only), grouped by class for delivering.
+     */
+    public function studentPreOrders(Request $request, string $date)
+    {
+        $branchId = $request->integer('branch') ?: null;
+
+        return $this->browsershotPdf('print.student.pre-orders', [
+            ...(new PrintListAction())->execute($date, $branchId),
+            ...$this->getCompanyInfo(),
+        ], 'pre-orders-'.$date.($branchId ? '-branch-'.$branchId : '').'.pdf');
     }
 
     public function residentialLease($id, $type = 'normal')

@@ -47,8 +47,10 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -85,7 +87,7 @@ class ParentPortalController extends Controller
                 'mobile' => tenant_cache('mobile', null) ?: null,
                 'email' => tenant_cache('email', null) ?: null,
             ],
-            'registration_open' => StudentSettings::current()->registrationSchools !== [],
+            'registration_open' => StudentSettings::current()->registrationAvailable(),
         ], 'School retrieved successfully');
     }
 
@@ -103,8 +105,12 @@ class ParentPortalController extends Controller
     /**
      * Register children.
      *
-     * Public. Saves each child as a pending student under the parent; none of it
-     * counts until staff approve, and only then does the parent get a portal link.
+     * Public. Saves each child under the parent. A new parent is approved on the
+     * spot (when automatic approval is on) and emailed a set-password link:
+     * `approved` is true and `email` says where it went. Otherwise the children wait
+     * for staff, and the parent gets the link once they approve. A signed-in parent
+     * registering under their own mobile is approved at once (no email needed);
+     * `existing_parent` = the mobile belongs to another parent, so the office checks.
      */
     public function register(StoreRegistrationRequest $request, RegistrationCreateAction $action): JsonResponse
     {
@@ -113,7 +119,7 @@ class ParentPortalController extends Controller
             return $this->sendSuccess(null, 'Registration received');
         }
 
-        $response = $action->execute($request->validated());
+        $response = $action->execute($request->validated(), $this->signedInParent()?->id);
 
         if (! $response['success']) {
             Log::error('Public student registration failed', ['error' => $response['message']]);
@@ -121,7 +127,19 @@ class ParentPortalController extends Controller
             return $this->sendServerError('We could not save this registration.');
         }
 
-        return $this->sendSuccess(null, $response['message'], Response::HTTP_CREATED);
+        // Approved on the spot for a parent with no password yet: the set-password email goes out
+        // after the response, so a slow mail server never holds the parent's screen.
+        $guardian = $response['data'];
+        $invited = $response['approved'] && $guardian->isPendingInvite();
+        if ($invited) {
+            app()->terminating(fn () => (new SendInviteAction())->execute($guardian->id));
+        }
+
+        return $this->sendSuccess([
+            'approved' => $response['approved'],
+            'email' => $invited ? $guardian->email : null,
+            'existing_parent' => $response['existing_parent'],
+        ], $response['message'], Response::HTTP_CREATED);
     }
 
     /**
@@ -561,5 +579,20 @@ class ParentPortalController extends Controller
         report($e);
 
         return $this->sendServerError($message);
+    }
+
+    /**
+     * The parent signed in to the portal, when a public route is called with their
+     * token. Same test as AuthenticateParent: a real personal access token owned by
+     * an active parent, never a staff web session.
+     */
+    private function signedInParent(): ?Guardian
+    {
+        $guardian = Auth::guard('parent')->user();
+
+        // @phpstan-ignore instanceof.alwaysTrue (see AuthenticateParent)
+        return $guardian instanceof Guardian && $guardian->currentAccessToken() instanceof PersonalAccessToken && $guardian->isActive()
+            ? $guardian
+            : null;
     }
 }

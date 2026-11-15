@@ -53,6 +53,11 @@ Schedule::command('sale-day-sessions:open-daily')->everyMinute()->withoutOverlap
 // QPay certification: student card top-ups with no result are inquired after 20 minutes.
 Schedule::command('qpay:inquire-pending')->everyFiveMinutes()->withoutOverlapping();
 
+// Canteen pre-orders: the minute a school day's cut-off passes, what is still unpaid
+// is paid from the cards and the day's list is emailed. Gated per tenant inside the
+// command (pre-orders open), so no ->when().
+Schedule::command('student:pre-order-close')->everyMinute()->withoutOverlapping();
+
 Schedule::command('send:daily-sale-summary')->dailyAt('00:10');
 Schedule::command('assets:post-depreciation')->dailyAt('00:15')->withoutOverlapping();
 

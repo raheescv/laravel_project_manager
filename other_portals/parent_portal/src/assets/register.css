@@ -214,3 +214,32 @@
 @media (prefers-reduced-motion:reduce){
   .srx *,.srx *::before,.srx *::after{animation:none!important;transition:none!important}
 }
+
+/* ---- Caterer branding (src/brand.js) ----
+ * Every step of the form: the café photo behind a glass card. */
+.srx--photo .srx-page{
+  background:
+    linear-gradient(180deg,color-mix(in oklab,var(--bg) 18%,transparent),color-mix(in oklab,var(--bg) 42%,transparent)),
+    var(--brand-photo,none) center / cover no-repeat,
+    var(--bg)}
+.srx--photo .srx-card{--glass:color-mix(in oklab,var(--surface) 90%,transparent)}
+.srx--photo .srx-foot{display:table;margin-inline:auto;padding:8px 14px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.srx--photo .pp-themebtn{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+
+.srx-logo{--logo-h:34px}
+.srx-brand > span{font-size:13px;font-weight:700;color:var(--ink-2)}
+.srx--photo .srx-brand > span{padding:6px 12px;border-radius:999px;background:var(--glass);color:var(--ink);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+@container (max-width:350px){ .srx-logo{--logo-h:28px} }
+
+.srx .srx-title{margin:0 0 14px;font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--accent)}
+.srx h2{margin:0;font-size:20px;line-height:1.2;font-weight:800;letter-spacing:-.015em}
+@container (min-width:560px){ .srx .srx-title{font-size:34px} }
+
+/* Grade and Class: plain dropdowns in the same box as the text fields. */
+.srx-ctl--select select{flex:1;min-width:0;width:100%;height:50px;padding-inline:14px 38px;border:0;border-radius:11px;background:none;outline:0;color:var(--ink);font:600 16px/1 var(--font);-webkit-appearance:none;appearance:none;cursor:pointer}
+.srx-ctl--select select:invalid,.srx-ctl--select select:has(option[value=""]:checked){color:var(--ink-2)}
+.srx-ctl--select option{color:var(--ink)}
+.srx-caret{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-2);font-size:18px}
+
+.srx-next--sent{background:color-mix(in oklab,var(--pos) 12%,var(--surface))}
+.srx-next--sent .fa{color:var(--pos)}

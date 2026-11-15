@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
@@ -45,7 +46,8 @@ class StudentDetail extends Model implements AuditableContracts
         'tenant_id',
         'account_id',
         'admission_no',
-        'school',
+        // The branch the student belongs to: their school (see school()), and where their pre-orders are sold.
+        'branch_id',
         'gender',
         'grade',
         'section',
@@ -71,7 +73,7 @@ class StudentDetail extends Model implements AuditableContracts
         return array_merge([
             'account_id' => ['required'],
             'admission_no' => ['required', 'max:30', Rule::unique(self::class)->where('tenant_id', $tenantId)->ignore($id)],
-            'school' => ['nullable', 'max:100'],
+            'branch_id' => ['nullable', 'integer'],
             'gender' => ['nullable', Rule::in(array_keys(self::GENDERS))],
             'grade' => ['nullable', 'max:30'],
             'section' => ['nullable', 'max:30'],
@@ -101,6 +103,22 @@ class StudentDetail extends Model implements AuditableContracts
     }
 
     /** @return BelongsTo<Account, $this> */
+    /** @return BelongsTo<Branch, $this> */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    /**
+     * The student's school as people read it: their branch's location (its name when
+     * no location is set). Not a column — only `branch_id` is stored; eager load
+     * `branch` when listing many students.
+     */
+    protected function school(): Attribute
+    {
+        return Attribute::get(fn (): ?string => $this->branch?->locationLabel());
+    }
+
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);

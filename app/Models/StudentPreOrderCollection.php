@@ -6,7 +6,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** A pre-order handed over at the till on a date, and the sale that charged it. */
+/** A pre-order paid for one date, and the sale that paid it (ChargeAction). Deleted when refunded. */
 class StudentPreOrderCollection extends Model
 {
     use BelongsToTenant;

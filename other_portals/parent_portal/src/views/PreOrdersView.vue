@@ -2,19 +2,21 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { fetchPreOrderMenu, fetchPreOrders, fetchStudent } from '@/api/parent'
+import { clearDayPreOrder, fetchPreOrderMenu, fetchPreOrders, fetchStudent, skipDayPreOrder } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
+import BottomSheet from '@/components/BottomSheet.vue'
 import LoadError from '@/components/LoadError.vue'
 import MealCalendar from '@/components/MealCalendar.vue'
 import { refreshChild } from '@/children'
+import { toast } from '@/toast'
 import { dateTile, dayName, firstName, isToday, money, time, weekdaysLabel } from '@/utils/format'
 import { BOOKING_WINDOW_DAYS, flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
 import { bigScreen, desktop } from '@/utils/viewport'
 
 /**
- * A child's canteen meals: the weekly order and what happens on each of the next
- * school days. Nothing is charged here — the meal is paid from the card when the
- * child taps it at the canteen.
+ * A child's canteen meals: the weekly order, what happens on each of the next
+ * school days, and the paid orders, each of which can be cancelled until that
+ * day's orders close (the money goes back on the card).
  */
 const route = useRoute()
 const id = Number(route.params.id)
@@ -26,6 +28,11 @@ const status = ref('loading')
 const error = ref('')
 
 const first = computed(() => firstName(student.value?.name))
+/** "Orders for a day close at 6:00 PM the day before. Balance today: …" — the rule is worded by the API. */
+const cutoffNote = computed(() => {
+  const rule = schedule.value?.cutoff_label || `${time(schedule.value?.days[0]?.deadline) || schedule.value?.cutoff} that day`
+  return `Orders for a day close at ${rule}. Balance today: ${money(student.value?.balance)}.`
+})
 function mealName(order) {
   const names = (order?.items || []).map((item) => (item.quantity > 1 ? `${item.quantity} × ${item.name}` : item.name))
   if (names.length > 2) return `${names.slice(0, 2).join(', ')} +${names.length - 2} more`
@@ -45,18 +52,58 @@ async function load() {
   }
 }
 
+/* ---- Paid orders: cancel before the day closes ---- */
+const paidDays = computed(() => (schedule.value?.days || []).filter((day) => day.order && day.paid))
+const cancelling = ref(null)
+const cancelBusy = ref(false)
+const cancelError = ref('')
+
+function askCancel(day) {
+  cancelling.value = day
+  cancelError.value = ''
+}
+
+/**
+ * Cancelling a day the weekly order also covers is a skip: clearing it would hand
+ * the day back to the weekly order, which would charge it again when orders close.
+ */
+async function confirmCancel() {
+  const day = cancelling.value
+  const weekly = schedule.value?.weekly
+  const coveredByWeekly = weekly?.status === 'active' && weekly.weekdays.includes(isoWeekday(day.date))
+  cancelBusy.value = true
+  cancelError.value = ''
+  try {
+    await (coveredByWeekly ? skipDayPreOrder(id, day.date) : clearDayPreOrder(id, day.date))
+    const [s, sch] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? BOOKING_WINDOW_DAYS : undefined)])
+    ;[student.value, schedule.value] = [s, sch]
+    refreshChild(s)
+    cancelling.value = null
+    toast(`${dayName(day.date)}'s order cancelled. ${money(day.order.total)} is back on the card`)
+  } catch (e) {
+    cancelError.value = e.message
+  } finally {
+    cancelBusy.value = false
+  }
+}
+
 /** What a day row says. */
+/**
+ * A day as the parent reads it. Paid = the day's sale exists. A weekly day is paid
+ * from the card when that day's orders close; a day order waiting for its bank card
+ * payment, or one the card could not cover by the cut-off, is not paid.
+ */
 function describe(day) {
   const served = meals.value.some((meal) => servedOn(meal, isoWeekday(day.date)))
-  if (day.collected) return { sub: `Collected · ${mealName(day.order)}`, tag: ['accent', 'Collected'] }
   if (day.source === 'skipped') return { sub: 'No meal this day', tag: ['muted', 'Skipped'] }
-  if (day.order) {
-    return {
-      sub: `${mealName(day.order)}${day.source === 'weekly' ? ' · Weekly' : ''}`,
-      tag: ['pos', 'Ordered'],
-      amount: day.order.total,
-    }
+  if (day.order && day.paid) {
+    return { sub: `${mealName(day.order)}${day.source === 'weekly' ? ' · Weekly' : ''}`, tag: ['pos', 'Paid'], amount: day.order.total }
   }
+  if (day.order && day.locked) return { sub: `${mealName(day.order)} · not enough on the card`, tag: ['neg', 'Not paid'], amount: day.order.total }
+  if (day.order && day.source === 'weekly') {
+    return { sub: `${mealName(day.order)} · paid from the card when orders close`, tag: ['accent', 'Weekly'], amount: day.order.total }
+  }
+  if (day.order) return { sub: `${mealName(day.order)} · waiting for payment`, tag: ['warn', 'Not paid'], amount: day.order.total }
   if (!served) return { sub: 'No meal served', tag: null }
   return { sub: day.locked ? 'Ordering closed' : 'Not ordered', tag: null }
 }
@@ -66,7 +113,7 @@ function dayCard(day) {
   const { tag, amount } = describe(day)
   const served = meals.value.some((meal) => servedOn(meal, isoWeekday(day.date)))
   const open = !day.locked
-  if (day.collected) return { tag, amount, meal: mealName(day.order), note: 'Collected', kind: 'done' }
+  if (day.order && day.paid) return { tag, amount, meal: mealName(day.order), note: 'Paid', kind: 'done', action: open && 'Change' }
   if (day.source === 'skipped') return { tag, meal: 'No meal this day', note: open ? 'You chose not to order' : 'Ordering closed', kind: 'skipped', action: open && 'Order this day' }
   if (day.order) {
     return { tag, amount, meal: mealName(day.order), note: day.source === 'weekly' ? 'Every week' : 'This day only', kind: 'ordered', action: open && 'Change' }
@@ -109,7 +156,7 @@ onMounted(load)
   <main v-else>
     <div class="pp-largetitle">
       <h1>Canteen meals</h1>
-      <p>Order {{ first }}'s meal ahead. It's added when {{ first }} taps the card at the canteen, and paid from the card then.</p>
+      <p>Order and pay for {{ first }}'s meals ahead. A paid order can be cancelled until that day's orders close, and the money goes back on the card.</p>
     </div>
 
     <div v-if="!schedule.enabled" class="pp-alert pp-alert--warn" role="alert">
@@ -163,7 +210,7 @@ onMounted(load)
           </component>
         </div>
         <p class="pp-group__foot">
-          <i class="fa fa-clock-o"></i>Orders for a day close at {{ time(schedule.days[0]?.deadline) || schedule.cutoff }} that day. Balance today: {{ money(student.balance) }}.
+          <i class="fa fa-clock-o"></i>{{ cutoffNote }}
         </p>
       </section>
     </template>
@@ -220,9 +267,51 @@ onMounted(load)
           </component>
         </div>
         <p class="pp-group__foot">
-          <i class="fa fa-clock-o"></i>Orders for a day close at {{ time(schedule.days[0]?.deadline) || schedule.cutoff }} that day. Balance today: {{ money(student.balance) }}.
+          <i class="fa fa-clock-o"></i>{{ cutoffNote }}
         </p>
       </section>
     </template>
+
+    <section v-if="schedule.enabled && paidDays.length" class="pp-group pp-paid">
+      <h2 class="pp-group__head">Paid orders</h2>
+      <div class="pp-group__body">
+        <div v-for="day in paidDays" :key="day.date" class="pp-row pp-day-row">
+          <span class="pp-date" :class="{ 'is-today': isToday(day.date) }">
+            <small>{{ dateTile(day.date).month }}</small><b>{{ dateTile(day.date).day }}</b>
+          </span>
+          <span class="pp-row__main">
+            <span class="pp-row__title">{{ isToday(day.date) ? 'Today' : dayName(day.date) }} · {{ money(day.order.total) }}</span>
+            <span class="pp-row__sub">{{ mealName(day.order) }}</span>
+          </span>
+          <span class="pp-row__end">
+            <button v-if="!day.locked" class="pp-paid__cancel" type="button" @click="askCancel(day)">Cancel</button>
+            <span v-else class="pp-tag pp-tag--muted" title="Orders for this day have closed">Closed</span>
+          </span>
+        </div>
+      </div>
+      <p class="pp-group__foot"><i class="fa fa-undo"></i>Cancelling gives the money back to {{ first }}'s card straight away.</p>
+    </section>
   </main>
+
+  <BottomSheet :open="Boolean(cancelling)" label="Cancel order" @close="cancelling = null">
+    <div class="pp-sheet__grabber"></div>
+    <div class="pp-sheet__bar">
+      <button class="pp-navbtn" type="button" @click="cancelling = null">Keep it</button>
+      <div class="pp-sheet__title">Cancel order</div>
+    </div>
+    <div v-if="cancelling" class="pp-lede pp-lede--sheet">
+      <div class="pp-hero-icon pp-hero-icon--neg"><i class="fa fa-undo"></i></div>
+      <h2>Cancel {{ isToday(cancelling.date) ? "today's" : `${dayName(cancelling.date)}'s` }} order?</h2>
+      <p>{{ mealName(cancelling.order) }}. {{ money(cancelling.order.total) }} goes back on {{ first }}'s card, and nothing is ordered that day.</p>
+    </div>
+    <div v-if="cancelError" class="pp-alert" role="alert">
+      <i class="fa fa-exclamation-circle"></i><span class="pp-alert__main">{{ cancelError }}</span>
+    </div>
+    <div class="pp-sheet__actions">
+      <button class="pp-btn pp-btn--danger" :class="{ 'is-busy': cancelBusy }" type="button" :disabled="cancelBusy" @click="confirmCancel">
+        <span v-if="cancelBusy" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa fa-undo"></i>
+        {{ cancelBusy ? 'Cancelling…' : 'Cancel order and refund' }}
+      </button>
+    </div>
+  </BottomSheet>
 </template>

@@ -81,6 +81,8 @@ class QpayTransaction extends Model
         'original_pun',
         'account_id',
         'guardian_id',
+        // Set when the payment is for one canteen pre-order, which it then pays (QPay\SettleAction).
+        'student_pre_order_id',
         'amount',
         'currency_code',
         'lang',
@@ -114,6 +116,16 @@ class QpayTransaction extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * The canteen pre-order this payment was made for, if any.
+     *
+     * @return BelongsTo<StudentPreOrder, $this>
+     */
+    public function preOrder(): BelongsTo
+    {
+        return $this->belongsTo(StudentPreOrder::class, 'student_pre_order_id');
     }
 
     /** @return BelongsTo<Guardian, $this> */

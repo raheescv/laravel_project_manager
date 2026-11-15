@@ -4,7 +4,6 @@ namespace App\Actions\Student\Card;
 
 use App\Actions\Student\EnsureAccountsAction;
 use App\Actions\Student\GetBalanceAction;
-use App\Actions\Student\PreOrder\ForTillAction;
 use App\Models\StudentDetail;
 use App\Support\Student\StudentSettings;
 
@@ -53,8 +52,9 @@ class FindByUidAction
             'available' => max(0, round($balance + $limit, 2)),
             // The Student Card payment method, so the till can put the card into a split payment.
             'card_method_id' => EnsureAccountsAction::cardMethodId(),
-            // Today's pre-order from the parent portal, for the till to put in the cart (null when none).
-            'pre_order' => (new ForTillAction())->execute($account->id),
+            // Always null: pre-orders are paid as their own sale in the parent portal, so a tap
+            // never puts one in the cart. Kept for app builds that still read the key.
+            'pre_order' => null,
         ];
     }
 }

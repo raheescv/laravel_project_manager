@@ -5,11 +5,13 @@ use App\Actions\QPay\RefundAction;
 use App\Actions\QPay\ReleaseAction;
 use App\Actions\QPay\StartPaymentAction;
 use App\Actions\Student\GetBalanceAction;
+use App\Actions\Student\PreOrder\SaveAction;
 use App\Console\Commands\Student\QPayInquirePendingCommand;
 use App\Models\ApiLog;
 use App\Models\Configuration;
 use App\Models\JournalEntry;
 use App\Models\QpayTransaction;
+use App\Models\StudentPreOrderCollection;
 use App\Services\Payment\QPayApiLog;
 use App\Services\Payment\QPayClient;
 use App\Support\Payment\QPaySettings;
@@ -670,4 +672,46 @@ it('warns the parent before a debit card payment that leaving QPay half-way hold
         ->assertOk()
         ->assertJsonPath('data.topup.methods.0.key', 'debit')
         ->assertJsonPath('data.topup.methods.0.notice', fn ($notice) => str_contains($notice, StartPaymentAction::BROKEN_AFTER_MINUTES.' minutes'));
+});
+
+it('charges exactly the pre-order and pays it with that payment, whatever the card owed', function (): void {
+    StudentWorld::enablePreOrders($this->world, [(int) $this->world->product->main_category_id], ['school_days' => [1, 2, 3, 4, 5, 6, 7], 'overdraft_limit' => 20]);
+    // The card owes 9 from an earlier canteen purchase.
+    $earlier = (new \App\Actions\Sale\CreateAction())->execute(StudentWorld::salePayload($this->world, $this->student->id, 9, card: 9), $this->world->user->id);
+    expect($earlier['success'])->toBeTrue($earlier['message'])->and(qpayBalance($this))->toBe(-9.0);
+
+    $day = today()->addDay()->toDateString();
+    $saved = (new SaveAction())->execute($this->student, $this->guardian, [
+        'type' => 'day', 'date' => $day, 'pay' => 'bank',
+        'items' => [['product_id' => $this->world->product->id, 'quantity' => 1]],
+    ]);
+    expect($saved['success'])->toBeTrue($saved['message']);
+
+    $started = $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['pre_order_date' => $day, 'method' => 'debit', 'amount' => 999])
+        ->assertCreated();
+    $transaction = QpayTransaction::where('pun', $started->json('data.topup.pun'))->sole();
+    expect((float) $transaction->amount)->toBe(50.0)
+        ->and($transaction->student_pre_order_id)->toBe($saved['data']->id);
+
+    qpayPostReturn($this, qpaySigned(qpayPaymentResponse($transaction)));
+
+    $paid = StudentPreOrderCollection::sole();
+    expect($transaction->refresh()->status)->toBe('success')
+        ->and($paid->date->toDateString())->toBe($day)
+        ->and($paid->sale->status)->toBe('completed')
+        ->and((float) $paid->sale->grand_total)->toBe(50.0)
+        ->and(qpayBalance($this))->toBe(-9.0);
+});
+
+it('will not start a payment for a pre-order that is already paid', function (): void {
+    StudentWorld::enablePreOrders($this->world, [(int) $this->world->product->main_category_id], ['school_days' => [1, 2, 3, 4, 5, 6, 7]]);
+    StudentWorld::topUp($this->world, $this->student, 100);
+    $day = today()->addDay()->toDateString();
+    (new SaveAction())->execute($this->student, $this->guardian, ['type' => 'day', 'date' => $day, 'items' => [['product_id' => $this->world->product->id, 'quantity' => 1]]]);
+
+    $this->withToken(StudentWorld::parentToken($this->guardian))
+        ->postJson($this->world->url("/api/v1/parent/students/{$this->student->id}/topups"), ['pre_order_date' => $day, 'method' => 'debit'])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'This pre-order is already paid.');
 });

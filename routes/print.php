@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\PrintController;
+use App\Http\Middleware\EnsureModuleEnabled;
+use App\Support\ModuleAccess;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -37,6 +39,9 @@ Route::middleware('auth')->group(function (): void {
         });
         Route::name('tailoring::')->prefix('tailoring')->group(function (): void {
             Route::get('customer-receipt', 'tailoringCustomerReceipt')->name('customer-receipt')->can('tailoring order.receipts');
+        });
+        Route::name('student::')->prefix('student')->middleware(EnsureModuleEnabled::class.':'.ModuleAccess::SCHOOL)->group(function (): void {
+            Route::get('pre-orders/{date}', 'studentPreOrders')->where('date', '\d{4}-\d{2}-\d{2}')->name('pre-orders')->can('student menu.view');
         });
     });
 });

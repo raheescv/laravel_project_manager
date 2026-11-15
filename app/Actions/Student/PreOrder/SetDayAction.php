@@ -5,6 +5,7 @@ namespace App\Actions\Student\PreOrder;
 use App\Models\Account;
 use App\Models\Guardian;
 use App\Models\StudentPreOrder;
+use App\Models\StudentPreOrderCollection;
 use App\Support\Student\StudentSettings;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,15 @@ class SetDayAction
                     ->whereIn('status', [StudentPreOrder::STATUS_ACTIVE, StudentPreOrder::STATUS_SKIPPED])
                     ->lockForUpdate()
                     ->first();
+
+                // A paid day goes back onto the card before it is cleared or skipped.
+                $paid = $order ? StudentPreOrderCollection::where('student_pre_order_id', $order->id)->whereDate('date', $day->toDateString())->first() : null;
+                if ($paid) {
+                    $response = (new RefundAction())->execute($paid);
+                    if (! $response['success']) {
+                        throw new Exception($response['message'], 1);
+                    }
+                }
 
                 if ($action === self::CLEAR) {
                     $order?->forceFill(['status' => StudentPreOrder::STATUS_CANCELLED, 'guardian_id' => $guardian->id])->save();

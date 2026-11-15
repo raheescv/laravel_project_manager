@@ -50,6 +50,8 @@ class ScheduleAction
         return [
             'enabled' => $settings->preOrdersOpen(),
             'cutoff' => $settings->preOrderCutoff,
+            'cutoff_day_before' => $settings->preOrderCutoffDayBefore,
+            'cutoff_label' => $settings->preOrderCutoffLabel(),
             'school_days' => $settings->schoolDays,
             'max_quantity' => StudentPreOrder::MAX_QUANTITY,
             'weekly' => $weekly ? $this->order($weekly, $products) : null,
@@ -61,6 +63,8 @@ class ScheduleAction
                     'source' => $resolved['source'],
                     'locked' => $settings->preOrderLocked($date),
                     'deadline' => $settings->preOrderDeadline($date)->toIso8601String(),
+                    // Paid = the day's sale exists (ChargeAction). `collected` is the older name for it.
+                    'paid' => (bool) $resolved['collection'],
                     'collected' => (bool) $resolved['collection'],
                     'order' => $resolved['order'] && $resolved['source'] !== 'skipped' ? $this->order($resolved['order'], $products) : null,
                 ];

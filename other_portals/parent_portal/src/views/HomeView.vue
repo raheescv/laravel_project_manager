@@ -5,11 +5,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { fetchMe } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
 import ChildCard from '@/components/ChildCard.vue'
 import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { children, loadChildren } from '@/children'
-import { school } from '@/school'
 import { session } from '@/session'
 import { signOut } from '@/utils/account'
 import { classLabel, firstName, initials, money } from '@/utils/format'
@@ -61,9 +61,7 @@ onMounted(() => {
   <AppBar>
     <template #start>
       <span class="pp-appbar__school">
-        <img v-if="school.logo" class="pp-appbar__logo" :src="school.logo" alt="" />
-        <i v-else class="fa fa-graduation-cap pp-mark"></i>
-        <span>{{ school.name || 'Parent Portal' }}</span>
+        <BrandLogo class="pp-appbar__brand" />
       </span>
     </template>
     <template #end>

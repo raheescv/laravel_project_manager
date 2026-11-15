@@ -44,8 +44,8 @@ class StoreRequest extends FormRequest
             // method) spends their card balance. cardUid is what was tapped.
             'studentAccountId' => ['nullable', 'integer'],
             'cardUid' => ['nullable', 'string', 'max:40'],
-            // The parent's pre-order the till put in the cart (from the card lookup's
-            // pre_order.id). A completed sale marks it collected for today.
+            // Sent by older app builds with a pre-order in the cart. Ignored: pre-orders
+            // are paid in the parent portal now, and every till sale is a new sale.
             'preOrderId' => ['nullable', 'integer'],
             'totalPayment' => ['required', 'numeric', 'min:0'],
             // Custom payment breakdown — required when paymentMethod is "custom".

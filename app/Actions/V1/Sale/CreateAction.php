@@ -6,7 +6,6 @@ use App\Actions\Account\CreateAction as AccountCreateAction;
 use App\Actions\Sale\AssignStaffBillNoAction;
 use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\EnsureAccountsAction;
-use App\Actions\Student\PreOrder\CollectAction as CollectPreOrderAction;
 use App\Actions\V1\Student\ResolveCardCustomerAction;
 use App\Http\Requests\V1\Sale\StoreRequest;
 use App\Models\Account;
@@ -136,23 +135,16 @@ class CreateAction
                 'comboOffers' => [],
             ];
 
-            $preOrderId = $student ? $request->validated('preOrderId') : null;
-
             // The Office Bill number the till already counted for this sale. An
             // offline till has printed it; staff count their day on those slips.
             $sale = DB::transaction(fn () => AssignStaffBillNoAction::honouring(
                 $request->validated('staffBillSequence'),
                 $request->validated('staffBillDate'),
-                function () use ($data, $user, $preOrderId) {
+                function () use ($data, $user) {
                     $response = (new SaleCreateAction())->execute($data, (int) $user->id);
 
                     if (! $response['success']) {
                         throw new RuntimeException($response['message']);
-                    }
-
-                    // The parent's pre-order is handed over: the next tap today must not add it again.
-                    if ($preOrderId && $response['data']->status === 'completed') {
-                        (new CollectPreOrderAction())->execute((int) $preOrderId, (int) $response['data']->account_id, (int) $response['data']->id, (int) $user->id);
                     }
 
                     return $response['data'];

@@ -18,7 +18,9 @@ class StartTopupRequest extends FormRequest
     {
         return [
             // QAR. The school's limits (Settings → Student Settings) are checked by the action.
-            'amount' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required_without:pre_order_date', 'nullable', 'numeric', 'gt:0'],
+            // Pay for this day's pre-order instead: the amount is the order's own total, worked out by the server.
+            'pre_order_date' => ['nullable', 'date_format:Y-m-d'],
             // Language of the payment page.
             'lang' => ['nullable', 'string', 'in:En,Ar'],
             // debit → Qatar debit card through QPay (the default); credit → credit card through the Mastercard Gateway.

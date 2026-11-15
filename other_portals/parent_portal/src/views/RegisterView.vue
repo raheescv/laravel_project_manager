@@ -3,9 +3,9 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 
 import { fetchRegistrationForm, submitRegistration } from '@/api/parent'
 import '@/assets/register.css'
+import BrandLogo from '@/components/BrandLogo.vue'
 import RegisterField from '@/components/RegisterField.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
-import { school } from '@/school'
 import { session } from '@/session'
 
 /**
@@ -24,7 +24,12 @@ const loadError = ref('')
 
 const step = ref(1)
 const reached = ref(1)
+// The picked school is a branch: its id goes to the API, its name is what the parent reads.
 const chosenSchool = ref('')
+const schoolName = computed(() => {
+  const tile = options.value?.schools.find((school) => school.value === chosenSchool.value)
+  return tile?.name || tile?.place || ''
+})
 const parent = reactive({ name: '', qid: '', phone: '', email: '' })
 const students = ref([blankStudent()])
 const open = ref(0)
@@ -34,6 +39,8 @@ const serverErrors = ref({})
 const sending = ref(false)
 const alert = ref('')
 const done = ref(false)
+/** What the API said about the form: { approved, email }. Approved = the set-password email is on its way. */
+const result = ref(null)
 const botField = ref('')
 const panel = ref(null)
 const doneCard = ref(null)
@@ -46,12 +53,19 @@ const goLabel = computed(() => {
   if (step.value !== 3) return 'Continue'
   return students.value.length > 1 ? `Submit ${students.value.length} students` : 'Submit registration'
 })
-const firstName = computed(() => parent.name.trim().split(/\s+/)[0])
-/** Kindergarten names on one line, numbered classes on the next. */
-const classRows = computed(() => {
-  const classes = options.value?.classes ?? []
-  return [classes.filter((value) => !/^\d+$/.test(value)), classes.filter((value) => /^\d+$/.test(value))].filter((row) => row.length)
-})
+/**
+ * "thameem rahman" or "THAMEEM RAHMAN" → "Thameem Rahman", as the server saves it.
+ * A name typed with its own capitals ("McDonald") is kept as typed.
+ */
+function properName(value) {
+  const name = String(value || '').trim().replace(/\s+/g, ' ')
+  if (name !== name.toLowerCase() && name !== name.toUpperCase()) return name
+  return name.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (match, gap, letter) => gap + letter.toUpperCase())
+}
+
+const firstName = computed(() => properName(parent.name).split(' ')[0])
+/** The first page carries the big title, so the header leaves out its own label there. */
+const firstPage = computed(() => step.value === 1 && !done.value)
 
 async function loadForm() {
   loadError.value = ''
@@ -96,8 +110,8 @@ function problem(path) {
   const twin = (name) => students.value.some((student, i) => i !== index && String(student[name]).trim() === value)
   if (field === 'name') return value.length >= 2 ? '' : "Enter your child's full name."
   if (field === 'qid') return checkQid(value) || (twin('qid') ? 'You already added a child with this QID.' : '')
-  if (field === 'class') return value ? '' : 'Choose a class.'
-  if (field === 'div') return value ? '' : 'Choose a division.'
+  if (field === 'class') return value ? '' : 'Choose a grade.'
+  if (field === 'div') return value ? '' : 'Choose a class.'
   if (!value) return 'Enter the registration number.'
   return twin('reg') ? 'You already added a child with this number.' : ''
 }
@@ -186,7 +200,7 @@ function failOn(paths) {
   nextTick(() => {
     const field = document.querySelector(`[data-field="${first}"]`)
     field?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    const input = field?.querySelector('input')
+    const input = field?.querySelector('input, select')
     if (input && input.type !== 'radio') input.focus({ preventScroll: true })
   })
   return true
@@ -242,7 +256,7 @@ async function send() {
   sending.value = true
   alert.value = ''
   try {
-    await submitRegistration({
+    result.value = await submitRegistration({
       school: chosenSchool.value,
       parent: { ...parent },
       students: students.value,
@@ -304,18 +318,12 @@ function enterMovesOn(event) {
 </script>
 
 <template>
-  <div class="srx">
+  <div class="srx srx--photo">
     <div class="srx-page">
       <header class="srx-head">
         <div class="srx-brand">
-          <div class="srx-mark">
-            <img v-if="school.logo" :src="school.logo" alt="" />
-            <i v-else class="fa fa-cutlery"></i>
-          </div>
-          <div>
-            <strong>{{ school.name || 'School canteen' }}</strong>
-            <span>Student registration</span>
-          </div>
+          <BrandLogo class="srx-logo" plate />
+          <span v-if="!firstPage">Student registration</span>
         </div>
         <nav v-if="options?.schools.length && !done" class="srx-steps" aria-label="Progress">
           <button
@@ -355,14 +363,26 @@ function enterMovesOn(event) {
         <div v-else-if="done" ref="doneCard" class="srx-done" tabindex="-1">
           <div class="srx-done__ic"><i class="fa fa-check"></i></div>
           <h1>Registration received</h1>
-          <p class="srx-sub">Thank you, {{ firstName }}. Your details are with the {{ chosenSchool }} office.</p>
+          <p class="srx-sub">Thank you, {{ firstName }}. Your details are with the {{ schoolName }} office.</p>
           <div class="srx-slip">
-            <div class="srx-slip__row"><span>School</span><b>{{ chosenSchool }}</b></div>
+            <div class="srx-slip__row"><span>School</span><b>{{ schoolName }}</b></div>
             <div v-for="(student, index) in students" :key="index" class="srx-slip__row">
-              <span>{{ classText(student) }}</span><b>{{ student.name }}</b>
+              <span>{{ classText(student) }}</span><b>{{ properName(student.name) }}</b>
             </div>
           </div>
-          <p class="srx-next">
+          <p v-if="result?.approved && result.email" class="srx-next srx-next--sent">
+            <i class="fa fa-envelope"></i>
+            <span>Confirmation mail has been sent to <b>{{ result.email }}</b>. Please follow the link in it to set your password.</span>
+          </p>
+          <p v-else-if="result?.approved" class="srx-next srx-next--sent">
+            <i class="fa fa-check-circle"></i>
+            <span>{{ students.length > 1 ? 'They are' : `${students[0].name.trim().split(/\s+/)[0]} is` }} on your parent portal now.{{ session.signedIn ? ' You can top up and pre-order straight away.' : ' Sign in with your usual password to see them.' }}</span>
+          </p>
+          <p v-else-if="result?.existing_parent" class="srx-next">
+            <i class="fa fa-info-circle"></i>
+            <span>This mobile number already has a parent portal account. The office will check the registration and add the {{ students.length > 1 ? 'children' : 'child' }} to that account. Sign in with its existing password; no new link is sent.</span>
+          </p>
+          <p v-else class="srx-next">
             <i class="fa fa-info-circle"></i>
             <span>Once the office has checked them, we'll email <b>{{ parent.email }}</b> a link to set your parent portal password.</span>
           </p>
@@ -380,7 +400,8 @@ function enterMovesOn(event) {
 
             <section :key="step" ref="panel" class="srx-panel" tabindex="-1">
               <template v-if="step === 1">
-                <h1>Which school?</h1>
+                <h1 class="srx-title">Student Registration</h1>
+                <h2>Which school?</h2>
                 <p class="srx-sub">Tap your child's school to begin. If your children go to different schools, send one form for each school.</p>
                 <div class="srx-schools">
                   <label v-for="tile in options.schools" :key="tile.value" class="srx-school">
@@ -410,8 +431,8 @@ function enterMovesOn(event) {
                 <h1>Your children</h1>
                 <p class="srx-sub">Add each child who goes to this school.</p>
                 <div class="srx-sum">
-                  <button type="button" @click="goTo(1)"><i class="fa fa-map-marker"></i><span>{{ chosenSchool }}</span><em>Change</em></button>
-                  <button type="button" @click="goTo(2)"><i class="fa fa-user"></i><span>{{ parent.name }}</span><em>Change</em></button>
+                  <button type="button" @click="goTo(1)"><i class="fa fa-map-marker"></i><span>{{ schoolName }}</span><em>Change</em></button>
+                  <button type="button" @click="goTo(2)"><i class="fa fa-user"></i><span>{{ properName(parent.name) }}</span><em>Change</em></button>
                 </div>
 
                 <div class="srx-kids">
@@ -423,17 +444,17 @@ function enterMovesOn(event) {
                       </div>
                       <div class="srx-open__body">
                         <aside class="srx-pass" aria-hidden="true">
-                          <div class="srx-pass__top">{{ chosenSchool }}</div>
+                          <div class="srx-pass__top">{{ schoolName }}</div>
                           <div class="srx-pass__av">
                             <template v-if="initials(student.name)">{{ initials(student.name) }}</template>
                             <i v-else class="fa fa-graduation-cap"></i>
                           </div>
                           <div class="srx-pass__info">
-                            <div class="srx-pass__name" :class="{ 'is-empty': !student.name.trim() }">{{ student.name.trim() || "Your child's name" }}</div>
+                            <div class="srx-pass__name" :class="{ 'is-empty': !student.name.trim() }">{{ properName(student.name) || "Your child's name" }}</div>
                           </div>
                           <div class="srx-pass__tiles">
-                            <div><small>Class</small><b>{{ gradeText(student) || '—' }}</b></div>
-                            <div><small>Division</small><b>{{ student.div || '—' }}</b></div>
+                            <div><small>Grade</small><b>{{ student.class || '—' }}</b></div>
+                            <div><small>Class</small><b>{{ student.div || '—' }}</b></div>
                           </div>
                           <div class="srx-pass__bar"></div>
                           <div v-if="student.reg" class="srx-pass__reg">{{ student.reg }}</div>
@@ -444,26 +465,26 @@ function enterMovesOn(event) {
                           <RegisterField :id="`s_qid_${index}`" :path="`s.${index}.qid`" label="QID number" dir="ltr" :value="student.qid" :error="errorFor(`s.${index}.qid`)" :ok="isOk(`s.${index}.qid`)" :count="countFor(`s.${index}.qid`)" inputmode="numeric" autocomplete="off" enterkeyhint="next" maxlength="20" placeholder="11 digits" @edit="edit(`s.${index}.qid`, $event)" @leave="leave(`s.${index}.qid`)" />
                           <RegisterField :id="`s_reg_${index}`" :path="`s.${index}.reg`" label="Registration number" dir="ltr" help="The number the school gave your child." :value="student.reg" :error="errorFor(`s.${index}.reg`)" :ok="isOk(`s.${index}.reg`)" autocomplete="off" autocapitalize="characters" enterkeyhint="done" maxlength="30" placeholder="From the school" @edit="edit(`s.${index}.reg`, $event)" @leave="leave(`s.${index}.reg`)" />
 
-                          <div class="srx-f srx-span" :class="{ 'is-bad': errorFor(`s.${index}.class`) }" :data-field="`s.${index}.class`">
-                            <div :id="`lc_${index}`" class="srx-lbl">Class</div>
-                            <div class="srx-chip-rows" role="radiogroup" :aria-labelledby="`lc_${index}`">
-                              <div v-for="(row, rowIndex) in classRows" :key="rowIndex" class="srx-chips">
-                                <label v-for="value in row" :key="value" class="srx-chip">
-                                  <input type="radio" :name="`class_${index}`" :value="value" :checked="student.class === value" @change="choose(`s.${index}.class`, value)" />
-                                  <span>{{ value }}</span>
-                                </label>
-                              </div>
+                          <div class="srx-f" :class="{ 'is-bad': errorFor(`s.${index}.class`), 'is-ok': isOk(`s.${index}.class`) }" :data-field="`s.${index}.class`">
+                            <label :for="`s_class_${index}`">Grade</label>
+                            <div class="srx-ctl srx-ctl--select">
+                              <select :id="`s_class_${index}`" :value="student.class" :aria-invalid="errorFor(`s.${index}.class`) ? 'true' : 'false'" @change="choose(`s.${index}.class`, $event.target.value)">
+                                <option value="" disabled>Select grade</option>
+                                <option v-for="value in options.classes" :key="value" :value="value">{{ value }}</option>
+                              </select>
+                              <i class="fa fa-angle-down srx-caret" aria-hidden="true"></i>
                             </div>
                             <p class="srx-err" role="alert"><template v-if="errorFor(`s.${index}.class`)"><i class="fa fa-exclamation-circle"></i><span>{{ errorFor(`s.${index}.class`) }}</span></template></p>
                           </div>
 
-                          <div class="srx-f srx-span" :class="{ 'is-bad': errorFor(`s.${index}.div`) }" :data-field="`s.${index}.div`">
-                            <div :id="`ld_${index}`" class="srx-lbl">Division</div>
-                            <div class="srx-chips" role="radiogroup" :aria-labelledby="`ld_${index}`">
-                              <label v-for="value in options.divisions" :key="value" class="srx-chip">
-                                <input type="radio" :name="`div_${index}`" :value="value" :checked="student.div === value" @change="choose(`s.${index}.div`, value)" />
-                                <span>{{ value }}</span>
-                              </label>
+                          <div class="srx-f" :class="{ 'is-bad': errorFor(`s.${index}.div`), 'is-ok': isOk(`s.${index}.div`) }" :data-field="`s.${index}.div`">
+                            <label :for="`s_div_${index}`">Class</label>
+                            <div class="srx-ctl srx-ctl--select">
+                              <select :id="`s_div_${index}`" :value="student.div" :aria-invalid="errorFor(`s.${index}.div`) ? 'true' : 'false'" @change="choose(`s.${index}.div`, $event.target.value)">
+                                <option value="" disabled>Select class</option>
+                                <option v-for="value in options.divisions" :key="value" :value="value">{{ value }}</option>
+                              </select>
+                              <i class="fa fa-angle-down srx-caret" aria-hidden="true"></i>
                             </div>
                             <p class="srx-err" role="alert"><template v-if="errorFor(`s.${index}.div`)"><i class="fa fa-exclamation-circle"></i><span>{{ errorFor(`s.${index}.div`) }}</span></template></p>
                           </div>
@@ -478,7 +499,7 @@ function enterMovesOn(event) {
                           <i v-else class="fa fa-graduation-cap"></i>
                         </span>
                         <span class="srx-kid__tx">
-                          <b>{{ student.name.trim() || `Student ${index + 1}` }}</b>
+                          <b>{{ properName(student.name) || `Student ${index + 1}` }}</b>
                           <small>{{ rowDetail(student, index) }}</small>
                         </span>
                       </button>
@@ -488,7 +509,7 @@ function enterMovesOn(event) {
                   </template>
 
                   <div v-if="removed" class="srx-undo">
-                    <span>Removed {{ removed.student.name.trim() || 'student' }}</span>
+                    <span>Removed {{ properName(removed.student.name) || 'student' }}</span>
                     <button type="button" @click="undoRemove"><i class="fa fa-undo"></i> Undo</button>
                   </div>
                 </div>

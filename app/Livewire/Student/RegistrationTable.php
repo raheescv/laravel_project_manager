@@ -28,6 +28,7 @@ class RegistrationTable extends Component
 
     public $search = '';
 
+    /** The school filter: a branch id, '' for all. */
     public $school = '';
 
     /** '' for all, 'new' or 'existing'. */
@@ -210,7 +211,7 @@ class RegistrationTable extends Component
         return Guardian::query()
             ->whereHas('pendingStudents', fn ($students) => $students->when(
                 $this->school !== '',
-                fn ($query) => $query->whereHas('studentDetail', fn ($detail) => $detail->where('school', $this->school)),
+                fn ($query) => $query->whereHas('studentDetail', fn ($detail) => $detail->where('branch_id', (int) $this->school)),
             ))
             ->when($this->parentType === 'new', fn ($query) => $query->where('guardians.status', Guardian::PENDING))
             ->when($this->parentType === 'existing', fn ($query) => $query->where('guardians.status', '!=', Guardian::PENDING))
@@ -252,7 +253,7 @@ class RegistrationTable extends Component
 
     public function render(): View
     {
-        $waiting = Guardian::query()->whereHas('pendingStudents')->with('pendingStudents.studentDetail')->get();
+        $waiting = Guardian::query()->whereHas('pendingStudents')->with('pendingStudents.studentDetail.branch')->get();
 
         return view('livewire.student.registration-table', [
             'stats' => [
@@ -260,14 +261,16 @@ class RegistrationTable extends Component
                 'students' => $waiting->sum(fn (Guardian $guardian) => $guardian->pendingStudents->count()),
                 'existing' => $waiting->reject(fn (Guardian $guardian) => $guardian->isPendingApproval())->count(),
             ],
+            // Families waiting per school (branch), keyed by branch id: [name, count].
             'schools' => $waiting
-                ->flatMap(fn (Guardian $guardian) => $guardian->pendingStudents->map(fn ($student) => $student->studentDetail->school)->filter()->unique())
-                ->countBy()
-                ->sortKeys(),
-            'data' => $this->filteredQuery()->with('pendingStudents.studentDetail')->paginate($this->limit),
+                ->flatMap(fn (Guardian $guardian) => $guardian->pendingStudents->pluck('studentDetail')->filter(fn ($detail) => $detail?->branch)->unique('branch_id'))
+                ->groupBy('branch_id')
+                ->map(fn ($details) => ['name' => $details->first()->school, 'count' => $details->count()])
+                ->sortBy('name'),
+            'data' => $this->filteredQuery()->with('pendingStudents.studentDetail.branch')->paginate($this->limit),
             'selection' => $this->selectionSummary(),
             'viewing' => $this->viewingId
-                ? Guardian::with('pendingStudents.studentDetail')->find($this->viewingId)
+                ? Guardian::with('pendingStudents.studentDetail.branch')->find($this->viewingId)
                 : null,
         ]);
     }

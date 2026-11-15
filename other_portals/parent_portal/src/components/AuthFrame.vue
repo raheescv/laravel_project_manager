@@ -1,4 +1,5 @@
 <script setup>
+import { brand } from '@/brand'
 import CanteenArt from '@/components/CanteenArt.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { desktop } from '@/utils/viewport'
@@ -18,8 +19,11 @@ defineProps({
   <div class="pp-signin">
     <ThemeToggle v-if="desktop || !bar" class="pp-signin__theme" />
     <div class="pp-signin__wash" aria-hidden="true">
-      <CanteenArt class="pp-signin__plate pp-signin__plate--lead" />
-      <CanteenArt class="pp-signin__plate pp-signin__plate--trail" />
+      <img v-if="brand.backdrop" class="pp-signin__brand" :src="brand.backdrop" alt="" />
+      <template v-else>
+        <CanteenArt class="pp-signin__plate pp-signin__plate--lead" />
+        <CanteenArt class="pp-signin__plate pp-signin__plate--trail" />
+      </template>
     </div>
     <div class="pp-signin__form"><slot /></div>
   </div>

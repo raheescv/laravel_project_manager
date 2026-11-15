@@ -151,11 +151,32 @@
                     <div class="sec-h">
                         <span class="num">2</span>
                         <div>
-                            <h5>Which class are they in?</h5>
-                            <p>Grade, section and whether they are at school now</p>
+                            <h5>Which school and class are they in?</h5>
+                            <p>School, grade, section and whether they are at school now</p>
                         </div>
                     </div>
                     <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-label" id="sp_branch_label">School</div>
+                            <div class="row g-2" role="radiogroup" aria-labelledby="sp_branch_label">
+                                @foreach ($branches as $branch)
+                                    <div class="col-6 col-md-4">
+                                        <input type="radio" class="btn-check" name="sp_branch" id="sp_branch_{{ $branch->id }}" value="{{ $branch->id }}" wire:model="student.branch_id">
+                                        <label class="tapc" for="sp_branch_{{ $branch->id }}">
+                                            <span class="ti"><i class="fa fa-building-o"></i></span>
+                                            <span class="tt"><b>{{ $branch->locationLabel() }}</b>@if ($branch->locationLabel() !== $branch->name)<small class="d-block text-body-secondary">{{ $branch->name }}</small>@endif</span>
+                                            <span class="tk"><i class="fa fa-check"></i></span>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="hint"><i class="fa fa-info-circle"></i>
+                                <span>
+                                    The branch the student belongs to. Their canteen pre-orders are sold there.
+                                </span>
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label" for="sp_grade">Grade <span class="opt">Optional</span></label>
                             <input type="text" id="sp_grade" class="form-control" wire:model="student.grade" list="sp_grades" maxlength="30" placeholder="e.g. Grade 5" autocomplete="off">

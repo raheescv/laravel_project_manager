@@ -3,8 +3,11 @@
 namespace App\Actions\QPay;
 
 use App\Actions\Student\PostTopupJournalAction;
+use App\Actions\Student\PreOrder\ChargeAction;
+use App\Actions\Student\PreOrder\ChargeDueAction;
 use App\Models\Branch;
 use App\Models\QpayTransaction;
+use App\Models\StudentPreOrder;
 use App\Models\User;
 use App\Services\Payment\QPayClient;
 use Exception;
@@ -92,8 +95,40 @@ class SettleAction
                 'failure_reason' => null,
             ])->save();
 
+            $this->payWaitingPreOrders($locked);
+
             return $locked;
         });
+    }
+
+    /**
+     * A parent who chose "Bank card" for a pre-order saved it first and then paid:
+     * now the money is on the card, pay that order with it, whatever the card owed
+     * before (the payment was its exact total), then any other order still waiting
+     * that the balance covers (ChargeDueAction). Never allowed to disturb the
+     * top-up itself, which is already credited.
+     */
+    private function payWaitingPreOrders(QpayTransaction $transaction): void
+    {
+        try {
+            $order = $transaction->student_pre_order_id ? StudentPreOrder::find($transaction->student_pre_order_id) : null;
+            if ($order?->date && $order->status === StudentPreOrder::STATUS_ACTIVE) {
+                DB::transaction(function () use ($order): void {
+                    $response = (new ChargeAction())->execute($order, $order->date, null, funded: true);
+                    if (! $response['success']) {
+                        throw new Exception($response['message']);
+                    }
+                });
+            }
+        } catch (\Throwable $th) {
+            Log::warning('Pre-order not paid after its bank card payment', ['pun' => $transaction->pun, 'error' => $th->getMessage()]);
+        }
+
+        try {
+            (new ChargeDueAction())->forStudent((int) $transaction->account_id);
+        } catch (\Throwable $th) {
+            Log::warning('Waiting pre-orders not paid after a top-up', ['pun' => $transaction->pun, 'error' => $th->getMessage()]);
+        }
     }
 
     private function credit(QpayTransaction $transaction)

@@ -26,6 +26,8 @@ class SavePreOrderRequest extends FormRequest
             'weekdays.*' => ['integer', 'between:1,7'],
             // For the canteen, e.g. "No mayonnaise". Optional.
             'note' => ['nullable', 'string', 'max:200'],
+            // Day order only: `card` pays now from the student card; `bank` waits for the bank card top-up the portal opens next.
+            'pay' => ['nullable', 'string', 'in:card,bank'],
         ];
     }
 

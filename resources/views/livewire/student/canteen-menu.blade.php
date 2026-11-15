@@ -31,6 +31,25 @@
             </div>
         </div>
     @else
+        {{-- The day's pre-order list for the counter: printed as a PDF (print::student::pre-orders) --}}
+        @php($printDay = $settings->preOrderPrintDay()->toDateString())
+        <div class="sheet mb-3 rise d-flex flex-wrap align-items-center gap-2 p-3" style="--i:0" x-data="{ day: @js($printDay), branch: '' }">
+            <div class="me-auto">
+                <h5 class="mb-0"><i class="fa fa-print me-1"></i> Pre-order list</h5>
+                <p class="mb-0 text-body-secondary" style="font-size: 13px;">Every student's paid order for a day, branch by branch (one page each), by class, with what to prepare.</p>
+            </div>
+            <input type="date" class="form-control form-control-sm" style="width: auto;" x-model="day" aria-label="Day">
+            <select class="form-select form-select-sm" style="width: auto;" x-model="branch" aria-label="Branch">
+                <option value="">All branches</option>
+                @foreach (App\Models\Branch::query()->orderBy('name')->get(['id', 'name']) as $branch)
+                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                @endforeach
+            </select>
+            <a class="btn btn-primary btn-sm" target="_blank" rel="noopener"
+               :href="@js(route('print::student::pre-orders', ['date' => '__DAY__'])).replace('__DAY__', day) + (branch ? '?branch=' + branch : '')"
+               :class="{ disabled: !day }"><i class="fa fa-print me-1"></i> Print</a>
+        </div>
+
         {{-- Hero: the meal being written, and how far the week has got --}}
         <div class="sheet top mb-3 rise" style="--i:0">
             <div class="min-w-0">
@@ -241,7 +260,7 @@
                         <div class="phone" :class="{ dim: !day.rows.length }">
                             <div class="ph">
                                 <i class="fa fa-cutlery" style="color: var(--acc)"></i>
-                                <div><b x-text="day.label"></b><small class="d-block">order before {{ $settings->preOrderCutoff }}</small></div>
+                                <div><b x-text="day.label"></b><small class="d-block">order before {{ $settings->preOrderCutoffLabel() }}</small></div>
                             </div>
                             <template x-for="(row, i) in day.rows" :key="i">
                                 <div class="prow">

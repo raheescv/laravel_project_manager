@@ -5,8 +5,11 @@ namespace App\Livewire\Sale;
 use App\Actions\Sale\DeleteAction;
 use App\Exports\SaleExport;
 use App\Jobs\Export\ExportSaleJob;
+use App\Models\Branch;
 use App\Models\Configuration;
 use App\Models\Sale;
+use App\Support\ModuleAccess;
+use App\Support\Student\StudentSettings;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -281,11 +284,31 @@ class Table extends Component
             ->get();
 
         return view('livewire.sale.table', [
+            'preOrderPrintDay' => $printDay = $this->preOrderPrintDay(),
+            'preOrderBranches' => $printDay ? Branch::query()->orderBy('name')->get(['id', 'name']) : collect(),
             'total' => $total,
             'data' => new LengthAwarePaginator($rows, $total['total_count'], $limit, $page, [
                 'path' => Paginator::resolveCurrentPath(),
                 'pageName' => 'page',
             ]),
         ]);
+    }
+
+    /**
+     * The day the "Pre-orders" print offers, or null when there is nothing to print
+     * here: not a school, pre-orders off, or no access to the canteen menu. A list
+     * filtered to one day prints that day.
+     */
+    private function preOrderPrintDay(): ?string
+    {
+        if (! ModuleAccess::school() || ! auth()->user()?->can('student menu.view')) {
+            return null;
+        }
+        $settings = StudentSettings::current();
+        if (! $settings->preOrdersOpen()) {
+            return null;
+        }
+
+        return $this->from_date && $this->from_date === $this->to_date ? $this->from_date : $settings->preOrderPrintDay()->toDateString();
     }
 }

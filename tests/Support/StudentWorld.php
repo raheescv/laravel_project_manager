@@ -73,6 +73,7 @@ class StudentWorld
                 'overdraft_limit' => 0, 'topup_min' => 10, 'topup_max' => 1000,
                 'pre_orders_enabled' => true, 'pre_order_category_ids' => $categoryIds,
                 'pre_order_cutoff' => '07:30', 'school_days' => [7, 1, 2, 3, 4],
+                'pre_order_branch_id' => $world->branch->id, 'pre_order_user_id' => $world->user->id,
             ], $overrides))],
         );
     }

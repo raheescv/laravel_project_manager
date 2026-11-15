@@ -9,12 +9,17 @@ import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { school } from '@/school'
-import { amount as plainAmount, classLabel, firstName, money } from '@/utils/format'
+import { amount as plainAmount, classLabel, date, dayName, firstName, money } from '@/utils/format'
 import { goToPayment } from '@/utils/checkout'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
 const id = Number(route.params.id)
+// Opened from a pre-order the parent chose to pay by bank card: the amount is the order's
+// own total and cannot be changed (the server charges exactly that order).
+const preOrderDate = /^\d{4}-\d{2}-\d{2}$/.test(String(route.query.date || '')) ? String(route.query.date) : ''
+const forPreOrder = route.query.for === 'pre-order' && Boolean(preOrderDate)
+const askedAmount = Number(route.query.amount) || 0
 
 const student = ref(null)
 const status = ref('loading')
@@ -56,10 +61,13 @@ const trust = computed(() =>
     : "You'll pay on QPay's secure page, not in this app.",
 )
 const value = computed(() => {
+  if (forPreOrder) return askedAmount
   const cleaned = String(input.value).replace(/,/g, '').trim()
   return /^\d+(\.\d{0,2})?$/.test(cleaned) ? Number(cleaned) : null
 })
-const valid = computed(() => value.value !== null && value.value >= limits.value.min && value.value <= limits.value.max)
+const valid = computed(() =>
+  forPreOrder ? askedAmount > 0 : value.value !== null && value.value >= limits.value.min && value.value <= limits.value.max,
+)
 const newBalance = computed(() => Number(student.value?.balance || 0) + (value.value || 0))
 /** The number written on the card face: what has been typed, or a resting zero. */
 const faceAmount = computed(() => plainAmount(value.value ?? 0))
@@ -143,8 +151,8 @@ async function load() {
   try {
     student.value = await fetchStudent(id)
     refreshChild(student.value)
-    const suggestions = student.value.topup.suggestions
-    if (!input.value && suggestions.length) input.value = plainAmount(suggestions[Math.min(1, suggestions.length - 1)])
+    const { suggestions } = student.value.topup
+    if (!forPreOrder && !input.value && suggestions.length) input.value = plainAmount(suggestions[Math.min(1, suggestions.length - 1)])
     if (!methods.value.some((option) => option.key === method.value)) method.value = rememberedMethod(methods.value)
     status.value = 'ready'
   } catch (e) {
@@ -183,7 +191,7 @@ function confirmCredit() {
 async function startPayment(confirmPending = false) {
   paying.value = true
   try {
-    const { payment } = await startTopup(id, value.value, chosen.value?.key, confirmPending)
+    const { payment } = await startTopup(id, value.value, chosen.value?.key, confirmPending, forPreOrder ? preOrderDate : null)
     // Leaves the portal for the gateway's page; it brings the parent back to #/topups/{pun}.
     await goToPayment(payment)
   } catch (e) {
@@ -203,15 +211,26 @@ onUnmounted(stopTicker)
 </script>
 
 <template>
-  <AppBar :back="{ name: 'student', params: { id } }" :back-label="first || 'Back'" title="Top up" />
+  <AppBar
+    :back="forPreOrder ? { name: 'pre-orders', params: { id } } : { name: 'student', params: { id } }"
+    :back-label="forPreOrder ? 'Pre-order' : first || 'Back'"
+    :title="forPreOrder ? 'Pay for pre-order' : 'Top up'"
+  />
 
   <LoadError v-if="status === 'error'" title="We couldn't open top-up" :message="loadError" @retry="load" />
 
   <template v-else>
     <main>
       <div class="pp-largetitle">
-        <h1 v-if="student">Top up {{ first }}'s card</h1>
+        <h1 v-if="student">{{ forPreOrder ? `Pay for ${first}'s pre-order` : `Top up ${first}'s card` }}</h1>
         <span v-else class="pp-skel pp-skel--title"></span>
+      </div>
+
+      <div v-if="forPreOrder && student" class="pp-alert pp-alert--info">
+        <i class="fa fa-check-circle"></i>
+        <span class="pp-alert__main">
+          <span class="pp-alert__title">Your pre-order is saved, not paid yet</span>Pay by bank card below. As soon as the payment goes through, the order is paid and {{ first }}'s meal is booked.
+        </span>
       </div>
 
       <div v-if="!desktop && !student" class="pp-face pp-face--skel" aria-hidden="true">
@@ -234,7 +253,7 @@ onUnmounted(stopTicker)
           <span v-if="cardState === 'active'" class="pp-face__chip"><i class="fa fa-check-circle"></i>Active</span>
           <span v-else-if="cardState === 'blocked'" class="pp-face__chip"><i class="fa fa-ban"></i>Blocked</span>
         </div>
-        <span class="pp-face__label">Adding to balance</span>
+        <span class="pp-face__label">{{ forPreOrder ? `Pre-order · ${dayName(preOrderDate)}` : 'Adding to balance' }}</span>
         <div class="pp-face__amt" :class="{ 'is-empty': !valid }">
           <small>{{ school.currency.code }}</small><b>{{ faceAmount }}</b>
         </div>
@@ -243,7 +262,11 @@ onUnmounted(stopTicker)
             <small><i class="fa fa-credit-card"></i>Balance now</small>
             <b>{{ money(student.balance) }}</b>
           </span>
-          <span class="pp-face__stat">
+          <span v-if="forPreOrder" class="pp-face__stat">
+            <small><i class="fa fa-check-circle"></i>After paying</small>
+            <b>{{ money(student.balance) }}</b>
+          </span>
+          <span v-else class="pp-face__stat">
             <small><i class="fa fa-arrow-circle-o-up"></i>After top-up</small>
             <b>{{ valid ? money(newBalance) : '—' }}</b>
           </span>
@@ -279,7 +302,23 @@ onUnmounted(stopTicker)
             </span>
           </div>
 
-          <section class="pp-group">
+          <section v-if="forPreOrder" class="pp-group">
+            <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-money"></i>Amount</span></h2>
+            <div class="pp-group__body">
+              <div class="pp-row">
+                <span class="pp-row__main">
+                  <span class="pp-row__title">Pre-order for {{ dayName(preOrderDate) }}</span>
+                  <span class="pp-row__sub">{{ date(preOrderDate) }}</span>
+                </span>
+                <span class="pp-row__end"><span class="pp-amt">{{ money(askedAmount) }}</span></span>
+              </div>
+            </div>
+            <p class="pp-group__foot">
+              <i class="fa fa-info-circle" aria-hidden="true"></i>The order's exact total. It pays the order and leaves {{ first }}'s card balance as it is.
+            </p>
+          </section>
+
+          <section v-else class="pp-group">
             <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-money"></i>Amount</span></h2>
             <div v-if="limits.suggestions.length" class="pp-chips" role="group" aria-label="Quick amounts">
               <button
@@ -357,9 +396,16 @@ onUnmounted(stopTicker)
             <span v-else-if="cardState === 'blocked'" class="pp-tag pp-tag--neg">Card blocked</span>
           </div>
           <dl class="pp-summary__rows">
-            <div><dt>Current balance</dt><dd :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</dd></div>
-            <div><dt>Top-up</dt><dd>{{ valid ? money(value, { sign: true }) : '—' }}</dd></div>
-            <div class="is-total"><dt>New balance</dt><dd>{{ valid ? money(newBalance) : '—' }}</dd></div>
+            <template v-if="forPreOrder">
+              <div><dt>Pre-order · {{ dayName(preOrderDate) }}</dt><dd>{{ money(askedAmount) }}</dd></div>
+              <div><dt>Card balance</dt><dd :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }} · unchanged</dd></div>
+              <div class="is-total"><dt>To pay</dt><dd>{{ money(askedAmount) }}</dd></div>
+            </template>
+            <template v-else>
+              <div><dt>Current balance</dt><dd :class="{ 'pp-text-neg': student.balance < 0 }">{{ money(student.balance) }}</dd></div>
+              <div><dt>Top-up</dt><dd>{{ valid ? money(value, { sign: true }) : '—' }}</dd></div>
+              <div class="is-total"><dt>New balance</dt><dd>{{ valid ? money(newBalance) : '—' }}</dd></div>
+            </template>
           </dl>
           <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" :disabled="paying || blocked">
             <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa" :class="blocked ? 'fa-clock-o' : 'fa-lock'"></i>

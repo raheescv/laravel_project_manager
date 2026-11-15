@@ -40,6 +40,12 @@ class Branch extends Model
         static::deleted($invalidate);
     }
 
+    /** What parents read for this branch (e.g. the registration form's school): its location, else its name. */
+    public function locationLabel(): string
+    {
+        return trim((string) $this->location) ?: trim((string) $this->name);
+    }
+
     public static function rules($id = 0, $merge = [])
     {
         $tenantId = self::getCurrentTenantId();

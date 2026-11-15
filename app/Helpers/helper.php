@@ -711,6 +711,7 @@ if (! function_exists('saleSources')) {
             'import' => 'Import',
             'migration' => 'Migration',
             'storefront' => 'Storefront',
+            'pre_order' => 'Pre-order',
         ];
     }
 }

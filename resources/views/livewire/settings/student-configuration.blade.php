@@ -54,17 +54,40 @@
             <div class="sct-pane-head">
                 <div>
                     <h6>Public registration page</h6>
-                    <p>Parents register their children from the parent portal, without signing in. Each form waits under Students → Registrations until you approve it.</p>
+                    <p>Parents register their children from the parent portal, without signing in.</p>
                 </div>
+                <label class="form-switch scx-switch" for="sc_registration_auto_approve">
+                    {{ $registration_auto_approve ? 'Approve automatically' : 'Office approves' }}
+                    <input class="form-check-input" type="checkbox" role="switch" id="sc_registration_auto_approve" wire:model.live="registration_auto_approve">
+                </label>
+            </div>
+            <div class="alert alert-light border small py-2 mb-3">
+                <i class="fa fa-info-circle me-1"></i>
+                @if ($registration_auto_approve)
+                    A new parent's children are added at once and the parent is emailed a link to set their portal password. A form that uses the mobile number of a parent you already have still waits under Students → Registrations, so nobody can add a child to another family.
+                @else
+                    Each form waits under Students → Registrations until you approve it. The parent gets their portal link after that.
+                @endif
             </div>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label" for="sc_registration_schools">Schools</label>
-                    <textarea id="sc_registration_schools" class="form-control" rows="7" wire:model="registration_schools" placeholder="AIA - Doha"></textarea>
-                    <div class="form-text">One per line. Leave empty to close the page.</div>
-                    @error('registration_schools')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span class="form-label mb-0">Schools</span>
+                        <label class="form-check form-switch mb-0" for="sc_registration_enabled">
+                            <input class="form-check-input" type="checkbox" role="switch" id="sc_registration_enabled" wire:model.live="registration_enabled">
+                            <span class="form-check-label small">{{ $registration_enabled ? 'Page open' : 'Page closed' }}</span>
+                        </label>
+                    </div>
+                    <div class="border rounded p-2" style="min-height: 9.5rem;">
+                        @forelse ($registrationBranches as $branch)
+                            <span class="badge bg-light text-dark border me-1 mb-1 fw-semibold"><i class="fa fa-building-o me-1"></i>{{ $branch->name }}</span>
+                        @empty
+                            <span class="text-body-secondary small">No branch is on the showcase yet, so the page offers no school.</span>
+                        @endforelse
+                    </div>
+                    <div class="form-text">
+                        The branches shown on the showcase, from Settings → Branches. A registered child is attached to the branch picked, and their pre-orders are sold there.
+                    </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label" for="sc_registration_classes">Classes</label>
@@ -90,7 +113,7 @@
             <div class="sct-pane-head">
                 <div>
                     <h6>Canteen pre-orders</h6>
-                    <p>Parents order for a day or every week in the portal; the items drop into the POS cart when the card is tapped. Nothing is charged at ordering.</p>
+                    <p>Parents order and pay in the portal: each order becomes a completed sale dated the day it is served, paid from the student card (a parent who picks bank card tops the card up for it first). Weekly orders are paid day by day when each day's orders close. A tap at the till is always a new sale.</p>
                 </div>
                 <label class="form-switch scx-switch" for="sc_pre_orders_enabled">
                     {{ $pre_orders_enabled ? 'On' : 'Off' }}
@@ -255,9 +278,28 @@
                     @enderror
 
                     <label class="form-label mt-3" for="sc_pre_order_cutoff">Order cut-off time</label>
-                    <input type="time" id="sc_pre_order_cutoff" class="form-control" wire:model="pre_order_cutoff">
-                    <div class="form-text">After this time, that day's order is locked.</div>
+                    <input type="time" id="sc_pre_order_cutoff" class="form-control" wire:model.live="pre_order_cutoff">
+                    <div class="cnx-days mt-2" style="grid-template-columns: repeat(2, minmax(0, 1fr));" role="radiogroup" aria-label="Cut-off day">
+                        <input type="radio" class="btn-check" id="sc_cutoff_same" value="0" wire:model.live="pre_order_cutoff_day_before" autocomplete="off">
+                        <label class="cnx-day" for="sc_cutoff_same">On the day</label>
+                        <input type="radio" class="btn-check" id="sc_cutoff_before" value="1" wire:model.live="pre_order_cutoff_day_before" autocomplete="off">
+                        <label class="cnx-day" for="sc_cutoff_before">The day before</label>
+                    </div>
+                    <div class="form-text">
+                        @if ($pre_order_cutoff_day_before === '1')
+                            Orders for a day close at {{ $pre_order_cutoff }} the evening before. Sunday's orders close on Saturday.
+                        @else
+                            Orders for a day close at {{ $pre_order_cutoff }} on that day.
+                        @endif
+                    </div>
                     @error('pre_order_cutoff')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+
+                    <label class="form-label mt-3" for="sc_pre_order_summary_emails">Email the orders to</label>
+                    <textarea id="sc_pre_order_summary_emails" class="form-control" rows="2" wire:model="pre_order_summary_emails" placeholder="kitchen@school.qa"></textarea>
+                    <div class="form-text">One address per line. When a day's orders close, these addresses get the list of what to prepare. Leave empty to send nothing.</div>
+                    @error('pre_order_summary_emails')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
                 </div>
@@ -279,16 +321,45 @@
                     @error('pre_order_category_ids')
                         <div class="text-danger small">{{ $message }}</div>
                     @enderror
+
+                    <div class="row g-2 mt-2">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="sc_pre_order_branch">Branch for students without one</label>
+                            <select id="sc_pre_order_branch" class="form-select" wire:model="pre_order_branch_id">
+                                <option value="">First branch ({{ $branches->sortBy('id')->first()?->name ?? 'none yet' }})</option>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">A student's pre-orders are sold at their own branch (the school picked when registering). This one is used when a student has none.</div>
+                            @error('pre_order_branch_id')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="sc_pre_order_user">Record them as</label>
+                            <select id="sc_pre_order_user" class="form-select" wire:model="pre_order_user_id">
+                                <option value="">The System user</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Shown as the cashier on pre-order sales.</div>
+                            @error('pre_order_user_id')
+                                <div class="text-danger small">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         @php
             $cardErrors = $errors->hasAny(['overdraft_limit', 'topup_min', 'topup_max', 'portal_url']);
-            $canteenErrors = $errors->hasAny(['school_days', 'school_days.*', 'pre_order_cutoff', 'pre_order_category_ids', 'pre_order_category_ids.*']);
+            $canteenErrors = $errors->hasAny(['school_days', 'school_days.*', 'pre_order_cutoff', 'pre_order_cutoff_day_before', 'pre_order_summary_emails', 'pre_order_category_ids', 'pre_order_category_ids.*', 'pre_order_branch_id', 'pre_order_user_id']);
         @endphp
         <div class="scx-foot" x-show="pane === 'card' || pane === 'canteen' || pane === 'registration'">
-            @if ($errors->hasAny(['registration_schools', 'registration_classes', 'registration_divisions']))
+            @if ($errors->hasAny(['registration_classes', 'registration_divisions']))
                 <button type="button" class="btn btn-link btn-sm text-danger p-0 me-auto" x-show="pane !== 'registration'" x-on:click="pane = 'registration'"><i class="fa fa-exclamation-circle me-1"></i>Fix Registration</button>
             @endif
             @if ($cardErrors)

@@ -9,10 +9,12 @@ use Exception;
 /**
  * Make a family's pending students real: each becomes active and a pending parent
  * can then be invited to the portal. The caller owns the transaction.
+ *
+ * No user means the registration form approved it by itself (automatic approval).
  */
 class ApproveAction
 {
-    public function execute(int $guardianId, int $userId): array
+    public function execute(int $guardianId, ?int $userId): array
     {
         try {
             $guardian = Guardian::query()->lockForUpdate()->find($guardianId);

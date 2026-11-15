@@ -61,6 +61,8 @@ const cartOpen = ref(false)
 const quantities = ref({})
 const days = ref([])
 const note = ref('')
+// 'card': charged to the student card at the canteen. 'bank': saved, then the card is topped up for it by bank card.
+const payBy = ref('card')
 const busy = ref('')
 const error = ref('')
 
@@ -91,7 +93,32 @@ const weeklyCoversDay = computed(() => {
   const w = schedule.value?.weekly
   return !weekly && w?.status === 'active' && w.weekdays.includes(weekday)
 })
-const lowBalance = computed(() => selectedMeals.value.length > 0 && Number(student.value?.available ?? 0) < selectedTotal.value)
+/**
+ * A pre-order is paid from money on the card only: the balance must cover the whole
+ * order (the school's overdraft does not count). Changing a paid day refunds it
+ * first, so its own amount counts towards the new one.
+ */
+const cardMoney = computed(() => Number(student.value?.balance ?? 0) + (!weekly && day.value?.paid ? Number(day.value.order?.total || 0) : 0))
+const cardCovers = computed(() => cardMoney.value + 0.001 >= (weekly ? selectedTotal.value : orderAmount.value))
+const lowBalance = computed(() => selectedMeals.value.length > 0 && !cardCovers.value)
+const bankCardOffered = computed(() => Boolean(student.value?.topup?.enabled))
+/** What the order costs: the day, or one week of the weekly order. */
+const orderAmount = computed(() => (weekly ? selectedTotal.value * days.value.length : selectedTotal.value))
+/** A bank card payment for a pre-order is exactly the order's total (the top-up range does not apply). */
+const bankAmount = computed(() => orderAmount.value)
+// Bank card pays a single day; a weekly order is paid from the card day by day when each day closes.
+// A card that cannot cover the order leaves bank card as the only way to pay.
+const payingByBank = computed(() => !weekly && bankCardOffered.value && (payBy.value === 'bank' || !cardCovers.value))
+// Nothing can pay this day: not enough on the card and no online payment.
+const cannotPay = computed(() => !weekly && selectedMeals.value.length > 0 && !cardCovers.value && !bankCardOffered.value)
+const paid = computed(() => !weekly && Boolean(day.value?.paid))
+/** The deadline in words: "6:00 PM" on the day itself, "Sunday 6:00 PM" when it falls the day before. */
+const closesAt = computed(() => {
+  if (!day.value?.deadline) return ''
+  const deadline = new Date(day.value.deadline)
+  const sameDay = deadline.toDateString() === new Date(`${date}T00:00:00`).toDateString()
+  return sameDay ? time(day.value.deadline) : `${dayName(deadline)} ${time(day.value.deadline)}`
+})
 const servedOnSelected = (d) => selectedMeals.value.every((m) => servedOn(m, d))
 
 const title = computed(() => (weekly ? 'Every week' : isToday(date) ? 'Today' : shortDate(date)))
@@ -155,13 +182,14 @@ function toggleDay(d) {
   error.value = ''
 }
 
-async function run(kind, request, message) {
+async function run(kind, request, message, after = null) {
   busy.value = kind
   error.value = ''
   try {
     await request()
     toast(message)
-    goBackOr(router, listRoute)
+    if (after) after()
+    else goBackOr(router, listRoute)
   } catch (e) {
     error.value = e.message
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -180,16 +208,23 @@ function save() {
     return
   }
   const payload = { items: selectedMeals.value.map((m) => ({ product_id: m.id, quantity: quantities.value[m.id] })), note: note.value.trim() || null }
+  // Bank card: the order is kept first, then the top-up page opens with its amount, so
+  // a payment the parent abandons never loses the order. Replace, so Back skips this page.
+  const amount = bankAmount.value.toFixed(2)
+  const thenPay = payingByBank.value ? () => router.replace({ name: 'topup', params: { id }, query: { for: 'pre-order', date, amount } }) : null
+  const when = isToday(date) ? 'today' : dayName(date)
   if (weekly) {
     run('save', () => saveWeeklyPreOrder(id, { ...payload, weekdays: sortWeekdays(days.value) }), `${first.value}'s weekly order is set`)
   } else {
-    run('save', () => saveDayPreOrder(id, date, payload), `Ordered for ${isToday(date) ? 'today' : dayName(date)}`)
+    const pay = payingByBank.value ? 'bank' : 'card'
+    run('save', () => saveDayPreOrder(id, date, { ...payload, pay }), payingByBank.value ? `Order saved. Now pay by bank card` : `Paid · ordered for ${when}`, thenPay)
   }
 }
 
-const skip = () => run('skip', () => skipDayPreOrder(id, date), `No meal on ${dayName(date)}`)
+const refunded = () => (paid.value ? `. ${money(current.value?.total || 0)} is back on the card` : '')
+const skip = () => run('skip', () => skipDayPreOrder(id, date), `No meal on ${dayName(date)}${refunded()}`)
 const clear = () =>
-  run('clear', () => clearDayPreOrder(id, date), weeklyCoversDay.value ? `${dayName(date)} is back on the weekly order` : `${dayName(date)}'s order removed`)
+  run('clear', () => clearDayPreOrder(id, date), (weeklyCoversDay.value ? `${dayName(date)} is back on the weekly order` : `${dayName(date)}'s order removed`) + refunded())
 const pause = () => run('pause', () => pauseWeeklyPreOrder(id), 'Weekly order paused')
 const resume = () => run('resume', () => resumeWeeklyPreOrder(id), 'Weekly order is on again')
 function removeWeekly() {
@@ -217,7 +252,7 @@ onMounted(load)
       <div class="pp-largetitle">
         <h1>{{ weekly ? 'Every week' : dayName(date) }}</h1>
         <p v-if="weekly">Pick {{ first }}'s meals and the days. They're ordered automatically until you pause it.</p>
-        <p v-else>{{ longDate(date) }} · orders close at {{ time(day.deadline) }}</p>
+        <p v-else>{{ longDate(date) }} · orders close {{ closesAt }}</p>
       </div>
 
       <div v-if="error" class="pp-alert" role="alert">
@@ -228,6 +263,13 @@ onMounted(load)
         <i class="fa fa-pause"></i>
         <span class="pp-alert__main"><span class="pp-alert__title">Weekly order paused</span>Nothing is ordered until you switch it back on.</span>
         <button class="pp-alert__btn" type="button" :disabled="Boolean(busy)" @click="resume">Resume</button>
+      </div>
+
+      <div v-if="paid" class="pp-alert pp-alert--info">
+        <i class="fa fa-check-circle"></i>
+        <span class="pp-alert__main">
+          <span class="pp-alert__title">Paid · {{ money(current?.total || 0) }}</span>Changing the order before it closes puts this back on {{ first }}'s card and takes the new total. Removing it gives the money back.
+        </span>
       </div>
 
       <div v-if="!weekly && day.source === 'skipped'" class="pp-alert pp-alert--info">
@@ -320,13 +362,50 @@ onMounted(load)
           </div>
         </section>
 
-        <div v-if="lowBalance" class="pp-alert pp-alert--warn">
+        <section v-if="selectedMeals.length && !locked && !weekly" class="pp-group">
+          <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-credit-card"></i>Pay with</span></h2>
+          <div class="pp-tiles" role="radiogroup" aria-label="Pay with">
+            <button
+              class="pp-tile"
+              type="button"
+              role="radio"
+              :aria-checked="!payingByBank && cardCovers"
+              :disabled="!cardCovers"
+              :title="cardCovers ? undefined : 'Not enough on the card for this order'"
+              @click="payBy = 'card'"
+            >
+              <span class="pp-tile__icon"><i class="fa fa-graduation-cap"></i></span>
+              <span>
+                <span class="pp-tile__title">Student card</span>
+                <span class="pp-tile__sub">{{ cardCovers ? 'Paid now' : 'Not enough' }} · balance {{ money(student.balance) }}</span>
+              </span>
+              <span class="pp-tile__check" aria-hidden="true"><i class="fa fa-check"></i></span>
+            </button>
+            <button v-if="bankCardOffered" class="pp-tile" type="button" role="radio" :aria-checked="payingByBank" @click="payBy = 'bank'">
+              <span class="pp-tile__icon"><i class="fa fa-university"></i></span>
+              <span>
+                <span class="pp-tile__title">Bank card</span>
+                <span class="pp-tile__sub">Pay {{ money(bankAmount) }} now</span>
+              </span>
+              <span class="pp-tile__check" aria-hidden="true"><i class="fa fa-check"></i></span>
+            </button>
+          </div>
+          <p class="pp-group__foot">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            <template v-if="payingByBank">
+              After saving, you pay exactly {{ money(bankAmount) }} on the bank's secure page. The order is paid the moment the payment goes through.
+            </template>
+            <template v-else-if="cardCovers">{{ money(orderAmount) }} is taken from {{ first }}'s card now, and the order is booked.</template>
+            <template v-else>{{ first }}'s card has {{ money(student.balance) }}, which does not cover {{ money(orderAmount) }}. Please top up first.</template>
+          </p>
+        </section>
+
+        <div v-if="weekly ? lowBalance : cannotPay" class="pp-alert pp-alert--warn">
           <i class="fa fa-exclamation-triangle"></i>
           <span class="pp-alert__main">
-            <span class="pp-alert__title">Top up before the day</span>{{ first }}'s card can spend {{ money(student.available) }} now, and the order is
-            {{ money(selectedTotal) }}.
+            <template v-if="weekly"><span class="pp-alert__title">Keep the card topped up</span>Each day is paid from {{ first }}'s card when its orders close. It has {{ money(student.balance) }} now, and a day costs {{ money(selectedTotal) }}; a day the balance cannot cover is not ordered.</template>
+            <template v-else><span class="pp-alert__title">Not enough on the card</span>{{ first }}'s card has {{ money(student.balance) }}, and the order is {{ money(orderAmount) }}. Online payment isn't available right now, so please top up at the school office first.</template>
           </span>
-          <RouterLink class="pp-alert__btn" :to="{ name: 'topup', params: { id } }">Top up</RouterLink>
         </div>
         </div>
       </div>
@@ -356,15 +435,15 @@ onMounted(load)
         </span>
         <span class="pp-order-sum__label">
           <span>{{ selectedLabel }} <i class="fa fa-angle-up" aria-hidden="true"></i></span>
-          <small>Paid at the canteen</small>
+          <small>{{ weekly ? 'Paid from the card each day' : payingByBank ? 'Pay now by bank card' : 'Paid now from the card' }}</small>
         </span>
       </button>
       <div v-if="selectedMeals.length" class="pp-order-total">
         <span>Grand total</span>
         <b>{{ money(weekly ? selectedTotal * days.length : selectedTotal) }}<small v-if="weekly"> /wk</small></b>
       </div>
-      <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !selectedMeals.length" @click="save">
-        <span v-if="busy === 'save'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save' ? 'Saving…' : saveLabel }}
+      <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !selectedMeals.length || cannotPay" @click="save">
+        <span v-if="busy === 'save'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save' ? 'Saving…' : weekly ? saveLabel : payingByBank ? 'Save and pay by bank card' : paid ? 'Save changes' : `Pay ${money(orderAmount)}` }}
       </button>
     </footer>
 

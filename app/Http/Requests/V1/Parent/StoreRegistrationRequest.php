@@ -31,7 +31,8 @@ class StoreRegistrationRequest extends FormRequest
         $tenantId = app(TenantService::class)->getCurrentTenantId();
 
         return [
-            'school' => ['required', 'string', Rule::in($settings->registrationSchools)],
+            // The id of a branch shown on the showcase (the form's school tiles).
+            'school' => ['required', Rule::in($settings->registrationOpen ? StudentSettings::registrationBranches()->pluck('id')->map(fn ($id) => (string) $id)->all() : [])],
             'parent.name' => ['required', 'string', 'min:2', 'max:100'],
             'parent.qid' => ['required', 'digits:11'],
             'parent.phone' => ['required', 'digits:8'],

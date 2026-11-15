@@ -14,6 +14,30 @@
                             <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="export"></i> Export
                         </button>
                     @endcan
+                    @if ($preOrderPrintDay)
+                        {{-- The day's canteen pre-order list (print::student::pre-orders): student details and items, for the kitchen and class delivery --}}
+                        <div class="btn-group" x-data="{ day: @js($preOrderPrintDay), branch: '' }">
+                            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Print the pre-order list">
+                                <i class="fa fa-print me-1"></i> Pre-orders
+                            </button>
+                            <div class="dropdown-menu p-3 shadow-sm" style="min-width: 240px;">
+                                <label class="form-label small mb-1" for="sale_pre_order_day">Pre-order list for</label>
+                                <input type="date" id="sale_pre_order_day" class="form-control form-control-sm mb-2" x-model="day">
+                                <label class="form-label small mb-1" for="sale_pre_order_branch">Branch</label>
+                                <select id="sale_pre_order_branch" class="form-select form-select-sm mb-2" x-model="branch">
+                                    <option value="">All branches (one page each)</option>
+                                    @foreach ($preOrderBranches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                                <a class="btn btn-sm btn-success w-100" target="_blank" rel="noopener" :class="{ disabled: !day }"
+                                   :href="@js(route('print::student::pre-orders', ['date' => '__DAY__'])).replace('__DAY__', day) + (branch ? '?branch=' + branch : '')">
+                                    <i class="fa fa-print me-1"></i> Print list
+                                </a>
+                                <div class="form-text">Per branch: students by class, with each item and quantity.</div>
+                            </div>
+                        </div>
+                    @endif
                     @can('sale.delete')
                         <button class="btn btn-sm btn-outline-danger" title="Delete selected items" wire:click="delete()" wire:confirm="Are you sure you want to delete the selected items?" wire:loading.attr="disabled" wire:target="delete">
                             <i class="demo-pli-recycling me-1" wire:loading.remove wire:target="delete"></i>

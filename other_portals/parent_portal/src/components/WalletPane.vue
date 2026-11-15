@@ -3,10 +3,10 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AccountMenu from '@/components/AccountMenu.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
 import ChildCard from '@/components/ChildCard.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { children, loadChildren } from '@/children'
-import { school } from '@/school'
 import { session } from '@/session'
 import { firstName } from '@/utils/format'
 
@@ -38,9 +38,8 @@ onMounted(() => {
   <aside class="pp-wallet">
     <div class="pp-wallet__top">
       <RouterLink class="pp-wallet__brand" :to="{ name: 'home' }">
-        <span v-if="school.logo" class="pp-logo-tile pp-logo-tile--image"><img :src="school.logo" alt="" /></span>
-        <span v-else class="pp-logo-tile"><i class="fa fa-graduation-cap"></i></span>
-        <span class="pp-brandname"><b>{{ school.name || 'Parent Portal' }}</b><small v-if="school.name">Parent Portal</small></span>
+        <BrandLogo class="pp-wallet__logo" />
+        <span class="pp-brandname"><small>Parent Portal</small></span>
       </RouterLink>
       <div class="pp-wallet__tools">
         <ThemeToggle />

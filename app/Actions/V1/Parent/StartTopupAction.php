@@ -4,12 +4,15 @@ namespace App\Actions\V1\Parent;
 
 use App\Actions\Parent\FindStudentAction;
 use App\Actions\QPay\StartPaymentAction;
+use App\Actions\Student\PreOrder\ChargeAction;
 use App\Exceptions\ParentPortalException;
 use App\Http\Requests\V1\Parent\StartTopupRequest;
 use App\Http\Resources\V1\Parent\TopupResource;
 use App\Models\Account;
 use App\Models\Guardian;
 use App\Models\QpayTransaction;
+use App\Models\StudentPreOrder;
+use App\Models\StudentPreOrderCollection;
 use App\Services\Payment\MpgsClient;
 use App\Services\Payment\QPayApiLog;
 use App\Services\Payment\QPayClient;
@@ -42,7 +45,9 @@ class StartTopupAction
         $lang = $request->validated('lang') === 'Ar' ? 'Ar' : 'En';
         // An older portal sends no method: the first card type the school offers.
         $gateway = QpayTransaction::METHODS[$request->validated('method') ?: (GetStudentAction::methods()[0]['key'] ?? 'debit')];
-        $response = (new StartPaymentAction())->execute($guardian, $student, (float) $request->validated('amount'), $lang, $gateway, $request->boolean('confirm_pending'));
+        $preOrder = $request->validated('pre_order_date') ? $this->unpaidPreOrder($student, $request->validated('pre_order_date')) : null;
+        $amount = $preOrder ? ChargeAction::amountFor($preOrder) : (float) $request->validated('amount');
+        $response = (new StartPaymentAction())->execute($guardian, $student, $amount, $lang, $gateway, $request->boolean('confirm_pending'), $preOrder?->id);
         if (! $response['success']) {
             // A block on an unfinished top-up carries the moment it lifts, so the portal can count
             // down to it, and that top-up's reference, so the portal can link back to its result page.
@@ -62,6 +67,33 @@ class StartTopupAction
                 ? $this->creditCardPage($request, $transaction, $student)
                 : $this->qpayForm($request, $transaction),
         ];
+    }
+
+    /**
+     * The day order the parent is paying for: still open, not paid yet. Its exact
+     * total is the payment, and the payment pays it when it lands (SettleAction).
+     */
+    private function unpaidPreOrder(Account $student, string $date): StudentPreOrder
+    {
+        $order = StudentPreOrder::query()
+            ->where('account_id', $student->id)
+            ->where('type', StudentPreOrder::TYPE_DAY)
+            ->where('status', StudentPreOrder::STATUS_ACTIVE)
+            ->whereDate('date', $date)
+            ->latest('id')
+            ->first();
+
+        if (! $order) {
+            throw new ParentPortalException('That pre-order was not found. Please order the day again.');
+        }
+        if (StudentPreOrderCollection::where('student_pre_order_id', $order->id)->whereDate('date', $date)->exists()) {
+            throw new ParentPortalException('This pre-order is already paid.');
+        }
+        if (StudentSettings::current()->preOrderLocked($order->date)) {
+            throw new ParentPortalException('Orders for that day have closed.');
+        }
+
+        return $order;
     }
 
     private function qpayForm(StartTopupRequest $request, QpayTransaction $transaction): array

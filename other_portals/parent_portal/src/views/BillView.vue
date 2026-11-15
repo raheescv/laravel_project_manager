@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import { fetchBill, fetchStudent } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
 import LoadError from '@/components/LoadError.vue'
 import { refreshChild } from '@/children'
 import { school } from '@/school'
@@ -57,7 +58,7 @@ onMounted(load)
     <article v-else class="pp-pass">
       <header class="pp-pass__head">
         <div class="pp-pass__brand">
-          <span><i class="fa fa-graduation-cap pp-mark"></i>{{ school.name || 'School' }}</span><span>Canteen bill</span>
+          <BrandLogo plate class="pp-pass__logo" /><span>Canteen bill</span>
         </div>
         <h1 class="pp-pass__title">Bill #{{ bill.invoice_no }}</h1>
         <p class="pp-pass__sub">{{ student.name }}</p>

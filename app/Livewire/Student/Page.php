@@ -5,6 +5,7 @@ namespace App\Livewire\Student;
 use App\Actions\Student\CreateAction;
 use App\Actions\Student\UpdateAction;
 use App\Models\Account;
+use App\Models\Branch;
 use App\Models\Country;
 use App\Models\Guardian;
 use App\Models\StudentDetail;
@@ -40,6 +41,8 @@ class Page extends Component
         $this->student = [
             'name' => '',
             'admission_no' => '',
+            // The branch the student belongs to (shown by its location): their school, and where their pre-orders are sold.
+            'branch_id' => '',
             'gender' => '',
             'dob' => '',
             'grade' => '',
@@ -67,6 +70,7 @@ class Page extends Component
                 'nationality' => (string) $account->nationality,
                 'description' => (string) $account->description,
                 'admission_no' => (string) $detail?->admission_no,
+                'branch_id' => (string) ($detail?->branch_id ?? ''),
                 'gender' => (string) $detail?->gender,
                 'grade' => (string) $detail?->grade,
                 'section' => (string) $detail?->section,
@@ -127,6 +131,11 @@ class Page extends Component
 
         try {
             $data = $this->student;
+            // The student's school is the branch picked, as on the public registration form.
+            $data['branch_id'] = ($data['branch_id'] ?? '') === '' ? null : (int) $data['branch_id'];
+            if ($data['branch_id'] && ! Branch::query()->whereKey($data['branch_id'])->exists()) {
+                throw new \Exception('That school is no longer on the branch list. Please pick another.', 1);
+            }
             $data['image'] = $this->photo ? $this->storeOptimizedImage($this->photo, 'students') : $this->image;
             $data['guardians'] = $this->guardians;
 
@@ -152,6 +161,7 @@ class Page extends Component
     {
         return view('livewire.student.page', [
             'countries' => Country::orderBy('name')->pluck('name', 'name')->toArray(),
+            'branches' => Branch::query()->orderBy('name')->get(['id', 'name', 'location']),
             'grades' => StudentDetail::whereNotNull('grade')->distinct()->orderBy('grade')->pluck('grade'),
             'sections' => StudentDetail::whereNotNull('section')->distinct()->orderBy('section')->pluck('section'),
             'detail' => $this->account_id ? StudentDetail::where('account_id', $this->account_id)->first() : null,

@@ -30,8 +30,8 @@
         </label>
         <div class="rgx-chips" role="group" aria-label="School">
             <button type="button" @class(['rgx-chip', 'is-on' => $school === '']) wire:click="$set('school', '')">All schools<i>{{ $stats['families'] }}</i></button>
-            @foreach ($schools as $schoolName => $familyCount)
-                <button type="button" @class(['rgx-chip', 'is-on' => $school === $schoolName]) wire:click="$set('school', @js($schoolName))" wire:key="school-{{ $loop->index }}">{{ $schoolName }}<i>{{ $familyCount }}</i></button>
+            @foreach ($schools as $branchId => $entry)
+                <button type="button" @class(['rgx-chip', 'is-on' => (string) $school === (string) $branchId]) wire:click="$set('school', '{{ $branchId }}')" wire:key="school-{{ $branchId }}">{{ $entry['name'] }}<i>{{ $entry['count'] }}</i></button>
             @endforeach
         </div>
         <div class="rgx-chips" role="group" aria-label="Parent">

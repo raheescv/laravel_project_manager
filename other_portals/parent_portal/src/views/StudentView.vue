@@ -39,7 +39,7 @@ const mealsToday = computed(() => {
   const today = student.value?.pre_orders?.today
   if (!today) return 'Nothing ordered for today'
   if (today.source === 'skipped') return 'No meal today'
-  return today.collected ? "Today's meal collected" : 'Meal ordered for today'
+  return today.collected ? "Today's meal is paid" : 'Meal ordered for today · not paid'
 })
 const mealsSummary = computed(() => {
   const weekly = student.value?.pre_orders?.weekly
@@ -50,7 +50,7 @@ const cardState = computed(() => (!student.value?.has_card ? 'none' : student.va
 /* Desktop: the card is in the wallet, so the page leads with the numbers. */
 const details = computed(() => [classLabel(student.value?.class), student.value?.admission_no].filter(Boolean).join(' · '))
 const balanceNote = computed(() => {
-  if (cardState.value === 'none') return 'No card yet'
+  if (cardState.value === 'none') return ''
   if (cardState.value === 'blocked') return 'Card blocked'
   return student.value.balance < 0 ? 'In overdraft. Please top up.' : 'Card active'
 })
@@ -183,6 +183,7 @@ onMounted(() => {
             <i class="fa fa-plus-circle"></i>Top up card
           </RouterLink>
           <button v-else class="pp-btn pp-btn--primary pp-btn--auto" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
+          <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder pp-btn--auto" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
         </template>
       </header>
       <p v-if="student && !student.topup.enabled" class="pp-cta__note pp-cta__note--start">
@@ -198,7 +199,7 @@ onMounted(() => {
           <span>{{ student.overdraft_limit > 0 ? `Includes ${money(student.overdraft_limit)} overdraft` : 'No overdraft' }}</span>
         </div>
         <div v-if="student.pre_orders?.enabled" class="pp-stat pp-stat--text">
-          <small><i class="fa fa-cutlery"></i>Meals</small><b>{{ weeklyMeals }}</b><span>{{ mealsToday }}</span>
+          <small>Pre-orders</small><b>{{ weeklyMeals }}</b><span>{{ mealsToday }}</span>
         </div>
       </div>
     </template>
@@ -227,171 +228,145 @@ onMounted(() => {
           <button class="pp-btn pp-btn--primary" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
           <p class="pp-cta__note">Online top-up isn't available right now. Please contact the school office.</p>
         </template>
+        <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
+        <p v-if="student.pre_orders?.enabled" class="pp-cta__note">{{ mealsSummary }}</p>
       </div>
     </template>
 
-    <div class="pp-student-grid">
-      <div class="pp-student-grid__aside">
-        <section v-if="student" class="pp-group">
-          <h2 class="pp-group__head">Card</h2>
-          <div class="pp-group__body">
-            <div v-if="cardState === 'none'" class="pp-row pp-row--icon">
-              <span class="pp-row__icon pp-row__icon--muted"><i class="fa fa-credit-card"></i></span>
-              <span class="pp-row__main"><span class="pp-row__title">No card yet</span><span class="pp-row__sub">Ask the school office about a card</span></span>
-            </div>
-            <div v-else-if="cardState === 'blocked'" class="pp-row pp-row--icon">
-              <span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span>
-              <span class="pp-row__main">
-                <span class="pp-row__title pp-text-neg">Card blocked</span>
-                <span class="pp-row__sub">{{ student.card_blocked_at ? `Since ${date(student.card_blocked_at)}` : 'The canteen will refuse it' }}</span>
-              </span>
-            </div>
-            <template v-else>
-              <div class="pp-row pp-row--icon">
-                <span class="pp-row__icon pp-row__icon--pos"><i class="fa fa-credit-card"></i></span>
-                <span class="pp-row__main"><span class="pp-row__title">Card active</span><span class="pp-row__sub">{{ first }} can pay at the canteen</span></span>
-              </div>
-              <button class="pp-row pp-row--icon" type="button" @click="sheetOpen = true">
-                <span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span>
-                <span class="pp-row__main"><span class="pp-row__title pp-text-neg">Lost card?</span><span class="pp-row__sub">Block it straight away</span></span>
-                <i class="fa fa-angle-right pp-chev"></i>
-              </button>
-            </template>
-          </div>
-          <p v-if="cardState === 'blocked'" class="pp-group__foot">Only the school office can switch it back on or issue a new card. The balance stays with {{ first }}.</p>
-        </section>
-
-        <section v-if="student?.pre_orders?.enabled" class="pp-group">
-          <h2 class="pp-group__head">Canteen</h2>
-          <div class="pp-group__body">
-            <RouterLink class="pp-row pp-row--icon" :to="{ name: 'pre-orders', params: { id } }">
-              <span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-cutlery"></i></span>
-              <span class="pp-row__main">
-                <span class="pp-row__title">Meals</span>
-                <span class="pp-row__sub">{{ mealsSummary }}</span>
-              </span>
-              <i class="fa fa-angle-right pp-chev"></i>
-            </RouterLink>
-          </div>
-        </section>
+    <section class="pp-activity">
+      <div class="pp-activity__head">
+        <div class="pp-seg" role="tablist" aria-label="Bills or statement">
+          <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'bills'" @click="setQuery({ tab: 'bills' })">Bills</button>
+          <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'statement'" @click="setQuery({ tab: 'statement' })">Statement</button>
+        </div>
+        <div class="pp-month">
+          <button class="pp-month__btn" type="button" aria-label="Previous month" @click="setQuery({ month: shiftMonth(month, -1) })">
+            <i class="fa fa-chevron-left"></i>
+          </button>
+          <span class="pp-month__label" aria-live="polite">{{ monthLabel(month) }}</span>
+          <button class="pp-month__btn" type="button" aria-label="Next month" :disabled="isCurrentMonth" @click="setQuery({ month: shiftMonth(month, 1) })">
+            <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
       </div>
 
-      <section class="pp-activity">
-        <div class="pp-activity__head">
-          <div class="pp-seg" role="tablist" aria-label="Bills or statement">
-            <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'bills'" @click="setQuery({ tab: 'bills' })">Bills</button>
-            <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'statement'" @click="setQuery({ tab: 'statement' })">Statement</button>
-          </div>
-          <div class="pp-month">
-            <button class="pp-month__btn" type="button" aria-label="Previous month" @click="setQuery({ month: shiftMonth(month, -1) })">
-              <i class="fa fa-chevron-left"></i>
-            </button>
-            <span class="pp-month__label" aria-live="polite">{{ monthLabel(month) }}</span>
-            <button class="pp-month__btn" type="button" aria-label="Next month" :disabled="isCurrentMonth" @click="setQuery({ month: shiftMonth(month, 1) })">
-              <i class="fa fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- Bills -->
-        <div v-if="tab === 'bills'" class="pp-group" role="tabpanel" :class="{ 'is-loading': billsLoading && bills.length }">
-          <div class="pp-group__body">
-            <template v-if="billsLoading && !billsPage">
-              <div v-for="n in 3" :key="n" class="pp-row pp-bill-row" aria-hidden="true">
-                <span class="pp-skel" style="width: 44px; height: 44px"></span>
-                <span class="pp-row__main"><span class="pp-skel pp-skel--line" style="width: 40%"></span><span class="pp-skel pp-skel--line" style="width: 65%"></span></span>
-              </div>
-            </template>
-            <button v-else-if="billsError && !bills.length" class="pp-row pp-row--empty" type="button" @click="loadBills()">
-              {{ billsError }} Tap to try again.
-            </button>
-            <div v-else-if="!bills.length" class="pp-row pp-row--empty">No purchases in {{ monthLabel(month) }}</div>
-            <template v-else>
-              <RouterLink
-                v-for="bill in bills"
-                :key="bill.id"
-                class="pp-row pp-bill-row"
-                :to="{ name: 'bill', params: { id, saleId: bill.id } }"
-              >
-                <span class="pp-date"><small>{{ dateTile(bill.date).month }}</small><b>{{ dateTile(bill.date).day }}</b></span>
-                <span class="pp-row__main">
-                  <span class="pp-row__title">{{ bill.items_count }} {{ bill.items_count === 1 ? 'item' : 'items' }}</span>
-                  <span class="pp-row__sub">#{{ bill.invoice_no }}{{ bill.branch ? ` · ${bill.branch}` : '' }}</span>
-                </span>
-                <span class="pp-row__end"><span class="pp-amt">{{ money(bill.grand_total) }}</span><i class="fa fa-angle-right pp-chev"></i></span>
-              </RouterLink>
-              <button
-                v-if="billsPage?.has_more_pages"
-                class="pp-row pp-row--more"
-                type="button"
-                :disabled="billsLoading"
-                @click="loadBills(billsPage.current_page + 1)"
-              >
-                {{ billsLoading ? 'Loading…' : 'Show more bills' }}
-              </button>
-            </template>
-          </div>
-          <p v-if="bills.length && billsPage" class="pp-group__foot">
-            {{ billsPage.total }} {{ billsPage.total === 1 ? 'bill' : 'bills' }}<template v-if="!billsPage.has_more_pages">
-              · {{ money(billsTotal) }} spent in {{ monthLabel(month).split(' ')[0] }}</template
+      <!-- Bills -->
+      <div v-if="tab === 'bills'" class="pp-group" role="tabpanel" :class="{ 'is-loading': billsLoading && bills.length }">
+        <div class="pp-group__body">
+          <template v-if="billsLoading && !billsPage">
+            <div v-for="n in 3" :key="n" class="pp-row pp-bill-row" aria-hidden="true">
+              <span class="pp-skel" style="width: 44px; height: 44px"></span>
+              <span class="pp-row__main"><span class="pp-skel pp-skel--line" style="width: 40%"></span><span class="pp-skel pp-skel--line" style="width: 65%"></span></span>
+            </div>
+          </template>
+          <button v-else-if="billsError && !bills.length" class="pp-row pp-row--empty" type="button" @click="loadBills()">
+            {{ billsError }} Tap to try again.
+          </button>
+          <div v-else-if="!bills.length" class="pp-row pp-row--empty">No purchases in {{ monthLabel(month) }}</div>
+          <template v-else>
+            <RouterLink
+              v-for="bill in bills"
+              :key="bill.id"
+              class="pp-row pp-bill-row"
+              :to="{ name: 'bill', params: { id, saleId: bill.id } }"
             >
-          </p>
-        </div>
-
-        <!-- Statement -->
-        <div v-else class="pp-group" role="tabpanel" :class="{ 'is-loading': statementLoading && statement }">
-          <div class="pp-group__body">
-            <template v-if="statementLoading && !statement">
-              <div v-for="n in 3" :key="n" class="pp-row pp-row--icon" aria-hidden="true">
-                <span class="pp-skel" style="width: 30px; height: 30px; border-radius: 8px"></span>
-                <span class="pp-row__main"><span class="pp-skel pp-skel--line" style="width: 35%"></span><span class="pp-skel pp-skel--line" style="width: 60%"></span></span>
-              </div>
-            </template>
-            <button v-else-if="statementError && !statement" class="pp-row pp-row--empty" type="button" @click="loadStatement">
-              {{ statementError }} Tap to try again.
+              <span class="pp-date"><small>{{ dateTile(bill.date).month }}</small><b>{{ dateTile(bill.date).day }}</b></span>
+              <span class="pp-row__main">
+                <span class="pp-row__title">{{ bill.items_count }} {{ bill.items_count === 1 ? 'item' : 'items' }}</span>
+                <span class="pp-row__sub">#{{ bill.invoice_no }}{{ bill.branch ? ` · ${bill.branch}` : '' }}</span>
+              </span>
+              <span class="pp-row__end"><span class="pp-amt">{{ money(bill.grand_total) }}</span><i class="fa fa-angle-right pp-chev"></i></span>
+            </RouterLink>
+            <button
+              v-if="billsPage?.has_more_pages"
+              class="pp-row pp-row--more"
+              type="button"
+              :disabled="billsLoading"
+              @click="loadBills(billsPage.current_page + 1)"
+            >
+              {{ billsLoading ? 'Loading…' : 'Show more bills' }}
             </button>
-            <template v-else-if="statement">
-              <div class="pp-row pp-row--quiet">
-                <span class="pp-row__main">
-                  <span class="pp-row__title">Starting balance</span>
-                  <span class="pp-row__sub">Brought forward from {{ monthLabel(shiftMonth(month, -1)).split(' ')[0] }}</span>
-                </span>
-                <span class="pp-row__end"><span class="pp-amt">{{ money(statement.opening) }}</span></span>
-              </div>
-              <div v-if="!statement.rows.length" class="pp-row pp-row--empty">Nothing moved on the card in {{ monthLabel(month) }}</div>
-              <component
-                :is="row.sale_id ? 'RouterLink' : 'div'"
-                v-for="row in statement.rows"
-                :key="row.id"
-                class="pp-row pp-row--icon pp-stmt-row"
-                :to="row.sale_id ? { name: 'bill', params: { id, saleId: row.sale_id } } : undefined"
-              >
-                <span class="pp-row__icon" :class="`pp-row__icon--${statementIcon(row).tone}`"><i class="fa" :class="statementIcon(row).icon"></i></span>
-                <span class="pp-row__main">
-                  <span class="pp-row__title">{{ row.title }}</span>
-                  <span class="pp-row__sub">{{ dayMonth(row.date) }}{{ row.detail ? ` · ${row.detail}` : '' }}</span>
-                </span>
-                <span class="pp-row__end">
-                  <span class="pp-amt" :class="{ 'pp-amt--in': row.amount > 0 }">{{ money(row.amount, { sign: true }) }}</span>
-                  <span class="pp-run">Balance {{ runningBalance(row.balance) }}</span>
-                </span>
-                <i v-if="row.sale_id" class="fa fa-angle-right pp-chev"></i>
-              </component>
-              <div class="pp-row pp-row--total">
-                <span class="pp-row__main">
-                  <span class="pp-row__title">{{ isCurrentMonth ? 'On the card now' : 'Closing balance' }}</span>
-                  <span class="pp-row__sub">{{ isCurrentMonth ? `As of ${dayMonth(new Date())}` : `End of ${monthLabel(month).split(' ')[0]}` }}</span>
-                </span>
-                <span class="pp-row__end"><span class="pp-amt">{{ money(statement.closing) }}</span></span>
-              </div>
-            </template>
-          </div>
-          <p v-if="statement?.rows.length" class="pp-group__foot">
-            {{ money(statement.added) }} added · {{ money(statement.spent) }} spent in {{ monthLabel(month).split(' ')[0] }}
-          </p>
+          </template>
         </div>
-      </section>
-    </div>
+        <p v-if="bills.length && billsPage" class="pp-group__foot">
+          {{ billsPage.total }} {{ billsPage.total === 1 ? 'bill' : 'bills' }}<template v-if="!billsPage.has_more_pages">
+            · {{ money(billsTotal) }} spent in {{ monthLabel(month).split(' ')[0] }}</template
+          >
+        </p>
+      </div>
+
+      <!-- Statement -->
+      <div v-else class="pp-group" role="tabpanel" :class="{ 'is-loading': statementLoading && statement }">
+        <div class="pp-group__body">
+          <template v-if="statementLoading && !statement">
+            <div v-for="n in 3" :key="n" class="pp-row pp-row--icon" aria-hidden="true">
+              <span class="pp-skel" style="width: 30px; height: 30px; border-radius: 8px"></span>
+              <span class="pp-row__main"><span class="pp-skel pp-skel--line" style="width: 35%"></span><span class="pp-skel pp-skel--line" style="width: 60%"></span></span>
+            </div>
+          </template>
+          <button v-else-if="statementError && !statement" class="pp-row pp-row--empty" type="button" @click="loadStatement">
+            {{ statementError }} Tap to try again.
+          </button>
+          <template v-else-if="statement">
+            <div class="pp-row pp-row--quiet">
+              <span class="pp-row__main">
+                <span class="pp-row__title">Starting balance</span>
+                <span class="pp-row__sub">Brought forward from {{ monthLabel(shiftMonth(month, -1)).split(' ')[0] }}</span>
+              </span>
+              <span class="pp-row__end"><span class="pp-amt">{{ money(statement.opening) }}</span></span>
+            </div>
+            <div v-if="!statement.rows.length" class="pp-row pp-row--empty">Nothing moved on the card in {{ monthLabel(month) }}</div>
+            <component
+              :is="row.sale_id ? 'RouterLink' : 'div'"
+              v-for="row in statement.rows"
+              :key="row.id"
+              class="pp-row pp-row--icon pp-stmt-row"
+              :to="row.sale_id ? { name: 'bill', params: { id, saleId: row.sale_id } } : undefined"
+            >
+              <span class="pp-row__icon" :class="`pp-row__icon--${statementIcon(row).tone}`"><i class="fa" :class="statementIcon(row).icon"></i></span>
+              <span class="pp-row__main">
+                <span class="pp-row__title">{{ row.title }}</span>
+                <span class="pp-row__sub">{{ dayMonth(row.date) }}{{ row.detail ? ` · ${row.detail}` : '' }}</span>
+              </span>
+              <span class="pp-row__end">
+                <span class="pp-amt" :class="{ 'pp-amt--in': row.amount > 0 }">{{ money(row.amount, { sign: true }) }}</span>
+                <span class="pp-run">Balance {{ runningBalance(row.balance) }}</span>
+              </span>
+              <i v-if="row.sale_id" class="fa fa-angle-right pp-chev"></i>
+            </component>
+            <div class="pp-row pp-row--total">
+              <span class="pp-row__main">
+                <span class="pp-row__title">{{ isCurrentMonth ? 'On the card now' : 'Closing balance' }}</span>
+                <span class="pp-row__sub">{{ isCurrentMonth ? `As of ${dayMonth(new Date())}` : `End of ${monthLabel(month).split(' ')[0]}` }}</span>
+              </span>
+              <span class="pp-row__end"><span class="pp-amt">{{ money(statement.closing) }}</span></span>
+            </div>
+          </template>
+        </div>
+        <p v-if="statement?.rows.length" class="pp-group__foot">
+          {{ money(statement.added) }} added · {{ money(statement.spent) }} spent in {{ monthLabel(month).split(' ')[0] }}
+        </p>
+      </div>
+    </section>
+
+    <!-- Only for reporting a lost card: the card's day-to-day state is on its face above. -->
+    <section v-if="student && cardState !== 'none'" class="pp-group pp-lost">
+      <div class="pp-group__body">
+        <div v-if="cardState === 'blocked'" class="pp-row pp-row--icon">
+          <span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span>
+          <span class="pp-row__main">
+            <span class="pp-row__title pp-text-neg">Card blocked</span>
+            <span class="pp-row__sub">{{ student.card_blocked_at ? `Reported lost on ${date(student.card_blocked_at)}` : 'The canteen will refuse it' }}</span>
+          </span>
+        </div>
+        <button v-else class="pp-row pp-row--icon" type="button" @click="sheetOpen = true">
+          <span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span>
+          <span class="pp-row__main"><span class="pp-row__title pp-text-neg">Lost card?</span><span class="pp-row__sub">Report it and block it straight away</span></span>
+          <i class="fa fa-angle-right pp-chev"></i>
+        </button>
+      </div>
+      <p v-if="cardState === 'blocked'" class="pp-group__foot">Only the school office can switch it back on or issue a new card. The balance stays with {{ first }}.</p>
+    </section>
   </main>
 
   <BottomSheet :open="sheetOpen" label="Block card" @close="sheetOpen = false">

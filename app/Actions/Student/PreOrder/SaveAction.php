@@ -5,6 +5,7 @@ namespace App\Actions\Student\PreOrder;
 use App\Models\Account;
 use App\Models\Guardian;
 use App\Models\StudentPreOrder;
+use App\Models\StudentPreOrderCollection;
 use App\Support\Student\StudentSettings;
 use Exception;
 use Illuminate\Support\Carbon;
@@ -15,9 +16,16 @@ use Illuminate\Support\Facades\DB;
  * the weekly order. Replaces what was there (one day order per date, one weekly
  * order per student) and keeps a weekly order's paused state.
  *
+ * A day order is paid now: `pay: card` (default) takes it from the student card
+ * as a completed sale on that day (ChargeAction), all or nothing, so a short card
+ * saves nothing; `pay: bank` saves it waiting for the bank card top-up the portal
+ * opens next, which pays it the moment it lands (ChargeDueAction::forStudent).
+ * Changing a paid day refunds the old sale to the card first; saving it unchanged
+ * keeps the sale. A weekly order is paid day by day when each day's orders close.
+ *
  * The caller has resolved the student through the signed-in parent.
  *
- * @param  array{type: string, date?: ?string, weekdays?: array<int, int>, items: array<int, array{product_id: int, quantity: int}>, note?: ?string}  $data
+ * @param  array{type: string, date?: ?string, weekdays?: array<int, int>, items: array<int, array{product_id: int, quantity: int}>, note?: ?string, pay?: ?string}  $data
  */
 class SaveAction
 {
@@ -65,15 +73,27 @@ class SaveAction
                     $order->weekdays = $weekdays;
                 }
 
+                $unchanged = $order->exists && $order->note === $note
+                    && $order->items()->pluck('quantity', 'product_id')->map(fn ($quantity) => (int) $quantity)->sortKeys()->all() === collect($items)->sortKeys()->all();
+
                 $order->fill(['guardian_id' => $guardian->id, 'note' => $note])->save();
                 self::syncItems($order, $items);
+
+                if ($type === StudentPreOrder::TYPE_DAY) {
+                    self::settleDay($order, $unchanged, ($data['pay'] ?? 'card') === 'bank');
+                }
 
                 return $order;
             });
 
+            $paid = $type === StudentPreOrder::TYPE_DAY && StudentPreOrderCollection::where('student_pre_order_id', $order->id)->whereDate('date', $order->date)->exists();
             $return['success'] = true;
-            $return['message'] = $type === StudentPreOrder::TYPE_DAY ? 'Pre-order saved' : 'Weekly order saved';
-            $return['data'] = $order->load('items');
+            $return['message'] = match (true) {
+                $type === StudentPreOrder::TYPE_WEEKLY => 'Weekly order saved',
+                $paid => 'Pre-order paid',
+                default => 'Pre-order saved. Pay by bank card to confirm it.',
+            };
+            $return['data'] = $order->load('items')->setAttribute('paid', $paid);
         } catch (\Throwable $th) {
             $return['success'] = false;
             $return['message'] = $th->getMessage();
@@ -145,16 +165,50 @@ class SaveAction
         if (! $settings->isSchoolDay($date)) {
             throw new Exception('The canteen is closed on '.$date->format('l').'s.', 1);
         }
+        if ($date->lt(today())) {
+            throw new Exception('That day has already passed.', 1);
+        }
         if ($settings->preOrderLocked($date)) {
-            throw new Exception($date->isToday()
-                ? 'Orders for today closed at '.$settings->preOrderDeadline($date)->format('g:i A').'.'
-                : 'That day has already passed.', 1);
+            $day = match (true) {
+                $date->isToday() => 'today',
+                $date->isTomorrow() => 'tomorrow',
+                default => $date->format('l j M'),
+            };
+
+            throw new Exception('Orders for '.$day.' closed at '.$settings->preOrderCutoffLabel().'.', 1);
         }
         if ($date->gt(today()->addDays(StudentSettings::PRE_ORDER_DAYS_AHEAD))) {
             throw new Exception('You can pre-order up to '.StudentSettings::PRE_ORDER_DAYS_AHEAD.' days ahead.', 1);
         }
 
         return $date;
+    }
+
+    /**
+     * Pay the day: an unchanged, paid order keeps its sale; otherwise a sale already
+     * taken is refunded and, unless the parent is paying by bank card next, the new
+     * order is taken from the card. Throws when the card cannot cover it.
+     */
+    private static function settleDay(StudentPreOrder $order, bool $unchanged, bool $byBank): void
+    {
+        $previous = StudentPreOrderCollection::where('student_pre_order_id', $order->id)->whereDate('date', $order->date)->first();
+        if ($previous && $unchanged) {
+            return;
+        }
+        if ($previous) {
+            $response = (new RefundAction())->execute($previous);
+            if (! $response['success']) {
+                throw new Exception($response['message'], 1);
+            }
+        }
+        if ($byBank) {
+            return;
+        }
+
+        $response = (new ChargeAction())->execute($order->unsetRelation('items'), $order->date);
+        if (! $response['success']) {
+            throw new Exception($response['message'], 1);
+        }
     }
 
     /** @param  array<int, int>  $items */

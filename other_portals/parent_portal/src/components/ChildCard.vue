@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import SchoolMark from '@/components/SchoolMark.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { school } from '@/school'
-import { amount, classLabel, firstName, money } from '@/utils/format'
+import { amount, classLabel, money } from '@/utils/format'
 
 /**
  * A child as a physical student card. On the home stack it is a link showing who
@@ -18,7 +18,7 @@ const props = defineProps({
 
 const state = computed(() => (!props.student.has_card ? 'none' : props.student.card_blocked ? 'blocked' : 'active'))
 const negative = computed(() => Number(props.student.balance) < 0)
-const statusLabel = computed(() => ({ none: 'No card yet', blocked: 'Card blocked', active: 'Card active' })[state.value])
+const statusLabel = computed(() => ({ blocked: 'Card blocked', active: 'Card active' })[state.value] || '')
 </script>
 
 <template>
@@ -30,7 +30,7 @@ const statusLabel = computed(() => ({ none: 'No card yet', blocked: 'Card blocke
   >
     <span class="pp-card__top">
       <SchoolMark />
-      <span class="pp-status" :class="`pp-status--${state}`">
+      <span v-if="state !== 'none'" class="pp-status" :class="`pp-status--${state}`">
         <i v-if="state === 'blocked'" class="fa fa-ban"></i>{{ statusLabel }}
       </span>
     </span>
@@ -58,11 +58,9 @@ const statusLabel = computed(() => ({ none: 'No card yet', blocked: 'Card blocke
           <small>{{ negative ? 'Overdraft' : 'Balance' }}</small><b>{{ money(student.balance) }}</b>
         </span>
       </span>
-      <span v-if="state === 'none'" class="pp-card__empty">
-        <i class="fa fa-info-circle"></i>Ask the school office about a card for {{ firstName(student.name) }}.
-      </span>
-      <span v-else class="pp-card__bottom">
-        <span class="pp-card__chip"></span><span class="pp-card__label">Student card</span><i class="fa fa-wifi pp-card__nfc"></i>
+      <span class="pp-card__bottom">
+        <span v-if="state !== 'none'" class="pp-card__chip"></span><span class="pp-card__label">Student card</span>
+        <i v-if="state !== 'none'" class="fa fa-wifi pp-card__nfc"></i>
       </span>
     </template>
   </component>

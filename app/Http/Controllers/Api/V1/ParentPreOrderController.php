@@ -64,10 +64,13 @@ class ParentPreOrderController extends Controller
     }
 
     /**
-     * Save a day's order.
+     * Save and pay a day's order.
      *
      * Replaces that day's order (or its skip). The weekly order does not apply on
-     * a day with its own order.
+     * a day with its own order. `pay: card` (default) takes it from the student card
+     * now as a completed sale dated that day (422 when the card cannot cover it);
+     * `pay: bank` saves it to be paid by the bank card top-up opened next. A paid
+     * day that changes is refunded to the card first.
      */
     public function saveDay(SavePreOrderRequest $request, int $account, string $date): JsonResponse
     {
@@ -79,6 +82,7 @@ class ParentPreOrderController extends Controller
                 'date' => $date,
                 'items' => $request->validated('items'),
                 'note' => $request->validated('note'),
+                'pay' => $request->validated('pay'),
             ]), $student->id);
         });
     }
@@ -86,7 +90,7 @@ class ParentPreOrderController extends Controller
     /**
      * Skip a day.
      *
-     * Nothing is added at the till that day, even when the weekly order covers it.
+     * No order that day, even when the weekly order covers it. A paid day order is refunded to the card.
      */
     public function skipDay(Request $request, int $account, string $date): JsonResponse
     {
@@ -100,7 +104,7 @@ class ParentPreOrderController extends Controller
     /**
      * Remove a day's order or skip.
      *
-     * The weekly order (if any) applies to that day again.
+     * The weekly order (if any) applies to that day again. A paid day order is refunded to the card.
      */
     public function clearDay(Request $request, int $account, string $date): JsonResponse
     {
@@ -114,8 +118,9 @@ class ParentPreOrderController extends Controller
     /**
      * Save the weekly order.
      *
-     * The items added on the chosen school days (`weekdays`, ISO 1–7). Takes
-     * effect from the next tap. A paused weekly order stays paused.
+     * The items ordered on the chosen school days (`weekdays`, ISO 1–7). Each day is
+     * paid from the student card when that day's orders close; a card that cannot
+     * cover it leaves that day unpaid. A paused weekly order stays paused.
      */
     public function saveWeekly(SavePreOrderRequest $request, int $account): JsonResponse
     {

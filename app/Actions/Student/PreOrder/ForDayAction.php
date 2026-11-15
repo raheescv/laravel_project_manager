@@ -4,6 +4,7 @@ namespace App\Actions\Student\PreOrder;
 
 use App\Models\StudentPreOrder;
 use App\Models\StudentPreOrderCollection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 
 /**
@@ -58,6 +59,44 @@ class ForDayAction
                 ->whereDate('date', $date->toDateString())
                 ->first(),
         ];
+    }
+
+    /**
+     * The order that applies on [$date] for every student who has one, by the same
+     * rules as execute(): a day order wins, a skipped day drops the weekly order, an
+     * active weekly order covering the weekday applies.
+     *
+     * @return EloquentCollection<int, StudentPreOrder>
+     */
+    public static function allOn(Carbon $date): EloquentCollection
+    {
+        $dayOrders = StudentPreOrder::query()
+            ->where('type', StudentPreOrder::TYPE_DAY)
+            ->whereDate('date', $date->toDateString())
+            ->whereIn('status', [StudentPreOrder::STATUS_ACTIVE, StudentPreOrder::STATUS_SKIPPED])
+            ->latest('id')
+            ->get()
+            ->unique('account_id')
+            ->keyBy('account_id');
+
+        $weeklyOrders = StudentPreOrder::query()
+            ->where('type', StudentPreOrder::TYPE_WEEKLY)
+            ->where('status', StudentPreOrder::STATUS_ACTIVE)
+            ->latest('id')
+            ->get()
+            ->unique('account_id')
+            ->filter(fn (StudentPreOrder $order) => in_array($date->dayOfWeekIso, (array) $order->weekdays, true))
+            ->keyBy('account_id');
+
+        return new EloquentCollection($dayOrders->keys()->merge($weeklyOrders->keys())->unique()
+            ->map(function (int $accountId) use ($dayOrders, $weeklyOrders) {
+                $day = $dayOrders->get($accountId);
+
+                return $day?->status === StudentPreOrder::STATUS_SKIPPED ? null : ($day ?? $weeklyOrders->get($accountId));
+            })
+            ->filter()
+            ->values()
+            ->all());
     }
 
     /** The student's weekly order (active or paused), if any. */

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { login } from '@/api/parent'
 import AuthFrame from '@/components/AuthFrame.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
 import PasswordField from '@/components/PasswordField.vue'
 import { safeRedirect } from '@/router'
 import { school } from '@/school'
@@ -47,8 +48,7 @@ async function submit() {
   <AuthFrame>
     <main class="pp-auth">
       <div class="pp-auth__brand">
-        <div v-if="school.logo" class="pp-logo pp-logo--image"><img :src="school.logo" :alt="`${school.name} logo`" /></div>
-        <div v-else class="pp-logo" role="img" aria-hidden="true"><i class="fa fa-cutlery"></i></div>
+        <BrandLogo class="pp-auth__logo" />
         <h1 class="pp-auth__school">Welcome back</h1>
         <p class="pp-auth__lede">Use the mobile number or email registered with your school.</p>
       </div>

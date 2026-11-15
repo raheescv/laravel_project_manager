@@ -2,44 +2,47 @@
 
 namespace App\Actions\V1\Parent;
 
+use App\Models\Branch;
 use App\Support\Student\StudentSettings;
 use Illuminate\Support\Str;
 
 /**
- * What the portal's public registration form offers. No schools means the
- * school has not opened registration.
+ * What the portal's public registration form offers. The schools are the
+ * branches shown on the showcase; no schools means registration is closed
+ * (switched off in Settings, or no branch on the showcase).
  */
 class GetRegistrationFormAction
 {
     /**
-     * @return array{schools: list<array{value: string, group: string, place: string, initial: string}>, classes: list<string>, divisions: list<string>}
+     * @return array{schools: list<array{value: string, name: string, group: string, place: string, initial: string}>, classes: list<string>, divisions: list<string>}
      */
     public function execute(): array
     {
         $settings = StudentSettings::current();
 
         return [
-            'schools' => array_map($this->schoolTile(...), $settings->registrationSchools),
+            'schools' => $settings->registrationOpen ? StudentSettings::registrationBranches()->map($this->schoolTile(...))->values()->all() : [],
             'classes' => $settings->registrationClasses,
             'divisions' => $settings->registrationDivisions,
         ];
     }
 
     /**
-     * "AIA - Doha" becomes a small "AIA" above a large "Doha".
+     * A branch as a tile: the value sent back is its id, and what the parent reads
+     * is the branch's location (its name when no location is set).
      *
-     * @return array{value: string, group: string, place: string, initial: string}
+     * @return array{value: string, name: string, group: string, place: string, initial: string}
      */
-    private function schoolTile(string $school): array
+    private function schoolTile(Branch $branch): array
     {
-        $hasGroup = str_contains($school, '-');
-        $place = $hasGroup ? trim(Str::after($school, '-')) : $school;
+        $label = $branch->locationLabel();
 
         return [
-            'value' => $school,
-            'group' => $hasGroup ? trim(Str::before($school, '-')) : '',
-            'place' => $place,
-            'initial' => Str::upper(Str::substr($place, 0, 1)),
+            'value' => (string) $branch->id,
+            'name' => $label,
+            'group' => '',
+            'place' => $label,
+            'initial' => Str::upper(Str::substr($label, 0, 1)),
         ];
     }
 }

@@ -16,9 +16,9 @@ use Tests\Support\PosWorld;
 use Tests\Support\StudentWorld;
 
 /**
- * Canteen pre-orders: a parent picks items in the portal for a day or every week;
- * when the card is tapped the till gets today's items to put in the cart, and the
- * completed card sale marks the order collected. Nothing is charged at ordering.
+ * Canteen pre-orders: a parent picks items in the portal for a day or every week.
+ * A day order is paid when it is placed (PreOrderPaymentTest covers the money);
+ * the till never puts a pre-order in the cart, so a tap is always a new sale.
  */
 beforeEach(function (): void {
     // Sunday 20 September 2026, before the 07:30 cut-off.
@@ -39,6 +39,8 @@ beforeEach(function (): void {
     ]);
 
     StudentWorld::enablePreOrders($this->world, [$this->menuCategory]);
+    // Day orders are paid from the card as they are placed.
+    StudentWorld::topUp($this->world, $this->student, 500);
 });
 
 function preOrderJson($test, string $method, string $path, array $data = [])
@@ -108,9 +110,15 @@ it('saves a day order and a weekly order, and the day order wins on its day', fu
         ->and($days->has('2026-09-25'))->toBeFalse();
 });
 
-it('orders several meals with quantities and the till gets each product and quantity for the sale', function (): void {
+it('orders several meals with quantities and pays them as one sale with each product and quantity', function (): void {
     $second = $this->world->product->replicate()->fill(['name' => 'Muffin Banana', 'code' => 'MUF1', 'mrp' => 8]);
     $second->save();
+    // Stocked at the canteen branch, where the pre-order sale is booked.
+    DB::table('inventories')->insert([
+        'tenant_id' => $this->world->tenant->id, 'branch_id' => $this->world->branch->id, 'product_id' => $second->id,
+        'quantity' => 100, 'batch' => 'MUF1', 'cost' => 4, 'barcode_prefix' => '', 'barcode_number' => '55500011',
+        'created_by' => $this->world->user->id, 'updated_by' => $this->world->user->id, 'created_at' => now(), 'updated_at' => now(),
+    ]);
 
     $response = preOrderJson($this, 'PUT', "students/{$this->student->id}/pre-orders/days/2026-09-20", [
         'items' => [
@@ -124,9 +132,11 @@ it('orders several meals with quantities and the till gets each product and quan
         ->and($today['order']['items_count'])->toBe(4)
         ->and($today['order']['total'])->toEqual(29);
 
-    $preOrder = tillLookup($this)->assertOk()->json('data.pre_order');
-    expect(collect($preOrder['items'])->pluck('quantity', 'product.id')->all())->toEqual([$this->world->product->id => 1, $second->id => 3])
-        ->and($preOrder['total'])->toEqual(29);
+    $sale = StudentPreOrderCollection::sole()->sale->load('items');
+    expect($today['paid'])->toBeTrue()
+        ->and($sale->items->pluck('quantity', 'product_id')->map(fn ($quantity) => (int) $quantity)->all())->toEqual([$this->world->product->id => 1, $second->id => 3])
+        ->and((float) $sale->grand_total)->toEqual(29.0)
+        ->and(tillLookup($this)->assertOk()->json('data.pre_order'))->toBeNull();
 
     $tooMany = collect(range(1, StudentPreOrder::MAX_LINES + 1))->map(fn (int $id) => ['product_id' => $id, 'quantity' => 1])->all();
     preOrderJson($this, 'PUT', "students/{$this->student->id}/pre-orders/days/2026-09-20", ['items' => $tooMany])
@@ -180,48 +190,37 @@ it('is a 404 for another family\'s child', function (): void {
     expect(StudentPreOrder::count())->toBe(0);
 });
 
-it('hands today\'s pre-order to the till and marks it collected by the card sale', function (): void {
-    StudentWorld::topUp($this->world, $this->student, 100);
+it('never puts a paid pre-order in the till cart: a tap is a new sale', function (): void {
     preOrderJson($this, 'PUT', "students/{$this->student->id}/pre-orders/weekly", [
         'weekdays' => [7, 1, 2, 3, 4],
         'items' => [['product_id' => $this->world->product->id, 'quantity' => 2]],
         'note' => 'Lunch break',
     ])->assertOk();
 
-    // Later that morning, after the cut-off, the card is tapped.
+    // The day's orders close at 07:30 and the weekly order is paid from the card.
+    $this->travelTo(Carbon::parse('2026-09-20 07:31:00'));
+    $this->artisan('student:pre-order-close')->assertSuccessful();
+    $paid = StudentPreOrderCollection::sole();
+
+    // Later that morning the card is tapped for a snack.
     $this->travelTo(Carbon::parse('2026-09-20 10:15:00'));
-    $lookup = tillLookup($this)->assertOk();
-    $preOrder = $lookup->json('data.pre_order');
+    expect(tillLookup($this)->assertOk()->json('data.pre_order'))->toBeNull();
 
-    expect($preOrder['source'])->toBe('weekly')
-        ->and($preOrder['note'])->toBe('Lunch break')
-        ->and($preOrder['total'])->toEqual(10)
-        ->and($preOrder['items'][0]['quantity'])->toBe(2)
-        ->and($preOrder['items'][0]['product']['id'])->toBe($this->world->product->id)
-        ->and($preOrder['items'][0]['product']['mrp'])->toEqual(5);
-
-    $this->postJson($this->world->url('/api/v1/sale'), $this->world->salePayload([
+    $sale = $this->postJson($this->world->url('/api/v1/sale'), $this->world->salePayload([
         'customerName' => $this->student->name,
         'studentAccountId' => $this->student->id,
         'cardUid' => '04A21B9C',
         'paymentMethod' => 'student_card',
-        'items' => [['productId' => $this->world->product->id, 'quantity' => 2, 'unitPrice' => 5, 'discount' => 0]],
-        'totalPayment' => 10,
-        'preOrderId' => $preOrder['id'],
+        'items' => [['productId' => $this->world->product->id, 'quantity' => 1, 'unitPrice' => 5, 'discount' => 0]],
+        'totalPayment' => 5,
     ]))->assertCreated();
 
-    $collection = StudentPreOrderCollection::sole();
-    expect($collection->date->toDateString())->toBe('2026-09-20')
-        ->and($collection->account_id)->toBe($this->student->id)
-        ->and(tillLookup($this)->json('data.pre_order'))->toBeNull();
-
-    // Collected today only: Monday's tap gets it again.
-    $this->travelTo(Carbon::parse('2026-09-21 10:00:00'));
-    expect(tillLookup($this)->json('data.pre_order.id'))->toBe($preOrder['id']);
+    expect(StudentPreOrderCollection::count())->toBe(1)
+        ->and($paid->fresh()->sale_id)->not->toBe($sale->json('data.id'))
+        ->and($paid->sale->source)->toBe('pre_order');
 });
 
-it('ignores a pre-order id that does not belong to the sale\'s student', function (): void {
-    StudentWorld::topUp($this->world, $this->student, 100);
+it('ignores a pre-order id an older till still sends with a sale', function (): void {
     $other = StudentWorld::enrol($this->world, ['name' => 'Other Child', 'card_uid' => '0A0B0C0D', 'guardians' => []]);
     $order = StudentPreOrder::create(['account_id' => $other->id, 'type' => 'weekly', 'weekdays' => [7], 'status' => 'active']);
     $order->items()->create(['product_id' => $this->world->product->id, 'quantity' => 1, 'tenant_id' => $order->tenant_id]);

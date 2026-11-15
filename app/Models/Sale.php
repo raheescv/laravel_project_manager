@@ -118,6 +118,13 @@ class Sale extends Model implements AuditableContracts
                 return;
             }
 
+            // A canteen pre-order is paid in the parent portal and dated the day the meal
+            // is served, which is usually not today: binding it to the open session
+            // would re-date it to today and count it in that till's cash.
+            if ($sale->source === 'pre_order') {
+                return;
+            }
+
             // A POS run without day sessions keeps the date the cashier picked
             // and stays out of the session, even when one happens to be open.
             if ($sale->source === 'pos' && posSkipsDaySession()) {

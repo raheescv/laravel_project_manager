@@ -58,8 +58,14 @@ export const blockCard = (id, reason) => client.post(`/students/${id}/card/block
  * (a 422 with `errors.confirmable` asks for it).
  * → { topup, payment } where payment is { type: 'qpay', url, method, fields } or { type: 'mpgs', script, session_id }.
  */
-export const startTopup = (id, amount, method, confirmPending = false) =>
-  client.post(`/students/${id}/topups`, { amount, lang: 'En', method, ...(confirmPending ? { confirm_pending: true } : {}) })
+/** `preOrderDate`: pay for that day's pre-order instead; the server charges its exact total and ignores `amount`. */
+export const startTopup = (id, amount, method, confirmPending = false, preOrderDate = null) =>
+  client.post(`/students/${id}/topups`, {
+    ...(preOrderDate ? { pre_order_date: preOrderDate } : { amount }),
+    lang: 'En',
+    method,
+    ...(confirmPending ? { confirm_pending: true } : {}),
+  })
 
 export const fetchTopup = (pun) => client.get(`/topups/${encodeURIComponent(pun)}`)
 

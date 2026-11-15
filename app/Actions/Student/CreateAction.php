@@ -23,7 +23,7 @@ class CreateAction
     public const ACCOUNT_FIELDS = ['name', 'mobile', 'email', 'dob', 'id_no', 'nationality', 'image', 'description'];
 
     /** Columns a student writes on `student_details`. */
-    public const DETAIL_FIELDS = ['admission_no', 'school', 'gender', 'grade', 'section', 'status', 'card_uid'];
+    public const DETAIL_FIELDS = ['admission_no', 'branch_id', 'gender', 'grade', 'section', 'status', 'card_uid'];
 
     public function execute(array $data, ?int $userId): array
     {
@@ -87,7 +87,7 @@ class CreateAction
         if (array_key_exists('card_uid', $detail)) {
             $detail['card_uid'] = StudentDetail::normalizeCardUid($detail['card_uid']);
         }
-        foreach (['school', 'gender', 'grade', 'section'] as $field) {
+        foreach (['branch_id', 'gender', 'grade', 'section'] as $field) {
             if (array_key_exists($field, $detail) && $detail[$field] === '') {
                 $detail[$field] = null;
             }

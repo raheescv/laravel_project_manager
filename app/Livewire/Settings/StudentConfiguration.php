@@ -3,10 +3,13 @@
 namespace App\Livewire\Settings;
 
 use App\Actions\Student\EnsureAccountsAction;
+use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Configuration;
+use App\Models\User;
 use App\Support\Student\StudentSettings;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
@@ -32,9 +35,22 @@ class StudentConfiguration extends Component
 
     public $pre_order_cutoff = StudentSettings::DEFAULT_PRE_ORDER_CUTOFF;
 
+    /** '1' = the cut-off falls the evening before the meal; a string for the radio pair. */
+    public $pre_order_cutoff_day_before = '0';
+
+    public $pre_order_summary_emails = '';
+
     public $pre_order_category_ids = [];
 
-    public $registration_schools = '';
+    /** Where a paid pre-order's sale is booked, and who it is recorded as. */
+    public $pre_order_branch_id = '';
+
+    public $pre_order_user_id = '';
+
+    public $registration_auto_approve = true;
+
+    /** The public registration page takes forms; its schools are the showcase branches. */
+    public $registration_enabled = false;
 
     public $registration_classes = '';
 
@@ -50,8 +66,13 @@ class StudentConfiguration extends Component
         $this->pre_orders_enabled = $settings->preOrdersEnabled;
         $this->school_days = array_map('strval', $settings->schoolDays);
         $this->pre_order_cutoff = $settings->preOrderCutoff;
+        $this->pre_order_cutoff_day_before = $settings->preOrderCutoffDayBefore ? '1' : '0';
+        $this->pre_order_summary_emails = implode("\n", $settings->preOrderSummaryEmails);
         $this->pre_order_category_ids = array_map('strval', $settings->preOrderCategoryIds);
-        $this->registration_schools = implode("\n", $settings->registrationSchools);
+        $this->pre_order_branch_id = (string) ($settings->preOrderBranchId ?? '');
+        $this->pre_order_user_id = (string) ($settings->preOrderUserId ?? '');
+        $this->registration_auto_approve = $settings->registrationAutoApprove;
+        $this->registration_enabled = $settings->registrationOpen;
         $this->registration_classes = implode("\n", $settings->registrationClasses);
         $this->registration_divisions = implode("\n", $settings->registrationDivisions);
     }
@@ -69,11 +90,24 @@ class StudentConfiguration extends Component
             'school_days' => ['required', 'array', 'min:1'],
             'school_days.*' => ['integer', 'between:1,7'],
             'pre_order_cutoff' => ['required', 'date_format:H:i'],
+            'pre_order_cutoff_day_before' => ['required', 'in:0,1'],
+            'pre_order_summary_emails' => ['nullable', 'string', 'max:1000', function (string $attribute, mixed $value, \Closure $fail): void {
+                foreach (preg_split('/[\s,;]+/', (string) $value, -1, PREG_SPLIT_NO_EMPTY) as $email) {
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                        $fail("\"{$email}\" is not an email address.");
+
+                        return;
+                    }
+                }
+            }],
             'pre_order_category_ids' => ['array', $this->pre_orders_enabled ? 'min:1' : 'min:0'],
             'pre_order_category_ids.*' => ['integer'],
-            'registration_schools' => ['nullable', 'string', 'max:2000'],
+            'pre_order_branch_id' => ['nullable', 'integer', Rule::exists('branches', 'id')->where('tenant_id', auth()->user()?->tenant_id)],
+            'pre_order_user_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('tenant_id', auth()->user()?->tenant_id)],
+            'registration_enabled' => ['boolean'],
             'registration_classes' => ['required', 'string', 'max:1000'],
             'registration_divisions' => ['required', 'string', 'max:500'],
+            'registration_auto_approve' => ['boolean'],
         ], [
             'registration_classes.required' => 'List at least one class.',
             'registration_divisions.required' => 'List at least one division.',
@@ -96,10 +130,15 @@ class StudentConfiguration extends Component
                 'pre_orders_enabled' => (bool) $this->pre_orders_enabled,
                 'school_days' => $this->school_days,
                 'pre_order_cutoff' => $this->pre_order_cutoff,
+                'pre_order_cutoff_day_before' => $this->pre_order_cutoff_day_before === '1',
+                'pre_order_summary_emails' => (string) $this->pre_order_summary_emails,
                 'pre_order_category_ids' => $this->pre_order_category_ids,
-                'registration_schools' => (string) $this->registration_schools,
+                'pre_order_branch_id' => $this->pre_order_branch_id,
+                'pre_order_user_id' => $this->pre_order_user_id,
+                'registration_enabled' => (bool) $this->registration_enabled,
                 'registration_classes' => (string) $this->registration_classes,
                 'registration_divisions' => (string) $this->registration_divisions,
+                'registration_auto_approve' => (bool) $this->registration_auto_approve,
             ]);
             Configuration::updateOrCreate(['key' => StudentSettings::KEY], ['value' => json_encode($settings->toArray())]);
             DB::commit();
@@ -127,8 +166,8 @@ class StudentConfiguration extends Component
             'canteen' => $settings->preOrdersEnabled
                 ? ['text' => 'On · '.count($settings->schoolDays).' days', 'tone' => 'live']
                 : ['text' => 'Off', 'tone' => 'off'],
-            'registration' => $settings->registrationSchools
-                ? ['text' => 'Open · '.count($settings->registrationSchools).' schools', 'tone' => 'live']
+            'registration' => $settings->registrationAvailable()
+                ? ['text' => 'Open · '.StudentSettings::registrationBranches()->count().' schools', 'tone' => 'live']
                 : ['text' => 'Closed', 'tone' => 'off'],
         ];
     }
@@ -137,6 +176,9 @@ class StudentConfiguration extends Component
     {
         return view('livewire.settings.student-configuration', [
             'weekdays' => self::WEEKDAYS,
+            'registrationBranches' => StudentSettings::registrationBranches(),
+            'branches' => Branch::query()->orderBy('name')->get(['id', 'name']),
+            'users' => User::query()->where('is_active', 1)->orderBy('name')->get(['id', 'name']),
             // "Drinks" or "Food › Sandwiches", so a sub category is recognisable.
             'categories' => Category::with('parent:id,name')->orderBy('name')->get(['id', 'name', 'parent_id'])
                 ->mapWithKeys(fn (Category $category) => [$category->id => $category->parent ? $category->parent->name.' › '.$category->name : $category->name])

@@ -859,7 +859,7 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-sheet__grabber{display:none}
 
   /* ---- The two panes ---- */
-  .pp-web{display:grid; grid-template-columns:420px minmax(0,1fr); min-height:100dvh; background:var(--bg)}
+  .pp-web{--wallet-w:420px; display:grid; grid-template-columns:var(--wallet-w) minmax(0,1fr); min-height:100dvh; background:var(--bg)}
   .pp-wallet{
     --wallet-bg:color-mix(in oklab,var(--bg),var(--ink) 4%);
     position:sticky; top:0; display:flex; flex-direction:column; height:100dvh; overflow-y:auto; overscroll-behavior:contain;
@@ -933,8 +933,6 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
   .pp-detail__id h1{font-size:30px; font-weight:800; line-height:1.05; letter-spacing:-.035em}
   .pp-detail__id p{margin-top:5px; font-size:15px; color:var(--ink-2)}
   .pp-cta__note--start{justify-content:flex-start; margin:-8px 0 18px; text-align:left}
-  .pp-student-grid{display:grid; grid-template-columns:minmax(0,1fr) 320px; grid-template-areas:"activity aside"; gap:24px; align-items:start}
-  .pp-student-grid__aside{grid-area:aside}
   .pp-activity{grid-area:activity; overflow:hidden; border-radius:16px; background:var(--surface); box-shadow:0 0 0 1px var(--line)}
   .pp-activity__head{display:flex; align-items:center; gap:12px; min-height:60px; padding:10px 12px 10px 16px; border-bottom:1px solid var(--line)}
   .pp-activity__head .pp-seg{width:240px; margin:0}
@@ -1041,19 +1039,17 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
 
 /* A very wide screen: the wallet takes a little more of it. */
 @media (min-width:1600px){
-  .pp-web{grid-template-columns:480px minmax(0,1fr)}
+  .pp-web{--wallet-w:480px}
   .pp-detail{padding-left:56px; padding-right:56px}
 }
 
 /* Smaller laptops and iPads in landscape */
 @media (min-width:1024px) and (max-width:1199.98px){
-  .pp-web{grid-template-columns:360px minmax(0,1fr)}
+  .pp-web{--wallet-w:360px}
   .pp-wallet{padding-left:20px; padding-right:20px}
   /* A narrower wallet means a shorter card: less overlap, or the next card covers the balance. */
   .pp-wallet .pp-wallet-stack .pp-child-card + .pp-child-card{margin-top:-72px}
   .pp-detail{padding-left:32px; padding-right:32px}
-  .pp-student-grid{grid-template-columns:minmax(0,1fr); grid-template-areas:"aside" "activity"}
-  .pp-student-grid__aside{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); column-gap:18px}
   .pp-checkout,.pp-bill-layout{grid-template-columns:minmax(0,1fr)}
   .pp-bill-layout > *{max-width:540px}
   .pp-summary{position:static}
@@ -1149,3 +1145,59 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
 @media (hover:hover){
   .pp-meals--grid .pp-meal-row:not(.is-selected):hover{box-shadow:0 0 0 1.5px var(--accent-ring)}
 }
+
+/* ---------------------------------------------------------------------------
+ * Caterer branding (src/brand.js): the logo, the Pre-Order button and the
+ * My Place watermark behind every page but the first registration step.
+ * ------------------------------------------------------------------------- */
+:root{--brand-veil:color-mix(in oklab,var(--bg) 90%,transparent); --preorder:#6F8C34; --preorder-hover:#5D7629}
+
+/* The logo is a wide wordmark: its height is set per place, the width follows. */
+.pp-brand-logo{--logo-h:28px; display:inline-flex; align-items:center; flex:none; max-width:100%; line-height:0}
+.pp-brand-logo img{display:block; width:auto; height:var(--logo-h); max-width:100%; object-fit:contain}
+.pp-brand-logo--plate{padding:calc(var(--logo-h) * .18) calc(var(--logo-h) * .32); border-radius:calc(var(--logo-h) * .3); background:#FFFFFF; box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.pp-brand-logo--text{font:700 13px/1.2 var(--font); letter-spacing:.04em; text-transform:uppercase}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .pp-brand-logo:not(.pp-brand-logo--text){padding:calc(var(--logo-h) * .18) calc(var(--logo-h) * .32); border-radius:calc(var(--logo-h) * .3); background:#FFFFFF}
+}
+:root[data-theme="dark"] .pp-brand-logo:not(.pp-brand-logo--text){padding:calc(var(--logo-h) * .18) calc(var(--logo-h) * .32); border-radius:calc(var(--logo-h) * .3); background:#FFFFFF}
+
+.pp-card__school .pp-brand-logo{--logo-h:15px}
+.pp-pass__logo{--logo-h:16px}
+.pp-appbar__brand{--logo-h:26px}
+.pp-wallet__logo{--logo-h:32px}
+.pp-auth__logo{--logo-h:56px; margin:0 0 14px}
+.pp-signin__form .pp-auth__logo{margin-inline:auto}
+@media (max-height:760px){ .pp-auth__logo{--logo-h:44px} }
+
+/* Pre-Order: the caterer's green, under (phone) or beside (desktop) Top up. */
+.pp-btn--preorder{margin-top:12px; background:var(--preorder); color:#FFFFFF; box-shadow:0 10px 22px -14px var(--preorder)}
+.pp-btn--preorder:hover{background:var(--preorder-hover)}
+.pp-detail__head .pp-btn--preorder{margin-top:0}
+.pp-cta .pp-btn--preorder + .pp-cta__note{margin-top:8px}
+.pp-lost{margin-top:18px}
+
+/* The watermark: the logo faded into the page colour, centred on the content. */
+.pp-app:not(.pp-app--full),.pp-detail{
+  background:
+    linear-gradient(var(--brand-veil),var(--brand-veil)) fixed,
+    var(--brand-backdrop,none) center 55% / min(72vw,460px) auto no-repeat fixed,
+    var(--bg);
+}
+@media (min-width:1024px){
+  .pp-detail{background-position:0 0,calc(50% + var(--wallet-w) / 2) 55%,0 0; background-size:auto,min(40vw,520px) auto,auto}
+}
+
+/* Sign-in pages: the same mark sunk into the wash, in place of the plates. */
+.pp-signin__brand{position:absolute; width:min(70%,380px); left:50%; top:50%; transform:translate(-50%,-50%) rotate(-6deg); opacity:.13}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .pp-signin__brand{opacity:.08} }
+:root[data-theme="dark"] .pp-signin__brand{opacity:.08}
+@media (min-width:1024px){ .pp-signin__brand{width:min(44%,560px)} }
+
+/* Paid pre-orders on the meals page: cancel (refund to the card) until the day closes. */
+.pp-paid{margin-top:26px}
+.pp-paid__cancel{min-height:36px; padding:0 14px; border:0; border-radius:10px; background:var(--neg-soft); color:var(--neg); font-size:14px; font-weight:700}
+.pp-paid__cancel:hover{filter:brightness(.96)}
+/* A pay option that cannot be used (e.g. not enough on the student card). */
+.pp-tile:disabled{opacity:.55; cursor:not-allowed; box-shadow:0 0 0 1px var(--line)}
+.pp-tile:disabled .pp-tile__sub{color:var(--neg)}

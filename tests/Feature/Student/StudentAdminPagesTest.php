@@ -95,6 +95,33 @@ it('creates a student with parents from the form', function (): void {
         ->and($account->guardians()->count())->toBe(2);
 });
 
+it('puts a student in a school picked from the branches, shown by its location', function (): void {
+    $lusail = $this->world->addBranch('AIA-LUSAIL', 'AIAL');
+    $lusail->update(['location' => 'Lusail']);
+
+    Livewire::test(Page::class)
+        ->assertSee('Lusail')
+        ->set('student.name', 'Yusuf Khan')
+        ->set('student.admission_no', 'ADM-7788')
+        ->set('student.branch_id', (string) $lusail->id)
+        ->set('guardians.0.name', 'Imran Khan')
+        ->set('guardians.0.mobile', '77001122')
+        ->call('save')
+        ->assertRedirect();
+
+    $detail = Account::student()->where('name', 'Yusuf Khan')->sole()->studentDetail;
+    expect($detail->branch_id)->toBe($lusail->id)
+        ->and($detail->school)->toBe('Lusail');
+
+    // Editing shows the branch picked and keeps it.
+    Livewire::test(Page::class, ['id' => $detail->account_id])
+        ->assertSet('student.branch_id', (string) $lusail->id)
+        ->set('student.grade', 'Grade 6')
+        ->call('save')
+        ->assertRedirect();
+    expect($detail->fresh()->branch_id)->toBe($lusail->id);
+});
+
 it('renders the student view and every tab', function (): void {
     Livewire::test(View::class, ['account_id' => $this->student->id])
         ->assertOk()
