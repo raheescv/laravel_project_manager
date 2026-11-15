@@ -7,7 +7,10 @@
 const base = import.meta.env.BASE_URL
 const asset = (value, fallback) => {
   const path = value ?? fallback
-  return path ? (/^(https?:)?\/\//.test(path) || path.startsWith('/') ? path : `${base}${path}`) : null
+  if (!path) return null
+  // Absolute URL: a relative url() inside a CSS variable resolves against the
+  // stylesheet that uses it (dist/assets/), not the page, and 404s.
+  return new URL(/^(https?:)?\/\//.test(path) || path.startsWith('/') ? path : `${base}${path}`, document.baseURI).href
 }
 
 export const brand = {
