@@ -155,7 +155,28 @@
                     </div>
                 </div>
 
-                {{-- Row 6: Parking, Kitchen, Toilet --}}
+                {{-- Row 6: Water Number, BTU Number --}}
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.water_number') is-invalid @enderror" id="water_number" placeholder="Enter Water Number" wire:model="formData.water_number">
+                        <label for="water_number">Water Number</label>
+                        @error('formData.water_number')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.btu_number') is-invalid @enderror" id="btu_number" placeholder="Enter BTU Number" wire:model="formData.btu_number">
+                        <label for="btu_number">BTU Number</label>
+                        @error('formData.btu_number')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-4 d-none d-md-block"></div>
+
+                {{-- Row 7: Parking, Kitchen, Toilet --}}
                 <div class="col-md-4">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.parking') is-invalid @enderror" id="parking" placeholder="Enter Parking" wire:model="formData.parking">
@@ -184,7 +205,7 @@
                     </div>
                 </div>
 
-                {{-- Row 7: Flag* --}}
+                {{-- Row 8: Flag* --}}
                 <div class="col-md-4">
                     <div class="form-floating">
                         <select class="form-select @error('formData.flag') is-invalid @enderror" id="flag" wire:model="formData.flag" required>

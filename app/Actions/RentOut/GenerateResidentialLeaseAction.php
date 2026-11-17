@@ -187,6 +187,18 @@ class GenerateResidentialLeaseAction
                 'arabic' => ['title' => 'رقم الكهرباء', 'value' => $rentOut->property?->kahramaa],
             ],
             [
+                'english' => ['title' => 'Water No', 'value' => $rentOut->property?->water_number],
+                'arabic' => ['title' => 'رقم المياه', 'value' => $rentOut->property?->water_number],
+            ],
+            [
+                'english' => ['title' => 'BTU No', 'value' => $rentOut->property?->btu_number],
+                'arabic' => ['title' => 'رقم BTU', 'value' => $rentOut->property?->btu_number],
+            ],
+            [
+                'english' => ['title' => 'Gas Meter No', 'value' => $rentOut->property?->gas_meter_number],
+                'arabic' => ['title' => 'رقم عداد الغاز', 'value' => $rentOut->property?->gas_meter_number],
+            ],
+            [
                 'english' => ['title' => 'Parking Number', 'value' => $rentOut->property?->parking],
                 'arabic' => ['title' => 'رقم موقف السيارة', 'value' => $rentOut->property?->parking],
             ],

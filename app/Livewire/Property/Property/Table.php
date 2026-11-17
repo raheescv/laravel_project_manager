@@ -93,6 +93,8 @@ class Table extends Component
                     $q->where('number', 'like', "%{$value}%")
                         ->orWhere('floor', 'like', "%{$value}%")
                         ->orWhere('gas_meter_number', 'like', "%{$value}%")
+                        ->orWhere('water_number', 'like', "%{$value}%")
+                        ->orWhere('btu_number', 'like', "%{$value}%")
                         ->orWhereHas('building', function ($q) use ($value) {
                             $q->where('name', 'like', "%{$value}%");
                         })

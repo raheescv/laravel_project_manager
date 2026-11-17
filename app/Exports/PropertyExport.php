@@ -24,7 +24,9 @@ class PropertyExport implements FromQuery, WithColumnFormatting, WithHeadings, W
                 return $query->where(function ($q) use ($value) {
                     $q->where('number', 'like', "%{$value}%")
                         ->orWhere('floor', 'like', "%{$value}%")
-                        ->orWhere('gas_meter_number', 'like', "%{$value}%");
+                        ->orWhere('gas_meter_number', 'like', "%{$value}%")
+                        ->orWhere('water_number', 'like', "%{$value}%")
+                        ->orWhere('btu_number', 'like', "%{$value}%");
                 });
             })
             ->when($this->filters['filterGroup'] ?? '', function ($query, $value) {
@@ -64,6 +66,8 @@ class PropertyExport implements FromQuery, WithColumnFormatting, WithHeadings, W
             'Ownership',
             'Kahramaa',
             'Gas Meter Number',
+            'Water Number',
+            'BTU Number',
             'Parking',
             'Furniture',
             'Status',
@@ -85,6 +89,8 @@ class PropertyExport implements FromQuery, WithColumnFormatting, WithHeadings, W
             $row->ownership,
             $row->kahramaa,
             $row->gas_meter_number,
+            $row->water_number,
+            $row->btu_number,
             $row->parking,
             $row->furniture,
             $row->status?->label(),

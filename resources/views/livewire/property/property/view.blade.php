@@ -129,6 +129,12 @@
                         @if ($property->gas_meter_number)
                             <span><i class="fa fa-fire"></i> Gas {{ $property->gas_meter_number }}</span>
                         @endif
+                        @if ($property->water_number)
+                            <span><i class="fa fa-tint"></i> Water {{ $property->water_number }}</span>
+                        @endif
+                        @if ($property->btu_number)
+                            <span><i class="fa fa-snowflake-o"></i> BTU {{ $property->btu_number }}</span>
+                        @endif
                     </div>
                 </div>
 
@@ -322,6 +328,8 @@
                                     ['fa-bolt', 'Kahramaa', $property->kahramaa],
                                     ['fa-plug', 'Electricity', $property->electricity],
                                     ['fa-fire', 'Gas Meter No', $property->gas_meter_number],
+                                    ['fa-tint', 'Water No', $property->water_number],
+                                    ['fa-snowflake-o', 'BTU No', $property->btu_number],
                                     ['fa-briefcase', 'Furniture', $property->furniture],
                                 ] as [$icon, $label, $value])
                                     <li class="list-group-item d-flex justify-content-between align-items-center gap-2 bg-transparent">

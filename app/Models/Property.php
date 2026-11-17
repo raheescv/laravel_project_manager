@@ -35,6 +35,8 @@ class Property extends Model implements AuditableContracts
         'electricity',
         'kahramaa',
         'gas_meter_number',
+        'water_number',
+        'btu_number',
         'parking',
         'furniture',
         'status',

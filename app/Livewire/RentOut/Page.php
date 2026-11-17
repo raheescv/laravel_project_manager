@@ -105,6 +105,8 @@ class Page extends Component
             'Electricity no.' => $property->electricity,
             'Kahramaa no.' => $property->kahramaa,
             'Gas meter no.' => $property->gas_meter_number,
+            'Water no.' => $property->water_number,
+            'BTU no.' => $property->btu_number,
         ], fn ($value): bool => filled($value));
     }
 

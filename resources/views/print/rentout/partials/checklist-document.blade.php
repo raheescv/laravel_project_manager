@@ -121,6 +121,8 @@
                 ['Hand Over Date', $fmt($ro->actual_move_out_date)],
                 ['Kahrama Number', $ro?->property?->kahramaa ?: '—'],
                 ['Gas Meter Number', $ro?->property?->gas_meter_number ?: '—'],
+                ['Water Number', $ro?->property?->water_number ?: '—'],
+                ['BTU Number', $ro?->property?->btu_number ?: '—'],
             ];
     @endphp
     <table class="meta">

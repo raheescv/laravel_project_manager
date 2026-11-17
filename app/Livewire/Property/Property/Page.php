@@ -63,6 +63,8 @@ class Page extends Component
                 'ownership' => '',
                 'kahramaa' => '',
                 'gas_meter_number' => '',
+                'water_number' => '',
+                'btu_number' => '',
                 'parking' => '',
                 'kitchen' => '',
                 'toilet' => '',
