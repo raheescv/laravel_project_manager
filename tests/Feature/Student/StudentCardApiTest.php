@@ -149,3 +149,20 @@ it('links a card from the app only with permission', function (): void {
     // A card already linked to someone else is refused.
     $this->postJson($this->world->url("/api/v1/students/{$other->id}/card"), ['cardUid' => '04A21B9C'])->assertUnprocessable();
 });
+
+it('lists every card a till can take, for the device to keep', function (): void {
+    $this->getJson($this->world->url('/api/v1/students/cards'))->assertForbidden();
+
+    $this->world->user->givePermissionTo(Permission::firstOrCreate(['name' => 'student card.assign', 'guard_name' => 'web']));
+    StudentWorld::enrol($this->world, ['name' => 'No Card', 'card_uid' => null, 'guardians' => []]);
+    $blocked = StudentWorld::enrol($this->world, ['name' => 'Blocked', 'card_uid' => '11:22:33:44', 'guardians' => []]);
+    (new BlockAction())->execute($blocked->id, 'user', $this->world->user->id, 'Lost');
+
+    $this->getJson($this->world->url('/api/v1/students/cards'))
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.account_id', $this->student->id)
+        ->assertJsonPath('data.0.card_uid', '04A21B9C')
+        ->assertJsonPath('data.0.balance', 30)
+        ->assertJsonPath('data.0.available', 40);
+});
