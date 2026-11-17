@@ -176,6 +176,10 @@ Route::prefix('v1')->group(function () {
             // linking a card is gated like the web Card tab.
             Route::prefix('students')->middleware(EnsureModuleEnabled::class.':'.ModuleAccess::SCHOOL)->group(function () {
                 Route::get('card/{uid}', [StudentCardController::class, 'show'])->name('api.v1.students.card');
+                // The tap list a till keeps on the device (only tills that may take cards ask for it).
+                Route::get('cards', [StudentCardController::class, 'cards'])
+                    ->middleware(EnsureMobilePermission::class.':student card.assign')
+                    ->name('api.v1.students.cards');
                 Route::get('/', [StudentCardController::class, 'index'])
                     ->middleware(EnsureMobilePermission::class.':student card.assign')
                     ->name('api.v1.students.index');

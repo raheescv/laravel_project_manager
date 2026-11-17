@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\Student\Card\AssignAction;
 use App\Actions\Student\Card\FindByAdmissionNoAction;
 use App\Actions\Student\Card\FindByUidAction;
+use App\Actions\Student\Card\ListTappableCardsAction;
 use App\Actions\Student\GetBalanceAction;
 use App\Http\Controllers\Controller;
 use App\Livewire\Student\Table as StudentTable;
@@ -49,6 +50,23 @@ class StudentCardController extends Controller
             return $this->sendSuccess($student, 'Card found');
         } catch (\Exception $e) {
             return $this->sendServerError('Failed to read the card: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Every card a till can take right now, for the device to keep.
+     *
+     * Active students holding an active card, each in the same shape as the
+     * single-card lookup. The app answers a tap from this list instantly and
+     * confirms it with the lookup in the background; a card it does not hold
+     * (blocked, new, unlinked) goes to the lookup, which says why.
+     */
+    public function cards(): JsonResponse
+    {
+        try {
+            return $this->sendSuccess((new ListTappableCardsAction())->execute(), 'Cards retrieved');
+        } catch (\Exception $e) {
+            return $this->sendServerError('Failed to list the cards: '.$e->getMessage());
         }
     }
 

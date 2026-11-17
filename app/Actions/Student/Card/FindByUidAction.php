@@ -33,9 +33,21 @@ class FindByUidAction
 
     public static function summary(StudentDetail $detail): array
     {
+        return self::row(
+            $detail,
+            (new GetBalanceAction())->execute($detail->account->id),
+            StudentSettings::current()->overdraftLimit,
+            EnsureAccountsAction::cardMethodId(),
+        );
+    }
+
+    /**
+     * The summary from figures already in hand, so a list of cards
+     * ({@see ListTappableCardsAction}) reads the ledger and settings once.
+     */
+    public static function row(StudentDetail $detail, float $balance, float $limit, ?int $cardMethodId): array
+    {
         $account = $detail->account;
-        $balance = (new GetBalanceAction())->execute($account->id);
-        $limit = StudentSettings::current()->overdraftLimit;
 
         return [
             'account_id' => $account->id,
@@ -51,7 +63,7 @@ class FindByUidAction
             'overdraft_limit' => $limit,
             'available' => max(0, round($balance + $limit, 2)),
             // The Student Card payment method, so the till can put the card into a split payment.
-            'card_method_id' => EnsureAccountsAction::cardMethodId(),
+            'card_method_id' => $cardMethodId,
             // Always null: pre-orders are paid as their own sale in the parent portal, so a tap
             // never puts one in the cart. Kept for app builds that still read the key.
             'pre_order' => null,
