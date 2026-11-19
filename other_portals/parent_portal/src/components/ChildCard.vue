@@ -7,8 +7,9 @@ import { school } from '@/school'
 import { amount, classLabel, money } from '@/utils/format'
 
 /**
- * A child as a physical student card. On the home stack it is a link showing who
- * and the balance; as the child page's hero (`hero`) the balance is the headline.
+ * A child as their school ID card ("Split Portrait"): the photo down the left on
+ * the school colour, then name, grade, student number and the balance. On the home
+ * stack it is a link; as the child page's hero (`hero`) the balance is the headline.
  */
 const props = defineProps({
   student: { type: Object, required: true },
@@ -26,42 +27,39 @@ const statusLabel = computed(() => ({ blocked: 'Card blocked', active: 'Card act
     :is="to ? 'RouterLink' : 'div'"
     :to="to || undefined"
     class="pp-child-card"
-    :class="{ 'pp-child-card--blocked': state === 'blocked', 'pp-child-card--none': state === 'none' }"
+    :class="{ 'pp-child-card--blocked': state === 'blocked', 'pp-child-card--none': state === 'none', 'pp-child-card--hero': hero }"
   >
-    <span class="pp-card__top">
+    <span class="pp-card__photo">
+      <StudentAvatar :name="student.name" :image="student.image_url" />
       <SchoolMark />
-      <span v-if="state !== 'none'" class="pp-status" :class="`pp-status--${state}`">
-        <i v-if="state === 'blocked'" class="fa fa-ban"></i>{{ statusLabel }}
-      </span>
+      <span class="pp-card__kind">Student ID</span>
     </span>
 
-    <template v-if="hero">
-      <span class="pp-card__balance">
+    <span class="pp-card__info">
+      <span class="pp-card__top">
+        <span class="pp-card__label">Student</span>
+        <span v-if="state !== 'none'" class="pp-status" :class="`pp-status--${state}`">
+          <i v-if="state === 'blocked'" class="fa fa-ban"></i>{{ statusLabel }}
+        </span>
+      </span>
+      <span class="pp-card__name">{{ student.name }}</span>
+      <span v-if="student.class || student.admission_no" class="pp-card__class">
+        {{ classLabel(student.class) }}<span v-if="student.admission_no" class="pp-card__no">ID {{ student.admission_no }}</span>
+      </span>
+
+      <span v-if="hero" class="pp-card__balance" :class="{ 'pp-card__balance--neg': negative }">
         <small>Card balance</small>
         <b class="pp-num"><span>{{ school.currency.code }}</span>{{ negative ? '−' : '' }}{{ amount(student.balance) }}</b>
       </span>
-      <span class="pp-card__bottom">
-        <span v-if="state !== 'none'" class="pp-card__chip"></span>
-        <span class="pp-card__holder"><b>{{ student.name }}</b><small v-if="student.class">{{ classLabel(student.class) }}</small></span>
-        <i v-if="state !== 'none'" class="fa fa-wifi pp-card__nfc"></i>
+      <span v-else class="pp-card__bal" :class="{ 'pp-card__bal--neg': negative && state !== 'none' }">
+        <small>{{ negative ? 'Overdraft' : 'Balance' }}</small><b>{{ money(student.balance) }}</b>
       </span>
-    </template>
 
-    <template v-else>
-      <span class="pp-card__who">
-        <StudentAvatar :name="student.name" :image="student.image_url" />
-        <span class="pp-card__id">
-          <span class="pp-card__name">{{ student.name }}</span>
-          <span v-if="student.class || student.admission_no" class="pp-card__class">{{ classLabel(student.class) || student.admission_no }}</span>
-        </span>
-        <span class="pp-card__bal" :class="{ 'pp-card__bal--neg': negative && state !== 'none' }">
-          <small>{{ negative ? 'Overdraft' : 'Balance' }}</small><b>{{ money(student.balance) }}</b>
-        </span>
-      </span>
       <span class="pp-card__bottom">
-        <span v-if="state !== 'none'" class="pp-card__chip"></span><span class="pp-card__label">Student card</span>
-        <i v-if="state !== 'none'" class="fa fa-wifi pp-card__nfc"></i>
+        <i v-if="state !== 'none'" class="pp-card__barcode" aria-hidden="true"></i>
+        <span v-if="to" class="pp-card__open">Open<i class="fa fa-angle-right" aria-hidden="true"></i></span>
+        <span v-else class="pp-card__type">{{ state === 'none' ? 'No card yet' : 'Student card' }}</span>
       </span>
-    </template>
+    </span>
   </component>
 </template>

@@ -95,6 +95,24 @@ it('saves a bank card order unpaid and pays it once the money lands on the card'
         ->and(cardBalance($this))->toBe(0.0);
 });
 
+it('saves an edited cart without paying, then pays it on the next save', function (): void {
+    StudentWorld::topUp($this->world, $this->student, 50);
+
+    payDay($this, '2026-09-22', 2, ['pay' => 'later'])
+        ->assertOk()
+        ->assertJsonPath('message', 'Pre-order saved. It is not paid yet.');
+    payDay($this, '2026-09-22', 3, ['pay' => 'later'])->assertOk();
+
+    expect(Sale::count())->toBe(0)
+        ->and(StudentPreOrder::sole()->items()->sole()->quantity)->toBe(3)
+        ->and(cardBalance($this))->toBe(50.0);
+
+    payDay($this, '2026-09-22', 3)->assertOk()->assertJsonPath('message', 'Pre-order paid');
+
+    expect((float) Sale::sole()->grand_total)->toBe(15.0)
+        ->and(cardBalance($this))->toBe(35.0);
+});
+
 it('refunds a paid day when it changes, and keeps the sale when it is saved unchanged', function (): void {
     StudentWorld::topUp($this->world, $this->student, 50);
     payDay($this, '2026-09-22', 2)->assertOk();

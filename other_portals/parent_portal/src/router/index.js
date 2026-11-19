@@ -25,6 +25,8 @@ const router = createRouter({
 
     { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
     { path: '/students/:id(\\d+)', name: 'student', component: () => import('@/views/StudentView.vue') },
+    { path: '/students/:id(\\d+)/bills', name: 'student-bills', component: () => import('@/views/StudentActivityView.vue') },
+    { path: '/students/:id(\\d+)/statement', name: 'student-statement', component: () => import('@/views/StudentActivityView.vue') },
     { path: '/students/:id(\\d+)/bills/:saleId(\\d+)', name: 'bill', component: () => import('@/views/BillView.vue') },
     { path: '/students/:id(\\d+)/topup', name: 'topup', component: () => import('@/views/TopupView.vue') },
     { path: '/students/:id(\\d+)/pre-orders', name: 'pre-orders', component: () => import('@/views/PreOrdersView.vue') },

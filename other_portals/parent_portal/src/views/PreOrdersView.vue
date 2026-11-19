@@ -1,16 +1,17 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { clearDayPreOrder, fetchPreOrderMenu, fetchPreOrders, fetchStudent, skipDayPreOrder } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
+import ChildSwitcher from '@/components/ChildSwitcher.vue'
 import LoadError from '@/components/LoadError.vue'
 import MealCalendar from '@/components/MealCalendar.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
 import { dateTile, dayName, firstName, isToday, money, time, weekdaysLabel } from '@/utils/format'
-import { BOOKING_WINDOW_DAYS, flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
+import { flattenMenu, isoWeekday, servedOn } from '@/utils/meals'
 import { bigScreen, desktop } from '@/utils/viewport'
 
 /**
@@ -42,7 +43,7 @@ function mealName(order) {
 async function load() {
   status.value = 'loading'
   try {
-    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? BOOKING_WINDOW_DAYS : undefined), fetchPreOrderMenu()])
+    const [s, sch, menu] = await Promise.all([fetchStudent(id), fetchPreOrders(id), fetchPreOrderMenu()])
     ;[student.value, schedule.value, meals.value] = [s, sch, flattenMenu(menu)]
     refreshChild(s)
     status.value = 'ready'
@@ -75,7 +76,7 @@ async function confirmCancel() {
   cancelError.value = ''
   try {
     await (coveredByWeekly ? skipDayPreOrder(id, day.date) : clearDayPreOrder(id, day.date))
-    const [s, sch] = await Promise.all([fetchStudent(id), fetchPreOrders(id, bigScreen.value ? BOOKING_WINDOW_DAYS : undefined)])
+    const [s, sch] = await Promise.all([fetchStudent(id), fetchPreOrders(id)])
     ;[student.value, schedule.value] = [s, sch]
     refreshChild(s)
     cancelling.value = null
@@ -121,17 +122,15 @@ function dayCard(day) {
   if (!served) return { meal: 'No meal served', note: 'Nothing on the menu', kind: 'empty' }
   return { meal: 'Not ordered', note: open ? 'Ordering open' : 'Ordering closed', kind: 'empty', action: open && 'Order a meal' }
 }
-const board = computed(() => (schedule.value?.days || []).map((day) => ({ day, card: dayCard(day) })))
-
-/** A window dragged wider needs the rest of the days the calendar shows. */
-watch(bigScreen, async (isBig) => {
-  if (!isBig || status.value !== 'ready') return
-  try {
-    schedule.value = await fetchPreOrders(id, BOOKING_WINDOW_DAYS)
-  } catch {
-    // The days already on screen stay; the calendar just ends sooner.
-  }
-})
+/** The phone list and the big-screen calendar both show the coming week only: only those days can be ordered from here. */
+const LIST_DAYS = 7
+const listEnd = (() => {
+  const end = new Date()
+  end.setDate(end.getDate() + LIST_DAYS)
+  return `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`
+})()
+const listDays = computed(() => (schedule.value?.days || []).filter((day) => day.date < listEnd))
+const board = computed(() => listDays.value.map((day) => ({ day, card: dayCard(day) })))
 
 onMounted(load)
 </script>
@@ -154,6 +153,7 @@ onMounted(load)
   </main>
 
   <main v-else>
+    <ChildSwitcher label="Ordering for" :current="id" />
     <div class="pp-largetitle">
       <h1>Canteen meals</h1>
       <p>Order and pay for {{ first }}'s meals ahead. A paid order can be cancelled until that day's orders close, and the money goes back on the card.</p>
@@ -248,7 +248,7 @@ onMounted(load)
         <div class="pp-group__body">
           <component
             :is="day.locked ? 'div' : 'RouterLink'"
-            v-for="day in schedule.days"
+            v-for="day in listDays"
             :key="day.date"
             class="pp-row pp-day-row"
             :to="day.locked ? undefined : { name: 'pre-order-day', params: { id, date: day.date } }"

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Student Card Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400..800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<style>
+/* Parent-portal tokens (other_portals/parent_portal/src/assets/app.css) */
+:root{
+  --accent:#B94421;
+  --bg:#F3F2EC; --surface:#FFFFFF; --ink:#2E392D; --ink-2:#666C60; --ink-3:#A7A99D; --line:#E9E4D7;
+  --amber:#FFE2AE; --neg:#A33A2B;
+  --accent-hi:color-mix(in oklab,var(--accent),white 24%);
+  --accent-lo:color-mix(in oklab,var(--accent),black 42%);
+  --accent-soft:color-mix(in oklab,var(--accent) 11%,var(--surface));
+  --card-face:linear-gradient(152deg,var(--accent-hi) 0%,var(--accent) 46%,var(--accent-lo) 100%);
+  --paper:#FFFDF6; --rule:color-mix(in oklab,var(--accent) 10%,transparent);
+  --font:"Manrope",system-ui,sans-serif; --mono:"DM Mono",ui-monospace,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#171A15; --surface:#22261F; --ink:#ECEDE6; --ink-2:#A9AEA2; --ink-3:#6E7368; --line:#343A30;
+  --paper:#26291F; --rule:color-mix(in oklab,var(--accent) 22%,transparent);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); -webkit-font-smoothing:antialiased}
+.bar{position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 16px; background:color-mix(in oklab,var(--bg),transparent 10%); backdrop-filter:blur(14px); border-bottom:1px solid var(--line)}
+.bar b{margin-right:auto; font-size:15px}
+.bar button{min-height:36px; padding:0 14px; border:0; border-radius:10px; background:var(--surface); box-shadow:inset 0 0 0 1px var(--line); color:var(--ink); font:600 13.5px var(--font); cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent); box-shadow:none; color:#fff}
+.note{max-width:900px; margin:16px auto 0; padding:0 16px; color:var(--ink-2); font-size:14px; line-height:1.5}
+.note b{color:var(--ink)}
+.stage{display:flex; flex-wrap:wrap; justify-content:center; gap:28px; padding:20px 16px 60px}
+.phone{width:390px; max-width:100%; padding:22px 18px 30px; border-radius:30px; background:var(--bg); box-shadow:0 0 0 1px var(--line),0 30px 60px -40px rgba(0,0,0,.5)}
+.phone h1{margin:0; font-size:30px; letter-spacing:-.02em}
+.phone p{margin:4px 0 18px; color:var(--ink-2); font-size:15px}
+.caption{margin:0 0 10px; color:var(--ink-3); font:500 11px var(--mono); letter-spacing:.14em; text-transform:uppercase}
+.stack .sc + .sc{margin-top:-100px}
+.single{margin-bottom:26px}
+
+/* ===== Shared card skeleton ===== */
+.sc{position:relative; isolation:isolate; display:block; width:100%; aspect-ratio:1.586/1; overflow:hidden; border-radius:20px; color:inherit; text-decoration:none; transition:transform .3s cubic-bezier(.2,.9,.25,1)}
+.sc:hover{transform:translateY(-6px)}
+.logo{display:inline-flex; align-items:baseline; gap:3px; padding:3px 7px; border-radius:6px; background:#fff; color:#3B3B3B; font:800 11px/1 var(--font); letter-spacing:-.02em}
+.logo i{font-style:normal; color:#5AA6C9; font-weight:700; font-size:9px; letter-spacing:.08em}
+.photo{position:relative; display:grid; place-items:center; flex:none; overflow:hidden; background:#F5D987; color:#574721; font-weight:800}
+.photo img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.status{display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:12px; font-weight:700}
+.status::before{content:""; width:7px; height:7px; border-radius:50%; background:#3FD07F; box-shadow:0 0 0 3px rgba(63,208,127,.22)}
+.name{display:block; overflow:hidden; font-weight:800; letter-spacing:-.01em; white-space:nowrap; text-overflow:ellipsis}
+.num{font-variant-numeric:tabular-nums}
+.barcode{display:block; background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 3px,currentColor 3px 4px,transparent 4px 7px,currentColor 7px 10px,transparent 10px 11px,currentColor 11px 12px,transparent 12px 15px)}
+.sc .d{display:none}
+
+/* ===== A · Campus ID: white ID with a school band ===== */
+.dir-a .sc{background:var(--surface); box-shadow:0 0 0 1px var(--line),0 -8px 20px -12px rgba(0,0,0,.22),0 16px 30px -20px rgba(0,0,0,.45)}
+.dir-a .sc .d-a{display:flex}
+.dir-a .a-head{align-items:center; gap:10px; height:46px; padding:0 16px; background:var(--card-face); color:#fff}
+.dir-a .a-head .kind{font:500 10.5px var(--mono); letter-spacing:.2em; text-transform:uppercase; opacity:.9}
+.dir-a .a-head .status{margin-left:auto; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,.2)}
+.dir-a .a-body{gap:14px; padding:14px 16px 0}
+.dir-a .a-body .photo{width:66px; height:82px; border-radius:10px; font-size:22px; box-shadow:0 0 0 3px var(--surface),0 0 0 4px var(--line),0 8px 16px -10px rgba(0,0,0,.5)}
+.dir-a .a-id{display:flex; flex-direction:column; min-width:0; flex:1}
+.dir-a .a-id .name{font-size:18px}
+.dir-a .a-id .cls{margin-top:2px; color:var(--ink-2); font-size:13.5px; font-weight:600}
+.dir-a .a-id .no{margin-top:8px; color:var(--ink-3); font:500 11px var(--mono); letter-spacing:.08em}
+.dir-a .a-bal{text-align:right; white-space:nowrap}
+.dir-a .a-bal small{display:block; color:var(--ink-3); font:500 9.5px var(--mono); letter-spacing:.16em; text-transform:uppercase}
+.dir-a .a-bal b{display:block; margin-top:4px; color:var(--accent); font-size:19px; font-weight:800}
+.dir-a .a-foot{position:absolute; left:16px; right:16px; bottom:14px; align-items:center; gap:12px; color:var(--ink)}
+.dir-a .a-foot .barcode{width:120px; height:24px; opacity:.85}
+.dir-a .a-foot span{margin-left:auto; color:var(--ink-3); font:500 10.5px var(--mono); letter-spacing:.14em}
+.dir-a .sc::after{content:""; position:absolute; left:0; right:0; bottom:0; height:5px; background:var(--card-face)}
+
+/* ===== B · Lanyard: the school colour with a punched strap slot ===== */
+.dir-b .sc{background:var(--card-face); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 -8px 20px -10px rgba(38,49,34,.28),0 16px 30px -20px rgba(38,49,34,.5)}
+.dir-b .sc::before{content:""; position:absolute; top:12px; left:50%; width:52px; height:9px; margin-left:-26px; border-radius:99px; background:var(--bg); box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
+.dir-b .sc::after{content:""; position:absolute; inset:0; z-index:-1; background:radial-gradient(90% 70% at 0% 0%,rgba(255,255,255,.2),transparent 60%)}
+.dir-b .sc .d-b{display:flex}
+.dir-b .b-top{justify-content:space-between; align-items:center; padding:14px 16px 0}
+.dir-b .b-top .status{padding:5px 10px; border-radius:99px; background:rgba(255,255,255,.2)}
+.dir-b .b-body{align-items:center; gap:14px; padding:16px 16px 0}
+.dir-b .b-body .photo{width:64px; height:64px; border-radius:50%; font-size:22px; box-shadow:0 0 0 3px #fff,0 10px 20px -10px rgba(0,0,0,.6)}
+.dir-b .b-id{min-width:0; flex:1}
+.dir-b .b-id .name{font-size:19px}
+.dir-b .chips{display:flex; gap:6px; margin-top:6px}
+.dir-b .chips span{padding:3px 8px; border-radius:99px; background:rgba(255,255,255,.18); font-size:12px; font-weight:700}
+.dir-b .b-bal{padding:8px 12px; border-radius:14px; background:rgba(255,255,255,.95); color:var(--ink); text-align:right; white-space:nowrap}
+.dir-b .b-bal small{display:block; color:var(--ink-2); font:500 9px var(--mono); letter-spacing:.16em; text-transform:uppercase}
+.dir-b .b-bal b{display:block; margin-top:2px; color:var(--accent); font-size:17px; font-weight:800}
+.dir-b .b-foot{position:absolute; left:0; right:0; bottom:0; align-items:center; gap:10px; height:36px; padding:0 16px; background:rgba(0,0,0,.18); font:500 10.5px var(--mono); letter-spacing:.2em; text-transform:uppercase}
+.dir-b .b-foot span:last-child{margin-left:auto; opacity:.75}
+
+/* ===== C · Exercise book: ruled paper, spine, polaroid ===== */
+.dir-c .sc{background:repeating-linear-gradient(180deg,transparent 0 23px,var(--rule) 23px 24px),var(--paper); box-shadow:0 0 0 1px var(--line),0 -8px 20px -12px rgba(0,0,0,.2),0 16px 30px -20px rgba(0,0,0,.45)}
+.dir-c .sc::before{content:""; position:absolute; top:0; bottom:0; left:0; width:18px; background:var(--card-face)}
+.dir-c .sc::after{content:""; position:absolute; top:10px; bottom:10px; left:8px; border-left:2px dashed rgba(255,255,255,.5)}
+.dir-c .sc .d-c{display:flex}
+.dir-c .c-top{align-items:center; gap:10px; padding:14px 16px 0 34px}
+.dir-c .c-top .kind{color:var(--accent); font:500 10.5px var(--mono); letter-spacing:.2em; text-transform:uppercase}
+.dir-c .c-top .status{margin-left:auto; color:var(--ink-2)}
+.dir-c .c-body{gap:16px; padding:14px 16px 0 34px}
+.dir-c .polaroid{flex:none; padding:4px 4px 14px; background:#fff; box-shadow:0 8px 16px -8px rgba(0,0,0,.4); transform:rotate(-4deg)}
+.dir-c .polaroid .photo{width:60px; height:62px; font-size:21px}
+.dir-c .c-id{min-width:0; flex:1}
+.dir-c .c-id .name{font-size:19px}
+.dir-c .stamp{display:inline-block; margin-top:7px; padding:2px 8px; border:2px solid var(--accent); border-radius:6px; color:var(--accent); font:500 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; transform:rotate(-2deg)}
+.dir-c .c-bal{text-align:right; white-space:nowrap}
+.dir-c .c-bal small{display:block; color:var(--ink-3); font:500 9.5px var(--mono); letter-spacing:.16em; text-transform:uppercase}
+.dir-c .c-bal b{display:inline-block; margin-top:4px; padding:0 4px; background:linear-gradient(transparent 55%,var(--amber) 55%); font-size:19px; font-weight:800}
+:root[data-theme="dark"] .dir-c .c-bal b{background:linear-gradient(transparent 55%,color-mix(in oklab,var(--accent) 45%,transparent) 55%)}
+.dir-c .c-foot{position:absolute; left:34px; right:16px; bottom:14px; align-items:center; gap:10px; color:var(--ink-2); font:500 10.5px var(--mono); letter-spacing:.14em; text-transform:uppercase}
+.dir-c .c-foot span:last-child{margin-left:auto}
+
+/* ===== D · Official ID: guilloche face, portrait, labelled fields ===== */
+.dir-d .sc{background:repeating-radial-gradient(circle at 110% -20%,rgba(255,255,255,.06) 0 1px,transparent 1.6px 8px),var(--card-face); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 -8px 20px -10px rgba(38,49,34,.28),0 16px 30px -20px rgba(38,49,34,.5)}
+.dir-d .sc .d-d{display:flex}
+.dir-d .d-top{align-items:center; gap:10px; padding:14px 16px 0}
+.dir-d .d-top .kind{font:500 9.5px var(--mono); letter-spacing:.2em; text-transform:uppercase; opacity:.85}
+.dir-d .d-top .status{margin-left:auto; padding:5px 10px; border-radius:99px; background:rgba(255,255,255,.2)}
+.dir-d .d-body{gap:14px; padding:14px 16px 0}
+.dir-d .d-body .photo{width:68px; height:86px; border-radius:9px; font-size:22px; box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.dir-d .fields{display:grid; grid-template-columns:1fr auto; gap:8px 14px; min-width:0; flex:1; align-content:start}
+.dir-d .f small{display:block; font:500 8.5px var(--mono); letter-spacing:.18em; text-transform:uppercase; opacity:.7}
+.dir-d .f b{display:block; margin-top:2px; overflow:hidden; font-size:14px; font-weight:700; white-space:nowrap; text-overflow:ellipsis}
+.dir-d .f--name{grid-column:1 / -1}
+.dir-d .f--name b{font-size:18px; font-weight:800}
+.dir-d .f--bal b{font-size:18px; font-weight:800}
+.dir-d .seal{position:absolute; right:16px; bottom:40px; width:36px; height:36px; border-radius:50%; background:conic-gradient(from 30deg,#ffd6a5,#caffbf,#9bf6ff,#bdb2ff,#ffc6ff,#ffd6a5); opacity:.55; mix-blend-mode:screen}
+.dir-d .mrz{position:absolute; left:0; right:0; bottom:0; padding:7px 16px 9px; background:rgba(0,0,0,.2); font:500 10.5px var(--mono); letter-spacing:.16em; white-space:nowrap; overflow:hidden; opacity:.85}
+
+.blocked.sc{filter:grayscale(1) contrast(.9)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Student card · pick a direction</b>
+  <button type="button" data-dir="a" aria-pressed="true">A · Campus ID</button>
+  <button type="button" data-dir="b" aria-pressed="false">B · Lanyard</button>
+  <button type="button" data-dir="c" aria-pressed="false">C · Exercise book</button>
+  <button type="button" data-dir="d" aria-pressed="false">D · Official ID</button>
+  <button type="button" id="theme">Dark</button>
+</div>
+<p class="note" id="note"></p>
+
+<div class="stage dir-a" id="stage">
+  <div class="phone">
+    <h1>Hello, Abdullah</h1>
+    <p>Your child's card. Click it to open.</p>
+    <div class="caption">One child</div>
+    <div class="single" id="one"></div>
+    <div class="caption">Two children · the home stack</div>
+    <div class="stack" id="two"></div>
+  </div>
+</div>
+
+<template id="card">
+  <a class="sc" href="#">
+    <!-- A -->
+    <div class="d d-a a-head"><span class="logo">newrest<i>GULF</i></span><span class="kind">Student ID</span><span class="status">Card active</span></div>
+    <div class="d d-a a-body"><span class="photo" data-photo></span><span class="a-id"><b class="name" data-name></b><span class="cls" data-cls></span><span class="no" data-no></span></span><span class="a-bal"><small>Balance</small><b class="num" data-bal></b></span></div>
+    <div class="d d-a a-foot"><i class="barcode"></i><span>2026 – 27</span></div>
+    <!-- B -->
+    <div class="d d-b b-top"><span class="logo">newrest<i>GULF</i></span><span class="status">Card active</span></div>
+    <div class="d d-b b-body"><span class="photo" data-photo></span><span class="b-id"><b class="name" data-name></b><span class="chips"><span data-cls></span><span data-no></span></span></span><span class="b-bal"><small>Balance</small><b class="num" data-bal></b></span></div>
+    <div class="d d-b b-foot"><span>Student</span><span>2026 – 27</span></div>
+    <!-- C -->
+    <div class="d d-c c-top"><span class="logo">newrest<i>GULF</i></span><span class="kind">Student card</span><span class="status">Active</span></div>
+    <div class="d d-c c-body"><span class="polaroid"><span class="photo" data-photo></span></span><span class="c-id"><b class="name" data-name></b><span class="stamp" data-cls></span></span><span class="c-bal"><small>Balance</small><b class="num" data-bal></b></span></div>
+    <div class="d d-c c-foot"><span data-no></span><span>2026 – 27</span></div>
+    <!-- D -->
+    <div class="d d-d d-top"><span class="logo">newrest<i>GULF</i></span><span class="kind">Student identity card</span><span class="status">Active</span></div>
+    <div class="d d-d d-body"><span class="photo" data-photo></span><span class="fields"><span class="f f--name"><small>Name</small><b data-name></b></span><span class="f"><small>Grade</small><b data-cls></b></span><span class="f f--bal"><small>Balance</small><b class="num" data-bal></b></span><span class="f"><small>Student no</small><b data-no></b></span></span></div>
+    <i class="d d-d seal"></i>
+    <div class="d d-d mrz" data-mrz></div>
+  </a>
+</template>
+
+<script>
+const PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100"><rect width="80" height="100" fill="#D9E4EC"/><circle cx="40" cy="40" r="18" fill="#C68B62"/><path d="M22 36c0-14 9-22 18-22s18 8 18 22c-4-8-10-10-18-10s-14 2-18 10z" fill="#2B2420"/><path d="M8 100c2-24 16-34 32-34s30 10 32 34z" fill="#2F5D8C"/><path d="M33 66l7 10 7-10z" fill="#fff"/></svg>')
+const KIDS = [
+  { name: 'Ahmed', cls: 'Grade 4 · A', no: 'STU-0412', bal: 'QAR 91.00', photo: PHOTO },
+  { name: 'Mariam', cls: 'Grade 1 · B', no: 'STU-0388', bal: 'QAR 42.50', photo: null },
+]
+const NOTES = {
+  a: '<b>A · Campus ID</b> — a white school ID: the school colour is a band across the top, a framed portrait photo, name, grade and student number, the balance in the school colour, and a barcode with the school year. Reads as "ID card", not "bank card".',
+  b: '<b>B · Lanyard</b> — keeps today\'s brick face so the brand stays loud, but punches a strap slot at the top, uses a ringed round photo, grade + number chips, a white balance pill and a "STUDENT · 2026–27" band.',
+  c: '<b>C · Exercise book</b> — ruled paper with a stitched school-colour spine, a tilted polaroid photo, the grade as a rubber stamp and the balance underlined with a highlighter. The most playful, made for younger children.',
+  d: '<b>D · Official ID</b> — a government-style identity card: guilloche pattern, portrait photo, labelled NAME / GRADE / BALANCE / STUDENT NO fields, a holographic seal and a machine-readable line along the bottom.',
+}
+function card(kid) {
+  const node = document.getElementById('card').content.firstElementChild.cloneNode(true)
+  node.querySelectorAll('[data-name]').forEach((el) => (el.textContent = kid.name))
+  node.querySelectorAll('[data-cls]').forEach((el) => (el.textContent = kid.cls))
+  node.querySelectorAll('[data-no]').forEach((el) => (el.textContent = kid.no))
+  node.querySelectorAll('[data-bal]').forEach((el) => (el.textContent = kid.bal))
+  node.querySelectorAll('[data-photo]').forEach((el) => (el.innerHTML = kid.photo ? `<img src="${kid.photo}" alt="">` : kid.name[0]))
+  node.querySelectorAll('[data-mrz]').forEach((el) => (el.textContent = `STU<<${kid.name.toUpperCase()}<<${kid.no.replace('STU-', '')}<<2026<<27<<<<<<<<<<`))
+  return node
+}
+document.getElementById('one').append(card(KIDS[0]))
+KIDS.forEach((kid) => document.getElementById('two').append(card(kid)))
+
+const stage = document.getElementById('stage')
+const note = document.getElementById('note')
+function pick(dir) {
+  stage.className = `stage dir-${dir}`
+  note.innerHTML = NOTES[dir]
+  document.querySelectorAll('[data-dir]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dir === dir)))
+}
+document.querySelectorAll('[data-dir]').forEach((b) => b.addEventListener('click', () => pick(b.dataset.dir)))
+pick('a')
+
+const theme = document.getElementById('theme')
+theme.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme !== 'dark'
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  theme.textContent = dark ? 'Light' : 'Dark'
+})
+</script>
+</body>
+</html>

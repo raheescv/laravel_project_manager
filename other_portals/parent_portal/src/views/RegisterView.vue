@@ -13,7 +13,7 @@ import { session } from '@/session'
  * child. Nothing here signs anyone in. Every child waits for the office to
  * approve them, and the parent's portal link comes after that.
  */
-const PARENT_FIELDS = ['name', 'qid', 'phone', 'email']
+const PARENT_FIELDS = ['first_name', 'last_name', 'qid', 'phone', 'email']
 const STUDENT_FIELDS = ['name', 'qid', 'class', 'div', 'reg']
 const ORDINALS = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth']
 
@@ -30,7 +30,9 @@ const schoolName = computed(() => {
   const tile = options.value?.schools.find((school) => school.value === chosenSchool.value)
   return tile?.name || tile?.place || ''
 })
-const parent = reactive({ name: '', qid: '', phone: '', email: '' })
+const parent = reactive({ first_name: '', last_name: '', qid: '', phone: '', email: '' })
+/** The API keeps one name: first and last joined. */
+const parentName = computed(() => properName(`${parent.first_name} ${parent.last_name}`))
 const students = ref([blankStudent()])
 const open = ref(0)
 const removed = ref(null)
@@ -63,7 +65,7 @@ function properName(value) {
   return name.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (match, gap, letter) => gap + letter.toUpperCase())
 }
 
-const firstName = computed(() => properName(parent.name).split(' ')[0])
+const firstName = computed(() => properName(parent.first_name).split(' ')[0])
 /** The first page carries the big title, so the header leaves out its own label there. */
 const firstPage = computed(() => step.value === 1 && !done.value)
 
@@ -100,7 +102,8 @@ function problem(path) {
   const [group, key, field] = path.split('.')
 
   if (group === 'parent') {
-    if (key === 'name') return value.length >= 2 ? '' : 'Enter your full name.'
+    if (key === 'first_name') return value.length >= 2 ? '' : 'Enter your first name.'
+    if (key === 'last_name') return value ? '' : 'Enter your last name.'
     if (key === 'qid') return checkQid(value)
     if (key === 'phone') return /^\d{8}$/.test(value) ? '' : 'Enter your 8-digit mobile number.'
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? '' : 'Enter a full email, like name@example.com.'
@@ -258,7 +261,7 @@ async function send() {
   try {
     result.value = await submitRegistration({
       school: chosenSchool.value,
-      parent: { ...parent },
+      parent: { name: parentName.value, qid: parent.qid, phone: parent.phone, email: parent.email },
       students: students.value,
       contact_ref: botField.value,
     })
@@ -279,7 +282,7 @@ async function send() {
 function applyServerErrors(errors) {
   const mapped = {}
   Object.entries(errors).forEach(([key, messages]) => {
-    mapped[key.replace(/^students\./, 's.')] = messages[0]
+    mapped[key.replace(/^students\./, 's.').replace(/^parent\.name$/, 'parent.first_name')] = messages[0]
   })
 
   if (mapped.school) {
@@ -417,10 +420,11 @@ function enterMovesOn(event) {
               </template>
 
               <template v-else-if="step === 2">
-                <h1>Your details</h1>
+                <h1>Parent details</h1>
                 <p class="srx-sub">Please fill in every box. Your mobile number will be your sign-in for the parent portal.</p>
                 <div class="srx-fields srx-fields--two">
-                  <RegisterField id="p_name" path="parent.name" label="Full name" wide :value="parent.name" :error="errorFor('parent.name')" :ok="isOk('parent.name')" autocomplete="name" enterkeyhint="next" maxlength="100" placeholder="As on your QID" @edit="edit('parent.name', $event)" @leave="leave('parent.name')" />
+                  <RegisterField id="p_first_name" path="parent.first_name" label="First name" :value="parent.first_name" :error="errorFor('parent.first_name')" :ok="isOk('parent.first_name')" autocomplete="given-name" enterkeyhint="next" maxlength="50" placeholder="As on your QID" @edit="edit('parent.first_name', $event)" @leave="leave('parent.first_name')" />
+                  <RegisterField id="p_last_name" path="parent.last_name" label="Last name" :value="parent.last_name" :error="errorFor('parent.last_name')" :ok="isOk('parent.last_name')" autocomplete="family-name" enterkeyhint="next" maxlength="49" placeholder="As on your QID" @edit="edit('parent.last_name', $event)" @leave="leave('parent.last_name')" />
                   <RegisterField id="p_qid" path="parent.qid" label="QID number" dir="ltr" :value="parent.qid" :error="errorFor('parent.qid')" :ok="isOk('parent.qid')" :count="countFor('parent.qid')" inputmode="numeric" autocomplete="off" enterkeyhint="next" maxlength="20" placeholder="11 digits" @edit="edit('parent.qid', $event)" @leave="leave('parent.qid')" />
                   <RegisterField id="p_phone" path="parent.phone" label="Mobile number" prefix="+974" :value="parent.phone" :error="errorFor('parent.phone')" :ok="isOk('parent.phone')" type="tel" inputmode="numeric" autocomplete="tel-national" enterkeyhint="next" maxlength="16" placeholder="5512 3456" @edit="edit('parent.phone', $event)" @leave="leave('parent.phone')" />
                   <RegisterField id="p_email" path="parent.email" label="Email" dir="ltr" wide help="We'll send your portal sign-in link here." :value="parent.email" :error="errorFor('parent.email')" :ok="isOk('parent.email')" type="email" inputmode="email" autocomplete="email" autocapitalize="none" enterkeyhint="done" maxlength="150" placeholder="name@example.com" @edit="edit('parent.email', $event)" @leave="leave('parent.email')" />
@@ -432,7 +436,7 @@ function enterMovesOn(event) {
                 <p class="srx-sub">Add each child who goes to this school.</p>
                 <div class="srx-sum">
                   <button type="button" @click="goTo(1)"><i class="fa fa-map-marker"></i><span>{{ schoolName }}</span><em>Change</em></button>
-                  <button type="button" @click="goTo(2)"><i class="fa fa-user"></i><span>{{ properName(parent.name) }}</span><em>Change</em></button>
+                  <button type="button" @click="goTo(2)"><i class="fa fa-user"></i><span>{{ parentName }}</span><em>Change</em></button>
                 </div>
 
                 <div class="srx-kids">

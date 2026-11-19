@@ -19,7 +19,9 @@ use Illuminate\Support\Facades\DB;
  * A day order is paid now: `pay: card` (default) takes it from the student card
  * as a completed sale on that day (ChargeAction), all or nothing, so a short card
  * saves nothing; `pay: bank` saves it waiting for the bank card top-up the portal
- * opens next, which pays it the moment it lands (ChargeDueAction::forStudent).
+ * opens next, which pays it the moment it lands (ChargeDueAction::forStudent);
+ * `pay: later` only saves the cart, to be paid by a later save or from the card
+ * when the day's orders close (ChargeDueAction::forDate).
  * Changing a paid day refunds the old sale to the card first; saving it unchanged
  * keeps the sale. A weekly order is paid day by day when each day's orders close.
  *
@@ -80,7 +82,7 @@ class SaveAction
                 self::syncItems($order, $items);
 
                 if ($type === StudentPreOrder::TYPE_DAY) {
-                    self::settleDay($order, $unchanged, ($data['pay'] ?? 'card') === 'bank');
+                    self::settleDay($order, $unchanged, in_array($data['pay'] ?? 'card', ['bank', 'later'], true));
                 }
 
                 return $order;
@@ -91,6 +93,7 @@ class SaveAction
             $return['message'] = match (true) {
                 $type === StudentPreOrder::TYPE_WEEKLY => 'Weekly order saved',
                 $paid => 'Pre-order paid',
+                ($data['pay'] ?? null) === 'later' => 'Pre-order saved. It is not paid yet.',
                 default => 'Pre-order saved. Pay by bank card to confirm it.',
             };
             $return['data'] = $order->load('items')->setAttribute('paid', $paid);
@@ -186,10 +189,11 @@ class SaveAction
 
     /**
      * Pay the day: an unchanged, paid order keeps its sale; otherwise a sale already
-     * taken is refunded and, unless the parent is paying by bank card next, the new
-     * order is taken from the card. Throws when the card cannot cover it.
+     * taken is refunded and, unless the parent pays later (bank card next, or just
+     * saving the cart), the new order is taken from the card. Throws when the card
+     * cannot cover it.
      */
-    private static function settleDay(StudentPreOrder $order, bool $unchanged, bool $byBank): void
+    private static function settleDay(StudentPreOrder $order, bool $unchanged, bool $payLater): void
     {
         $previous = StudentPreOrderCollection::where('student_pre_order_id', $order->id)->whereDate('date', $order->date)->first();
         if ($previous && $unchanged) {
@@ -201,7 +205,7 @@ class SaveAction
                 throw new Exception($response['message'], 1);
             }
         }
-        if ($byBank) {
+        if ($payLater) {
             return;
         }
 

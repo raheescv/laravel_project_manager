@@ -16,10 +16,12 @@ import {
 } from '@/api/parent'
 import AppBar from '@/components/AppBar.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
+import ChildSwitcher from '@/components/ChildSwitcher.vue'
 import DayMenu from '@/components/DayMenu.vue'
 import LoadError from '@/components/LoadError.vue'
 import MealCart from '@/components/MealCart.vue'
 import MealOption from '@/components/MealOption.vue'
+import StudentAvatar from '@/components/StudentAvatar.vue'
 import { refreshChild } from '@/children'
 import { toast } from '@/toast'
 import { date as longDate, dayName, firstName, isToday, money, shortDate, sortWeekdays, time, weekdayName, weekdaysLabel } from '@/utils/format'
@@ -50,9 +52,9 @@ const loadError = ref('')
 const MEAL_VIEW_KEY = 'pp.mealView'
 function savedMealView() {
   try {
-    return localStorage.getItem(MEAL_VIEW_KEY) === 'list' ? 'list' : 'grid'
+    return localStorage.getItem(MEAL_VIEW_KEY) === 'grid' ? 'grid' : 'list'
   } catch {
-    return 'grid'
+    return 'list'
   }
 }
 
@@ -120,6 +122,13 @@ const closesAt = computed(() => {
   return sameDay ? time(day.value.deadline) : `${dayName(deadline)} ${time(day.value.deadline)}`
 })
 const servedOnSelected = (d) => selectedMeals.value.every((m) => servedOn(m, d))
+/** A saved day order nobody has paid for yet: kept by "Save" or a bank card payment that never arrived. */
+const unpaidSaved = computed(() => !weekly && day.value?.source === 'day' && !paid.value)
+// "Save" keeps the cart without paying. Not offered on a paid day, where saving a change pays the new total.
+const canSaveOnly = computed(() => !weekly && !paid.value && selectedMeals.value.length > 0)
+const orderKey = (lines, text) => JSON.stringify([lines.map((line) => [line.product_id, line.quantity]).sort((a, b) => a[0] - b[0]), (text || '').trim()])
+const savedKey = computed(() => (unpaidSaved.value ? orderKey(current.value?.items || [], current.value?.note) : ''))
+const unsaved = computed(() => orderKey(selectedMeals.value.map((m) => ({ product_id: m.id, quantity: quantities.value[m.id] })), note.value) !== savedKey.value)
 
 const title = computed(() => (weekly ? 'Every week' : isToday(date) ? 'Today' : shortDate(date)))
 const saveLabel = computed(() => {
@@ -198,16 +207,29 @@ async function run(kind, request, message, after = null) {
   }
 }
 
-function save() {
+function orderPayload() {
   if (!selectedMeals.value.length) {
     error.value = 'Choose at least one item.'
-    return
+    return null
   }
   if (weekly && !days.value.length) {
     error.value = 'Pick at least one day.'
-    return
+    return null
   }
-  const payload = { items: selectedMeals.value.map((m) => ({ product_id: m.id, quantity: quantities.value[m.id] })), note: note.value.trim() || null }
+  return { items: selectedMeals.value.map((m) => ({ product_id: m.id, quantity: quantities.value[m.id] })), note: note.value.trim() || null }
+}
+
+/** Keep the cart as it is, unpaid, and stay here to pay it now or later. */
+function saveOnly() {
+  const payload = orderPayload()
+  if (!payload) return
+  const refresh = () => fetchPreOrders(id, BOOKING_WINDOW_DAYS).then((sch) => (schedule.value = sch)).catch(() => {})
+  run('save-only', () => saveDayPreOrder(id, date, { ...payload, pay: 'later' }), 'Order saved · not paid yet', refresh)
+}
+
+function save() {
+  const payload = orderPayload()
+  if (!payload) return
   // Bank card: the order is kept first, then the top-up page opens with its amount, so
   // a payment the parent abandons never loses the order. Replace, so Back skips this page.
   const amount = bankAmount.value.toFixed(2)
@@ -249,6 +271,7 @@ onMounted(load)
 
   <template v-else>
     <main class="pp-order">
+      <ChildSwitcher label="Ordering for" :current="id" :unsaved="!weekly && selectedMeals.length > 0 && unsaved" />
       <div class="pp-largetitle">
         <h1>{{ weekly ? 'Every week' : dayName(date) }}</h1>
         <p v-if="weekly">Pick {{ first }}'s meals and the days. They're ordered automatically until you pause it.</p>
@@ -269,6 +292,13 @@ onMounted(load)
         <i class="fa fa-check-circle"></i>
         <span class="pp-alert__main">
           <span class="pp-alert__title">Paid · {{ money(current?.total || 0) }}</span>Changing the order before it closes puts this back on {{ first }}'s card and takes the new total. Removing it gives the money back.
+        </span>
+      </div>
+
+      <div v-if="unpaidSaved" class="pp-alert pp-alert--warn">
+        <i class="fa fa-clock-o"></i>
+        <span class="pp-alert__main">
+          <span class="pp-alert__title">Saved · not paid yet</span>Pay now to book it. If it is still unpaid when orders close {{ closesAt }}, it is taken from {{ first }}'s card, and not served if the card is short.
         </span>
       </div>
 
@@ -362,44 +392,6 @@ onMounted(load)
           </div>
         </section>
 
-        <section v-if="selectedMeals.length && !locked && !weekly" class="pp-group">
-          <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-credit-card"></i>Pay with</span></h2>
-          <div class="pp-tiles" role="radiogroup" aria-label="Pay with">
-            <button
-              class="pp-tile"
-              type="button"
-              role="radio"
-              :aria-checked="!payingByBank && cardCovers"
-              :disabled="!cardCovers"
-              :title="cardCovers ? undefined : 'Not enough on the card for this order'"
-              @click="payBy = 'card'"
-            >
-              <span class="pp-tile__icon"><i class="fa fa-graduation-cap"></i></span>
-              <span>
-                <span class="pp-tile__title">Student card</span>
-                <span class="pp-tile__sub">{{ cardCovers ? 'Paid now' : 'Not enough' }} · balance {{ money(student.balance) }}</span>
-              </span>
-              <span class="pp-tile__check" aria-hidden="true"><i class="fa fa-check"></i></span>
-            </button>
-            <button v-if="bankCardOffered" class="pp-tile" type="button" role="radio" :aria-checked="payingByBank" @click="payBy = 'bank'">
-              <span class="pp-tile__icon"><i class="fa fa-university"></i></span>
-              <span>
-                <span class="pp-tile__title">Bank card</span>
-                <span class="pp-tile__sub">Pay {{ money(bankAmount) }} now</span>
-              </span>
-              <span class="pp-tile__check" aria-hidden="true"><i class="fa fa-check"></i></span>
-            </button>
-          </div>
-          <p class="pp-group__foot">
-            <i class="fa fa-info-circle" aria-hidden="true"></i>
-            <template v-if="payingByBank">
-              After saving, you pay exactly {{ money(bankAmount) }} on the bank's secure page. The order is paid the moment the payment goes through.
-            </template>
-            <template v-else-if="cardCovers">{{ money(orderAmount) }} is taken from {{ first }}'s card now, and the order is booked.</template>
-            <template v-else>{{ first }}'s card has {{ money(student.balance) }}, which does not cover {{ money(orderAmount) }}. Please top up first.</template>
-          </p>
-        </section>
-
         <div v-if="weekly ? lowBalance : cannotPay" class="pp-alert pp-alert--warn">
           <i class="fa fa-exclamation-triangle"></i>
           <span class="pp-alert__main">
@@ -442,9 +434,40 @@ onMounted(load)
         <span>Grand total</span>
         <b>{{ money(weekly ? selectedTotal * days.length : selectedTotal) }}<small v-if="weekly"> /wk</small></b>
       </div>
-      <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !selectedMeals.length || cannotPay" @click="save">
-        <span v-if="busy === 'save'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save' ? 'Saving…' : weekly ? saveLabel : payingByBank ? 'Save and pay by bank card' : paid ? 'Save changes' : `Pay ${money(orderAmount)}` }}
-      </button>
+      <div v-if="!weekly && selectedMeals.length" class="pp-paywith" role="radiogroup" aria-label="Pay with">
+        <button
+          class="pp-paywith__opt"
+          type="button"
+          role="radio"
+          :aria-checked="!payingByBank && cardCovers"
+          :disabled="!cardCovers"
+          :title="cardCovers ? `Pay from ${first}'s card` : 'Not enough on the card for this order'"
+          @click="payBy = 'card'"
+        >
+          <StudentAvatar :name="student.name" :image="student.image_url" />
+          <span class="pp-paywith__text">
+            <b>{{ first }}'s card</b>
+            <small>{{ cardCovers ? money(student.balance) : `Short · ${money(student.balance)}` }}</small>
+          </span>
+          <i class="fa fa-check-circle pp-paywith__check" aria-hidden="true"></i>
+        </button>
+        <button v-if="bankCardOffered" class="pp-paywith__opt" type="button" role="radio" :aria-checked="payingByBank" title="Pay on the bank's secure page" @click="payBy = 'bank'">
+          <span class="pp-paywith__icon"><i class="fa fa-university" aria-hidden="true"></i></span>
+          <span class="pp-paywith__text">
+            <b>Bank card</b>
+            <small>Secure bank page</small>
+          </span>
+          <i class="fa fa-check-circle pp-paywith__check" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="pp-order-actions">
+        <button v-if="canSaveOnly" class="pp-btn pp-btn--tinted pp-order-actions__save" :class="{ 'is-busy': busy === 'save-only' }" type="button" :disabled="Boolean(busy) || !unsaved" :title="unsaved ? 'Save the order without paying' : 'No changes to save'" @click="saveOnly">
+          <span v-if="busy === 'save-only'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save-only' ? 'Saving…' : unsaved ? 'Save' : 'Saved' }}
+        </button>
+        <button class="pp-btn pp-btn--primary" :class="{ 'is-busy': busy === 'save' }" type="button" :disabled="Boolean(busy) || !selectedMeals.length || cannotPay" @click="save">
+          <span v-if="busy === 'save'" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span>{{ busy === 'save' ? 'Saving…' : weekly ? saveLabel : payingByBank ? 'Save and pay by bank card' : paid ? 'Save changes' : `Pay ${money(orderAmount)}` }}
+        </button>
+      </div>
     </footer>
 
     <BottomSheet :open="cartOpen" label="Your order" @close="cartOpen = false">

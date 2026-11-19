@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 import { dateTile, isToday, money } from '@/utils/format'
 
-/** The whole booking window as weeks, Sunday first: each school day opens its own order. */
+/** The coming week as Sunday-first weeks: each school day in it opens its own order; days past it show greyed out. */
 const props = defineProps({
   board: { type: Array, required: true },
   studentId: { type: Number, required: true },

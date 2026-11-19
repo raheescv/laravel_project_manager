@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Premium Student Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400..800&display=swap" rel="stylesheet" />
+<style>
+/* Parent-portal tokens (other_portals/parent_portal/src/assets/app.css) */
+:root{
+  --accent:#B94421;
+  --bg:#FFFCF5; --surface:#FFFFFF; --ink:#2E392D; --ink-2:#666C60; --ink-3:#A7A99D; --line:#E9E4D7;
+  --accent-hi:color-mix(in oklab,var(--accent),white 24%);
+  --accent-lo:color-mix(in oklab,var(--accent),black 42%);
+  --accent-soft:color-mix(in oklab,var(--accent) 11%,var(--surface));
+  --card-face:linear-gradient(152deg,var(--accent-hi) 0%,var(--accent) 46%,var(--accent-lo) 100%);
+  --ivory:#FBF6EA; --ivory-ink:#2E392D; --ivory-2:#7A7566; --ivory-line:#E7DCC4;
+  --font:"Manrope",system-ui,sans-serif; --mono:"DM Mono",ui-monospace,monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#141712; --surface:#20241D; --ink:#ECEDE6; --ink-2:#A9AEA2; --ink-3:#6E7368; --line:#323829;
+  --ivory:#26261F; --ivory-ink:#EFEADB; --ivory-2:#ABA591; --ivory-line:#3D3B30;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); -webkit-font-smoothing:antialiased}
+.bar{position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px 16px; background:color-mix(in oklab,var(--bg),transparent 10%); backdrop-filter:blur(14px); border-bottom:1px solid var(--line)}
+.bar b{margin-right:auto; font-size:15px}
+.bar button{min-height:36px; padding:0 14px; border:0; border-radius:10px; background:var(--surface); box-shadow:inset 0 0 0 1px var(--line); color:var(--ink); font:600 13.5px var(--font); cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--accent); box-shadow:none; color:#fff}
+.note{max-width:860px; margin:16px auto 0; padding:0 16px; color:var(--ink-2); font-size:14px; line-height:1.55}
+.note b{color:var(--ink)}
+.stage{display:flex; flex-wrap:wrap; justify-content:center; gap:28px; padding:20px 16px 60px}
+.phone{width:390px; max-width:100%; padding:22px 18px 30px; border-radius:30px; background:var(--bg); box-shadow:0 0 0 1px var(--line),0 30px 60px -40px rgba(0,0,0,.5)}
+.phone h1{margin:0; font-size:30px; letter-spacing:-.02em}
+.phone p{margin:4px 0 18px; color:var(--ink-2); font-size:15px}
+.caption{margin:0 0 10px; color:var(--ink-3); font:500 11px var(--mono); letter-spacing:.14em; text-transform:uppercase}
+.single{margin-bottom:26px}
+.s-overlap .sc + .sc{margin-top:-100px}
+.stackbar{display:flex; gap:6px; margin:0 0 12px; padding:3px; border-radius:11px; background:color-mix(in oklab,var(--ink) 7%,transparent)}
+.stackbar button{flex:1; min-height:32px; border:0; border-radius:8px; background:none; color:var(--ink-2); font:700 12.5px var(--font); cursor:pointer}
+.stackbar button[aria-pressed="true"]{background:var(--surface); color:var(--ink); box-shadow:0 2px 6px rgba(0,0,0,.12)}
+/* S1 · List: whole cards, one under another */
+.s-list{display:grid; gap:14px}
+/* S2 · Swipe: one card at a time, the next peeking */
+.s-swipe{display:flex; gap:12px; margin:0 -18px; padding:4px 18px 8px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none}
+.s-swipe::-webkit-scrollbar{display:none}
+.s-swipe .sc{flex:0 0 86%; scroll-snap-align:center}
+.dots{display:flex; justify-content:center; gap:6px; margin-top:6px}
+.dots i{width:6px; height:6px; border-radius:99px; background:var(--ink-3); opacity:.5; transition:width .2s,opacity .2s}
+.dots i.on{width:18px; background:var(--accent); opacity:1}
+/* S3 · Featured + strips: the first child full, the others as slim ID strips */
+.s-rows{display:grid; gap:10px}
+.strip{position:relative; display:grid; grid-template-columns:64px minmax(0,1fr) auto 18px; align-items:center; gap:0 14px; height:74px; overflow:hidden; border-radius:16px; background:var(--surface); color:var(--ink); text-decoration:none; box-shadow:0 0 0 1px var(--line),0 10px 22px -18px rgba(38,49,34,.5); transition:transform .2s}
+.strip:active{transform:scale(.985)}
+.strip .photo{align-self:stretch; height:100%; background:var(--card-face); color:#fff; font-size:24px}
+.strip::before{content:""; position:absolute; top:0; bottom:0; left:64px; width:3px; margin-left:-1.5px; z-index:2; background:linear-gradient(180deg,#F1D79A,#B8893A 50%,#F1D79A)}
+.strip .id b{font-size:16px; font-weight:800}
+.strip .id small{margin-top:2px; color:var(--ink-2); font-size:12.5px; font-weight:600}
+.strip .bal{text-align:right}
+.strip .bal small{color:var(--ink-3)}
+.strip .bal b{margin-top:4px; color:var(--accent); font-size:16px}
+.strip .chev{color:var(--ink-3); font-style:normal; font-size:20px}
+
+/* ===== Shared skeleton ===== */
+.sc{position:relative; isolation:isolate; display:grid; width:100%; aspect-ratio:1.586/1; overflow:hidden; border-radius:20px; color:inherit; text-decoration:none; transition:transform .35s cubic-bezier(.2,.9,.25,1)}
+.sc:hover{transform:translateY(-6px)}
+.top{display:flex; align-items:center; gap:10px; min-width:0}
+.logo{display:inline-flex; align-items:baseline; gap:3px; flex:none; padding:4px 7px; border-radius:7px; background:#fff; color:#3B3B3B; font:800 11px/1 var(--font); letter-spacing:-.02em; box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.logo i{font-style:normal; color:#5AA6C9; font-weight:700; font-size:9px; letter-spacing:.08em}
+.kind{overflow:hidden; font:500 10px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; white-space:nowrap}
+.status{display:inline-flex; align-items:center; gap:6px; flex:none; margin-left:auto; height:24px; padding:0 9px; border-radius:99px; font-size:11.5px; font-weight:700; white-space:nowrap}
+.status::before{content:""; width:6px; height:6px; border-radius:50%; background:#3FD07F; box-shadow:0 0 0 3px rgba(63,208,127,.22)}
+.photo{position:relative; display:grid; place-items:center; overflow:hidden; font-weight:800}
+.photo img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover}
+.id{display:flex; flex-direction:column; min-width:0}
+.name{overflow:hidden; font-weight:800; letter-spacing:-.015em; white-space:nowrap; text-overflow:ellipsis}
+.cls{font-weight:600}
+.no{font:500 10.5px/1 var(--mono); letter-spacing:.1em}
+.bal{white-space:nowrap}
+.bal small{display:block; font:500 9px/1 var(--mono); letter-spacing:.18em; text-transform:uppercase}
+.bal b{display:block; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.bal b span{margin-right:4px; font-size:.55em; font-weight:700; letter-spacing:0; vertical-align:.45em; opacity:.75}
+.foot{display:flex; align-items:flex-end; gap:12px; min-width:0}
+.type{margin-left:auto; font:500 9.5px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; white-space:nowrap}
+.code{flex:none}
+.foil{position:absolute; pointer-events:none}
+
+/* ===== 1 · Ivory & Foil ===== */
+.dir-1 .sc{
+  grid-template-columns:auto minmax(0,1fr) auto; grid-template-rows:auto auto 1fr auto;
+  grid-template-areas:"top top top" "photo id bal" ". . ." "foot foot foot";
+  column-gap:14px; padding:15px 18px 15px 26px; color:var(--ivory-ink);
+  background:
+    radial-gradient(120% 90% at 100% 0%,color-mix(in oklab,var(--accent) 7%,transparent),transparent 60%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.38  0 0 0 0 0.25  0 0 0 .07 0'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>"),
+    var(--ivory);
+  box-shadow:inset 0 0 0 1px var(--ivory-line),inset 0 1px 0 rgba(255,255,255,.7),0 -8px 20px -12px rgba(60,45,20,.22),0 18px 34px -22px rgba(60,45,20,.5);
+}
+.dir-1 .sc::before{content:""; position:absolute; top:0; bottom:0; left:0; width:9px; background:linear-gradient(180deg,rgba(255,255,255,.35),transparent 30%,rgba(255,255,255,.25) 60%,transparent),var(--card-face)}
+.dir-1 .sc::after{content:""; position:absolute; top:0; bottom:0; left:9px; width:1px; background:linear-gradient(180deg,#F1D79A,#B8893A,#F1D79A,#9C7230)}
+.dir-1 .top{grid-area:top; margin-bottom:13px}
+.dir-1 .kind{color:var(--accent); font-weight:500}
+.dir-1 .status{background:transparent; box-shadow:inset 0 0 0 1px var(--ivory-line); color:var(--ivory-2)}
+.dir-1 .photo{grid-area:photo; width:66px; height:80px; border-radius:14px; background:#F2D995; color:#5A4720; font-size:22px; box-shadow:0 0 0 3px var(--ivory),0 0 0 4px color-mix(in oklab,#B8893A 55%,transparent),0 10px 18px -10px rgba(60,45,20,.6)}
+.dir-1 .id{grid-area:id; padding-top:2px}
+.dir-1 .name{font-size:19px}
+.dir-1 .cls{margin-top:3px; color:var(--ivory-2); font-size:13px}
+.dir-1 .no{margin-top:9px; color:var(--ivory-2)}
+.dir-1 .bal{grid-area:bal; text-align:right; padding-top:2px}
+.dir-1 .bal small{color:var(--ivory-2)}
+.dir-1 .bal b{margin-top:6px; font-size:21px}
+.dir-1 .bal::after{content:""; display:block; height:2px; margin-top:6px; margin-left:auto; width:70%; border-radius:2px; background:linear-gradient(90deg,transparent,#C99A45,#F1D79A,#B8893A)}
+.dir-1 .foot{grid-area:foot; align-items:center}
+.dir-1 .code{width:min(52%,190px); height:9px; color:var(--ivory-2); opacity:.55; background:repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px 3px)}
+.dir-1 .type{color:var(--ivory-2)}
+.dir-1 .foil{right:18px; bottom:38px; width:40px; height:28px; border-radius:6px; background:conic-gradient(from 210deg,#F6E3B0,#CDE7D7,#BFD9F3,#E9C9EE,#F6D3B3,#F6E3B0); box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 2px 6px -2px rgba(0,0,0,.3); opacity:.85}
+
+/* ===== 2 · Midnight Glass ===== */
+.dir-2 .sc{
+  grid-template-columns:auto minmax(0,1fr) auto; grid-template-rows:auto auto 1fr auto;
+  grid-template-areas:"top top top" "photo id bal" ". . ." "foot foot foot";
+  column-gap:14px; padding:15px 18px; color:#F6F1EA;
+  background:
+    radial-gradient(70% 90% at 0% 0%,color-mix(in oklab,var(--accent) 70%,transparent),transparent 65%),
+    radial-gradient(60% 80% at 110% 110%,color-mix(in oklab,var(--accent-hi) 35%,transparent),transparent 60%),
+    linear-gradient(160deg,color-mix(in oklab,var(--accent-lo),#000 35%),#0E0B0A 75%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.07),0 -8px 20px -10px rgba(0,0,0,.4),0 20px 36px -20px rgba(0,0,0,.7);
+}
+.dir-2 .sc::before{content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/100% 14px,linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/14px 100%; mask:radial-gradient(80% 80% at 80% 20%,#000,transparent)}
+.dir-2 .sc::after{content:""; position:absolute; inset:-40% -60%; background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.14) 50%,transparent 58%); transform:translateX(-60%); transition:transform 1.1s cubic-bezier(.2,.9,.25,1); pointer-events:none}
+.dir-2 .sc:hover::after{transform:translateX(60%)}
+.dir-2 .top{grid-area:top; margin-bottom:14px}
+.dir-2 .kind{color:color-mix(in oklab,var(--accent-hi),white 40%); opacity:.85}
+.dir-2 .status{background:rgba(255,255,255,.1); box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); backdrop-filter:blur(8px); color:#F6F1EA}
+.dir-2 .photo{grid-area:photo; width:64px; height:64px; border-radius:50%; background:linear-gradient(140deg,var(--accent-hi),var(--accent)); color:#fff; font-size:22px; box-shadow:0 0 0 2px #0E0B0A,0 0 0 3.5px var(--accent-hi),0 0 26px -2px color-mix(in oklab,var(--accent) 80%,transparent)}
+.dir-2 .id{grid-area:id; justify-content:center; height:64px}
+.dir-2 .name{font-size:19px}
+.dir-2 .cls{margin-top:3px; color:rgba(246,241,234,.72); font-size:13px}
+.dir-2 .no{margin-top:7px; color:rgba(246,241,234,.5)}
+.dir-2 .bal{grid-area:bal; align-self:start; padding:9px 12px 10px; border-radius:14px; background:rgba(255,255,255,.08); box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.12); backdrop-filter:blur(10px); text-align:right}
+.dir-2 .bal small{color:color-mix(in oklab,var(--accent-hi),white 35%)}
+.dir-2 .bal b{margin-top:5px; font-size:19px}
+.dir-2 .foot{grid-area:foot; align-items:center}
+.dir-2 .code{width:28px; height:28px; border-radius:5px; background:radial-gradient(circle,rgba(255,255,255,.85) 1.1px,transparent 1.5px) 0 0/5px 5px; opacity:.55}
+.dir-2 .type{margin-left:12px; color:rgba(246,241,234,.55)}
+.dir-2 .foot::after{content:"2026 · 27"; margin-left:auto; color:rgba(246,241,234,.4); font:500 9.5px var(--mono); letter-spacing:.2em}
+
+/* ===== 3 · Split Portrait ===== */
+.dir-3 .sc{
+  grid-template-columns:37% minmax(0,1fr); grid-template-rows:1fr;
+  background:var(--surface); color:var(--ink);
+  box-shadow:0 0 0 1px var(--line),0 -8px 20px -12px rgba(38,49,34,.24),0 18px 34px -22px rgba(38,49,34,.5);
+}
+.dir-3 .photo{grid-column:1; grid-row:1; background:var(--card-face); color:#fff; font-size:56px; font-weight:800; letter-spacing:-.03em}
+.dir-3 .photo::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.28),transparent 32%,transparent 62%,color-mix(in oklab,var(--accent-lo) 85%,transparent))}
+.dir-3 .logo{position:absolute; top:14px; left:14px; z-index:2}
+.dir-3 .sc::before{content:""; position:absolute; top:0; bottom:0; left:37%; width:4px; margin-left:-2px; z-index:2; background:linear-gradient(180deg,#F1D79A,#B8893A 50%,#F1D79A)}
+.dir-3 .right{grid-column:2; grid-row:1; display:flex; flex-direction:column; min-width:0; padding:15px 16px 14px 18px}
+.dir-3 .top{gap:8px}
+.dir-3 .kind{color:var(--accent); font-weight:500}
+.dir-3 .status{background:color-mix(in oklab,#167A55 12%,var(--surface)); color:#167A55}
+:root[data-theme="dark"] .dir-3 .status{color:#5FD6A0}
+.dir-3 .name{margin-top:12px; font-size:20px}
+.dir-3 .cls{margin-top:2px; color:var(--ink-2); font-size:13px}
+.dir-3 .cls .no{margin-left:6px; color:var(--ink-3)}
+.dir-3 .bal{margin-top:10px}
+.dir-3 .bal small{color:var(--ink-3)}
+.dir-3 .bal b{margin-top:5px; color:var(--accent); font-size:24px}
+.dir-3 .foot{margin-top:auto; align-items:center}
+.dir-3 .code{width:84px; height:18px; color:var(--ink); opacity:.7; background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 3px,currentColor 3px 4px,transparent 4px 7px,currentColor 7px 9px,transparent 9px 11px)}
+.dir-3 .type{color:var(--ink-3)}
+.dir-3 .ph-name{position:absolute; left:14px; right:10px; bottom:14px; z-index:2; color:#fff; font:500 9px/1.3 var(--mono); letter-spacing:.2em; text-transform:uppercase; opacity:.9}
+
+.sc .only-3{display:none}
+.dir-3 .sc .only-3{display:block}
+.dir-3 .sc .not-3{display:none}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Premium student card · 3 samples</b>
+  <button type="button" data-dir="1" aria-pressed="false">1 · Ivory &amp; Foil</button>
+  <button type="button" data-dir="2" aria-pressed="false">2 · Midnight Glass</button>
+  <button type="button" data-dir="3" aria-pressed="false">3 · Split Portrait</button>
+  <button type="button" id="theme">Dark</button>
+</div>
+<p class="note" id="note"></p>
+
+<div class="stage dir-1" id="stage">
+  <div class="phone">
+    <h1>Hello, Abdullah</h1>
+    <p>Your child's card. Tap it to open.</p>
+    <div class="caption">One child · with a photo</div>
+    <div class="single" id="one"></div>
+    <div class="caption">Three children · the home stack</div>
+    <div class="stackbar" role="group" aria-label="Stack">
+      <button type="button" data-stack="overlap" aria-pressed="false">Now</button>
+      <button type="button" data-stack="list" aria-pressed="true">S1 · List</button>
+      <button type="button" data-stack="swipe" aria-pressed="false">S2 · Swipe</button>
+      <button type="button" data-stack="rows" aria-pressed="false">S3 · Strips</button>
+    </div>
+    <div class="stack" id="two"></div>
+    <p class="note" id="stacknote" style="margin:12px 0 0; padding:0; font-size:13px"></p>
+  </div>
+</div>
+
+<template id="card">
+  <a class="sc" href="#">
+    <!-- 1 and 2 -->
+    <span class="top not-3"><span class="logo">newrest<i>GULF</i></span><span class="kind">Student ID</span><span class="status">Card active</span></span>
+    <span class="photo not-3" data-photo></span>
+    <span class="id not-3"><b class="name" data-name></b><span class="cls" data-cls></span><span class="no" data-no></span></span>
+    <span class="bal not-3"><small>Balance</small><b data-bal></b></span>
+    <span class="foot not-3"><i class="code"></i><span class="type">Student card</span></span>
+    <i class="foil not-3"></i>
+    <!-- 3 -->
+    <span class="photo only-3" data-photo></span>
+    <span class="logo only-3">newrest<i>GULF</i></span>
+    <span class="ph-name only-3">Student ID</span>
+    <span class="right only-3" style="display:none">
+      <span class="top"><span class="kind">Student</span><span class="status">Active</span></span>
+      <b class="name" data-name></b>
+      <span class="cls"><span data-cls></span><span class="no" data-no></span></span>
+      <span class="bal"><small>Balance</small><b data-bal></b></span>
+      <span class="foot"><i class="code"></i><span class="type">2026 · 27</span></span>
+    </span>
+  </a>
+</template>
+
+<script>
+const PHOTO = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE6EE"/><stop offset="1" stop-color="#C3D2DE"/></linearGradient></defs><rect width="80" height="100" fill="url(#b)"/><circle cx="40" cy="40" r="18" fill="#C68B62"/><path d="M22 36c0-14 9-22 18-22s18 8 18 22c-4-8-10-10-18-10s-14 2-18 10z" fill="#2B2420"/><path d="M6 100c2-24 17-34 34-34s32 10 34 34z" fill="#2F5D8C"/><path d="M33 66l7 10 7-10z" fill="#fff"/></svg>')
+const KIDS = [
+  { name: 'Ahmed', cls: 'Grade 4 · A', no: 'ID NR2200', bal: '91.00', photo: PHOTO },
+  { name: 'Mariam', cls: 'Grade 1 · B', no: 'ID NR2381', bal: '42.50', photo: null },
+  { name: 'Yusuf', cls: 'Grade 7 · C', no: 'ID NR1974', bal: '12.00', photo: null },
+]
+const STACK_NOTES = {
+  overlap: 'Today: cards overlap like a wallet. With the split design the lower cards lose their photo column and balance, so this is what to replace.',
+  list: '<b>S1 · List</b> — every card whole, one under the other. Nothing hidden; the page just gets longer with each child.',
+  swipe: '<b>S2 · Swipe</b> — one card at a time, the next one peeking at the edge; swipe sideways, dots show how many. Shortest page.',
+  rows: '<b>S3 · Strips</b> — the first child as the full card, the others as slim ID strips (photo, name, grade, balance). Tap a strip to open that child.',
+}
+const NOTES = {
+  1: '<b>1 · Ivory &amp; Foil</b> — heavy ivory card stock with a fine paper grain, a school-colour edge with a thin gold foil line, a gold-ringed portrait, a foil underline under the balance, a holographic sticker and a micro-print strip instead of a barcode. Quiet, expensive, the same in light and dark (it turns to dark card stock).',
+  2: '<b>2 · Midnight Glass</b> — a deep night card lit by the school colour from the corner, a faint grid, a glowing round portrait, the balance in a frosted-glass tile and a dot code. A light sheen sweeps across when hovered or tapped. Stays dark in both themes.',
+  3: '<b>3 · Split Portrait</b> — the photo fills the left third of the card on the school colour (initials large when there is no photo), split by a gold line; the right side is a clean white ID with name, grade, number and a big balance. Most "university ID".',
+}
+function card(kid) {
+  const node = document.getElementById('card').content.firstElementChild.cloneNode(true)
+  node.querySelectorAll('[data-name]').forEach((el) => (el.textContent = kid.name))
+  node.querySelectorAll('[data-cls]').forEach((el) => (el.textContent = kid.cls))
+  node.querySelectorAll('[data-no]').forEach((el) => (el.textContent = kid.no))
+  node.querySelectorAll('[data-bal]').forEach((el) => (el.innerHTML = `<span>QAR</span>${kid.bal}`))
+  node.querySelectorAll('[data-photo]').forEach((el) => (el.innerHTML = kid.photo ? `<img src="${kid.photo}" alt="">` : kid.name[0]))
+  return node
+}
+document.getElementById('one').append(card(KIDS[0]))
+
+function strip(kid) {
+  const a = document.createElement('a')
+  a.className = 'strip'
+  a.href = '#'
+  a.innerHTML = `<span class="photo">${kid.photo ? `<img src="${kid.photo}" alt="">` : kid.name[0]}</span><span class="id"><b class="name">${kid.name}</b><small class="cls">${kid.cls}</small></span><span class="bal"><small>Balance</small><b><span>QAR</span>${kid.bal}</b></span><i class="chev">›</i>`
+  return a
+}
+const two = document.getElementById('two')
+function stackAs(kind) {
+  two.className = `stack s-${kind}`
+  two.innerHTML = ''
+  KIDS.forEach((kid, i) => two.append(kind === 'rows' && i > 0 ? strip(kid) : card(kid)))
+  document.querySelectorAll('.dots').forEach((d) => d.remove())
+  if (kind === 'swipe') {
+    const dots = document.createElement('div')
+    dots.className = 'dots'
+    dots.innerHTML = KIDS.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')
+    two.after(dots)
+    two.onscroll = () => {
+      const index = Math.round(two.scrollLeft / (two.firstElementChild.offsetWidth + 12))
+      dots.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i === index))
+    }
+  }
+  document.querySelectorAll('.right').forEach((el) => (el.style.display = stage.className.includes('dir-3') ? 'flex' : 'none'))
+  document.getElementById('stacknote').innerHTML = STACK_NOTES[kind]
+  document.querySelectorAll('[data-stack]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.stack === kind)))
+}
+document.querySelectorAll('[data-stack]').forEach((b) => b.addEventListener('click', () => stackAs(b.dataset.stack)))
+
+const stage = document.getElementById('stage')
+const note = document.getElementById('note')
+function pick(dir) {
+  stage.className = `stage dir-${dir}`
+  note.innerHTML = NOTES[dir]
+  document.querySelectorAll('.right').forEach((el) => (el.style.display = dir === '3' ? 'flex' : 'none'))
+  document.querySelectorAll('[data-dir]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.dir === dir)))
+}
+document.querySelectorAll('[data-dir]').forEach((b) => b.addEventListener('click', () => pick(b.dataset.dir)))
+stackAs('list')
+pick('3')
+
+const theme = document.getElementById('theme')
+theme.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme !== 'dark'
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  theme.textContent = dark ? 'Light' : 'Dark'
+})
+</script>
+</body>
+</html>
