@@ -6,6 +6,8 @@ use Tests\Support\PosWorld;
 
 it('shows how long ago each backup was taken', function (): void {
     $world = PosWorld::create();
+    // A backup dumps every tenant's data, so the page is for platform admins.
+    $world->user->forceFill(['is_super_admin' => true])->save();
     $world->user->givePermissionTo(Permission::firstOrCreate([
         'name' => 'backup.view', 'guard_name' => 'web',
     ]));

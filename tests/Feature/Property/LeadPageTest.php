@@ -142,7 +142,7 @@ it('shows the change history with field names as columns and readable values', f
     // Audits normally go through the database queue; write them inline here.
     config(['audit.queue.enable' => false]);
     $lead = leadPageLead(['status' => 'New Lead', 'assigned_to' => $this->world->user->id]);
-    $other = \App\Models\User::factory()->create(['name' => 'Second Salesman']);
+    $other = \App\Models\User::factory()->create(['name' => 'Second Salesman', 'tenant_id' => $this->world->tenant->id]);
 
     $lead->update(['status' => 'Visit Scheduled', 'meeting_time' => '18:00:00', 'location' => 'Site']);
     $lead->update(['meeting_time' => '18:00']);

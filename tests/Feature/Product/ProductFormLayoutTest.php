@@ -26,3 +26,14 @@ it('pairs the two names on the first row and code with status on the second', fu
         ->and(substr_count($rows[0], 'col-md-6'))->toBe(2)
         ->and($rows[1])->toContain('for="code"')->toContain('for="status"');
 });
+
+it('shows color beside size and size category instead of in the attributes tab', function (): void {
+    $html = Livewire::test(Page::class, ['type' => 'product'])->html();
+
+    $sizeRow = str($html)->after('for="size_category"')->before('for="hsn_code"')->toString();
+    $attributesTab = str($html)->after('id="tabAttributes"')->before('for="part_no"')->toString();
+
+    expect($sizeRow)->toContain('for="color"')->toContain('wire:model="products.color"')
+        ->and($attributesTab)->not->toContain('for="color"')
+        ->and(substr_count($html, 'wire:model="products.color"'))->toBe(1);
+});

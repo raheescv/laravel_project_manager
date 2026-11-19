@@ -208,6 +208,13 @@
                                         </label>
                                         {{ html()->input('size_category')->value('')->class('form-control shadow-sm')->attribute('dir', 'rtl')->placeholder('Enter size category name')->id('size_category')->attribute('wire:model', 'products.size_category') }}
                                     </div>
+                                    <div class="col-md-4">
+                                        <label for="color" class="form-label fw-medium">
+                                            <i class="fa fa-tint text-primary me-1 small"></i>
+                                            Color
+                                        </label>
+                                        {{ html()->input('color')->value('')->class('form-control shadow-sm')->placeholder('Enter your color')->id('color')->attribute('wire:model', 'products.color') }}
+                                    </div>
                                 @endif
                                 @if ($isProduct)
                                     <div class="col-12">
@@ -922,10 +929,6 @@
                                                             <div class="col-md-4">
                                                                 <label for="pattern" class="form-label">Pattern</label>
                                                                 {{ html()->input('pattern')->value('')->class('form-control')->placeholder('Enter your pattern')->attribute('wire:model', 'products.pattern') }}
-                                                            </div>
-                                                            <div class="col-md-4">
-                                                                <label for="color" class="form-label">Color</label>
-                                                                {{ html()->input('color')->value('')->class('form-control')->placeholder('Enter your color')->attribute('wire:model', 'products.color') }}
                                                             </div>
                                                             <div class="col-md-4">
                                                                 <label for="model" class="form-label">Model</label>
