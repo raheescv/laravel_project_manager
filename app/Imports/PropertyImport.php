@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Enums\Property\BuildingOwnership;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Property;
@@ -30,6 +31,9 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
 
     /** @var array<string,int> name => id */
     private array $groupsByName = [];
+
+    /** @var array<int,int> buildingId => groupId */
+    private array $buildingGroups = [];
 
     /** @var array<string,int> "buildingId|number" => propertyId */
     private array $existingProperties = [];
@@ -69,9 +73,11 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
 
     private function preloadLookups(): void
     {
-        $this->buildingsByName = PropertyBuilding::pluck('id', 'name')
-            ->mapWithKeys(fn ($id, $name) => [strtolower(trim((string) $name)) => $id])
+        $buildings = PropertyBuilding::get(['id', 'name', 'property_group_id']);
+        $this->buildingsByName = $buildings
+            ->mapWithKeys(fn (PropertyBuilding $building) => [strtolower(trim((string) $building->name)) => $building->id])
             ->toArray();
+        $this->buildingGroups = $buildings->pluck('property_group_id', 'id')->toArray();
 
         $this->typesByName = PropertyType::pluck('id', 'name')
             ->mapWithKeys(fn ($id, $name) => [strtolower(trim((string) $name)) => $id])
@@ -113,16 +119,19 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
         }
         $row['number'] = $number;
 
-        // Resolve foreign keys (accept either ID or name)
-        $row['property_building_id'] = $this->resolveBuilding($row['property_building_id'] ?? null);
-        $row['property_type_id'] = $this->resolveType($row['property_type_id'] ?? null);
         $row['property_group_id'] = $this->resolveGroup($row['property_group_id'] ?? null);
+        $row['property_building_id'] = $this->resolveBuilding($row['property_building_id'] ?? null, $row);
+        $row['property_type_id'] = $this->resolveType($row['property_type_id'] ?? null);
 
         if (empty($row['property_building_id'])) {
             throw new Exception('Building could not be resolved for row "'.$number.'".');
         }
         if (empty($row['property_type_id'])) {
             throw new Exception('Property Type could not be resolved for row "'.$number.'".');
+        }
+        if (empty($row['property_group_id'])) {
+            $row['property_group_id'] = $this->buildingGroups[$row['property_building_id']]
+                ?? PropertyBuilding::whereKey($row['property_building_id'])->value('property_group_id');
         }
 
         // Branch
@@ -170,7 +179,12 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
         $this->existingProperties[$key] = $created->id;
     }
 
-    private function resolveBuilding($value): ?int
+    /**
+     * Resolve a building by ID or name, creating it under the row's group when the name is new.
+     *
+     * @param  array<string,mixed>  $row
+     */
+    private function resolveBuilding($value, array $row): ?int
     {
         if ($value === null || $value === '') {
             return null;
@@ -178,11 +192,35 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
         if (is_numeric($value)) {
             return (int) $value;
         }
-        $key = strtolower(trim((string) $value));
+        $name = trim((string) $value);
+        $key = strtolower($name);
+        if (isset($this->buildingsByName[$key])) {
+            return $this->buildingsByName[$key];
+        }
 
-        return $this->buildingsByName[$key] ?? null;
+        $groupId = $row['property_group_id'] ?? null;
+        $branchId = $row['branch_id'] ?? $this->branchId;
+        if (! $groupId || ! $branchId) {
+            return null;
+        }
+
+        $building = PropertyBuilding::create([
+            'branch_id' => $branchId,
+            'property_group_id' => $groupId,
+            'name' => $name,
+            'ownership' => $this->buildingOwnership($row['ownership'] ?? null),
+            'created_by' => $this->userId,
+            'updated_by' => $this->userId,
+        ]);
+        $this->buildingsByName[$key] = $building->id;
+        $this->buildingGroups[$building->id] = (int) $groupId;
+
+        return $building->id;
     }
 
+    /**
+     * Resolve a property type by ID or name, creating it when the name is new.
+     */
     private function resolveType($value): ?int
     {
         if ($value === null || $value === '') {
@@ -191,11 +229,19 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
         if (is_numeric($value)) {
             return (int) $value;
         }
-        $key = strtolower(trim((string) $value));
+        $name = trim((string) $value);
+        $key = strtolower($name);
 
-        return $this->typesByName[$key] ?? null;
+        return $this->typesByName[$key] ??= PropertyType::create([
+            'name' => $name,
+            'created_by' => $this->userId,
+            'updated_by' => $this->userId,
+        ])->id;
     }
 
+    /**
+     * Resolve a property group by ID or name, creating it when the name is new.
+     */
     private function resolveGroup($value): ?int
     {
         if ($value === null || $value === '') {
@@ -204,9 +250,32 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
         if (is_numeric($value)) {
             return (int) $value;
         }
-        $key = strtolower(trim((string) $value));
+        $name = trim((string) $value);
+        $key = strtolower($name);
+        if (! isset($this->groupsByName[$key]) && ! $this->branchId) {
+            return null;
+        }
 
-        return $this->groupsByName[$key] ?? null;
+        return $this->groupsByName[$key] ??= PropertyGroup::create([
+            'branch_id' => $this->branchId,
+            'name' => $name,
+            'created_by' => $this->userId,
+            'updated_by' => $this->userId,
+        ])->id;
+    }
+
+    /**
+     * Map a unit's ownership wording (owned / leased / rented) onto the building ownership enum.
+     */
+    private function buildingOwnership($value): string
+    {
+        $normalized = strtolower(trim((string) $value));
+
+        return match (true) {
+            str_starts_with($normalized, 'lease') => BuildingOwnership::Lease->value,
+            str_starts_with($normalized, 'rent') => BuildingOwnership::Rent->value,
+            default => BuildingOwnership::Own->value,
+        };
     }
 
     private function handleError($value, \Throwable $th): void
