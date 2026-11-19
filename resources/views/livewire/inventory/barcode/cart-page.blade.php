@@ -16,6 +16,9 @@
     $proofHeight = max(1, (float) ($templateSettings['height'] ?? 30) / $mmPerPx);
     $proofScale = min(250 / $proofWidth, 150 / $proofHeight);
 
+    // Date columns the chosen template prints, typed per row at print time.
+    $dateColumns = array_filter(\App\Support\BarcodeLabel::DATE_FIELDS, fn (string $field) => $cart[$field . '_column'], ARRAY_FILTER_USE_KEY);
+
     $proofUrl = null;
     if ($selectedRow) {
         $isUnit = ($selectedRow['item_type'] ?? 'inventory') === 'product_unit';
@@ -24,7 +27,11 @@
             'unit_id' => $isUnit ? ($selectedRow['product_unit_id'] ?? null) : null,
             'price' => $selectedRow['price'] ?? null,
             'tax' => $selectedRow['tax'] ?? null,
-        ], fn ($value) => $value !== null && $value !== '') + ['weight' => $selectedRow['weight'] ?? '']);
+        ], fn ($value) => $value !== null && $value !== '') + [
+            'weight' => $selectedRow['weight'] ?? '',
+            'mfg_date' => $selectedRow['mfg_date'] ?? '',
+            'exp_date' => $selectedRow['exp_date'] ?? '',
+        ]);
     }
 @endphp
 
@@ -225,6 +232,9 @@
                                         <th class="bcx-cart__num bcx-cart__num--tax">Tax %</th>
                                         <th class="bcx-cart__num">MRP</th>
                                     @endif
+                                    @foreach ($dateColumns as $dateLabel)
+                                        <th class="bcx-cart__num">{{ $dateLabel }}</th>
+                                    @endforeach
                                     <th class="bcx-cart__num">Labels</th>
                                     <th style="width:76px"></th>
                                 </tr>
@@ -289,6 +299,13 @@
                                                     title="MRP printed on this row's labels{{ is_numeric($item['unit_price'] ?? null) ? ' — worked out from unit price, weight and tax' : '' }}">
                                             </td>
                                         @endif
+                                        @foreach ($dateColumns as $dateField => $dateLabel)
+                                            <td class="bcx-cart__num" @click.stop>
+                                                <input type="date" class="bcx-input bcx-cart__cell bcx-cart__date {{ empty($item[$dateField]) ? 'is-missing' : '' }}"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.{{ $dateField }}"
+                                                    title="{{ $dateLabel }} printed on this row's labels">
+                                            </td>
+                                        @endforeach
                                         <td class="bcx-cart__num" @click.stop>
                                             <div class="bcx-stepper">
                                                 <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] - 1 }})" title="Less"><i class="fa fa-minus"></i></button>
@@ -359,6 +376,12 @@
                             </div>
                         </label>
                     @endif
+                    @foreach ($dateColumns as $dateField => $dateLabel)
+                        <label class="bcx-field">
+                            <span>{{ $dateLabel }}</span>
+                            <input type="date" wire:model.blur="cartItems.{{ $selectedRowKey }}.{{ $dateField }}">
+                        </label>
+                    @endforeach
                     <label class="bcx-field">
                         <span>Labels</span>
                         <input type="number" min="1" wire:model.blur="cartItems.{{ $selectedRowKey }}.quantity">
@@ -373,7 +396,7 @@
                     <p class="bcx-note">Add an item, then pick a row to see its label.</p>
                 @endif
 
-                @if (!empty($cartItems) && ($cart['price_column'] || $cart['weight_column']))
+                @if (!empty($cartItems) && ($cart['price_column'] || $cart['weight_column'] || $dateColumns))
                     <div class="bcx-drawer__title">Fill all rows</div>
                     @if ($cart['price_column'])
                         <label class="bcx-field">
@@ -398,6 +421,12 @@
                             </div>
                         </label>
                     @endif
+                    @foreach ($dateColumns as $dateField => $dateLabel)
+                        <label class="bcx-field">
+                            <span>{{ $dateLabel }}</span>
+                            <input type="date" wire:model="{{ $dateField === 'mfg_date' ? 'fillMfgDate' : 'fillExpDate' }}">
+                        </label>
+                    @endforeach
                     <button wire:click="fillAllRows" class="bcx-btn bcx-cart__wide"><i class="fa fa-magic"></i> Apply to {{ count($cartItems) }} row(s)</button>
                 @endif
 
@@ -562,6 +591,11 @@
             width: 110px;
             text-align: end;
             font-variant-numeric: tabular-nums;
+        }
+
+        .bcx-cart__cell.bcx-cart__date {
+            width: 140px;
+            text-align: start;
         }
 
         .bcx-cart__gram {

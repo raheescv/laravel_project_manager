@@ -168,6 +168,26 @@ return [
                     'prefix' => 'Qty',
                     'weight_prefix' => 'Wt',
                 ],
+                // Manufacturing and expiry dates. Never stored on the product:
+                // each print cart row takes its own at print time.
+                'mfg_date' => [
+                    'font_size' => 8,
+                    'font_family' => '',
+                    'font_weight' => 500,
+                    'align' => 'left',
+                    'visible' => false,
+                    'prefix' => 'Mfg Date:',
+                    'format' => 'd - m - Y',
+                ],
+                'exp_date' => [
+                    'font_size' => 8,
+                    'font_family' => '',
+                    'font_weight' => 500,
+                    'align' => 'left',
+                    'visible' => false,
+                    'prefix' => 'Exp Date:',
+                    'format' => 'd - m - Y',
+                ],
                 'elements' => [
                     'product_name' => [
                         'top' => 1,
@@ -215,6 +235,18 @@ return [
                         'top' => 64,
                         'left' => 2,
                         'width' => 85,
+                        'height' => 12,
+                    ],
+                    'mfg_date' => [
+                        'top' => 88,
+                        'left' => 2,
+                        'width' => 180,
+                        'height' => 12,
+                    ],
+                    'exp_date' => [
+                        'top' => 100,
+                        'left' => 2,
+                        'width' => 180,
                         'height' => 12,
                     ],
                 ],
@@ -342,6 +374,27 @@ return [
                         'align' => 'left',
                         'bold' => false,
                         'prefix' => 'Tax',
+                    ],
+                    // Typed on each print cart row at print time, never stored on the product.
+                    'mfg_date' => [
+                        'visible' => false,
+                        'order' => 8,
+                        'font_size' => 6,
+                        'font_family' => '',
+                        'align' => 'left',
+                        'bold' => false,
+                        'prefix' => 'Mfg',
+                        'format' => 'd-m-Y',
+                    ],
+                    'exp_date' => [
+                        'visible' => false,
+                        'order' => 9,
+                        'font_size' => 6,
+                        'font_family' => '',
+                        'align' => 'left',
+                        'bold' => false,
+                        'prefix' => 'Exp',
+                        'format' => 'd-m-Y',
                     ],
                 ],
             ],

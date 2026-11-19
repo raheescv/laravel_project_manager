@@ -151,6 +151,7 @@ class BarcodeController extends Controller
             'types' => BarcodeTemplateConfiguration::types(),
             'barcodeTypes' => $this->barcodeTypes(),
             'qtySources' => $this->qtySources(),
+            'dateFormats' => BarcodeLabel::dateFormats(),
             // "Qty" or "Weight", from the sale setting Quantity Label In Print.
             'quantityCaption' => BarcodeLabel::quantityCaption(),
             'fonts' => BarcodeFonts::options(),
@@ -169,9 +170,9 @@ class BarcodeController extends Controller
 
     /**
      * One label as it will print. The print cart previews a row by passing its
-     * `unit_id` (product unit rows), `price` and `weight`; the designer passes
-     * neither, and then (in weight mode) shows a sample weight so the Qty field
-     * can be placed.
+     * `unit_id` (product unit rows), `price`, `weight` and dates; the designer
+     * passes none, and then shows a sample weight (in weight mode) and sample
+     * dates so the Qty and date lines can be placed.
      */
     public function preview(Request $request, $id = null)
     {
@@ -197,6 +198,8 @@ class BarcodeController extends Controller
             'price' => $request->query('price'),
             'tax' => $request->query('tax'),
             'weight' => $request->has('weight') ? $request->query('weight') : 4.25,
+            'mfg_date' => $request->has('mfg_date') ? $request->query('mfg_date') : now()->toDateString(),
+            'exp_date' => $request->has('exp_date') ? $request->query('exp_date') : now()->addDays(3)->toDateString(),
         ]);
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
         $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));

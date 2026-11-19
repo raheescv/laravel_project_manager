@@ -353,7 +353,7 @@ it('follows Quantity Label In Print for the qty caption', function (): void {
     ($this->printWeights)();
 
     expect(BarcodeLabel::quantityCaption())->toBe('Weight')
-        ->and(BarcodeLabel::rowValues([], ['price' => '10', 'weight' => '1.5']))->toBe(['price' => 10.0, 'weight' => 1.5, 'tax' => null]);
+        ->and(BarcodeLabel::rowValues([], ['price' => '10', 'weight' => '1.5']))->toBe(['price' => 10.0, 'weight' => 1.5, 'tax' => null, 'mfg_date' => null, 'exp_date' => null]);
 });
 
 it('shows each cart row with its product category', function (): void {
@@ -658,4 +658,116 @@ it('opens the print cart full window with a way back to inventory', function ():
         ->assertSee('href="'.route('inventory::index').'"', false)
         ->assertDontSee('breadcrumb-item', false)
         ->assertSee('const messageOf = (e) => (Array.isArray(e) ? e[0] : e)?.message', false);
+});
+
+it('asks for the mfg and exp date per row only when the template prints them', function (): void {
+    ($this->useTemplate)('standard');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertDontSeeHtml('<th class="bcx-cart__num">Exp Date</th>')
+        ->call('printBarcodes')
+        ->assertDispatched('label-print');
+
+    BarcodeTemplateConfiguration::saveConfiguration([
+        'default_template' => 'shop',
+        'templates' => [
+            'shop' => ['name' => 'Shop', 'type' => 'standard', 'settings' => [
+                'type' => 'standard',
+                'mfg_date' => ['visible' => true],
+                'exp_date' => ['visible' => true],
+            ]],
+        ],
+    ]);
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('<th class="bcx-cart__num">Mfg Date</th>')
+        ->assertSeeHtml('<th class="bcx-cart__num">Exp Date</th>')
+        ->call('printBarcodes')
+        ->assertDispatched('error', ['message' => 'Enter the Mfg Date for every row (1 missing).'])
+        ->assertNotDispatched('label-print')
+        ->set("cartItems.{$key}.mfg_date", '2026-11-02')
+        ->set("cartItems.{$key}.exp_date", 'not a date')
+        ->assertSet("cartItems.{$key}.exp_date", null)
+        ->set("cartItems.{$key}.exp_date", '2026-11-01')
+        ->call('printBarcodes')
+        ->assertDispatched('error', ['message' => 'The Exp Date is before the Mfg Date on 1 row(s).'])
+        ->assertNotDispatched('label-print')
+        ->set("cartItems.{$key}.exp_date", '2026-11-05')
+        ->call('printBarcodes')
+        ->assertDispatched('label-print');
+
+    expect(session('print_cart_items')[$key])->toMatchArray(['mfg_date' => '2026-11-02', 'exp_date' => '2026-11-05']);
+});
+
+it('fills the mfg and exp date of every row at once', function (): void {
+    BarcodeTemplateConfiguration::saveConfiguration([
+        'default_template' => 'shop',
+        'templates' => [
+            'shop' => ['name' => 'Shop', 'type' => 'jewellery_tag', 'settings' => [
+                'type' => 'jewellery_tag',
+                'fields' => ['price' => ['visible' => false], 'qty' => ['visible' => false], 'exp_date' => ['visible' => true]],
+            ]],
+        ],
+    ]);
+
+    $component = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->set('separateRows', true)
+        ->call('addToCart', $this->inventoryId)
+        ->call('addToCart', $this->inventoryId)
+        ->assertSee('Fill all rows')
+        ->assertDontSeeHtml('<th class="bcx-cart__num">Mfg Date</th>')
+        ->set('fillExpDate', '2026-12-31')
+        ->call('fillAllRows')
+        ->assertSet('fillExpDate', '');
+
+    expect(collect($component->get('cartItems'))->pluck('exp_date')->all())->toBe(['2026-12-31', '2026-12-31']);
+});
+
+it('prints the row dates on a standard sticker in the template format', function (): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings([
+        'mfg_date' => ['visible' => true],
+        'exp_date' => ['visible' => true, 'prefix' => 'Best before', 'format' => 'd M Y'],
+    ], 'standard');
+
+    $render = fn (array $item): string => view('inventory.barcode-cart-print', [
+        'settings' => $settings,
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => ['a' => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 1, 'price' => 11] + $item],
+    ])->render();
+
+    expect($render(['mfg_date' => '2026-11-02', 'exp_date' => '2026-11-05']))
+        ->toContain('<span>Mfg Date: 02 - 11 - 2026</span>')
+        ->toContain('<span>Best before 05 Nov 2026</span>')
+        ->and($render([]))->not->toContain('Mfg Date:')->not->toContain('Best before');
+});
+
+it('prints the row dates on a jewellery tag and samples them in the designer preview', function (): void {
+    $settings = BarcodeTemplateConfiguration::normalizeSettings(['fields' => ['mfg_date' => ['visible' => true], 'exp_date' => ['visible' => true]]], 'jewellery_tag');
+
+    $html = view('inventory.barcode-cart-print', [
+        'settings' => $settings,
+        'company_name' => 'Shop',
+        'company_logo' => '',
+        'cartItems' => ['a' => ['item_type' => 'inventory', 'inventory_id' => $this->inventoryId, 'quantity' => 1, 'price' => 11, 'mfg_date' => '2026-11-02', 'exp_date' => '2026-11-05']],
+    ])->render();
+
+    expect($html)->toContain('Mfg 02-11-2026')->toContain('Exp 05-11-2026');
+
+    ($this->useTemplate)('standard');
+    $configuration = BarcodeTemplateConfiguration::getConfiguration();
+    $configuration['templates']['shop']['settings']['mfg_date']['visible'] = true;
+    BarcodeTemplateConfiguration::saveConfiguration($configuration);
+
+    $preview = app(BarcodeController::class)
+        ->preview(Request::create('/', 'GET', ['template' => 'shop']), $this->inventoryId)
+        ->render();
+
+    expect($preview)->toContain('<span>Mfg Date: '.now()->format('d - m - Y').'</span>');
 });

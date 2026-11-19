@@ -11,6 +11,14 @@
 
       <div class="bcx-spacer"></div>
 
+      <button
+        v-if="templateType === 'standard'"
+        class="bcx-btn"
+        title="Re-flow the visible elements so none overlap and they fill the label size"
+        @click="autoAdjustLayout"
+      >
+        <i class="fa fa-magic"></i> Auto adjust
+      </button>
       <button class="bcx-btn" :disabled="saving" @click="resetTemplate">
         <i class="fa fa-refresh"></i> Reset
       </button>
@@ -44,6 +52,7 @@
           :settings="settings"
           :barcode-types="barcodeTypes"
           :qty-sources="qtySources"
+          :date-formats="dateFormats"
           :fonts="fonts"
           :font-weights="fontWeights"
           :products="productOptions"
@@ -70,6 +79,7 @@
           :settings="settings"
           :barcode-types="barcodeTypes"
           :qty-sources="qtySources"
+          :date-formats="dateFormats"
           :fonts="fonts"
           :font-weights="fontWeights"
           :selected="selectedElementKey"
@@ -107,6 +117,7 @@ import InspStandard from './panels/inspectors/InspStandard.vue'
 import SecJewelleryBarcode from './panels/sections/SecJewelleryBarcode.vue'
 import SecJewelleryFields from './panels/sections/SecJewelleryFields.vue'
 import SecJewellerySize from './panels/sections/SecJewellerySize.vue'
+import { fitStandardLayout } from './panels/fitLayout'
 import { applyQuantityCaption } from './panels/labels'
 import SecPrint from './panels/sections/SecPrint.vue'
 import SecProduct from './panels/sections/SecProduct.vue'
@@ -162,6 +173,7 @@ const notice = ref('')
 const settings = ref({})
 const barcodeTypes = ref({})
 const qtySources = ref({})
+const dateFormats = ref({})
 const fonts = ref({})
 const currency = ref('')
 const fontWeights = ref({})
@@ -236,6 +248,7 @@ async function loadData() {
   version.value = data.version || ''
   barcodeTypes.value = data.barcodeTypes
   qtySources.value = data.qtySources || {}
+  dateFormats.value = data.dateFormats || {}
   applyQuantityCaption(data.quantityCaption)
   fonts.value = data.fonts || {}
   currency.value = data.currency || ''
@@ -341,6 +354,10 @@ async function resetTemplate() {
   selectedElementKey.value = firstSelectableField()
   suppressAutoSave.value = false
   refreshPreview()
+}
+
+function autoAdjustLayout() {
+  if (fitStandardLayout(settings.value)) scheduleAutoSave()
 }
 
 function refreshPreview() {

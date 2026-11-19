@@ -197,6 +197,14 @@
             font-weight: {{ BarcodeFonts::elementWeight($settings, 'qty', 700) }};
         }
 
+        @foreach (array_keys(BarcodeLabel::DATE_FIELDS) as $dateKey)
+            .{{ str_replace('_', '-', $dateKey) }} {
+                font-size: {{ $settings[$dateKey]['font_size'] ?? 8 }}px;
+                font-family: {!! BarcodeFonts::elementStack($settings, $dateKey) !!};
+                font-weight: {{ BarcodeFonts::elementWeight($settings, $dateKey, 500) }};
+            }
+        @endforeach
+
         .price-arabic {
             font-size: {{ $settings['price_arabic']['font_size'] ?? 14 }}px;
             font-family: {!! BarcodeFonts::elementStack($settings, 'price_arabic') !!};
@@ -308,6 +316,19 @@
                 <span>{{ $qtyText }}</span>
             </div>
         @endif
+
+        @foreach (array_keys(BarcodeLabel::DATE_FIELDS) as $dateKey)
+            @php
+                $dateText = ($settings[$dateKey]['visible'] ?? false)
+                    ? BarcodeLabel::fieldValue($dateKey, $settings[$dateKey], $product, (float) $conversionFactor, $inventory ?? null, $row)
+                    : '';
+            @endphp
+            @if ($dateText !== '')
+                <div class="barcode-element {{ str_replace('_', '-', $dateKey) }}" style="{{ getElementStyle($dateKey, $settings) }}">
+                    <span>{{ $dateText }}</span>
+                </div>
+            @endif
+        @endforeach
     </div>
 </body>
 

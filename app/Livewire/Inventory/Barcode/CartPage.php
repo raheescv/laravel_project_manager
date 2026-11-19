@@ -61,6 +61,10 @@ class CartPage extends Component
 
     public $fillTax = '';
 
+    public $fillMfgDate = '';
+
+    public $fillExpDate = '';
+
     protected $listeners = [
         'productSelected' => 'addToCart',
         // 'barcodeScanned' => 'handleBarcodeScan'
@@ -74,6 +78,8 @@ class CartPage extends Component
             'weight' => null,
             'unit_price' => $this->mrpPrice($item),
             'tax' => 0,
+            'mfg_date' => null,
+            'exp_date' => null,
         ], session('cart_items', []));
         $this->cartItems = $this->withCategoryNames($this->cartItems);
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
@@ -114,13 +120,18 @@ class CartPage extends Component
      * alone: the grams work out the MRP, so the column stays even when the
      * template's Weight line is switched off and only printing drops it.
      *
-     * @return array{separate_rows: bool, auto_fill: bool, weight_mode: bool, category_name: bool, price_column: bool, weight_column: bool}
+     * `mfg_date_column` / `exp_date_column` show the date inputs only when the
+     * chosen template prints that date. Dates are typed per row at print time
+     * and never saved on the product.
+     *
+     * @return array{separate_rows: bool, auto_fill: bool, weight_mode: bool, category_name: bool, price_column: bool, weight_column: bool, mfg_date_column: bool, exp_date_column: bool}
      */
     #[Computed]
     public function cartSettings(): array
     {
         $settings = BarcodeTemplateConfiguration::resolveSettings($this->templateKey)['settings'];
         $weightMode = BarcodeLabel::usesWeight();
+        $dates = BarcodeLabel::printsDates($settings);
 
         return [
             'separate_rows' => $this->separateRows,
@@ -129,6 +140,8 @@ class CartPage extends Component
             'category_name' => BarcodeLabel::usesCategoryName(),
             'price_column' => BarcodeLabel::printsPrice($settings),
             'weight_column' => $weightMode,
+            'mfg_date_column' => $dates['mfg_date'],
+            'exp_date_column' => $dates['exp_date'],
         ];
     }
 
@@ -623,6 +636,7 @@ class CartPage extends Component
             'unit_price' => $row['unit_price'] = is_numeric($value) && $value >= 0 ? round((float) $value, 2) : null,
             'tax' => $row['tax'] = is_numeric($value) && $value >= 0 ? round((float) $value, 2) : 0,
             'quantity' => $row['quantity'] = max(1, (int) $value),
+            'mfg_date', 'exp_date' => $row[$field] = BarcodeLabel::rowDate($value),
             default => null,
         };
 
@@ -658,8 +672,9 @@ class CartPage extends Component
     }
 
     /**
-     * Custom fill: one MRP, weight, unit price and/or tax typed once, applied to
-     * every row. A typed MRP wins; otherwise rows get their MRP worked out again.
+     * Custom fill: one MRP, weight, unit price, tax and/or date typed once,
+     * applied to every row. A typed MRP wins; otherwise rows get their MRP
+     * worked out again.
      */
     public function fillAllRows(): void
     {
@@ -667,9 +682,13 @@ class CartPage extends Component
         $weight = is_numeric($this->fillWeight) && $this->fillWeight > 0 && $this->cartSettings()['weight_column'] ? round((float) $this->fillWeight, 3) : null;
         $unitPrice = is_numeric($this->fillUnitPrice) && $this->fillUnitPrice >= 0 ? round((float) $this->fillUnitPrice, 2) : null;
         $tax = is_numeric($this->fillTax) && $this->fillTax >= 0 ? round((float) $this->fillTax, 2) : null;
+        $dates = array_filter([
+            'mfg_date' => BarcodeLabel::rowDate($this->fillMfgDate),
+            'exp_date' => BarcodeLabel::rowDate($this->fillExpDate),
+        ]);
 
-        if ($price === null && $weight === null && $unitPrice === null && $tax === null) {
-            $this->dispatch('error', ['message' => 'Enter an MRP, weight, unit price or tax to fill.']);
+        if ($price === null && $weight === null && $unitPrice === null && $tax === null && $dates === []) {
+            $this->dispatch('error', ['message' => 'Enter an MRP, weight, unit price, tax or date to fill.']);
 
             return;
         }
@@ -690,12 +709,17 @@ class CartPage extends Component
             if ($price === null && ($weight !== null || $unitPrice !== null || $tax !== null)) {
                 $this->recalculatePrice($rowKey);
             }
+            foreach ($dates as $field => $date) {
+                $this->cartItems[$rowKey][$field] = $date;
+            }
         }
 
         $this->fillPrice = '';
         $this->fillWeight = '';
         $this->fillUnitPrice = '';
         $this->fillTax = '';
+        $this->fillMfgDate = '';
+        $this->fillExpDate = '';
         $this->persistCart();
         $this->dispatch('success', ['message' => 'Filled '.count($this->cartItems).' row(s).']);
     }
@@ -766,6 +790,33 @@ class CartPage extends Component
 
                 return;
             }
+        }
+
+        foreach (BarcodeLabel::DATE_FIELDS as $field => $label) {
+            if (! $cart[$field.'_column']) {
+                continue;
+            }
+
+            $missing = collect($printItems)->filter(fn (array $item): bool => BarcodeLabel::rowDate($item[$field] ?? null) === null);
+            if ($missing->isNotEmpty()) {
+                $this->selectedRowKey = (string) $missing->keys()->first();
+                $this->dispatch('error', ['message' => "Enter the {$label} for every row ({$missing->count()} missing)."]);
+
+                return;
+            }
+        }
+
+        $expiresFirst = collect($printItems)->filter(function (array $item): bool {
+            $mfgDate = BarcodeLabel::rowDate($item['mfg_date'] ?? null);
+            $expDate = BarcodeLabel::rowDate($item['exp_date'] ?? null);
+
+            return $mfgDate !== null && $expDate !== null && $expDate < $mfgDate;
+        });
+        if ($cart['mfg_date_column'] && $cart['exp_date_column'] && $expiresFirst->isNotEmpty()) {
+            $this->selectedRowKey = (string) $expiresFirst->keys()->first();
+            $this->dispatch('error', ['message' => "The Exp Date is before the Mfg Date on {$expiresFirst->count()} row(s)."]);
+
+            return;
         }
 
         session(['print_cart_items' => $printItems]);

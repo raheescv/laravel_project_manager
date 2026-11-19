@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Product;
+use Carbon\CarbonImmutable;
 use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
 
 /**
@@ -13,6 +14,82 @@ use Milon\Barcode\Facades\DNS1DFacade as DNS1D;
  */
 class BarcodeLabel
 {
+    /**
+     * The date lines a label can print. Their values come only from the print
+     * cart row (typed at print time); nothing is stored on the product.
+     *
+     * @var array<string, string>
+     */
+    public const DATE_FIELDS = [
+        'mfg_date' => 'Mfg Date',
+        'exp_date' => 'Exp Date',
+    ];
+
+    /**
+     * How a date line may be written, as a PHP date format => an example.
+     *
+     * @return array<string, string>
+     */
+    public static function dateFormats(): array
+    {
+        $sample = CarbonImmutable::create(2026, 11, 5);
+
+        return collect(['d - m - Y', 'd-m-Y', 'd/m/Y', 'd.m.Y', 'd M Y', 'M Y', 'm/Y', 'Y-m-d'])
+            ->mapWithKeys(fn (string $format): array => [$format => $sample->format($format)])
+            ->all();
+    }
+
+    /**
+     * Which date lines the template prints: a jewellery tag's date fields, or
+     * a sticker's date elements.
+     *
+     * @return array<string, bool>
+     */
+    public static function printsDates(array $settings): array
+    {
+        $isJewellery = self::type($settings) === 'jewellery_tag';
+
+        return collect(self::DATE_FIELDS)
+            ->map(fn (string $label, string $key): bool => (bool) ($isJewellery
+                ? ($settings['fields'][$key]['visible'] ?? false)
+                : ($settings[$key]['visible'] ?? false)))
+            ->all();
+    }
+
+    /**
+     * A cart row's date as Y-m-d, or null when it is blank or not a real date.
+     */
+    public static function rowDate(mixed $value): ?string
+    {
+        if (! is_string($value) || preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($value)) !== 1) {
+            return null;
+        }
+
+        $date = CarbonImmutable::createFromFormat('!Y-m-d', trim($value));
+
+        return $date && $date->format('Y-m-d') === trim($value) ? $date->format('Y-m-d') : null;
+    }
+
+    /**
+     * A date line's text in the field's format, or '' without a date.
+     *
+     * @param  array<string, mixed>  $field
+     */
+    public static function dateText(?string $date, array $field): string
+    {
+        $date = self::rowDate($date);
+        if ($date === null) {
+            return '';
+        }
+
+        $format = (string) ($field['format'] ?? '');
+        if (! array_key_exists($format, self::dateFormats())) {
+            $format = 'd-m-Y';
+        }
+
+        return CarbonImmutable::createFromFormat('!Y-m-d', $date)->format($format);
+    }
+
     public static function type(array $settings): string
     {
         return BarcodeTemplateConfiguration::resolveType($settings);
@@ -170,11 +247,11 @@ class BarcodeLabel
 
     /**
      * The per-row values a print cart row carries onto its label, kept only
-     * where they make sense: the row's MRP and tax % always, its grams only
-     * when the quantity label is Weight.
+     * where they make sense: the row's MRP, tax % and dates always, its grams
+     * only when the quantity label is Weight.
      *
      * @param  array<string, mixed>  $item
-     * @return array{price: ?float, weight: ?float, tax: ?float}
+     * @return array{price: ?float, weight: ?float, tax: ?float, mfg_date: ?string, exp_date: ?string}
      */
     public static function rowValues(array $settings, array $item): array
     {
@@ -186,6 +263,8 @@ class BarcodeLabel
             'price' => is_numeric($price) ? (float) $price : null,
             'weight' => is_numeric($weight) && (float) $weight > 0 && self::usesWeight() ? (float) $weight : null,
             'tax' => is_numeric($tax) && (float) $tax >= 0 ? (float) $tax : null,
+            'mfg_date' => self::rowDate($item['mfg_date'] ?? null),
+            'exp_date' => self::rowDate($item['exp_date'] ?? null),
         ];
     }
 
@@ -256,7 +335,7 @@ class BarcodeLabel
      * `amount` is the price before tax, `tax` its rate and amount, and `price`
      * the total with tax in the Settings currency.
      *
-     * @param  array{price?: ?float, weight?: ?float, tax?: ?float}  $row
+     * @param  array{price?: ?float, weight?: ?float, tax?: ?float, mfg_date?: ?string, exp_date?: ?string}  $row
      */
     public static function fieldValue(
         string $key,
@@ -282,6 +361,7 @@ class BarcodeLabel
                 ? rtrim(rtrim(number_format(self::taxRate($product, $row), 2), '0'), '.').'% '.number_format(self::taxAmount($product, $conversionFactor, $row), 2)
                 : '',
             'qty' => $weight === null ? self::qtyValue($field, $product, $conversionFactor, $inventory) : self::weightText($weight),
+            'mfg_date', 'exp_date' => self::dateText($row[$key] ?? null, $field),
             default => '',
         };
 

@@ -18,6 +18,7 @@
     </label>
 
     <p class="bcx-note">This is the physical sticker size sent to the printer.</p>
+    <p class="bcx-note">After changing it, use Auto adjust in the top bar to fit the elements to the new size.</p>
   </div>
 </template>
 

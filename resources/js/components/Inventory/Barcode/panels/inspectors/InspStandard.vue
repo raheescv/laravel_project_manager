@@ -70,6 +70,20 @@
       <p class="bcx-note">Weight prefix is used when Quantity Label In Print is Weight and the row has a weight.</p>
     </template>
 
+    <template v-if="DATE_FIELDS.includes(element.key)">
+      <label class="bcx-field">
+        <span>Prefix</span>
+        <input v-model="settings[element.key].prefix" type="text" placeholder="none" @input="$emit('change')" />
+      </label>
+      <label class="bcx-field">
+        <span>Format</span>
+        <select v-model="settings[element.key].format" @change="$emit('change')">
+          <option v-for="(example, format) in dateFormats" :key="format" :value="format">{{ example }}</option>
+        </select>
+      </label>
+      <p class="bcx-note">The date is typed on each row of the print cart when you print. The preview shows a sample.</p>
+    </template>
+
     <template v-if="element.key === 'barcode'">
       <div class="bcx-drawer__title">Barcode</div>
       <label class="bcx-field">
@@ -98,13 +112,14 @@
 <script setup>
 import { computed } from 'vue'
 import FontSelect from '../FontSelect.vue'
-import { STANDARD_ELEMENTS } from '../labels'
+import { DATE_FIELDS, STANDARD_ELEMENTS } from '../labels'
 
 defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   settings: { type: Object, required: true },
   barcodeTypes: { type: Object, default: () => ({}) },
+  dateFormats: { type: Object, default: () => ({}) },
   fonts: { type: Object, default: () => ({}) },
   fontWeights: { type: Object, default: () => ({}) },
   selected: { type: String, default: '' },

@@ -10,7 +10,12 @@ export const STANDARD_ELEMENTS = [
   { key: 'price_arabic', label: 'Price Arabic' },
   { key: 'size', label: 'Size' },
   { key: 'qty', label: 'Qty' },
+  { key: 'mfg_date', label: 'Mfg Date' },
+  { key: 'exp_date', label: 'Exp Date' },
 ]
+
+// Date lines: their values are typed on each print cart row at print time.
+export const DATE_FIELDS = ['mfg_date', 'exp_date']
 
 export const JEWELLERY_FIELD_LABELS = {
   product_name: 'Product Name',
@@ -20,6 +25,8 @@ export const JEWELLERY_FIELD_LABELS = {
   size: 'Size',
   amount: 'Amount (before tax)',
   tax: 'Tax',
+  mfg_date: 'Mfg Date',
+  exp_date: 'Exp Date',
 }
 
 // "Qty" or "Weight", from the sale setting Quantity Label In Print. The qty
