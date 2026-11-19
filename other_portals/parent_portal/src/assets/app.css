@@ -1261,3 +1261,73 @@ dl.pp-group__body dd.pp-text-muted{font-weight:500}
 /* A pay option that cannot be used (e.g. not enough on the student card). */
 .pp-tile:disabled{opacity:.55; cursor:not-allowed; box-shadow:0 0 0 1px var(--line)}
 .pp-tile:disabled .pp-tile__sub{color:var(--neg)}
+
+/* ---- Tour ("Show me how") — components/TourGuide.vue, wording in src/tours.js ---- */
+html.pp-touring{overflow:hidden}
+/* What a step points at stops clear of the sticky header and pay bar when scrolled to. */
+[data-tour]{scroll-margin-top:calc(var(--safe-top) + 72px); scroll-margin-bottom:24px}
+.pp-helpbtn{color:var(--accent-ink)}
+.pp-tour{position:fixed; inset:0; z-index:400}
+/* The veil catches every tap: the page stays still while a tip is showing. */
+.pp-tour__veil{position:absolute; inset:0; background:transparent}
+.pp-tour__veil.is-full{background:rgba(16,19,13,.56)}
+.pp-tour__spot{
+  position:fixed; border-radius:16px; pointer-events:none;
+  box-shadow:0 0 0 3px var(--accent),0 0 0 9px color-mix(in oklab,var(--accent) 22%,transparent),0 0 0 200vmax rgba(16,19,13,.56);
+  transition:top .38s var(--ease),left .38s var(--ease),width .38s var(--ease),height .38s var(--ease);
+}
+.pp-tour__card{
+  position:fixed; left:12px; right:12px; bottom:calc(var(--safe-bottom) + 12px); max-width:calc(var(--column) - 24px); margin:0 auto;
+  padding:16px 18px 16px; border-radius:18px; background:var(--surface); color:var(--ink);
+  box-shadow:0 0 0 1px var(--line),0 24px 60px -18px rgba(0,0,0,.5);
+  animation:pp-tour-in .32s var(--ease) both;
+}
+.pp-tour__card:focus{outline:none}
+.pp-tour--top .pp-tour__card{top:calc(var(--safe-top) + 12px); bottom:auto}
+.pp-tour--centre .pp-tour__card{top:50%; bottom:auto; max-width:400px; padding:24px 22px 18px; text-align:center; transform:translateY(-50%); animation-name:pp-tour-pop}
+.pp-tour__top{display:flex; align-items:center; justify-content:space-between; min-height:28px; margin-bottom:6px}
+.pp-tour--centre .pp-tour__top{position:absolute; top:12px; left:18px; right:10px}
+.pp-tour__count{font:500 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2)}
+.pp-tour__skip{min-height:36px; padding:0 8px; border:0; background:none; color:var(--ink-2); font-size:14px; font-weight:600}
+.pp-tour__icon{display:grid; place-items:center; width:64px; height:64px; margin:22px auto 14px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-size:28px}
+.pp-tour__title{font-size:19px; font-weight:800; line-height:1.2; letter-spacing:-.02em}
+.pp-tour--centre .pp-tour__title{font-size:23px}
+.pp-tour__text{margin-top:6px; font-size:15.5px; line-height:1.5; color:var(--ink-2)}
+.pp-tour__foot{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:16px}
+.pp-tour--centre .pp-tour__foot{flex-direction:column-reverse; gap:14px; margin-top:20px}
+.pp-tour--centre .pp-tour__buttons{width:100%}
+.pp-tour--centre .pp-tour__btn:not(.pp-tour__btn--ghost){flex:1}
+.pp-tour__dots{display:flex; gap:6px}
+.pp-tour__dot{width:7px; height:7px; border-radius:4px; background:var(--line); transition:width .25s var(--ease),background .25s ease}
+.pp-tour__dot.is-on{width:20px; background:var(--accent)}
+.pp-tour__buttons{display:flex; gap:8px; margin-left:auto}
+.pp-tour__btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:96px; min-height:46px; padding:0 18px;
+  border:0; border-radius:var(--radius-control); background:var(--accent); color:var(--on-accent); font-size:16px; font-weight:700;
+  box-shadow:0 10px 22px -14px var(--accent); transition:transform .12s ease,filter .12s ease;
+}
+.pp-tour__btn .fa{font-size:20px; line-height:0}
+.pp-tour__btn:active{transform:scale(.98); filter:brightness(.93)}
+.pp-tour__btn--ghost{min-width:0; padding:0 14px 0 10px; background:var(--fill); color:var(--ink); box-shadow:none}
+.pp-tour-enter-active,.pp-tour-leave-active{transition:opacity .25s ease}
+.pp-tour-enter-from,.pp-tour-leave-to{opacity:0}
+@keyframes pp-tour-in{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+@keyframes pp-tour-pop{from{opacity:0; transform:translateY(-46%) scale(.96)}to{opacity:1; transform:translateY(-50%)}}
+@media (max-width:370px){
+  .pp-tour__card{padding:14px 14px}
+  .pp-tour__btn{min-width:84px; padding:0 14px}
+}
+/* Computers: the card sits beside what it explains (TourGuide sets top/left). */
+@media (min-width:1024px){
+  .pp-tour:not(.pp-tour--centre):not(.pp-tour--bottom) .pp-tour__card{right:auto; bottom:auto; width:360px; max-width:calc(100vw - 24px); margin:0}
+  .pp-tour--bottom .pp-tour__card{width:420px; left:50%; right:auto; transform:translateX(-50%); animation:none}
+}
+@media (hover:hover){
+  .pp-tour__btn:hover{filter:brightness(1.06)}
+  .pp-tour__btn--ghost:hover{filter:none; background:color-mix(in oklab,var(--fill),var(--ink) 6%)}
+  .pp-tour__skip:hover{color:var(--ink)}
+}
+@media (prefers-reduced-motion:reduce){
+  .pp-tour__spot,.pp-tour__dot{transition:none}
+  .pp-tour__card{animation:none}
+}

@@ -313,7 +313,7 @@ onMounted(load)
       </div>
 
       <div v-else class="pp-order__layout">
-        <section class="pp-group pp-order__meals">
+        <section class="pp-group pp-order__meals" data-tour="meals">
           <div class="pp-meals-head">
             <h2 class="pp-group__head">Meals · add one or more</h2>
             <div class="pp-viewswitch" role="group" aria-label="Show meals as">
@@ -321,7 +321,7 @@ onMounted(load)
               <button type="button" aria-label="Grid" title="Grid" :aria-pressed="mealView === 'grid'" @click="setMealView('grid')"><i class="fa fa-th-large"></i></button>
             </div>
           </div>
-          <div class="pp-meal-tools">
+          <div class="pp-meal-tools" data-tour="meal-search">
             <label class="pp-meal-search">
               <i class="fa fa-search" aria-hidden="true"></i>
               <input v-model="mealSearch" type="search" placeholder="Search meals" aria-label="Search meals" autocomplete="off" />
@@ -338,7 +338,7 @@ onMounted(load)
         </section>
 
         <div class="pp-order__side">
-        <section v-if="weekly" class="pp-group">
+        <section v-if="weekly" class="pp-group" data-tour="weekdays">
           <h2 class="pp-group__head">Days</h2>
           <div class="pp-daychips" role="group" aria-label="Days">
             <button
@@ -359,7 +359,7 @@ onMounted(load)
           </p>
         </section>
 
-        <section class="pp-group pp-cart-panel">
+        <section class="pp-group pp-cart-panel" data-tour="cart">
           <h2 class="pp-group__head">Your order<span v-if="selectedCount">{{ selectedCount }} {{ selectedCount === 1 ? 'item' : 'items' }}</span></h2>
           <MealCart :meals="selectedMeals" :quantities="quantities" :total="selectedTotal" :max="maxQuantity" :days="weekly ? days.length : null" @quantity="setQuantity" />
         </section>
@@ -420,7 +420,7 @@ onMounted(load)
       </div>
     </main>
 
-    <footer v-if="offered.length && !locked" class="pp-actionbar">
+    <footer v-if="offered.length && !locked" class="pp-actionbar" data-tour="order-bar">
       <button v-if="selectedMeals.length" class="pp-order-sum" type="button" :aria-label="`Review your order: ${selectedLabel}`" @click="cartOpen = true">
         <span class="pp-order-sum__thumbs" aria-hidden="true">
           <span v-for="option in selectedMeals.slice(0, 3)" :key="option.id" class="pp-thumb" :style="mealThumbStyle(option)"><i v-if="!mealThumbStyle(option)" class="fa fa-cutlery"></i></span>

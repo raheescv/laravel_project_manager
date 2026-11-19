@@ -98,11 +98,11 @@ onMounted(loadTab)
 <template>
   <section class="pp-activity">
     <div class="pp-activity__head">
-      <div v-if="tabs" class="pp-seg" role="tablist" aria-label="Bills or statement">
+      <div v-if="tabs" class="pp-seg" data-tour="activity-tabs" role="tablist" aria-label="Bills or statement">
         <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'bills'" @click="setQuery({ tab: 'bills' })">Bills</button>
         <button class="pp-seg__tab" type="button" role="tab" :aria-selected="tab === 'statement'" @click="setQuery({ tab: 'statement' })">Statement</button>
       </div>
-      <div class="pp-month">
+      <div class="pp-month" data-tour="month">
         <button class="pp-month__btn" type="button" aria-label="Previous month" @click="setQuery({ month: shiftMonth(month, -1) })">
           <i class="fa fa-chevron-left"></i>
         </button>
@@ -114,7 +114,7 @@ onMounted(loadTab)
     </div>
 
     <!-- Bills -->
-    <div v-if="tab === 'bills'" class="pp-group" role="tabpanel" :class="{ 'is-loading': billsLoading && bills.length }">
+    <div v-if="tab === 'bills'" class="pp-group" data-tour="activity-list" role="tabpanel" :class="{ 'is-loading': billsLoading && bills.length }">
       <div class="pp-group__body">
         <template v-if="billsLoading && !billsPage">
           <div v-for="n in 3" :key="n" class="pp-row pp-bill-row" aria-hidden="true">
@@ -159,7 +159,7 @@ onMounted(loadTab)
     </div>
 
     <!-- Statement -->
-    <div v-else class="pp-group" role="tabpanel" :class="{ 'is-loading': statementLoading && statement }">
+    <div v-else class="pp-group" data-tour="activity-list" role="tabpanel" :class="{ 'is-loading': statementLoading && statement }">
       <div class="pp-group__body">
         <template v-if="statementLoading && !statement">
           <div v-for="n in 3" :key="n" class="pp-row pp-row--icon" aria-hidden="true">

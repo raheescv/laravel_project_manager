@@ -55,7 +55,7 @@ onMounted(load)
       </div>
     </div>
 
-    <article v-else class="pp-pass">
+    <article v-else class="pp-pass" data-tour="bill">
       <header class="pp-pass__head">
         <div class="pp-pass__brand">
           <BrandLogo plate class="pp-pass__logo" /><span>Canteen bill</span>

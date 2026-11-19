@@ -165,7 +165,7 @@ onMounted(load)
     </div>
 
     <template v-else-if="desktop">
-      <section class="pp-panel pp-weekly">
+      <section class="pp-panel pp-weekly" data-tour="weekly">
         <span
           class="pp-row__icon"
           :class="!schedule.weekly ? 'pp-row__icon--accent' : schedule.weekly.status === 'paused' ? 'pp-row__icon--muted' : 'pp-row__icon--pos'"
@@ -186,8 +186,8 @@ onMounted(load)
 
       <section>
         <h2 class="pp-group__head">{{ bigScreen ? 'Meal calendar' : 'Next school days' }}</h2>
-        <MealCalendar v-if="bigScreen" :board="board" :student-id="id" />
-        <div v-else class="pp-week">
+        <MealCalendar v-if="bigScreen" :board="board" :student-id="id" data-tour="days" />
+        <div v-else class="pp-week" data-tour="days">
           <component
             :is="day.locked ? 'div' : 'RouterLink'"
             v-for="{ day, card } in board"
@@ -209,7 +209,7 @@ onMounted(load)
             </span>
           </component>
         </div>
-        <p class="pp-group__foot">
+        <p class="pp-group__foot" data-tour="cutoff">
           <i class="fa fa-clock-o"></i>{{ cutoffNote }}
         </p>
       </section>
@@ -218,7 +218,7 @@ onMounted(load)
     <template v-else>
       <section class="pp-group">
         <h2 class="pp-group__head">Every week</h2>
-        <div class="pp-group__body">
+        <div class="pp-group__body" data-tour="weekly">
           <RouterLink class="pp-row pp-row--icon pp-weekly-row" :to="{ name: 'pre-order-weekly', params: { id } }">
             <template v-if="schedule.weekly">
               <span class="pp-row__icon" :class="schedule.weekly.status === 'paused' ? 'pp-row__icon--muted' : 'pp-row__icon--pos'"><i class="fa fa-refresh"></i></span>
@@ -245,7 +245,7 @@ onMounted(load)
 
       <section class="pp-group">
         <h2 class="pp-group__head">Next school days</h2>
-        <div class="pp-group__body">
+        <div class="pp-group__body" data-tour="days">
           <component
             :is="day.locked ? 'div' : 'RouterLink'"
             v-for="day in listDays"
@@ -266,13 +266,13 @@ onMounted(load)
             </span>
           </component>
         </div>
-        <p class="pp-group__foot">
+        <p class="pp-group__foot" data-tour="cutoff">
           <i class="fa fa-clock-o"></i>{{ cutoffNote }}
         </p>
       </section>
     </template>
 
-    <section v-if="schedule.enabled && paidDays.length" class="pp-group pp-paid">
+    <section v-if="schedule.enabled && paidDays.length" class="pp-group pp-paid" data-tour="paid">
       <h2 class="pp-group__head">Paid orders</h2>
       <div class="pp-group__body">
         <div v-for="day in paidDays" :key="day.date" class="pp-row pp-day-row">

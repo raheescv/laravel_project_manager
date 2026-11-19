@@ -102,18 +102,18 @@ onMounted(loadStudent)
           <p v-if="details">{{ details }}</p>
         </div>
         <template v-if="student">
-          <RouterLink v-if="student.topup.enabled" class="pp-btn pp-btn--primary pp-btn--auto" :to="{ name: 'topup', params: { id } }">
+          <RouterLink v-if="student.topup.enabled" class="pp-btn pp-btn--primary pp-btn--auto" data-tour="topup" :to="{ name: 'topup', params: { id } }">
             <i class="fa fa-plus-circle"></i>Top up card
           </RouterLink>
-          <button v-else class="pp-btn pp-btn--primary pp-btn--auto" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
-          <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder pp-btn--auto" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
+          <button v-else class="pp-btn pp-btn--primary pp-btn--auto" type="button" data-tour="topup" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
+          <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder pp-btn--auto" data-tour="preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
         </template>
       </header>
       <p v-if="student && !student.topup.enabled" class="pp-cta__note pp-cta__note--start">
         Online top-up isn't available right now. Please contact the school office.
       </p>
 
-      <div v-if="student" class="pp-stats">
+      <div v-if="student" class="pp-stats" data-tour="balance">
         <div class="pp-stat" :class="{ 'pp-stat--neg': student.balance < 0 }">
           <small>Card balance</small><b>{{ money(student.balance) }}</b><span>{{ balanceNote }}</span>
         </div>
@@ -128,7 +128,7 @@ onMounted(loadStudent)
     </template>
 
     <template v-else>
-      <section class="pp-balance-hero">
+      <section class="pp-balance-hero" data-tour="balance">
         <span v-if="!student" class="pp-skel pp-skel--card" aria-busy="true"></span>
         <ChildCard v-else :student="student" hero />
 
@@ -144,14 +144,14 @@ onMounted(loadStudent)
       </section>
 
       <div v-if="student" class="pp-cta">
-        <RouterLink v-if="student.topup.enabled" class="pp-btn pp-btn--primary" :to="{ name: 'topup', params: { id } }">
+        <RouterLink v-if="student.topup.enabled" class="pp-btn pp-btn--primary" data-tour="topup" :to="{ name: 'topup', params: { id } }">
           <i class="fa fa-plus-circle"></i>Top up card
         </RouterLink>
         <template v-else>
-          <button class="pp-btn pp-btn--primary" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
+          <button class="pp-btn pp-btn--primary" type="button" data-tour="topup" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
           <p class="pp-cta__note">Online top-up isn't available right now. Please contact the school office.</p>
         </template>
-        <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
+        <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder" data-tour="preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
         <p v-if="student.pre_orders?.enabled" class="pp-cta__note">{{ mealsSummary }}</p>
       </div>
     </template>
@@ -160,12 +160,12 @@ onMounted(loadStudent)
 
     <section v-else class="pp-group">
       <div class="pp-group__body">
-        <RouterLink class="pp-row pp-row--icon" :to="{ name: 'student-bills', params: { id } }">
+        <RouterLink class="pp-row pp-row--icon" data-tour="bills" :to="{ name: 'student-bills', params: { id } }">
           <span class="pp-row__icon pp-row__icon--accent"><i class="fa fa-file-text-o"></i></span>
           <span class="pp-row__main"><span class="pp-row__title">Bills</span><span class="pp-row__sub">Every purchase at the canteen</span></span>
           <i class="fa fa-angle-right pp-chev"></i>
         </RouterLink>
-        <RouterLink class="pp-row pp-row--icon" :to="{ name: 'student-statement', params: { id } }">
+        <RouterLink class="pp-row pp-row--icon" data-tour="statement" :to="{ name: 'student-statement', params: { id } }">
           <span class="pp-row__icon pp-row__icon--pos"><i class="fa fa-list-alt"></i></span>
           <span class="pp-row__main"><span class="pp-row__title">Statement</span><span class="pp-row__sub">Top-ups, purchases and refunds, month by month</span></span>
           <i class="fa fa-angle-right pp-chev"></i>
@@ -174,7 +174,7 @@ onMounted(loadStudent)
     </section>
 
     <!-- Only for reporting a lost card: the card's day-to-day state is on its face above. -->
-    <section v-if="student && cardState !== 'none'" class="pp-group pp-lost">
+    <section v-if="student && cardState !== 'none'" class="pp-group pp-lost" data-tour="lost">
       <div class="pp-group__body">
         <div v-if="cardState === 'blocked'" class="pp-row pp-row--icon">
           <span class="pp-row__icon pp-row__icon--neg"><i class="fa fa-ban"></i></span>

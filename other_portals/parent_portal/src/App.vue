@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ToastHost from '@/components/ToastHost.vue'
+import TourGuide from '@/components/TourGuide.vue'
 import WalletPane from '@/components/WalletPane.vue'
 import { session } from '@/session'
 import { desktop } from '@/utils/viewport'
@@ -43,4 +44,5 @@ watch(
     </Transition>
   </RouterView>
   <ToastHost />
+  <TourGuide />
 </template>

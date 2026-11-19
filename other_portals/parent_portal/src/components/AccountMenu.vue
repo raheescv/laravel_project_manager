@@ -3,8 +3,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { session } from '@/session'
+import { tourLabels } from '@/tours'
 import { signOut } from '@/utils/account'
 import { initials } from '@/utils/format'
+import { hasTour, startTour } from '@/utils/tour'
 
 /** The desktop account button: who is signed in, their profile and password, sign out. Phones use the action sheet on the home page. */
 const route = useRoute()
@@ -31,6 +33,12 @@ watch(open, listen)
 watch(() => route.fullPath, () => (open.value = false))
 onBeforeUnmount(() => listen(false))
 
+/** Close the menu, then play this page's tour again. */
+function showTour() {
+  open.value = false
+  startTour(route)
+}
+
 async function leave() {
   busy.value = true
   await signOut(router)
@@ -39,7 +47,7 @@ async function leave() {
 
 <template>
   <div ref="root" class="pp-menu-anchor">
-    <button class="pp-avatar-btn" type="button" aria-label="Account menu" aria-haspopup="menu" :aria-expanded="open" @click="open = !open">
+    <button class="pp-avatar-btn" type="button" data-tour="account" aria-label="Account menu" aria-haspopup="menu" :aria-expanded="open" @click="open = !open">
       <span class="pp-avatar">{{ initials(parent.name) }}</span>
     </button>
     <div v-if="open" class="pp-menu" role="menu">
@@ -53,6 +61,7 @@ async function leave() {
       </div>
       <RouterLink class="pp-menu__item" :to="{ name: 'profile' }" role="menuitem"><i class="fa fa-user"></i>Profile</RouterLink>
       <RouterLink class="pp-menu__item" :to="{ name: 'change-password' }" role="menuitem"><i class="fa fa-lock"></i>Change password</RouterLink>
+      <button v-if="hasTour(route.name)" class="pp-menu__item" type="button" role="menuitem" @click="showTour"><i class="fa fa-question-circle"></i>{{ tourLabels.help }}</button>
       <button class="pp-menu__item pp-menu__item--neg" type="button" role="menuitem" :disabled="busy" @click="leave">
         <i class="fa fa-sign-out"></i>{{ busy ? 'Signing out…' : 'Sign out' }}
       </button>

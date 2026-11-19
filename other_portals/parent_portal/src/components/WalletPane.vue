@@ -6,6 +6,7 @@ import AccountMenu from '@/components/AccountMenu.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import ChildCard from '@/components/ChildCard.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import TourHelp from '@/components/TourHelp.vue'
 import { children, loadChildren } from '@/children'
 import { session } from '@/session'
 import { firstName } from '@/utils/format'
@@ -42,6 +43,7 @@ onMounted(() => {
         <span class="pp-brandname"><small>Parent Portal</small></span>
       </RouterLink>
       <div class="pp-wallet__tools">
+        <TourHelp />
         <ThemeToggle />
         <AccountMenu />
       </div>
@@ -60,7 +62,7 @@ onMounted(() => {
       We couldn't load your children.
       <button class="pp-link" type="button" @click="loadChildren">Try again</button>
     </p>
-    <TransitionGroup v-else tag="section" name="pp-wallet" class="pp-wallet-stack" :class="{ 'has-selected': selected }" aria-label="Your children">
+    <TransitionGroup v-else tag="section" name="pp-wallet" class="pp-wallet-stack" data-tour="cards" :class="{ 'has-selected': selected }" aria-label="Your children">
       <ChildCard
         v-for="student in cards"
         :key="student.account_id"

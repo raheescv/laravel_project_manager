@@ -302,7 +302,7 @@ onUnmounted(stopTicker)
             </span>
           </div>
 
-          <section v-if="forPreOrder" class="pp-group">
+          <section v-if="forPreOrder" class="pp-group" data-tour="amount">
             <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-money"></i>Amount</span></h2>
             <div class="pp-group__body">
               <div class="pp-row">
@@ -318,7 +318,7 @@ onUnmounted(stopTicker)
             </p>
           </section>
 
-          <section v-else class="pp-group">
+          <section v-else class="pp-group" data-tour="amount">
             <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-money"></i>Amount</span></h2>
             <div v-if="limits.suggestions.length" class="pp-chips" role="group" aria-label="Quick amounts">
               <button
@@ -354,7 +354,7 @@ onUnmounted(stopTicker)
           </section>
 
           <!-- Debit (QPay) or credit (Mastercard Gateway): shown as a choice only when the school offers both. -->
-          <section v-if="methods.length" class="pp-group">
+          <section v-if="methods.length" class="pp-group" data-tour="paywith">
             <h2 class="pp-group__head"><span class="pp-group__lead"><i class="fa fa-credit-card"></i>Pay with</span></h2>
             <div v-if="methods.length > 1" class="pp-tiles" role="radiogroup" aria-label="Card type">
               <button
@@ -407,7 +407,7 @@ onUnmounted(stopTicker)
               <div class="is-total"><dt>New balance</dt><dd>{{ valid ? money(newBalance) : '—' }}</dd></div>
             </template>
           </dl>
-          <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" :disabled="paying || blocked">
+          <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" data-tour="pay" :disabled="paying || blocked">
             <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa" :class="blocked ? 'fa-clock-o' : 'fa-lock'"></i>
             {{ payLabel }}
           </button>
@@ -416,7 +416,7 @@ onUnmounted(stopTicker)
       </div>
     </main>
 
-    <footer v-if="!desktop && student && limits.enabled" class="pp-actionbar">
+    <footer v-if="!desktop && student && limits.enabled" class="pp-actionbar" data-tour="pay">
       <button class="pp-btn pp-btn--pay" :class="{ 'is-busy': paying }" type="submit" form="topup-form" :disabled="paying || blocked">
         <span v-if="paying" class="pp-spinner pp-spinner--sm" aria-hidden="true"></span><i v-else class="fa" :class="blocked ? 'fa-clock-o' : 'fa-lock'"></i>
         {{ payLabel }}

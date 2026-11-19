@@ -11,14 +11,22 @@ import LoadError from '@/components/LoadError.vue'
 import StudentAvatar from '@/components/StudentAvatar.vue'
 import { children, loadChildren } from '@/children'
 import { session } from '@/session'
+import { tourLabels } from '@/tours'
 import { signOut } from '@/utils/account'
 import { classLabel, firstName, initials, money } from '@/utils/format'
+import { startTour } from '@/utils/tour'
 import { desktop } from '@/utils/viewport'
 
 const route = useRoute()
 const router = useRouter()
 
 const menuOpen = ref(false)
+
+/** The action sheet's "Show me how": let the sheet slide away, then play the tour. */
+function showTour() {
+  menuOpen.value = false
+  setTimeout(() => startTour(route), 420)
+}
 const signingOut = ref(false)
 
 const students = computed(() => children.list)
@@ -65,7 +73,7 @@ onMounted(() => {
       </span>
     </template>
     <template #end>
-      <button class="pp-avatar-btn" type="button" aria-label="Account menu" @click="menuOpen = true">
+      <button class="pp-avatar-btn" type="button" data-tour="account" aria-label="Account menu" @click="menuOpen = true">
         <span class="pp-avatar">{{ initials(parent.name) }}</span>
       </button>
     </template>
@@ -82,7 +90,7 @@ onMounted(() => {
       <p v-else-if="students.length">Your {{ students.length }} children. Tap a card to open it.</p>
     </div>
 
-    <div v-if="desktop && students.length" class="pp-stats">
+    <div v-if="desktop && students.length" class="pp-stats" data-tour="overview">
       <div class="pp-stat">
         <small><i class="fa fa-credit-card"></i>On the cards</small>
         <b :class="{ 'pp-text-neg': total < 0 }">{{ money(total) }}</b>
@@ -119,12 +127,12 @@ onMounted(() => {
         <span class="pp-skel pp-skel--card"></span>
       </section>
 
-      <section v-else-if="students.length" class="pp-wallet-stack" aria-label="Your children">
+      <section v-else-if="students.length" class="pp-wallet-stack" data-tour="cards" aria-label="Your children">
         <ChildCard v-for="student in students" :key="student.account_id" :student="student" :to="{ name: 'student', params: { id: student.account_id } }" />
       </section>
     </template>
 
-    <section v-else-if="students.length" class="pp-panel" aria-label="Your children">
+    <section v-else-if="students.length" class="pp-panel" data-tour="children" aria-label="Your children">
       <h2 class="pp-panel__head pp-panel__title">Children</h2>
       <div class="pp-group__body">
         <div v-for="student in students" :key="student.account_id" class="pp-row pp-kid-row">
@@ -163,6 +171,7 @@ onMounted(() => {
       </div>
       <RouterLink class="pp-action" :to="{ name: 'profile' }"><i class="fa fa-user"></i>Profile</RouterLink>
       <RouterLink class="pp-action" :to="{ name: 'change-password' }"><i class="fa fa-lock"></i>Change password</RouterLink>
+      <button class="pp-action" type="button" @click="showTour"><i class="fa fa-question-circle"></i>{{ tourLabels.help }}</button>
       <button class="pp-action pp-action--danger" type="button" :disabled="signingOut" @click="leave">
         <i class="fa fa-sign-out"></i>{{ signingOut ? 'Signing out…' : 'Sign out' }}
       </button>

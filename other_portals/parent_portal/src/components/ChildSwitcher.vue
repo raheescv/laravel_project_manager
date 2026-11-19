@@ -33,7 +33,7 @@ function pick(child) {
 </script>
 
 <template>
-  <nav v-if="list.length" class="pp-kidswitch" aria-label="Child">
+  <nav v-if="list.length" class="pp-kidswitch" :data-tour="list.length > 1 ? 'kid-switch' : undefined" aria-label="Child">
     <span class="pp-kidswitch__label">{{ label }}</span>
     <div class="pp-kidswitch__row">
       <button
