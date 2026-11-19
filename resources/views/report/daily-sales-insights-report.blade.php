@@ -19,5 +19,6 @@
     </div>
     @push('scripts')
         <x-select.branchSelect />
+        @include('components.select.paymentMethodSelect')
     @endpush
 </x-app-layout>

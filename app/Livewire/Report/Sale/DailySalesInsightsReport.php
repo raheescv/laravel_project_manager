@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Report\Sale;
 
+use App\Exports\DailySalesInsightsReportExport;
 use App\Models\Account;
 use App\Models\Sale;
 use App\Models\SalePayment;
@@ -11,6 +12,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DailySalesInsightsReport extends Component
 {
@@ -21,6 +24,8 @@ class DailySalesInsightsReport extends Component
     public $from_date;
 
     public $to_date;
+
+    public $payment_method_id = '';
 
     public $limit = 10;
 
@@ -141,7 +146,51 @@ class DailySalesInsightsReport extends Component
         $this->dispatch('updateChart', $chartData->toArray(), $this->chart_period);
     }
 
+    public function export(): BinaryFileResponse
+    {
+        abort_unless(auth()->user()->can('sale.export'), 403);
+
+        [$data, $total, $paymentMethodColumns] = $this->getReportData();
+
+        $filters = [
+            'from_date' => $this->from_date,
+            'to_date' => $this->to_date,
+            'branch_id' => $this->branch_id,
+            'payment_method_id' => $this->payment_method_id,
+            'payment_method_name' => $this->payment_method_id ? Account::whereKey($this->payment_method_id)->value('name') : null,
+            'chart_period' => $this->chart_period,
+        ];
+
+        $from = $this->from_date ? systemDate($this->from_date) : '';
+        $to = $this->to_date ? systemDate($this->to_date) : '';
+        $exportFileName = 'DailySalesInsights_'.$from.'_'.$to.'_'.now()->timestamp.'.xlsx';
+
+        return Excel::download(new DailySalesInsightsReportExport($data, $total, $paymentMethodColumns, $filters), $exportFileName);
+    }
+
     public function render()
+    {
+        [$data, $total, $paymentMethodColumns] = $this->getReportData();
+
+        $this->prepareSalesChartData(collect($data));
+
+        return view('livewire.report.sale.daily-sales-insights-report', [
+            'data' => $data,
+            'total' => $total,
+            'paymentMethodColumns' => $paymentMethodColumns,
+        ]);
+    }
+
+    /**
+     * Builds the period × branch summary shared by the screen and the Excel export.
+     *
+     * With a payment method selected, the sales figures (and their paid/credit) only
+     * cover invoices that received a payment by that method, and the payment columns
+     * only show that method.
+     *
+     * @return array{0: array<int, array<string, mixed>>, 1: array<string, float|int>, 2: array<int, array{name: string, invoice_key: string, due_key: string, total_key: string}>}
+     */
+    private function getReportData(): array
     {
         $paymentMethodColumns = $this->buildPaymentMethodColumns();
         $emptyPaymentColumns = $this->buildEmptyPaymentColumns($paymentMethodColumns);
@@ -154,6 +203,7 @@ class DailySalesInsightsReport extends Component
             ->when($from, fn ($q) => $q->where('sales.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sales.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('branch_id', $this->branch_id))
+            ->when($this->payment_method_id, fn ($q) => $q->whereHas('payments', fn ($payment) => $payment->where('payment_method_id', $this->payment_method_id)))
             ->completed()
             ->select(
                 'sales.date',
@@ -171,6 +221,7 @@ class DailySalesInsightsReport extends Component
             ->when($from, fn ($q) => $q->where('tailoring_orders.order_date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
+            ->when($this->payment_method_id, fn ($q) => $q->whereHas('payments', fn ($payment) => $payment->where('payment_method_id', $this->payment_method_id)))
             ->select(
                 DB::raw('tailoring_orders.order_date as date'),
                 'tailoring_orders.branch_id',
@@ -205,6 +256,9 @@ class DailySalesInsightsReport extends Component
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
             ->where('sales.status', 'completed')
             ->whereColumn('sale_payments.date', 'sales.date')
+            ->when($this->payment_method_id, fn ($q) => $q->whereExists(fn ($exists) => $exists->from('sale_payments as method_payments')
+                ->whereColumn('method_payments.sale_id', 'sales.id')
+                ->where('method_payments.payment_method_id', $this->payment_method_id)))
             ->select(
                 'sales.date as date',
                 'sales.branch_id',
@@ -220,6 +274,9 @@ class DailySalesInsightsReport extends Component
             ->when($to, fn ($q) => $q->where('tailoring_orders.order_date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
             ->whereColumn('tailoring_payments.date', 'tailoring_orders.order_date')
+            ->when($this->payment_method_id, fn ($q) => $q->whereExists(fn ($exists) => $exists->from('tailoring_payments as method_payments')
+                ->whereColumn('method_payments.tailoring_order_id', 'tailoring_orders.id')
+                ->where('method_payments.payment_method_id', $this->payment_method_id)))
             ->select(
                 'tailoring_orders.order_date as date',
                 'tailoring_orders.branch_id',
@@ -249,6 +306,7 @@ class DailySalesInsightsReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('sale_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
@@ -267,6 +325,7 @@ class DailySalesInsightsReport extends Component
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
             ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
             ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('tailoring_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
@@ -297,6 +356,7 @@ class DailySalesInsightsReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('sale_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
@@ -314,6 +374,7 @@ class DailySalesInsightsReport extends Component
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
             ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
             ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('tailoring_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
@@ -343,6 +404,7 @@ class DailySalesInsightsReport extends Component
             ->join('sales', 'sales.id', '=', 'sale_id')
             ->join('branches', 'branches.id', '=', 'sales.branch_id')
             ->join('accounts', 'accounts.id', '=', 'payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('sale_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('sale_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('sale_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('sales.branch_id', $this->branch_id))
@@ -361,6 +423,7 @@ class DailySalesInsightsReport extends Component
             ->join('tailoring_orders', 'tailoring_orders.id', '=', 'tailoring_payments.tailoring_order_id')
             ->join('branches', 'branches.id', '=', 'tailoring_orders.branch_id')
             ->join('accounts', 'accounts.id', '=', 'tailoring_payments.payment_method_id')
+            ->when($this->payment_method_id, fn ($q) => $q->where('tailoring_payments.payment_method_id', $this->payment_method_id))
             ->when($from, fn ($q) => $q->where('tailoring_payments.date', '>=', $from))
             ->when($to, fn ($q) => $q->where('tailoring_payments.date', '<=', $to))
             ->when($this->branch_id, fn ($q) => $q->where('tailoring_orders.branch_id', $this->branch_id))
@@ -439,13 +502,7 @@ class DailySalesInsightsReport extends Component
             $total[$column['total_key']] = $summaryCollection->sum($column['total_key']);
         }
 
-        $this->prepareSalesChartData($summaryCollection);
-
-        return view('livewire.report.sale.daily-sales-insights-report', [
-            'data' => $sortedSummary,
-            'total' => $total,
-            'paymentMethodColumns' => $paymentMethodColumns,
-        ]);
+        return [$sortedSummary, $total, $paymentMethodColumns];
     }
 
     private function normalizePaymentMethodName(?string $name): string
@@ -490,6 +547,7 @@ class DailySalesInsightsReport extends Component
     private function buildPaymentMethodColumns(): array
     {
         $paymentMethodNames = Account::whereIn('id', tenant_cache('payment_methods', []))
+            ->when($this->payment_method_id, fn ($q) => $q->whereKey($this->payment_method_id))
             ->pluck('name', 'id')
             ->values()
             ->map(fn ($name) => $this->normalizePaymentMethodName($name))

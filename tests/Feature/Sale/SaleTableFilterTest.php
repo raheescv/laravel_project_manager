@@ -160,3 +160,34 @@ it('hands the list filters to the queued export job', function (): void {
     expect($filters)->toBe(['search' => 'INVQUEUED', 'status' => 'completed'])
         ->and((new SaleExport($filters))->query()->pluck('invoice_no')->all())->toBe(['INVQUEUED']);
 });
+
+it('exports the payment method, splitting the amount per method on a mixed payment', function (): void {
+    $cashSaleId = insertListedSale($this->world, 'INVCASHONLY', now()->toDateString(), now()->toDateTimeString());
+    $splitSaleId = insertListedSale($this->world, 'INVSPLIT', now()->toDateString(), now()->toDateTimeString());
+    $unpaidSaleId = insertListedSale($this->world, 'INVUNPAID', now()->toDateString(), now()->toDateTimeString());
+
+    $payment = fn (int $saleId, string $method, float $amount): array => [
+        'sale_id' => $saleId,
+        'payment_method_id' => $this->world->accounts[$method],
+        'date' => now()->toDateString(),
+        'amount' => $amount,
+        'created_by' => $this->world->user->id,
+    ];
+    DB::table('sale_payments')->insert([
+        $payment($cashSaleId, 'cash', 50),
+        $payment($splitSaleId, 'cash', 30),
+        $payment($splitSaleId, 'card', 20),
+    ]);
+
+    $export = new SaleExport(['status' => 'completed']);
+    $methodColumn = array_search('Payment Method', $export->headings(), true);
+    $methodsByInvoice = $export->query()->get()
+        ->mapWithKeys(fn ($sale) => [$sale->invoice_no => $export->map($sale)[$methodColumn]])
+        ->all();
+
+    expect($methodsByInvoice)->toMatchArray([
+        'INVCASHONLY' => 'Cash',
+        'INVSPLIT' => 'Cash: 30.00, Card: 20.00',
+        'INVUNPAID' => 'N/A',
+    ]);
+});

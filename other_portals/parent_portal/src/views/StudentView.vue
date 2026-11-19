@@ -105,7 +105,7 @@ onMounted(loadStudent)
           <RouterLink v-if="student.topup.enabled" class="pp-btn pp-btn--primary pp-btn--auto" data-tour="topup" :to="{ name: 'topup', params: { id } }">
             <i class="fa fa-plus-circle"></i>Top up card
           </RouterLink>
-          <button v-else class="pp-btn pp-btn--primary pp-btn--auto" type="button" data-tour="topup" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
+          <button v-else class="pp-btn pp-btn--primary pp-btn--auto" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
           <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder pp-btn--auto" data-tour="preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>
         </template>
       </header>
@@ -148,7 +148,7 @@ onMounted(loadStudent)
           <i class="fa fa-plus-circle"></i>Top up card
         </RouterLink>
         <template v-else>
-          <button class="pp-btn pp-btn--primary" type="button" data-tour="topup" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
+          <button class="pp-btn pp-btn--primary" type="button" disabled><i class="fa fa-plus-circle"></i>Top up card</button>
           <p class="pp-cta__note">Online top-up isn't available right now. Please contact the school office.</p>
         </template>
         <RouterLink v-if="student.pre_orders?.enabled" class="pp-btn pp-btn--preorder" data-tour="preorder" :to="{ name: 'pre-orders', params: { id } }">Pre-Order</RouterLink>

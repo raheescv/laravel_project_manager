@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-import { children } from '@/children'
+import { children, loadChildren } from '@/children'
 import { session } from '@/session'
 import { TOUR_VERSION, tours } from '@/tours'
 import { firstName } from '@/utils/format'
@@ -112,6 +112,8 @@ export function autoStartTour(route) {
   const run = ++attempt
   const key = route?.name
   if (!session.signedIn || !hasTour(key) || hasSeen(key)) return
+  // Opened straight from a link on a phone: fetch the children so the tips can use the child's name.
+  if (!children.list.length && children.status !== 'loading') loadChildren()
   let tries = 0
   const check = () => {
     if (run !== attempt || tour.open) return

@@ -32,6 +32,8 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
+                'payments:id,sale_id,payment_method_id,amount',
+                'payments.paymentMethod:id,name',
             ])
             ->filter($this->filters)
             ->orderBy('sales.date', 'desc')
@@ -56,6 +58,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             'Grand Total',
             'Paid',
             'Balance',
+            'Payment Method',
             'Status',
             'Created By',
             'Created At',
@@ -90,6 +93,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             $row->grand_total ?? 0,
             $row->paid ?? 0,
             $row->balance ?? 0,
+            $this->paymentMethodSummary($row),
             ucfirst($row->status ?? ''),
             $row->createdUser->name ?? 'N/A',
             systemDateTime($row->created_at),
@@ -99,6 +103,29 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
             $row->cancelled_at ? systemDateTime($row->cancelled_at) : 'N/A',
             $row->source_label,
         ];
+    }
+
+    /**
+     * One method reads as its name ("Cash"); a split payment lists each method
+     * with its share ("Cash: 30.00, Card: 20.00") so the sheet reconciles per tender.
+     */
+    protected function paymentMethodSummary(Sale $sale): string
+    {
+        $amountsByMethod = $sale->payments
+            ->groupBy(fn ($payment) => $payment->paymentMethod->name ?? 'N/A')
+            ->map(fn ($payments) => $payments->sum('amount'));
+
+        if ($amountsByMethod->isEmpty()) {
+            return $sale->payment_method_name ?: 'N/A';
+        }
+
+        if ($amountsByMethod->count() === 1) {
+            return (string) $amountsByMethod->keys()->first();
+        }
+
+        return $amountsByMethod
+            ->map(fn ($amount, $method) => $method.': '.number_format((float) $amount, 2))
+            ->implode(', ');
     }
 
     public function columnFormats(): array
@@ -128,7 +155,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                     $totalRow = $highestRow + 1;
 
                     // Style the total row
-                    $sheet->getStyle("A{$totalRow}:W{$totalRow}")->applyFromArray([
+                    $sheet->getStyle("A{$totalRow}:X{$totalRow}")->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -149,7 +176,7 @@ class SaleExport implements FromQuery, WithColumnFormatting, WithEvents, WithHea
                     $sheet->setCellValue("O{$totalRow}", "=SUM(O2:O{$highestRow})");
 
                     // Auto-size columns for better readability
-                    foreach (range('A', 'W') as $column) {
+                    foreach (range('A', 'X') as $column) {
                         $sheet->getColumnDimension($column)->setAutoSize(true);
                     }
                 }

@@ -125,16 +125,24 @@
                     <h5 class="mb-0">Sales Insights</h5>
                     <small class="text-muted">Track Sales performance and trends by Day, Week, or Month</small>
                 </div>
-                <div class="btn-group" role="group" aria-label="Chart Period">
-                    <button type="button" wire:click="setPeriod('daily')" class="btn btn-sm {{ $chart_period === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}">
-                        <i class="fa fa-calendar me-1"></i> Daily
-                    </button>
-                    <button type="button" wire:click="setPeriod('weekly')" class="btn btn-sm {{ $chart_period === 'weekly' ? 'btn-primary' : 'btn-outline-primary' }}">
-                        <i class="fa fa-calendar-o me-1"></i> Weekly
-                    </button>
-                    <button type="button" wire:click="setPeriod('monthly')" class="btn btn-sm {{ $chart_period === 'monthly' ? 'btn-primary' : 'btn-outline-primary' }}">
-                        <i class="fa fa-th-large me-1"></i> Monthly
-                    </button>
+                <div class="d-flex align-items-center gap-2">
+                    @can('sale.export')
+                        <button type="button" class="btn btn-sm btn-success" wire:click="export" wire:loading.attr="disabled" wire:target="export" title="Export to Excel">
+                            <i class="fa fa-file-excel-o me-1" wire:loading.remove wire:target="export"></i>
+                            <i class="fa fa-spinner fa-spin me-1" wire:loading wire:target="export"></i> Export
+                        </button>
+                    @endcan
+                    <div class="btn-group" role="group" aria-label="Chart Period">
+                        <button type="button" wire:click="setPeriod('daily')" class="btn btn-sm {{ $chart_period === 'daily' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            <i class="fa fa-calendar me-1"></i> Daily
+                        </button>
+                        <button type="button" wire:click="setPeriod('weekly')" class="btn btn-sm {{ $chart_period === 'weekly' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            <i class="fa fa-calendar-o me-1"></i> Weekly
+                        </button>
+                        <button type="button" wire:click="setPeriod('monthly')" class="btn btn-sm {{ $chart_period === 'monthly' ? 'btn-primary' : 'btn-outline-primary' }}">
+                            <i class="fa fa-th-large me-1"></i> Monthly
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -157,7 +165,7 @@
                     </div>
                     <label class="form-label small text-muted mt-1">To Date</label>
                 </div>
-                <div class="col-md-4" wire:ignore>
+                <div class="col-md-3" wire:ignore>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0">
                             <i class="fa fa-building text-success"></i>
@@ -165,6 +173,15 @@
                         {{ html()->select('branch_id', [session('branch_id') => session('branch_name')])->value(session('branch_id'))->class('select-assigned-branch_id-list border-start-0 ps-0')->id('branch_id')->attribute('style', 'width:80%')->placeholder('Select Branch') }}
                     </div>
                     <label class="form-label small text-muted mt-1">Branch</label>
+                </div>
+                <div class="col-md-3" wire:ignore>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="fa fa-credit-card text-success"></i>
+                        </span>
+                        {{ html()->select('payment_method_id')->class('select-payment_method_id-list border-start-0 ps-0')->id('payment_method_id')->attribute('style', 'width:80%')->placeholder('All Payment Methods') }}
+                    </div>
+                    <label class="form-label small text-muted mt-1">Payment Method</label>
                 </div>
             </div>
         </div>
@@ -213,14 +230,7 @@
 
     <div class="card mt-3 dsi-card">
         <div class="card-header bg-white p-3 border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 text-muted">Detailed Sales Data</h6>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-light" onclick="window.print()">
-                        <i class="fa fa-print me-1"></i> Print
-                    </button>
-                </div>
-            </div>
+            <h6 class="mb-0 text-muted">Detailed Sales Data</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -334,6 +344,11 @@
                 $('#branch_id').on('change', function(e) {
                     const value = $(this).val() || null;
                     @this.set('branch_id', value);
+                });
+
+                $('#payment_method_id').on('change', function(e) {
+                    const value = $(this).val() || null;
+                    @this.set('payment_method_id', value);
                 });
             });
 
