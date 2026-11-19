@@ -99,7 +99,10 @@ it('narrows tenantless child tables to the current tenant', function (): void {
     expect(SalePayment::withinCurrentTenant()->pluck('amount')->map(fn ($amount) => (float) $amount)->all())->toBe([100.0])
         ->and(SaleReturnPayment::withinCurrentTenant()->pluck('amount')->map(fn ($amount) => (float) $amount)->all())->toBe([10.0])
         ->and(PurchaseItem::withinCurrentTenant()->pluck('unit_price')->map(fn ($price) => (float) $price)->all())->toBe([100.0])
-        ->and(SalePayment::count())->toBe(2);
+        ->and(SalePayment::count())->toBe(1)
+        ->and(SaleReturnPayment::count())->toBe(1)
+        ->and(PurchaseItem::count())->toBe(1)
+        ->and(SalePayment::withoutTenant()->count())->toBe(2);
 });
 
 it('keeps other tenants out of the mobile overview payments across all branches', function (): void {

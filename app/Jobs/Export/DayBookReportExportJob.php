@@ -29,7 +29,7 @@ class DayBookReportExportJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/DayBookReport_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('DayBookReport', $this->user->tenant_id);
         Excel::store(new DayBookReportExport($this->filter), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('DayBookReport', $exportFileName));
     }

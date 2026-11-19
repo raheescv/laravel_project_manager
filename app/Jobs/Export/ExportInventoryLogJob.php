@@ -29,7 +29,7 @@ class ExportInventoryLogJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/Inventory_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('Inventory', $this->user->tenant_id);
         Excel::store(new InventoryLogExport($this->filter), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Inventory', $exportFileName));
     }

@@ -29,7 +29,7 @@ it('returns visitor stats as json', function (): void {
     physicalVisitor('checked_in');
     physicalVisitor('checked_out');
 
-    $this->get(route('visitors.stats'))
+    $this->get($this->world->url(route('visitors.stats', absolute: false)))
         ->assertOk()
         ->assertExactJson([
             'total_visitors' => 3,

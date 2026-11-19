@@ -4,6 +4,7 @@ namespace App\Actions\Product\Inventory;
 
 use App\Models\Branch;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -96,7 +97,7 @@ class GetProductAction
 
     private function buildQuery(array $filters): Builder
     {
-        $query = Inventory::withoutGlobalScopes()
+        $query = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->where('products.type', '=', 'product');
 

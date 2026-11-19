@@ -29,6 +29,7 @@ class FailedJobs extends Component
 
     public function mount(): void
     {
+        abort_unless(auth()->user()?->is_super_admin, 403);
         $this->from_date = date('Y-m-01');
         $this->to_date = date('Y-m-d');
     }

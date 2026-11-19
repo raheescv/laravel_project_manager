@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,13 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class PurchaseReturnItem extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenantThroughParent;
     use SoftDeletes;
+
+    public function tenantParentRelation(): string
+    {
+        return 'purchaseReturn';
+    }
 
     protected $fillable = [
         'purchase_return_id',

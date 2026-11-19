@@ -4,6 +4,7 @@ namespace App\Actions\Tailoring\Order\Item;
 
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\TailoringCategoryMeasurement;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
@@ -100,7 +101,7 @@ class UpdateTailoringItemAction
         }
 
         if (! empty($oldInventoryId)) {
-            $oldInventory = Inventory::withoutGlobalScopes()
+            $oldInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('id', $oldInventoryId)
                 ->where('branch_id', $order->branch_id)
                 ->first();
@@ -113,7 +114,7 @@ class UpdateTailoringItemAction
         }
 
         if (! empty($item->inventory_id)) {
-            $newInventory = Inventory::withoutGlobalScopes()
+            $newInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('id', $item->inventory_id)
                 ->where('branch_id', $order->branch_id)
                 ->first();

@@ -4,6 +4,7 @@ namespace App\Actions\Product\Inventory;
 
 use App\Actions\Product\Inventory\UpdateAction as InventoryUpdateAction;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use Exception;
 
 class SaveStockAdjustmentAction
@@ -23,7 +24,7 @@ class SaveStockAdjustmentAction
                 ];
 
                 // Check if inventory exists
-                $existingInventory = Inventory::withoutGlobalScopes()
+                $existingInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                     ->where('id', $item['inventory_id'])
                     ->where('branch_id', $branchId)
                     ->whereNull('employee_id')

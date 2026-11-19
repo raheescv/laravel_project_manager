@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\Rule;
 
 class PackageItem extends Model
 {
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'package';
+    }
+
     protected $fillable = ['package_id', 'date', 'rescheduled_date', 'notes', 'status', 'created_by', 'updated_by'];
 
     protected $casts = [];

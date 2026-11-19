@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 if (! function_exists('tenant_cache')) {
     /**
@@ -23,6 +24,29 @@ if (! function_exists('tenant_cache')) {
     function tenant_cache(string $key, mixed $default = null): mixed
     {
         return TenantCache::get($key, $default);
+    }
+}
+
+if (! function_exists('tenantExportPath')) {
+    /**
+     * Public-disk path for a generated export/error workbook. Files live under
+     * the tenant's own folder with an unguessable suffix, so one tenant can
+     * never fetch (or overwrite) another tenant's file by guessing a timestamp.
+     */
+    function tenantExportPath(string $name, ?int $tenantId = null, string $extension = 'xlsx'): string
+    {
+        $tenantId ??= app(TenantService::class)->getCurrentTenantId();
+
+        return 'exports/'.($tenantId ?: 'shared').'/'.$name.'_'.now()->format('Y-m-d_H-i-s').'_'.Str::random(20).'.'.$extension;
+    }
+}
+
+if (! function_exists('tenantExportFolder')) {
+    function tenantExportFolder(?int $tenantId = null): string
+    {
+        $tenantId ??= app(TenantService::class)->getCurrentTenantId();
+
+        return 'exports/'.($tenantId ?: 'shared').'/';
     }
 }
 

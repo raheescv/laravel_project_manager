@@ -13,6 +13,7 @@ use App\Models\Configuration;
 use App\Models\Inventory;
 use App\Models\Sale;
 use App\Models\User;
+use App\Support\TenantCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -376,7 +377,7 @@ class PageController extends Controller
         }
 
         return $this->getCachedData(
-            "account_balance_{$account_id}",
+            TenantCache::key("account_balance_{$account_id}"),
             self::CACHE_TTL_VERY_SHORT,
             fn () => Account::find($account_id)
                 ->ledger()

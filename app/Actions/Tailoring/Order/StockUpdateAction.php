@@ -4,6 +4,7 @@ namespace App\Actions\Tailoring\Order;
 
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\TailoringOrder;
 use App\Models\TailoringOrderItem;
 use Exception;
@@ -88,7 +89,7 @@ class StockUpdateAction
 
         $inventory = null;
         if (! empty($item->inventory_id)) {
-            $inventory = Inventory::withoutGlobalScopes()
+            $inventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('id', $item->inventory_id)
                 ->where('branch_id', $branchId)
                 ->first();

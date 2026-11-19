@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
@@ -10,6 +11,12 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class InventoryTransferItem extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'inventoryTransfer';
+    }
 
     protected $fillable = [
         'inventory_transfer_id',

@@ -5,6 +5,7 @@ namespace App\Actions\Sale;
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
 use App\Models\ProductRawMaterial;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Support\Sale\OutOfStockSales;
 use Exception;
 
@@ -53,7 +54,7 @@ class StockUpdateAction
         foreach ($rawMaterials as $rawMaterial) {
             $consumed = (float) $rawMaterial->quantity * (float) $item->base_unit_quantity;
 
-            $rmInventory = Inventory::withoutGlobalScopes()
+            $rmInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('product_id', $rawMaterial->raw_material_id)
                 ->where('branch_id', $sale->branch_id)
                 ->first();
@@ -140,7 +141,7 @@ class StockUpdateAction
             return;
         }
 
-        $inventories = Inventory::withoutGlobalScopes()
+        $inventories = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->whereIn('id', $requiredQuantities->keys())
             ->with('product:id,name,type')
             ->get()
@@ -180,7 +181,7 @@ class StockUpdateAction
             return;
         }
 
-        $inventories = Inventory::withoutGlobalScopes()
+        $inventories = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->whereIn('product_id', array_keys($required))
             ->where('branch_id', $sale->branch_id)
             ->with('product:id,name')

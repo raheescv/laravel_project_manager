@@ -29,7 +29,7 @@ class ExportServiceJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/Service_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('Service', $this->user->tenant_id);
         Excel::store(new ServiceExport($this->filter), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Service', $exportFileName));
     }

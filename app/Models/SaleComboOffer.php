@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleComboOffer extends Model
 {
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'sale';
+    }
+
     protected $fillable = [
         'sale_id',
         'combo_offer_id',

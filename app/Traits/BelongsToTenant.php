@@ -39,5 +39,13 @@ trait BelongsToTenant
                 }
             }
         });
+
+        // A saved row never changes tenant: tenant_id arriving in request data
+        // (e.g. a Livewire array round-tripped from toArray()) is ignored.
+        static::updating(function ($model): void {
+            if (static::getCurrentTenantId() && $model->isDirty('tenant_id')) {
+                $model->tenant_id = $model->getOriginal('tenant_id');
+            }
+        });
     }
 }

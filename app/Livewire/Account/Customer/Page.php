@@ -12,6 +12,7 @@ use App\Models\CustomerType;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -50,6 +51,7 @@ class Page extends Component
 
     public $photo;
 
+    #[Locked]
     public $originalImage;
 
     public function create($name = null, $mobile = null)

@@ -11,6 +11,7 @@ use App\Jobs\Export\ExportInventoryJob;
 use App\Jobs\Export\ExportInventoryProductWiseJob;
 use App\Models\Configuration;
 use App\Models\Inventory;
+use App\Support\TenantCache;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -171,7 +172,7 @@ class Table extends Component
     protected function getFilteredCount($filters)
     {
         // Cache the filtered count for better performance
-        $cacheKey = 'inventory_filtered_count_'.md5(serialize($filters));
+        $cacheKey = TenantCache::key('inventory_filtered_count_'.md5(serialize($filters)));
 
         return cache()->remember($cacheKey, now()->addMinutes(5), function () {
             return (new GetAction())->execute($this->getFilters())->count();

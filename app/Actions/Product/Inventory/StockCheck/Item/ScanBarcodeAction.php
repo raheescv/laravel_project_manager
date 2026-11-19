@@ -3,6 +3,7 @@
 namespace App\Actions\Product\Inventory\StockCheck\Item;
 
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\StockCheck;
 use App\Models\StockCheckItem;
 use Exception;
@@ -15,7 +16,7 @@ class ScanBarcodeAction
             $stockCheck = StockCheck::findOrFail($stockCheckId);
 
             // Find inventory by barcode
-            $inventory = Inventory::withoutGlobalScopes()
+            $inventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('barcode', $barcode)
                 ->where('branch_id', $stockCheck->branch_id)
                 ->whereNull('employee_id')

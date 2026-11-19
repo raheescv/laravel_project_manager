@@ -48,7 +48,9 @@ class DeleteAction
      */
     protected function reverseCompleted(Purchase $model, int $userId): void
     {
-        $hasReturns = PurchaseReturnItem::query()
+        // Keyed by this (tenant-scoped) purchase's own item ids, so the
+        // through-parent tenant scope adds nothing and is skipped.
+        $hasReturns = PurchaseReturnItem::withoutTenant()
             ->whereIn('purchase_item_id', $model->items()->pluck('id'))
             ->exists();
         if ($hasReturns) {

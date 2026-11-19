@@ -5,6 +5,7 @@ namespace App\Actions\EmployeeInventory;
 use App\Actions\Product\Inventory\CreateAction;
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\User;
 use Exception;
 
@@ -72,7 +73,7 @@ class TransferAction
                 }
 
                 // Step 2: Find or create employee inventory
-                $employeeInventory = Inventory::withoutGlobalScopes()
+                $employeeInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                     ->where('product_id', $sourceInventory->product_id)
                     ->where('branch_id', $sourceInventory->branch_id)
                     ->where('employee_id', $data['employee_id'])
@@ -149,7 +150,7 @@ class TransferAction
                 }
 
                 // Step 2: Find or create branch inventory (employee_id = null)
-                $branchInventory = Inventory::withoutGlobalScopes()
+                $branchInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                     ->where('product_id', $sourceInventory->product_id)
                     ->where('branch_id', $sourceInventory->branch_id)
                     ->whereNull('employee_id')

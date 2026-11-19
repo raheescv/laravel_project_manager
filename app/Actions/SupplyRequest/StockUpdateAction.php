@@ -4,6 +4,7 @@ namespace App\Actions\SupplyRequest;
 
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\SupplyRequest;
 
 class StockUpdateAction
@@ -31,7 +32,7 @@ class StockUpdateAction
     protected function singleItem($item, SupplyRequest $supplyRequest, string $type, int $userId): void
     {
         $inventory = Inventory::query()
-            ->withoutGlobalScopes()
+            ->withoutGlobalScope(AssignedBranchScope::class)
             ->where('product_id', $item->product_id)
             ->where('branch_id', $item->branch_id ?? $supplyRequest->branch_id)
             ->whereNull('employee_id')

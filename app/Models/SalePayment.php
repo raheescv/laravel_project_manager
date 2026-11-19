@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,13 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
 class SalePayment extends Model implements AuditableContracts
 {
     use Auditable;
+    use BelongsToTenantThroughParent;
     use SoftDeletes;
+
+    public function tenantParentRelation(): string
+    {
+        return 'sale';
+    }
 
     protected $fillable = [
         'sale_id',

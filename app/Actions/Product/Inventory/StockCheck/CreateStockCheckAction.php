@@ -3,6 +3,7 @@
 namespace App\Actions\Product\Inventory\StockCheck;
 
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use App\Models\StockCheck;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,7 @@ class CreateStockCheckAction
                 DB::raw('now() as created_at'),
             ];
 
-            $items = Inventory::withoutGlobalScopes()
+            $items = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('branch_id', $stockCheck->branch_id)
                 ->whereNull('employee_id')
                 // Only stock-countable goods — exclude services / assets.

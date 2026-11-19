@@ -2,11 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupplyRequestNote extends Model
 {
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'supplyRequest';
+    }
+
     protected $fillable = [
         'supply_request_id',
         'note',

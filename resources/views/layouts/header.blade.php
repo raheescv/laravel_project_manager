@@ -400,11 +400,11 @@
                                                                 <i class="fa fa-cogs fs-5 me-2"></i>Settings
                                                             </a>
                                                         @endcan
-                                                        @can('backup.view')
+                                                        @if (auth()->user()->is_super_admin && auth()->user()->can('backup.view'))
                                                             <a href="{{ route('backup::index') }}" class="list-group-item list-group-item-action header-mega-child">
                                                                 <i class="fa fa-database fs-5 me-2"></i>Backup
                                                             </a>
-                                                        @endcan
+                                                        @endif
                                                     </div>
                                                 @endif
                                             </div>

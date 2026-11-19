@@ -7,6 +7,7 @@ use App\Http\Middleware\AuthenticateParent;
 use App\Models\Guardian;
 use App\Notifications\DatabaseChannel;
 use App\Services\TenantService;
+use App\Support\TenantPresenceVerifier;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register TenantService as singleton to maintain state across the request
         $this->app->singleton(TenantService::class);
+
+        // exists/unique validation rules only see the current tenant's rows.
+        $this->app->extend('validation.presence', fn ($verifier, $app) => new TenantPresenceVerifier($app['db']));
 
         // Bind custom database channel to replace the default one
         $this->app->singleton(BaseDatabaseChannel::class, function () {

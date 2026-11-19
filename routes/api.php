@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login']);
+// Without a tenant, Auth::attempt would match the first same-email user of any tenant.
+Route::post('/login', [AuthController::class, 'login'])->middleware(IdentifyTenant::class.':required');
 Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle']);
 
 // Theme settings route - public but with throttling to prevent abuse.

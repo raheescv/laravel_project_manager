@@ -3,6 +3,7 @@
 namespace App\Livewire\Report\Customer;
 
 use App\Exports\CustomerReminderCallbackExport;
+use App\Support\TenantCache;
 use App\Traits\BuildsCustomerReminderQuery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -116,7 +117,7 @@ class CustomerCallbackReminder extends Component
     #[Computed]
     public function customerStats(): array
     {
-        $cacheKey = 'customer_stats_'.md5(serialize($this->getFiltersArray()));
+        $cacheKey = TenantCache::key('customer_stats_'.md5(serialize($this->getFiltersArray())));
 
         return Cache::remember($cacheKey, self::CACHE_TTL / 2, function () {
             $filters = $this->getFiltersArray();
@@ -190,7 +191,7 @@ class CustomerCallbackReminder extends Component
 
     private function clearCache(): void
     {
-        Cache::forget('customer_stats_'.md5(serialize($this->getFiltersArray())));
+        Cache::forget(TenantCache::key('customer_stats_'.md5(serialize($this->getFiltersArray()))));
     }
 
     public function getSortIcon(string $field): string

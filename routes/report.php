@@ -2,14 +2,16 @@
 
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\ReportController;
+use App\Http\Middleware\RequireSuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
     Route::name('log::')->prefix('log')
         ->controller(LogController::class)->group(function (): void {
             Route::get('inventory', 'inventory')->name('inventory')->can('log.inventory');
-            Route::get('jobs', 'jobs')->name('jobs')->can('log.inventory');
-            Route::get('failed-jobs', 'failedJobs')->name('failed_jobs')->can('log.inventory');
+            // The queue tables are shared by every tenant: platform admins only.
+            Route::get('jobs', 'jobs')->name('jobs')->can('log.inventory')->middleware(RequireSuperAdmin::class);
+            Route::get('failed-jobs', 'failedJobs')->name('failed_jobs')->can('log.inventory')->middleware(RequireSuperAdmin::class);
             Route::get('emails', 'emails')->name('emails')->can('log.email');
         });
 

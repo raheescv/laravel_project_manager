@@ -15,12 +15,12 @@ class NotificationController extends Controller
 
     /**
      * Render an Excel file from storage in the browser as an HTML table.
-     * Path must be relative to the public disk (e.g. exports/product_errors-123.xlsx).
+     * Path must sit in the current tenant's export folder on the public disk (see tenantExportPath()).
      */
     public function excelView(Request $request): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         $path = $request->query('path');
-        if (! $path || str_contains($path, '..')) {
+        if (! $path || str_contains($path, '..') || ! str_starts_with($path, tenantExportFolder())) {
             return redirect()->route('notification::index')->with('error', 'Invalid file path.');
         }
 

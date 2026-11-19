@@ -7,6 +7,7 @@ use App\Models\PropertyGroup;
 use App\Models\PropertyLead;
 use App\Models\PropertyType;
 use App\Models\User;
+use App\Services\TenantService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use OwenIt\Auditing\Models\Audit;
@@ -122,10 +123,14 @@ class LeadAuditTrail
         }
         $ids = array_map(fn (array $list) => array_values(array_unique(array_filter($list, 'filled'))), $ids);
 
+        // Scopes are dropped so trashed / out-of-branch names still resolve,
+        // but the lookup stays inside the current tenant.
+        $tenantId = app(TenantService::class)->getCurrentTenantId();
+
         return [
-            'users' => User::withoutGlobalScopes()->whereIn('id', $ids['users'])->pluck('name', 'id')->all(),
-            'property_group_id' => PropertyGroup::withoutGlobalScopes()->whereIn('id', $ids['property_group_id'])->pluck('name', 'id')->all(),
-            'property_type_id' => PropertyType::withoutGlobalScopes()->whereIn('id', $ids['property_type_id'])->pluck('name', 'id')->all(),
+            'users' => User::withoutGlobalScopes()->where('tenant_id', $tenantId)->whereIn('id', $ids['users'])->pluck('name', 'id')->all(),
+            'property_group_id' => PropertyGroup::withoutGlobalScopes()->where('tenant_id', $tenantId)->whereIn('id', $ids['property_group_id'])->pluck('name', 'id')->all(),
+            'property_type_id' => PropertyType::withoutGlobalScopes()->where('tenant_id', $tenantId)->whereIn('id', $ids['property_type_id'])->pluck('name', 'id')->all(),
             'country_id' => Country::whereIn('id', $ids['country_id'])->pluck('name', 'id')->all(),
         ];
     }

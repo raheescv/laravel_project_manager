@@ -647,7 +647,7 @@ class Page extends Component
     {
         // Cache account balance for 5 minutes
         $this->account_balance = Cache::remember(
-            "account_balance_{$this->sales['account_id']}",
+            TenantCache::key("account_balance_{$this->sales['account_id']}"),
             300,
             function () {
                 $account = Account::find($this->sales['account_id']);

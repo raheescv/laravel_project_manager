@@ -35,8 +35,7 @@ class ExportInventoryJob implements ShouldQueue
     public function handle()
     {
         try {
-            $timestamp = now()->format('Y-m-d_H-i-s');
-            $exportFileName = "exports/inventory_{$timestamp}.xlsx";
+            $exportFileName = tenantExportPath('inventory', $this->user->tenant_id);
 
             Excel::store(new InventoryExport($this->filters), $exportFileName, 'public');
 

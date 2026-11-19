@@ -2,7 +2,9 @@
 
 namespace App\Actions\User;
 
+use App\Models\User;
 use App\Models\UserAttendance;
+use App\Services\TenantService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,10 +20,13 @@ class AttendanceAction
             UserAttendance::where('date', $date)->delete();
 
             $now = Carbon::now();
+            $tenantId = app(TenantService::class)->getCurrentTenantId();
+            $tenantEmployeeIds = User::query()->whereIn('id', array_keys($attendance))->pluck('id')->flip();
             $data = [];
             foreach ($attendance as $employee_id => $value) {
-                if ($value) {
+                if ($value && $tenantEmployeeIds->has($employee_id)) {
                     $data[] = [
+                        'tenant_id' => $tenantId,
                         'employee_id' => $employee_id,
                         'date' => $date,
                         'created_at' => $now,

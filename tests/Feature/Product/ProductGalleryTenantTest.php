@@ -64,11 +64,11 @@ it('refuses to delete an image belonging to another tenant', function (): void {
         ->call('deleteSelected')
         ->assertDispatched('error');
 
-    expect(ProductImage::find($this->foreignImage->id))->not->toBeNull();
+    expect(ProductImage::withoutTenant()->find($this->foreignImage->id))->not->toBeNull();
 
     $response = (new DeleteImageAction())->execute($this->foreignImage->id);
 
     expect($response['success'])->toBeFalse()
-        ->and(ProductImage::find($this->foreignImage->id))->not->toBeNull()
+        ->and(ProductImage::withoutTenant()->find($this->foreignImage->id))->not->toBeNull()
         ->and(Product::withoutTenant()->count())->toBe(2);
 });

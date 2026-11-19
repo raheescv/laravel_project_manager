@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PhysicalVisitor extends Model
 {
+    use BelongsToTenantThroughParent;
     use SoftDeletes;
+
+    public function tenantParentRelation(): string
+    {
+        return 'branch';
+    }
 
     protected $fillable = [
         'branch_id',

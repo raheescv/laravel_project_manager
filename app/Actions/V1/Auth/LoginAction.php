@@ -4,7 +4,9 @@ namespace App\Actions\V1\Auth;
 
 use App\Http\Requests\V1\Auth\LoginRequest;
 use App\Http\Resources\V1\Auth\AuthUserResource;
+use App\Models\Tenant;
 use App\Models\User;
+use App\Services\TenantService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,6 +26,12 @@ class LoginAction
      */
     public function execute(LoginRequest $request): array
     {
+        // Without a resolved tenant the PIN / username lookups would match
+        // users of every tenant on this server, so refuse unless it hosts one.
+        if (! app(TenantService::class)->getCurrentTenantId() && Tenant::query()->count() > 1) {
+            throw new AuthenticationException('Tenant could not be identified. Check the server address.');
+        }
+
         $user = $request->resolvedMethod() === 'password'
             ? $this->byCredentials((string) $request->validated('username'), (string) $request->validated('password'))
             : $this->byPin((string) $request->validated('pin'));

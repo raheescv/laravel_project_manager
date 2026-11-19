@@ -28,6 +28,11 @@ class Jobs extends Component
 
     protected string $paginationTheme = 'bootstrap';
 
+    public function mount(): void
+    {
+        abort_unless(auth()->user()?->is_super_admin, 403);
+    }
+
     public function updated(string $key, mixed $value): void
     {
         $this->resetPage();

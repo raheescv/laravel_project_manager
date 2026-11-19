@@ -5,6 +5,7 @@ namespace App\Actions\SaleReturn;
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
 use App\Models\ProductRawMaterial;
+use App\Models\Scopes\AssignedBranchScope;
 
 class StockUpdateAction
 {
@@ -49,7 +50,7 @@ class StockUpdateAction
         foreach ($rawMaterials as $rawMaterial) {
             $consumed = (float) $rawMaterial->quantity * (float) $item->base_unit_quantity;
 
-            $rmInventory = Inventory::withoutGlobalScopes()
+            $rmInventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
                 ->where('product_id', $rawMaterial->raw_material_id)
                 ->where('branch_id', $model->branch_id)
                 ->first();

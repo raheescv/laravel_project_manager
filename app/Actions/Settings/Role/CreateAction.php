@@ -11,7 +11,11 @@ class CreateAction
     {
         try {
             $data['name'] = trim($data['name']);
-            $data['tenant_id'] ??= app(TenantService::class)->getCurrentTenantId() ?? 1;
+            $tenantId = app(TenantService::class)->getCurrentTenantId();
+            if (! $tenantId) {
+                throw new \Exception('No tenant resolved for this role.', 1);
+            }
+            $data['tenant_id'] = $tenantId;
             $model = Role::create($data);
             $return['success'] = true;
             $return['message'] = 'Successfully Created Role';

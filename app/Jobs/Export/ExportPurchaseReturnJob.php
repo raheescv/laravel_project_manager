@@ -34,7 +34,7 @@ class ExportPurchaseReturnJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/Purchase_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('PurchaseReturn', $this->user->tenant_id);
         Excel::store(new PurchaseReturnExport(), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('PurchaseReturn', $exportFileName));
     }

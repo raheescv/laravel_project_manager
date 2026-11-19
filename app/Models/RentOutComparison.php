@@ -2,11 +2,25 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class RentOutComparison extends Model
 {
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'rentOut';
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Relations\BelongsTo<RentOut, $this> */
+    public function rentOut(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(RentOut::class);
+    }
+
     protected $fillable = [
         'rent_out_id',
         'agreement_type',

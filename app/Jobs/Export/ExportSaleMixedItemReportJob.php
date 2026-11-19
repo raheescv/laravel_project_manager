@@ -29,7 +29,7 @@ class ExportSaleMixedItemReportJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/SaleAndReturnItemReport_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('SaleAndReturnItemReport', $this->user->tenant_id);
         Excel::store(new SaleMixedItemReportExport($this->filter, $this->visibleColumns), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('SaleMixedItemReport', $exportFileName));
     }

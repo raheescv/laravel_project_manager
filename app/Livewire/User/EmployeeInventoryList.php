@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\Inventory;
+use App\Models\Scopes\AssignedBranchScope;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -48,7 +49,7 @@ class EmployeeInventoryList extends Component
 
     public function render()
     {
-        $query = Inventory::withoutGlobalScopes()
+        $query = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->where('employee_id', $this->employee_id)
             ->join('products', 'inventories.product_id', '=', 'products.id')
             ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')

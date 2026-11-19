@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Audit;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Livewire\Component;
 use OwenIt\Auditing\Models\Audit;
 
@@ -43,12 +45,32 @@ class Table extends Component
         $this->view = in_array($view, ['timeline', 'table'], true) ? $view : 'timeline';
     }
 
+    /**
+     * The audits table has no tenant column, so audits are shown only when
+     * the audited record itself resolves through its model's tenant scopes.
+     */
+    protected function auditedRecordIsVisible(): bool
+    {
+        $class = 'App\\Models\\'.$this->model;
+        if (! is_string($this->model) || ! preg_match('/^[A-Za-z]+$/', $this->model) || ! is_subclass_of($class, Model::class)) {
+            return false;
+        }
+
+        $query = $class::query();
+        if (in_array(SoftDeletes::class, class_uses_recursive($class), true)) {
+            $query->withTrashed();
+        }
+
+        return $query->whereKey($this->table_id)->exists();
+    }
+
     public function render()
     {
         // @phpstan-ignore larastan.relationExistence (OwenIt Audit::user() is an untyped morphTo Larastan cannot see)
         $base = Audit::with('user')
             ->where('auditable_type', 'App\\Models\\'.$this->model)
-            ->where('auditable_id', $this->table_id);
+            ->where('auditable_id', $this->table_id)
+            ->when(! $this->auditedRecordIsVisible(), fn ($query) => $query->whereRaw('1 = 0'));
 
         $all = (clone $base)->latest()->get();
 

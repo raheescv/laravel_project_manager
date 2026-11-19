@@ -14,6 +14,7 @@ class UpdateAction
                 throw new \Exception("Role not found with the specified ID: $id.", 1);
             }
             $data['name'] = trim($data['name']);
+            unset($data['tenant_id']);
             $model->update($data);
 
             $return['success'] = true;

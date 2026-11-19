@@ -67,9 +67,13 @@ class Inventory extends Model implements AuditableContracts
         });
     }
 
+    /**
+     * Ignores the branch scope (stock moves between branches) but keeps the
+     * tenant scope, so an id from another tenant never resolves.
+     */
     public static function find($id)
     {
-        return self::withoutGlobalScopes()->find($id);
+        return self::withoutGlobalScope(AssignedBranchScope::class)->find($id);
     }
 
     /** @return BelongsTo<Product, $this> */

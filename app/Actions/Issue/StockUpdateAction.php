@@ -5,6 +5,7 @@ namespace App\Actions\Issue;
 use App\Actions\Product\Inventory\UpdateAction;
 use App\Models\Inventory;
 use App\Models\IssueItem;
+use App\Models\Scopes\AssignedBranchScope;
 use Exception;
 
 class StockUpdateAction
@@ -66,7 +67,7 @@ class StockUpdateAction
         $branchId = session('branch_id');
 
         if (! empty($item->inventory_id)) {
-            $inventoryQuery = Inventory::withoutGlobalScopes()->where('id', $item->inventory_id);
+            $inventoryQuery = Inventory::withoutGlobalScope(AssignedBranchScope::class)->where('id', $item->inventory_id);
             if ($branchId) {
                 $inventoryQuery->where('branch_id', $branchId);
             }
@@ -83,7 +84,7 @@ class StockUpdateAction
             throw new Exception('Branch context is required to update inventory for issue.', 1);
         }
 
-        $inventory = Inventory::withoutGlobalScopes()
+        $inventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
             ->where('product_id', $item->product_id)
             ->where('branch_id', $branchId)
             ->first();

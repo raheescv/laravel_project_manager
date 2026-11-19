@@ -68,7 +68,7 @@ class Dashboard extends Component
         CompareRentOutPopulationAction $compare,
         StoreRentOutComparisonAction $store,
     ): void {
-        abort_unless(auth()->check(), 403);
+        abort_unless(auth()->user()?->is_super_admin, 403);
 
         $this->statusMessage = null;
 

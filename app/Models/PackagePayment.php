@@ -2,11 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenantThroughParent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PackagePayment extends Model
 {
+    use BelongsToTenantThroughParent;
+
+    public function tenantParentRelation(): string
+    {
+        return 'package';
+    }
+
     protected $fillable = ['package_id', 'amount', 'payment_method_id', 'date', 'created_by', 'updated_by'];
 
     protected $casts = [

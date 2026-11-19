@@ -21,14 +21,17 @@ use App\Http\Controllers\SupplyRequestController;
 use App\Http\Controllers\UserAttendanceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisitorAnalyticsController;
+use App\Http\Middleware\IdentifyTenant;
+use App\Http\Middleware\RequireSuperAdmin;
 use App\Livewire\RentOut\Comparison\Dashboard as RentOutComparisonDashboard;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
 
 Route::get('/home', [PublicScanController::class, 'home'])->name('public_home');
-Route::get('/scan', [PublicScanController::class, 'index'])->name('scan.index');
-Route::post('/scan/search', [PublicScanController::class, 'search'])->name('scan.search');
+// Public barcode lookup: never answer without a tenant, or it searches every tenant's products.
+Route::get('/scan', [PublicScanController::class, 'index'])->name('scan.index')->middleware(IdentifyTenant::class.':required');
+Route::post('/scan/search', [PublicScanController::class, 'search'])->name('scan.search')->middleware(IdentifyTenant::class.':required');
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -63,7 +66,8 @@ Route::middleware('auth')->group(function (): void {
     Route::name('audit::')->prefix('audit')->controller(AuditController::class)->group(function (): void {
         Route::get('{model}/{id}', 'index')->name('index');
     });
-    Route::name('backup::')->prefix('backup')->controller(BackupController::class)->group(function (): void {
+    // A backup is a dump of the whole shared database (every tenant): platform admins only.
+    Route::name('backup::')->prefix('backup')->middleware(RequireSuperAdmin::class)->controller(BackupController::class)->group(function (): void {
         Route::get('/', 'index')->name('index')->can('backup.view');
         Route::get('download/{file}', 'get')->name('download')->can('backup.download');
         Route::get('create', 'store')->name('create')->can('backup.create');
@@ -79,8 +83,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('visitor-analytics', [VisitorAnalyticsController::class, 'index'])->name('visitor-analytics')->can('visitor analytics.view');
 
     Route::get('health', [HealthController::class, 'index'])->name('health')->can('system health.view');
+    // Migration comparison spans every tenant's rent-outs: platform admins only.
     Route::get('property/rentout-comparison', RentOutComparisonDashboard::class)
-        ->name('property::rentout-comparison');
+        ->name('property::rentout-comparison')
+        ->middleware(RequireSuperAdmin::class);
 
     // Purchase Request Routes
     Route::name('purchase-request::')->prefix('purchase-requests')->controller(PurchaseRequestController::class)->group(function (): void {

@@ -34,7 +34,7 @@ class ExportIncomeJob implements ShouldQueue
 
     public function handle()
     {
-        $exportFileName = 'exports/income_'.now()->timestamp.'.xlsx';
+        $exportFileName = tenantExportPath('income', $this->user->tenant_id);
         Excel::store(new IncomeExport(), $exportFileName, 'public');
         $this->user->notify(new ExportCompleted('Income', $exportFileName));
     }
