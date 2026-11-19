@@ -74,10 +74,13 @@ class BarcodeController extends Controller
         }
 
         $settings = BarcodeTemplateConfiguration::resolveSettings(request('template'))['settings'];
+        // Without an id this is the designer's test print, so it carries the
+        // proof's sample values; a real item's label has no dates to print.
+        $row = $id ? [] : $this->proofRow(request(), $settings);
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
         $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
 
-        $html = view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'company_name', 'company_logo'))->render();
+        $html = view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'row', 'company_name', 'company_logo'))->render();
         // TSC printers take the label as TSPL; see RendersTsplLabels.
         if ($this->wantsTspl()) {
             return $this->tsplResponse($html, $settings);
@@ -194,18 +197,30 @@ class BarcodeController extends Controller
         $barcode = $productUnit->barcode ?? ($inventory?->barcode ?: ($product->barcode ?: ''));
         $conversionFactor = $productUnit ? (float) $productUnit->conversion_factor : 1;
         $settings = BarcodeTemplateConfiguration::resolveSettings($request->query('template'))['settings'];
-        $row = BarcodeLabel::rowValues($settings, [
+        $row = $this->proofRow($request, $settings);
+        $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
+        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
+        $isPreview = true;
+
+        return view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'row', 'company_name', 'company_logo', 'isPreview'));
+    }
+
+    /**
+     * The row values a designer proof or test print renders with: whatever the
+     * query passes, else a sample weight (in weight mode) and sample dates, so
+     * the Qty and date lines show where they will print.
+     *
+     * @return array{price: ?float, weight: ?float, tax: ?float, mfg_date: ?string, exp_date: ?string}
+     */
+    private function proofRow(Request $request, array $settings): array
+    {
+        return BarcodeLabel::rowValues($settings, [
             'price' => $request->query('price'),
             'tax' => $request->query('tax'),
             'weight' => $request->has('weight') ? $request->query('weight') : 4.25,
             'mfg_date' => $request->has('mfg_date') ? $request->query('mfg_date') : now()->toDateString(),
             'exp_date' => $request->has('exp_date') ? $request->query('exp_date') : now()->addDays(3)->toDateString(),
         ]);
-        $company_name = Configuration::where('key', 'company_name')->value('value') ?? config('app.name');
-        $company_logo = tenant_cache('logo', asset('assets/img/logo.svg'));
-        $isPreview = true;
-
-        return view('inventory.barcode', compact('settings', 'product', 'inventory', 'conversionFactor', 'barcode', 'row', 'company_name', 'company_logo', 'isPreview'));
     }
 
     public function saveConfigurationTemplate(Request $request, string $templateKey): JsonResponse
