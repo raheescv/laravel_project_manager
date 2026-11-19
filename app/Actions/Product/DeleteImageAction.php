@@ -10,7 +10,7 @@ class DeleteImageAction
     public function execute($id)
     {
         try {
-            $model = ProductImage::find($id);
+            $model = ProductImage::query()->whereHas('product')->find($id);
             if (! $model) {
                 throw new \Exception("ProductImage not found with the specified ID: $id.", 1);
             }

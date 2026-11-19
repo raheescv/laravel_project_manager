@@ -4,6 +4,7 @@ namespace App\Livewire\Product;
 
 use App\Actions\Product\DeleteImageAction;
 use App\Models\ProductImage;
+use App\Services\TenantService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -97,6 +98,7 @@ class Gallery extends Component
     {
         return ProductImage::query()
             ->join('products', 'product_images.product_id', '=', 'products.id')
+            ->where('products.tenant_id', app(TenantService::class)->getCurrentTenantId())
             ->whereNull('products.deleted_at')
             ->when($this->search ?? '', function ($query, $value) {
                 $value = trim($value);
