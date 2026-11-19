@@ -94,6 +94,8 @@ flutter build ipa --release --dart-define-from-file=env.json --export-method app
 # Web (browser review / staging)
 flutter build web --dart-define-from-file=env.json
 ```
+flutter build windows --release --dart-define-from-file=env.json
+
 
 ### Production build (SIZERUN)
 

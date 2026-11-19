@@ -1,4 +1,4 @@
-package com.astrasalon.invo
+package com.astraqatar.invo
 
 import android.app.Activity
 import android.content.ActivityNotFoundException

@@ -1,4 +1,4 @@
-package com.astrasalon.invo
+package com.astraqatar.invo
 
 import android.media.AudioManager
 import android.media.ToneGenerator

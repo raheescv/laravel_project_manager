@@ -1,4 +1,4 @@
-package com.astrasalon.invo
+package com.astraqatar.invo
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine

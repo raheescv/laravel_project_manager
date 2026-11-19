@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Enums\Property\BuildingOwnership;
+use App\Enums\Property\PropertyStatus;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Models\Property;
@@ -154,6 +155,15 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
             }
         }
 
+        if (array_key_exists('status', $row)) {
+            $status = $this->propertyStatus($row['status']);
+            if ($status === null) {
+                unset($row['status']);
+            } else {
+                $row['status'] = $status;
+            }
+        }
+
         $key = $row['property_building_id'].'|'.strtolower($number);
 
         if ($uploadType === 'update') {
@@ -276,6 +286,20 @@ class PropertyImport implements ToCollection, WithBatchInserts, WithChunkReading
             str_starts_with($normalized, 'rent') => BuildingOwnership::Rent->value,
             default => BuildingOwnership::Own->value,
         };
+    }
+
+    /**
+     * Map a status cell onto the property status enum in any casing ("Occupied", " VACANT "); a blank cell leaves the column untouched.
+     */
+    private function propertyStatus($value): ?string
+    {
+        $normalized = strtolower(trim((string) $value));
+        if ($normalized === '') {
+            return null;
+        }
+
+        return PropertyStatus::tryFrom($normalized)?->value
+            ?? throw new Exception('Unknown status "'.trim((string) $value).'". Use one of: '.implode(', ', array_column(PropertyStatus::cases(), 'value')).'.');
     }
 
     private function handleError($value, \Throwable $th): void

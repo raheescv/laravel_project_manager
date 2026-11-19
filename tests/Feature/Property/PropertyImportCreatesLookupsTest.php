@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Property\PropertyStatus;
 use App\Events\FileImportCompleted;
 use App\Events\FileImportProgress;
 use App\Imports\PropertyImport;
@@ -93,4 +94,30 @@ it('still rejects a new building name when the row has no group to put it in', f
 
     expect($errors)->toBe(['Building could not be resolved for row "IMP-X1".'])
         ->and(PropertyBuilding::where('name', 'IMP Orphan Tower')->exists())->toBeFalse();
+});
+
+it('accepts a status cell in any casing and leaves a blank one to the default', function (): void {
+    $row = ['property_building' => 'IMP Status Tower', 'property_type' => 'IMP 3 BHK', 'property_group' => 'IMP Status Group', 'ownership' => 'owned', 'rent' => 4000];
+
+    $errors = runPropertyImport([...$this->mappings, 'status' => 'status'], $this->world->user->id, $this->world->branch->id, [
+        ['number' => 'IMP-T1', 'status' => 'Occupied', ...$row],
+        ['number' => 'IMP-T2', 'status' => ' VACANT ', ...$row],
+        ['number' => 'IMP-T3', 'status' => '', ...$row],
+    ]);
+
+    expect($errors)->toBe([]);
+
+    $statuses = Property::whereIn('number', ['IMP-T1', 'IMP-T2', 'IMP-T3'])->get()->mapWithKeys(fn (Property $unit) => [$unit->number => $unit->fresh()->status]);
+    expect($statuses['IMP-T1'])->toBe(PropertyStatus::Occupied)
+        ->and($statuses['IMP-T2'])->toBe(PropertyStatus::Vacant)
+        ->and($statuses['IMP-T3'])->toBe(PropertyStatus::Vacant);
+});
+
+it('reports an unknown status as a row error instead of crashing the upload', function (): void {
+    $errors = runPropertyImport([...$this->mappings, 'status' => 'status'], $this->world->user->id, $this->world->branch->id, [
+        ['number' => 'IMP-U1', 'status' => 'Rented', 'property_building' => 'IMP Status Tower', 'property_type' => 'IMP 3 BHK', 'property_group' => 'IMP Status Group', 'ownership' => 'owned', 'rent' => 4000],
+    ]);
+
+    expect($errors)->toBe(['Unknown status "Rented". Use one of: vacant, occupied, booked, sold.'])
+        ->and(Property::where('number', 'IMP-U1')->exists())->toBeFalse();
 });
