@@ -1,9 +1,9 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 /**
- * Hash routing (#/, #/product/123) — matches the reference storefront and lets
+ * Hash routing (#/, #/product/nike-air-max-90) — matches the reference storefront and lets
  * the built bundle be dropped into any folder without server rewrite rules.
- * Catalogue state travels in the query string: ?size=42&brand=11&q=dunk&sort=priceAsc
+ * Catalogue state travels in the query string: ?size=42&brand=nike&q=dunk&sort=priceAsc
  */
 const router = createRouter({
   history: createWebHashHistory(),
@@ -16,7 +16,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'catalogue', component: () => import('@/views/CatalogueView.vue') },
     {
-      path: '/product/:id',
+      path: '/product/:slug',
       name: 'product',
       component: () => import('@/views/ProductView.vue'),
     },

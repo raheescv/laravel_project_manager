@@ -37,6 +37,7 @@ import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/client_lookup_fields.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+import 'package:invo/features/sale/widgets/v3/variant_picker_sheet.dart';
 import 'package:invo/features/student_card/domain/models/student_card.dart';
 import 'package:invo/features/student_card/domain/services/nfc_card_reader.dart';
 import 'package:invo/features/student_card/domain/services/student_card_cache.dart';
@@ -228,7 +229,13 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   /// snapshot less whatever queued sales have taken, so it is an estimate — and
   /// refusing a sale on an estimate, with the customer standing there, is worse
   /// than the server refusing it later. Services have no stock to check.
+  ///
+  /// A size / colour family card first asks which one (see [pickVariant]).
   void _addToCart(Product product) {
+    if (product.isFamily) {
+      unawaited(_pickVariantAndAdd(product));
+      return;
+    }
     final cart = context.read<CartCubit>();
     final cat = context.read<CatalogCubit>();
     final onTicket = cart.lines
@@ -238,6 +245,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     if (!cat.state.servingCached || product.isService) return;
     if (product.totalStock > onTicket) return;
     AstraSnack.show(context, '${product.name} may be out of stock — the catalog is offline');
+  }
+
+  Future<void> _pickVariantAndAdd(Product family) async {
+    final variant = await pickVariant(context, family);
+    if (variant == null || !mounted) return;
+    _addToCart(variant);
   }
 
   /// Infinite scroll: pull the next page in once the user nears the bottom.
@@ -1036,7 +1049,11 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   }
 
   String _metaLine(Product s) => [
-        s.code,
+        if (s.isFamily) '${s.variants.length} items'
+        else ...[
+          s.code,
+          s.variantLabel,
+        ],
         if (s.duration.isNotEmpty && s.duration != '0') '${s.duration} min',
       ].where((e) => e.isNotEmpty).join(' · ');
 

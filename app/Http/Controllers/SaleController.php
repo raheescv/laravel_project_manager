@@ -11,6 +11,7 @@ use App\Models\Sale;
 use App\Models\SaleDaySession;
 use App\Models\TailoringPayment;
 use App\Models\User;
+use App\Support\ProductColours;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -185,6 +186,8 @@ class SaleController extends Controller
                         'name' => $item->product->name,
                         'barcode' => $item->product->barcode,
                         'size' => $item->product->size,
+                        'color' => ProductColours::displayName($item->product->color) ?: null,
+                        'color_hex' => filled($item->product->color) ? ProductColours::hexFor($item->product->color) : null,
                         'category' => $item->product->category->name ?? 'N/A',
                         'unit_price' => (float) $item->unit_price,
                         'quantity' => $item->quantity,

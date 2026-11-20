@@ -3,6 +3,7 @@ import { nextTick, onMounted, ref, watch } from 'vue'
 
 import { i18n } from '@/i18n'
 import { useCatalogStore } from '@/stores/catalog'
+import { sizeLabel } from '@/sizing'
 import { isHalfSize } from '@/utils/catalog'
 
 const props = defineProps({
@@ -90,7 +91,7 @@ watch(() => [catalog.size, props.sizes.length], centreSelected)
           :key="s.size"
           class="tick"
           :class="{
-            'tick--half': isHalfSize(s.size),
+            'tick--half': isHalfSize(sizeLabel(s.size)),
             'tick--top': s.top,
             'is-on': catalog.size === s.size,
             'is-out': !s.in_stock,
@@ -102,7 +103,7 @@ watch(() => [catalog.size, props.sizes.length], centreSelected)
           @click="emit('pick', s.size)"
         >
           <span class="tick__mark"></span>
-          <span class="tick__num">{{ s.size }}</span>
+          <span class="tick__num">{{ sizeLabel(s.size) }}</span>
         </button>
       </div>
     </div>

@@ -17,6 +17,10 @@ class DeleteAction
             if (! $model) {
                 throw new Exception("Product not found with the specified ID: $id.", 1);
             }
+            $variantCount = $model->variants()->count();
+            if ($variantCount) {
+                throw new Exception("{$model->name} has {$variantCount} variant(s). Delete the variants first.", 1);
+            }
             if (! $model->delete()) {
                 throw new Exception('Oops! Something went wrong while deleting the Product. Please try again.', 1);
             }

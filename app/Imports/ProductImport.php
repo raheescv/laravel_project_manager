@@ -31,10 +31,15 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
     /** @var array<int, Product> */
     private array $existingById = [];
 
-    /** @var array<string, Product> */
+    /**
+     * Every live product with the name: a size / colour family shares one name,
+     * so a name can point at several products and must then be narrowed down.
+     *
+     * @var array<string, array<int, Product>>
+     */
     private array $existingByName = [];
 
-    /** @var array<string, int> */
+    /** @var array<string, int> deleted heads / standalone products only — never a deleted variant */
     private array $trashedByName = [];
 
     /** @var array<int, array<int, true>> product id => branch id, for inventory rows that exist */
@@ -101,16 +106,17 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     $q->orWhereIn('name', $names);
                 }
             })
-            ->get(['id', 'name', 'barcode_number']);
+            ->get(['id', 'parent_id', 'name', 'size', 'color', 'barcode_number']);
 
         foreach ($activeRows as $row) {
             $this->existingById[$row->id] = $row;
-            $this->existingByName[$this->nameKey($row->name)] = $row;
+            $this->existingByName[$this->nameKey($row->name)][] = $row;
         }
 
         if (! empty($names)) {
             $trashedRows = Product::onlyTrashed()
                 ->where('type', $this->defaultType)
+                ->whereNull('parent_id')
                 ->whereIn('name', $names)
                 ->get(['id', 'name']);
 
@@ -215,11 +221,33 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         }
 
         $nameKey = $this->nameKey($data['name'] ?? null);
-        if ($nameKey !== '' && isset($this->existingByName[$nameKey])) {
-            return $this->existingByName[$nameKey];
+        $candidates = $nameKey !== '' ? ($this->existingByName[$nameKey] ?? []) : [];
+        if (count($candidates) <= 1) {
+            return $candidates[0] ?? null;
         }
 
-        return null;
+        // A size / colour family shares the name: the row's barcode, else its size + colour, picks one.
+        $barcode = trim((string) ($productRow['barcode'] ?? ''));
+        if ($barcode !== '') {
+            foreach ($candidates as $candidate) {
+                if (trim((string) $candidate->barcode_number) === $barcode) {
+                    return $candidate;
+                }
+            }
+        }
+
+        $size = Product::normaliseVariantValue($data['size'] ?? null);
+        $color = Product::normaliseVariantValue($data['color'] ?? null);
+        $matches = array_values(array_filter($candidates, fn (Product $candidate) => Product::normaliseVariantValue($candidate->size) === $size
+            && Product::normaliseVariantValue($candidate->color) === $color));
+
+        if (count($matches) === 1) {
+            return $matches[0];
+        }
+
+        throw new Exception('"'.$data['name'].'" matches '.count($candidates).' variants ('
+            .implode(', ', array_map(fn (Product $candidate) => Product::variantLabel($candidate->size, $candidate->color), $candidates))
+            .'). Add the barcode, or the size and colour columns, so the row points at one of them.', 1);
     }
 
     private function processProductRow($value): void

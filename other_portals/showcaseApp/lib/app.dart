@@ -7,6 +7,7 @@ import 'shared/domain/constants/global_variables.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/logic/branch_cubit/branch_cubit.dart';
 import 'shared/logic/locale_cubit/locale_cubit.dart';
+import 'shared/logic/size_system_cubit/size_system_cubit.dart';
 import 'shared/logic/connectivity_cubit/connectivity_cubit.dart';
 import 'shared/logic/theme_cubit/theme_cubit.dart';
 import 'shared/utils/components/theme/panel_scale.dart';
@@ -54,6 +55,7 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
         BlocProvider<BranchCubit>.value(value: serviceLocator<BranchCubit>()),
         BlocProvider<ConnectivityCubit>.value(value: serviceLocator<ConnectivityCubit>()),
         BlocProvider<LocaleCubit>(create: (_) => LocaleCubit()),
+        BlocProvider<SizeSystemCubit>(create: (_) => SizeSystemCubit()),
         BlocProvider<FunnelCubit>(create: (_) => FunnelCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeSettings>(

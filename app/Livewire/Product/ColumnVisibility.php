@@ -12,7 +12,7 @@ class ColumnVisibility extends Component
     public function mount()
     {
         $config = Configuration::where('key', 'product_visible_column')->value('value');
-        $this->product_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+        $this->product_visible_column = array_merge($this->getDefaultColumns(), $config ? (array) json_decode($config, true) : []);
     }
 
     protected function getDefaultColumns()
@@ -26,6 +26,7 @@ class ColumnVisibility extends Component
             'unit' => true,
             'brand' => true,
             'size' => true,
+            'color' => true,
             'code' => true,
             'product_name' => true,
             'name_arabic' => true,

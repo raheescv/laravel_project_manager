@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Variant Picker — Premium Directions</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Tokens mirror resources/css/pos-premium.css (graphite preset). */
+:root {
+    --pos-pri: #23262d; --pos-on-pri: #fff; --pos-acc: #9a7a3c;
+    --pos-canvas: #eceef2; --pos-panel: #fff; --pos-panel-2: #f6f7f9;
+    --pos-ink: #1a1d21; --pos-ink-2: #6b7280;
+    --pos-line: rgba(26,29,33,.09); --pos-line-strong: rgba(26,29,33,.16);
+    --pos-ok: #1f9d63; --pos-ok-soft: rgba(31,157,99,.12);
+    --pos-danger: #c2483f; --pos-danger-soft: rgba(194,72,63,.1);
+    --pos-shadow: 0 10px 26px -20px rgba(26,29,33,.5);
+    --pos-shadow-lg: 0 30px 70px -30px rgba(26,29,33,.55);
+    --pos-pri-soft: color-mix(in srgb, var(--pos-pri) 7%, transparent);
+    --pos-pri-ring: color-mix(in srgb, var(--pos-pri) 22%, transparent);
+    --pos-muted: color-mix(in srgb, var(--pos-ink-2) 80%, transparent);
+    --photo-bg: #f3f2ef;
+}
+[data-theme="dark"] {
+    --pos-pri: #e8e2d4; --pos-on-pri: #17191d; --pos-acc: #d2b170;
+    --pos-canvas: #0f1114; --pos-panel: #181b20; --pos-panel-2: #1f2329;
+    --pos-ink: #eceef1; --pos-ink-2: #9aa3ae;
+    --pos-line: rgba(255,255,255,.08); --pos-line-strong: rgba(255,255,255,.16);
+    --pos-shadow: 0 10px 26px -18px rgba(0,0,0,.8);
+    --pos-shadow-lg: 0 30px 70px -30px rgba(0,0,0,.9);
+    --photo-bg: #23272e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--pos-canvas); color: var(--pos-ink); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ---------- harness ---------- */
+.bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; background: color-mix(in srgb, var(--pos-canvas) 85%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--pos-line); }
+.bar h1 { font-size: 14px; margin: 0 12px 0 0; font-weight: 800; }
+.seg { display: inline-flex; background: var(--pos-panel); border: 1px solid var(--pos-line); border-radius: 999px; padding: 3px; flex-wrap: wrap; }
+.seg button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--pos-ink-2); }
+.seg button.on { background: var(--pos-pri); color: var(--pos-on-pri); }
+.note { max-width: 880px; margin: 18px auto 0; padding: 0 16px; font-size: 13.5px; color: var(--pos-ink-2); line-height: 1.5; }
+.note b { color: var(--pos-ink); }
+.stage { padding: 18px 16px 60px; display: flex; justify-content: center; }
+
+/* ---------- modal shell (shared) ---------- */
+.vp { width: 100%; max-width: 880px; background: var(--pos-panel); border-radius: 24px; box-shadow: var(--pos-shadow-lg); overflow: hidden; border: 1px solid var(--pos-line); }
+.vp-head { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--pos-line); }
+.vp-head .ph { width: 64px; height: 64px; border-radius: 16px; background: var(--photo-bg); flex: none; display: grid; place-items: center; overflow: hidden; }
+.vp-title { flex: 1; min-width: 0; }
+.vp-title h2 { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+.vp-title p { margin: 3px 0 0; font-size: 13px; color: var(--pos-ink-2); font-weight: 600; }
+.vp-price { text-align: right; }
+.vp-price b { display: block; font-size: 24px; font-weight: 900; letter-spacing: -.02em; }
+.vp-price small { font-size: 11.5px; font-weight: 700; color: var(--pos-muted); text-transform: uppercase; letter-spacing: .06em; }
+.x { width: 52px; height: 52px; border-radius: 16px; border: 1px solid var(--pos-line-strong); background: var(--pos-panel-2); font-size: 18px; flex: none; }
+.lbl { font-size: 11.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--pos-muted); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+.lbl em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 12.5px; }
+.shoe { display: block; width: 100%; height: auto; }
+.dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); flex: none; }
+.toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 30px); opacity: 0; transition: .25s; background: var(--pos-pri); color: var(--pos-on-pri); padding: 13px 20px; border-radius: 14px; font-weight: 700; font-size: 14px; box-shadow: var(--pos-shadow-lg); z-index: 50; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.tap:active { transform: scale(.97); }
+
+/* ===== A · Matrix ===== */
+.mx-body { padding: 18px 20px 22px; overflow-x: auto; }
+.mx { width: 100%; border-collapse: separate; border-spacing: 8px; margin: -8px; }
+.mx th { font-size: 20px; font-weight: 900; padding: 4px 0 2px; min-width: 70px; letter-spacing: -.01em; }
+.mx th:first-child { min-width: 190px; }
+.mx-row { display: flex; align-items: center; gap: 12px; text-align: left; }
+.mx-row .ph { width: 56px; height: 56px; border-radius: 14px; background: var(--photo-bg); display: grid; place-items: center; overflow: hidden; flex: none; }
+.mx-row b { font-size: 16px; font-weight: 800; display: block; }
+.mx-row small { font-size: 12px; color: var(--pos-muted); font-weight: 600; }
+.mx td.cell { height: 72px; }
+.mx .hit { width: 100%; height: 100%; border-radius: 14px; border: 1.5px solid var(--pos-line-strong); background: var(--pos-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: .12s; }
+.mx .hit:hover { border-color: var(--pos-pri); background: var(--pos-pri-soft); }
+.mx .hit b { font-size: 18px; font-weight: 900; }
+.mx .hit small { font-size: 11px; font-weight: 700; color: var(--pos-ok); }
+.mx .none { width: 100%; height: 100%; border-radius: 14px; background: repeating-linear-gradient(135deg, transparent 0 7px, var(--pos-line) 7px 8px); }
+
+/* ===== B · Lookbook ===== */
+.lb-body { padding: 18px 20px 22px; display: grid; gap: 22px; }
+.lb-colours { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.lb-c { border: 1.5px solid var(--pos-line-strong); background: var(--pos-panel); border-radius: 20px; padding: 10px; text-align: left; transition: .15s; }
+.lb-c .ph { aspect-ratio: 4/3; border-radius: 14px; background: var(--photo-bg); display: grid; place-items: center; overflow: hidden; padding: 10px; }
+.lb-c .cap { display: flex; align-items: center; gap: 8px; padding: 10px 4px 2px; }
+.lb-c .cap b { font-size: 16px; font-weight: 800; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-c .cap small { font-size: 12px; font-weight: 700; color: var(--pos-muted); }
+.lb-c.on { border-color: var(--pos-pri); box-shadow: 0 0 0 4px var(--pos-pri-ring); }
+.lb-sizes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.key { height: 84px; border-radius: 18px; border: 1.5px solid var(--pos-line-strong); background: var(--pos-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: .12s; position: relative; }
+.key b { font-size: 26px; font-weight: 900; letter-spacing: -.02em; }
+.key small { font-size: 11.5px; font-weight: 700; color: var(--pos-ok); }
+.key:hover:not(:disabled) { background: var(--pos-pri); color: var(--pos-on-pri); border-color: var(--pos-pri); }
+.key:hover:not(:disabled) small { color: inherit; opacity: .8; }
+.key:disabled { opacity: .28; cursor: not-allowed; border-style: dashed; }
+.key:disabled small { color: var(--pos-muted); }
+
+/* ===== C · Studio ===== */
+.st { display: grid; grid-template-columns: 1fr 1fr; min-height: 480px; }
+.st-left { background: var(--photo-bg); padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.st-hero { flex: 1; display: grid; place-items: center; padding: 10px; }
+.st-hero .shoe { max-width: 340px; filter: drop-shadow(0 18px 18px rgba(0,0,0,.18)); }
+.st-name { font-size: 13px; font-weight: 700; color: var(--pos-ink-2); text-align: center; }
+.st-name b { display: block; font-size: 22px; color: var(--pos-ink); font-weight: 900; letter-spacing: -.02em; }
+.st-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.st-t { border: 2px solid transparent; background: var(--pos-panel); border-radius: 16px; padding: 6px 6px 8px; transition: .15s; }
+.st-t .ph { aspect-ratio: 1; display: grid; place-items: center; }
+.st-t span { display: block; font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-t.on { border-color: var(--pos-pri); }
+.st-right { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.st-right .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.st-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.st-foot { margin-top: auto; display: flex; gap: 10px; align-items: center; padding-top: 14px; border-top: 1px solid var(--pos-line); font-size: 13px; color: var(--pos-ink-2); font-weight: 600; }
+
+/* ===== D · Size wall ===== */
+.sw-body { padding: 18px 20px 22px; display: grid; gap: 20px; }
+.sw-sizes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.sw-sizes .key.on { background: var(--pos-pri); color: var(--pos-on-pri); border-color: var(--pos-pri); }
+.sw-sizes .key.on small { color: inherit; opacity: .85; }
+.sw-pick { background: var(--pos-panel-2); border-radius: 20px; padding: 16px; border: 1px solid var(--pos-line); }
+.sw-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.sw-i { display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; border-radius: 18px; border: 1.5px solid var(--pos-line-strong); background: var(--pos-panel); text-align: left; transition: .12s; min-height: 92px; }
+.sw-i:hover { border-color: var(--pos-pri); }
+.sw-i .ph { width: 72px; height: 72px; border-radius: 14px; background: var(--photo-bg); display: grid; place-items: center; overflow: hidden; flex: none; padding: 4px; }
+.sw-i .t { flex: 1; min-width: 0; }
+.sw-i .t b { display: block; font-size: 18px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-i .t small { display: block; font-size: 12px; color: var(--pos-muted); font-weight: 600; margin-top: 2px; }
+.sw-i .add { width: 44px; height: 44px; border-radius: 14px; background: var(--pos-pri); color: var(--pos-on-pri); display: grid; place-items: center; font-size: 18px; flex: none; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--pos-ok-soft); color: var(--pos-ok); }
+.empty { text-align: center; color: var(--pos-muted); font-weight: 600; padding: 22px; font-size: 14px; }
+
+@media (max-width: 720px) {
+    .st { grid-template-columns: 1fr; }
+    .vp-price { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="bar">
+    <h1>Variant picker · POS</h1>
+    <div class="seg" id="dirs">
+        <button data-d="A" class="on">A · Matrix</button>
+        <button data-d="B">B · Lookbook</button>
+        <button data-d="C">C · Studio</button>
+        <button data-d="D">D · Size wall</button>
+    </div>
+    <div class="seg" id="theme">
+        <button data-t="light" class="on"><i class="fa fa-sun-o"></i> Light</button>
+        <button data-t="dark"><i class="fa fa-moon-o"></i> Dark</button>
+    </div>
+</div>
+<p class="note" id="note"></p>
+<div class="stage"><div id="app"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const COLOURS = [
+    { key: 'black', name: 'Black', hex: '#1f2124', upper: '#26282c', sole: '#e9e9e9' },
+    { key: 'pearl', name: 'Pearl', hex: '#e9e3d6', upper: '#efeae0', sole: '#d8d2c4' },
+    { key: 'olive', name: 'Olive Desert', hex: '#a3977a', upper: '#b8ad92', sole: '#efece4' },
+    { key: 'marsh', name: 'Marsh', hex: '#b8c6dc', upper: '#c8d4e6', sole: '#f2f4f8' },
+];
+const ITEMS = [
+    ['37', 'black', 2, 10515], ['47', 'black', 1, 10516],
+    ['36', 'pearl', 1, 10061], ['37.5', 'pearl', 1, 10062], ['38.5', 'pearl', 1, 10063], ['47', 'pearl', 1, 10059],
+    ['46', 'olive', 1, 10031], ['47', 'olive', 1, 9925], ['47.5', 'olive', 1, 10030],
+    ['38.5', 'marsh', 1, 9477], ['40', 'marsh', 1, 9475],
+].map(([size, colour, stock, bc]) => ({ size, colour, stock, bc, price: 880 }));
+const SIZES = [...new Set(ITEMS.map(i => i.size))].sort((a, b) => parseFloat(a) - parseFloat(b));
+const colour = key => COLOURS.find(c => c.key === key);
+const item = (s, c) => ITEMS.find(i => i.size === s && i.colour === c);
+const stockOf = pred => ITEMS.filter(pred).reduce((t, i) => t + i.stock, 0);
+
+/* A sneaker silhouette tinted per colour — stands in for the product photo. */
+function shoe(key) {
+    const c = colour(key);
+    return `<svg class="shoe" viewBox="0 0 220 110" aria-hidden="true">
+        <path d="M14 78 C14 60 30 54 46 50 L82 40 C96 30 104 20 116 18 C124 17 128 24 136 30 C150 40 172 46 192 52 C206 56 210 66 208 76 L208 82 L14 82 Z" fill="${c.upper}" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+        <path d="M60 46 L74 66 M78 41 L92 63 M96 34 L110 58" stroke="${c.key === 'black' ? '#4a4d52' : 'rgba(0,0,0,.22)'}" stroke-width="5" stroke-linecap="round"/>
+        <path d="M10 80 L212 80 C214 90 206 96 196 96 L26 96 C14 96 8 90 10 80 Z" fill="${c.sole}" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+        <path d="M30 96 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8 l8 -8 l8 8" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>
+    </svg>`;
+}
+
+const NOTES = {
+    A: '<b>Matrix:</b> one tap. Colours down the side with their photo, sizes across the top sorted small to large. Every cell is a stocked item, so tapping it adds it. Empty cells are hatched. Best for shoes and apparel with many sizes.',
+    B: '<b>Lookbook:</b> colour first, because the photo is what customers point at. Pick a colour card, then tap a size key to add it. Sizes that colour does not come in are ghosted. Two taps, and the most visual.',
+    C: '<b>Studio:</b> the product as the hero. A large photo of the chosen colour on the left, with colour thumbnails underneath; a size keypad on the right. Tapping a size adds it. Feels like a boutique, and works well on a tablet in landscape.',
+    D: '<b>Size wall:</b> size first, as the cashier asks "what size?". Tap a size and that size\'s colours appear as photo cards below; if the size comes in only one colour, it is added straight away. Closest to today\'s flow, but cleaner.',
+};
+
+let dir = 'A', pickedColour = 'pearl', pickedSize = null;
+
+function head(sub, photoKey = 'pearl') {
+    return `<div class="vp-head">
+        <div class="ph">${shoe(photoKey)}</div>
+        <div class="vp-title"><h2>On Cloudtilt</h2><p>${sub}</p></div>
+        <div class="vp-price"><small>Price</small><b>880.00</b></div>
+        <button class="x tap" aria-label="Close"><i class="fa fa-times"></i></button>
+    </div>`;
+}
+
+function renderA() {
+    const rows = COLOURS.map(c => `<tr>
+        <td><div class="mx-row"><div class="ph">${shoe(c.key)}</div><div><b>${c.name}</b><small>${stockOf(i => i.colour === c.key)} in stock</small></div></div></td>
+        ${SIZES.map(s => { const it = item(s, c.key); return `<td class="cell">${it
+            ? `<button class="hit tap" data-add="${s}|${c.key}"><b>${s}</b><small>${it.stock} left</small></button>`
+            : '<div class="none"></div>'}</td>`; }).join('')}
+    </tr>`).join('');
+    return `<div class="vp">${head('11 items · tap a size in the colour you want')}
+        <div class="mx-body"><table class="mx"><thead><tr><th></th>${SIZES.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+function renderB() {
+    const cards = COLOURS.map(c => `<button class="lb-c tap ${pickedColour === c.key ? 'on' : ''}" data-colour="${c.key}">
+        <div class="ph">${shoe(c.key)}</div>
+        <div class="cap"><span class="dot" style="--c:${c.hex}"></span><b>${c.name}</b><small>${stockOf(i => i.colour === c.key)}</small></div></button>`).join('');
+    const keys = SIZES.map(s => { const it = item(s, pickedColour); return `<button class="key tap" ${it ? `data-add="${s}|${pickedColour}"` : 'disabled'}>
+        <b>${s}</b><small>${it ? it.stock + ' left' : 'Not in ' + colour(pickedColour).name}</small></button>`; }).join('');
+    return `<div class="vp">${head('Pick a colour, then a size', pickedColour)}
+        <div class="lb-body"><div><div class="lbl">Colour <em>${COLOURS.length} colours</em></div><div class="lb-colours">${cards}</div></div>
+        <div><div class="lbl">Size in ${colour(pickedColour).name} <em>tap to add</em></div><div class="lb-sizes">${keys}</div></div></div></div>`;
+}
+
+function renderC() {
+    const c = colour(pickedColour);
+    const thumbs = COLOURS.map(x => `<button class="st-t tap ${pickedColour === x.key ? 'on' : ''}" data-colour="${x.key}"><div class="ph">${shoe(x.key)}</div><span>${x.name}</span></button>`).join('');
+    const keys = SIZES.map(s => { const it = item(s, pickedColour); return `<button class="key tap" ${it ? `data-add="${s}|${pickedColour}"` : 'disabled'}>
+        <b>${s}</b><small>${it ? it.stock + ' left' : '—'}</small></button>`; }).join('');
+    return `<div class="vp"><div class="st">
+        <div class="st-left"><div class="st-hero">${shoe(pickedColour)}</div>
+            <div class="st-name"><b>${c.name}</b>${stockOf(i => i.colour === pickedColour)} in stock across ${ITEMS.filter(i => i.colour === pickedColour).length} sizes</div>
+            <div class="st-thumbs">${thumbs}</div></div>
+        <div class="st-right">
+            <div class="top"><div class="vp-title"><h2>On Cloudtilt</h2><p>880.00 · 11 items</p></div><button class="x tap"><i class="fa fa-times"></i></button></div>
+            <div><div class="lbl">Size <em>tap to add</em></div><div class="st-sizes">${keys}</div></div>
+            <div class="st-foot"><i class="fa fa-barcode"></i> Scanning a barcode adds that item directly</div>
+        </div></div></div>`;
+}
+
+function renderD() {
+    const keys = SIZES.map(s => `<button class="key tap ${pickedSize === s ? 'on' : ''}" data-size="${s}"><b>${s}</b><small>${stockOf(i => i.size === s)} left</small></button>`).join('');
+    const items = pickedSize ? ITEMS.filter(i => i.size === pickedSize) : [];
+    const pick = pickedSize
+        ? `<div class="sw-pick"><div class="lbl">Size ${pickedSize} comes in <em>tap to add</em></div><div class="sw-items">${items.map(i => `
+            <button class="sw-i tap" data-add="${i.size}|${i.colour}"><div class="ph">${shoe(i.colour)}</div>
+            <div class="t"><b>${colour(i.colour).name}</b><small><span class="pill">${i.stock} left</span> &nbsp;BC ${i.bc}</small></div>
+            <span class="add"><i class="fa fa-plus"></i></span></button>`).join('')}</div></div>`
+        : '<div class="empty"><i class="fa fa-hand-pointer-o"></i>&nbsp; Tap the customer\'s size</div>';
+    return `<div class="vp">${head('Pick a size · 11 items')}
+        <div class="sw-body"><div><div class="lbl">Size <em>${SIZES.length} sizes</em></div><div class="sw-sizes">${keys}</div></div>${pick}</div></div>`;
+}
+
+function render() {
+    document.getElementById('app').innerHTML = { A: renderA, B: renderB, C: renderC, D: renderD }[dir]();
+    document.getElementById('note').innerHTML = NOTES[dir];
+}
+
+let toastTimer;
+function added(size, key) {
+    const t = document.getElementById('toast');
+    t.innerHTML = `<i class="fa fa-check-circle"></i>&nbsp; Added On Cloudtilt · ${size} / ${colour(key).name}`;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
+document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.d) { dir = b.dataset.d; pickedSize = null; document.querySelectorAll('#dirs button').forEach(x => x.classList.toggle('on', x === b)); render(); }
+    else if (b.dataset.t) { document.documentElement.dataset.theme = b.dataset.t; document.querySelectorAll('#theme button').forEach(x => x.classList.toggle('on', x === b)); }
+    else if (b.dataset.colour) { pickedColour = b.dataset.colour; render(); }
+    else if (b.dataset.size) {
+        pickedSize = pickedSize === b.dataset.size ? null : b.dataset.size;
+        const only = ITEMS.filter(i => i.size === pickedSize);
+        if (only.length === 1) { added(only[0].size, only[0].colour); pickedSize = null; }
+        render();
+    }
+    else if (b.dataset.add) { const [s, c] = b.dataset.add.split('|'); added(s, c); }
+});
+render();
+</script>
+</body>
+</html>

@@ -163,7 +163,7 @@ class MergeDuplicateProductsCommand extends Command
      */
     private function scan(): int
     {
-        $products = DB::table('products')->whereNull('deleted_at')->orderBy('id')
+        $products = DB::table('products')->whereNull('deleted_at')->whereNull('parent_id')->orderBy('id')
             ->get(['id', 'tenant_id', 'name', 'type', 'mrp', 'cost']);
 
         $groups = $products->groupBy(fn ($p) => $p->tenant_id.'|'.$p->type.'|'.mb_strtoupper($this->baseName($p->name)))
@@ -203,7 +203,7 @@ class MergeDuplicateProductsCommand extends Command
      */
     private function groupsByLike(string $like): ?array
     {
-        $matches = DB::table('products')->whereNull('deleted_at')
+        $matches = DB::table('products')->whereNull('deleted_at')->whereNull('parent_id')
             ->where('name', 'like', '%'.$like.'%')->orderBy('id')->get();
 
         if ($matches->count() < 2) {
@@ -239,7 +239,7 @@ class MergeDuplicateProductsCommand extends Command
     private function autoGroups(): array
     {
         $loose = (bool) $this->option('loose');
-        $products = DB::table('products')->whereNull('deleted_at')->orderBy('id')->get();
+        $products = DB::table('products')->whereNull('deleted_at')->whereNull('parent_id')->orderBy('id')->get();
 
         return $products
             ->groupBy(fn ($p) => $p->tenant_id.'|'.$p->type

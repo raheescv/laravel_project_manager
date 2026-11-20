@@ -55,6 +55,10 @@ class CatalogCubit extends Cubit<CatalogState> {
   String? _categoriesFor;
   bool _categoriesCached = false;
 
+  /// The rows as fetched, before size / colour variants are folded into family
+  /// cards — kept so a family split across two pages joins up on [loadMore].
+  List<Product> _rows = const [];
+
   bool _typeInitialised = false;
   bool _typeTouched = false;
   int _reqId = 0;
@@ -138,7 +142,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       }
       emit(state.copyWith(
         status: DataFetchStatus.success,
-        products: paged.items,
+        products: groupFamilies(_rows = paged.items),
         page: paged.currentPage,
         lastPage: paged.lastPage,
         categories: needCategories ? results[1] as List<Category> : null,
@@ -200,7 +204,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       }
       emit(state.copyWith(
         status: DataFetchStatus.success,
-        products: paged.items,
+        products: groupFamilies(_rows = paged.items),
         page: paged.currentPage,
         lastPage: paged.lastPage,
         categories: categories,
@@ -244,7 +248,7 @@ class CatalogCubit extends Cubit<CatalogState> {
             );
       if (req != _reqId) return;
       emit(state.copyWith(
-        products: [...state.products, ...paged.items],
+        products: groupFamilies(_rows = [..._rows, ...paged.items]),
         page: paged.currentPage,
         lastPage: paged.lastPage,
       ));

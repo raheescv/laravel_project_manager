@@ -20,7 +20,8 @@ const STRINGS = {
     sizeLede: 'Pick it once. From there you only see pairs that are actually on the shelf in your size.',
     allSizes: 'Show every size',
     allSizesHint: 'Not sure of your size? Browse the whole shop instead.',
-    euLabel: 'EU sizing',
+    euLabel: (d) => `${d.system} sizing`,
+    sizeSystem: 'Size system',
     noSizes: 'No sizes on record yet.',
     brandTitle: 'Pick a brand',
     brandLedeSized: (d) => `Counts below are pairs in stock in size ${d.size}.`,
@@ -55,8 +56,10 @@ const STRINGS = {
     back: 'Back to the shop',
     notFound: "We couldn't find that product.",
     colour: 'Colour',
+    priceFrom: 'From',
+    colours: 'Colours',
     chooseSize: 'Choose a size',
-    sizeGuide: 'EU sizing',
+    sizeGuide: (d) => `${d.system} sizing`,
     addToBag: 'Add to bag',
     pickSizeFirst: 'Pick a size',
     inStores: 'In our shops',
@@ -191,7 +194,8 @@ const STRINGS = {
     sizeLede: 'اختره مرة واحدة، وبعدها لن ترى إلا الأزواج المتوفرة فعلًا بمقاسك.',
     allSizes: 'اعرض كل المقاسات',
     allSizesHint: 'غير متأكد من مقاسك؟ تصفح المتجر كاملًا.',
-    euLabel: 'المقاسات الأوروبية',
+    euLabel: (d) => AR_SIZING[d.system] || AR_SIZING.EU,
+    sizeSystem: 'نظام المقاسات',
     noSizes: 'لا توجد مقاسات مسجلة بعد.',
     brandTitle: 'اختر علامة',
     brandLedeSized: (d) => `الأرقام أدناه هي الأزواج المتوفرة بمقاس ${d.size}.`,
@@ -225,8 +229,10 @@ const STRINGS = {
     back: 'العودة إلى المتجر',
     notFound: 'لم نعثر على هذا المنتج.',
     colour: 'اللون',
+    priceFrom: 'من',
+    colours: 'الألوان',
     chooseSize: 'اختر المقاس',
-    sizeGuide: 'المقاسات الأوروبية',
+    sizeGuide: (d) => AR_SIZING[d.system] || AR_SIZING.EU,
     addToBag: 'أضف إلى الحقيبة',
     pickSizeFirst: 'اختر مقاسًا',
     inStores: 'في فروعنا',
@@ -352,6 +358,9 @@ const STRINGS = {
     photos: (d) => `${d.i} / ${d.n}`,
   },
 }
+
+/** The size-run label per display system (header UK / US / EU switch). */
+const AR_SIZING = { EU: 'المقاسات الأوروبية', UK: 'المقاسات البريطانية', US: 'المقاسات الأمريكية' }
 
 const STORAGE_KEY = 'sr.lang'
 

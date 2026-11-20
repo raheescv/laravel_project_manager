@@ -165,7 +165,7 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
         } elseif (! empty($row['product_code'])) {
             $productId = $this->getProductIdByCode($row['product_code']);
         } elseif (! empty($row['product_name'])) {
-            $productId = $this->getProductIdByName($row['product_name']);
+            $productId = $this->getProductIdByName($row['product_name'], $row);
         } elseif (! empty($row['barcode'])) {
             $productId = $this->getProductIdByBarcode($row['barcode']);
         }
@@ -263,15 +263,37 @@ class SaleImport implements ToCollection, WithBatchInserts, WithChunkReading, Wi
         return null;
     }
 
-    private function getProductIdByName(string $name): ?int
+    /**
+     * A size / colour family shares one name, so a name alone may match several
+     * products: the row's barcode, else its size + colour, must then pick one.
+     * An unresolvable name fails the row instead of billing a random sibling.
+     */
+    private function getProductIdByName(string $name, array $row = []): ?int
     {
-        if (isset($this->productCache[$name])) {
-            return $this->productCache[$name];
+        $size = Product::normaliseVariantValue($row['size'] ?? null);
+        $color = Product::normaliseVariantValue($row['color'] ?? ($row['colour'] ?? null));
+        $barcode = trim((string) ($row['barcode'] ?? ''));
+        $cacheKey = 'name:'.$name.'|'.$size.'|'.$color.'|'.$barcode;
+        if (isset($this->productCache[$cacheKey])) {
+            return $this->productCache[$cacheKey];
         }
 
-        $product = Product::where('name', $name)->first();
+        $candidates = Product::where('name', $name)->get(['id', 'parent_id', 'size', 'color', 'barcode_number']);
+        if ($candidates->count() > 1 && $candidates->contains(fn (Product $candidate) => $candidate->parent_id)) {
+            $byBarcode = $barcode !== '' ? $candidates->where('barcode_number', $barcode) : collect();
+            $narrowed = $byBarcode->isNotEmpty() ? $byBarcode : $candidates->filter(
+                fn (Product $candidate) => Product::normaliseVariantValue($candidate->size) === $size
+                    && Product::normaliseVariantValue($candidate->color) === $color
+            );
+            if ($narrowed->count() !== 1) {
+                throw new Exception("\"{$name}\" matches {$candidates->count()} variants. Add the barcode, or the size and colour columns, to pick one.");
+            }
+            $candidates = $narrowed;
+        }
+
+        $product = $candidates->first();
         if ($product) {
-            $this->productCache[$name] = $product->id;
+            $this->productCache[$cacheKey] = $product->id;
 
             return $product->id;
         }

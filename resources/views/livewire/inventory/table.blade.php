@@ -292,6 +292,9 @@
                         @if ($inventory_visible_column['size'] ?? true)
                             <th class="border-bottom py-2"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.size" label="Size" /> </th>
                         @endif
+                        @if ($inventory_visible_column['color'] ?? true)
+                            <th class="border-bottom py-2"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.color" label="Colour" /> </th>
+                        @endif
                         @if ($inventory_visible_column['code'] ?? true)
                             <th class="border-bottom py-2"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="products.code" label="Code" /> </th>
                         @endif
@@ -389,6 +392,13 @@
                             @if ($inventory_visible_column['size'] ?? true)
                                 <td class="text-nowrap py-1 small">{{ $item->size }}</td>
                             @endif
+                            @if ($inventory_visible_column['color'] ?? true)
+                                <td class="text-nowrap py-1 small">
+                                    @if (trim((string) $item->color) !== '')
+                                        <span class="d-inline-block rounded-circle border me-1 align-middle" style="width: 10px; height: 10px; background: {{ \App\Support\ProductColours::hexFor($item->color, $colourPalette) }}"></span>{{ \App\Support\ProductColours::displayName($item->color) }}
+                                    @endif
+                                </td>
+                            @endif
                             @if ($inventory_visible_column['code'] ?? true)
                                 <td class="py-1">
                                     <code class="bg-light px-1 py-0 rounded small">{{ $item->code }}</code>
@@ -471,6 +481,9 @@
                             <th></th>
                         @endif
                         @if ($inventory_visible_column['size'] ?? true)
+                            <th></th>
+                        @endif
+                        @if ($inventory_visible_column['color'] ?? true)
                             <th></th>
                         @endif
                         @if ($inventory_visible_column['code'] ?? true)

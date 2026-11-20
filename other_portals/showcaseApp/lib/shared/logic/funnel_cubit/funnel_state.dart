@@ -37,9 +37,11 @@ class FunnelState extends Equatable {
 
   /// The chosen sizes as one short line — "44 · 43 · 42", and past [max] the
   /// rest as a count ("44 · 43 · 42 +2") so a crumb never runs off the bar.
-  String chosenSizesLabel({int max = 3}) {
-    if (chosenSizes.length <= max) return chosenSizes.join(' · ');
-    return '${chosenSizes.take(max).join(' · ')} +${chosenSizes.length - max}';
+  /// [show] reads each size out in the sizing chosen in the bar.
+  String chosenSizesLabel({int max = 3, String Function(String size)? show}) {
+    final shown = chosenSizes.map(show ?? (s) => s);
+    if (chosenSizes.length <= max) return shown.join(' · ');
+    return '${shown.take(max).join(' · ')} +${chosenSizes.length - max}';
   }
   final BrandOption? brand;
 

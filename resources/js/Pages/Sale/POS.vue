@@ -153,7 +153,7 @@
                                     </div>
                                     <products-grid v-else :products="products" :lowStockThreshold="10"
                                         :columns="gridColumns"
-                                        @product-selected="addProductToCart"></products-grid>
+                                        @product-selected="selectProduct"></products-grid>
                                 </div>
                             </div>
                         </div>
@@ -297,6 +297,10 @@
         <ComboOfferModal :show="showComboOfferModal" :cart-items="form.items" :initial-combo-offers="form.comboOffers"
             @close="closeComboOfferModal" @save="handleComboOfferSave" @update="handleComboOfferUpdate"
             @openSettings="openComboOfferSettings" />
+
+        <!-- Size / colour picker for a product family (one card, several variants) -->
+        <VariantPickerModal :show="!!variantFamily" :family="variantFamily" @close="variantFamily = null"
+            @pick="pickVariant" />
     </div>
 </template>
 
@@ -313,6 +317,7 @@ import ProductsGrid from '@/components/ProductsGrid.vue'
 import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
+import VariantPickerModal from '@/components/VariantPickerModal.vue'
 
 import {
     useForm
@@ -350,7 +355,7 @@ export default {
         SaleConfirmationModal,
         EditItemModal,
         ComboOfferModal,
-
+        VariantPickerModal,
     },
     props: {
         categories: Array,
@@ -1009,6 +1014,21 @@ export default {
         const editItemKey = ref(null)
         const editItemData = ref({})
 
+        // A card that stands for several size / colour variants asks which one;
+        // a card with a single item goes straight to the cart.
+        const variantFamily = ref(null)
+        const selectProduct = (product) => {
+            if (Array.isArray(product?.variants) && product.variants.length > 1) {
+                variantFamily.value = product
+                return
+            }
+            addProductToCart(product)
+        }
+        const pickVariant = async (variant) => {
+            variantFamily.value = null
+            await addProductToCart(variant)
+        }
+
         // Combo Offer Modal
         const showComboOfferModal = ref(false)
         const showCustomerDetailsModal = ref(false)
@@ -1605,6 +1625,8 @@ export default {
 
         // Lifecycle
         onMounted(() => {
+            document.title = 'POS'
+
             // Initialize form with sale data if provided from controller FIRST
             initializeFormWithSaleData()
 
@@ -1688,6 +1710,9 @@ export default {
             searchProducts,
             searchByBarcode,
             addProductToCart,
+            variantFamily,
+            selectProduct,
+            pickVariant,
             updateItemQuantity,
             removeCartItem,
             updateItemField,

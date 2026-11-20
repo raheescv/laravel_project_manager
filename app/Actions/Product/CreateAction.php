@@ -53,7 +53,7 @@ class CreateAction
             }
             validationHelper(Product::rules($data), $data);
             $user_id = $data['created_by'] = $data['updated_by'] = $user_id;
-            $trashedExists = Product::onlyTrashed()->firstWhere('name', $data['name']);
+            $trashedExists = $this->trashedTwin($data);
             if ($trashedExists) {
                 $trashedExists->restore();
                 $trashedExists->update($data);
@@ -117,5 +117,25 @@ class CreateAction
         }
 
         return $return;
+    }
+
+    /**
+     * A soft-deleted product this create should bring back instead of inserting.
+     * Variants of one family share a name, so a name alone would revive (and
+     * overwrite) a deleted sibling: a variant only matches the same family, size
+     * and colour; anything else only matches a deleted head/standalone product.
+     */
+    private function trashedTwin(array $data): ?Product
+    {
+        $query = Product::onlyTrashed()->where('type', $data['type'] ?? 'product');
+
+        if (! empty($data['parent_id'])) {
+            return $query->where('parent_id', $data['parent_id'])
+                ->whereRaw("LOWER(TRIM(COALESCE(size, ''))) = ?", [Product::normaliseVariantValue($data['size'] ?? null)])
+                ->whereRaw("LOWER(TRIM(COALESCE(color, ''))) = ?", [Product::normaliseVariantValue($data['color'] ?? null)])
+                ->first();
+        }
+
+        return $query->whereNull('parent_id')->firstWhere('name', $data['name']);
     }
 }

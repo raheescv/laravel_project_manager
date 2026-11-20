@@ -23,6 +23,7 @@ class LocalStorageService {
   static const _kBaseUrl = 'base_url';
   static const _kTenant = 'tenant';
   static const _kSpinHintSeen = 'spin_hint_seen';
+  static const _kSizeSystem = 'size_system';
 
   /// The chosen shop, or [BranchCubit.allBranches] for "all stores". Null when
   /// nobody has chosen yet, which is different from having chosen all.
@@ -72,6 +73,10 @@ class LocalStorageService {
 
   String? get baseUrl => _prefs.getString(_kBaseUrl);
   String? get tenant => _prefs.getString(_kTenant);
+
+  /// 'uk' | 'us' | 'eu' — the sizing shoe sizes are read out in. Null until picked (EU).
+  String? get sizeSystem => _prefs.getString(_kSizeSystem);
+  Future<void> setSizeSystem(String code) => _prefs.setString(_kSizeSystem, code);
 
   /// The "drag to spin" coach mark shows once per device, not once per product.
   bool get spinHintSeen => _prefs.getBool(_kSpinHintSeen) ?? false;

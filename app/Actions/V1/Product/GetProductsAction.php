@@ -4,14 +4,19 @@ namespace App\Actions\V1\Product;
 
 use App\Http\Requests\V1\GetProductsRequest;
 use App\Http\Resources\V1\ProductResource;
+use App\Models\Brand;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Services\TenantService;
+use App\Support\ProductColours;
 use App\Support\Storefront\SizeFilter;
+use App\Support\StorefrontSlug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class GetProductsAction
 {
@@ -23,13 +28,19 @@ class GetProductsAction
      */
     private const COUNT_CACHE_TTL = 60;
 
+    /** A size / colour variant's family is its parent; a plain product is its own family. */
+    private const FAMILY_KEY = 'COALESCE(products.parent_id, products.id)';
+
+    /** Filters that decide whether a family member is on offer at all — not which one the shopper is after. */
+    private const FAMILY_MEMBER_FILTERS = ['type', 'branch_id', 'in_stock_only', 'online_only'];
+
     /**
      * Columns the list card actually renders. `products` has ~60 columns
      * (accounting links, depreciation, barcode parts, …); selecting them all
      * hydrated a wide model per row for fields the response never emits.
      */
     private const LIST_COLUMNS = [
-        'id', 'type', 'code', 'name', 'name_arabic', 'thumbnail', 'description',
+        'id', 'parent_id', 'type', 'code', 'name', 'name_arabic', 'thumbnail', 'description',
         'barcode', 'color', 'size', 'model', 'hsn_code', 'mrp', 'tax',
         'location', 'priority', 'time', 'document_file',
         'reorder_level', 'min_stock',
@@ -44,6 +55,10 @@ class GetProductsAction
     {
         $filters = $request->validatedWithDefaults();
         $branchId = $filters['branch_id'] ?? null;
+        if (filled($filters['brand'] ?? null)) {
+            // The showcase names the brand ("new-balance"); a name that matches no brand matches no products.
+            $filters['brand_id'] = StorefrontSlug::resolve(Brand::query(), $filters['brand'])?->id ?? 0;
+        }
 
         $query = Product::query()->select(self::LIST_COLUMNS)->with([
             'unit:id,name,code',
@@ -57,9 +72,15 @@ class GetProductsAction
         $this->addSpinFrameCount($query);
 
         $this->applyFilters($query, $filters);
+        if ($filters['group_by_family'] ?? false) {
+            $this->onePerFamily($query, $filters);
+        }
         $this->applySorting($query, $filters);
 
         $products = $this->paginate($query, $filters);
+        if ($filters['group_by_family'] ?? false) {
+            $this->attachFamilies($products->getCollection(), $filters);
+        }
 
         return [
             'data' => ProductResource::collection($products->items()),
@@ -181,6 +202,68 @@ class GetProductsAction
     }
 
     /**
+     * Keep one row per family: the head when it matches the filters, else the
+     * first matching variant. A filter such as a size still picks the row — a
+     * shopper browsing size 42 lands on the 42 — but the family is listed once.
+     *
+     * @param  Builder<Product>  $query
+     */
+    private function onePerFamily(Builder $query, array $filters): void
+    {
+        $matching = Product::query();
+        $this->applyFilters($matching, $filters);
+
+        $query->whereIn('products.id', $matching
+            ->selectRaw('COALESCE(MIN(CASE WHEN products.parent_id IS NULL THEN products.id END), MIN(products.id))')
+            ->groupByRaw(self::FAMILY_KEY)
+            ->toBase());
+    }
+
+    /**
+     * What a family card needs beyond its own row: every size and colour on
+     * offer, the price range and the stock across the family. One query for
+     * the page's families.
+     *
+     * @param  Collection<int, Product>  $products
+     */
+    private function attachFamilies(Collection $products, array $filters): void
+    {
+        if ($products->isEmpty()) {
+            return;
+        }
+        $familyOf = fn (Product $product): int => (int) ($product->parent_id ?: $product->id);
+
+        $members = Product::query()->select(['id', 'parent_id', 'size', 'color', 'mrp'])->withOnlinePrice();
+        $this->addStockAggregates($members, $filters['branch_id'] ?? null);
+        $this->applyFilters($members, array_intersect_key($filters, array_flip(self::FAMILY_MEMBER_FILTERS)));
+        $members = $members->whereIn(DB::raw(self::FAMILY_KEY), $products->map($familyOf)->unique()->values())
+            ->orderBy('id')
+            ->get()
+            ->groupBy($familyOf);
+
+        $palette = ProductColours::palette();
+        $products->each(function (Product $product) use ($members, $familyOf, $palette): void {
+            $family = $members->get($familyOf($product), collect([$product]));
+            $prices = $family->map(fn (Product $member) => $member->onlinePrice());
+            $colours = $family->map(fn (Product $member) => trim((string) $member->color))->filter()->unique()->values();
+
+            $product->setAttribute('family_summary', [
+                'id' => $familyOf($product),
+                'count' => $family->count(),
+                'sizes' => $family->map(fn (Product $member) => trim((string) $member->size))->filter()->unique()->values()->all(),
+                'colours' => $colours->map(fn (string $colour) => [
+                    'value' => $colour,
+                    'name' => ProductColours::displayName($colour),
+                    'hex' => ProductColours::hexFor($colour, $palette),
+                ])->all(),
+                'min_price' => $prices->min(),
+                'max_price' => $prices->max(),
+                'stock_total' => $family->sum(fn (Product $member) => (float) $member->stock_total),
+            ]);
+        });
+    }
+
+    /**
      * Apply filters to the query.
      *
      * @param  Builder<Product>  $query
@@ -192,6 +275,10 @@ class GetProductsAction
             // wants one row, not the whole catalog filtered by nothing.
             ->when($filters['product_id'] ?? null, function ($q, $value) {
                 return $q->whereKey($value);
+            })
+            // Every size and colour of one family (its head and the variants under it).
+            ->when($filters['family_id'] ?? null, function ($q, $value) {
+                return $q->where(fn ($family) => $family->whereKey($value)->orWhere('parent_id', $value));
             })
             ->when($filters['barcode'] ?? null, function ($q, $value) {
                 return $q->where('barcode', $value);
@@ -207,8 +294,8 @@ class GetProductsAction
                 return $q->where('sub_category_id', $value);
             })
             // Brand filter
-            ->when($filters['brand_id'] ?? null, function ($q, $value) {
-                return $q->where('brand_id', $value);
+            ->when(isset($filters['brand_id']), function ($q) use ($filters) {
+                return $q->where('brand_id', $filters['brand_id']);
             })
             // Storefront callers only — the POS catalog must still see hidden brands/categories.
             ->when($filters['online_only'] ?? false, function ($q) {

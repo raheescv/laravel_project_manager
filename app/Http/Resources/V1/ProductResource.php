@@ -3,6 +3,8 @@
 namespace App\Http\Resources\V1;
 
 use App\Models\Product;
+use App\Support\ProductColours;
+use App\Support\StorefrontSlug;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
@@ -39,11 +41,21 @@ class ProductResource extends JsonResource
             'type' => $this->type,
             'code' => $this->code,
             'name' => $this->name,
+            // What the showcase puts in a product URL: the name's slug, or the name itself.
+            'slug' => StorefrontSlug::link($this->name),
             'name_arabic' => $this->name_arabic,
             'description' => $this->description,
             'thumbnail' => $this->resolvedThumbnail(),
             'barcode' => $this->barcode,
             'color' => $this->color,
+            // Size / colour variants: the family is `parent_id ?: id`. The till
+            // shows one card per family and asks for the size and colour; the
+            // colour comes ready to draw, as stored codes ("#ff0000") have no name.
+            'parent_id' => $this->parent_id,
+            'color_name' => $this->colourName(),
+            'color_hex' => $this->colourHex($request),
+            // `group_by_family` lists: the family behind this card (sizes, colours, price range, stock).
+            'family' => $this->when($this->resource->getAttribute('family_summary') !== null, fn () => $this->resource->getAttribute('family_summary')),
             'size' => $this->size,
             'model' => $this->model,
             'hsn_code' => $this->hsn_code,
@@ -179,6 +191,27 @@ class ProductResource extends JsonResource
             'available_sizes' => $this->when(! $isList, fn () => $this->getAvailableSizes()),
             'related_sizes' => $this->when(! $isList, fn () => $this->getRelatedSizes()),
         ];
+    }
+
+    private function colourName(): ?string
+    {
+        $colour = trim((string) $this->color);
+
+        return $colour === '' ? null : ProductColours::displayName($colour);
+    }
+
+    /** The tenant's palette is read once per request, not once per row. */
+    private function colourHex(Request $request): ?string
+    {
+        $colour = trim((string) $this->color);
+        if ($colour === '') {
+            return null;
+        }
+        if (! $request->attributes->has('product_colour_palette')) {
+            $request->attributes->set('product_colour_palette', ProductColours::palette());
+        }
+
+        return ProductColours::hexFor($colour, $request->attributes->get('product_colour_palette'));
     }
 
     /**

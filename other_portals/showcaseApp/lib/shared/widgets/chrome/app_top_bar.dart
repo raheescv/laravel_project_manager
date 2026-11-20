@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../logic/branch_cubit/branch_cubit.dart';
 import '../../logic/funnel_cubit/funnel_cubit.dart';
 import '../../logic/locale_cubit/locale_cubit.dart';
+import '../../logic/size_system_cubit/size_system_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import '../../utils/router/routes.dart';
 import '../branch_picker.dart';
@@ -102,25 +103,31 @@ class AppTopBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Row(
+          LayoutBuilder(
+            builder: (context, row) => Row(
             children: [
-              BrandMark(height: 42),
-              SizedBox(width: _group),
-              LanguagePill(),
-              SizedBox(width: _gap),
+              const BrandMark(height: 42),
+              const SizedBox(width: _group),
+              const LanguagePill(),
+              const SizedBox(width: _gap),
+              // Three cells need about 100pt; under [_sizingFull] the shop name
+              // would be squeezed out, so the switch becomes one cell that steps.
+              SizeSystemPill(compact: row.maxWidth < _sizingFull),
+              const SizedBox(width: _gap),
               // Expanded + Align rather than a Spacer beside a Flexible: two
               // flex children split the slack between them, so the pill ended
               // up sitting in the middle of the row with empty space to its
               // right. One flex child that fills and aligns its contents puts
               // the shop hard against the edge and still lets a long name
               // shorten inside it.
-              Expanded(
+              const Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: BranchPill(),
                 ),
               ),
             ],
+          ),
           ),
           const SizedBox(height: _gap),
           LayoutBuilder(
@@ -228,6 +235,9 @@ const double _searchComfort = 96;
 /// How far the bar's own labels will grow, whatever the text-size setting says.
 const double _chromeMaxScale = 1.25;
 const double _gap = 8;
+
+/// Row width below which the UK / US / EU switch shows only the current one.
+const double _sizingFull = 400;
 const double _group = 14;
 
 class _SearchField extends StatelessWidget {
@@ -399,6 +409,67 @@ class LanguagePill extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// UK / US / EU — which sizing every size on screen is read out in.
+///
+/// In the bar beside the language for the same reason the language is there: a
+/// customer from London reads "42" as nothing, and it is the first thing they
+/// would change. One tap applies it; the chosen one is the ink block Pearl marks
+/// a choice with.
+class SizeSystemPill extends StatelessWidget {
+  const SizeSystemPill({super.key, this.compact = false});
+
+  /// One cell, the current sizing, that steps UK → US → EU on each tap — for a
+  /// row too narrow to give all three their own.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.pearl;
+    final cubit = context.sizeSystemCubit;
+    if (cubit == null) return const SizedBox.shrink();
+    if (compact) {
+      const all = SizeSystem.values;
+      return InkWell(
+        onTap: () => cubit.set(all[(all.indexOf(cubit.state) + 1) % all.length]),
+        // The code alone: at this width an icon beside it costs the shop name
+        // its last characters.
+        child: Container(
+          height: _control,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          decoration: BoxDecoration(color: p.surface, border: Border.all(color: p.line)),
+          child: Text(cubit.state.code, style: PearlText.label.copyWith(color: p.ink, fontSize: 11.5)),
+        ),
+      );
+    }
+    return Container(
+      height: _control,
+      decoration: BoxDecoration(color: p.surface, border: Border.all(color: p.line)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final system in SizeSystem.values)
+            InkWell(
+              onTap: () => cubit.set(system),
+              child: Container(
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 9),
+                color: cubit.state == system ? p.accent : null,
+                child: Text(
+                  system.code,
+                  style: PearlText.label.copyWith(
+                    color: cubit.state == system ? p.accentInk : p.muted,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -626,7 +626,7 @@
                         <td colspan="4" class="text-left">
                             <div class="item-name">
                                 @if ($print_item_label == 'product')
-                                    {{ $item->product->name }}
+                                    {{ $item->product->displayName() }}
                                 @else
                                     {{ $item->product->code }}) {{ $item->product->mainCategory->name }}
                                 @endif

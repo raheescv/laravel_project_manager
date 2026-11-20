@@ -4,6 +4,8 @@ import { nextTick, reactive } from 'vue'
 import ErrorBox from '@/components/ErrorBox.vue'
 import { t } from '@/i18n'
 import { useCatalogStore } from '@/stores/catalog'
+import { sizeLabel } from '@/sizing'
+import { brandLink } from '@/utils/catalog'
 
 const catalog = useCatalogStore()
 
@@ -33,7 +35,7 @@ async function pick(brand) {
         <p class="eyebrow">{{ t('step2') }}</p>
         <h2 class="stage__title">{{ t('brandTitle') }}</h2>
         <p class="lede">
-          {{ catalog.sized ? t('brandLedeSized', { size: catalog.size }) : t('brandLedeAll') }}
+          {{ catalog.sized ? t('brandLedeSized', { size: sizeLabel(catalog.size) }) : t('brandLedeAll') }}
         </p>
       </header>
     </div>
@@ -69,9 +71,9 @@ async function pick(brand) {
           v-for="b in catalog.brands"
           :key="b.id"
           class="brand"
-          :class="{ 'is-on': catalog.brand === b.id, 'is-empty': !b.product_count }"
+          :class="{ 'is-on': catalog.brand === brandLink(b), 'is-empty': !b.product_count }"
           :disabled="!b.product_count"
-          :aria-pressed="catalog.brand === b.id"
+          :aria-pressed="catalog.brand === brandLink(b)"
           @click="pick(b)"
         >
           <span

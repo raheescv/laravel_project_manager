@@ -4,6 +4,7 @@ namespace App\Actions\V1\Brand;
 
 use App\Models\Brand;
 use App\Support\Storefront\SizeFilter;
+use App\Support\StorefrontSlug;
 use Illuminate\Support\Collection;
 
 class GetBrandsAction
@@ -61,6 +62,7 @@ class GetBrandsAction
                 return [
                     'id' => $brand->id,
                     'name' => $brand->name,
+                    'slug' => StorefrontSlug::link($brand->name),
                     'image_path' => $brand->image_path ? url('storage/'.$brand->image_path) : null,
                     'product_count' => $brand->products_count,
                 ];

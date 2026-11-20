@@ -5,6 +5,7 @@ import ErrorBox from '@/components/ErrorBox.vue'
 import SizeRail from '@/components/SizeRail.vue'
 import { t } from '@/i18n'
 import { useCatalogStore } from '@/stores/catalog'
+import { sizing } from '@/sizing'
 
 const catalog = useCatalogStore()
 
@@ -48,7 +49,7 @@ async function pick(size) {
         </div>
       </div>
 
-      <SizeRail v-else-if="catalog.allSizes.length" :label="t('euLabel')" :sizes="catalog.allSizes" @pick="pick" />
+      <SizeRail v-else-if="catalog.allSizes.length" :label="t('euLabel', { system: sizing.system })" :sizes="catalog.allSizes" @pick="pick" />
 
       <p v-else class="rail__empty">{{ t('noSizes') }}</p>
     </div>

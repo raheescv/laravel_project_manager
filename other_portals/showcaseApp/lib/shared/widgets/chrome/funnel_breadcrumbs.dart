@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../logic/funnel_cubit/funnel_cubit.dart';
+import '../../logic/size_system_cubit/size_system_cubit.dart';
 import '../../utils/components/theme/pearl_theme.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -45,7 +46,7 @@ class FunnelBreadcrumbs extends StatelessWidget {
         (
           FunnelStep.size,
           state.chosenSizes.length == 1 ? t.stepSize : t.stepSizes,
-          state.chosenSizesLabel(),
+          state.chosenSizesLabel(show: context.sizeLabel),
         ),
       if (state.brand != null && current.index > FunnelStep.brand.index)
         (FunnelStep.brand, t.stepBrand, state.brand!.name),

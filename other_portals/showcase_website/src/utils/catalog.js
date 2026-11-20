@@ -96,3 +96,24 @@ export function productImage(p) {
   if (!p) return null
   return resolveImage(p.thumbnail) || resolveImage(p.images?.[0]?.url) || null
 }
+
+/**
+ * Route to a product page by name: #/product/nike-air-max-90 (a name that can't make
+ * a slug, e.g. Arabic, goes in as itself). The URL never carries an id; the exact row
+ * (this size) rides along in history state so a click still opens that size.
+ */
+export function productRoute(p) {
+  const slug = p.slug || p.name
+  return { name: 'product', params: { slug }, state: { productId: p.id, productSlug: slug } }
+}
+
+/** What to ask the API for on a product page: the clicked row when known, else the slug. */
+export function productReference(slug) {
+  const state = window.history.state
+  return state?.productSlug === slug && state?.productId ? state.productId : slug
+}
+
+/** What the catalogue URL carries for a brand (?brand=new-balance): its slug, else its name. */
+export function brandLink(b) {
+  return b?.slug || b?.name || ''
+}

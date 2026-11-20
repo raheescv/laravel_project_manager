@@ -609,7 +609,13 @@ class Page extends Component
     public function render()
     {
         $units = Unit::pluck('name', 'id')->toArray();
+        $variantParent = null;
+        $variantCount = 0;
+        if ($this->table_id && $this->product) {
+            $variantParent = $this->product->parent_id ? Product::whereKey($this->product->parent_id)->first(['id', 'name'])?->toArray() : null;
+            $variantCount = Product::where('parent_id', $this->product->familyHeadId())->count();
+        }
 
-        return view('livewire.product.page', compact('units'));
+        return view('livewire.product.page', compact('units', 'variantParent', 'variantCount'));
     }
 }

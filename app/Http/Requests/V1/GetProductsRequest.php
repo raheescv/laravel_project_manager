@@ -27,6 +27,8 @@ class GetProductsRequest extends FormRequest
             'main_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'sub_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
+            // The brand's name or its slug, as the showcase puts it in the URL.
+            'brand' => ['nullable', 'string', 'max:255'],
             'branch_id' => ['nullable', 'integer', 'exists:branches,id'],
             'hsn_code' => ['nullable', 'string', 'max:50'],
             'size' => ['nullable', 'string', 'max:50'],
@@ -51,6 +53,8 @@ class GetProductsRequest extends FormRequest
             'type' => ['nullable', 'string', 'in:product,service'],
             // Storefront callers ask for only what is online visible (category and brand).
             'online_only' => ['nullable', 'boolean'],
+            'group_by_family' => ['nullable', 'boolean'],
+            'family_id' => ['nullable', 'integer'],
         ];
     }
 

@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product Variants — Premium Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<style>
+/* ---------- preview harness (not part of the real page) ---------- */
+body{font-family:"Poppins",system-ui,sans-serif;font-size:13.5px;background:var(--bs-tertiary-bg)}
+.host-bar{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:color-mix(in srgb,var(--bs-body-bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--bs-border-color)}
+.host-bar .ttl{font-weight:600;margin-right:auto}
+.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--bs-secondary-bg);gap:2px}
+.seg button{border:0;background:none;padding:5px 11px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--bs-secondary-color)}
+.seg button[aria-pressed="true"]{background:var(--bs-body-bg);color:var(--bs-emphasis-color);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.accent-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--bs-body-bg);box-shadow:0 0 0 1px var(--bs-border-color);cursor:pointer}
+.accent-dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--pv-accent)}
+.host-note{max-width:1180px;margin:14px auto 0;padding:0 16px;color:var(--bs-secondary-color)}
+.host-note b{color:var(--bs-emphasis-color)}
+.stage{max-width:1180px;margin:0 auto;padding:16px 16px 120px}
+
+/* ---------- .pvx scope — the real design system ---------- */
+:root{--pv-accent:#24447f}
+.pvx{
+  --acc:var(--pv-accent);
+  --acc-deep:color-mix(in srgb,var(--acc),#000 38%);
+  --acc-soft:color-mix(in srgb,var(--acc) 9%,var(--bs-body-bg));
+  --acc-soft-2:color-mix(in srgb,var(--acc) 16%,var(--bs-body-bg));
+  --acc-line:color-mix(in srgb,var(--acc) 38%,var(--bs-border-color));
+  --acc-ink:color-mix(in srgb,var(--acc) 70%,var(--bs-emphasis-color));
+  --card-shadow:0 1px 2px rgba(15,23,42,.05),0 10px 28px -18px rgba(15,23,42,.35);
+}
+[data-bs-theme="dark"] .pvx{--acc-ink:color-mix(in srgb,var(--acc) 35%,#fff);--acc-soft:color-mix(in srgb,var(--acc) 22%,var(--bs-body-bg));--acc-soft-2:color-mix(in srgb,var(--acc) 32%,var(--bs-body-bg))}
+.pvx-card{background:var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);border-radius:14px;box-shadow:var(--card-shadow)}
+.pvx-card + .pvx-card{margin-top:14px}
+.pvx-card__head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bs-border-color-translucent)}
+.pvx-card__head h6{margin:0;font-weight:600;color:var(--bs-emphasis-color)}
+.pvx-card__head .sub{color:var(--bs-secondary-color);font-size:12.5px}
+.pvx-card__body{padding:16px 18px}
+.pvx-step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--acc);color:#fff;font-size:12px;font-weight:600}
+
+/* hero */
+.pvx-hero{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 20px;border-radius:16px;color:#fff;overflow:hidden;
+  background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--acc),#fff 18%) 0%,transparent 55%),linear-gradient(135deg,var(--acc),var(--acc-deep));box-shadow:0 18px 40px -24px var(--acc)}
+.pvx-hero::after{content:"";position:absolute;inset:auto -40px -60px auto;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.07)}
+.pvx-hero__thumb{width:76px;height:76px;border-radius:14px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:30px;border:1px solid rgba(255,255,255,.22)}
+.pvx-hero h4{margin:0;font-weight:600;letter-spacing:-.01em}
+.pvx-hero .crumb{font-size:12px;opacity:.75;margin-bottom:2px}
+.pvx-hero .crumb a{color:#fff;text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.5)}
+.pvx-hero__chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pvx-hero__chips span{padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.14);font-size:12px}
+.pvx-hero__stat{position:relative;z-index:1;text-align:right}
+.pvx-hero__stat b{display:block;font-size:26px;line-height:1.1;font-weight:600}
+.pvx-hero__stat small{opacity:.75}
+@media (max-width:640px){.pvx-hero{grid-template-columns:56px 1fr}.pvx-hero__thumb{width:56px;height:56px;font-size:22px}.pvx-hero__stat{grid-column:1/-1;text-align:left;display:flex;gap:18px}}
+
+/* fake product tab strip */
+.pvx-tabs{display:flex;gap:4px;overflow-x:auto;margin:14px 0;padding-bottom:2px;scrollbar-width:none}
+.pvx-tabs span{flex:none;padding:7px 13px;border-radius:9px;color:var(--bs-secondary-color);font-weight:500;white-space:nowrap}
+.pvx-tabs span.on{background:var(--bs-body-bg);color:var(--acc-ink);box-shadow:var(--card-shadow)}
+.pvx-tabs span .badge{background:var(--acc)!important}
+
+/* chips + swatches */
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 0 2px var(--bs-body-bg);flex:none}
+.sw.lg{width:34px;height:34px}
+.sw.none{background:linear-gradient(135deg,transparent 44%,var(--bs-secondary-color) 44% 56%,transparent 56%);box-shadow:inset 0 0 0 1.5px var(--bs-secondary-color),0 0 0 2px var(--bs-body-bg);opacity:.75}
+.opt-badge{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:6px;background:var(--bs-secondary-bg);color:var(--bs-secondary-color);margin-left:6px;vertical-align:middle}
+.so-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.so-grid .tile b{font-size:22px;font-weight:600;color:inherit}
+.pvx-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 6px 5px 12px;border-radius:99px;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc-ink);font-weight:500}
+.pvx-chip button{display:grid;place-items:center;width:20px;height:20px;border:0;border-radius:50%;background:transparent;color:inherit;opacity:.6}
+.pvx-chip button:hover{opacity:1;background:var(--acc-soft-2)}
+.pvx-chip.locked{padding-right:12px}
+.pvx-chip--ghost{background:transparent;border-style:dashed;border-color:var(--bs-border-color);color:var(--bs-secondary-color);cursor:pointer;padding-right:12px}
+.pvx-chip--ghost:hover{border-color:var(--acc);color:var(--acc-ink)}
+.pvx-add{display:inline-flex;align-items:center;border:1px dashed var(--bs-border-color);border-radius:99px;padding:2px 3px 2px 12px;background:var(--bs-body-bg)}
+.pvx-add input{border:0;outline:0;background:transparent;width:86px;font-size:13px;color:var(--bs-body-color)}
+.pvx-add input[type=color]{width:24px;height:24px;padding:0;margin-right:8px;border:0;border-radius:50%;background:none;cursor:pointer;flex:none}
+.pvx-add input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.pvx-add input[type=color]::-webkit-color-swatch{border:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.pvx-add input[type=color]::-moz-color-swatch{border:0;border-radius:50%}
+.pvx-add.colour{padding-left:6px}
+.pvx-add button{border:0;border-radius:99px;background:var(--acc);color:#fff;padding:3px 10px;font-size:12px}
+.opt-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0}
+.opt-row + .opt-row{border-top:1px dashed var(--bs-border-color-translucent)}
+.opt-row > label{font-weight:600;color:var(--bs-emphasis-color);padding-top:6px}
+.opt-row > label small{display:block;font-weight:400;color:var(--bs-secondary-color)}
+@media (max-width:640px){.opt-row{grid-template-columns:1fr}}
+.help{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--acc-soft);color:var(--acc-ink);font-size:12.5px}
+
+/* A · matrix */
+.mx-wrap{overflow-x:auto}
+.mx{border-collapse:separate;border-spacing:8px;margin:-8px;min-width:420px}
+.mx th{font-weight:600;color:var(--bs-emphasis-color);white-space:nowrap}
+.mx thead th{text-align:center}
+.mx-head{border:0;background:none;display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:9px;color:inherit;font-weight:600}
+.mx-head:hover{background:var(--bs-secondary-bg)}
+.mx-head small{font-weight:400;color:var(--bs-secondary-color)}
+.mx-cell{width:100%;min-width:96px;height:58px;border-radius:12px;border:1.5px dashed var(--bs-border-color);background:var(--bs-body-bg);color:var(--bs-tertiary-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.15s}
+.mx-cell:hover{border-color:var(--acc);color:var(--acc-ink)}
+.mx-cell small{font-size:11px}
+.mx-cell.on{border-style:solid;border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink);box-shadow:0 6px 16px -12px var(--acc)}
+.mx-cell.on .fa-check{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--acc);color:#fff;font-size:11px}
+.mx-cell.base{cursor:default;background:repeating-linear-gradient(135deg,var(--acc-soft),var(--acc-soft) 8px,var(--acc-soft-2) 8px,var(--acc-soft-2) 16px)}
+
+/* B · size cards */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.sc{border:1px solid var(--bs-border-color-translucent);border-radius:14px;background:var(--bs-body-bg);overflow:hidden;transition:.15s}
+.sc.has{border-color:var(--acc-line)}
+.sc__head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bs-tertiary-bg)}
+.sc.has .sc__head{background:var(--acc-soft)}
+.sc__size{display:grid;place-items:center;min-width:44px;height:44px;padding:0 8px;border-radius:11px;background:var(--bs-body-bg);font-size:18px;font-weight:600;color:var(--bs-emphasis-color);box-shadow:var(--card-shadow)}
+.sc.has .sc__size{background:var(--acc);color:#fff}
+.sc__body{display:flex;flex-wrap:wrap;gap:7px;padding:12px 14px}
+.ctog{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:99px;border:1.5px solid var(--bs-border-color);background:var(--bs-body-bg);color:var(--bs-secondary-color);font-weight:500}
+.ctog:hover{border-color:var(--acc)}
+.ctog.on{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink)}
+.ctog.on::after{content:"\f00c";font-family:FontAwesome;font-size:10px;color:var(--acc)}
+.ctog.base{cursor:default}
+.ctog.base::after{content:"\f023"}
+.sc__foot{display:flex;justify-content:space-between;padding:0 14px 12px;font-size:12px}
+.linkbtn{border:0;background:none;padding:0;color:var(--acc-ink);font-weight:500}
+.linkbtn:hover{text-decoration:underline}
+
+/* C · split rail */
+.sp{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:300px}
+.sp__rail{border-right:1px solid var(--bs-border-color-translucent);padding:10px;display:flex;flex-direction:column;gap:4px;background:var(--bs-tertiary-bg);border-radius:0 0 0 14px}
+.sp__item{display:flex;align-items:center;gap:10px;width:100%;border:0;padding:10px 12px;border-radius:11px;background:none;text-align:left;color:var(--bs-body-color)}
+.sp__item:hover{background:var(--bs-body-bg)}
+.sp__item.on{background:var(--bs-body-bg);box-shadow:var(--card-shadow);color:var(--bs-emphasis-color)}
+.sp__item.on .sp__num{background:var(--acc);color:#fff}
+.sp__num{display:grid;place-items:center;min-width:36px;height:36px;border-radius:10px;background:var(--bs-body-bg);font-weight:600;box-shadow:inset 0 0 0 1px var(--bs-border-color)}
+.sp__dots{display:flex;gap:3px;margin-top:3px}
+.sp__dots .sw{width:10px;height:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.sp__main{padding:18px 20px}
+.tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 10px 14px;border-radius:14px;border:1.5px solid var(--bs-border-color);background:var(--bs-body-bg);color:var(--bs-body-color);font-weight:500;transition:.15s}
+.tile:hover{border-color:var(--acc)}
+.tile.on{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink);box-shadow:0 10px 22px -16px var(--acc)}
+.tile .tick{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;border:1.5px solid var(--bs-border-color);color:transparent}
+.tile.on .tick{background:var(--acc);border-color:var(--acc);color:#fff}
+.tile.base{cursor:default}
+@media (max-width:720px){.sp{grid-template-columns:1fr}.sp__rail{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--bs-border-color-translucent);border-radius:0}.sp__item{flex:none;width:auto}}
+
+/* variant rows */
+.pvx-table{margin:0}
+.pvx-table thead th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--bs-secondary-color);font-weight:600;background:var(--bs-tertiary-bg);border-bottom:0;white-space:nowrap}
+.pvx-table td{vertical-align:middle;border-color:var(--bs-border-color-translucent)}
+.pvx-table .form-control-sm{min-width:84px;border-radius:8px}
+.vname{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--bs-emphasis-color);white-space:nowrap}
+.vname small{font-weight:400;color:var(--bs-secondary-color)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.pill.base{background:var(--acc-soft-2);color:var(--acc-ink)}
+.pill.new{background:var(--bs-success-bg-subtle);color:var(--bs-success-text-emphasis)}
+.pill.exist{background:var(--bs-secondary-bg);color:var(--bs-secondary-color)}
+.bc{display:flex;align-items:center;gap:6px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.iconbtn{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:var(--bs-secondary-color)}
+.iconbtn:hover{background:var(--bs-danger-bg-subtle);color:var(--bs-danger)}
+
+/* sticky action bar */
+.pvx-dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:30;width:min(1148px,calc(100% - 32px));display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 12px 10px 18px;border-radius:14px;background:color-mix(in srgb,var(--bs-body-bg) 92%,transparent);backdrop-filter:blur(12px);border:1px solid var(--bs-border-color-translucent);box-shadow:0 20px 40px -20px rgba(0,0,0,.45)}
+.pvx-dock .sum{margin-right:auto;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.pvx-dock .sum b{font-size:18px;color:var(--bs-emphasis-color)}
+.btn-acc{background:var(--acc);border:0;color:#fff;font-weight:500;padding:8px 18px;border-radius:10px;box-shadow:0 8px 18px -10px var(--acc)}
+.btn-acc:hover{background:var(--acc-deep);color:#fff}
+.btn-acc:disabled{opacity:.45;box-shadow:none}
+.btn-soft{background:var(--bs-secondary-bg);border:0;color:var(--bs-body-color);font-weight:500;padding:8px 14px;border-radius:10px}
+
+/* list screen */
+.fam-row{cursor:pointer}
+.fam-row:hover td{background:var(--acc-soft)}
+.fam-row.open td{background:var(--acc-soft)}
+.caret{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--bs-secondary-bg);transition:transform .2s}
+.fam-row.open .caret{transform:rotate(90deg);background:var(--acc);color:#fff}
+.child-row td{background:var(--bs-tertiary-bg);font-size:13px}
+.child-row td:first-child{border-left:3px solid var(--acc)}
+.thumb{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc-ink);font-size:16px;flex:none}
+.dotset{display:inline-flex;gap:3px;vertical-align:middle}
+.sizeset{display:inline-flex;flex-wrap:wrap;gap:3px}
+.sizeset span{padding:1px 7px;border-radius:6px;background:var(--bs-secondary-bg);font-size:11.5px;font-weight:500}
+.fam-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;background:var(--acc);color:#fff;font-size:11px;font-weight:600}
+.stock-ok{color:var(--bs-success-text-emphasis);font-weight:600}
+.stock-low{color:var(--bs-warning-text-emphasis);font-weight:600}
+.stock-out{color:var(--bs-danger-text-emphasis);font-weight:600}
+
+/* variant page siblings */
+.sib{display:flex;flex-wrap:wrap;gap:8px}
+.sib a{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:11px;border:1px solid var(--bs-border-color);color:var(--bs-body-color);text-decoration:none;font-weight:500}
+.sib a:hover{border-color:var(--acc)}
+.sib a.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.kv div{padding:10px 12px;border-radius:10px;background:var(--bs-tertiary-bg)}
+.kv small{display:block;color:var(--bs-secondary-color);font-size:11.5px}
+.kv b{font-weight:600;color:var(--bs-emphasis-color)}
+.inherit{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--bs-secondary-color)}
+</style>
+</head>
+<body>
+
+<div class="host-bar">
+  <span class="ttl"><i class="fa fa-cubes"></i>&nbsp; Product Variants — samples</span>
+  <div class="seg" id="screenSeg">
+    <button data-screen="builder" aria-pressed="true">1 · Variants tab</button>
+    <button data-screen="list">2 · Product list</button>
+    <button data-screen="inventory">3 · Inventory</button>
+    <button data-screen="variant">4 · Variant page</button>
+  </div>
+  <div class="seg" id="sampleSeg">
+    <button data-sample="shoe" aria-pressed="true">Shoe · size + colour</button>
+    <button data-sample="shorts">Shorts · size only</button>
+  </div>
+  <div class="seg" id="dirSeg">
+    <button data-dir="a" aria-pressed="true">A · Matrix</button>
+    <button data-dir="b">B · Size cards</button>
+    <button data-dir="c">C · Split rail</button>
+  </div>
+  <span class="d-inline-flex gap-1 align-items-center">
+    <span class="accent-dot" data-accent="#24447f" style="background:#24447f" aria-pressed="true" title="Navy"></span>
+    <span class="accent-dot" data-accent="#2563eb" style="background:#2563eb" title="Blue"></span>
+    <span class="accent-dot" data-accent="#0f766e" style="background:#0f766e" title="Teal"></span>
+    <span class="accent-dot" data-accent="#9d174d" style="background:#9d174d" title="Berry"></span>
+  </span>
+  <button class="btn btn-sm btn-outline-secondary" id="themeBtn"><i class="fa fa-moon-o"></i></button>
+</div>
+
+<p class="host-note" id="hostNote"></p>
+
+<div class="stage pvx" id="stage"></div>
+<div class="pvx" id="dockHost"></div>
+
+<script>
+const NONE = 'None';
+const PALETTE = [
+  {name:'Black', hex:'#1f2328'}, {name:'Blue', hex:'#2563eb'}, {name:'White', hex:'#f8fafc'},
+  {name:'Red', hex:'#dc2626'}, {name:'Grey', hex:'#9ca3af'}, {name:'Tan', hex:'#b08155'}, {name:'Green', hex:'#15803d'}
+];
+const SAMPLES = {
+  shoe: {name:'Running Shoe', code:'PRD-000418', cat:'Footwear › Sports', unit:'Pair', cost:'85.00', mrp:'149.00',
+    sizes:['41','42','43','44'], colours:['Black','Blue'], base:'41|Black',
+    picked:['41|Black','42|Black','42|Blue','43|Black','44|Black'],
+    stock:{'41|Black':12,'42|Black':8,'42|Blue':3,'43|Black':10,'44|Black':0}},
+  shorts: {name:'Gym Shorts', code:'PRD-000433', cat:'Apparel › Sports', unit:'Pcs', cost:'22.00', mrp:'45.00',
+    sizes:['S','M','L','XL'], colours:[NONE], base:'M|None',
+    picked:['S|None','M|None','L|None','XL|None'],
+    stock:{'S|None':6,'M|None':14,'L|None':9,'XL|None':0}}
+};
+const S = {screen:'builder', dir:'a', sample:'shoe', grouped:true, open:new Set(['live']), vals:{}};
+function loadSample(id) {
+  const p = SAMPLES[id];
+  Object.assign(S, {sample:id, name:p.name, code:p.code, cat:p.cat, unit:p.unit, cost:p.cost, mrp:p.mrp,
+    sizes:[...p.sizes], colours:[...p.colours], base:p.base, picked:new Set(p.picked), stock:{...p.stock}, vals:{}, active:p.sizes[1]});
+}
+const hex = n => (PALETTE.find(p => p.name === n) || {hex:'#999'}).hex;
+const key = (s, c) => s + '|' + c;
+const cname = c => c === NONE ? 'No colour' : c;
+const label = (s, c) => c === NONE ? s : s + ' / ' + c;
+const sw = (n, cls = '') => n === NONE ? `<span class="sw none ${cls}"></span>` : `<span class="sw ${cls}" style="--sw:${hex(n)}"></span>`;
+const esc = v => String(v).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const sizeOnly = () => S.colours.length === 1 && S.colours[0] === NONE;
+const baseSize = () => S.base.split('|')[0];
+const baseColour = () => S.base.split('|')[1];
+
+function combos() {
+  const out = [];
+  S.sizes.forEach(s => S.colours.forEach(c => { if (S.picked.has(key(s, c))) out.push([s, c]); }));
+  return out;
+}
+function val(k, field) {
+  if (!S.vals[k]) {
+    const [s, c] = k.split('|');
+    const ci = PALETTE.findIndex(p => p.name === c) + 1;
+    S.vals[k] = {barcode: '6291004' + s + String(ci).padStart(2, '0'), cost: S.cost, mrp: S.mrp};
+  }
+  return S.vals[k][field];
+}
+
+/* ---------- screen 1 · builder ---------- */
+function hero() {
+  const n = combos().length;
+  const dims = sizeOnly() ? `<div><b>${S.sizes.length}</b><small>sizes · no colour</small></div>` : `<div><b>${S.sizes.length}·${S.colours.filter(c => c !== NONE).length}</b><small>sizes · colours</small></div>`;
+  return `<div class="pvx-hero">
+    <div class="pvx-hero__thumb"><i class="fa fa-cube"></i></div>
+    <div style="position:relative;z-index:1;min-width:0">
+      <div class="crumb">Products › Edit</div>
+      <h4>${S.name}</h4>
+      <div class="pvx-hero__chips"><span>${S.code}</span><span>${S.cat}</span><span>Unit: ${S.unit}</span><span>${sw(baseColour())} ${label(baseSize(), baseColour())} (base)</span></div>
+    </div>
+    <div class="pvx-hero__stat"><div><b>${n}</b><small>variants</small></div>${dims}</div>
+  </div>`;
+}
+function tabs() {
+  return `<div class="pvx-tabs"><span>Prices</span><span>Attributes</span><span class="on"><i class="fa fa-th"></i> Variants <span class="badge rounded-pill ms-1">${combos().length}</span></span><span>Accounting</span><span>Stock</span><span>Units</span><span>Images</span><span>Audit</span></div>`;
+}
+function optionsCard() {
+  const sizeChips = S.sizes.map(s => s === baseSize()
+    ? `<span class="pvx-chip locked" title="Base product size"><i class="fa fa-lock"></i> ${s}</span>`
+    : `<span class="pvx-chip">${s}<button data-act="rm-size" data-s="${s}" title="Remove size"><i class="fa fa-times"></i></button></span>`).join('');
+  const real = S.colours.filter(c => c !== NONE);
+  const colourChips = S.colours.filter(c => !(c === NONE && sizeOnly())).map(c => c === baseColour()
+    ? `<span class="pvx-chip locked">${sw(c)} ${cname(c)} <i class="fa fa-lock"></i></span>`
+    : `<span class="pvx-chip">${sw(c)} ${cname(c)}<button data-act="rm-colour" data-c="${c}"><i class="fa fa-times"></i></button></span>`).join('');
+  const offerNone = real.length && !S.colours.includes(NONE)
+    ? `<span class="pvx-chip pvx-chip--ghost" data-act="add-colour" data-c="${NONE}" title="Some sizes are sold without a colour">${sw(NONE)} No colour</span>` : '';
+  const more = PALETTE.filter(p => !S.colours.includes(p.name))
+    .map(p => `<span class="pvx-chip pvx-chip--ghost" data-act="add-colour" data-c="${p.name}">${sw(p.name)} ${p.name}</span>`).join('') + offerNone;
+  const colourState = sizeOnly()
+    ? `<div class="help mb-2"><i class="fa fa-info-circle mt-1"></i><span><b>No colours.</b> This product only comes in sizes, so each size becomes one item. Tap a colour below only if it really comes in colours.</span></div>`
+    : `<div class="d-flex flex-wrap gap-2 mb-2">${colourChips}</div>`;
+  return `<div class="pvx-card">
+    <div class="pvx-card__head"><span class="pvx-step">1</span><h6>What sizes and colours does this product come in?</h6></div>
+    <div class="pvx-card__body">
+      <div class="opt-row"><label>Sizes<small>Type and press Enter</small></label>
+        <div class="d-flex flex-wrap gap-2 align-items-center">${sizeChips}
+          <span class="pvx-add"><input id="sizeIn" placeholder="e.g. 45" /><button data-act="add-size"><i class="fa fa-plus"></i> Add</button></span></div></div>
+      <div class="opt-row"><label>Colours <span class="opt-badge">Optional</span><small>Tap one, or type your own. Skip if it has none</small></label>
+        <div>${colourState}<div class="d-flex flex-wrap gap-2 align-items-center">${more}
+          <span class="pvx-add colour" title="Your own colour: pick the shade, type the name"><input type="color" id="colourHex" value="#6b7280" aria-label="Colour shade" /><input id="colourIn" placeholder="e.g. Navy" /><button data-act="add-custom-colour"><i class="fa fa-plus"></i> Add</button></span></div></div></div>
+    </div></div>`;
+}
+function pickHead(extra = '') {
+  return `<div class="pvx-card__head"><span class="pvx-step">2</span><h6>${sizeOnly() ? 'Tick the sizes you actually stock' : 'Tick the combinations you actually stock'}</h6><span class="sub ms-auto">${extra}</span></div>`;
+}
+function sizeOnlyPicker() {
+  const tiles = S.sizes.map(s => {
+    const k = key(s, NONE), on = S.picked.has(k), base = k === S.base;
+    return `<button class="tile ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${NONE}"><span class="tick"><i class="fa ${base ? 'fa-lock' : 'fa-check'}"></i></span><b>${s}</b><small class="text-body-secondary">${base ? 'Base product' : on ? 'Will be created' : 'Tap to add'}</small></button>`;
+  }).join('');
+  return `<div class="pvx-card">${pickHead('Each size becomes one item')}<div class="pvx-card__body"><div class="so-grid">${tiles}</div>
+    <div class="help mt-3"><i class="fa fa-info-circle mt-1"></i><span>Each ticked size becomes <b>its own item</b> with its own barcode, price and stock. No colour is needed.</span></div></div></div>`;
+}
+function matrix() {
+  const head = S.colours.map(c => {
+    const n = S.sizes.filter(s => S.picked.has(key(s, c))).length;
+    return `<th><button class="mx-head" data-act="col" data-c="${c}" title="Tick / untick this column for every size">${sw(c)} ${cname(c)} <small>${n}/${S.sizes.length}</small></button></th>`;
+  }).join('');
+  const rows = S.sizes.map(s => {
+    const n = S.colours.filter(c => S.picked.has(key(s, c))).length;
+    const cells = S.colours.map(c => {
+      const k = key(s, c), on = S.picked.has(k), base = k === S.base;
+      const inner = base ? '<i class="fa fa-lock"></i><small>Base</small>' : on ? '<i class="fa fa-check"></i><small>' + label(s, c) + '</small>' : '<i class="fa fa-plus"></i>';
+      return `<td><button class="mx-cell ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${c}">${inner}</button></td>`;
+    }).join('');
+    return `<tr><th><button class="mx-head" data-act="row" data-s="${s}" title="Tick / untick the whole row">Size ${s} <small>${n}/${S.colours.length}</small></button></th>${cells}</tr>`;
+  }).join('');
+  return `<div class="pvx-card">${pickHead('Tap a size or colour heading to tick the whole row or column')}
+    <div class="pvx-card__body"><div class="mx-wrap"><table class="mx"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="help mt-3"><i class="fa fa-info-circle mt-1"></i><span>Every tick becomes <b>its own item</b> with its own barcode, price and stock. Empty boxes are not created.${S.colours.includes(NONE) ? ' A tick in <b>No colour</b> is a size-only item.' : ''}</span></div></div></div>`;
+}
+function sizeCards() {
+  const cards = S.sizes.map(s => {
+    const n = S.colours.filter(c => S.picked.has(key(s, c))).length;
+    const tg = S.colours.map(c => {
+      const k = key(s, c), on = S.picked.has(k), base = k === S.base;
+      return `<button class="ctog ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${c}">${sw(c)} ${cname(c)}</button>`;
+    }).join('');
+    return `<div class="sc ${n ? 'has' : ''}"><div class="sc__head"><span class="sc__size">${s}</span><div><div class="fw-semibold">Size ${s}</div><small class="text-body-secondary">${n ? n + ' variant' + (n > 1 ? 's' : '') : 'Not stocked'}</small></div></div>
+      <div class="sc__body">${tg}</div>
+      <div class="sc__foot"><button class="linkbtn" data-act="row" data-s="${s}">${n === S.colours.length ? 'Clear' : 'All colours'}</button><span class="text-body-secondary">${n} variant${n === 1 ? '' : 's'}</span></div></div>`;
+  }).join('');
+  return `<div class="pvx-card">${pickHead('One card per size — tap the colours that size comes in')}<div class="pvx-card__body"><div class="sc-grid">${cards}</div>
+    <div class="help mt-3"><i class="fa fa-info-circle mt-1"></i><span>Each ticked chip becomes its own item. Sizes with nothing ticked are skipped.</span></div></div></div>`;
+}
+function splitRail() {
+  if (!S.sizes.includes(S.active)) S.active = S.sizes[0];
+  const rail = S.sizes.map(s => {
+    const on = S.colours.filter(c => S.picked.has(key(s, c)));
+    return `<button class="sp__item ${s === S.active ? 'on' : ''}" data-act="focus" data-s="${s}"><span class="sp__num">${s}</span>
+      <span><span class="d-block fw-semibold">Size ${s}</span><span class="sp__dots">${on.map(c => sw(c)).join('') || '<small class="text-body-secondary">none</small>'}</span></span></button>`;
+  }).join('');
+  const tiles = S.colours.map(c => {
+    const k = key(S.active, c), on = S.picked.has(k), base = k === S.base;
+    return `<button class="tile ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${S.active}" data-c="${c}"><span class="tick"><i class="fa ${base ? 'fa-lock' : 'fa-check'}"></i></span>${sw(c, 'lg')}<span>${cname(c)}</span><small class="text-body-secondary">${base ? 'Base product' : on ? 'Will be created' : 'Tap to add'}</small></button>`;
+  }).join('');
+  return `<div class="pvx-card">${pickHead('Pick a size on the left, then tap its colours')}
+    <div class="sp"><div class="sp__rail">${rail}</div>
+      <div class="sp__main"><div class="d-flex flex-wrap align-items-center gap-2 mb-3"><h5 class="m-0 fw-semibold">Size ${S.active}</h5><span class="text-body-secondary">— which colours?</span>
+        <button class="btn-soft btn btn-sm ms-auto" data-act="copy-all"><i class="fa fa-files-o"></i> Use these colours for all sizes</button></div>
+        <div class="tile-grid">${tiles}</div></div></div></div>`;
+}
+function rowsCard() {
+  const list = combos();
+  const rows = list.map(([s, c], i) => {
+    const k = key(s, c), base = k === S.base;
+    const status = base ? `<span class="pill base"><i class="fa fa-lock"></i> Base · existing</span>` : `<span class="pill new"><i class="fa fa-plus"></i> New</span>`;
+    const inp = (f, extra = '') => `<input class="form-control form-control-sm" data-k="${k}" data-f="${f}" value="${esc(val(k, f))}" ${extra}/>`;
+    return `<tr><td class="text-body-secondary">${i + 1}</td>
+      <td><div class="vname">${sw(c)} ${label(s, c)} <small>${S.name}</small></div></td>
+      <td>${status}</td>
+      <td><div class="bc"><i class="fa fa-barcode text-body-secondary"></i>${base ? val(k, 'barcode') : inp('barcode', 'style="min-width:130px"')}</div></td>
+      <td>${inp('cost')}</td><td>${inp('mrp')}</td>
+      <td class="text-end">${base ? '' : `<button class="iconbtn" data-act="cell" data-s="${s}" data-c="${c}" title="Don't create"><i class="fa fa-trash-o"></i></button>`}</td></tr>`;
+  }).join('');
+  return `<div class="pvx-card"><div class="pvx-card__head"><span class="pvx-step">3</span><h6>Check each item before saving</h6><span class="sub ms-auto">Category, brand, tax and unit are copied from ${S.name}</span></div>
+    <div class="table-responsive"><table class="table pvx-table"><thead><tr><th>#</th><th>Variant</th><th>Status</th><th>Barcode</th><th>Cost</th><th>MRP</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7"class="text-center text-body-secondary py-4">Nothing ticked yet</td></tr>'}</tbody></table></div></div>`;
+}
+function dock() {
+  const list = combos(), fresh = list.filter(([s, c]) => key(s, c) !== S.base).length;
+  return `<div class="pvx-dock"><div class="sum"><span><b>${list.length}</b> variants</span><span class="text-body-secondary">${fresh} new · 1 existing</span><span class="text-body-secondary d-none d-md-inline">Product list shows <b class="fs-6">1</b> product</span></div>
+    <button class="btn-soft btn">Cancel</button><button class="btn btn-acc" ${fresh ? '' : 'disabled'}><i class="fa fa-check"></i> Create ${fresh} variant${fresh === 1 ? '' : 's'}</button></div>`;
+}
+
+/* ---------- screen 2 · product list ---------- */
+function familyOf(p, picked, stock, id) {
+  const items = [];
+  p.sizes.forEach(s => p.colours.forEach(c => { const k = key(s, c); if (picked.has(k)) items.push({name:p.name, v:[s, c], bc:'6291004' + s + String(PALETTE.findIndex(x => x.name === c) + 1).padStart(2, '0'), stock:stock[k] ?? 0, mrp:parseFloat(p.mrp), base:k === p.base}); }));
+  return {id, name:p.name, code:p.code, cat:p.cat, items};
+}
+function listScreen() {
+  const otherId = S.sample === 'shoe' ? 'shorts' : 'shoe', other = SAMPLES[otherId];
+  const fams = [
+    familyOf(S, S.picked, S.stock, 'live'),
+    familyOf(other, new Set(other.picked), other.stock, 'other'),
+    {id:'polish', name:'Shoe Polish 50ml', code:'PRD-000377', cat:'Accessories', items:[{name:'Shoe Polish 50ml', v:null, bc:'6291002200017', stock:40, mrp:12}]}
+  ];
+  const stockCls = q => q <= 0 ? 'stock-out' : q < 5 ? 'stock-low' : 'stock-ok';
+  let body = '';
+  if (S.grouped) {
+    fams.forEach(f => {
+      const single = !f.items[0].v;
+      const sizes = [...new Set(f.items.filter(i => i.v).map(i => i.v[0]))];
+      const cols = [...new Set(f.items.filter(i => i.v && i.v[1] !== NONE).map(i => i.v[1]))];
+      const total = f.items.reduce((a, i) => a + i.stock, 0), open = S.open.has(f.id);
+      body += `<tr class="${single ? '' : 'fam-row'} ${open && !single ? 'open' : ''}" ${single ? '' : `data-act="fam" data-id="${f.id}"`}>
+        <td style="width:40px">${single ? '' : '<span class="caret"><i class="fa fa-chevron-right"></i></span>'}</td>
+        <td><div class="d-flex align-items-center gap-2"><span class="thumb"><i class="fa ${single ? 'fa-tag' : 'fa-cubes'}"></i></span><div><div class="fw-semibold text-body-emphasis">${f.name}</div><small class="text-body-secondary">${f.cat}</small></div></div></td>
+        <td class="text-body-secondary">${f.code}</td>
+        <td>${single ? '<span class="text-body-secondary">Single item</span>' : `<div class="d-flex flex-wrap align-items-center gap-2"><span class="fam-badge"><i class="fa fa-th"></i> ${f.items.length} variants</span><span class="sizeset">${sizes.map(s => `<span>${s}</span>`).join('')}</span>${cols.length ? `<span class="dotset">${cols.map(c => sw(c)).join('')}</span>` : '<small class="text-body-secondary">sizes only</small>'}</div>`}</td>
+        <td class="${stockCls(total)}">${total}</td><td>${Math.min(...f.items.map(i => i.mrp)).toFixed(2)}</td>
+        <td><span class="badge bg-success-subtle text-success-emphasis">Selling</span></td></tr>`;
+      if (open && !single) f.items.forEach(i => {
+        body += `<tr class="child-row"><td></td><td><div class="vname">${sw(i.v[1])} ${label(i.v[0], i.v[1])}${i.base ? ' <span class="pill base">Base</span>' : ''}</div></td>
+          <td><span class="bc"><i class="fa fa-barcode text-body-secondary"></i>${i.bc}</span></td><td class="text-body-secondary">Size ${i.v[0]}${i.v[1] === NONE ? '' : ' · ' + i.v[1]}</td>
+          <td class="${stockCls(i.stock)}">${i.stock}</td><td>${i.mrp.toFixed(2)}</td><td><a href="#" class="small" data-act="goto-variant">Open <i class="fa fa-chevron-right"></i></a></td></tr>`;
+      });
+    });
+  } else {
+    fams.flatMap(f => f.items).forEach(i => {
+      body += `<tr><td></td><td><div class="d-flex align-items-center gap-2"><span class="thumb">${i.v ? sw(i.v[1]) : '<i class="fa fa-tag"></i>'}</span><div><div class="fw-semibold text-body-emphasis">${i.name}${i.v ? ` <span class="text-body-secondary fw-normal">— ${label(i.v[0], i.v[1])}</span>` : ''}</div><small class="text-body-secondary">${i.bc}</small></div></div></td>
+        <td class="text-body-secondary">${i.v ? fams.find(f => f.items.includes(i)).code : 'PRD-000377'}</td><td>${i.v ? `<span class="pill exist">Variant of ${i.name}</span>` : '<span class="text-body-secondary">Single item</span>'}</td>
+        <td class="${stockCls(i.stock)}">${i.stock}</td><td>${i.mrp.toFixed(2)}</td><td><span class="badge bg-success-subtle text-success-emphasis">Selling</span></td></tr>`;
+    });
+  }
+  const totalRows = S.grouped ? fams.length : fams.flatMap(f => f.items).length;
+  return `<div class="pvx-card"><div class="pvx-card__head"><h6><i class="fa fa-cubes"></i> Products</h6><span class="sub">${totalRows} rows</span>
+    <div class="ms-auto d-flex flex-wrap gap-2 align-items-center"><div class="input-group input-group-sm" style="width:220px"><span class="input-group-text"><i class="fa fa-search"></i></span><input class="form-control" placeholder="Name, barcode, size, colour"/></div>
+    <div class="seg"><button data-act="grouped" data-v="1" aria-pressed="${S.grouped}"><i class="fa fa-th-large"></i> Group variants</button><button data-act="grouped" data-v="0" aria-pressed="${!S.grouped}"><i class="fa fa-list"></i> Show every variant</button></div></div></div>
+    <div class="table-responsive"><table class="table pvx-table"><thead><tr><th></th><th>Product</th><th>Code / Barcode</th><th>Variants</th><th>Stock</th><th>MRP</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+
+/* ---------- screen 3 · inventory ---------- */
+function inventoryScreen() {
+  const rows = combos().map(([s, c]) => {
+    const k = key(s, c), q = S.stock[k] ?? 0, cost = parseFloat(S.cost);
+    return `<tr><td><span class="bc"><i class="fa fa-barcode text-body-secondary"></i>${val(k, 'barcode')}</span></td>
+      <td><div class="vname">${S.name} <span class="pill exist">${sw(c)} ${label(s, c)}</span></div></td>
+      <td>Main Branch</td><td class="${q <= 0 ? 'stock-out' : q < 5 ? 'stock-low' : 'stock-ok'}">${q}</td><td>${cost.toFixed(2)}</td><td>${(q * cost).toFixed(2)}</td></tr>`;
+  }).join('');
+  return `<div class="alert alert-light border d-flex gap-2 align-items-center"><i class="fa fa-info-circle text-primary"></i><span>Inventory never groups. <b>${S.name}</b> is one product but <b>${combos().length} separate stock items</b>, and each one is counted, sold, purchased and transferred on its own.</span></div>
+    <div class="pvx-card"><div class="pvx-card__head"><h6><i class="fa fa-cubes"></i> Inventory</h6><span class="sub">Filtered: ${S.name}</span>
+    <div class="ms-auto input-group input-group-sm" style="width:240px"><span class="input-group-text"><i class="fa fa-search"></i></span><input class="form-control" value="${S.name}"/></div></div>
+    <div class="table-responsive"><table class="table pvx-table"><thead><tr><th>Barcode</th><th>Item</th><th>Branch</th><th>Qty</th><th>Cost</th><th>Value</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ---------- screen 4 · a variant's own page ---------- */
+function variantScreen() {
+  const list = combos(), cur = list.find(([s, c]) => key(s, c) !== S.base) || list[0];
+  const sib = list.map(([s, c]) => `<a href="#" class="${s === cur[0] && c === cur[1] ? 'on' : ''}">${sw(c)} ${label(s, c)}</a>`).join('');
+  const k = key(cur[0], cur[1]);
+  return `<div class="pvx-hero"><div class="pvx-hero__thumb">${cur[1] === NONE ? '<b style="font-size:24px">' + cur[0] + '</b>' : sw(cur[1], 'lg')}</div>
+      <div style="position:relative;z-index:1;min-width:0"><div class="crumb">Products › <a href="#" data-act="goto-builder">${S.name}</a> › Variant</div><h4>${S.name} — ${label(cur[0], cur[1])}</h4>
+      <div class="pvx-hero__chips"><span><i class="fa fa-barcode"></i> ${val(k, 'barcode')}</span><span>Size ${cur[0]}</span><span>${cname(cur[1])}</span></div></div>
+      <div class="pvx-hero__stat"><div><b>${S.mrp}</b><small>MRP</small></div></div></div>
+    <div class="pvx-card mt-3"><div class="pvx-card__head"><h6>Other variants of ${S.name}</h6><span class="sub">Tap to jump</span></div><div class="pvx-card__body"><div class="sib">${sib}</div></div></div>
+    <div class="row g-3 mt-0">
+      <div class="col-lg-6"><div class="pvx-card h-100"><div class="pvx-card__head"><h6>This variant's own details</h6></div><div class="pvx-card__body">
+        <div class="row g-2"><div class="col-6"><label class="form-label small">Barcode</label><input class="form-control" value="${val(k, 'barcode')}"/></div>
+        <div class="col-6"><label class="form-label small">Size</label><input class="form-control" value="${cur[0]}"/></div>
+        <div class="col-6"><label class="form-label small">Colour <span class="text-body-secondary">(optional)</span></label><input class="form-control" value="${cur[1] === NONE ? '' : cur[1]}" placeholder="No colour"/></div>
+        <div class="col-3"><label class="form-label small">Cost</label><input class="form-control" value="${S.cost}"/></div>
+        <div class="col-3"><label class="form-label small">MRP</label><input class="form-control" value="${S.mrp}"/></div></div></div></div></div>
+      <div class="col-lg-6"><div class="pvx-card h-100"><div class="pvx-card__head"><h6>Shared with the whole family</h6><span class="sub ms-auto"><a href="#" data-act="goto-builder">Edit on ${S.name}</a></span></div><div class="pvx-card__body">
+        <div class="kv"><div><small>Department</small><b>${S.cat.split(' › ')[0]}</b></div><div><small>Category</small><b>${S.cat.split(' › ')[1]}</b></div><div><small>Brand</small><b>Stride</b></div><div><small>Unit</small><b>${S.unit}</b></div><div><small>Tax</small><b>5%</b></div><div><small>Income account</small><b>Sales</b></div></div>
+        <div class="inherit mt-2"><i class="fa fa-lock"></i> These are copied from the base product and kept in sync.</div></div></div></div>
+    </div>`;
+}
+
+/* ---------- render + events ---------- */
+const NOTES = {
+  builder: {
+    a:'<b>A · Matrix.</b> Sizes down the side, colours across the top, and each box is one item. Colour is optional: add a <b>No colour</b> column for sizes sold without a colour, or switch to the Shorts sample to see a size-only product.',
+    b:'<b>B · Size cards.</b> One card per size with that size\'s colours on it ("42 comes in black and blue"). With no colours, it becomes a row of size tiles.',
+    c:'<b>C · Split rail.</b> Pick a size on the left, then tap large colour tiles. Best when there are many colours or for touch screens. With no colours, it becomes a row of size tiles.'
+  },
+  list:'<b>Product list.</b> A family shows as ONE row with its sizes, colour dots (or "sizes only") and total stock. Tap it to expand, or switch to "Show every variant".',
+  inventory:'<b>Inventory.</b> Nothing is grouped here. Every variant is its own stock line with its own barcode. A size-only variant is labelled just "M".',
+  variant:'<b>Variant page.</b> A variant has its own barcode, size, an optional colour, and price. It links back to the parent and its siblings. Shared fields are read-only here.'
+};
+function render() {
+  const st = document.getElementById('stage'), dk = document.getElementById('dockHost');
+  document.getElementById('dirSeg').style.display = S.screen === 'builder' ? '' : 'none';
+  document.getElementById('hostNote').innerHTML = S.screen === 'builder' ? NOTES.builder[S.dir] : NOTES[S.screen];
+  if (S.screen === 'builder') {
+    const picker = sizeOnly() ? sizeOnlyPicker : {a:matrix, b:sizeCards, c:splitRail}[S.dir];
+    st.innerHTML = hero() + tabs() + optionsCard() + picker() + rowsCard();
+    dk.innerHTML = dock();
+  } else {
+    st.innerHTML = {list:listScreen, inventory:inventoryScreen, variant:variantScreen}[S.screen]();
+    dk.innerHTML = '';
+  }
+}
+function setPressed(segId, attr, v) { document.querySelectorAll('#' + segId + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset[attr] === v)); }
+function toggle(k) { if (k === S.base) return; S.picked.has(k) ? S.picked.delete(k) : S.picked.add(k); }
+function addSize() {
+  const el = document.getElementById('sizeIn'), v = (el.value || '').trim();
+  if (v && !S.sizes.includes(v)) { S.sizes.push(v); S.active = v; if (sizeOnly()) S.picked.add(key(v, NONE)); }
+  render(); const n = document.getElementById('sizeIn'); if (n) n.focus();
+}
+function addColour(c) {
+  if (S.colours.includes(c)) return;
+  S.colours.push(c);
+}
+const NAMED = {navy:'#1e3a8a', maroon:'#7f1d1d', beige:'#e7dcc4', brown:'#78350f', pink:'#ec4899', purple:'#7e22ce', orange:'#ea580c', yellow:'#eab308', olive:'#65712b', gold:'#c9a227', silver:'#c0c4cc', cream:'#f5ecd7', khaki:'#b9a77a', teal:'#0f766e', burgundy:'#6d1a2c', charcoal:'#36393f'};
+function addCustomColour() {
+  const nameEl = document.getElementById('colourIn'), hexEl = document.getElementById('colourHex');
+  let name = (nameEl.value || '').replace(/[<>"&|]/g, '').trim();
+  if (!name || ['none', 'no colour', 'no color'].includes(name.toLowerCase())) { nameEl.focus(); return; }
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  const known = PALETTE.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (known) { name = known.name; }
+  else { PALETTE.push({name, hex: hexEl.value !== '#6b7280' ? hexEl.value : (NAMED[name.toLowerCase()] || hexEl.value)}); }
+  addColour(name);
+  render();
+  const n = document.getElementById('colourIn'); if (n) n.focus();
+}
+function removeColour(c) {
+  if (c === baseColour()) return;
+  S.colours = S.colours.filter(x => x !== c);
+  S.sizes.forEach(x => S.picked.delete(key(x, c)));
+  if (!S.colours.length) S.colours = [NONE];
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act],[data-screen],[data-dir],[data-accent],[data-sample]');
+  if (!t) return;
+  if (t.dataset.screen) { S.screen = t.dataset.screen; setPressed('screenSeg', 'screen', S.screen); return render(); }
+  if (t.dataset.dir) { S.dir = t.dataset.dir; setPressed('dirSeg', 'dir', S.dir); return render(); }
+  if (t.dataset.sample) { loadSample(t.dataset.sample); setPressed('sampleSeg', 'sample', S.sample); return render(); }
+  if (t.dataset.accent) { document.documentElement.style.setProperty('--pv-accent', t.dataset.accent); document.querySelectorAll('[data-accent]').forEach(d => d.setAttribute('aria-pressed', d === t)); return; }
+  const {act, s, c} = t.dataset;
+  if (t.tagName === 'A') e.preventDefault();
+  switch (act) {
+    case 'cell': toggle(key(s, c)); break;
+    case 'row': { const all = S.colours.every(x => S.picked.has(key(s, x))); S.colours.forEach(x => { const k = key(s, x); if (k === S.base) return; all ? S.picked.delete(k) : S.picked.add(k); }); break; }
+    case 'col': { const all = S.sizes.every(x => S.picked.has(key(x, c))); S.sizes.forEach(x => { const k = key(x, c); if (k === S.base) return; all ? S.picked.delete(k) : S.picked.add(k); }); break; }
+    case 'focus': S.active = s; break;
+    case 'copy-all': { const on = S.colours.filter(x => S.picked.has(key(S.active, x))); S.sizes.forEach(sz => S.colours.forEach(x => { const k = key(sz, x); if (k === S.base) return; on.includes(x) ? S.picked.add(k) : S.picked.delete(k); })); break; }
+    case 'add-size': return addSize();
+    case 'rm-size': if (s !== baseSize()) { S.sizes = S.sizes.filter(x => x !== s); S.colours.forEach(x => S.picked.delete(key(s, x))); } break;
+    case 'add-colour': addColour(c); break;
+    case 'add-custom-colour': return addCustomColour();
+    case 'rm-colour': removeColour(c); break;
+    case 'grouped': S.grouped = t.dataset.v === '1'; break;
+    case 'fam': S.open.has(t.dataset.id) ? S.open.delete(t.dataset.id) : S.open.add(t.dataset.id); break;
+    case 'goto-variant': S.screen = 'variant'; setPressed('screenSeg', 'screen', 'variant'); break;
+    case 'goto-builder': S.screen = 'builder'; setPressed('screenSeg', 'screen', 'builder'); break;
+    default: return;
+  }
+  render();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'sizeIn') { e.preventDefault(); addSize(); }
+  if (e.target.id === 'colourIn') { e.preventDefault(); addCustomColour(); }
+});
+document.addEventListener('input', e => { const {k, f} = e.target.dataset; if (k && f) { val(k, f); S.vals[k][f] = e.target.value; } });
+document.getElementById('themeBtn').addEventListener('click', e => {
+  const dark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
+  document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+  e.currentTarget.innerHTML = `<i class="fa ${dark ? 'fa-sun-o' : 'fa-moon-o'}"></i>`;
+});
+loadSample('shoe');
+render();
+</script>
+</body>
+</html>

@@ -75,6 +75,13 @@ class Product extends Equatable {
     required this.totalStock,
     required this.thumbnail,
     this.priority = 0,
+    this.parentId,
+    this.size = '',
+    this.color = '',
+    this.colorName = '',
+    this.colorHex = '',
+    this.variants = const [],
+    this.maxMrp = 0,
   });
 
   final int id;
@@ -92,8 +99,70 @@ class Product extends Equatable {
   /// POS listing priority (Settings → Sale → POS Product Order); 0 = none.
   final int priority;
 
+  /// Size / colour variants (web Variants tab): every variant is its own
+  /// product with its own stock and barcode, and the family is
+  /// `parentId ?? id`. [color] is as stored (a name, or a "#ff0000" code from
+  /// the product form); [colorName] / [colorHex] are what to show.
+  final int? parentId;
+  final String size;
+  final String color;
+  final String colorName;
+  final String colorHex;
+
+  /// Set only on a family card (see [groupFamilies]): the variants the till
+  /// asks the cashier to choose between. [mrp] is then the lowest price and
+  /// [maxMrp] the highest.
+  final List<Product> variants;
+  final double maxMrp;
+
   bool get isService => type == 'service';
   bool get hasImage => thumbnail.startsWith('http');
+  int get familyId => parentId ?? id;
+  bool get isFamily => variants.length > 1;
+  bool get hasPriceRange => isFamily && maxMrp > mrp;
+
+  /// "42 / Blue", "M", or '' for a product that is not a variant.
+  String get variantLabel =>
+      [size.trim(), color.isEmpty ? '' : colorName].where((e) => e.isNotEmpty).join(' / ');
+
+  /// The name a ticket line carries — a variant says which one it is.
+  String get displayName => variantLabel.isEmpty || isFamily ? name : '$name · $variantLabel';
+
+  /// Every product id this card stands for (a family's variants, else itself).
+  List<int> get memberIds => isFamily ? [for (final v in variants) v.id] : [id];
+
+  /// The distinct sizes / colours across a family, in catalog order.
+  List<String> get familySizes =>
+      {for (final v in variants) if (v.size.trim().isNotEmpty) v.size.trim()}.toList();
+  List<Product> get familyColours {
+    final seen = <String>{};
+    return [for (final v in variants) if (v.color.isNotEmpty && seen.add(v.color)) v];
+  }
+
+  /// One card for a whole family: the head's name and photo, the stock of every
+  /// variant, and the lowest price.
+  factory Product.family(List<Product> members) {
+    final head = members.firstWhere((m) => m.parentId == null, orElse: () => members.first);
+    final prices = [for (final m in members) m.mrp];
+    final photo = head.hasImage ? head.thumbnail
+        : members.firstWhere((m) => m.hasImage, orElse: () => head).thumbnail;
+    return Product(
+      id: head.id,
+      code: head.code,
+      name: head.name,
+      barcode: '',
+      mrp: prices.reduce((a, b) => a < b ? a : b),
+      maxMrp: prices.reduce((a, b) => a > b ? a : b),
+      tax: head.tax,
+      type: head.type,
+      categoryName: head.categoryName,
+      duration: head.duration,
+      totalStock: members.fold<num>(0, (sum, m) => sum + m.totalStock),
+      thumbnail: photo,
+      priority: head.priority,
+      variants: members,
+    );
+  }
 
   factory Product.fromJson(Map<String, dynamic> j) {
     final main = j['main_category'];
@@ -118,6 +187,11 @@ class Product extends Equatable {
       totalStock: asNum(j['total_stock']),
       thumbnail: thumb,
       priority: asNum(j['priority']).toInt(),
+      parentId: j['parent_id'] == null ? null : asNum(j['parent_id']).toInt(),
+      size: asStr(j['size']).trim(),
+      color: asStr(j['color']).trim(),
+      colorName: asStr(j['color_name']).isEmpty ? asStr(j['color']).trim() : asStr(j['color_name']),
+      colorHex: asStr(j['color_hex']),
     );
   }
 
@@ -136,7 +210,27 @@ class Product extends Equatable {
         totalStock,
         thumbnail,
         priority,
+        parentId,
+        size,
+        color,
+        colorName,
+        colorHex,
+        variants,
+        maxMrp,
       ];
+}
+
+/// Fold size / colour variants into one card each, keeping the catalog order
+/// (a family sits where its first member came in). A family with a single
+/// member in [rows] — one on the shelf, or a search that matched just one —
+/// stays a plain card.
+List<Product> groupFamilies(List<Product> rows) {
+  final families = <int, List<Product>>{};
+  for (final row in rows) {
+    final members = families.putIfAbsent(row.familyId, () => []);
+    if (!members.any((m) => m.id == row.id)) members.add(row);
+  }
+  return [for (final members in families.values) members.length == 1 ? members.first : Product.family(members)];
 }
 
 class Customer extends Equatable {

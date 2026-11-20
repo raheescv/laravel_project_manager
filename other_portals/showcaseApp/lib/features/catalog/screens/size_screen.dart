@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
+import '../../../shared/logic/size_system_cubit/size_system_cubit.dart';
 import '../../../shared/logic/theme_cubit/theme_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/funnel_navigation.dart';
@@ -358,7 +359,7 @@ class _SizeWrap extends StatelessWidget {
               SizedBox(
                 width: side,
                 child: PearlChip(
-                  label: size.size,
+                  label: context.sizeLabel(size.size),
                   // No count. The run is long and a number on every chip made
                   // it a table to read rather than a row to scan — the size is
                   // the only thing being chosen here.
@@ -415,7 +416,7 @@ class _ContinueBar extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  state.chosenSizesLabel(max: 8),
+                  state.chosenSizesLabel(max: 8, show: context.sizeLabel),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: PearlText.label.copyWith(

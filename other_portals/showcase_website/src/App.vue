@@ -10,14 +10,16 @@ import ToastHost from '@/components/ToastHost.vue'
 import { i18n, t } from '@/i18n'
 import { useBagStore } from '@/stores/bag'
 import { useShopsStore } from '@/stores/shops'
+import { productReference } from '@/utils/catalog'
 
 const route = useRoute()
 const bag = useBagStore()
 const shops = useShopsStore()
 
-// Re-key the view on real page changes so the entrance animation replays.
+// Re-key the view on real page changes so the entrance animation replays. Keyed by
+// the product asked for, so swapping an old id link for its name link isn't a change.
 const viewKey = computed(() =>
-  route.name === 'product' ? `product-${route.params.id}` : 'catalogue',
+  route.name === 'product' ? `product-${productReference(route.params.slug)}` : 'catalogue',
 )
 
 // The bag drawer locks page scroll by fixing <body>; remember where we were.

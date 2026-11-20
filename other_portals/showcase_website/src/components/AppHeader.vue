@@ -7,6 +7,7 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import { i18n, setLang, t } from '@/i18n'
 import { useBagStore } from '@/stores/bag'
 import { useCatalogStore } from '@/stores/catalog'
+import { SIZE_SYSTEMS, setSizeSystem, sizeLabel, sizing } from '@/sizing'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,7 +16,7 @@ const bag = useBagStore()
 
 const sizeChip = computed(() => {
   if (!catalog.size) return ''
-  return catalog.size === 'all' ? t('allSizesChip') : `${t('yourSize')} ${catalog.size}`
+  return catalog.size === 'all' ? t('allSizesChip') : `${t('yourSize')} ${sizeLabel(catalog.size)}`
 })
 
 /** Scroll to a catalogue stage — from the product page, go there first. */
@@ -57,6 +58,17 @@ async function jump(id) {
       </div>
 
       <div class="head__tools">
+        <div class="lang lang--sizing" role="group" :aria-label="t('sizeSystem')">
+          <button
+            v-for="s in SIZE_SYSTEMS"
+            :key="s"
+            class="lang__btn"
+            :aria-pressed="sizing.system === s"
+            @click="setSizeSystem(s)"
+          >
+            {{ s }}
+          </button>
+        </div>
         <div class="lang" role="group" aria-label="Language">
           <button class="lang__btn" :aria-pressed="i18n.lang === 'en'" @click="setLang('en')">
             EN

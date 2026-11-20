@@ -18,12 +18,12 @@ One page, three stages, then a product page:
 2. **Brand** — tiles with live counts scoped to the chosen size (`GET /brands?size=`).
 3. **The pairs** — search, sort and an infinite-scroll grid (`GET /products`).
 
-`#/product/:id` — gallery (+ 360° spin when the product has angle frames), size run with
+`#/product/:name` (e.g. `#/product/nike-dunk-low`; URLs carry names, never ids) — gallery (+ 360° spin when the product has angle frames), size run with
 per-size stock, per-shop availability, details, and the bag (localStorage) with online
 checkout through Tap Payments (see below).
 
 Size and brand persist per device; every selection is mirrored into the hash URL
-(`#/?size=42&brand=11&q=dunk&sort=priceAsc`) so a catalogue view can be shared.
+(`#/?size=42&brand=nike&q=dunk&sort=priceAsc`) so a catalogue view can be shared.
 
 ## Online checkout (Tap Payments)
 

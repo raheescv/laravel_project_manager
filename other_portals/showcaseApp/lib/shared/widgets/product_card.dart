@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../domain/helpers/formatters.dart';
+import '../logic/size_system_cubit/size_system_cubit.dart';
 import '../logic/theme_cubit/theme_cubit.dart';
 import '../domain/models/index.dart';
 import '../utils/components/theme/pearl_theme.dart';
@@ -245,7 +246,7 @@ class _SizeCorner extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            size,
+            context.sizeLabel(size),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: PearlText.price(_priceSize(compact, width) * 1.2)

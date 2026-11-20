@@ -8,7 +8,7 @@ export function fetchProducts(params = {}) {
   return client.get('/products', { params: prune(params) })
 }
 
-/** GET /products/{id} — full detail (images, images360, inventories, related_sizes…). */
+/** GET /products/{id|slug} — full detail (images, images360, inventories, related_sizes…). */
 export function fetchProduct(id) {
   return client.get(`/products/${id}`)
 }

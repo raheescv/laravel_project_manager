@@ -49,9 +49,19 @@ class UpdateAction
             if ($data['type'] !== 'product') {
                 unset($data['barcode_number']);
             }
+            $data['parent_id'] = $model->parent_id;
+            $data += ['size' => $model->size, 'color' => $model->color];
+            if ($model->parent_id && $model->parent) {
+                $data = array_merge($data, $model->parent->only(Product::VARIANT_SHARED_FIELDS));
+            }
             validationHelper(Product::rules($data, $id), $data);
             $data['updated_by'] = $user_id;
             $model->update($data);
+
+            if (! $model->parent_id) {
+                $shared = $model->only(Product::VARIANT_SHARED_FIELDS);
+                $model->variants()->get()->each(fn (Product $variant) => $variant->update($shared + ['updated_by' => $user_id]));
+            }
 
             if ($data['type'] == 'product' && $model->wasChanged('barcode_number')) {
                 $model->inventories()->update(['barcode_number' => $model->barcode_number]);

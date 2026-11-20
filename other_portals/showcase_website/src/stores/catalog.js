@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import { fetchBrands, fetchProducts, fetchSizes } from '@/api/resources'
 import router from '@/router'
-import { sortSizes, sortSizesDescending } from '@/utils/catalog'
+import { brandLink, sortSizes, sortSizesDescending } from '@/utils/catalog'
 
 const STORAGE_KEY = 'sr.catalog'
 const PER_PAGE = 24
@@ -24,7 +24,7 @@ export const SORTS = {
 export const useCatalogStore = defineStore('catalog', () => {
   // ---- selections -------------------------------------------------------
   const size = ref(null) // null (nothing picked yet) | 'all' | '42'
-  const brand = ref(null) // brand id | null (= all brands)
+  const brand = ref(null) // brand slug ('new-balance') | null (= all brands) — the URL carries names, never ids
   const brandName = ref('') // cached label so the header chip works before /brands answers
   const q = ref('')
   const sort = ref('name')
@@ -48,7 +48,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   /** A concrete size is chosen (not null, not "all"). */
   const sized = computed(() => Boolean(size.value) && size.value !== 'all')
   const brandLabel = computed(
-    () => brands.value.find((b) => b.id === brand.value)?.name || brandName.value || '',
+    () => brands.value.find((b) => brandLink(b) === brand.value)?.name || brandName.value || '',
   )
   const brandsTotal = computed(() =>
     brands.value.reduce((n, b) => n + (Number(b.product_count) || 0), 0),
@@ -86,7 +86,8 @@ export const useCatalogStore = defineStore('catalog', () => {
       const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
       if (s) {
         size.value = s.size ?? null
-        brand.value = s.brand ?? null
+        // Older saves held the brand id; links are by name now, so those start over.
+        brand.value = typeof s.brand === 'string' && s.brand ? s.brand : null
         brandName.value = s.brandName || ''
       }
     } catch {
@@ -109,7 +110,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   function toQuery() {
     const query = {}
     if (size.value) query.size = size.value
-    if (brand.value) query.brand = String(brand.value)
+    if (brand.value) query.brand = brand.value
     if (q.value) query.q = q.value
     if (sort.value !== 'name') query.sort = sort.value
     return query
@@ -122,7 +123,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   /** Apply a route query to the state (idempotent — unchanged refs don't retrigger loads). */
   function applyQuery(query) {
     size.value = query?.size ? String(query.size) : null
-    brand.value = query?.brand ? Number(query.brand) || null : null
+    brand.value = query?.brand ? String(query.brand) : null
     q.value = query?.q ? String(query.q) : ''
     sort.value = SORTS[query?.sort] ? query.sort : 'name'
     save()
@@ -148,11 +149,11 @@ export const useCatalogStore = defineStore('catalog', () => {
     return sync()
   }
   function setBrand(b) {
-    if (!b || brand.value === b.id) {
+    if (!b || brand.value === brandLink(b)) {
       brand.value = null
       brandName.value = ''
     } else {
-      brand.value = b.id
+      brand.value = brandLink(b)
       brandName.value = b.name || ''
     }
     save()
@@ -227,12 +228,14 @@ export const useCatalogStore = defineStore('catalog', () => {
     const [sortBy, sortDirection] = SORTS[sort.value] || SORTS.name
     return {
       size: sized.value ? size.value : null,
-      brand_id: brand.value,
+      brand: brand.value,
       search: q.value || null,
       sort_by: sortBy,
       sort_direction: sortDirection,
       in_stock_only: 1,
       online_only: 1,
+      // One card per size / colour family (parent_id); the card carries its sizes.
+      group_by_family: 1,
       type: 'product',
       per_page: PER_PAGE,
     }

@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use App\Models\ProductUnit;
 use App\Models\UniversalUnitConversion;
 use App\Models\User;
+use App\Support\ProductColours;
 use Illuminate\Support\Facades\Log;
 
 class AddItemAction
@@ -180,6 +181,8 @@ class AddItemAction
             'name' => $inventory->product->name,
             'barcode' => $unitInfo['barcode'],
             'size' => $inventory->product->size,
+            'color' => ProductColours::displayName($inventory->product->color) ?: null,
+            'color_hex' => filled($inventory->product->color) ? ProductColours::hexFor($inventory->product->color) : null,
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'base_unit_price' => $baseUnitPrice,

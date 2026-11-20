@@ -3,3 +3,4 @@ export 'cart_widgets.dart';
 export 'custom_payment_sheet.dart';
 export 'edit_line_sheet.dart';
 export 'stylist_sheet.dart';
+export 'variant_picker_sheet.dart';

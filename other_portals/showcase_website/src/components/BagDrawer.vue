@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import { field, money, percentOff, t } from '@/i18n'
 import { useBagStore } from '@/stores/bag'
 import { useCatalogStore } from '@/stores/catalog'
+import { sizeLabel } from '@/sizing'
 import { useShopsStore } from '@/stores/shops'
 import { toast } from '@/toast'
 import { initialOf } from '@/utils/catalog'
@@ -205,7 +206,7 @@ function keepShopping() {
             <div>
               <p class="line__brand">{{ l.brand }}</p>
               <p class="line__name">{{ field(l, 'name') }}</p>
-              <p v-if="l.size" class="line__meta">{{ t('size') }} {{ l.size }}</p>
+              <p v-if="l.size" class="line__meta">{{ t('size') }} {{ sizeLabel(l.size) }}</p>
               <div class="qty qty--sm" style="margin-block-start: 8px">
                 <button aria-label="−" @click="change(l.key, -1)">&minus;</button>
                 <span>{{ l.qty }}</span>

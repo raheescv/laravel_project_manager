@@ -23,9 +23,14 @@
                 {{ product.name }}
             </h6>
 
-            <div class="posx-card-meta">
+            <!-- A family card stands for several size / colour items; tapping it asks which one -->
+            <div v-if="isFamily" class="posx-card-meta">
+                <span class="posx-card-family"><i class="fa fa-th"></i> {{ product.variants.length }} items</span>
+            </div>
+            <div v-else class="posx-card-meta">
                 <span v-if="product.code"><b>SKU</b> {{ product.code }}</span>
                 <span v-if="product.size"><b>Size</b> {{ product.size }}</span>
+                <span v-if="product.color_name" class="posx-card-colour"><i :style="{ background: product.color_hex }"></i>{{ product.color_name }}</span>
                 <span v-if="isProduct && product.barcode" class="text-truncate" style="max-width: 60px;">
                     <b>BC</b> {{ product.barcode }}
                 </span>
@@ -39,6 +44,7 @@
 
                 <span class="posx-price" :class="{ 'has-offer': hasOffer }">
                     <s v-if="hasOffer" class="posx-price-was" title="Original price">{{ formatPrice(product.original_price) }}</s>
+                    <small v-if="hasPriceRange" class="posx-price-from">from</small>
                     {{ formatPrice(product.mrp) }}<em v-if="product.unit_name">/{{ product.unit_name }}</em>
                 </span>
             </div>
@@ -65,6 +71,12 @@ export default {
     computed: {
         isProduct() {
             return this.product.type === 'product';
+        },
+        isFamily() {
+            return Array.isArray(this.product.variants) && this.product.variants.length > 1;
+        },
+        hasPriceRange() {
+            return this.isFamily && Number(this.product.mrp_max) > Number(this.product.mrp);
         },
         priority() {
             return Number(this.product.priority) || 0;
@@ -150,6 +162,35 @@ export default {
 
 .posx-price.has-offer {
     text-align: right;
+}
+
+.posx-card-family {
+    font-weight: 700;
+    color: var(--pos-pri);
+}
+
+.posx-card-colour {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.posx-card-colour i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2);
+}
+
+.posx-card-colour i {
+    margin-right: 2px;
+}
+
+.posx-price-from {
+    font-size: .7em;
+    font-weight: 600;
+    color: var(--pos-muted);
+    margin-right: 2px;
 }
 
 .posx-card-meta b {

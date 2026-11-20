@@ -501,7 +501,7 @@ class CartCubit extends Cubit<CartState> {
     } else {
       rows.add(CartLine(
         productId: p.id,
-        name: p.name,
+        name: p.displayName,
         code: p.code,
         type: p.type,
         unitPrice: p.mrp,

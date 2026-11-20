@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { resolveImage } from '@/api/client'
 import { fetchProduct, fetchProducts } from '@/api/resources'
@@ -8,11 +8,13 @@ import ErrorBox from '@/components/ErrorBox.vue'
 import { field, money, t } from '@/i18n'
 import { useBagStore } from '@/stores/bag'
 import { useCatalogStore } from '@/stores/catalog'
+import { sizeLabel, sizing } from '@/sizing'
 import { useShopsStore } from '@/stores/shops'
 import { toast } from '@/toast'
-import { initialOf, priceOf, sortSizes, stockPill } from '@/utils/catalog'
+import { initialOf, priceOf, productReference, productRoute, sortSizes, stockPill } from '@/utils/catalog'
 
 const route = useRoute()
+const router = useRouter()
 const catalog = useCatalogStore()
 const bag = useBagStore()
 const shops = useShopsStore()
@@ -23,6 +25,9 @@ const error = ref(null)
 
 /** Every size of this model: [{ id, size, stock, branches? }] (see loadVariants). */
 const variants = ref([])
+/** Every item of this product's size / colour family (parent_id), when it has one. */
+const family = ref([])
+const switchingColour = ref(false)
 /** Lazily fetched per-shop stock for sibling sizes, keyed by product id. */
 const siblingStock = ref({})
 
@@ -60,6 +65,21 @@ const galleryLabel = computed(() =>
     : t('photos', { i: photo.value + 1, n: gallery.value.length }),
 )
 
+const colourKey = (p) => String(p?.color || '').trim()
+/** The family's colours, each knowing its stock; shown only when there is a choice. */
+const colours = computed(() => {
+  const byColour = new Map()
+  for (const m of family.value) {
+    const key = colourKey(m)
+    if (!key) continue
+    const c = byColour.get(key) || { value: key, name: m.color_name || key, hex: m.color_hex, stock: 0 }
+    c.stock += Number(m.total_stock) || 0
+    byColour.set(key, c)
+  }
+  return byColour.size > 1 ? [...byColour.values()] : []
+})
+const colourName = computed(() => product.value?.color_name || product.value?.color || '')
+
 const sizes = computed(() => variants.value)
 const selected = computed(() => sizes.value.find((v) => v.size === size.value) || null)
 // Each size is its own product row, so an offer may cover only some of them.
@@ -75,7 +95,7 @@ const note = computed(() => {
   if (sizes.value.length && !selected.value) return { cls: '', text: t('notePick') }
   if (selected.value) {
     const n = selected.value.stock
-    const s = selected.value.size
+    const s = sizeLabel(selected.value.size)
     if (n <= 0) return { cls: 'pdp__note--warn', text: t('noteOut', { size: s }) }
     if (n <= 5) return { cls: 'pdp__note--warn', text: t('noteLow', { n, size: s }) }
     return { cls: 'pdp__note--ok', text: t('noteOk', { n, size: s }) }
@@ -119,7 +139,7 @@ const specs = computed(() => {
   const run = sizes.value
   return [
     { label: t('specBrand'), value: brandName.value },
-    { label: t('specColour'), value: p.color },
+    { label: t('specColour'), value: colourName.value },
     { label: t('specModel'), value: p.model },
     { label: t('specSku'), value: p.code, mono: true },
     { label: t('specBarcode'), value: p.barcode, mono: true },
@@ -139,14 +159,21 @@ let spinTimer = null
 let dragging = false
 let dragX = 0
 let dragFrame = 0
+// Set while an old id link (#/product/123) is swapped for its name link, so the swap doesn't reload.
+let renamedTo = null
 
 async function load() {
   // Leaving the page clears the param before this component unmounts.
-  if (!route.params.id) return
+  if (!route.params.slug) return
+  if (route.params.slug === renamedTo) {
+    renamedTo = null
+    return
+  }
   loading.value = true
   error.value = null
   product.value = null
   variants.value = []
+  family.value = []
   siblingStock.value = {}
   size.value = null
   qty.value = 1
@@ -155,7 +182,12 @@ async function load() {
   mode360.value = false
   stopSpin()
   try {
-    product.value = await fetchProduct(route.params.id)
+    product.value = await fetchProduct(productReference(route.params.slug))
+    const named = productRoute(product.value)
+    if (named.params.slug !== route.params.slug) {
+      renamedTo = named.params.slug
+      router.replace(named)
+    }
     await loadVariants()
   } catch (e) {
     error.value = e.message
@@ -164,18 +196,56 @@ async function load() {
   }
 }
 
+/** A family member as a size-run entry. */
+function runEntry(v) {
+  return {
+    id: v.id,
+    size: String(v.size).trim(),
+    stock: Number(v.total_stock) || 0,
+    mrp: v.mrp,
+    online_price: v.online_price,
+    online_discount_percent: v.online_discount_percent,
+  }
+}
+
+/** Every item of the product's family: its head (parent_id) and the variants under it. */
+async function loadFamily(p) {
+  try {
+    const res = await fetchProducts({
+      family_id: p.parent_id || p.id,
+      in_stock_only: 0,
+      type: 'product',
+      per_page: 100,
+    })
+    return Array.isArray(res?.data) ? res.data : []
+  } catch {
+    return []
+  }
+}
+
 /**
- * The size run. Every size of a model is its own product row sharing the
- * model's `code`, so the siblings come from a code search on the list
- * endpoint (stock included, no in-stock filter so sold-out sizes still show
- * struck through). `related_sizes` is the fallback when the code is missing.
+ * The size run. A product with size / colour variants is one family
+ * (`parent_id`): the run is the family's sizes in this colour, and the other
+ * colours are a swatch away. Older catalogues filed each size as its own row
+ * sharing the model's `code`, so without a family the siblings come from a
+ * code search (no in-stock filter, so sold-out sizes still show struck
+ * through); `related_sizes` is the last fallback.
  */
 async function loadVariants() {
   const p = product.value
   if (!p) return
   let list = []
 
-  if (p.code) {
+  const members = await loadFamily(p)
+  if (members.length > 1) {
+    family.value = members
+    const sameColour = members.filter((v) => colourKey(v) === colourKey(p))
+    list = sameColour
+      .filter((v) => v.size !== null && String(v.size).trim() !== '')
+      .map(runEntry)
+  }
+
+  if (!list.length && p.code) {
     try {
       const res = await fetchProducts({
         search: p.code,
@@ -185,14 +255,7 @@ async function loadVariants() {
       })
       list = (res?.data || [])
         .filter((v) => v.code === p.code && v.size !== null && String(v.size).trim() !== '')
-        .map((v) => ({
-          id: v.id,
-          size: String(v.size).trim(),
-          stock: Number(v.total_stock) || 0,
-          mrp: v.mrp,
-          online_price: v.online_price,
-          online_discount_percent: v.online_discount_percent,
-        }))
+        .map(runEntry)
     } catch {
       list = []
     }
@@ -237,9 +300,50 @@ watch(selected, async (v) => {
   }
 })
 
-watch(() => route.params.id, load, { immediate: true })
+watch(() => route.params.slug, load, { immediate: true })
 
 // ---- interactions ---------------------------------------------------------
+/**
+ * Another colour of the family: open that colour's item in the size you had
+ * (or the one with the most stock) without leaving the page — the family and
+ * its run are already here.
+ */
+async function pickColour(c) {
+  const p = product.value
+  if (!p || c.value === colourKey(p) || switchingColour.value) return
+  const inColour = family.value.filter((m) => colourKey(m) === c.value)
+  const wanted = size.value || String(p.size || '').trim()
+  const target =
+    inColour.find((m) => String(m.size).trim() === wanted && Number(m.total_stock) > 0) ||
+    [...inColour].sort((a, b) => (Number(b.total_stock) || 0) - (Number(a.total_stock) || 0))[0]
+  if (!target) return
+  switchingColour.value = true
+  try {
+    const next = await fetchProduct(target.id)
+    product.value = next
+    siblingStock.value = {}
+    photo.value = 0
+    frame.value = 0
+    mode360.value = false
+    stopSpin()
+    variants.value = sortSizes(
+      family.value
+        .filter((m) => colourKey(m) === c.value && m.size !== null && String(m.size).trim() !== '')
+        .map(runEntry),
+      (v) => v.size,
+    )
+    const same = variants.value.find((v) => v.size === wanted && v.stock > 0)
+    size.value = same ? same.size : null
+    const named = productRoute(next)
+    renamedTo = named.params.slug !== route.params.slug ? named.params.slug : null
+    router.replace(named)
+  } catch (e) {
+    toast(e.message)
+  } finally {
+    switchingColour.value = false
+  }
+}
+
 function pickSize(v) {
   if (v.stock <= 0) return
   size.value = size.value === v.size ? null : v.size
@@ -390,7 +494,7 @@ onBeforeUnmount(stopSpin)
       <div class="pdp__info">
         <p class="pdp__brand">{{ brandName }}</p>
         <h1 class="pdp__title">{{ name }}</h1>
-        <p v-if="product.color" class="pdp__colour">{{ t('colour') }}: {{ product.color }}</p>
+        <p v-if="colourName" class="pdp__colour">{{ t('colour') }}: {{ colourName }}</p>
         <div class="pdp__pricerow">
           <span v-if="price.was" class="pdp__prices">
             <span class="price price--lg price--sale">{{ money(price.now) }}</span>
@@ -403,10 +507,30 @@ onBeforeUnmount(stopSpin)
         <p class="pdp__note" :class="note.cls">{{ note.text }}</p>
 
         <div class="pdp__block">
+          <template v-if="colours.length">
+            <div class="pdp__blockhead">
+              <p class="h-sm">{{ t('colours') }}</p>
+              <span class="field__tag">{{ colourName }}</span>
+            </div>
+            <div class="swatches" :aria-busy="switchingColour">
+              <button
+                v-for="c in colours"
+                :key="c.value"
+                class="swatch"
+                :class="{ 'is-on': c.value === colourKey(product), 'is-out': c.stock <= 0 }"
+                :title="c.name"
+                :aria-label="c.name"
+                @click="pickColour(c)"
+              >
+                <span class="swatch__dot" :style="{ '--c': c.hex || '#9ca3af' }"></span>
+                <span class="swatch__name">{{ c.name }}</span>
+              </button>
+            </div>
+          </template>
           <template v-if="sizes.length">
             <div class="pdp__blockhead">
               <p class="h-sm">{{ t('chooseSize') }}</p>
-              <span class="field__tag">{{ t('sizeGuide') }}</span>
+              <span class="field__tag">{{ t('sizeGuide', { system: sizing.system }) }}</span>
             </div>
             <div class="szgrid">
               <button
@@ -417,7 +541,7 @@ onBeforeUnmount(stopSpin)
                 :disabled="v.stock <= 0"
                 @click="pickSize(v)"
               >
-                {{ v.size }}
+                {{ sizeLabel(v.size) }}
               </button>
             </div>
           </template>

@@ -68,6 +68,16 @@
     @endphp
 
     <form wire:submit="save">
+        @if ($variantParent)
+            <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 mb-3">
+                <i class="fa fa-sitemap"></i>
+                <span>
+                    This is <b>{{ \App\Models\Product::variantLabel($products['size'] ?? '', $products['color'] ?? '') }}</b>, a variant of
+                    <a href="{{ route('product::edit', $variantParent['id']) }}" class="alert-link">{{ $variantParent['name'] }}</a>.
+                    Name, category, brand, unit, tax and accounts come from {{ $variantParent['name'] }} and are changed there.
+                </span>
+            </div>
+        @endif
         <div class="row mb-2">
             <div class="col-md-6">
                 <div class="card h-100 shadow-sm">
@@ -796,6 +806,20 @@
                                                         </button>
                                                     </li>
                                                 @endif
+                                                @if (isset($table_id) && $type == 'product')
+                                                    <li class="nav-item" role="presentation">
+                                                        <button
+                                                            class="nav-link @if ($selectedTab == 'Variants') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" wire:click="tabSelect('Variants')" data-bs-target="#tabVariants"
+                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-th text-primary"></i>
+                                                            Variants
+                                                            @if (($variantCount ?? 0) > 0)
+                                                                <span class="badge rounded-pill bg-primary">{{ $variantCount }}</span>
+                                                            @endif
+                                                        </button>
+                                                    </li>
+                                                @endif
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
                                                         <button
@@ -1417,6 +1441,11 @@
                                                         class="tab-pane fade @if ($selectedTab == 'RawMaterials') active show @endif"
                                                         role="tabpanel">
                                                         @livewire('product.raw-materials', ['product_id' => $table_id], key('raw-materials-' . $table_id))
+                                                    </div>
+                                                    <div id="tabVariants"
+                                                        class="tab-pane fade @if ($selectedTab == 'Variants') active show @endif"
+                                                        role="tabpanel">
+                                                        @livewire('product.variants', ['product_id' => $table_id], key('variants-' . $table_id))
                                                     </div>
                                                 @endif
                                                 @if (isset($table_id) && auth()->user()->can('product.audit view'))

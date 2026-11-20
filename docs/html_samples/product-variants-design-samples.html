@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Variants Tab — Design Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<style>
+/* ================= preview harness ================= */
+body{font-family:"Poppins",system-ui,sans-serif;font-size:13.5px;background:var(--bs-tertiary-bg)}
+.host-bar{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:color-mix(in srgb,var(--bs-body-bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--bs-border-color)}
+.host-bar .ttl{font-weight:600;margin-right:auto}
+.seg{display:inline-flex;flex-wrap:wrap;padding:3px;border-radius:10px;background:var(--bs-secondary-bg);gap:2px}
+.seg button{border:0;background:none;padding:5px 11px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--bs-secondary-color)}
+.seg button[aria-pressed="true"]{background:var(--bs-body-bg);color:var(--bs-emphasis-color);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.accent-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--bs-body-bg);box-shadow:0 0 0 1px var(--bs-border-color);cursor:pointer}
+.accent-dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--pv-accent)}
+.host-note{max-width:1200px;margin:14px auto 0;padding:0 16px;color:var(--bs-secondary-color)}
+.host-note b{color:var(--bs-emphasis-color)}
+.stage{max-width:1200px;margin:0 auto;padding:16px 16px 130px}
+
+/* ================= shared .pvd tokens ================= */
+:root{--pv-accent:#24447f}
+.pvd{
+  --acc:var(--pv-accent);
+  --acc-deep:color-mix(in srgb,var(--acc),#000 38%);
+  --acc-soft:color-mix(in srgb,var(--acc) 9%,var(--bs-body-bg));
+  --acc-soft-2:color-mix(in srgb,var(--acc) 17%,var(--bs-body-bg));
+  --acc-line:color-mix(in srgb,var(--acc) 40%,var(--bs-border-color));
+  --acc-ink:color-mix(in srgb,var(--acc) 72%,var(--bs-emphasis-color));
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 12px 30px -20px rgba(15,23,42,.4);
+  --r:16px;
+}
+[data-bs-theme="dark"] .pvd{--acc-ink:color-mix(in srgb,var(--acc) 35%,#fff);--acc-soft:color-mix(in srgb,var(--acc) 22%,var(--bs-body-bg));--acc-soft-2:color-mix(in srgb,var(--acc) 34%,var(--bs-body-bg))}
+.pvd button{font-family:inherit}
+.card-x{background:var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);border-radius:var(--r);box-shadow:var(--shadow)}
+.card-x + .card-x{margin-top:14px}
+.card-x__head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bs-border-color-translucent)}
+.card-x__head h6{margin:0;font-weight:600;color:var(--bs-emphasis-color)}
+.card-x__body{padding:16px 18px}
+.muted{color:var(--bs-secondary-color)}
+.q{font-size:20px;font-weight:600;color:var(--bs-emphasis-color);letter-spacing:-.01em;margin:0}
+.q-sub{color:var(--bs-secondary-color);margin:4px 0 16px}
+
+/* product strip (same in every direction) */
+.prod{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--r);background:var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);box-shadow:var(--shadow);margin-bottom:12px}
+.prod__img{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:22px;color:#fff;background:linear-gradient(135deg,var(--acc),var(--acc-deep))}
+.prod h5{margin:0;font-weight:600;color:var(--bs-emphasis-color)}
+.prod small{color:var(--bs-secondary-color)}
+.prod__count{margin-left:auto;text-align:right}
+.prod__count b{display:block;font-size:24px;line-height:1;color:var(--acc-ink)}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin:0 0 14px;scrollbar-width:none}
+.tabs span{flex:none;padding:7px 13px;border-radius:9px;color:var(--bs-secondary-color);font-weight:500;white-space:nowrap}
+.tabs span.on{background:var(--bs-body-bg);color:var(--acc-ink);box-shadow:var(--shadow)}
+
+/* swatches + chips */
+.sw{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 0 2px var(--bs-body-bg);flex:none}
+.sw.none{background:linear-gradient(135deg,transparent 44%,var(--bs-secondary-color) 44% 56%,transparent 56%);box-shadow:inset 0 0 0 1.5px var(--bs-secondary-color);opacity:.8}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 6px 6px 12px;border-radius:99px;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc-ink);font-weight:500}
+.chip.lock{padding-right:12px}
+.chip .x{display:grid;place-items:center;width:20px;height:20px;border:0;border-radius:50%;background:none;color:inherit;opacity:.6}
+.chip .x:hover{opacity:1;background:var(--acc-soft-2)}
+.ghost{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;border:1px dashed var(--bs-border-color);background:none;color:var(--bs-secondary-color);font-weight:500}
+.ghost:hover{border-color:var(--acc);color:var(--acc-ink)}
+.adder{display:inline-flex;align-items:center;border:1px dashed var(--bs-border-color);border-radius:99px;padding:3px 3px 3px 12px;background:var(--bs-body-bg)}
+.adder:focus-within{border-color:var(--acc);border-style:solid;box-shadow:0 0 0 3px var(--acc-soft-2)}
+.adder input:not([type=color]){border:0;outline:0;background:transparent;width:90px;font-size:13px;color:var(--bs-body-color)}
+.adder input[type=color]{width:24px;height:24px;padding:0;margin-right:8px;border:0;border-radius:50%;background:none;cursor:pointer;flex:none}
+.adder input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.adder input[type=color]::-webkit-color-swatch{border:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.adder.colour{padding-left:6px}
+.adder button{border:0;border-radius:99px;background:var(--acc);color:#fff;padding:4px 11px;font-size:12px;font-weight:500}
+.sw.rainbow{background:conic-gradient(#ef4444,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#ec4899,#ef4444)}
+.ghost.choose{border-style:solid;border-color:var(--acc-line);color:var(--acc-ink);background:var(--bs-body-bg)}
+.ghost.choose:hover{background:var(--acc-soft)}
+.ghost.choose .sw{width:18px;height:18px}
+/* colour chooser popup */
+.chx-back{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.45);backdrop-filter:blur(2px)}
+.chx{position:fixed;z-index:61;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,calc(100% - 32px));max-height:calc(100vh - 40px);overflow:auto;border-radius:20px;background:var(--bs-body-bg);box-shadow:0 30px 60px -20px rgba(0,0,0,.5);border:1px solid var(--bs-border-color-translucent)}
+.chx__top{display:flex;align-items:center;gap:14px;padding:18px 18px 14px}
+.chx__prev{width:58px;height:58px;border-radius:16px;flex:none;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.chx__top input{font-size:17px;font-weight:600;border-radius:10px}
+.chx__hex{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--bs-secondary-color);margin-top:4px}
+.chx__sec{padding:0 18px 14px}
+.chx__sec > small{display:block;font-weight:600;color:var(--bs-secondary-color);margin-bottom:8px}
+.chx__grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.chx__sw{aspect-ratio:1;border-radius:50%;border:0;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);transition:transform .12s}
+.chx__sw:hover{transform:scale(1.12)}
+.chx__sw.on{box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 0 0 2px var(--bs-body-bg),0 0 0 4px var(--acc)}
+.chx__any{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px dashed var(--bs-border-color);cursor:pointer;margin:0}
+.chx__any:hover{border-color:var(--acc)}
+.chx__any input{width:34px;height:34px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer}
+.chx__any input::-webkit-color-swatch-wrapper{padding:0}
+.chx__any input::-webkit-color-swatch{border:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.chx__custom{display:flex;align-items:center;gap:12px;margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--acc-soft)}
+.chx__custom .chx__prev{width:40px;height:40px;border-radius:12px}
+.chx__foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--bs-border-color-translucent)}
+.sbc.new .bigdot{width:72px;height:72px;border-radius:50%;border:0;box-shadow:0 0 0 4px var(--bs-body-bg),0 0 0 5px var(--bs-border-color)}
+.sbc.new .bigdot:hover{transform:scale(1.05)}
+.tip{display:flex;gap:9px;align-items:flex-start;padding:10px 13px;border-radius:12px;background:var(--acc-soft);color:var(--acc-ink);font-size:12.5px}
+.badge-opt{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:6px;background:var(--bs-secondary-bg);color:var(--bs-secondary-color)}
+
+/* review table (shared) */
+.rv thead th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--bs-secondary-color);font-weight:600;background:var(--bs-tertiary-bg);border-bottom:0;white-space:nowrap}
+.rv td{vertical-align:middle;border-color:var(--bs-border-color-translucent)}
+.rv .form-control-sm{border-radius:8px;min-width:84px}
+.vname{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--bs-emphasis-color);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.pill.base{background:var(--acc-soft-2);color:var(--acc-ink)}
+.pill.new{background:var(--bs-success-bg-subtle);color:var(--bs-success-text-emphasis)}
+.bc{display:flex;align-items:center;gap:6px}
+.bc input{font-family:ui-monospace,Menlo,monospace;min-width:140px!important}
+.bc .mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.ibtn{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:var(--bs-secondary-color);flex:none}
+.ibtn:hover{background:var(--bs-secondary-bg);color:var(--bs-emphasis-color)}
+.ibtn.del:hover{background:var(--bs-danger-bg-subtle);color:var(--bs-danger)}
+.bulk{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 18px;background:var(--acc-soft);border-bottom:1px solid var(--bs-border-color-translucent)}
+.bulk .form-control{width:110px;border-radius:9px}
+
+/* dock */
+.dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:30;width:min(1168px,calc(100% - 32px));display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 12px 10px 18px;border-radius:16px;background:color-mix(in srgb,var(--bs-body-bg) 92%,transparent);backdrop-filter:blur(12px);border:1px solid var(--bs-border-color-translucent);box-shadow:0 20px 40px -20px rgba(0,0,0,.45)}
+.dock .sum{margin-right:auto;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.dock .sum b{font-size:18px;color:var(--bs-emphasis-color)}
+.btn-acc{background:var(--acc);border:0;color:#fff;font-weight:500;padding:9px 18px;border-radius:11px;box-shadow:0 8px 18px -10px var(--acc)}
+.btn-acc:hover{background:var(--acc-deep);color:#fff}
+.btn-acc:disabled{opacity:.45;box-shadow:none}
+.btn-soft{background:var(--bs-secondary-bg);border:0;color:var(--bs-body-color);font-weight:500;padding:9px 14px;border-radius:11px}
+
+/* ================= A · Guided steps ================= */
+.ga{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:960px){.ga{grid-template-columns:1fr}}
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.st{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:14px;border:1px solid var(--bs-border-color-translucent);background:var(--bs-body-bg);text-align:left;color:var(--bs-secondary-color)}
+.st__n{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--bs-secondary-bg);font-weight:600;flex:none}
+.st b{display:block;color:var(--bs-emphasis-color);font-weight:600;font-size:13px}
+.st small{font-size:11.5px}
+.st.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft-2)}
+.st.on .st__n{background:var(--acc);color:#fff}
+.st.done .st__n{background:var(--bs-success);color:#fff}
+@media (max-width:640px){.st small{display:none}.st{padding:9px}}
+.ga-body{padding:24px}
+.btiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.btile{position:relative;height:88px;border-radius:16px;border:1.5px solid var(--acc-line);background:var(--acc-soft);color:var(--acc-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:26px;font-weight:600}
+.btile small{font-size:11px;font-weight:500;opacity:.75}
+.btile .x{position:absolute;top:6px;right:6px;border:0;background:none;color:inherit;opacity:.5;width:22px;height:22px;border-radius:50%}
+.btile .x:hover{opacity:1;background:var(--acc-soft-2)}
+.btile.add{border-style:dashed;border-color:var(--bs-border-color);background:none;color:var(--bs-secondary-color);padding:10px}
+.btile.add input{width:100%;border:0;border-bottom:1.5px solid var(--bs-border-color);background:none;text-align:center;font-size:18px;font-weight:600;outline:0;color:var(--bs-emphasis-color)}
+.btile.add input:focus{border-color:var(--acc)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+@media (max-width:640px){.choices{grid-template-columns:1fr}}
+.choice{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;border:1.5px solid var(--bs-border-color);background:var(--bs-body-bg);text-align:left;color:var(--bs-body-color)}
+.choice i.ic{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--bs-secondary-bg);font-size:18px;flex:none}
+.choice b{display:block;color:var(--bs-emphasis-color)}
+.choice small{color:var(--bs-secondary-color)}
+.choice.on{border-color:var(--acc);background:var(--acc-soft)}
+.choice.on i.ic{background:var(--acc);color:#fff}
+.choice:disabled{opacity:.55}
+.swpick{display:flex;flex-wrap:wrap;gap:14px}
+.swp{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;width:76px;border:0;background:none;color:var(--bs-body-color);font-weight:500;font-size:12.5px}
+.swp .sw{width:52px;height:52px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15),0 0 0 3px var(--bs-body-bg),0 0 0 4px var(--bs-border-color)}
+.swp.on .sw{box-shadow:inset 0 0 0 1px rgba(0,0,0,.15),0 0 0 3px var(--bs-body-bg),0 0 0 5.5px var(--acc)}
+.swp .ck{position:absolute;top:36px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;display:none;place-items:center;box-shadow:0 0 0 2px var(--bs-body-bg)}
+.swp.on .ck{display:grid}
+.swp .lk{position:absolute;top:36px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--bs-emphasis-color);color:var(--bs-body-bg);font-size:10px;display:grid;place-items:center}
+.combo-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 0;border-bottom:1px dashed var(--bs-border-color-translucent)}
+.combo-row:last-child{border-bottom:0}
+.sz{display:grid;place-items:center;min-width:46px;height:46px;padding:0 8px;border-radius:12px;background:var(--acc);color:#fff;font-weight:600;font-size:17px;margin-right:6px}
+.tog{display:inline-flex;align-items:center;gap:7px;padding:7px 13px 7px 9px;border-radius:99px;border:1.5px solid var(--bs-border-color);background:var(--bs-body-bg);color:var(--bs-secondary-color);font-weight:500}
+.tog:hover{border-color:var(--acc)}
+.tog.on{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink)}
+.tog.on::after{content:"\f00c";font-family:FontAwesome;font-size:10px}
+.tog.base::after{content:"\f023";font-family:FontAwesome;font-size:10px}
+.ga-nav{display:flex;justify-content:space-between;gap:8px;padding:14px 24px;border-top:1px solid var(--bs-border-color-translucent)}
+.aside{position:sticky;top:76px}
+.aside__head{padding:18px;border-radius:var(--r) var(--r) 0 0;color:#fff;background:radial-gradient(120% 120% at 100% 0%,color-mix(in srgb,var(--acc),#fff 22%),transparent 60%),linear-gradient(135deg,var(--acc),var(--acc-deep))}
+.aside__head b{font-size:34px;line-height:1;font-weight:600}
+.aside__list{max-height:340px;overflow:auto;padding:8px}
+.aside__item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px}
+.aside__item:nth-child(odd){background:var(--bs-tertiary-bg)}
+
+/* ================= B · Sentence + tag shelf ================= */
+.sent-card{padding:26px 28px;border-radius:20px;background:radial-gradient(90% 140% at 0% 0%,var(--acc-soft-2),transparent 60%),var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);box-shadow:var(--shadow)}
+.sent{font-size:21px;line-height:2.25;font-weight:500;color:var(--bs-emphasis-color)}
+.sent .chip,.sent .ghost,.sent .adder{font-size:15px;vertical-align:middle;margin:0 2px}
+.sent .em{color:var(--acc-ink);font-weight:600}
+@media (max-width:640px){.sent{font-size:17px}}
+.shelf-head{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:22px 2px 10px}
+.shelf-head h6{margin:0;font-weight:600;font-size:15px;color:var(--bs-emphasis-color)}
+.shelf-row{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:start;margin-bottom:12px}
+.shelf-row__size{position:sticky;left:0;display:grid;place-items:center;height:132px;border-radius:16px;background:var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);font-size:22px;font-weight:600;color:var(--bs-emphasis-color)}
+.shelf-row__size small{display:block;font-size:10.5px;font-weight:500;color:var(--bs-secondary-color);text-transform:uppercase;letter-spacing:.06em}
+.tags{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tag{position:relative;display:block;width:100%;height:132px;padding:0;border-radius:16px;border:1.5px solid var(--bs-border-color);background:var(--bs-body-bg);text-align:left;overflow:hidden;color:var(--bs-body-color);transition:transform .15s,box-shadow .15s}
+.tag:hover{transform:translateY(-2px)}
+.tag__band{height:38px;background:var(--sw);position:relative}
+.tag__band.none{background:repeating-linear-gradient(135deg,var(--bs-secondary-bg) 0 8px,var(--bs-tertiary-bg) 8px 16px)}
+.tag__hole{position:absolute;top:13px;left:14px;width:12px;height:12px;border-radius:50%;background:var(--bs-body-bg);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+.tag__body{padding:9px 14px}
+.tag__name{font-weight:600;color:var(--bs-emphasis-color);font-size:14px}
+.tag__meta{font-size:11.5px;color:var(--bs-secondary-color)}
+.tag__bars{height:16px;margin-top:7px;color:var(--bs-emphasis-color);background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 2px 4px,currentColor 4px 5px,transparent 5px 8px,currentColor 8px 11px,transparent 11px 13px);opacity:.5}
+.tag__state{position:absolute;top:8px;right:10px;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--acc);font-size:11px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tag.on{border-color:var(--acc);box-shadow:0 14px 28px -18px var(--acc)}
+.tag.off{border-style:dashed;background:transparent}
+.tag.off .tag__band{filter:grayscale(.7) opacity(.35)}
+.tag.off .tag__bars{opacity:.12}
+.tag.off .tag__name{color:var(--bs-secondary-color)}
+.tag.off .tag__state{background:var(--bs-body-bg);color:var(--bs-secondary-color)}
+.tag.base .tag__state{background:var(--bs-emphasis-color);color:var(--bs-body-bg)}
+
+/* ================= C · Swatch board ================= */
+.sb-top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 18px}
+.sb-top .lbl{font-weight:600;color:var(--bs-emphasis-color);margin-right:4px}
+.sb{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
+.sbc{flex:0 0 190px;scroll-snap-align:start;border-radius:20px;background:var(--bs-body-bg);border:1px solid var(--bs-border-color-translucent);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.sbc__head{position:relative;height:118px;padding:14px 16px;background:var(--sw);color:var(--ink);display:flex;flex-direction:column;justify-content:space-between}
+.sbc__head.none{background:repeating-linear-gradient(135deg,var(--bs-secondary-bg) 0 10px,var(--bs-tertiary-bg) 10px 20px);color:var(--bs-emphasis-color)}
+.sbc__head b{font-size:17px;font-weight:600}
+.sbc__head small{opacity:.8;font-size:11.5px}
+.sbc__head .x{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:inherit}
+.sbc__head .lk{position:absolute;top:12px;right:14px;opacity:.8}
+.sbc__list{padding:10px;display:grid;gap:7px}
+.sbs{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:12px;border:1.5px solid var(--bs-border-color);background:none;font-weight:600;color:var(--bs-secondary-color)}
+.sbs i{font-size:11px;opacity:.5}
+.sbs:hover{border-color:var(--acc)}
+.sbs.on{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink)}
+.sbs.on i{opacity:1}
+.sbc__foot{margin-top:auto;padding:0 12px 12px;display:flex;justify-content:space-between;font-size:12px}
+.linkbtn{border:0;background:none;padding:0;color:var(--acc-ink);font-weight:500}
+.linkbtn:hover{text-decoration:underline}
+.sbc.new{border-style:dashed;background:transparent;box-shadow:none;justify-content:center;align-items:center;padding:18px;gap:12px;text-align:center}
+.sbc.new .big{width:64px;height:64px;border-radius:50%;padding:0;border:0;cursor:pointer}
+.sbc.new .big::-webkit-color-swatch-wrapper{padding:0}
+.sbc.new .big::-webkit-color-swatch{border:0;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.sbc.new input[type=text]{width:100%;text-align:center;border-radius:10px}
+.sbc.sugg{flex-basis:160px;background:transparent;box-shadow:none;border-style:dashed;padding:14px;gap:8px}
+.sbc.sugg .ghost{width:100%;justify-content:flex-start}
+
+/* ================= D · Studio split ================= */
+.sd{display:grid;grid-template-columns:310px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.sd{grid-template-columns:1fr}}
+.sd-left{position:sticky;top:76px}
+.sd-sec{padding:16px 18px}
+.sd-sec + .sd-sec{border-top:1px solid var(--bs-border-color-translucent)}
+.sd-sec h6{display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--bs-secondary-color);font-weight:600;margin:0 0 10px}
+.qa{display:grid;gap:6px}
+.qa button{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:11px;border:1px solid var(--bs-border-color-translucent);background:var(--bs-body-bg);text-align:left;color:var(--bs-body-color);font-weight:500}
+.qa button:hover{border-color:var(--acc);color:var(--acc-ink)}
+.qa i{width:16px;text-align:center;color:var(--acc-ink)}
+.hm{width:100%;border-collapse:separate;border-spacing:6px}
+.hm th{font-weight:600;color:var(--bs-emphasis-color);font-size:12.5px;white-space:nowrap}
+.hm thead th{text-align:center}
+.hm-h{border:0;background:none;display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:8px;color:inherit;font-weight:600}
+.hm-h:hover{background:var(--bs-secondary-bg)}
+.hm-c{width:100%;height:42px;border-radius:10px;border:1px solid var(--bs-border-color-translucent);background:var(--bs-tertiary-bg);color:transparent;transition:.12s}
+.hm-c:hover{border-color:var(--acc);color:var(--acc-ink)}
+.hm-c.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.hm-c.base{background:repeating-linear-gradient(135deg,var(--acc) 0 6px,var(--acc-deep) 6px 12px);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--bs-secondary-color)}
+.legend i.k{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px}
+</style>
+</head>
+<body>
+
+<div class="host-bar">
+  <span class="ttl"><i class="fa fa-th"></i>&nbsp; Variants tab — design samples</span>
+  <div class="seg" id="dirSeg">
+    <button data-dir="a" aria-pressed="true">A · Guided steps</button>
+    <button data-dir="b">B · Sentence + tags</button>
+    <button data-dir="c">C · Swatch board</button>
+    <button data-dir="d">D · Studio split</button>
+  </div>
+  <div class="seg" id="sampleSeg">
+    <button data-sample="shoe" aria-pressed="true">Shoe · size + colour</button>
+    <button data-sample="shorts">Shorts · size only</button>
+  </div>
+  <span class="d-inline-flex gap-1 align-items-center">
+    <span class="accent-dot" data-accent="#24447f" style="background:#24447f" aria-pressed="true" title="Navy"></span>
+    <span class="accent-dot" data-accent="#2563eb" style="background:#2563eb" title="Blue"></span>
+    <span class="accent-dot" data-accent="#0f766e" style="background:#0f766e" title="Teal"></span>
+    <span class="accent-dot" data-accent="#9d174d" style="background:#9d174d" title="Berry"></span>
+  </span>
+  <button class="btn btn-sm btn-outline-secondary" id="themeBtn" title="Light / dark"><i class="fa fa-moon-o"></i></button>
+</div>
+
+<p class="host-note" id="hostNote"></p>
+<div class="stage pvd" id="stage"></div>
+<div class="pvd" id="dockHost"></div>
+<div class="pvd" id="chooserHost"></div>
+
+<script>
+const NONE = 'None';
+const PALETTE = [
+  {name:'Black', hex:'#1f2328'}, {name:'Blue', hex:'#2563eb'}, {name:'White', hex:'#f8fafc'},
+  {name:'Red', hex:'#dc2626'}, {name:'Grey', hex:'#9ca3af'}, {name:'Tan', hex:'#b08155'}, {name:'Green', hex:'#15803d'}
+];
+const SHADES = [
+  ['Black','#1f2328'],['Charcoal','#36393f'],['Grey','#9ca3af'],['Silver','#c0c4cc'],['White','#f8fafc'],['Cream','#f5ecd7'],['Beige','#e7dcc4'],['Khaki','#b9a77a'],
+  ['Tan','#b08155'],['Brown','#78350f'],['Maroon','#7f1d1d'],['Burgundy','#6d1a2c'],['Red','#dc2626'],['Coral','#f87171'],['Orange','#ea580c'],['Mustard','#ca8a04'],
+  ['Yellow','#eab308'],['Gold','#c9a227'],['Olive','#65712b'],['Lime','#84cc16'],['Green','#15803d'],['Forest Green','#14532d'],['Mint','#6ee7b7'],['Teal','#0f766e'],
+  ['Sky Blue','#38bdf8'],['Blue','#2563eb'],['Royal Blue','#1d4ed8'],['Navy','#1e3a8a'],['Lavender','#a78bfa'],['Purple','#7e22ce'],['Pink','#ec4899'],['Rose','#e11d48']
+];
+function nearestName(h) {
+  const rgb = x => { const n = parseInt(x.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  const [r, g, b] = rgb(h);
+  let best = SHADES[0], bd = Infinity;
+  SHADES.forEach(sh => { const [r2, g2, b2] = rgb(sh[1]); const d = (r - r2) ** 2 * 2 + (g - g2) ** 2 * 4 + (b - b2) ** 2 * 3; if (d < bd) { bd = d; best = sh; } });
+  return best[0];
+}
+const SAMPLES = {
+  shoe: {name:'Running Shoe', code:'PRD-000418', cat:'Footwear › Sports', cost:'85.00', mrp:'149.00', icon:'fa-cube',
+    sizes:['41','42','43','44'], colours:['Black','Blue'], base:'41|Black',
+    picked:['41|Black','42|Black','42|Blue','43|Black','44|Black']},
+  shorts: {name:'Gym Shorts', code:'PRD-000433', cat:'Apparel › Sports', cost:'22.00', mrp:'45.00', icon:'fa-tag',
+    sizes:['S','M','L','XL'], colours:[NONE], base:'M|None',
+    picked:['S|None','M|None','L|None','XL|None']}
+};
+const S = {dir:'a', step:1, vals:{}};
+function loadSample(id) {
+  const p = SAMPLES[id];
+  Object.assign(S, {sample:id, name:p.name, code:p.code, cat:p.cat, cost:p.cost, mrp:p.mrp, icon:p.icon,
+    sizes:[...p.sizes], colours:[...p.colours], base:p.base, picked:new Set(p.picked), vals:{}, step:1});
+}
+
+/* ---------- helpers ---------- */
+const hex = n => (PALETTE.find(p => p.name === n) || {hex:'#999'}).hex;
+const key = (s, c) => s + '|' + c;
+const cname = c => c === NONE ? 'No colour' : c;
+const label = (s, c) => c === NONE ? s : s + ' / ' + c;
+const sw = (n, style = '') => n === NONE ? `<span class="sw none" style="${style}"></span>` : `<span class="sw" style="--sw:${hex(n)};${style}"></span>`;
+const esc = v => String(v).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const sizeOnly = () => S.colours.length === 1 && S.colours[0] === NONE;
+const baseSize = () => S.base.split('|')[0];
+const baseColour = () => S.base.split('|')[1];
+const realColours = () => S.colours.filter(c => c !== NONE);
+function ink(h) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if (!m) return '#111';
+  const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.6 ? '#111827' : '#ffffff';
+}
+function combos() {
+  const out = [];
+  S.sizes.forEach(s => S.colours.forEach(c => { if (S.picked.has(key(s, c))) out.push([s, c]); }));
+  return out;
+}
+function val(k, f) {
+  if (!S.vals[k]) {
+    const [s, c] = k.split('|');
+    const ci = PALETTE.findIndex(p => p.name === c) + 1;
+    S.vals[k] = {barcode:'6291004' + s + String(ci).padStart(2, '0'), cost:S.cost, mrp:S.mrp, stock:''};
+  }
+  return S.vals[k][f];
+}
+const isBase = k => k === S.base;
+const cntSize = s => S.colours.filter(c => S.picked.has(key(s, c))).length;
+const cntColour = c => S.sizes.filter(s => S.picked.has(key(s, c))).length;
+
+/* ---------- shared building blocks ---------- */
+function productStrip() {
+  const n = combos().length;
+  return `<div class="prod"><div class="prod__img"><i class="fa ${S.icon}"></i></div>
+    <div><h5>${S.name}</h5><small>${S.code} · ${S.cat} · base ${label(baseSize(), baseColour())}</small></div>
+    <div class="prod__count"><b>${n}</b><small>variant${n === 1 ? '' : 's'}</small></div></div>
+    <div class="tabs"><span>Prices</span><span>Attributes</span><span class="on"><i class="fa fa-th"></i> Variants</span><span>Accounting</span><span>Units</span><span>Images</span><span>Audit</span></div>`;
+}
+function sizeChips() {
+  return S.sizes.map(s => s === baseSize()
+    ? `<span class="chip lock" title="The size of the original product"><i class="fa fa-lock"></i> ${s}</span>`
+    : `<span class="chip">${s}<button class="x" data-act="rm-size" data-s="${s}" title="Remove"><i class="fa fa-times"></i></button></span>`).join('');
+}
+const sizeAdder = (ph = 'e.g. 45') => `<span class="adder"><input id="sizeIn" placeholder="${ph}" /><button data-act="add-size"><i class="fa fa-plus"></i> Size</button></span>`;
+function colourChips() {
+  if (sizeOnly()) return '';
+  return S.colours.map(c => c === baseColour()
+    ? `<span class="chip lock">${sw(c)} ${cname(c)} <i class="fa fa-lock"></i></span>`
+    : `<span class="chip">${sw(c)} ${cname(c)}<button class="x" data-act="rm-colour" data-c="${c}"><i class="fa fa-times"></i></button></span>`).join('');
+}
+function colourSuggestions() {
+  const out = PALETTE.filter(p => !S.colours.includes(p.name)).map(p => `<button class="ghost" data-act="add-colour" data-c="${p.name}">${sw(p.name)} ${p.name}</button>`);
+  if (realColours().length && !S.colours.includes(NONE)) out.push(`<button class="ghost" data-act="add-colour" data-c="${NONE}">${sw(NONE)} No colour</button>`);
+  return out.join('');
+}
+const colourAdder = () => `<button class="ghost choose" data-act="ch-open"><span class="sw rainbow"></span> Choose a colour…</button>`;
+function chooserHTML() {
+  if (!S.ch) return '';
+  const used = S.colours.map(c => c.toLowerCase());
+  const grid = SHADES.filter(([n]) => !used.includes(n.toLowerCase()))
+    .map(([n, h]) => `<button class="chx__sw ${S.ch.hex === h ? 'on' : ''}" style="--sw:${h}" data-act="ch-pick" data-hex="${h}" data-name="${n}" title="${n}"></button>`).join('');
+  return `<div class="chx-back" data-act="ch-close"></div>
+    <div class="chx" role="dialog" aria-label="Choose a colour">
+      <div class="chx__top"><div class="flex-grow-1"><b class="d-block fs-6">Choose a colour</b><small class="muted">Tap one and it's added straight away</small></div><button class="ibtn" data-act="ch-close" title="Close"><i class="fa fa-times"></i></button></div>
+      <div class="chx__sec"><div class="chx__grid">${grid}</div></div>
+      <div class="chx__sec"><small>Need a different shade?</small>
+        <label class="chx__any"><input type="color" id="chHex" value="${S.ch.hex}" /><span><b class="d-block">Pick any shade</b><small class="muted">Opens the full colour picker</small></span></label>
+        <div class="chx__custom ${S.ch.custom ? '' : 'd-none'}" id="chCustom"><span class="chx__prev" id="chPrev" style="--sw:${S.ch.hex}"></span><span class="flex-grow-1"><b class="d-block" id="chAutoName">${esc(S.ch.name)}</b><small class="chx__hex" id="chHexTxt">${S.ch.hex.toUpperCase()}</small></span><button class="btn btn-acc btn-sm" data-act="ch-add"><i class="fa fa-plus"></i> Add</button></div>
+      </div>
+    </div>`;
+}
+
+function reviewCard(step) {
+  const list = combos();
+  const rows = list.map(([s, c], i) => {
+    const k = key(s, c), base = isBase(k);
+    const inp = (f, ph = '') => `<input class="form-control form-control-sm" data-k="${k}" data-f="${f}" value="${esc(val(k, f))}" placeholder="${ph}"/>`;
+    return `<tr><td class="muted">${i + 1}</td>
+      <td><div class="vname">${sw(c)} ${label(s, c)}</div></td>
+      <td>${base ? '<span class="pill base"><i class="fa fa-lock"></i> Original</span>' : '<span class="pill new"><i class="fa fa-plus"></i> New</span>'}</td>
+      <td><div class="bc">${base ? `<i class="fa fa-barcode muted"></i><span class="mono">${val(k, 'barcode')}</span>` : `${inp('barcode')}<button class="ibtn" data-act="regen" data-k="${k}" title="New barcode"><i class="fa fa-refresh"></i></button>`}</div></td>
+      <td>${inp('cost')}</td><td>${inp('mrp')}</td>
+      <td>${base ? '<span class="muted small">Already set up</span>' : inp('stock', 'Optional')}</td>
+      <td class="text-end">${base ? '' : `<button class="ibtn del" data-act="cell" data-s="${s}" data-c="${c}" title="Don't create this one"><i class="fa fa-trash-o"></i></button>`}</td></tr>`;
+  }).join('');
+  return `<div class="card-x mt-3"><div class="card-x__head">${step ? `<span class="badge rounded-pill" style="background:var(--acc)">${step}</span>` : ''}<h6>Barcode, price and opening stock</h6><span class="muted ms-auto small">Category, brand, tax and unit are copied from ${S.name}</span></div>
+    <div class="bulk"><span class="fw-semibold small">Same for all new ones:</span><input class="form-control form-control-sm" id="bulkCost" placeholder="Cost" value="${S.cost}"/><input class="form-control form-control-sm" id="bulkMrp" placeholder="MRP" value="${S.mrp}"/><input class="form-control form-control-sm" id="bulkStock" placeholder="Opening stock (optional)" style="width:190px"/><button class="btn btn-sm btn-acc" data-act="apply-all"><i class="fa fa-check"></i> Apply</button><span class="muted small">Leave stock empty if it will come in through a purchase.</span></div>
+    <div class="table-responsive"><table class="table rv m-0"><thead><tr><th>#</th><th>Variant</th><th></th><th>Barcode</th><th>Cost</th><th>MRP</th><th>Opening stock <span class="badge-opt">Optional</span></th><th></th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="8" class="text-center muted py-4">Nothing picked yet</td></tr>'}</tbody></table></div></div>`;
+}
+function dock() {
+  const list = combos(), fresh = list.filter(([s, c]) => !isBase(key(s, c))).length;
+  return `<div class="dock"><div class="sum"><span><b>${list.length}</b> variants</span><span class="muted">${fresh} new + 1 original · shows as <b class="fs-6">1</b> product in the list</span></div>
+    <button class="btn btn-soft">Cancel</button><button class="btn btn-acc" ${fresh ? '' : 'disabled'}><i class="fa fa-check"></i> Create ${fresh} variant${fresh === 1 ? '' : 's'}</button></div>`;
+}
+
+/* ================= A · Guided steps ================= */
+function dirA() {
+  const steps = [['Sizes', 'Which sizes?'], ['Colours', 'Optional'], ['Pick & price', 'What you stock']];
+  const stepper = `<div class="stepper">${steps.map(([t, s], i) => {
+    const n = i + 1, cls = n === S.step ? 'on' : n < S.step ? 'done' : '';
+    return `<button class="st ${cls}" data-act="step" data-n="${n}"><span class="st__n">${n < S.step ? '<i class="fa fa-check"></i>' : n}</span><span><b>${t}</b><small>${s}</small></span></button>`;
+  }).join('')}</div>`;
+  let body = '';
+  if (S.step === 1) {
+    const tiles = S.sizes.map(s => `<div class="btile">${s}${s === baseSize() ? '<small><i class="fa fa-lock"></i> original</small>' : `<button class="x" data-act="rm-size" data-s="${s}"><i class="fa fa-times"></i></button>`}</div>`).join('');
+    body = `<p class="q">Which sizes do you sell?</p><p class="q-sub">Type a size in the empty box and press Enter. Add as many as you need.</p>
+      <div class="btiles">${tiles}<label class="btile add"><input id="sizeIn" placeholder="+" /><small>new size</small></label></div>`;
+  } else if (S.step === 2) {
+    const lockedColour = baseColour() !== NONE;
+    const yes = !sizeOnly();
+    const picks = S.colours.filter(c => c !== NONE).map(c => `<button class="swp on" ${c === baseColour() ? '' : `data-act="rm-colour" data-c="${c}"`}>${sw(c)}${c === baseColour() ? '<span class="lk"><i class="fa fa-lock"></i></span>' : '<span class="ck"><i class="fa fa-check"></i></span>'}${c}</button>`).join('');
+    const sugg = PALETTE.filter(p => !S.colours.includes(p.name)).map(p => `<button class="swp" data-act="add-colour" data-c="${p.name}">${sw(p.name)}${p.name}</button>`).join('');
+    body = `<p class="q">Does it come in different colours?</p><p class="q-sub">This is optional. Many products only change by size.</p>
+      <div class="choices">
+        <button class="choice ${yes ? 'on' : ''}" data-act="colours-yes"><i class="fa fa-tint ic"></i><span><b>Yes, in colours</b><small>e.g. 42 in Black and Blue</small></span></button>
+        <button class="choice ${!yes ? 'on' : ''}" data-act="colours-no" ${lockedColour ? 'disabled' : ''}><i class="fa fa-ban ic"></i><span><b>No, sizes only</b><small>${lockedColour ? 'The original is ' + baseColour() + ', so colours are on' : 'Each size is one item'}</small></span></button>
+      </div>
+      ${yes ? `<div class="mb-2 fw-semibold">Chosen colours <span class="muted fw-normal">— tap to remove</span></div><div class="swpick mb-3">${picks}${S.colours.includes(NONE) ? `<button class="swp on" data-act="rm-colour" data-c="${NONE}">${sw(NONE)}<span class="ck"><i class="fa fa-check"></i></span>No colour</button>` : ''}</div>
+      <div class="mb-2 fw-semibold">Add more <span class="muted fw-normal">— tap one, or choose any colour</span></div><div class="swpick mb-3">${sugg}${realColours().length && !S.colours.includes(NONE) ? `<button class="swp" data-act="add-colour" data-c="${NONE}">${sw(NONE)}No colour</button>` : ''}</div>
+      ${colourAdder()}` : `<div class="tip"><i class="fa fa-info-circle mt-1"></i><span>Sizes only: you'll get one item per size (${S.sizes.join(', ')}).</span></div>`}`;
+  } else {
+    const rows = S.sizes.map(s => `<div class="combo-row"><span class="sz">${s}</span>${S.colours.map(c => {
+      const k = key(s, c), on = S.picked.has(k), base = isBase(k);
+      return `<button class="tog ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${c}">${sw(c)} ${sizeOnly() ? 'Size ' + s : cname(c)}</button>`;
+    }).join('')}<span class="ms-auto muted small">${cntSize(s)} picked</span></div>`).join('');
+    body = `<p class="q">${sizeOnly() ? 'Which sizes do you actually stock?' : 'Which combinations do you actually stock?'}</p><p class="q-sub">Tap to turn on or off. Only the ones you turn on will be created.</p>${rows}`;
+  }
+  const nav = `<div class="ga-nav"><button class="btn btn-soft" data-act="step" data-n="${Math.max(1, S.step - 1)}" ${S.step === 1 ? 'disabled' : ''}><i class="fa fa-chevron-left"></i> Back</button>
+    ${S.step < 3 ? `<button class="btn btn-acc" data-act="step" data-n="${S.step + 1}">Next: ${steps[S.step][0]} <i class="fa fa-chevron-right"></i></button>` : '<span class="muted align-self-center small">Check the barcodes and prices below, then press Create</span>'}</div>`;
+  const list = combos();
+  const aside = `<div class="card-x aside"><div class="aside__head"><b>${list.length}</b><div>variant${list.length === 1 ? '' : 's'} will exist</div><small style="opacity:.75">${S.sizes.length} sizes${sizeOnly() ? '' : ' · ' + realColours().length + ' colours'}</small></div>
+    <div class="aside__list">${list.map(([s, c]) => `<div class="aside__item">${sw(c)}<span class="fw-semibold">${label(s, c)}</span>${isBase(key(s, c)) ? '<span class="pill base ms-auto">Original</span>' : '<span class="pill new ms-auto">New</span>'}</div>`).join('')}</div></div>`;
+  return `${stepper}<div class="ga"><div><div class="card-x"><div class="ga-body">${body}</div>${nav}</div>${S.step === 3 ? reviewCard() : ''}</div>${aside}</div>`;
+}
+
+/* ================= B · Sentence + tag shelf ================= */
+function dirB() {
+  const sentence = `<div class="sent-card"><div class="sent">
+    <span class="em">${S.name}</span> comes in sizes ${sizeChips()} ${sizeAdder()}
+    ${sizeOnly()
+      ? `<br/>with <span class="em">no colours</span>. ${colourSuggestions().length ? '<span class="muted" style="font-size:15px">Add one?</span> ' : ''}${PALETTE.filter(p => !S.colours.includes(p.name)).slice(0, 4).map(p => `<button class="ghost" data-act="add-colour" data-c="${p.name}">${sw(p.name)} ${p.name}</button>`).join('')} ${colourAdder()}`
+      : `<br/>and in colours ${colourChips()} ${colourAdder()}`}
+  </div>${sizeOnly() ? '' : `<div class="d-flex flex-wrap gap-2 mt-2 align-items-center"><span class="muted small me-1">Quick add:</span>${colourSuggestions()}</div>`}</div>`;
+  const rows = S.sizes.map(s => `<div class="shelf-row"><div class="shelf-row__size"><div class="text-center"><small>Size</small>${s}</div></div><div class="tags">${S.colours.map(c => {
+    const k = key(s, c), on = S.picked.has(k), base = isBase(k);
+    return `<button class="tag ${on ? 'on' : 'off'} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${c}">
+      <div class="tag__band ${c === NONE ? 'none' : ''}" style="--sw:${hex(c)}"><span class="tag__hole"></span></div>
+      <span class="tag__state"><i class="fa ${base ? 'fa-lock' : on ? 'fa-check' : 'fa-plus'}"></i></span>
+      <div class="tag__body"><div class="tag__name">${label(s, c)}</div><div class="tag__meta">${base ? 'Original product' : on ? 'MRP ' + val(k, 'mrp') : 'Tap to add'}</div><div class="tag__bars"></div></div></button>`;
+  }).join('')}</div></div>`).join('');
+  return `${sentence}
+    <div class="shelf-head"><div><h6>Your shelf</h6><span class="muted small">Every tag is one item with its own barcode. Faded tags won't be created, so tap to switch them on.</span></div>
+    <div class="ms-auto d-flex gap-2"><button class="btn btn-sm btn-soft" data-act="all-on"><i class="fa fa-check-square-o"></i> Tick all</button><button class="btn btn-sm btn-soft" data-act="all-off"><i class="fa fa-square-o"></i> Clear</button></div></div>
+    ${rows}${reviewCard()}`;
+}
+
+/* ================= C · Swatch board ================= */
+function dirC() {
+  const top = `<div class="card-x"><div class="sb-top"><span class="lbl">Sizes</span>${sizeChips()}${sizeAdder()}<span class="ms-auto muted small">Each colour is a column. Tap the sizes it comes in.</span></div></div>`;
+  const cols = S.colours.map(c => {
+    const n = cntColour(c), locked = c === baseColour(), h = hex(c);
+    const list = S.sizes.map(s => {
+      const k = key(s, c), on = S.picked.has(k), base = isBase(k);
+      return `<button class="sbs ${on ? 'on' : ''}" data-act="cell" data-s="${s}" data-c="${c}"><span>${s}</span><i class="fa ${base ? 'fa-lock' : on ? 'fa-check' : 'fa-plus'}"></i></button>`;
+    }).join('');
+    return `<div class="sbc"><div class="sbc__head ${c === NONE ? 'none' : ''}" style="--sw:${h};--ink:${ink(h)}">
+        ${locked ? '<i class="fa fa-lock lk" title="Colour of the original product"></i>' : `<button class="x" data-act="rm-colour" data-c="${c}" title="Remove colour"><i class="fa fa-times"></i></button>`}
+        <small>${c === NONE ? 'sizes only' : esc(h).toUpperCase()}</small><div><b>${cname(c)}</b><br/><small>${n} of ${S.sizes.length} sizes</small></div></div>
+      <div class="sbc__list">${list}</div>
+      <div class="sbc__foot"><button class="linkbtn" data-act="col" data-c="${c}">${n === S.sizes.length ? 'Clear' : 'All sizes'}</button></div></div>`;
+  }).join('');
+  const sugg = PALETTE.filter(p => !S.colours.includes(p.name)).map(p => `<button class="ghost" data-act="add-colour" data-c="${p.name}">${sw(p.name)} ${p.name}</button>`).join('')
+    + (S.colours.includes(NONE) ? '' : `<button class="ghost" data-act="add-colour" data-c="${NONE}">${sw(NONE)} No colour</button>`);
+  const add = `<div class="sbc new"><button class="bigdot sw rainbow" data-act="ch-open" title="Choose a colour"></button><button class="btn btn-sm btn-acc w-100" data-act="ch-open"><i class="fa fa-plus"></i> Choose a colour</button><small class="muted">Any shade you need</small></div>
+    <div class="sbc sugg"><small class="muted fw-semibold">Quick add</small>${sugg}</div>`;
+  return `${top}<div class="d-flex align-items-center gap-2 mt-3 mb-2"><h6 class="m-0 fw-semibold">Colours</h6><span class="badge-opt">Optional</span><span class="muted small">${sizeOnly() ? 'No colours: the grey column is "sizes only".' : 'Add a "No colour" column for sizes sold without one.'}</span></div>
+    <div class="sb">${cols}${add}</div>${reviewCard()}`;
+}
+
+/* ================= D · Studio split ================= */
+function dirD() {
+  const left = `<div class="card-x sd-left">
+    <div class="sd-sec"><h6><i class="fa fa-arrows-h"></i> Sizes</h6><div class="d-flex flex-wrap gap-2">${sizeChips()}${sizeAdder('Add')}</div></div>
+    <div class="sd-sec"><h6><i class="fa fa-tint"></i> Colours <span class="badge-opt ms-1">Optional</span></h6>
+      ${sizeOnly() ? '<div class="tip mb-2"><i class="fa fa-info-circle mt-1"></i><span>Sizes only. Tap a colour to add one.</span></div>' : `<div class="d-flex flex-wrap gap-2 mb-2">${colourChips()}</div>`}
+      <div class="d-flex flex-wrap gap-2 mb-2">${colourSuggestions()}</div>${colourAdder()}</div>
+    <div class="sd-sec"><h6><i class="fa fa-magic"></i> Quick actions</h6><div class="qa">
+      <button data-act="all-on"><i class="fa fa-check-square-o"></i> Tick every combination</button>
+      <button data-act="all-off"><i class="fa fa-square-o"></i> Clear all (keeps original)</button>
+      <button data-act="same-as-base"><i class="fa fa-files-o"></i> Every size in the original's colour</button></div></div></div>`;
+  const head = S.colours.map(c => `<th><button class="hm-h" data-act="col" data-c="${c}">${sw(c)} ${cname(c)}</button></th>`).join('');
+  const body = S.sizes.map(s => `<tr><th><button class="hm-h" data-act="row" data-s="${s}">${s} <small class="muted">${cntSize(s)}</small></button></th>${S.colours.map(c => {
+    const k = key(s, c), on = S.picked.has(k), base = isBase(k);
+    return `<td><button class="hm-c ${on ? 'on' : ''} ${base ? 'base' : ''}" data-act="cell" data-s="${s}" data-c="${c}" title="${label(s, c)}"><i class="fa ${base ? 'fa-lock' : on ? 'fa-check' : 'fa-plus'}"></i></button></td>`;
+  }).join('')}</tr>`).join('');
+  const right = `<div class="card-x"><div class="card-x__head"><h6>Combinations</h6><div class="legend ms-auto"><span><i class="k" style="background:var(--acc)"></i>will be created</span><span><i class="k" style="background:var(--bs-tertiary-bg);border:1px solid var(--bs-border-color)"></i>skipped</span><span><i class="k" style="background:repeating-linear-gradient(135deg,var(--acc) 0 3px,var(--acc-deep) 3px 6px)"></i>original</span></div></div>
+    <div class="card-x__body"><div class="table-responsive"><table class="hm"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div></div>${reviewCard()}`;
+  return `<div class="sd">${left}<div>${right}</div></div>`;
+}
+
+/* ---------- render ---------- */
+const NOTES = {
+  a:'<b>A · Guided steps.</b> One plain question at a time (Sizes → Colours → Pick & price) with big tap targets, and a summary on the side that always shows what will be created. Friendliest for non-technical staff.',
+  b:'<b>B · Sentence + tags.</b> The product reads like a sentence ("Running Shoe comes in sizes … and in colours …"). Below it, every possible variant is a hanging price tag: solid tags will be created, faded ones won\'t. Very visual.',
+  c:'<b>C · Swatch board.</b> Each colour is a tall paint-swatch card in its real colour, with its sizes stacked inside. The last card adds your own colour with a big colour picker. Best when colour matters most (fashion, footwear).',
+  d:'<b>D · Studio split.</b> All settings sit in a sticky left panel (sizes, colours, quick actions). On the right is a compact heat-grid plus the price table. Fastest for power users with lots of sizes.'
+};
+function render() {
+  document.getElementById('hostNote').innerHTML = NOTES[S.dir];
+  document.getElementById('stage').innerHTML = productStrip() + ({a:dirA, b:dirB, c:dirC, d:dirD}[S.dir])();
+  document.getElementById('dockHost').innerHTML = dock();
+  document.getElementById('chooserHost').innerHTML = chooserHTML();
+}
+
+/* ---------- actions ---------- */
+function toggle(k) { if (isBase(k)) return; S.picked.has(k) ? S.picked.delete(k) : S.picked.add(k); }
+function refocus(id) { const n = document.getElementById(id); if (n) n.focus(); }
+function addSize() {
+  const el = document.getElementById('sizeIn'); if (!el) return;
+  const v = (el.value || '').replace(/[<>"&|]/g, '').trim();
+  if (v && !S.sizes.includes(v)) {
+    S.sizes.push(v);
+    if (sizeOnly()) S.picked.add(key(v, NONE));
+  }
+  render(); refocus('sizeIn');
+}
+function addColour(c) {
+  if (S.colours.includes(c)) return;
+  if (sizeOnly() && baseColour() !== NONE) S.colours = [];
+  S.colours.push(c);
+}
+function removeColour(c) {
+  if (c === baseColour()) return;
+  S.colours = S.colours.filter(x => x !== c);
+  S.sizes.forEach(x => S.picked.delete(key(x, c)));
+  if (!S.colours.length) { S.colours = [NONE]; S.sizes.forEach(x => S.picked.add(key(x, NONE))); }
+}
+function openChooser() { S.ch = {hex:'#6b7280', name:'', custom:false}; }
+const lum = h => { const n = parseInt(h.slice(1), 16); return (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255; };
+/** Name a custom shade automatically: nearest known colour, "Light"/"Dark" when it differs, a number if still taken. */
+function autoName(h) {
+  const base = nearestName(h), ref = SHADES.find(([n]) => n === base)[1];
+  const diff = lum(h) - lum(ref);
+  let name = Math.abs(diff) > 0.12 ? (diff > 0 ? 'Light ' : 'Dark ') + base : base;
+  const taken = n => S.colours.some(c => c.toLowerCase() === n.toLowerCase());
+  if (taken(name)) { let i = 2; while (taken(name + ' ' + i)) i++; name = name + ' ' + i; }
+  return name;
+}
+function chooserSync() {
+  const set = (id, fn) => { const n = document.getElementById(id); if (n) fn(n); };
+  set('chCustom', n => n.classList.remove('d-none'));
+  set('chPrev', n => n.style.setProperty('--sw', S.ch.hex));
+  set('chHexTxt', n => { n.textContent = S.ch.hex.toUpperCase(); });
+  set('chAutoName', n => { n.textContent = S.ch.name; });
+}
+function addPicked(name, h) {
+  const known = PALETTE.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (known) name = known.name; else PALETTE.push({name, hex:h});
+  addColour(name);
+  S.ch = null;
+  render();
+}
+function setAll(on) {
+  S.sizes.forEach(s => S.colours.forEach(c => { const k = key(s, c); if (isBase(k)) return; on ? S.picked.add(k) : S.picked.delete(k); }));
+}
+function setPressed(segId, attr, v) { document.querySelectorAll('#' + segId + ' button').forEach(b => b.setAttribute('aria-pressed', b.dataset[attr] === v)); }
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act],[data-dir],[data-accent],[data-sample]');
+  if (!t || t.disabled) return;
+  if (t.dataset.dir) { S.dir = t.dataset.dir; setPressed('dirSeg', 'dir', S.dir); return render(); }
+  if (t.dataset.sample) { loadSample(t.dataset.sample); setPressed('sampleSeg', 'sample', S.sample); return render(); }
+  if (t.dataset.accent) { document.documentElement.style.setProperty('--pv-accent', t.dataset.accent); document.querySelectorAll('[data-accent]').forEach(d => d.setAttribute('aria-pressed', d === t)); return; }
+  const {act, s, c} = t.dataset;
+  switch (act) {
+    case 'cell': toggle(key(s, c)); break;
+    case 'row': { const all = S.colours.every(x => S.picked.has(key(s, x))); S.colours.forEach(x => { const k = key(s, x); if (!isBase(k)) all ? S.picked.delete(k) : S.picked.add(k); }); break; }
+    case 'col': { const all = S.sizes.every(x => S.picked.has(key(x, c))); S.sizes.forEach(x => { const k = key(x, c); if (!isBase(k)) all ? S.picked.delete(k) : S.picked.add(k); }); break; }
+    case 'all-on': setAll(true); break;
+    case 'all-off': setAll(false); break;
+    case 'same-as-base': setAll(false); S.sizes.forEach(x => S.picked.add(key(x, baseColour()))); break;
+    case 'add-size': return addSize();
+    case 'rm-size': if (s !== baseSize()) { S.sizes = S.sizes.filter(x => x !== s); S.colours.forEach(x => S.picked.delete(key(s, x))); } break;
+    case 'add-colour': addColour(c); break;
+    case 'rm-colour': removeColour(c); break;
+    case 'ch-open': openChooser(); break;
+    case 'ch-close': S.ch = null; break;
+    case 'ch-pick': return addPicked(t.dataset.name, t.dataset.hex);
+    case 'ch-add': return addPicked(S.ch.name, S.ch.hex);
+    case 'colours-yes': if (sizeOnly()) { const next = PALETTE.find(p => !S.colours.includes(p.name)); if (next) S.colours.push(next.name); } break;
+    case 'colours-no': if (baseColour() === NONE) { S.colours = [NONE]; S.sizes.forEach(x => S.picked.add(key(x, NONE))); } break;
+    case 'step': S.step = Number(t.dataset.n); break;
+    case 'regen': S.vals[t.dataset.k].barcode = '629' + String(Math.floor(1e9 + Math.random() * 9e9)); break;
+    case 'apply-all': {
+      const cost = document.getElementById('bulkCost').value, mrp = document.getElementById('bulkMrp').value, stock = document.getElementById('bulkStock').value;
+      combos().forEach(([sz, col]) => { const k = key(sz, col); if (!isBase(k)) { val(k, 'cost'); S.vals[k].cost = cost; S.vals[k].mrp = mrp; if (stock !== '') S.vals[k].stock = stock; } });
+      break;
+    }
+    default: return;
+  }
+  render();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'sizeIn') { e.preventDefault(); addSize(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.ch) { S.ch = null; render(); } });
+document.addEventListener('input', e => {
+  const {k, f} = e.target.dataset;
+  if (k && f) { val(k, f); S.vals[k][f] = e.target.value; return; }
+  if (e.target.id === 'chHex') { S.ch.hex = e.target.value; S.ch.name = autoName(S.ch.hex); S.ch.custom = true; chooserSync(); }
+});
+document.getElementById('themeBtn').addEventListener('click', e => {
+  const dark = document.documentElement.getAttribute('data-bs-theme') !== 'dark';
+  document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+  e.currentTarget.innerHTML = `<i class="fa ${dark ? 'fa-sun-o' : 'fa-moon-o'}"></i>`;
+});
+loadSample('shoe');
+render();
+</script>
+</body>
+</html>

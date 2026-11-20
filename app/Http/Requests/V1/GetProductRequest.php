@@ -16,11 +16,13 @@ class GetProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->route('id') !== null) {
-            $this->merge([
-                'id' => $this->route('id'),
-            ]);
+        $reference = $this->route('id');
+        if ($reference === null) {
+            return;
         }
+
+        // The showcase links by name ("nike-air-max-90"); the apps and old links send the id.
+        $this->merge(['link' => $reference]);
     }
 
     /**
@@ -31,8 +33,9 @@ class GetProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => ['required_without:barcode', 'nullable', 'integer', 'exists:products,id'],
-            'barcode' => ['required_without:id', 'nullable', 'string', 'exists:products,barcode'],
+            'id' => ['required_without_all:barcode,link', 'nullable', 'integer', 'exists:products,id'],
+            'barcode' => ['required_without_all:id,link', 'nullable', 'string', 'exists:products,barcode'],
+            'link' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -44,8 +47,8 @@ class GetProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id.required_without' => 'Either Product ID or Barcode is required.',
-            'barcode.required_without' => 'Either Product ID or Barcode is required.',
+            'id.required_without_all' => 'Either Product ID or Barcode is required.',
+            'barcode.required_without_all' => 'Either Product ID or Barcode is required.',
         ];
     }
 

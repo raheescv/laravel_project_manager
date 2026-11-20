@@ -35,6 +35,12 @@
                             </a>
                         @endcan
                     </div>
+                    <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Variant grouping">
+                        <input type="radio" class="btn-check" id="group-variants-on" value="1" wire:model.live="groupVariants" @checked($groupVariants)>
+                        <label class="btn btn-outline-primary" for="group-variants-on" title="One row per product family"><i class="fa fa-th-large me-1"></i> Group variants</label>
+                        <input type="radio" class="btn-check" id="group-variants-off" value="0" wire:model.live="groupVariants" @checked(! $groupVariants)>
+                        <label class="btn btn-outline-primary" for="group-variants-off" title="Every size / colour on its own row"><i class="fa fa-list me-1"></i> Every variant</label>
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <div class="row g-2 align-items-center">
@@ -53,7 +59,7 @@
                                 <span class="input-group-text bg-white border-secondary-subtle">
                                     <i class="demo-psi-magnifi-glass"></i>
                                 </span>
-                                <input type="text" id="search" wire:model.live="search" placeholder="Search products..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
+                                <input type="text" id="search" wire:model.live.debounce.400ms="search" placeholder="Search products..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
                                     aria-label="Search products">
                             </div>
                         </div>
@@ -136,6 +142,20 @@
                     </div>
                 </div>
 
+                <div class="col-lg-4 col-md-6">
+                    <div>
+                        <label for="variant" class="form-label small fw-medium text-capitalize">
+                            <i class="fa fa-sitemap me-1 text-muted"></i>
+                            Variant
+                        </label>
+                        <select id="variant" wire:model.live="variant" class="form-select shadow-sm border-secondary-subtle">
+                            <option value="">All products</option>
+                            <option value="main">Main products only</option>
+                            <option value="variants">Variants only</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="col-lg-4 col-md-6" wire:ignore>
                     <div>
                         <label for="image_status" class="form-label small fw-medium text-capitalize">
@@ -151,7 +171,7 @@
                             <i class="demo-psi-cube me-1 text-muted"></i>
                             Size
                         </label>
-                        <input type="text" id="size" wire:model.live="size" placeholder="Search size..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
+                        <input type="text" id="size" wire:model.live.debounce.400ms="size" placeholder="Search size..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
                         aria-label="Search size">
                     </div>
                 </div>
@@ -242,6 +262,14 @@
                                 <div class="d-flex align-items-center">
                                     <i class="demo-psi-cube me-2 text-secondary small"></i>
                                     <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" />
+                                </div>
+                            </th>
+                        @endif
+                        @if ($product_visible_column['color'] ?? true)
+                            <th class="border-0">
+                                <div class="d-flex align-items-center">
+                                    <i class="fa fa-tint me-2 text-secondary small"></i>
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="color" label="Color" />
                                 </div>
                             </th>
                         @endif
@@ -349,6 +377,15 @@
                                     <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->size}}</span>
                                 </td>
                             @endif
+                            @if ($product_visible_column['color'] ?? true)
+                                <td>
+                                    @if (trim((string) $item->color) !== '')
+                                        <span class="badge bg-light text-dark border border-secondary-subtle">
+                                            <span class="d-inline-block rounded-circle border me-1 align-middle" style="width: 10px; height: 10px; background: {{ \App\Support\ProductColours::hexFor($item->color, $colourPalette) }}"></span>{{ \App\Support\ProductColours::displayName($item->color) }}
+                                        </span>
+                                    @endif
+                                </td>
+                            @endif
                             @if ($product_visible_column['code'] ?? true)
                                 <td>
                                     <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
@@ -358,7 +395,30 @@
                                 <td>
                                     <a href="{{ route('product::edit', $item->id) }}" class="text-decoration-none fw-semibold link-primary d-block">
                                         {{ $item->name }}
+                                        @if (! $groupVariants && ($item->parent_id || ($item->variants_count ?? 0)))
+                                            <span class="fw-normal text-secondary">— {{ \App\Models\Product::variantLabel($item->size, $item->color) }}</span>
+                                        @endif
                                     </a>
+                                    @if ($groupVariants && ($item->variants_count ?? 0) > 0)
+                                        @php
+                                            $family = collect([$item])->merge($item->variants);
+                                            $familySizes = $family->pluck('size')->filter()->unique()->values();
+                                            $familyColours = $family->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique()->values();
+                                        @endphp
+                                        <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                                            <button type="button" class="badge rounded-pill bg-primary border-0" wire:click="toggleFamily({{ $item->id }})" title="Show / hide the variants">
+                                                <i class="fa {{ in_array($item->id, $openFamilies, true) ? 'fa-chevron-down' : 'fa-chevron-right' }} me-1"></i>{{ $item->variants_count + 1 }} variants
+                                            </button>
+                                            @foreach ($familySizes as $familySize)
+                                                <span class="badge bg-light text-dark border border-secondary-subtle fw-medium">{{ $familySize }}</span>
+                                            @endforeach
+                                            @forelse ($familyColours as $familyColour)
+                                                <span class="d-inline-block rounded-circle border" title="{{ $familyColour }}" style="width: 12px; height: 12px; background: {{ \App\Support\ProductColours::hexFor($familyColour, $colourPalette) }}"></span>
+                                            @empty
+                                                <small class="text-muted">sizes only</small>
+                                            @endforelse
+                                        </div>
+                                    @endif
                                 </td>
                             @endif
                             @if ($product_visible_column['name_arabic'] ?? true)
@@ -386,6 +446,44 @@
                                 </td>
                             @endif
                         </tr>
+                        @if ($groupVariants && ($item->variants_count ?? 0) > 0 && in_array($item->id, $openFamilies, true))
+                            <tr class="table-light" wire:key="family-{{ $item->id }}">
+                                <td colspan="{{ count(array_filter($product_visible_column ?? [])) + 1 }}" class="ps-4 py-2 border-start border-3 border-primary">
+                                    <table class="table table-sm table-borderless mb-0 align-middle bg-transparent">
+                                        <thead>
+                                            <tr class="small text-muted text-uppercase">
+                                                <th class="bg-transparent">Variant</th>
+                                                <th class="bg-transparent">Code</th>
+                                                <th class="bg-transparent">Barcode</th>
+                                                <th class="bg-transparent text-end">Cost</th>
+                                                <th class="bg-transparent text-end">MRP</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (collect([$item])->merge($item->variants) as $member)
+                                                <tr wire:key="family-{{ $item->id }}-{{ $member->id }}">
+                                                    <td class="bg-transparent">
+                                                        <a href="{{ route('product::edit', $member->id) }}" class="text-decoration-none fw-semibold">
+                                                            @if (trim((string) $member->color) !== '')
+                                                                <span class="d-inline-block rounded-circle border me-1" style="width: 10px; height: 10px; background: {{ \App\Support\ProductColours::hexFor($member->color, $colourPalette) }}"></span>
+                                                            @endif
+                                                            {{ \App\Models\Product::variantLabel($member->size, $member->color) ?: $member->name }}
+                                                        </a>
+                                                        @if ($member->id === $item->id)
+                                                            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">Original</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="bg-transparent"><code class="small">{{ $member->code }}</code></td>
+                                                    <td class="bg-transparent"><code class="small">{{ $member->barcode }}</code></td>
+                                                    <td class="bg-transparent text-end">{{ currency($member->cost) }}</td>
+                                                    <td class="bg-transparent text-end fw-semibold">{{ currency($member->mrp) }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        @endif
                     @empty
                         <tr>
                             <td colspan="{{ count(array_filter($product_visible_column ?? [])) + 1 }}" class="text-center py-5">

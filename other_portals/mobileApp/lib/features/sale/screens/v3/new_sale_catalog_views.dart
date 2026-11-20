@@ -118,7 +118,7 @@ extension _CatalogViews on _NewSaleScreenState {
     return BlocSelector<CartCubit, CartState, double>(
       key: ValueKey(s.id),
       selector: (cart) =>
-          cart.lines.where((l) => l.productId == s.id).fold(0.0, (sum, l) => sum + l.qty),
+          cart.lines.where((l) => s.memberIds.contains(l.productId)).fold(0.0, (sum, l) => sum + l.qty),
       builder: (context, qty) => GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
@@ -169,7 +169,7 @@ extension _CatalogViews on _NewSaleScreenState {
               // row's spare width evenly with the name column, so a two-word
               // product wrapped while the price sat in the middle of an empty
               // half. Inflexible, the name gets everything the price doesn't.
-              _priceText(s.mrp),
+              _priceText(s.mrp, from: s.hasPriceRange),
               const SizedBox(width: 16),
             ],
           ),
@@ -515,7 +515,7 @@ extension _CatalogViews on _NewSaleScreenState {
     return BlocSelector<CartCubit, CartState, double>(
       key: ValueKey(s.id),
       selector: (cart) =>
-          cart.lines.where((l) => l.productId == s.id).fold(0.0, (sum, l) => sum + l.qty),
+          cart.lines.where((l) => s.memberIds.contains(l.productId)).fold(0.0, (sum, l) => sum + l.qty),
       builder: (context, qty) {
         final inCart = qty > 0;
         return GestureDetector(
@@ -608,7 +608,7 @@ extension _CatalogViews on _NewSaleScreenState {
           BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
-      child: _priceText(s.mrp, currency: k.currency, amount: k.price),
+      child: _priceText(s.mrp, currency: k.currency, amount: k.price, from: s.hasPriceRange),
     );
   }
 
@@ -725,12 +725,15 @@ extension _CatalogViews on _NewSaleScreenState {
       Icon(iconForName('${s.categoryName} ${s.name}'), size: iconSize, color: context.astra.primary.withValues(alpha: 0.85));
 
   /// Two-tone serif price: gold currency mark + ink amount.
-  Widget _priceText(double v, {double currency = 12, double amount = 17}) {
+  /// [from] marks a family card whose variants are priced differently: the
+  /// amount is the cheapest.
+  Widget _priceText(double v, {double currency = 12, double amount = 17, bool from = false}) {
     final p = context.astra;
     return RichText(
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       text: TextSpan(children: [
+        if (from) TextSpan(text: 'from ', style: ui(size: currency * 0.9, weight: FontWeight.w700, color: p.textMuted)),
         TextSpan(text: '${Money.symbol.trim()} ', style: serif(size: currency, color: p.goldText)),
         TextSpan(text: Money.plain(v), style: serif(size: amount, color: p.ink)),
       ]),

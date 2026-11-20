@@ -99,7 +99,22 @@ trait MatchesInvoiceLines
 
     private function catalogueColumns(): array
     {
-        return ['id', 'code', 'barcode', 'name', 'unit_id', 'cost', 'tax', 'expense_account_id'];
+        return ['id', 'parent_id', 'code', 'barcode', 'name', 'size', 'color', 'unit_id', 'cost', 'tax', 'expense_account_id'];
+    }
+
+    /**
+     * Size / colour variants share their family's name, so a candidate list of
+     * plain names would read "Running Shoe, Running Shoe, …". Variants (and the
+     * head of a family) carry their size / colour so the user can tell them apart.
+     */
+    private function catalogueName($product): string
+    {
+        static $isHead = [];
+        $label = trim((string) $product->size) !== '' ? Product::variantLabel($product->size, $product->color) : '';
+        $inFamily = $product->parent_id
+            || ($label !== '' && ($isHead[$product->id] ??= Product::where('parent_id', $product->id)->exists()));
+
+        return $inFamily ? $product->name.' - '.$label : (string) $product->name;
     }
 
     /**
@@ -197,7 +212,7 @@ trait MatchesInvoiceLines
             $item['candidates'] = $hits
                 ->sortBy(fn ($p) => [abs((float) $p->cost - $rate), (string) $p->name])
                 ->take(4)
-                ->map->only(['id', 'name', 'code', 'cost'])
+                ->map(fn ($p) => ['id' => $p->id, 'name' => $this->catalogueName($p), 'code' => $p->code, 'cost' => $p->cost])
                 ->values()
                 ->all();
 
@@ -207,7 +222,7 @@ trait MatchesInvoiceLines
         $product = $hits->first();
 
         $item['product_id'] = $product->id;
-        $item['name'] = $product->name;
+        $item['name'] = $this->catalogueName($product);
         $item['code'] = $product->code ?: $item['raw_code'];
         $item['barcode'] = $product->barcode ?: $item['raw_barcode'];
         $item['unit_id'] = $product->unit_id;

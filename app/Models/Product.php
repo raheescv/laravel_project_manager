@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\ProductColours;
+use App\Support\StorefrontSlug;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use OwenIt\Auditing\Auditable;
@@ -99,8 +102,30 @@ class Product extends Model implements AuditableContracts
         return self::SIZE_CATEGORY_ADULT;
     }
 
+    /**
+     * Fields every variant inherits from its family head. They are copied when a
+     * variant is made and pushed down whenever the head is saved, so a family
+     * always shares one name, category, unit, tax and set of accounts.
+     */
+    public const VARIANT_SHARED_FIELDS = [
+        'type',
+        'name',
+        'name_arabic',
+        'unit_id',
+        'department_id',
+        'main_category_id',
+        'sub_category_id',
+        'brand_id',
+        'hsn_code',
+        'tax',
+        'is_selling',
+        'income_account_id',
+        'expense_account_id',
+    ];
+
     protected $fillable = [
         'tenant_id',
+        'parent_id',
         'type',
         'code',
         'name',
@@ -172,11 +197,25 @@ class Product extends Model implements AuditableContracts
         $tenantId = self::getCurrentTenantId();
         $type = $data['type'] ?? 'product';
 
+        $isVariant = ! empty($data['parent_id'] ?? null);
+        $familyId = $isVariant ? (int) $data['parent_id'] : (int) $id;
+
         $rules = [
-            'name' => [
-                'required',
-                'max:100',
-                Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $type)->whereNull('deleted_at')->ignore($id),
+            'name' => array_merge(
+                ['required', 'max:100'],
+                $isVariant ? [] : [Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $type)->whereNull('parent_id')->whereNull('deleted_at')->ignore($id)],
+            ),
+            'size' => [
+                $isVariant ? 'required' : 'nullable',
+                'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) use ($data, $familyId, $id, $isVariant): void {
+                    if (! $familyId || (! $isVariant && ! self::query()->where('parent_id', $familyId)->exists())) {
+                        return;
+                    }
+                    if (self::familyCombinationTaken($familyId, $value, $data['color'] ?? null, (int) $id)) {
+                        $fail('This family already has a '.self::variantLabel($value, $data['color'] ?? null).' variant.');
+                    }
+                },
             ],
             'type' => ['required', Rule::in(['product', 'service', 'asset'])],
             'code' => ['required', 'max:50'],
@@ -216,6 +255,96 @@ class Product extends Model implements AuditableContracts
         }
 
         return array_merge($rules, $merge);
+    }
+
+    /**
+     * Whether another live member of the family already uses this size + colour.
+     * Compared trimmed and case-insensitively; a missing colour counts as a value
+     * of its own, so a family cannot hold two plain "43" items either.
+     */
+    public static function familyCombinationTaken(int $familyId, ?string $size, ?string $color, int $ignoreId = 0): bool
+    {
+        return self::query()
+            ->where(fn (Builder $query) => $query->where('id', $familyId)->orWhere('parent_id', $familyId))
+            ->when($ignoreId, fn (Builder $query) => $query->where('id', '!=', $ignoreId))
+            ->whereRaw("LOWER(TRIM(COALESCE(size, ''))) = ?", [self::normaliseVariantValue($size)])
+            ->whereRaw("LOWER(TRIM(COALESCE(color, ''))) = ?", [self::normaliseVariantValue($color)])
+            ->exists();
+    }
+
+    public static function normaliseVariantValue(?string $value): string
+    {
+        return mb_strtolower(trim((string) $value));
+    }
+
+    /** "42 / Blue", or just "43" when the variant has no colour. A picked hex ("#ff0000") reads as its colour name. */
+    public static function variantLabel(?string $size, ?string $color): string
+    {
+        $size = trim((string) $size);
+        $color = ProductColours::displayName($color);
+
+        return $color === '' ? $size : trim($size.' / '.$color, ' /');
+    }
+
+    /**
+     * The product a showcase link names (its name, or that name's slug). Size / colour
+     * variants share their head's name, so the family head (or a standalone product)
+     * wins over its variants; the product page lays out the whole size run from there.
+     */
+    public static function findByStorefrontLink(string $reference, ?Builder $query = null): ?self
+    {
+        $query = ($query ?? self::query())
+            ->orderByRaw('products.parent_id IS NULL DESC')
+            ->orderBy('products.id');
+
+        return StorefrontSlug::resolve($query, $reference, 'products.name');
+    }
+
+    /**
+     * "Running Shoe - 42 / Blue": the name plus the size and colour, so two pairs
+     * of one model can be told apart on a receipt. A size or colour the name
+     * already spells out ("Polo Shirt XL") is not repeated.
+     */
+    public function displayName(): string
+    {
+        $name = (string) $this->name;
+        $words = ' '.mb_strtolower($name).' ';
+        $mentioned = fn (?string $value): bool => trim((string) $value) === '' || str_contains($words, ' '.mb_strtolower(trim((string) $value)).' ');
+        $label = self::variantLabel(
+            $mentioned($this->size) ? null : $this->size,
+            $mentioned(ProductColours::displayName($this->color)) ? null : $this->color,
+        );
+
+        return $label === '' ? $name : $name.' - '.$label;
+    }
+
+    public function isVariant(): bool
+    {
+        return ! empty($this->parent_id);
+    }
+
+    /** The id of the product this one's family hangs from (itself for a head). */
+    public function familyHeadId(): int
+    {
+        return (int) ($this->parent_id ?: $this->id);
+    }
+
+    /** @return BelongsTo<Product, $this> */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** @return HasMany<Product, $this> */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /** Family heads and standalone products: what a product list shows by default. */
+    public function scopeFamilyHeads(Builder $query): Builder
+    {
+        return $query->whereNull($query->getModel()->getTable().'.parent_id');
     }
 
     public function scopeService($query)
@@ -317,6 +446,23 @@ class Product extends Model implements AuditableContracts
      */
     protected function computeResolvedUnits(): array
     {
+        $universal = $this->unit_id
+            ? UniversalUnitConversion::with('subUnit')->where('base_unit_id', $this->unit_id)->get()
+            : collect();
+
+        return $this->resolvedUnitsWith($universal);
+    }
+
+    /**
+     * Same as getResolvedUnits(), for callers that list many products at once:
+     * they eager-load unit + units.subUnit and fetch the Universal UOM rows for
+     * every base unit in one query, instead of one cache read per product.
+     *
+     * @param  Collection<int, UniversalUnitConversion>  $universal  rows for this product's base unit
+     * @return array<int, array{id: int, name: string, conversion_factor: mixed}>
+     */
+    public function resolvedUnitsWith(Collection $universal): array
+    {
         $this->loadMissing(['unit', 'units.subUnit']);
         $units = [];
         $seenUnitIds = [];
@@ -345,9 +491,6 @@ class Product extends Model implements AuditableContracts
 
         // 3. Universal conversions for this product's base unit (add any not already present)
         if ($this->unit_id) {
-            $universal = UniversalUnitConversion::with('subUnit')
-                ->where('base_unit_id', $this->unit_id)
-                ->get();
             foreach ($universal as $u) {
                 if ($u->subUnit && empty($seenUnitIds[$u->subUnit->id])) {
                     $units[] = [

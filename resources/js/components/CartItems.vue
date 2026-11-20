@@ -79,6 +79,11 @@
                                             <i class="fa fa-arrows mr-1"></i>
                                             {{ item.size }}
                                         </span>
+                                        <span v-if="item.color" class="flex items-center min-w-0">
+                                            <span class="inline-block w-2.5 h-2.5 rounded-full border border-gray-300 mr-1 flex-shrink-0"
+                                                :style="{ background: item.color_hex || '#9ca3af' }"></span>
+                                            <span class="truncate">{{ item.color }}</span>
+                                        </span>
                                     </div>
                                     <div class="text-xs posx-ink-2 leading-tight">
                                         <span v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex items-center gap-1">

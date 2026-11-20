@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/domain/constants/data_fetching_status.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
+import '../../../shared/logic/size_system_cubit/size_system_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/funnel_navigation.dart';
 import '../../../shared/widgets/chrome/app_top_bar.dart';
@@ -114,8 +115,8 @@ class _BrandBody extends StatelessWidget {
       final sizes = state.chosenSizes;
       final inSize = switch (sizes.length) {
         0 => '',
-        1 => t.inSizeSuffix(sizes.single),
-        _ => t.inSizesSuffix(sizes.join(', ')),
+        1 => t.inSizeSuffix(context.sizeLabel(sizes.single)),
+        _ => t.inSizesSuffix(sizes.map(context.sizeLabel).join(', ')),
       };
       return MessageState(
         title: switch (sizes.length) {

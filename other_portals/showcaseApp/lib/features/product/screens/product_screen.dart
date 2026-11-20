@@ -7,6 +7,7 @@ import '../../../shared/domain/helpers/formatters.dart';
 import '../../../shared/domain/models/index.dart';
 import '../../../shared/logic/branch_cubit/branch_cubit.dart';
 import '../../../shared/logic/funnel_cubit/funnel_cubit.dart';
+import '../../../shared/logic/size_system_cubit/size_system_cubit.dart';
 import '../../../shared/utils/components/theme/pearl_theme.dart';
 import '../../../shared/utils/router/funnel_navigation.dart';
 import '../../../shared/utils/router/routes.dart';
@@ -594,7 +595,7 @@ class _SizeRun extends StatelessWidget {
               SizedBox(
                 width: width,
                 child: PearlChip(
-                  label: size.size,
+                  label: context.sizeLabel(size.size),
                   height: 46,
                   selected: size.size == selected,
                   available: !size.isOutOfStock,
@@ -649,7 +650,7 @@ class _Availability extends StatelessWidget {
             // a customer back to the size run, "nobody has it" does not.
             size == null
                 ? L.of(context).notOnShelf
-                : L.of(context).sizeNotOnShelf(size!),
+                : L.of(context).sizeNotOnShelf(context.sizeLabel(size!)),
             style: PearlText.body(11.5).copyWith(color: p.faint),
           ),
         ],

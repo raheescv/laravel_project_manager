@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Actions\Product\Inventory\GetAction;
+use App\Support\ProductColours;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
@@ -34,6 +35,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 'products.mrp',
                 'brands.name as brand_name',
                 'products.size',
+                'products.color',
                 'products.name_arabic',
                 'products.department_id',
                 'departments.name as department_name',
@@ -63,6 +65,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             'Brand',
             'Unit',
             'Size',
+            'Colour',
             'Barcode',
             'Batch',
             'Quantity',
@@ -87,6 +90,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $row->brand_name,
             $row->unit_name,
             $row->size,
+            ProductColours::displayName($row->color),
             $row->barcode,
             $row->batch,
             $row->quantity,

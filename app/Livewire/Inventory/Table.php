@@ -80,7 +80,7 @@ class Table extends Component
         $this->branch_id = [session('branch_id')];
 
         $config = Configuration::where('key', 'inventory_visible_column')->value('value');
-        $this->inventory_visible_column = $config ? json_decode($config, true) : $this->getDefaultColumns();
+        $this->inventory_visible_column = array_merge($this->getDefaultColumns(), $config ? (array) json_decode($config, true) : []);
     }
 
     protected function getDefaultColumns()
@@ -94,6 +94,7 @@ class Table extends Component
             'unit' => true,
             'brand_id' => true,
             'size' => true,
+            'color' => true,
             'code' => true,
             'product_name' => true,
             'quantity' => true,
@@ -396,6 +397,7 @@ class Table extends Component
             'data' => $data,
             'total' => $total,
             'quantity' => $quantity,
+            'colourPalette' => \App\Support\ProductColours::palette(),
         ]);
     }
 
@@ -416,6 +418,7 @@ class Table extends Component
                 'products.mrp',
                 'brands.name as brand_name',
                 'products.size',
+                'products.color',
                 'products.name_arabic',
                 'products.department_id',
                 'departments.name as department_name',
