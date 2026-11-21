@@ -21,6 +21,30 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      /*
+       * Old store links (/collections/onitsuka-tiger, /products/…, /search?q=…)
+       * land on this page with a deep path. The app routes by hash (#/…) and its
+       * assets are relative, so from such a path they would be fetched from
+       * /collections/assets/… and the page would stay blank. Send the visitor to
+       * the app's own folder with the matching #/ route before anything loads.
+       */
+      ;(function () {
+        var m = location.pathname.match(/^(.*?\/)(collections|products|search|pages|blogs|cart|account)(\/.*)?$/i)
+        if (!m) return
+        var kind = m[2].toLowerCase()
+        var parts = (m[3] || '').split('/').filter(Boolean)
+        var hash = '#/'
+        var product = kind === 'products' ? parts[0] : kind === 'collections' && parts[1] === 'products' ? parts[2] : ''
+        if (product) hash = '#/product/' + encodeURIComponent(product)
+        else if (kind === 'collections' && parts[0]) hash = '#/?collection=' + encodeURIComponent(parts[0])
+        else if (kind === 'search') {
+          var q = new URLSearchParams(location.search).get('q')
+          if (q) hash = '#/?q=' + encodeURIComponent(q)
+        }
+        location.replace(m[1] + hash)
+      })()
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

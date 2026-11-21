@@ -117,3 +117,36 @@ export function productReference(slug) {
 export function brandLink(b) {
   return b?.slug || b?.name || ''
 }
+
+/**
+ * An old store link ("/collections/onitsuka-tiger", "new-balance-530") as the
+ * catalogue's own filters: the brand whose name is inside the handle (the
+ * longest one wins — "Tiger" in "onitsuka-tiger"), and the rest as a search
+ * when it names a model ("530", "1 low"). No brand inside → the handle's words
+ * become the search.
+ * Handles that mean "everything" give no filter at all.
+ *
+ * @param {string} handle
+ * @param {Array<{name?: string, slug?: string}>} brands
+ * @returns {{ brand: string|null, brandName: string, q: string }}
+ */
+export function collectionFilters(handle, brands) {
+  const words = (s) => String(s || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+  const wanted = words(decodeURIComponent(String(handle || '')))
+  const none = { brand: null, brandName: '', q: '' }
+  if (!wanted.length || /^(all|frontpage|shop|catalog|catalogue|new|new-arrivals?|sale|sneakers|shoes)$/.test(wanted.join('-'))) {
+    return none
+  }
+
+  let best = null
+  for (const b of brands || []) {
+    const name = words(b?.name)
+    if (!name.length || !name.every((w) => wanted.includes(w))) continue
+    if (!best || name.length > best.words.length) best = { brand: b, words: name }
+  }
+  if (!best) return { ...none, q: wanted.join(' ') }
+
+  const rest = wanted.filter((w) => !best.words.includes(w))
+  const model = rest.some((w) => /\d/.test(w)) ? rest.join(' ') : ''
+  return { brand: brandLink(best.brand), brandName: best.brand.name || '', q: model }
+}
