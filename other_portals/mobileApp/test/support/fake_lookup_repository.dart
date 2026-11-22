@@ -126,8 +126,8 @@ class FakeLookupRepository implements LookupRepository {
       (baseCode: null, currencies: const <Currency>[]);
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async =>
-      (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, logoUrl: null, productSort: null, paymentButtons: null, print: null);
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, bool? groupVariants, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async =>
+      (defaultQuantity: null, tipEnabled: null, roundOffEnabled: null, defaultProductType: null, schoolEnabled: null, logoUrl: null, productSort: null, groupVariants: null, paymentButtons: null, print: null);
 
   @override
   Future<Uint8List> logo() async => Uint8List(0);

@@ -38,20 +38,25 @@ class GetProductsAction
 
             $isFavorite = ($filters['category_id'] ?? null) === 'favorite';
             $sort = appProductSort();
+            $groupVariants = posGroupsVariants();
 
             $query = $this->baseQuery($filters, $branchId)
-                ->when($isFavorite, fn ($q) => $this->favouriteFamilies($q))
+                ->when($isFavorite, fn ($q) => $groupVariants ? $this->favouriteFamilies($q) : $q->where('products.is_favorite', true))
                 ->when($sort['by'] === 'priority', fn ($q) => $q->orderBy('products.priority', $sort['direction'])->orderBy('products.name'))
                 ->when($sort['by'] === 'name', fn ($q) => $q->orderBy('products.name', $sort['direction']));
 
-            $total = (clone $query)->count(DB::raw('DISTINCT '.self::FAMILY_KEY));
+            $total = $groupVariants
+                ? (clone $query)->count(DB::raw('DISTINCT '.self::FAMILY_KEY))
+                : (clone $query)->count();
 
             if ($isFavorite && $total === 0 && empty($filters['search'])) {
                 $query = $this->topSellingQuery($filters, $branchId);
                 $rows = $query->get();
-            } else {
+            } elseif ($groupVariants) {
                 $familyIds = $this->firstFamilies($query, $sort, self::CARD_LIMIT);
                 $rows = $query->where(fn ($q) => $q->whereIn('products.id', $familyIds)->orWhereIn('products.parent_id', $familyIds))->get();
+            } else {
+                $rows = $query->limit(self::CARD_LIMIT)->get();
             }
 
             $this->universalUnits = UniversalUnitConversion::with('subUnit')
@@ -59,7 +64,10 @@ class GetProductsAction
                 ->get()
                 ->groupBy('base_unit_id');
 
-            $products = $this->groupFamilies($rows, $saleType, ProductColours::palette());
+            $palette = ProductColours::palette();
+            $products = $groupVariants
+                ? $this->groupFamilies($rows, $saleType, $palette)
+                : $rows->map(fn ($inventory) => $this->formatProduct($inventory, $saleType, $palette))->values();
             $total = max($total, $products->count());
 
             return ['success' => true, 'data' => $products, 'total' => $total];

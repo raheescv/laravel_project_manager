@@ -970,6 +970,32 @@ if (! function_exists('appProductSort')) {
         ];
     }
 }
+if (! function_exists('posProductDisplayOptions')) {
+    /**
+     * How the web POS and the mobile app's New Sale show size / colour variants
+     * (Settings → Sale Configuration → Product Display).
+     *
+     * @return array<string, string>
+     */
+    function posProductDisplayOptions(): array
+    {
+        return [
+            'individual' => 'Individual (every size / colour as its own card)',
+            'family' => 'Family Wise (one card, pick size / colour)',
+        ];
+    }
+}
+if (! function_exists('posGroupsVariants')) {
+    /**
+     * Whether the POS catalog folds a product's size / colour variants into one
+     * family card. Off (every variant its own card) unless the business picks
+     * "Family Wise".
+     */
+    function posGroupsVariants(): bool
+    {
+        return Configuration::where('key', 'pos_product_display')->value('value') === 'family';
+    }
+}
 if (! function_exists('saleRoundOffEnabled')) {
     /**
      * Whether a sale's grand total is rounded to the nearest whole number, with

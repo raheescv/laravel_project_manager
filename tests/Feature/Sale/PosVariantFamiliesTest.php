@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Configuration;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -8,12 +9,14 @@ use Tests\Support\PosWorld;
 /**
  * The POS grid shows a size / colour family as ONE card carrying its variants
  * (the till then asks for size and colour); a product with a single item, or a
- * search that narrows a family down to one item, stays a plain card.
+ * search that narrows a family down to one item, stays a plain card. Needs
+ * Product Display = Family Wise (the default is Individual).
  *
  * @see App\Actions\Sale\Pos\GetProductsAction
  */
 beforeEach(function (): void {
     $this->world = PosWorld::create();
+    Configuration::updateOrCreate(['key' => 'pos_product_display'], ['value' => 'family']);
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);
 
@@ -117,4 +120,28 @@ it('brings the whole family into Favorites when only one variant is starred', fu
     $cards = collect($this->getJson($this->world->url('products?category_id=favorite'))->assertOk()->json());
 
     expect($cards->firstWhere('name', 'Running Shoe')['variants'])->toHaveCount(3);
+});
+
+it('lists every variant as its own card when Product Display is Individual', function (): void {
+    Configuration::updateOrCreate(['key' => 'pos_product_display'], ['value' => 'individual']);
+
+    $response = $this->getJson($this->world->url('products'))->assertOk();
+    $cards = collect($response->json())->where('name', 'Running Shoe');
+
+    expect($cards)->toHaveCount(3)
+        ->and($cards->every(fn (array $card) => ! array_key_exists('variants', $card)))->toBeTrue()
+        ->and($cards->pluck('size')->sort()->values()->all())->toBe(['41', '42', '43'])
+        ->and($cards->firstWhere('size', '42')['color_name'])->toBe('Blue')
+        ->and($response->headers->get('X-Total-Count'))->toBe((string) count($response->json()));
+});
+
+it('shows only the starred variant in Favorites when Product Display is Individual', function (): void {
+    Configuration::updateOrCreate(['key' => 'pos_product_display'], ['value' => 'individual']);
+    Product::whereKey([$this->shoe->id, $this->plain->id])->update(['is_favorite' => false]);
+    $this->blue->update(['is_favorite' => true]);
+
+    $cards = collect($this->getJson($this->world->url('products?category_id=favorite'))->assertOk()->json());
+
+    expect($cards)->toHaveCount(1)
+        ->and($cards->first()['product_id'])->toBe($this->blue->id);
 });

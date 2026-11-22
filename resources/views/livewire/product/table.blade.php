@@ -608,6 +608,27 @@
                             </li>
                         </ul>
                     </div>
+                    <div class="dropup">
+                        <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                            wire:loading.attr="disabled">
+                            <i class="fa fa-star me-1"></i>
+                            Favorite
+                        </button>
+                        <ul class="dropdown-menu shadow-lg">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateFavorite(true)">
+                                    <i class="fa fa-star me-2 text-warning"></i>
+                                    Mark as favorite
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateFavorite(false)">
+                                    <i class="fa fa-star-o me-2 text-muted"></i>
+                                    Remove from favorites
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 @endcan
                 <button type="button" class="btn btn-sm btn-link text-white-50 p-1 ms-1" title="Clear selection" aria-label="Clear selection" wire:click="clearSelection()">
                     <i class="fa fa-times"></i>

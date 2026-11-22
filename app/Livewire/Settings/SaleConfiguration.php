@@ -79,6 +79,9 @@ class SaleConfiguration extends Component
     /** 'asc' or 'desc' — see appProductSort(). */
     public $app_product_sort_direction;
 
+    /** 'individual' (default) or 'family' (one card per size / colour family) — see posGroupsVariants(). */
+    public $pos_product_display;
+
     public function mount()
     {
         $this->default_status = Configuration::where('key', 'default_status')->value('value');
@@ -111,6 +114,7 @@ class SaleConfiguration extends Component
         $this->pos_color_preset = Configuration::where('key', 'pos_color_preset')->value('value') ?: 'theme';
         $this->pos_grid_columns = Configuration::where('key', 'pos_grid_columns')->value('value') ?: 'auto';
         ['by' => $this->app_product_sort_by, 'direction' => $this->app_product_sort_direction] = appProductSort();
+        $this->pos_product_display = posGroupsVariants() ? 'family' : 'individual';
     }
 
     public function save()
@@ -159,6 +163,10 @@ class SaleConfiguration extends Component
         Configuration::updateOrCreate(
             ['key' => 'app_product_sort_direction'],
             ['value' => $this->app_product_sort_direction === 'desc' ? 'desc' : 'asc']
+        );
+        Configuration::updateOrCreate(
+            ['key' => 'pos_product_display'],
+            ['value' => $this->pos_product_display === 'family' ? 'family' : 'individual']
         );
         $this->dispatch('success', ['message' => 'Updated Successfully']);
         Artisan::call('optimize:clear');

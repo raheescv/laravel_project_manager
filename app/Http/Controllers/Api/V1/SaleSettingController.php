@@ -52,6 +52,9 @@ class SaleSettingController extends Controller
                 // New Sale catalog order — sent back as sort_by / sort_direction
                 // on GET /products and applied to the offline snapshot.
                 'product_sort' => appProductSort(),
+                // Product Display: true folds size / colour variants into one
+                // family card on New Sale, false lists every variant on its own.
+                'group_variants' => posGroupsVariants(),
                 // Quick payment buttons on the checkout, in order, ahead of Credit
                 // and Custom (System Configurations → POS Payment Buttons). Each is
                 // {id, name, slug}; slug 'cash' keeps the cash tender pad.

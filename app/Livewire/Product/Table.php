@@ -133,6 +133,17 @@ class Table extends Component
 
     public function updateSelling(bool $isSelling): void
     {
+        $this->bulkUpdateFlag('is_selling', $isSelling, $isSelling ? 'selling' : 'not selling');
+    }
+
+    public function updateFavorite(bool $isFavorite): void
+    {
+        $this->bulkUpdateFlag('is_favorite', $isFavorite, $isFavorite ? 'favorite' : 'not favorite');
+    }
+
+    /** Sets one boolean column on every selected product inside a single transaction. */
+    private function bulkUpdateFlag(string $column, bool $value, string $label): void
+    {
         abort_unless(auth()->user()?->can('product.edit'), 403);
         if (! count($this->selected)) {
             $this->dispatch('error', ['message' => 'Please select any item to update.']);
@@ -143,10 +154,9 @@ class Table extends Component
             DB::beginTransaction();
             $products = Product::product()->whereIn('id', $this->selected)->get();
             foreach ($products as $product) {
-                $product->update(['is_selling' => $isSelling]);
+                $product->update([$column => $value]);
             }
             DB::commit();
-            $label = $isSelling ? 'selling' : 'not selling';
             $this->dispatch('success', ['message' => 'Marked '.$products->count().' items as '.$label]);
             $this->clearSelection();
         } catch (\Exception $e) {

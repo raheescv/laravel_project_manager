@@ -110,6 +110,11 @@
                         {{ html()->select('pos_grid_columns', posGridColumns())->value('')->class('form-select')->placeholder('How many product cards per row?')->attribute('wire:model', 'pos_grid_columns') }}
                         <div class="form-text">&ldquo;Auto&rdquo; fits the screen. Phones always show 2.</div>
                     </div>
+                    <div class="col-md-6 col-xl-4">
+                        <label class="form-label" for="pos_product_display">Product Display</label>
+                        {{ html()->select('pos_product_display', posProductDisplayOptions())->value('')->class('form-select')->attribute('wire:model', 'pos_product_display') }}
+                        <div class="form-text">How size / colour variants show on the web POS and the mobile app.</div>
+                    </div>
                 </div>
 
                 <div class="scx-sub mt-4">Colour preset</div>

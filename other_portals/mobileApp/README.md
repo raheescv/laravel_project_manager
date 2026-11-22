@@ -63,6 +63,79 @@ at the **LAN IP** of the machine running Valet.
 > always gets the same IP. While `valet loopback` points at the LAN IP, the `.test`
 > domains resolve there too and won't work offline — revert to `127.0.0.1` when off WiFi.
 
+### Device can't reach the server (after the IP changed)
+
+Re-point everything at the Mac's current IP in one go (paste as **one** line so
+`$IP` is set):
+
+```bash
+IP=$(ipconfig getifaddr en0) && [ -n "$IP" ] && valet loopback "$IP" && sed -i '' -E "s#(\"API_BASE_URL\": *\")[^\"]*#\1https://$IP#" env.json && grep API_BASE_URL env.json
+flutter run --dart-define-from-file=env.json
+```
+
+`env.json` **must** also contain `"API_HOST": "project_manager.test"`. Valet picks
+the site by host name, so a request to a bare IP without that Host header gets
+Valet's own **"404 - Not Found"** page instead of Laravel.
+
+Check each step if it still fails:
+
+```bash
+grep loopback ~/.config/valet/config.json         # must equal $(ipconfig getifaddr en0)
+lsof -nP -iTCP:443 -sTCP:LISTEN | grep -v 127.0.0.1   # nginx must listen on <IP>:443
+curl -k -s -H 'Host: project_manager.test' -H 'Accept: application/json' -X POST https://$(ipconfig getifaddr en0)/api/v1/login
+# {"message":"The PIN is required."...} = server OK · "Valet - Not Found" = Host header missing · no output = not reachable
+```
+
+- Open `https://<IP>` in the **phone's browser** — if that fails, it's the network
+  (different WiFi / guest network / macOS firewall blocking nginx), not the app.
+- A connection saved from the login-screen **gear** wins over `env.json`. If the
+  app still uses the old IP, open the gear and tap **"This build was made for … · Use it"**
+  (or re-enter the IP) and Save.
+- iOS: allow **Settings → QLOUD POS → Local Network**, otherwise LAN calls are silently blocked.
+- See which URL the app is **actually** calling (Android):
+  ```bash
+  adb logcat -d | grep "could not reach"    # e.g. "[auth] sign-in could not reach https://<old-ip>"
+  ```
+  If that shows an old IP, it's the saved connection above — fix it from the gear, not env.json.
+
+### `flutter run` doesn't see the device
+
+```bash
+flutter devices                                   # list what Flutter can see
+adb kill-server && adb start-server && adb devices   # Android: restart adb, then re-accept the USB-debugging prompt
+xcrun devicectl list devices                      # iOS: State must be "available (paired)", not "unavailable"
+flutter run -d <device-id> --device-timeout 30 --dart-define-from-file=env.json
+```
+
+**Android device:**
+
+1. On the phone: **Settings → About phone → tap Build number 7×** → back to
+   **Developer options → USB debugging → On**.
+2. Plug in USB, accept **Allow USB debugging** on the phone, then:
+   ```bash
+   adb devices -l                                   # must say "device", not "unauthorized"/"offline"
+   flutter run -d <serial> --dart-define-from-file=env.json
+   ```
+3. Check the phone can reach the Mac's server (same WiFi, port 443 open):
+   ```bash
+   adb shell 'ip -4 addr show wlan0 | grep inet'    # phone IP — same 192.168.x subnet as the Mac
+   adb shell 'echo | nc -w 3 <mac-ip> 443 && echo OPEN || echo CLOSED'
+   ```
+4. Optional, no cable (Android 11+): **Developer options → Wireless debugging → Pair
+   device with pairing code**, then `adb pair <ip>:<pair-port>` and
+   `adb connect <ip>:<port>` (ports shown on that screen).
+
+**iPhone shows `unavailable` / "Browsing on the local area network … (code -27)"** —
+wireless debugging can't find the phone. Fix it once over a cable:
+
+1. Plug the iPhone in with USB, unlock it, tap **Trust This Computer**.
+2. On the phone: **Settings → Privacy & Security → Developer Mode → On** (it reboots).
+3. Xcode → **Window → Devices and Simulators** → select the phone → tick
+   **Connect via network**. Wait until it finishes "Preparing device".
+4. Unplug. From now on it works wirelessly **only while the phone is unlocked and
+   on the same WiFi as the Mac** (not a guest/isolated network). If it drops,
+   just run with the cable plugged in — USB is always faster and more reliable.
+
 ## Build
 
 ```bash

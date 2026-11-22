@@ -69,3 +69,32 @@ it('forbids a bulk selling update without edit permission', function (): void {
         ->call('updateSelling', false)
         ->assertForbidden();
 });
+
+it('marks the selected products as favorite and back', function (): void {
+    $product = $this->world->product;
+    $product->update(['is_favorite' => true]);
+
+    Livewire::test(Table::class)
+        ->set('selected', [$product->id])
+        ->assertSee('Remove from favorites')
+        ->call('updateFavorite', false)
+        ->assertSet('selected', [])
+        ->assertDispatched('success');
+
+    expect((bool) $product->fresh()->is_favorite)->toBeFalse();
+
+    Livewire::test(Table::class)
+        ->set('selected', [$product->id])
+        ->call('updateFavorite', true);
+
+    expect((bool) $product->fresh()->is_favorite)->toBeTrue();
+});
+
+it('forbids a bulk favorite update without edit permission', function (): void {
+    $this->world->user->revokePermissionTo('product.edit');
+
+    Livewire::test(Table::class)
+        ->set('selected', [$this->world->product->id])
+        ->call('updateFavorite', true)
+        ->assertForbidden();
+});

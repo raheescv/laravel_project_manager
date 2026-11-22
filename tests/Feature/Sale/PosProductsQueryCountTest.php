@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\Sale\Pos\GetProductsAction;
+use App\Models\Configuration;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Unit;
@@ -18,6 +19,7 @@ use Tests\Support\PosWorld;
  */
 beforeEach(function (): void {
     $this->world = PosWorld::create();
+    Configuration::updateOrCreate(['key' => 'pos_product_display'], ['value' => 'family']);
     $this->actingAs($this->world->user);
     session(['branch_id' => $this->world->branch->id]);
 

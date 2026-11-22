@@ -16,13 +16,6 @@
                                 <span class="d-none d-md-inline">Export</span>
                             </button>
                         @endcan
-                        @can('service.delete')
-                            <button class="btn btn-danger btn-sm d-flex align-items-center" title="Delete Selected" data-bs-toggle="tooltip" wire:click="delete()"
-                                wire:confirm="Are you sure you want to delete the selected items?">
-                                <i class="fa fa-trash me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Delete</span>
-                            </button>
-                        @endcan
                         @can('service.import')
                             <a class="btn btn-info btn-sm d-flex align-items-center text-white shadow-sm" title="Import Services" href="{{ route('service::import') }}">
                                 <i class="fa fa-cloud-download me-md-1 fs-5"></i>
@@ -225,6 +218,91 @@
                 {{ $data->links() }}
             </div>
         </div>
+
+        @if (count($selected))
+            <div class="service-bulk-bar" role="toolbar" aria-label="Bulk actions for selected services">
+                <div class="d-flex align-items-center gap-2 bg-dark text-white rounded-pill shadow-lg px-3 py-2">
+                    <span class="badge bg-primary rounded-pill">{{ count($selected) }}</span>
+                    <span class="small fw-semibold text-nowrap me-1 d-none d-sm-inline">selected</span>
+                    <span class="vr opacity-25"></span>
+                    @can('service.delete')
+                        <button type="button" class="btn btn-sm btn-danger rounded-pill d-flex align-items-center" wire:click="delete()"
+                            wire:confirm="Are you sure you want to delete the {{ count($selected) }} selected items?" wire:loading.attr="disabled">
+                            <i class="fa fa-trash me-1"></i>
+                            Delete
+                        </button>
+                    @endcan
+                    @can('service.edit')
+                        <div class="dropup">
+                            <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                                wire:loading.attr="disabled">
+                                <i class="fa fa-shopping-cart me-1"></i>
+                                Sellable
+                            </button>
+                            <ul class="dropdown-menu shadow-lg">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateSelling(true)">
+                                        <i class="fa fa-check-circle me-2 text-success"></i>
+                                        Mark as selling
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateSelling(false)">
+                                        <i class="fa fa-ban me-2 text-danger"></i>
+                                        Mark as not selling
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="dropup">
+                            <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
+                                wire:loading.attr="disabled">
+                                <i class="fa fa-star me-1"></i>
+                                Favorite
+                            </button>
+                            <ul class="dropdown-menu shadow-lg">
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateFavorite(true)">
+                                        <i class="fa fa-star me-2 text-warning"></i>
+                                        Mark as favorite
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center" href="#" wire:click.prevent="updateFavorite(false)">
+                                        <i class="fa fa-star-o me-2 text-muted"></i>
+                                        Remove from favorites
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    @endcan
+                    <button type="button" class="btn btn-sm btn-link text-white-50 p-1 ms-1" title="Clear selection" aria-label="Clear selection" wire:click="clearSelection()">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        @endif
+
+        @push('styles')
+            <style>
+                .service-bulk-bar {
+                    position: fixed;
+                    bottom: 1.5rem;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 1060;
+                    max-width: calc(100vw - 2rem);
+                }
+
+                @media (max-width: 767.98px) {
+                    .service-bulk-bar {
+                        left: 1rem;
+                        right: 5.5rem;
+                        transform: none;
+                    }
+                }
+            </style>
+        @endpush
 
         <!-- Floating action button for mobile -->
         <div class="position-fixed bottom-0 end-0 mb-4 me-4 d-md-none">

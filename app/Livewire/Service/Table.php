@@ -115,6 +115,46 @@ class Table extends Component
         }
     }
 
+    public function updateSelling(bool $isSelling): void
+    {
+        $this->bulkUpdateFlag('is_selling', $isSelling, $isSelling ? 'selling' : 'not selling');
+    }
+
+    public function updateFavorite(bool $isFavorite): void
+    {
+        $this->bulkUpdateFlag('is_favorite', $isFavorite, $isFavorite ? 'favorite' : 'not favorite');
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+        $this->selectAll = false;
+    }
+
+    /** Sets one boolean column on every selected service inside a single transaction. */
+    private function bulkUpdateFlag(string $column, bool $value, string $label): void
+    {
+        abort_unless(auth()->user()?->can('service.edit'), 403);
+        if (! count($this->selected)) {
+            $this->dispatch('error', ['message' => 'Please select any item to update.']);
+
+            return;
+        }
+        try {
+            DB::beginTransaction();
+            $services = Product::service()->whereIn('id', $this->selected)->get();
+            foreach ($services as $service) {
+                $service->update([$column => $value]);
+            }
+            DB::commit();
+            $this->dispatch('success', ['message' => 'Marked '.$services->count().' items as '.$label]);
+            $this->clearSelection();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
     public function updated($key, $value)
     {
         if (! in_array($key, ['SelectAll']) && ! preg_match('/^selected\..*/', $key) && ! preg_match('/^columns\..*/', $key)) {
