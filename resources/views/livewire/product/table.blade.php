@@ -1,497 +1,401 @@
-<div>
-    <div class="card shadow-sm">
-        <div class="card-header bg-light py-3">
-            <div class="row mt-3">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
-                    @can('product.create')
-                        <a class="btn btn-primary d-flex align-items-center shadow-sm" href="{{ route('product::create') }}">
-                            <i class="demo-psi-add me-2"></i>
-                            Add New Product
-                        </a>
-                    @endcan
-                    <div class="btn-group shadow-sm">
-                        @can('product.export')
-                            <button class="btn btn-success btn-sm d-flex align-items-center" title="Export to Excel" data-bs-toggle="tooltip" wire:click="export()">
-                                <i class="demo-pli-file-excel me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Export</span>
-                            </button>
-                        @endcan
-                        @can('product.import')
-                            <a class="btn btn-info btn-sm d-flex align-items-center text-white shadow-sm" title="Import" href="{{ route('product::import') }}">
-                                <i class="demo-pli-download-from-cloud me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Import</span>
-                            </a>
-                        @endcan
-                        @can('product.view')
-                            <a class="btn btn-secondary btn-sm d-flex align-items-center text-white shadow-sm" title="Image Gallery" data-bs-toggle="tooltip" href="{{ route('product::gallery') }}">
-                                <i class="demo-psi-camera me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Gallery</span>
-                            </a>
-                        @endcan
-                        @can('product offer.view')
-                            <a class="btn btn-warning btn-sm d-flex align-items-center shadow-sm" title="Offer prices" data-bs-toggle="tooltip" href="{{ route('product::offer::index') }}">
-                                <i class="fa fa-tags me-md-1 fs-5"></i>
-                                <span class="d-none d-md-inline">Offers</span>
-                            </a>
-                        @endcan
-                    </div>
-                    <div class="btn-group btn-group-sm shadow-sm" role="group" aria-label="Variant grouping">
-                        <input type="radio" class="btn-check" id="group-variants-on" value="1" wire:model.live="groupVariants" @checked($groupVariants)>
-                        <label class="btn btn-outline-primary" for="group-variants-on" title="One row per product family"><i class="fa fa-th-large me-1"></i> Group variants</label>
-                        <input type="radio" class="btn-check" id="group-variants-off" value="0" wire:model.live="groupVariants" @checked(! $groupVariants)>
-                        <label class="btn btn-outline-primary" for="group-variants-off" title="Every size / colour on its own row"><i class="fa fa-list me-1"></i> Every variant</label>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="row g-2 align-items-center">
-                        <div class="col-auto">
-                            <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
-                        </div>
-                        <div class="col-auto">
-                            <select wire:model.live="limit" class="form-select form-select-sm border-secondary-subtle shadow-sm">
-                                <option value="10">10</option>
-                                <option value="100">100</option>
-                                <option value="500">500</option>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-secondary-subtle">
-                                    <i class="demo-psi-magnifi-glass"></i>
-                                </span>
-                                <input type="text" id="search" wire:model.live.debounce.400ms="search" placeholder="Search products..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
-                                    aria-label="Search products">
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-primary shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" title="Column Visibility">
-                                    <i class="demo-pli-layout-grid"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                    <li>
-                                        <a class="dropdown-item" data-bs-toggle="offcanvas" data-bs-target="#productColumnVisibility" aria-controls="productColumnVisibility">
-                                            <i class="demo-pli-column-width me-2"></i>Column Visibility
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+@php
+    $cols = $columns;
+    $show = fn (string $key, bool $default = true): bool => (bool) ($cols[$key] ?? $default);
+    $showCodes = $show('code') || $show('barcode');
+    $showCategory = $show('department') || $show('main_category') || $show('sub_category');
+    $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
+    $panelFilterCount = count(array_diff_key($activeFilters, ['sku' => true]));
+@endphp
+<div class="pdx" x-data="{ filtersOpen: $persist(false).as('product-list-filters-open') }">
+    <x-product.list-premium />
+
+    <div class="pdx-shell">
+        <div class="pdx-head bg-light">
+        {{-- Header --}}
+        <div class="d-flex flex-wrap align-items-center gap-2 px-3 pt-3 pb-3">
+            @can('product.create')
+                <a class="btn btn-primary d-none d-md-inline-flex align-items-center shadow-sm" href="{{ route('product::create') }}">
+                    <i class="fa fa-plus me-2"></i>Add New Product
+                </a>
+            @endcan
+            <div class="btn-group shadow-sm d-none d-md-inline-flex">
+                @can('product.export')
+                    <button type="button" class="btn btn-success btn-sm d-flex align-items-center" title="Export to Excel" wire:click="export()" wire:loading.attr="disabled" wire:target="export">
+                        <i class="fa fa-file-excel-o me-lg-1 fs-5"></i><span class="hide-lg">Export</span>
+                    </button>
+                @endcan
+                @can('product.import')
+                    <a class="btn btn-info btn-sm d-flex align-items-center text-white" title="Import" href="{{ route('product::import') }}">
+                        <i class="fa fa-cloud-download me-lg-1 fs-5"></i><span class="hide-lg">Import</span>
+                    </a>
+                @endcan
+                @can('product.view')
+                    <a class="btn btn-secondary btn-sm d-flex align-items-center text-white" title="Image Gallery" href="{{ route('product::gallery') }}">
+                        <i class="fa fa-picture-o me-lg-1 fs-5"></i><span class="hide-lg">Gallery</span>
+                    </a>
+                @endcan
+                @can('product offer.view')
+                    <a class="btn btn-warning btn-sm d-flex align-items-center" title="Offer prices" href="{{ route('product::offer::index') }}">
+                        <i class="fa fa-tags me-lg-1 fs-5"></i><span class="hide-lg">Offers</span>
+                    </a>
+                @endcan
+            </div>
+            <div class="ms-md-auto d-flex align-items-center gap-2">
+                <span class="fw-semibold">Products</span>
+                <span class="badge bg-primary rounded-pill">{{ number_format($data->total()) }}</span>
+            </div>
+        </div>
+
+        {{-- Toolbar --}}
+        <div class="toolbar d-flex flex-wrap align-items-center gap-2 px-3 pb-3">
+            <div class="search-wrap" style="flex: 1 1 260px; max-width: 420px">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                    <input type="text" id="search" wire:model.live.debounce.400ms="search" placeholder="Search name, Arabic name, code, colour, price…" class="form-control tool-input" autocomplete="off"
+                        aria-label="Search products">
                 </div>
             </div>
-            <hr class="my-3">
-            <div class="row g-3">
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="department_id" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-building me-1 text-muted"></i>
-                            Department
-                        </label>
-                        {{ html()->select('department_id', [])->value('')->class('select-department_id-list shadow-sm border-secondary-subtle')->id('department_id')->placeholder('All Departments') }}
-                    </div>
+            <div class="search-wrap" style="flex: 0 1 200px">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="fa fa-barcode"></i></span>
+                    <input type="text" id="sku" wire:model.live.debounce.400ms="sku" placeholder="SKU code" class="form-control tool-input mono" autocomplete="off" aria-label="Search SKU code">
                 </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" :class="{ 'on': filtersOpen }" @click="filtersOpen = ! filtersOpen" :aria-expanded="filtersOpen" aria-controls="productFilterPanel">
+                <i class="fa fa-sliders me-1"></i>Filters
+                @if ($panelFilterCount)
+                    <span class="badge rounded-pill text-bg-primary ms-1">{{ $panelFilterCount }}</span>
+                @endif
+            </button>
+            <div class="seg hide-sm" role="group" aria-label="Row density">
+                <button type="button" class="{{ $compact ? '' : 'on' }}" wire:click="$set('compact', false)">Comfort</button>
+                <button type="button" class="{{ $compact ? 'on' : '' }}" wire:click="$set('compact', true)">Compact</button>
+            </div>
+            <div class="seg ms-auto" role="group" aria-label="Variant grouping">
+                <button type="button" class="{{ $groupVariants ? 'on' : '' }}" wire:click="$set('groupVariants', true)" title="One row per product family">
+                    <i class="fa fa-th-large me-1"></i><span class="hide-sm">Grouped</span>
+                </button>
+                <button type="button" class="{{ $groupVariants ? '' : 'on' }}" wire:click="$set('groupVariants', false)" title="Every size / colour on its own row">
+                    <i class="fa fa-list me-1"></i><span class="hide-sm">Every variant</span>
+                </button>
+            </div>
+<div class="dropdown">
+                <button type="button" class="btn btn-sm btn-ghost d-flex align-items-center" wire:ignore.self data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Visible columns">
+                    <i class="fa fa-columns"></i><span class="hide-sm ms-1">Columns</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 col-menu" wire:ignore.self>
+                    <li class="dropdown-header small text-uppercase" style="font-size: .65rem; letter-spacing: .04em;">Visible Columns</li>
+                    @foreach ($columnLabels as $column => $label)
+                        <li wire:key="col-{{ $column }}">
+                            <div class="form-check px-3 py-1 ms-2">
+                                <input class="form-check-input" type="checkbox" wire:model.live="columns.{{ $column }}" id="product_col_{{ $column }}">
+                                <label class="form-check-label small" for="product_col_{{ $column }}">{{ $label }}</label>
+                            </div>
+                        </li>
+                    @endforeach
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item small text-muted d-inline-flex align-items-center gap-2" wire:click="resetColumns">
+                            <i class="fa fa-undo"></i> Reset columns
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="main_category_id" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-folder me-1 text-muted"></i>
-                            Main Category
-                        </label>
-                        {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list shadow-sm border-secondary-subtle')->id('main_category_id')->placeholder('All Categories') }}
-                    </div>
+        {{-- Filter panel (kept in the DOM so the TomSelects stay initialised) --}}
+        <div class="filter-panel px-3 py-3" id="productFilterPanel" x-show="filtersOpen" x-cloak x-collapse>
+            <div class="row g-2">
+                <div class="col-6 col-md-4 col-xl-3" wire:ignore>
+                    <label for="department_id" class="form-label">Department</label>
+                    {{ html()->select('department_id', [])->value('')->class('select-department_id-list')->id('department_id')->placeholder('All departments') }}
                 </div>
-
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="sub_category_id" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-folder-open me-1 text-muted"></i>
-                            Sub Category
-                        </label>
-                        {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list shadow-sm border-secondary-subtle')->id('sub_category_id')->placeholder('All Sub Categories') }}
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3" wire:ignore>
+                    <label for="main_category_id" class="form-label">Main category</label>
+                    {{ html()->select('main_category_id', [])->value('')->class('select-category_id-list')->id('main_category_id')->placeholder('All categories') }}
                 </div>
-
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="brand_id" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-tag me-1 text-muted"></i>
-                            Brand
-                        </label>
-                        {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list shadow-sm border-secondary-subtle')->id('brand_id')->placeholder('All Brands') }}
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3" wire:ignore>
+                    <label for="sub_category_id" class="form-label">Sub category</label>
+                    {{ html()->select('sub_category_id', [])->value('')->class('select-category_id-list')->id('sub_category_id')->placeholder('All sub categories') }}
                 </div>
-
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="unit_id" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-cube me-1 text-muted"></i>
-                            Unit
-                        </label>
-                        {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list shadow-sm border-secondary-subtle')->id('unit_id')->placeholder('All Units') }}
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3" wire:ignore>
+                    <label for="brand_id" class="form-label">Brand</label>
+                    {{ html()->select('brand_id', [])->value('')->class('select-brand_id-list')->id('brand_id')->placeholder('All brands') }}
                 </div>
-
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="status" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-toggle me-1 text-muted"></i>
-                            Status
-                        </label>
-                        {{ html()->select('status', activeOrDisabled())->value('')->class('form-select shadow-sm border-secondary-subtle')->placeholder('Select Status')->id('status')->attribute('wire:model.live', 'status') }}
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3" wire:ignore>
+                    <label for="unit_id" class="form-label">Unit</label>
+                    {{ html()->select('unit_id', [])->value('')->class('select-unit_id-list')->id('unit_id')->placeholder('All units') }}
                 </div>
-
-                <div class="col-lg-4 col-md-6">
-                    <div>
-                        <label for="variant" class="form-label small fw-medium text-capitalize">
-                            <i class="fa fa-sitemap me-1 text-muted"></i>
-                            Variant
-                        </label>
-                        <select id="variant" wire:model.live="variant" class="form-select shadow-sm border-secondary-subtle">
-                            <option value="">All products</option>
-                            <option value="main">Main products only</option>
-                            <option value="variants">Variants only</option>
-                        </select>
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" wire:model.live="status" class="form-select form-select-sm">
+                        <option value="">Any status</option>
+                        @foreach (activeOrDisabled() as $statusKey => $statusLabel)
+                            <option value="{{ $statusKey }}">{{ $statusLabel }}</option>
+                        @endforeach
+                    </select>
                 </div>
-
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="image_status" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-camera me-1 text-muted"></i>
-                            Image
-                        </label>
-                        {{ html()->select('image_status', ['with_image' => 'With Image', 'without_image' => 'Without Image'])->value('')->class('form-select shadow-sm border-secondary-subtle')->placeholder('All Products')->id('image_status')->attribute('wire:model.live', 'image_status') }}
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <label for="variant" class="form-label">Variant</label>
+                    <select id="variant" wire:model.live="variant" class="form-select form-select-sm">
+                        <option value="">All products</option>
+                        <option value="main">Main products only</option>
+                        <option value="variants">Variants only</option>
+                    </select>
                 </div>
-                <div class="col-lg-4 col-md-6" wire:ignore>
-                    <div>
-                        <label for="image_status" class="form-label small fw-medium text-capitalize">
-                            <i class="demo-psi-cube me-1 text-muted"></i>
-                            Size
-                        </label>
-                        <input type="text" id="size" wire:model.live.debounce.400ms="size" placeholder="Search size..." class="form-control border-secondary-subtle shadow-sm" autocomplete="off"
-                        aria-label="Search size">
-                    </div>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <label for="image_status" class="form-label">Image</label>
+                    <select id="image_status" wire:model.live="image_status" class="form-select form-select-sm">
+                        <option value="">All products</option>
+                        <option value="with_image">With image</option>
+                        <option value="without_image">Without image</option>
+                    </select>
                 </div>
-
-
-                <div class="col-lg-4 col-md-6">
-                    <div>
-                        <label class="d-block form-label small fw-medium text-capitalize mb-2">
-                            <i class="demo-psi-shop me-1 text-muted"></i>
-                            Sales Status
-                        </label>
-                        <div class="form-check form-switch">
-                            {{ html()->checkbox('is_selling', (bool)$is_selling)->class('form-check-input')->attribute('wire:model.live', 'is_selling')->id('is_selling') }}
-                            <label for="is_selling" class="form-check-label">
-                                &nbsp; Is Currently Selling
-                            </label>
-                        </div>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <label for="size" class="form-label">Size</label>
+                    <input type="text" id="size" wire:model.live.debounce.400ms="size" placeholder="e.g. 42, XL" class="form-control form-control-sm" autocomplete="off">
+                </div>
+                <div class="col-6 col-md-4 col-xl-3 d-flex align-items-end">
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" id="is_selling" wire:model.live="is_selling">
+                        <label for="is_selling" class="form-check-label small">Currently selling</label>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="card-body p-0">
+
+        {{-- Active filter chips --}}
+        @if (count($activeFilters))
+            <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2">
+                @foreach ($activeFilters as $filterKey => $chip)
+                    <span class="fchip" wire:key="chip-{{ $filterKey }}">
+                        {{ $chip['label'] }}: <b class="{{ $filterKey === 'sku' ? 'mono' : '' }}">{{ $chip['value'] }}</b>
+                        <button type="button" wire:click="clearFilter('{{ $filterKey }}')" aria-label="Remove {{ $chip['label'] }} filter"><i class="fa fa-times"></i></button>
+                    </span>
+                @endforeach
+                <a href="#" class="small text-body-secondary ms-1" wire:click.prevent="clearFilters()">Clear all</a>
+            </div>
+        @endif
+
+        </div>
+
+        {{-- List --}}
         <div class="table-responsive">
-            <table class="table table-hover align-middle border-bottom mb-0">
-                <thead class="table-light text-capitalize">
+            <table class="ptable {{ $compact ? 'is-compact' : '' }}">
+                <thead>
                     <tr>
-                        @if ($product_visible_column['id'] ?? true)
-                            <th class="border-0">
-                                <div class="form-check ms-1">
-                                    <input class="form-check-input" type="checkbox" wire:model.live="selectAll" id="selectAll" />
-                                    <label class="form-check-label" for="selectAll">
-                                        <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
-                                    </label>
-                                </div>
-                            </th>
+                        <th style="width: 1%">
+                            <div class="d-flex align-items-center gap-2">
+                                <input class="form-check-input m-0" type="checkbox" wire:model.live="selectAll" id="selectAll" aria-label="Select all" />
+                                @if ($show('id'))
+                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="id" label="ID" />
+                                @endif
+                            </div>
+                        </th>
+                        @if ($show('image', false))
+                            <th style="width: 1%"></th>
                         @endif
-                        @if ($product_visible_column['image'] ?? false)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-camera me-2 text-secondary small"></i>
-                                    Image
-                                </div>
-                            </th>
+                        <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Product" /></th>
+                        @if ($showCodes)
+                            <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="{{ $show('code') ? 'code' : 'barcode' }}" label="{{ $show('code') && $show('barcode') ? 'SKU / Barcode' : ($show('code') ? 'SKU' : 'Barcode') }}" /></th>
                         @endif
-                        @if ($product_visible_column['department'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-building me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="department_id" label="Department" />
-                                </div>
-                            </th>
+                        @if ($showCategory)
+                            <th class="hide-md"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="{{ $show('department') ? 'department_id' : ($show('main_category') ? 'main_category_id' : 'sub_category_id') }}" label="Category" /></th>
                         @endif
-                        @if ($product_visible_column['main_category'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-folder me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="main_category_id" label="Main Category" />
-                                </div>
-                            </th>
+                        @if ($show('brand'))
+                            <th class="hide-md"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand_id" label="Brand" /></th>
                         @endif
-                        @if ($product_visible_column['sub_category'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-folder-open me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="sub_category_id" label="Sub Category" />
-                                </div>
-                            </th>
+                        @if ($show('unit'))
+                            <th class="hide-lg"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="Unit" /></th>
                         @endif
-                        @if ($product_visible_column['unit'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-cube me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="unit_id" label="Unit" />
-                                </div>
-                            </th>
+                        @if ($show('cost'))
+                            <th class="num hide-sm"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" /></th>
                         @endif
-                        @if ($product_visible_column['brand'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="brand_id" label="Brand" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['size'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-cube me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['color'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="fa fa-tint me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="color" label="Color" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['code'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-coding me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="code" label="Code" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['product_name'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name" label="Product Name" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['name_arabic'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-tag me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="name_arabic" label="Arabic Name" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['barcode'] ?? true)
-                            <th class="border-0">
-                                <div class="d-flex align-items-center">
-                                    <i class="demo-psi-barcode me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="barcode" label="Barcode" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['cost'] ?? true)
-                            <th class="border-0 text-end">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="demo-psi-dollar me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="cost" label="Cost" />
-                                </div>
-                            </th>
-                        @endif
-                        @if ($product_visible_column['mrp'] ?? true)
-                            <th class="border-0 text-end">
-                                <div class="d-flex align-items-center justify-content-end">
-                                    <i class="demo-psi-coin me-2 text-secondary small"></i>
-                                    <x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="MRP" />
-                                </div>
-                            </th>
+                        @if ($show('mrp'))
+                            <th class="num"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="mrp" label="MRP" /></th>
                         @endif
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($data as $item)
-                        <tr class="align-middle">
-                            @if ($product_visible_column['id'] ?? true)
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="form-check ms-1">
-                                            <input class="form-check-input" type="checkbox" value="{{ $item->id }}" wire:model.live="selected" id="product-{{ $item->id }}" />
-                                        </div>
-                                        <span class="badge bg-secondary rounded-pill">{{ $item->id }}</span>
+                        @php
+                            $isSelected = in_array((string) $item->id, array_map('strval', $selected), true);
+                            $hasFamily = $groupVariants && ($item->variants_count ?? 0) > 0;
+                            $colour = trim((string) $item->color);
+                        @endphp
+                        <tr class="row-main {{ $isSelected ? 'is-selected' : '' }}" wire:key="product-{{ $item->id }}">
+                            <td class="c-check">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input class="form-check-input m-0" type="checkbox" value="{{ $item->id }}" wire:model.live="selected" id="product-{{ $item->id }}" aria-label="Select {{ $item->name }}" />
+                                    @if ($show('id'))
+                                        <span class="bc hide-sm">#{{ $item->id }}</span>
+                                    @endif
+                                </div>
+                            </td>
+                            @if ($show('image', false))
+                                <td class="c-thumb">
+                                    @if ($item->thumbnail)
+                                        <img src="{{ $item->thumbnail }}" alt="" class="thumb" loading="lazy" decoding="async" width="36" height="36">
+                                    @else
+                                        <span class="thumb"><i class="fa fa-picture-o"></i></span>
+                                    @endif
+                                </td>
+                            @endif
+                            <td class="c-product" style="min-width: 220px">
+                                <a href="{{ route('product::edit', $item->id) }}" class="name">
+                                    {{ $item->name }}@if (! $groupVariants && ($item->parent_id || ($item->variants_count ?? 0)))
+                                        <span class="fw-normal text-body-secondary">— {{ \App\Models\Product::variantLabel($item->size, $item->color) }}</span>
+                                    @endif
+                                </a>
+                                @if (! $item->is_selling)
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Not selling</span>
+                                @endif
+                                @if ($item->status === 'disabled')
+                                    <span class="badge bg-danger-subtle text-danger-emphasis ms-1">Disabled</span>
+                                @endif
+                                @if ($show('name_arabic') && $item->name_arabic)
+                                    <div class="ar" dir="rtl">{{ $item->name_arabic }}</div>
+                                @endif
+                                @if ($hasFamily)
+                                    @php
+                                        $family = collect([$item])->merge($item->variants);
+                                        $familySizes = $family->pluck('size')->filter()->unique()->values();
+                                        $familyColours = $family->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique()->values();
+                                        $isOpen = in_array($item->id, $openFamilies, true);
+                                    @endphp
+                                    <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                                        <button type="button" class="fam-toggle" wire:click="toggleFamily({{ $item->id }})" aria-expanded="{{ $isOpen ? 'true' : 'false' }}" title="Show / hide the variants">
+                                            <i class="fa {{ $isOpen ? 'fa-chevron-down' : 'fa-chevron-right' }} me-1"></i>{{ $item->variants_count + 1 }} variants
+                                        </button>
+                                        @if ($show('size'))
+                                            @foreach ($familySizes as $familySize)
+                                                <span class="chip-size">{{ $familySize }}</span>
+                                            @endforeach
+                                        @endif
+                                        @if ($show('color'))
+                                            @foreach ($familyColours as $familyColour)
+                                                <span class="sw" title="{{ \App\Support\ProductColours::displayName($familyColour) }}" style="background: {{ \App\Support\ProductColours::hexFor($familyColour, $colourPalette) }}"></span>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                @elseif (($show('size') && $item->size) || ($show('color') && $colour !== ''))
+                                    <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+                                        @if ($show('size') && $item->size)
+                                            <span class="chip-size">{{ $item->size }}</span>
+                                        @endif
+                                        @if ($show('color') && $colour !== '')
+                                            <span class="sw" style="background: {{ \App\Support\ProductColours::hexFor($colour, $colourPalette) }}"></span>
+                                            <small class="text-body-secondary">{{ \App\Support\ProductColours::displayName($colour) }}</small>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
+                            @if ($showCodes)
+                                <td class="c-codes">
+                                    @if ($show('code'))
+                                        @if ($item->code)
+                                            <span class="badge bg-light text-dark border sku-badge"><i class="fa fa-barcode me-1 opacity-50"></i>{{ $item->code }}</span>
+                                        @else
+                                            <span class="bc">—</span>
+                                        @endif
+                                    @endif
+                                    @if ($show('barcode'))
+                                        <div class="bc {{ $show('code') ? 'mt-1' : '' }}">{{ $item->barcode ?: '—' }}</div>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($showCategory)
+                                <td class="c-cat hide-md">
+                                    <div class="crumb">
+                                        @if ($show('department'))
+                                            <span class="badge bg-light text-dark border"><i class="fa fa-building-o me-1 opacity-50"></i>{{ $item->department?->name ?? '—' }}</span>
+                                        @endif
+                                        @if ($show('main_category') && $item->mainCategory)
+                                            @if ($show('department'))
+                                                ·
+                                            @endif
+                                            {{ $item->mainCategory->name }}
+                                        @endif
+                                        @if ($show('sub_category') && $item->subCategory)
+                                            › {{ $item->subCategory->name }}
+                                        @endif
                                     </div>
                                 </td>
                             @endif
-                            @if ($product_visible_column['image'] ?? false)
-                                <td>
-                                    @if ($item->thumbnail)
-                                        <img src="{{ $item->thumbnail }}" alt="{{ $item->name }}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;" loading="lazy">
+                            @if ($show('brand'))
+                                <td class="c-brand hide-md">
+                                    @if ($item->brand)
+                                        <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ $item->brand->name }}</span>
                                     @else
-                                        <span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style="width: 40px; height: 40px;">
-                                            <i class="fa fa-image"></i>
-                                        </span>
+                                        <span class="bc">—</span>
                                     @endif
                                 </td>
                             @endif
-                            @if ($product_visible_column['department'] ?? true)
-                                <td>
-                                    <span class="fw-medium text-primary">{{ $item->department?->name ?? '-' }}</span>
-                                </td>
+                            @if ($show('unit'))
+                                <td class="c-unit hide-lg small text-body-secondary">{{ $item->unit?->name ?? '—' }}</td>
                             @endif
-                            @if ($product_visible_column['main_category'] ?? true)
-                                <td>
-                                    <span class="text-secondary">{!! $item->mainCategory?->name ?? '-' !!}</span>
-                                </td>
+                            @if ($show('cost'))
+                                <td class="c-cost num hide-sm text-body-secondary">{{ currency($item->cost) }}</td>
                             @endif
-                            @if ($product_visible_column['sub_category'] ?? true)
-                                <td>
-                                    <span class="text-secondary">{{ $item->subCategory?->name ?? '-' }}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['unit'] ?? true)
-                                <td>
-                                    <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->unit?->name ?? '-' }}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['brand'] ?? true)
-                                <td>
-                                    <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle">{{ $item->brand?->name ?? '-' }}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['size'] ?? true)
-                                <td>
-                                    <span class="badge bg-light text-dark border border-secondary-subtle">{{ $item->size}}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['color'] ?? true)
-                                <td>
-                                    @if (trim((string) $item->color) !== '')
-                                        <span class="badge bg-light text-dark border border-secondary-subtle">
-                                            <span class="d-inline-block rounded-circle border me-1 align-middle" style="width: 10px; height: 10px; background: {{ \App\Support\ProductColours::hexFor($item->color, $colourPalette) }}"></span>{{ \App\Support\ProductColours::displayName($item->color) }}
-                                        </span>
+                            @if ($show('mrp'))
+                                <td class="c-price num fw-semibold">
+                                    {{ currency($item->mrp) }}
+                                    @if ($show('cost') && $item->mrp > 0)
+                                        @php $margin = round((1 - $item->cost / $item->mrp) * 100); @endphp
+                                        <div class="margin fw-normal hide-md {{ $margin < 0 ? 'text-danger' : 'text-success' }}">{{ $margin }}% margin</div>
                                     @endif
-                                </td>
-                            @endif
-                            @if ($product_visible_column['code'] ?? true)
-                                <td>
-                                    <code class="bg-light rounded px-2 py-1 small">{{ $item->code }}</code>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['product_name'] ?? true)
-                                <td>
-                                    <a href="{{ route('product::edit', $item->id) }}" class="text-decoration-none fw-semibold link-primary d-block">
-                                        {{ $item->name }}
-                                        @if (! $groupVariants && ($item->parent_id || ($item->variants_count ?? 0)))
-                                            <span class="fw-normal text-secondary">— {{ \App\Models\Product::variantLabel($item->size, $item->color) }}</span>
-                                        @endif
-                                    </a>
-                                    @if ($groupVariants && ($item->variants_count ?? 0) > 0)
-                                        @php
-                                            $family = collect([$item])->merge($item->variants);
-                                            $familySizes = $family->pluck('size')->filter()->unique()->values();
-                                            $familyColours = $family->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique()->values();
-                                        @endphp
-                                        <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                            <button type="button" class="badge rounded-pill bg-primary border-0" wire:click="toggleFamily({{ $item->id }})" title="Show / hide the variants">
-                                                <i class="fa {{ in_array($item->id, $openFamilies, true) ? 'fa-chevron-down' : 'fa-chevron-right' }} me-1"></i>{{ $item->variants_count + 1 }} variants
-                                            </button>
-                                            @foreach ($familySizes as $familySize)
-                                                <span class="badge bg-light text-dark border border-secondary-subtle fw-medium">{{ $familySize }}</span>
-                                            @endforeach
-                                            @forelse ($familyColours as $familyColour)
-                                                <span class="d-inline-block rounded-circle border" title="{{ $familyColour }}" style="width: 12px; height: 12px; background: {{ \App\Support\ProductColours::hexFor($familyColour, $colourPalette) }}"></span>
-                                            @empty
-                                                <small class="text-muted">sizes only</small>
-                                            @endforelse
-                                        </div>
-                                    @endif
-                                </td>
-                            @endif
-                            @if ($product_visible_column['name_arabic'] ?? true)
-                                <td dir="rtl">
-                                    <span class="text-secondary">{{ $item->name_arabic }}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['barcode'] ?? true)
-                                <td>
-                                    @if ($item->barcode)
-                                        <code class="bg-light rounded px-2 py-1 small">{{ $item->barcode }}</code>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                            @endif
-                            @if ($product_visible_column['cost'] ?? true)
-                                <td class="text-end fw-semibold">
-                                    <span class="text-success">{{ currency($item->cost) }}</span>
-                                </td>
-                            @endif
-                            @if ($product_visible_column['mrp'] ?? true)
-                                <td class="text-end fw-bold">
-                                    <span class="text-dark">{{ currency($item->mrp) }}</span>
                                 </td>
                             @endif
                         </tr>
-                        @if ($groupVariants && ($item->variants_count ?? 0) > 0 && in_array($item->id, $openFamilies, true))
-                            <tr class="table-light" wire:key="family-{{ $item->id }}">
-                                <td colspan="{{ count(array_filter($product_visible_column ?? [])) + 1 }}" class="ps-4 py-2 border-start border-3 border-primary">
-                                    <table class="table table-sm table-borderless mb-0 align-middle bg-transparent">
-                                        <thead>
-                                            <tr class="small text-muted text-uppercase">
-                                                <th class="bg-transparent">Variant</th>
-                                                <th class="bg-transparent">Code</th>
-                                                <th class="bg-transparent">Barcode</th>
-                                                <th class="bg-transparent text-end">Cost</th>
-                                                <th class="bg-transparent text-end">MRP</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (collect([$item])->merge($item->variants) as $member)
-                                                <tr wire:key="family-{{ $item->id }}-{{ $member->id }}">
-                                                    <td class="bg-transparent">
-                                                        <a href="{{ route('product::edit', $member->id) }}" class="text-decoration-none fw-semibold">
-                                                            @if (trim((string) $member->color) !== '')
-                                                                <span class="d-inline-block rounded-circle border me-1" style="width: 10px; height: 10px; background: {{ \App\Support\ProductColours::hexFor($member->color, $colourPalette) }}"></span>
-                                                            @endif
-                                                            {{ \App\Models\Product::variantLabel($member->size, $member->color) ?: $member->name }}
-                                                        </a>
-                                                        @if ($member->id === $item->id)
-                                                            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">Original</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="bg-transparent"><code class="small">{{ $member->code }}</code></td>
-                                                    <td class="bg-transparent"><code class="small">{{ $member->barcode }}</code></td>
-                                                    <td class="bg-transparent text-end">{{ currency($member->cost) }}</td>
-                                                    <td class="bg-transparent text-end fw-semibold">{{ currency($member->mrp) }}</td>
+                        @if ($hasFamily && in_array($item->id, $openFamilies, true))
+                            <tr class="fam-row" wire:key="family-{{ $item->id }}">
+                                <td colspan="{{ $columnCount }}">
+                                    <div class="fam-inner">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Variant</th>
+                                                    <th>SKU</th>
+                                                    <th class="hide-sm">Barcode</th>
+                                                    <th class="text-end hide-sm">Cost</th>
+                                                    <th class="text-end">MRP</th>
                                                 </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (collect([$item])->merge($item->variants) as $member)
+                                                    <tr wire:key="family-{{ $item->id }}-{{ $member->id }}">
+                                                        <td>
+                                                            <a href="{{ route('product::edit', $member->id) }}" class="fw-semibold text-decoration-none">
+                                                                @if (trim((string) $member->color) !== '')
+                                                                    <span class="sw me-1" style="background: {{ \App\Support\ProductColours::hexFor($member->color, $colourPalette) }}"></span>
+                                                                @endif
+                                                                {{ \App\Models\Product::variantLabel($member->size, $member->color) ?: $member->name }}
+                                                            </a>
+                                                            @if ($member->id === $item->id)
+                                                                <span class="badge bg-primary-subtle text-primary-emphasis ms-1">Original</span>
+                                                            @endif
+                                                        </td>
+                                                        <td><span class="sku">{{ $member->code ?: '—' }}</span></td>
+                                                        <td class="hide-sm"><span class="bc">{{ $member->barcode ?: '—' }}</span></td>
+                                                        <td class="text-end hide-sm">{{ currency($member->cost) }}</td>
+                                                        <td class="text-end fw-semibold">{{ currency($member->mrp) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </td>
                             </tr>
                         @endif
                     @empty
                         <tr>
-                            <td colspan="{{ count(array_filter($product_visible_column ?? [])) + 1 }}" class="text-center py-5">
-                                <div class="text-muted my-4">
-                                    <i class="demo-psi-exclamation-circle fs-1 d-block mb-3 text-secondary-emphasis opacity-50"></i>
-                                    <h5 class="fw-semibold mb-2">No Products Found</h5>
-                                    <p class="mb-0">Try adjusting your search or filter criteria</p>
-                                </div>
+                            <td colspan="{{ $columnCount }}" class="empty">
+                                <i class="fa fa-search d-block mb-3"></i>
+                                <h6 class="fw-semibold mb-1 text-body">No products found</h6>
+                                <p class="small mb-2">Try a different search or remove a filter.</p>
+                                @if (count($activeFilters))
+                                    <button type="button" class="btn btn-sm btn-ghost" wire:click="clearFilters()">Clear all filters</button>
+                                @endif
                             </td>
                         </tr>
                     @endforelse
@@ -499,80 +403,47 @@
             </table>
         </div>
 
-        <div class="p-3 border-top bg-light">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-2 mb-lg-0">
-                    <p class="text-muted small mb-0">
-                        Showing {{ $data->firstItem() ?? 0 }} to {{ $data->lastItem() ?? 0 }} of {{ $data->total() }} entries
-                    </p>
-                </div>
-                <div class="col-lg-6 d-flex justify-content-lg-end">
-                    {{ $data->links() }}
-                </div>
-            </div>
+        {{-- Footer --}}
+        <div class="pdx-foot d-flex flex-wrap align-items-center gap-2 px-3 py-2">
+            <span>Showing <b class="text-body">{{ $data->firstItem() ?? 0 }}–{{ $data->lastItem() ?? 0 }}</b> of <b class="text-body">{{ number_format($data->total()) }}</b></span>
+            <select wire:model.live="limit" class="form-select form-select-sm w-auto" aria-label="Rows per page">
+                <option value="10">10 / page</option>
+                <option value="50">50 / page</option>
+                <option value="100">100 / page</option>
+                <option value="500">500 / page</option>
+            </select>
+            <div class="ms-auto">{{ $data->links() }}</div>
         </div>
     </div>
 
-    <!-- Mobile Floating Action Button -->
+    {{-- Mobile actions --}}
     <div class="d-block d-md-none position-fixed bottom-0 end-0 mb-4 me-4" style="z-index: 1050;">
         <div class="dropup">
-            <button class="btn btn-primary rounded-circle shadow-lg p-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="mobileActionButton">
-                <i class="demo-psi-gear fs-4"></i>
+            <button class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 52px; height: 52px" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                id="mobileActionButton" aria-label="Product actions">
+                <i class="fa fa-plus fs-5"></i>
             </button>
-            <ul class="dropdown-menu shadow-lg" aria-labelledby="mobileActionButton">
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="mobileActionButton">
                 @can('product.create')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::create') }}">
-                            <i class="demo-psi-add me-2 text-success"></i>
-                            Add New Product
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="{{ route('product::create') }}"><i class="fa fa-plus me-2 text-primary"></i>New product</a></li>
                 @endcan
                 @can('product.export')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="#" wire:click="export()">
-                            <i class="demo-pli-file-excel me-2 text-success"></i>
-                            Export Products
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="#" wire:click.prevent="export()"><i class="fa fa-file-excel-o me-2 text-success"></i>Export</a></li>
                 @endcan
                 @can('product.import')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::import') }}">
-                            <i class="demo-pli-download-from-cloud me-2 text-info"></i>
-                            Advanced Import
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="{{ route('product::import') }}"><i class="fa fa-cloud-upload me-2 text-info"></i>Import</a></li>
                 @endcan
                 @can('product.view')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::gallery') }}">
-                            <i class="demo-psi-camera me-2 text-secondary"></i>
-                            Image Gallery
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="{{ route('product::gallery') }}"><i class="fa fa-picture-o me-2"></i>Image gallery</a></li>
                 @endcan
                 @can('product offer.view')
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="{{ route('product::offer::index') }}">
-                            <i class="fa fa-tags me-2 text-warning"></i>
-                            Offers
-                        </a>
-                    </li>
+                    <li><a class="dropdown-item" href="{{ route('product::offer::index') }}"><i class="fa fa-tags me-2 text-warning"></i>Offers</a></li>
                 @endcan
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li>
-                    <a class="dropdown-item d-flex align-items-center" href="#" onclick="document.getElementById('search').focus()">
-                        <i class="demo-psi-magnifi-glass me-2 text-primary"></i>
-                        Search Products
-                    </a>
-                </li>
             </ul>
         </div>
     </div>
 
+    {{-- Bulk actions --}}
     @if (count($selected))
         <div class="product-bulk-bar" role="toolbar" aria-label="Bulk actions for selected products">
             <div class="d-flex align-items-center gap-2 bg-dark text-white rounded-pill shadow-lg px-3 py-2">
@@ -582,16 +453,16 @@
                 @can('product.delete')
                     <button type="button" class="btn btn-sm btn-danger rounded-pill d-flex align-items-center" wire:click="delete()"
                         wire:confirm="Are you sure you want to delete the {{ count($selected) }} selected items?" wire:loading.attr="disabled">
-                        <i class="demo-pli-recycling me-1"></i>
-                        Delete
+                        <i class="fa fa-trash me-1"></i>
+                        <span class="d-none d-sm-inline">Delete</span>
                     </button>
                 @endcan
                 @can('product.edit')
                     <div class="dropup">
                         <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                             wire:loading.attr="disabled">
-                            <i class="demo-psi-shop me-1"></i>
-                            Sellable
+                            <i class="fa fa-shopping-cart me-1"></i>
+                            <span class="d-none d-sm-inline">Sellable</span>
                         </button>
                         <ul class="dropdown-menu shadow-lg">
                             <li>
@@ -612,7 +483,7 @@
                         <button type="button" class="btn btn-sm btn-light rounded-pill d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                             wire:loading.attr="disabled">
                             <i class="fa fa-star me-1"></i>
-                            Favorite
+                            <span class="d-none d-sm-inline">Favorite</span>
                         </button>
                         <ul class="dropdown-menu shadow-lg">
                             <li>
@@ -637,57 +508,23 @@
         </div>
     @endif
 
-    @push('styles')
-        <style>
-            .product-bulk-bar {
-                position: fixed;
-                bottom: 1.5rem;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 1060;
-                max-width: calc(100vw - 2rem);
-            }
-
-            @media (max-width: 767.98px) {
-                .product-bulk-bar {
-                    left: 1rem;
-                    right: 5.5rem;
-                    transform: none;
-                }
-            }
-        </style>
-    @endpush
-
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $('#unit_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('unit_id', value);
+                ['unit_id', 'department_id', 'main_category_id', 'sub_category_id', 'brand_id'].forEach(function(field) {
+                    $('#' + field).on('change', function() {
+                        @this.set(field, $(this).val() || '');
+                    });
                 });
-                $('#department_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('department_id', value);
-                });
-                $('#main_category_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('main_category_id', value);
-                });
-                $('#sub_category_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('sub_category_id', value);
-                });
-                $('#brand_id').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('brand_id', value);
-                });
-                $('#status').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('status', value);
-                });
-                $('#image_status').on('change', function(e) {
-                    const value = $(this).val() || null;
-                    @this.set('image_status', value);
+            });
+            document.addEventListener('livewire:init', function() {
+                Livewire.on('product-filters-cleared', function({ keys }) {
+                    (keys || []).forEach(function(key) {
+                        const el = document.getElementById(key);
+                        if (el && el.tomselect) {
+                            el.tomselect.clear(true);
+                        }
+                    });
                 });
             });
         </script>

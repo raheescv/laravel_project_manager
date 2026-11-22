@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product List — Premium Directions</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ---------- Preview harness (not part of the design) ---------- */
+body { font-family: Poppins, system-ui, sans-serif; font-size: .875rem; background: var(--bs-tertiary-bg); }
+.harness { position: sticky; top: 0; z-index: 20; background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); }
+.harness .btn { font-size: .78rem; }
+.stage-wrap { padding: 20px 16px 60px; }
+.stage { margin: 0 auto; max-width: 100%; transition: width .25s ease; container-type: inline-size; container-name: stage; }
+.stage[data-w="desktop"] { width: 100%; }
+.stage[data-w="tablet"] { width: 820px; }
+.stage[data-w="phone"] { width: 390px; }
+.dir-note { max-width: 760px; }
+
+/* ---------- Scoped design layer: .pdx (theme-var driven) ---------- */
+.pdx {
+    --acc: var(--bs-primary);
+    --acc-rgb: var(--bs-primary-rgb);
+    --acc-soft: color-mix(in srgb, var(--acc) 9%, transparent);
+    --acc-ring: color-mix(in srgb, var(--acc) 24%, transparent);
+    --ink: var(--bs-body-color);
+    --ink-2: var(--bs-secondary-color);
+    --line: var(--bs-border-color-translucent);
+    --panel: var(--bs-body-bg);
+    --panel-2: var(--bs-tertiary-bg);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -18px rgba(16,24,40,.35);
+    color: var(--ink);
+}
+[data-bs-theme="dark"] .pdx { --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.9); }
+
+.pdx .shell { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.pdx .eyebrow { font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); }
+.pdx .mono { font-family: var(--mono); font-size: .74rem; letter-spacing: -.01em; }
+.pdx .sku { font-family: var(--mono); font-size: .74rem; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.pdx .bc { font-family: var(--mono); font-size: .7rem; color: var(--ink-2); white-space: nowrap; }
+.pdx .count-pill { font-size: .72rem; font-weight: 600; background: var(--acc-soft); color: var(--acc); border-radius: 99px; padding: 2px 10px; }
+.pdx .sw { display: inline-block; width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); vertical-align: -1px; }
+.pdx .chip-size { font-size: .66rem; font-weight: 600; line-height: 1; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
+.pdx .thumb { width: 36px; height: 36px; border-radius: 9px; flex: none; display: grid; place-items: center; font-weight: 600; font-size: .72rem; color: #fff; }
+.pdx .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.pdx .tool-input { border-color: var(--line); background: var(--panel); }
+.pdx .tool-input:focus { border-color: var(--acc); box-shadow: 0 0 0 .2rem var(--acc-ring); }
+.pdx .input-group-text { background: var(--panel); border-color: var(--line); color: var(--ink-2); }
+.pdx .btn-ghost { border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.pdx .btn-ghost:hover { border-color: var(--acc); color: var(--acc); }
+.pdx .btn-ghost.on { background: var(--acc-soft); border-color: var(--acc-ring); color: var(--acc); }
+.pdx .seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
+.pdx .seg button { border: 0; background: transparent; padding: 4px 10px; border-radius: 7px; font-size: .76rem; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.pdx .seg button.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.pdx .fchip { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--acc-soft); color: var(--acc); border: 1px solid var(--acc-ring); }
+.pdx .fchip b { font-weight: 600; }
+.pdx .fchip button { border: 0; background: transparent; color: inherit; width: 18px; height: 18px; border-radius: 50%; line-height: 1; padding: 0; }
+.pdx .fchip button:hover { background: var(--acc-ring); }
+.pdx .filter-panel { background: var(--panel-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.pdx .filter-panel .form-select, .pdx .filter-panel .form-control { font-size: .8rem; border-color: var(--line); }
+.pdx .filter-panel label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
+
+/* Table */
+.pdx .ptable { width: 100%; border-collapse: separate; border-spacing: 0; }
+.pdx .ptable th { position: sticky; top: 0; z-index: 1; background: var(--panel-2); font-size: .66rem; letter-spacing: .07em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.pdx .ptable th .fa-sort, .pdx .ptable th .fa-sort-desc { opacity: .45; margin-left: 4px; }
+.pdx .ptable th.sorted { color: var(--acc); }
+.pdx .ptable th.sorted .fa { opacity: 1; }
+.pdx .ptable td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.pdx .ptable tbody tr.row-main:hover td { background: color-mix(in srgb, var(--acc) 4%, transparent); }
+.pdx .ptable tr.is-selected td { background: var(--acc-soft) !important; }
+.pdx .ptable .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pdx .ptable .name { font-weight: 600; color: var(--ink); text-decoration: none; }
+.pdx .ptable .name:hover { color: var(--acc); }
+.pdx .ptable .ar { font-size: .74rem; color: var(--ink-2); }
+.pdx .crumb { font-size: .74rem; color: var(--ink-2); white-space: nowrap; }
+.pdx .crumb b { color: var(--ink); font-weight: 500; }
+.pdx .fam-toggle { border: 0; font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--acc); color: #fff; }
+.pdx .fam-row td { background: var(--panel-2); padding: 0; }
+.pdx .fam-inner { border-left: 3px solid var(--acc); margin-left: 12px; padding: 6px 12px 8px; }
+.pdx .fam-inner table td, .pdx .fam-inner table th { padding: 5px 10px; border: 0; background: transparent; position: static; }
+.pdx .row-actions { opacity: 0; transition: opacity .15s; }
+.pdx tr:hover .row-actions { opacity: 1; }
+.pdx .ptable .density-compact td { padding-top: 5px; padding-bottom: 5px; }
+
+/* Footer + bulk bar */
+.pdx .foot { background: var(--panel-2); border-top: 1px solid var(--line); font-size: .78rem; color: var(--ink-2); }
+.pdx .pager .page-link { font-size: .76rem; padding: 3px 9px; }
+.pdx .bulk { position: sticky; bottom: 14px; z-index: 5; display: flex; justify-content: center; pointer-events: none; }
+.pdx .bulk > div { pointer-events: auto; background: #111827; color: #fff; border-radius: 99px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.6); padding: 6px 8px 6px 14px; }
+[data-bs-theme="dark"] .pdx .bulk > div { background: #f3f4f6; color: #111827; }
+
+/* B — Facet rail */
+.pdx .kpi { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--panel); cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; width: 100%; }
+.pdx .kpi:hover { border-color: var(--acc-ring); }
+.pdx .kpi.on { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-ring); }
+.pdx .kpi .v { font-size: 1.25rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pdx .kpi .i { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--acc-soft); color: var(--acc); }
+.pdx .rail { width: 232px; flex: none; border-right: 1px solid var(--line); background: var(--panel-2); }
+.pdx .rail h6 { font-size: .64rem; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; margin: 0 0 6px; }
+.pdx .facet { display: flex; align-items: center; width: 100%; border: 0; background: transparent; text-align: left; padding: 5px 9px; border-radius: 8px; font-size: .8rem; color: var(--ink); }
+.pdx .facet:hover { background: var(--panel); }
+.pdx .facet.on { background: var(--acc-soft); color: var(--acc); font-weight: 600; }
+.pdx .facet .c { margin-left: auto; font-size: .7rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.pdx .facet.on .c { color: var(--acc); }
+.pdx .rail-chips { display: none; }
+
+/* C — Catalog grid */
+.pdx .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 14px; }
+.pdx .pcard { position: relative; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; transition: transform .15s, box-shadow .15s, border-color .15s; }
+.pdx .pcard:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--acc-ring); }
+.pdx .pcard.is-selected { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-ring); }
+.pdx .pcard .media { aspect-ratio: 4/3; display: grid; place-items: center; color: rgba(255,255,255,.9); font-size: 1.6rem; font-weight: 700; position: relative; }
+.pdx .pcard .media .no-img { position: absolute; bottom: 8px; left: 8px; font-size: .62rem; font-weight: 600; background: rgba(0,0,0,.45); color: #fff; border-radius: 99px; padding: 2px 8px; }
+.pdx .pcard .pick { position: absolute; top: 9px; left: 9px; z-index: 2; }
+.pdx .pcard .flag { position: absolute; top: 9px; right: 9px; z-index: 2; font-size: .62rem; font-weight: 600; border-radius: 99px; padding: 2px 8px; background: rgba(255,255,255,.92); color: #111; }
+.pdx .pcard .price { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------- Compact behaviour (container queries = the page width) ---------- */
+@container stage (max-width: 980px) {
+    .pdx .hide-md { display: none !important; }
+    .pdx .rail { width: 200px; }
+}
+@container stage (max-width: 640px) {
+    .pdx .hide-sm { display: none !important; }
+    .pdx .only-wide { display: none !important; }
+    /* Table rows → stacked cards */
+    .pdx .ptable thead { display: none; }
+    .pdx .ptable, .pdx .ptable tbody, .pdx .ptable tr, .pdx .ptable td { display: block; width: 100%; }
+    .pdx .ptable tr.row-main { position: relative; padding: 10px 12px 10px 44px; border-bottom: 1px solid var(--line); }
+    .pdx .ptable tr.row-main td { border: 0; padding: 0; background: transparent !important; }
+    .pdx .ptable td.c-check { position: absolute; left: 14px; top: 14px; width: auto; }
+    .pdx .ptable td.c-thumb { display: none; }
+    .pdx .ptable td.c-price { position: absolute; right: 12px; top: 10px; width: auto; text-align: right; }
+    .pdx .ptable td.c-product { padding-right: 90px !important; }
+    .pdx .ptable td.c-codes, .pdx .ptable td.c-cat { margin-top: 4px; }
+    .pdx .ptable td.c-cost { display: none; }
+    .pdx .ptable tr.is-selected { background: var(--acc-soft); }
+    .pdx .rail { display: none; }
+    .pdx .rail-chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+    .pdx .rail-chips .facet { width: auto; white-space: nowrap; border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; }
+    .pdx .kpis { grid-template-columns: repeat(2, 1fr) !important; }
+    .pdx .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pdx .pcard .body { padding: 9px !important; }
+    .pdx .pcard .price { font-size: .95rem; }
+    .pdx .toolbar .search-wrap { flex: 1 1 100% !important; }
+    .pdx .fab { display: flex !important; }
+}
+.pdx .fab { display: none; position: sticky; bottom: 16px; justify-content: flex-end; padding-right: 14px; pointer-events: none; }
+.pdx .fab button { pointer-events: auto; width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--acc); color: #fff; font-size: 1.2rem; box-shadow: 0 14px 30px -12px rgba(var(--acc-rgb), .8); }
+</style>
+</head>
+<body>
+
+<div class="harness">
+    <div class="container-fluid py-2 d-flex flex-wrap gap-2 align-items-center">
+        <strong class="me-2"><i class="fa fa-cubes me-1 text-primary"></i>Product list · directions</strong>
+        <div class="btn-group btn-group-sm" id="dirSwitch">
+            <button class="btn btn-primary" data-dir="A">A · Compact Ledger</button>
+            <button class="btn btn-outline-primary" data-dir="B">B · Facet Rail</button>
+            <button class="btn btn-outline-primary" data-dir="C">C · Catalog Grid</button>
+        </div>
+        <div class="btn-group btn-group-sm ms-md-auto" id="widthSwitch">
+            <button class="btn btn-dark" data-w="desktop"><i class="fa fa-desktop me-1"></i>Desktop</button>
+            <button class="btn btn-outline-dark" data-w="tablet"><i class="fa fa-tablet me-1"></i>Tablet</button>
+            <button class="btn btn-outline-dark" data-w="phone"><i class="fa fa-mobile me-1"></i>Phone</button>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" id="themeToggle"><i class="fa fa-moon-o me-1"></i>Dark</button>
+    </div>
+    <div class="container-fluid pb-2"><p class="dir-note small text-body-secondary mb-0" id="dirNote"></p></div>
+</div>
+
+<div class="stage-wrap">
+    <div class="stage" data-w="desktop" id="stage"></div>
+</div>
+
+<script>
+const products = [
+    { id: 1284, name: 'GEL-Kayano 31', ar: 'جل كايانو ٣١', code: 'ONT-GK31-BLK', barcode: '4570145823011', dept: 'Footwear', cat: 'Running', sub: 'Stability', brand: 'Onitsuka', unit: 'Pair', cost: 210, mrp: 459, selling: true, img: true, tint: '#1f2937',
+      variants: [['40','Black','#111827'],['41','Black','#111827'],['42','Black','#111827'],['41','White','#f3f4f6'],['42','White','#f3f4f6']] },
+    { id: 1283, name: 'Mexico 66 SD', ar: 'مكسيكو ٦٦', code: 'ONT-MX66-YEL', barcode: '4570145822984', dept: 'Footwear', cat: 'Lifestyle', sub: 'Sneakers', brand: 'Onitsuka', unit: 'Pair', cost: 180, mrp: 399, selling: true, img: true, tint: '#ca8a04',
+      variants: [['39','Yellow','#eab308'],['40','Yellow','#eab308'],['41','Kale','#3f6212']] },
+    { id: 1279, name: 'Linen Overshirt', ar: 'قميص كتان', code: 'KSH-LOS-SND', barcode: '6291041500213', dept: 'Apparel', cat: 'Men', sub: 'Shirts', brand: 'Kashperia', unit: 'Pcs', cost: 74, mrp: 189, selling: true, img: false, tint: '#a16207',
+      variants: [['M','Sand','#d6c2a1'],['L','Sand','#d6c2a1'],['XL','Olive','#65743a']] },
+    { id: 1276, name: 'Pashmina Wrap', ar: 'شال باشمينا', code: 'KSH-PSH-001', barcode: '6291041500190', dept: 'Apparel', cat: 'Women', sub: 'Scarves', brand: 'Kashperia', unit: 'Pcs', cost: 120, mrp: 340, selling: true, img: true, tint: '#9f1239', variants: [] },
+    { id: 1270, name: 'Leather Weekender', ar: 'حقيبة جلدية', code: 'BAG-LW-BRN', barcode: '6291041500077', dept: 'Accessories', cat: 'Bags', sub: 'Travel', brand: 'Atelier 9', unit: 'Pcs', cost: 390, mrp: 1250, selling: true, img: true, tint: '#7c2d12', variants: [] },
+    { id: 1266, name: 'Merino Crew Socks', ar: 'جوارب صوف', code: 'SOC-MER-3PK', barcode: '', dept: 'Apparel', cat: 'Men', sub: 'Socks', brand: 'Atelier 9', unit: 'Pack', cost: 18, mrp: 45, selling: false, img: false, tint: '#475569',
+      variants: [['S',null,null],['M',null,null],['L',null,null]] },
+    { id: 1262, name: 'Canvas Tote', ar: 'حقيبة قماش', code: 'BAG-CT-NAT', barcode: '6291041500053', dept: 'Accessories', cat: 'Bags', sub: 'Totes', brand: 'Kashperia', unit: 'Pcs', cost: 22, mrp: 69, selling: true, img: true, tint: '#57534e', variants: [] },
+    { id: 1258, name: 'Serrano Low', ar: 'سيرانو', code: 'ONT-SRN-WHT', barcode: '4570145822731', dept: 'Footwear', cat: 'Lifestyle', sub: 'Sneakers', brand: 'Onitsuka', unit: 'Pair', cost: 150, mrp: 329, selling: false, img: false, tint: '#0f766e', variants: [] },
+    { id: 1251, name: 'Silk Pocket Square', ar: 'منديل حرير', code: 'ACC-SPS-NVY', barcode: '6291041500015', dept: 'Accessories', cat: 'Men', sub: 'Pocket squares', brand: 'Atelier 9', unit: 'Pcs', cost: 15, mrp: 55, selling: true, img: true, tint: '#1e3a8a', variants: [] },
+];
+const fmt = n => 'QAR ' + n.toLocaleString('en-US', { minimumFractionDigits: 2 });
+const state = { dir: 'A', w: 'desktop', selected: new Set([1279, 1276]), open: new Set([1284]), filters: true, density: 'normal', grid: 'grid' };
+const notes = {
+    A: 'Compact Ledger: one slim toolbar (search, SKU, a Filters button with a count). The 10 dropdowns fold into a panel. 15 columns merge into 8: name, Arabic name and variants share one cell; SKU and barcode are stacked. On a phone each row becomes a card.',
+    B: 'Facet Rail: KPI tiles you can click as quick filters. Department and brand become a left rail with live counts instead of dropdowns, similar to /users. On a phone the rail turns into a scrolling chip strip.',
+    C: 'Catalog Grid: product cards with image, price, SKU and variant swatches, plus a switch to the Ledger table. Best for clothing and shoe tenants who think in pictures. Two columns on a phone.',
+};
+
+function initials(n) { return n.split(' ').slice(0, 2).map(w => w[0]).join(''); }
+function swatches(p) {
+    const cols = [...new Map(p.variants.filter(v => v[1]).map(v => [v[1], v[2]])).entries()];
+    return cols.map(([n, h]) => `<span class="sw" title="${n}" style="background:${h}"></span>`).join(' ');
+}
+function sizes(p) { return [...new Set(p.variants.map(v => v[0]))].map(s => `<span class="chip-size">${s}</span>`).join(' '); }
+function familyCell(p) {
+    if (!p.variants.length) return '';
+    const isOpen = state.open.has(p.id);
+    return `<div class="d-flex flex-wrap align-items-center gap-1 mt-1">
+        <button class="fam-toggle" data-fam="${p.id}"><i class="fa fa-chevron-${isOpen ? 'down' : 'right'} me-1"></i>${p.variants.length} variants</button>
+        ${sizes(p)} ${swatches(p)}</div>`;
+}
+
+function header(sub) {
+    return `<div class="d-flex flex-wrap align-items-center gap-2 px-3 pt-3 pb-2">
+        <div class="me-auto">
+            <div class="eyebrow">Inventory</div>
+            <div class="d-flex align-items-center gap-2"><h5 class="mb-0 fw-semibold">Products</h5><span class="count-pill">2,418</span></div>
+            ${sub ? `<div class="small text-body-secondary">${sub}</div>` : ''}
+        </div>
+        <div class="d-flex flex-wrap gap-1 only-wide">
+            <button class="btn btn-sm btn-ghost"><i class="fa fa-file-excel-o me-1 text-success"></i><span class="hide-md">Export</span></button>
+            <button class="btn btn-sm btn-ghost"><i class="fa fa-cloud-upload me-1 text-info"></i><span class="hide-md">Import</span></button>
+            <button class="btn btn-sm btn-ghost"><i class="fa fa-picture-o me-1"></i><span class="hide-md">Gallery</span></button>
+            <button class="btn btn-sm btn-ghost"><i class="fa fa-tags me-1 text-warning"></i><span class="hide-md">Offers</span></button>
+        </div>
+        <button class="btn btn-sm btn-primary only-wide"><i class="fa fa-plus me-1"></i>New product</button>
+        <div class="dropdown d-none" data-phone-menu><button class="btn btn-sm btn-ghost"><i class="fa fa-ellipsis-v"></i></button></div>
+    </div>`;
+}
+
+function toolbar(extra = '') {
+    return `<div class="toolbar d-flex flex-wrap align-items-center gap-2 px-3 pb-3">
+        <div class="search-wrap" style="flex: 1 1 260px; max-width: 420px">
+            <div class="input-group input-group-sm"><span class="input-group-text"><i class="fa fa-search"></i></span>
+            <input class="form-control tool-input" placeholder="Search name, Arabic name, colour, price…" value="shoe"></div>
+        </div>
+        <div style="flex: 0 1 190px" class="search-wrap">
+            <div class="input-group input-group-sm"><span class="input-group-text"><i class="fa fa-barcode"></i></span>
+            <input class="form-control tool-input mono" placeholder="SKU code" value="ONT-"></div>
+        </div>
+        ${extra}
+        <button class="btn btn-sm btn-ghost ${state.filters ? 'on' : ''}" data-act="filters"><i class="fa fa-sliders me-1"></i>Filters <span class="badge rounded-pill text-bg-primary ms-1">3</span></button>
+        <div class="seg hide-sm ms-auto"><button class="on" title="One row per product family"><i class="fa fa-th-large me-1"></i>Grouped</button><button title="Every size / colour on its own row"><i class="fa fa-list me-1"></i>Every variant</button></div>
+        <button class="btn btn-sm btn-ghost hide-sm" title="Columns"><i class="fa fa-columns"></i></button>
+    </div>
+    ${state.filters ? filterPanel() : ''}
+    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2">
+        <span class="fchip">Department: <b>Footwear</b><button><i class="fa fa-times"></i></button></span>
+        <span class="fchip">Brand: <b>Onitsuka</b><button><i class="fa fa-times"></i></button></span>
+        <span class="fchip">SKU: <b class="mono">ONT-</b><button><i class="fa fa-times"></i></button></span>
+        <a href="#" class="small text-body-secondary ms-1">Clear all</a>
+    </div>`;
+}
+
+function filterPanel() {
+    const sel = (l, v, o) => `<div class="col-6 col-md-4 col-xl-3"><label>${l}</label><select class="form-select form-select-sm"><option>${v}</option>${(o||[]).map(x => `<option>${x}</option>`).join('')}</select></div>`;
+    return `<div class="filter-panel px-3 py-3"><div class="row g-2">
+        ${sel('Department', 'Footwear')}${sel('Main category', 'All categories')}${sel('Sub category', 'All sub categories')}${sel('Brand', 'Onitsuka')}
+        ${sel('Unit', 'All units')}${sel('Status', 'Active')}${sel('Variant', 'All products', ['Main products only','Variants only'])}${sel('Image', 'All products', ['With image','Without image'])}
+        <div class="col-6 col-md-4 col-xl-3"><label>Size</label><input class="form-control form-control-sm" placeholder="e.g. 42, XL"></div>
+        <div class="col-6 col-md-4 col-xl-3 d-flex align-items-end"><div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" checked id="sell"><label class="form-check-label text-body" style="text-transform:none;letter-spacing:0;font-weight:500;font-size:.8rem" for="sell">Currently selling</label></div></div>
+    </div></div>`;
+}
+
+function tableView(roomy) {
+    const rows = products.map(p => {
+        const sel = state.selected.has(p.id);
+        const fam = state.open.has(p.id) && p.variants.length ? `<tr class="fam-row"><td colspan="9"><div class="fam-inner"><table class="w-100 small">
+            <thead><tr class="text-body-secondary text-uppercase" style="font-size:.64rem;letter-spacing:.06em"><th>Variant</th><th>SKU</th><th class="hide-sm">Barcode</th><th class="num">MRP</th></tr></thead><tbody>
+            ${p.variants.map((v, i) => `<tr><td>${v[2] ? `<span class="sw me-1" style="background:${v[2]}"></span>` : ''}<a href="#" class="fw-semibold text-decoration-none">${v[0]}${v[1] ? ' / ' + v[1] : ''}</a>${i === 0 ? ' <span class="badge bg-primary-subtle text-primary-emphasis ms-1">Original</span>' : ''}</td>
+            <td><span class="sku">${p.code.replace(/-[A-Z]+$/, '')}-${v[0]}${v[1] ? '-' + v[1].slice(0,3).toUpperCase() : ''}</span></td><td class="hide-sm"><span class="bc">${p.barcode ? p.barcode.slice(0, -2) + (10 + i) : '—'}</span></td><td class="num fw-semibold">${fmt(p.mrp)}</td></tr>`).join('')}
+            </tbody></table></div></td></tr>` : '';
+        return `<tr class="row-main ${sel ? 'is-selected' : ''} ${state.density === 'compact' ? 'density-compact' : ''}">
+            <td class="c-check" style="width:34px"><input class="form-check-input" type="checkbox" data-sel="${p.id}" ${sel ? 'checked' : ''}></td>
+            <td class="c-thumb" style="width:48px"><div class="thumb" style="background:${p.tint}">${p.img ? '<i class="fa fa-picture-o"></i>' : initials(p.name)}</div></td>
+            <td class="c-product" style="min-width:220px">
+                <a href="#" class="name">${p.name}</a> ${p.selling ? '' : '<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Not selling</span>'}
+                <div class="ar" dir="rtl" style="text-align:left">${p.ar}</div>
+                ${familyCell(p)}
+            </td>
+            <td class="c-codes"><span class="sku">${p.code}</span><div class="bc mt-1">${p.barcode || '<span class="text-body-tertiary">no barcode</span>'}</div></td>
+            <td class="c-cat hide-md"><div class="crumb"><b>${p.dept}</b> · ${p.cat} › ${p.sub}</div></td>
+            <td class="hide-md"><span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">${p.brand}</span></td>
+            ${roomy ? `<td class="hide-md small text-body-secondary">${p.unit}</td>` : ''}
+            <td class="c-cost num text-body-secondary hide-sm">${fmt(p.cost)}</td>
+            <td class="c-price num fw-semibold">${fmt(p.mrp)}<div class="small fw-normal text-success hide-md" style="font-size:.68rem">${Math.round((1 - p.cost / p.mrp) * 100)}% margin</div></td>
+        </tr>${fam}`;
+    }).join('');
+    return `<div class="table-responsive"><table class="ptable">
+        <thead><tr><th><input class="form-check-input" type="checkbox"></th><th></th>
+        <th class="sorted">Product <i class="fa fa-sort-desc"></i></th><th>SKU / Barcode <i class="fa fa-sort"></i></th>
+        <th class="hide-md">Category <i class="fa fa-sort"></i></th><th class="hide-md">Brand <i class="fa fa-sort"></i></th>
+        ${roomy ? '<th class="hide-md">Unit</th>' : ''}
+        <th class="num hide-sm">Cost <i class="fa fa-sort"></i></th><th class="num">MRP <i class="fa fa-sort"></i></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+}
+
+function footer() {
+    return `<div class="foot d-flex flex-wrap align-items-center gap-2 px-3 py-2">
+        <span>Showing <b class="text-body">1–50</b> of <b class="text-body">2,418</b></span>
+        <select class="form-select form-select-sm w-auto ms-1"><option>50 / page</option><option>100 / page</option><option>500 / page</option></select>
+        <ul class="pagination pagination-sm pager mb-0 ms-auto"><li class="page-item disabled"><a class="page-link">‹</a></li><li class="page-item active"><a class="page-link">1</a></li><li class="page-item"><a class="page-link">2</a></li><li class="page-item hide-sm"><a class="page-link">3</a></li><li class="page-item"><a class="page-link">…</a></li><li class="page-item"><a class="page-link">49</a></li><li class="page-item"><a class="page-link">›</a></li></ul>
+    </div>`;
+}
+
+function bulk() {
+    if (!state.selected.size) return '';
+    return `<div class="bulk mt-3"><div class="d-flex align-items-center gap-2">
+        <span class="badge rounded-pill text-bg-primary">${state.selected.size}</span><span class="small fw-semibold me-1">selected</span>
+        <button class="btn btn-sm btn-success rounded-pill"><i class="fa fa-check-circle me-1"></i><span class="hide-sm">Selling</span></button>
+        <button class="btn btn-sm btn-secondary rounded-pill"><i class="fa fa-ban me-1"></i><span class="hide-sm">Not selling</span></button>
+        <button class="btn btn-sm btn-warning rounded-pill"><i class="fa fa-star me-1"></i><span class="hide-sm">Favourite</span></button>
+        <button class="btn btn-sm btn-danger rounded-pill"><i class="fa fa-trash me-1"></i><span class="hide-sm">Delete</span></button>
+        <button class="btn btn-sm rounded-pill text-reset" data-act="clearsel"><i class="fa fa-times"></i></button>
+    </div></div>`;
+}
+const fab = `<div class="fab"><button title="New product"><i class="fa fa-plus"></i></button></div>`;
+
+function dirA() {
+    return `<div class="shell">${header()}${toolbar(`<div class="seg hide-sm"><button class="${state.density === 'normal' ? 'on' : ''}" data-dens="normal">Comfort</button><button class="${state.density === 'compact' ? 'on' : ''}" data-dens="compact">Compact</button></div>`)}${tableView(false)}${footer()}</div>${bulk()}${fab}`;
+}
+
+function dirB() {
+    const kpi = (i, l, v, on) => `<button class="kpi ${on ? 'on' : ''}"><div class="d-flex align-items-center gap-2"><div class="i"><i class="fa ${i}"></i></div><div><div class="v">${v}</div><div class="eyebrow">${l}</div></div></div></button>`;
+    const facet = (n, c, on) => `<button class="facet ${on ? 'on' : ''}">${n}<span class="c">${c}</span></button>`;
+    const depts = [['All departments', '2,418'], ['Footwear', '612', true], ['Apparel', '1,104'], ['Accessories', '702']];
+    const brands = [['Onitsuka', '388', true], ['Kashperia', '941'], ['Atelier 9', '517'], ['Others', '572']];
+    return `<div class="d-grid gap-2 mb-3 kpis" style="grid-template-columns: repeat(4, 1fr)">
+        ${kpi('fa-cubes', 'Products', '2,418', false)}${kpi('fa-check-circle', 'Selling', '2,071', true)}${kpi('fa-sitemap', 'Variant families', '186', false)}${kpi('fa-picture-o', 'Missing image', '342', false)}
+    </div>
+    <div class="shell">${header('Footwear · Onitsuka · selling')}
+        <div class="rail-chips">${depts.map(d => facet(d[0], d[1], d[2])).join('')}${brands.map(d => facet(d[0], d[1], d[2])).join('')}</div>
+        <div class="d-flex border-top">
+            <aside class="rail p-3">
+                <h6>Department</h6>${depts.map(d => facet(d[0], d[1], d[2])).join('')}
+                <h6 class="mt-3">Brand</h6>${brands.map(d => facet(d[0], d[1], d[2])).join('')}
+                <h6 class="mt-3">Category</h6>${facet('Running', '144')}${facet('Lifestyle', '402')}${facet('Kids', '66')}
+                <h6 class="mt-3">Status</h6>${facet('Active', '2,360', true)}${facet('Disabled', '58')}
+            </aside>
+            <div class="flex-grow-1" style="min-width:0">
+                <div class="pt-3">${toolbar()}</div>
+                ${tableView(true)}${footer()}
+            </div>
+        </div>
+    </div>${bulk()}${fab}`;
+}
+
+function dirC() {
+    const cards = products.map(p => {
+        const sel = state.selected.has(p.id);
+        return `<div class="pcard ${sel ? 'is-selected' : ''}">
+            <input class="form-check-input pick" type="checkbox" data-sel="${p.id}" ${sel ? 'checked' : ''}>
+            ${p.selling ? '' : '<span class="flag">Not selling</span>'}
+            <div class="media" style="background: linear-gradient(135deg, ${p.tint}, color-mix(in srgb, ${p.tint} 55%, #000))">${p.img ? '<i class="fa fa-picture-o"></i>' : initials(p.name)}${p.img ? '' : '<span class="no-img"><i class="fa fa-camera me-1"></i>No image</span>'}</div>
+            <div class="body p-3">
+                <div class="eyebrow">${p.brand} · ${p.sub}</div>
+                <a href="#" class="d-block fw-semibold text-reset text-decoration-none text-truncate">${p.name}</a>
+                <div class="d-flex align-items-center gap-1 mt-1"><span class="sku">${p.code}</span></div>
+                <div class="d-flex align-items-end justify-content-between mt-2">
+                    <div><div class="price">${fmt(p.mrp)}</div><div class="small text-body-secondary hide-sm" style="font-size:.7rem">Cost ${fmt(p.cost)}</div></div>
+                    ${p.variants.length ? `<span class="badge bg-primary-subtle text-primary-emphasis">${p.variants.length} var</span>` : ''}
+                </div>
+                ${p.variants.length ? `<div class="d-flex flex-wrap gap-1 align-items-center mt-2">${sizes(p)} ${swatches(p)}</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+    return `<div class="shell">${header()}${toolbar(`<div class="seg"><button class="${state.grid === 'grid' ? 'on' : ''}" data-grid="grid"><i class="fa fa-th"></i></button><button class="${state.grid === 'list' ? 'on' : ''}" data-grid="list"><i class="fa fa-list"></i></button></div>`)}
+        ${state.grid === 'grid' ? `<div class="p-3 pt-1"><div class="grid">${cards}</div></div>` : tableView(false)}
+        ${footer()}</div>${bulk()}${fab}`;
+}
+
+function render() {
+    const stage = document.getElementById('stage');
+    stage.dataset.w = state.w;
+    stage.innerHTML = `<div class="pdx">${{ A: dirA, B: dirB, C: dirC }[state.dir]()}</div>`;
+    document.getElementById('dirNote').textContent = notes[state.dir];
+}
+
+document.addEventListener('click', e => {
+    const t = e.target.closest('[data-dir],[data-w],[data-fam],[data-act],[data-dens],[data-grid],[data-sel]');
+    if (!t) return;
+    if (t.dataset.dir) { state.dir = t.dataset.dir; document.querySelectorAll('#dirSwitch .btn').forEach(b => b.className = 'btn ' + (b === t ? 'btn-primary' : 'btn-outline-primary')); }
+    else if (t.dataset.w && t.closest('#widthSwitch')) { state.w = t.dataset.w; document.querySelectorAll('#widthSwitch .btn').forEach(b => b.className = 'btn ' + (b === t ? 'btn-dark' : 'btn-outline-dark')); }
+    else if (t.dataset.fam) { const id = +t.dataset.fam; state.open.has(id) ? state.open.delete(id) : state.open.add(id); }
+    else if (t.dataset.act === 'filters') state.filters = !state.filters;
+    else if (t.dataset.act === 'clearsel') state.selected.clear();
+    else if (t.dataset.dens) state.density = t.dataset.dens;
+    else if (t.dataset.grid) state.grid = t.dataset.grid;
+    else if (t.dataset.sel) { const id = +t.dataset.sel; state.selected.has(id) ? state.selected.delete(id) : state.selected.add(id); }
+    else return;
+    render();
+});
+document.getElementById('themeToggle').addEventListener('click', e => {
+    const html = document.documentElement, dark = html.dataset.bsTheme !== 'dark';
+    html.dataset.bsTheme = dark ? 'dark' : 'light';
+    e.currentTarget.innerHTML = dark ? '<i class="fa fa-sun-o me-1"></i>Light' : '<i class="fa fa-moon-o me-1"></i>Dark';
+});
+render();
+</script>
+</body>
+</html>

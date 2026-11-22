@@ -214,6 +214,9 @@
                                     @if ($item->product?->barcode)
                                         <div class="s-ps"><i class="fa fa-barcode"></i> {{ $item->product->barcode }}</div>
                                     @endif
+                                    @if ($variant = \App\Models\Product::variantLabel($item->product?->size, $item->product?->color))
+                                        <div class="s-ps"><i class="fa fa-tag"></i> {{ $variant }}</div>
+                                    @endif
                                 </td>
                                 <td>{{ $item->unit?->name ?: '—' }}</td>
                                 <td class="num mono">{{ currency($item->unit_price) }}</td>

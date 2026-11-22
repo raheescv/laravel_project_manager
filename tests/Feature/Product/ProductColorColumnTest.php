@@ -8,8 +8,8 @@ use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
- * The product list has a Color column that can be toggled from Column
- * Visibility, including for tenants whose saved choice predates the column.
+ * The product list shows each product's colour (swatch + name in the product
+ * cell), toggled from Column Visibility, including for tenants whose saved choice predates the column.
  */
 beforeEach(function (): void {
     Queue::fake();
@@ -20,10 +20,10 @@ beforeEach(function (): void {
     $this->world->product->update(['name' => 'Running Shoe', 'color' => 'Navy']);
 });
 
-it('shows the color column on the product list', function (): void {
+it('shows the colour swatch and name on the product row', function (): void {
     Livewire::test(Table::class)
-        ->assertSet('product_visible_column.color', true)
-        ->assertSee('Color')
+        ->assertSet('columns.color', true)
+        ->assertSeeHtml('class="sw"')
         ->assertSee('Navy');
 });
 
@@ -36,10 +36,27 @@ it('offers the color toggle even when the saved columns predate it', function ()
         ->assertSee('Color');
 });
 
-it('hides the color column once toggled off', function (): void {
-    Livewire::test(ColumnVisibility::class)->call('toggleColumn', 'color');
+it('hides the colour once the user turns the column off, only for that user', function (): void {
+    Livewire::test(Table::class)
+        ->set('columns.color', false)
+        ->assertSet('columns.color', false)
+        ->assertDontSee('Navy');
+
+    Livewire::test(Table::class)->assertSet('columns.color', false)->assertDontSee('Navy');
+
+    $this->actingAs(\App\Models\User::factory()->create(['tenant_id' => $this->world->user->tenant_id]));
+    Livewire::test(Table::class)->assertSet('columns.color', true);
+});
+
+it('starts from the tenant-wide column choice and resets back to it', function (): void {
+    Configuration::updateOrCreate(['key' => 'product_visible_column'], ['value' => json_encode(['barcode' => false, 'product_name' => false])]);
 
     Livewire::test(Table::class)
-        ->assertSet('product_visible_column.color', false)
-        ->assertDontSee('Navy');
+        ->assertSet('columns.barcode', false)
+        ->assertSet('columns.cost', true)
+        ->set('columns.barcode', true)
+        ->call('resetColumns')
+        ->assertSet('columns.barcode', false)
+        ->assertSee('Visible Columns')
+        ->assertSee('SKU Code');
 });

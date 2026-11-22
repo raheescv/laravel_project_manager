@@ -208,19 +208,29 @@ function runEntry(v) {
   }
 }
 
-/** Every item of the product's family: its head (parent_id) and the variants under it. */
+/**
+ * Every item of the product's family: its head (parent_id) and the variants
+ * under it. A family can outgrow one page (100 rows — e.g. 18 colours × sizes),
+ * and a truncated family drops whole colours' sizes, so every page is read.
+ */
 async function loadFamily(p) {
+  const members = []
   try {
-    const res = await fetchProducts({
-      family_id: p.parent_id || p.id,
-      in_stock_only: 0,
-      type: 'product',
-      per_page: 100,
-    })
-    return Array.isArray(res?.data) ? res.data : []
+    for (let page = 1; page <= 20; page++) {
+      const res = await fetchProducts({
+        family_id: p.parent_id || p.id,
+        in_stock_only: 0,
+        type: 'product',
+        per_page: 100,
+        page,
+      })
+      if (Array.isArray(res?.data)) members.push(...res.data)
+      if (!res?.pagination?.has_more_pages) break
+    }
   } catch {
-    return []
+    /* keep whatever pages arrived */
   }
+  return members
 }
 
 /**
@@ -261,7 +271,7 @@ async function loadVariants() {
     }
   }
 
-  if (list.length <= 1 && (p.related_sizes || []).length > 1) {
+  if (!family.value.length && list.length <= 1 && (p.related_sizes || []).length > 1) {
     list = p.related_sizes.map((r) => ({
       id: String(r.size) === String(p.size) ? p.id : null,
       size: String(r.size).trim(),

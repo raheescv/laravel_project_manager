@@ -51,6 +51,9 @@ class Page extends Component
 
     public $purchase_item_row_mode = 'merge';
 
+    /** The most lines one "Browse catalogue" add can put on the purchase. */
+    public const CATALOGUE_MAX_LINES = 500;
+
     /**
      * @param  int|string|null  $table_id
      */
@@ -74,7 +77,7 @@ class Page extends Component
                 'branch:id,name',
                 'items.product.unit:id,name,code',
                 'items.product.units.subUnit:id,name,code',
-                'items.product:id,name,barcode,unit_id,cost',
+                'items.product:id,name,barcode,unit_id,cost,size,color',
                 'createdUser:id,name',
                 'updatedUser:id,name',
                 'cancelledUser:id,name',
@@ -96,6 +99,7 @@ class Page extends Component
                         'account_id' => $item['account_id'] ?? null,
                         'name' => $item['name'],
                         'barcode' => $item->product?->barcode,
+                        'variant' => Product::variantLabel($item->product?->size, $item->product?->color),
                         'unit_id' => $item['unit_id'] ?: $item->product?->unit_id,
                         'conversion_factor' => $item['conversion_factor'] ?: 1,
                         'units' => $this->getProductUnits($item->product),
@@ -221,6 +225,42 @@ class Page extends Component
         $this->cartCalculator($key);
     }
 
+    /**
+     * Add the lines picked in the "Browse catalogue" drawer, each with its own
+     * quantity, in the order they were picked (the first ends up on top).
+     *
+     * @param  array<int, array{product_id?: mixed, quantity?: mixed}>  $lines
+     */
+    public function addCatalogueItems(array $lines): int
+    {
+        $quantities = collect($lines)
+            ->filter(fn ($line) => is_array($line) && is_numeric($line['product_id'] ?? null) && is_numeric($line['quantity'] ?? null) && $line['quantity'] > 0)
+            ->take(self::CATALOGUE_MAX_LINES)
+            ->mapWithKeys(fn (array $line) => [(int) $line['product_id'] => (float) $line['quantity']]);
+
+        if ($quantities->isEmpty()) {
+            return 0;
+        }
+
+        $products = Product::query()
+            ->product()
+            ->with(['unit', 'units.subUnit'])
+            ->whereIn('id', $quantities->keys())
+            ->get()
+            ->keyBy('id');
+
+        $added = 0;
+        foreach ($quantities->reverse() as $productId => $quantity) {
+            $product = $products->get($productId);
+            if ($product) {
+                $this->addToCart($product, $quantity);
+                $added++;
+            }
+        }
+
+        return $added;
+    }
+
     public function cartCalculator($key = null)
     {
         if ($key) {
@@ -265,11 +305,11 @@ class Page extends Component
         $this->payment['amount'] = round($this->purchases['balance'], 2);
     }
 
-    public function addToCart($product)
+    public function addToCart($product, ?float $quantity = null)
     {
-        $product->load(['unit', 'units.subUnit']);
+        $product->loadMissing(['unit', 'units.subUnit']);
 
-        $defaultQuantity = (float) (Configuration::where('key', 'purchase_default_quantity')->value('value') ?? '1');
+        $defaultQuantity = $quantity ?? (float) (Configuration::where('key', 'purchase_default_quantity')->value('value') ?? '1');
         $key = $this->findMatchingItemKey((int) $product->id) ?? $this->buildItemKey((int) $product->id);
 
         $single = [
@@ -278,6 +318,7 @@ class Page extends Component
             'account_id' => $product->expense_account_id ?? null,
             'name' => $product->name,
             'barcode' => $product->barcode,
+            'variant' => Product::variantLabel($product->size, $product->color),
             'unit_id' => $product->unit_id,
             'conversion_factor' => 1,
             'units' => $this->getProductUnits($product),

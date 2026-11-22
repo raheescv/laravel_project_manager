@@ -404,21 +404,22 @@ class ProductResource extends JsonResource
     }
 
     /**
-     * Get related product sizes from products with names containing the base name.
+     * The sizes of this product only: its variant family (head + parent_id
+     * children) in this colour — a standalone product is a family of one.
+     * Never a name prefix: "On Cloud 6" must not pull in On Cloud 5, Cloud X
+     * or the kids' models.
      */
     private function getRelatedSizes(): array
     {
-        // Extract base name by removing trailing numbers and spaces
-        $baseName = preg_replace('/\s+\d+$/', '', trim($this->name));
+        $familyId = $this->parent_id ?: $this->id;
 
-        // If base name is too short, use the full name
-        if (strlen($baseName) < 3) {
-            $baseName = $this->name;
-        }
-
-        // Get related products with their inventories and branches
         $relatedProducts = Product::query()
-            ->where('name', 'like', $baseName.'%')
+            ->where(fn ($family) => $family->whereKey($familyId)->orWhere('parent_id', $familyId))
+            ->when(
+                filled($this->color),
+                fn ($query) => $query->where('color', $this->color),
+                fn ($query) => $query->where(fn ($colour) => $colour->whereNull('color')->orWhere('color', '')),
+            )
             ->whereNotNull('size')
             ->where('size', '!=', '')
             ->with('inventories.branch:id,name,location')

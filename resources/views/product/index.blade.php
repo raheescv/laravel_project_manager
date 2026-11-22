@@ -15,7 +15,7 @@
     </div>
     <div class="content__boxed">
         <div class="content__wrap">
-            <div class="card mb-3">
+            <div class="mb-3">
                 @livewire('product.table')
             </div>
         </div>
@@ -26,5 +26,4 @@
         @include('components.select.categorySelect')
         @include('components.select.unitSelect')
     @endpush
-    <x-product.column-visibility-canvas />
 </x-app-layout>

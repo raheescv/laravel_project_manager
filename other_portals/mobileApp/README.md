@@ -143,6 +143,7 @@ wireless debugging can't find the phone. Fix it once over a cable:
 flutter devices
 flutter build apk --dart-define-from-file=env.json
 flutter run -d 1A291FDEE002SK 2>&1 --dart-define-from-file=env.json
+flutter run -d 1A291FDEE002SK 2>&1 --dart-define-from-file=env.json
 flutter run -d 00008120-0014609A2E44201E  --release --dart-define-from-file=env.json
 
 

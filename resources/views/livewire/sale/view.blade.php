@@ -444,6 +444,9 @@
                                     @if ($returnedQty > 0)
                                         <span class="s-chip c-w" title="Returned quantity">Returned {{ currency($returnedQty, 3) }}</span>
                                     @endif
+                                    @if (!empty($item['variant']))
+                                        <div class="s-ps"><i class="fa fa-tag"></i> {{ $item['variant'] }}</div>
+                                    @endif
                                     @if (!empty($item['assistant_name']))
                                         <div class="s-ps"><i class="fa fa-user-plus"></i> {{ $item['assistant_name'] }}</div>
                                     @endif

@@ -279,6 +279,34 @@ it('still returns the full record from the detail route', function (): void {
         ->and($response->json('data.total_stock'))->toEqual(12);
 });
 
+it('keeps related sizes to the product family in its own colour', function (): void {
+    // "On Cloud 6" once lost its trailing number and matched every "On Cloud…"
+    // model — kids' sizes and all — on the storefront size grid.
+    $head = makeProduct($this->world, ['name' => 'Trail Runner 6', 'color' => 'Navy', 'size' => '42']);
+    makeProduct($this->world, ['name' => 'Trail Runner 6', 'color' => 'Navy', 'size' => '43', 'parent_id' => $head->id]);
+    makeProduct($this->world, ['name' => 'Trail Runner 6', 'color' => 'Black', 'size' => '44', 'parent_id' => $head->id]);
+    makeProduct($this->world, ['name' => 'Trail Runner 5', 'color' => 'Navy', 'size' => '45']);
+    makeProduct($this->world, ['name' => 'Trail Runner Kids', 'color' => 'Navy', 'size' => '11C']);
+
+    $response = test()->getJson($this->world->url('/api/v1/products/'.$head->id));
+    $response->assertSuccessful();
+
+    expect(collect($response->json('data.related_sizes'))->map(fn ($row) => (string) $row['size'])->sort()->values()->all())
+        ->toBe(['42', '43']);
+});
+
+it('keeps related sizes of a standalone product to its own size', function (): void {
+    $product = makeProduct($this->world, ['name' => 'Court Classic 2', 'size' => '40']);
+    makeProduct($this->world, ['name' => 'Court Classic 3', 'size' => '41']);
+    makeProduct($this->world, ['name' => 'Court Classic', 'size' => '42']);
+
+    $response = test()->getJson($this->world->url('/api/v1/products/'.$product->id));
+    $response->assertSuccessful();
+
+    expect(collect($response->json('data.related_sizes'))->map(fn ($row) => (string) $row['size'])->all())
+        ->toBe(['40']);
+});
+
 it('leaves description out of search unless it is asked for', function (): void {
     $buried = makeProduct($this->world, [
         'name' => 'Unrelated Item',

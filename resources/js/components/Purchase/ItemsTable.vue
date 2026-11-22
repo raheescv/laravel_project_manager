@@ -15,7 +15,13 @@
                     <option value="">Scan barcode or search product…</option>
                 </select>
             </div>
+            <button type="button" class="pcx-cat-open" title="Browse the catalogue by family, SKU, colour or size (F2)"
+                @click="catalogueDrawer?.open()">
+                <i class="fa fa-th-list"></i><span class="lbl">Browse catalogue</span><span class="kbd">F2</span>
+            </button>
         </div>
+
+        <CatalogueDrawer ref="catalogueDrawer" />
 
         <!-- Desktop: the full grid (xl and up) -->
         <div class="d-none d-xl-block">
@@ -42,6 +48,7 @@
                             <td>
                                 <h6 class="pcx-pname">{{ item.name }}</h6>
                                 <div v-if="item.barcode" class="pcx-pbar">{{ item.barcode }}</div>
+                                <div v-if="item.variant" class="pcx-pvar"><i class="fa fa-tag"></i> {{ item.variant }}</div>
                             </td>
                             <td class="pcx-unit-cell">
                                 <select class="pcx-unit" :value="item.unit_id"
@@ -85,7 +92,7 @@
                                 <div class="pcx-empty">
                                     <i class="fa fa-cubes"></i>
                                     <div class="t">No items yet</div>
-                                    <div class="s">Scan a barcode or search a product above to add the first line.</div>
+                                    <div class="s">Scan a barcode, search a product above, or browse the catalogue (F2).</div>
                                 </div>
                             </td>
                         </tr>
@@ -119,6 +126,10 @@
                         <div v-if="item.barcode" class="pcx-fld full">
                             <label>Barcode</label>
                             <div class="pcx-pbar">{{ item.barcode }}</div>
+                        </div>
+                        <div v-if="item.variant" class="pcx-fld full">
+                            <label>Size / Colour</label>
+                            <div class="pcx-pvar"><i class="fa fa-tag"></i> {{ item.variant }}</div>
                         </div>
                         <div class="pcx-fld full">
                             <label>Unit</label>
@@ -163,7 +174,7 @@
                 <div v-if="items.length === 0" class="pcx-empty">
                     <i class="fa fa-cubes"></i>
                     <div class="t">No items yet</div>
-                    <div class="s">Scan a barcode or search a product above to add the first line.</div>
+                    <div class="s">Scan a barcode, search a product above, or browse the catalogue (F2).</div>
                 </div>
 
                 <div v-if="items.length > 0" class="pcx-icards-sum">
@@ -206,6 +217,7 @@ import {
 import {
     getRoute
 } from '@/utils/routes'
+import CatalogueDrawer from './CatalogueDrawer.vue'
 
 const props = defineProps({
     items: {
@@ -217,6 +229,7 @@ const props = defineProps({
 const emit = defineEmits(['item-removed', 'item-updated'])
 
 const productSelect = ref(null)
+const catalogueDrawer = ref(null)
 const {
     set,
     call,

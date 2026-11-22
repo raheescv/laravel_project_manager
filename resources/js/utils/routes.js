@@ -16,6 +16,7 @@ export function getRoute(name, params = {}) {
     const routes = {
         'account::list': '/account/list',
         'product::list': '/product/list',
+        'product::catalogue': '/product/catalogue',
         'purchase::print': (id) => `/purchase/print/${id}`,
         'purchase::barcode-print': (id) => `/purchase/barcode-print/${id}`,
     }

@@ -2,9 +2,11 @@
 
 use App\Actions\Sale\CreateAction;
 use App\Helpers\SaleHelper;
+use App\Livewire\Sale\View;
 use App\Models\Configuration;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Tests\Support\PosWorld;
 
 /**
@@ -59,4 +61,11 @@ it('does not repeat a size or colour the name already has, and prints a bare pro
 
     $this->shoe->update(['name' => 'Gift Card', 'size' => null, 'color' => null]);
     expect($this->shoe->fresh()->displayName())->toBe('Gift Card');
+});
+
+it('shows each item size and colour on the web sale view', function (): void {
+    $this->actingAs($this->world->user);
+
+    Livewire::test(View::class, ['table_id' => ($this->sell)($this->shoe)])
+        ->assertSeeHtml('<i class="fa fa-tag"></i> 41 / Black');
 });

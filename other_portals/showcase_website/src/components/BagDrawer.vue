@@ -47,6 +47,12 @@ watch(
   { immediate: true },
 )
 
+// Name the next step on the button so the shop / address form isn't a surprise.
+const checkoutLabel = computed(() => {
+  if (!bag.config.delivery) return t('checkout')
+  return t(bag.fulfilment === 'delivery' ? 'checkoutDelivery' : 'checkoutPickup')
+})
+
 const busy = computed(() => bag.step === 'redirecting' || bag.step === 'confirming')
 const outcome = computed(() => bag.result?.status || 'unknown')
 const outcomeBody = computed(() => {
@@ -237,20 +243,29 @@ function keepShopping() {
           <span class="h-sm">{{ t('fulfilment') }}</span>
           <div class="seg">
             <button
+              type="button"
               class="seg__btn"
               :class="{ 'is-on': bag.fulfilment === 'pickup' }"
+              :aria-pressed="bag.fulfilment === 'pickup'"
               @click="bag.fulfilment = 'pickup'"
             >
               {{ t('pickup') }}
             </button>
             <button
+              type="button"
               class="seg__btn"
               :class="{ 'is-on': bag.fulfilment === 'delivery' }"
+              :aria-pressed="bag.fulfilment === 'delivery'"
               @click="bag.fulfilment = 'delivery'"
             >
               {{ t('delivery') }}
             </button>
           </div>
+          <!-- The shop / address form lives on the next step — say so, or shoppers hunt for it here. -->
+          <p class="ful__next" aria-live="polite">
+            <b aria-hidden="true">2</b>
+            <span>{{ t(bag.fulfilment === 'delivery' ? 'nextDelivery' : 'nextPickup') }}</span>
+          </p>
         </div>
       </template>
     </div>
@@ -280,7 +295,7 @@ function keepShopping() {
       <template v-if="!bag.config.checked" />
       <p v-else-if="!bag.config.enabled" class="fineprint">{{ t('checkoutOff') }}</p>
       <template v-else-if="bag.step === 'bag'">
-        <button class="btn btn--primary btn--block" @click="bag.beginCheckout()">{{ t('checkout') }}</button>
+        <button class="btn btn--primary btn--block" @click="bag.beginCheckout()">{{ checkoutLabel }}</button>
         <p class="fineprint">{{ t('fineprint') }}</p>
       </template>
       <template v-else>

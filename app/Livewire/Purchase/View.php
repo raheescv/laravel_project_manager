@@ -4,6 +4,7 @@ namespace App\Livewire\Purchase;
 
 use App\Actions\Purchase\UpdateAction;
 use App\Models\InventoryLog;
+use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseReturnItem;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +45,7 @@ class View extends Component
             'account:id,name,mobile,email',
             'branch:id,name',
             'localPurchaseOrder:id',
-            'items.product:id,name,barcode,unit_id,cost',
+            'items.product:id,name,barcode,unit_id,cost,size,color',
             'items.product.audits.user:id,name',
             'items.unit:id,name',
             'items.account:id,name',
@@ -78,6 +79,7 @@ class View extends Component
                     'account_id' => $item->account_id,
                     'name' => $item->name,
                     'barcode' => $item->product?->barcode,
+                    'variant' => Product::variantLabel($item->product?->size, $item->product?->color),
                     'unit' => $item->unit?->name,
                     'unit_id' => $item->unit_id,
                     'conversion_factor' => $item->conversion_factor,

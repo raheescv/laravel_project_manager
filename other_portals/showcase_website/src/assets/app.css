@@ -279,6 +279,8 @@ html[dir="rtl"] .bag{transform:translateX(-102%)}
 .seg{display:flex;gap:6px;background:var(--mist);padding:4px;border-radius:var(--r-pill)}
 .seg__btn{flex:1;background:none;border:0;padding:9px 10px;border-radius:var(--r-pill);font-size:.84rem;font-weight:600;color:var(--ink-50)}
 .seg__btn.is-on{background:var(--paper);color:var(--ink);box-shadow:var(--shadow)}
+.ful__next{display:flex;gap:10px;align-items:flex-start;margin-block-start:12px;padding:11px 14px;border-radius:12px;background:var(--mist);color:var(--ink-70);font-size:.8rem;line-height:1.45}
+.ful__next b{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:.66rem;font-family:var(--mono)}
 .total{display:flex;align-items:baseline;justify-content:space-between}
 .total>span{color:var(--ink-50);font-size:.9rem}
 .fineprint{font-size:.72rem;color:var(--ink-30);text-align:center}

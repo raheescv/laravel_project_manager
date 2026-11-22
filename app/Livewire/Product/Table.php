@@ -5,18 +5,25 @@ namespace App\Livewire\Product;
 use App\Actions\Product\DeleteAction;
 use App\Exports\ProductExport;
 use App\Jobs\Export\ExportProductJob;
+use App\Livewire\Concerns\HasColumnPreferences;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Configuration;
+use App\Models\Department;
 use App\Models\Product;
+use App\Models\Unit;
 use App\Support\ProductColours;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Session;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Maatwebsite\Excel\Facades\Excel;
 
 class Table extends Component
 {
+    use HasColumnPreferences;
     use WithPagination;
 
     /** Text columns the search box looks in. */
@@ -48,10 +55,17 @@ class Table extends Component
 
     public $size = '';
 
+    /** Product code (SKU) filter; exact match, a variant's code leads to its family. */
+    public string $sku = '';
+
     /** '' every product, 'main' only parent_id null (heads + standalone), 'variants' only parent_id set. */
     public string $variant = '';
 
-    public $limit = 100;
+    public $limit = 50;
+
+    /** Tighter rows; remembered for the session. */
+    #[Session(key: 'product.table.compact')]
+    public bool $compact = false;
 
     public $selected = [];
 
@@ -60,8 +74,6 @@ class Table extends Component
     public $sortField = 'id';
 
     public $sortDirection = 'desc';
-
-    public $product_visible_column = [];
 
     /** One row per family (head + its size / colour variants) instead of one per variant. */
     public bool $groupVariants = true;
@@ -75,30 +87,69 @@ class Table extends Component
         'Product-Refresh-Component' => '$refresh',
     ];
 
-    public function mount()
+    /** @var array<string, bool>|null tenant-wide starting columns, read once per request */
+    private ?array $tenantDefaultColumns = null;
+
+    public function mount(): void
     {
-        $config = Configuration::where('key', 'product_visible_column')->value('value');
-        $this->product_visible_column = array_merge($this->getDefaultColumns(), $config ? (array) json_decode($config, true) : []);
+        $this->initializeColumnPreferences();
     }
 
-    protected function getDefaultColumns()
+    /**
+     * Shipped columns, overlaid with the tenant's old shared choice so each user
+     * starts from what the shop already had before picking their own.
+     *
+     * @return array<string, bool>
+     */
+    protected function defaultColumns(): array
+    {
+        if ($this->tenantDefaultColumns === null) {
+            $shipped = [
+                'id' => true,
+                'image' => false,
+                'department' => true,
+                'main_category' => true,
+                'sub_category' => true,
+                'unit' => true,
+                'brand' => true,
+                'size' => true,
+                'color' => true,
+                'code' => true,
+                'name_arabic' => true,
+                'barcode' => true,
+                'cost' => true,
+                'mrp' => true,
+            ];
+            $tenant = json_decode((string) Configuration::where('key', 'product_visible_column')->value('value'), true);
+            $this->tenantDefaultColumns = array_merge($shipped, array_map(fn ($visible) => (bool) $visible, array_intersect_key(is_array($tenant) ? $tenant : [], $shipped)));
+        }
+
+        return $this->tenantDefaultColumns;
+    }
+
+    protected function columnPreferenceKey(): string
+    {
+        return 'product.table.columns';
+    }
+
+    /** @return array<string, string> */
+    protected function columnLabels(): array
     {
         return [
-            'id' => true,
-            'image' => false,
-            'department' => true,
-            'main_category' => true,
-            'sub_category' => true,
-            'unit' => true,
-            'brand' => true,
-            'size' => true,
-            'color' => true,
-            'code' => true,
-            'product_name' => true,
-            'name_arabic' => true,
-            'barcode' => true,
-            'cost' => true,
-            'mrp' => true,
+            'id' => 'ID',
+            'image' => 'Image',
+            'name_arabic' => 'Arabic Name',
+            'size' => 'Size',
+            'color' => 'Color',
+            'code' => 'SKU Code',
+            'barcode' => 'Barcode',
+            'department' => 'Department',
+            'main_category' => 'Main Category',
+            'sub_category' => 'Sub Category',
+            'brand' => 'Brand',
+            'unit' => 'Unit',
+            'cost' => 'Cost',
+            'mrp' => 'MRP',
         ];
     }
 
@@ -173,7 +224,7 @@ class Table extends Component
 
     public function updated($key, $value)
     {
-        if (! in_array($key, ['selectAll', 'openFamilies']) && ! preg_match('/^selected\..*/', $key)) {
+        if (! in_array($key, ['selectAll', 'openFamilies', 'compact', 'columns']) && ! preg_match('/^(selected|columns)\..*/', $key)) {
             $this->resetPage();
         }
     }
@@ -200,6 +251,76 @@ class Table extends Component
         } else {
             $this->selected = [];
         }
+    }
+
+    /** Resets one filter chip; the browser clears the matching TomSelect. */
+    public function clearFilter(string $key): void
+    {
+        if (! array_key_exists($key, $this->filterLabels())) {
+            return;
+        }
+        $this->{$key} = '';
+        $this->resetPage();
+        $this->dispatch('product-filters-cleared', keys: [$key]);
+    }
+
+    public function clearFilters(): void
+    {
+        $keys = array_keys($this->activeFilters());
+        foreach ($keys as $key) {
+            $this->{$key} = '';
+        }
+        $this->resetPage();
+        $this->dispatch('product-filters-cleared', keys: $keys);
+    }
+
+    /**
+     * Applied filters as removable chips, keyed by property.
+     *
+     * @return array<string, array{label: string, value: string}>
+     */
+    public function activeFilters(): array
+    {
+        $names = [
+            'department_id' => fn ($id) => Department::query()->whereKey($id)->value('name'),
+            'main_category_id' => fn ($id) => Category::query()->whereKey($id)->value('name'),
+            'sub_category_id' => fn ($id) => Category::query()->whereKey($id)->value('name'),
+            'brand_id' => fn ($id) => Brand::query()->whereKey($id)->value('name'),
+            'unit_id' => fn ($id) => Unit::query()->whereKey($id)->value('name'),
+            'status' => fn ($value) => activeOrDisabled()[$value] ?? $value,
+            'image_status' => fn ($value) => ['with_image' => 'With image', 'without_image' => 'Without image'][$value] ?? $value,
+            'variant' => fn ($value) => ['main' => 'Main products only', 'variants' => 'Variants only'][$value] ?? $value,
+            'is_selling' => fn () => 'Currently selling',
+        ];
+
+        $chips = [];
+        foreach ($this->filterLabels() as $key => $label) {
+            $value = $this->{$key};
+            if ($value === '' || $value === null || $value === false) {
+                continue;
+            }
+            $chips[$key] = ['label' => $label, 'value' => (string) (isset($names[$key]) ? ($names[$key]($value) ?? $value) : trim((string) $value))];
+        }
+
+        return $chips;
+    }
+
+    /** @return array<string, string> filter property => chip label */
+    private function filterLabels(): array
+    {
+        return [
+            'sku' => 'SKU',
+            'department_id' => 'Department',
+            'main_category_id' => 'Category',
+            'sub_category_id' => 'Sub category',
+            'brand_id' => 'Brand',
+            'unit_id' => 'Unit',
+            'size' => 'Size',
+            'status' => 'Status',
+            'image_status' => 'Image',
+            'variant' => 'Variant',
+            'is_selling' => 'Sales',
+        ];
     }
 
     public function export()
@@ -250,17 +371,20 @@ class Table extends Component
         return view('livewire.product.table', [
             'data' => $this->productsQuery()->paginate($this->limit),
             'colourPalette' => ProductColours::palette(),
+            'activeFilters' => $this->activeFilters(),
+            'columnLabels' => $this->columnLabels(),
         ]);
     }
 
     /**
      * The list query. In grouped mode a family is listed (by its head) when the
-     * head or any of its variants matches the search or size.
+     * head or any of its variants matches the search, size or SKU code.
      */
     protected function productsQuery(): Builder
     {
         $terms = preg_split('/\s+/', trim((string) $this->search), -1, PREG_SPLIT_NO_EMPTY);
         $size = trim((string) $this->size);
+        $sku = trim($this->sku);
 
         $query = Product::query()
             ->product()
@@ -270,6 +394,7 @@ class Table extends Component
                 ->with(['variants' => fn ($variants) => $variants->select(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'cost', 'mrp'])->orderBy('id')]))
             ->when($terms, fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $this->matchSearchTerms($member, $terms)))
             ->when($size !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('size', $size)))
+            ->when($sku !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('code', '=', $sku)))
             ->when($this->is_selling, fn (Builder $query) => $query->where('is_selling', true))
             ->when($this->image_status === 'with_image', fn (Builder $query) => $query->whereHas('images'))
             ->when($this->image_status === 'without_image', fn (Builder $query) => $query->whereDoesntHave('images'))

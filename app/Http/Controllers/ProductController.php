@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Product\ProductCatalogueRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Support\ProductCatalogue;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,6 +39,15 @@ class ProductController extends Controller
         $list = (new Product())->getDropDownList($request->all());
 
         return response()->json($list);
+    }
+
+    /** The purchase "Browse catalogue" drawer: families (or a flat list) filtered per column. */
+    public function catalogue(ProductCatalogueRequest $request): JsonResponse
+    {
+        $catalogue = new ProductCatalogue($request->filters());
+        $page = (int) $request->input('page', 1);
+
+        return response()->json($request->boolean('group', true) ? $catalogue->families($page) : $catalogue->rows($page));
     }
 
     public function downloadDocument(Product $product)
