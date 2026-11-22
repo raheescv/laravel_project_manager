@@ -36,6 +36,8 @@ class LocalStorageKeys {
   /// New Sale catalog order — 'name' | 'priority' and 'asc' | 'desc'. From the web.
   static const String productSortBy = 'astra.productSortBy';
   static const String productSortDirection = 'astra.productSortDirection';
+  /// New Sale: fold size / colour variants into one family card. From the web.
+  static const String groupVariants = 'astra.groupVariants';
   static const String haptics = 'astra.haptics';
   static const String branch = 'astra.branch';
 

@@ -1,0 +1,1 @@
+Kashperia homepage revision. Only home() and homepage-specific CSS changed; all other site navigation and pages are retained. Replace assets/kashperia-house-film.mp4 with an approved brand film to activate the video banner. All newly added editorial images are concept placeholders, not verified Kashperia facilities or products. Open index.html in browser.

@@ -158,7 +158,7 @@ class LookupService implements LookupRepository {
   }
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async {
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, bool? groupVariants, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})> saleSettings() async {
     final data = await _http.get(EndPoints.saleSettings);
     final map = Map<String, dynamic>.from(data as Map);
     return (
@@ -169,6 +169,7 @@ class LookupService implements LookupRepository {
       schoolEnabled: map['school_enabled'] is bool ? map['school_enabled'] as bool : null,
       logoUrl: map.containsKey('logo_url') ? asStr(map['logo_url']) : null,
       productSort: map['product_sort'] is Map ? ProductSort.fromJson(Map<String, dynamic>.from(map['product_sort'] as Map)) : null,
+      groupVariants: map['group_variants'] is bool ? map['group_variants'] as bool : null,
       paymentButtons: map['payment_buttons'] is List
           ? [for (final b in map['payment_buttons'] as List) if (b is Map) PaymentMethod.fromJson(Map<String, dynamic>.from(b))]
           : null,

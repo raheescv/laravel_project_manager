@@ -1,0 +1,10 @@
+KASHPERIA — STONE GREY, MIST & CHAMPAGNE GOLD
+
+Primary stone grey: #777B7A
+Mist grey: #E3E4E2
+Porcelain: #F5F5F3
+Champagne gold: #B39A68
+Dark text: #535856
+Footer: #777B7A
+
+Slate grey removed throughout the interface.

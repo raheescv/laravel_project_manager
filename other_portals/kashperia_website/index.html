@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="%KP_BASE%" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Kashperia — rare by nature, exceptional by craft. Shahmina shawls, ghutra, shumagh and fine fabrics from the House of Kashperia, Qatar."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#faf9f6" />
+    <title>KASHPERIA — Rare by Nature. Exceptional by Craft.</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      /*
+       * Old links still land on the right page: the reference site's anchors
+       * (index.html#kmu-about, #kmu-craft, #kmu-materials, #maison-*) and the
+       * earlier hash routes (#/collection/women) become clean paths.
+       */
+      ;(function () {
+        var legacy = {
+          'kmu-about': 'about', 'maison-about': 'about', 'maison-top': 'about',
+          'kmu-craft': 'craftsmanship', 'maison-craftsmanship': 'craftsmanship',
+          'kmu-materials': 'materials', 'maison-materials': 'materials',
+        }
+        var key = location.hash.replace(/^#/, '')
+        var to = legacy[key] ? 'maison/' + legacy[key] : key.charAt(0) === '/' ? key.slice(1) : null
+        if (to !== null) location.replace(new URL(to, document.baseURI).href)
+      })()
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

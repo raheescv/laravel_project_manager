@@ -1,0 +1,1 @@
+Hover zoom and left collection/category/price filters added. Prices are not provided in original; populate KASHPRICES with approved QAR prices to enable priced results.

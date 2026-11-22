@@ -168,7 +168,7 @@ class OfflineFirstLookupService implements LookupRepository {
   Future<({String? baseCode, List<Currency> currencies})> currencies() => _online.currencies();
 
   @override
-  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})>
+  Future<({double? defaultQuantity, bool? tipEnabled, bool? roundOffEnabled, String? defaultProductType, bool? schoolEnabled, String? logoUrl, ProductSort? productSort, bool? groupVariants, List<PaymentMethod>? paymentButtons, RemotePrintConfig? print})>
       saleSettings() => _online.saleSettings();
 
   @override

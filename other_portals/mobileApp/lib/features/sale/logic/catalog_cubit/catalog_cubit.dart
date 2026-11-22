@@ -109,10 +109,17 @@ class CatalogCubit extends Cubit<CatalogState> {
   /// the next [loadIfNeeded] refetch instead of keeping the old order.
   ProductSort? _loadedSort;
 
+  /// Whether the products on screen were folded into family cards — the web's
+  /// Product Display setting; a change reloads like [_loadedSort].
+  bool? _loadedGrouping;
+
   Future<void> loadIfNeeded() async {
-    if (state.loaded && _loadedSort == _storage.productSort) return;
+    if (state.loaded && _loadedSort == _storage.productSort && _loadedGrouping == _storage.groupVariants) return;
     await load();
   }
+
+  /// One card per size / colour family, or every variant on its own.
+  List<Product> _cards(List<Product> rows) => _storage.groupVariants ? groupFamilies(rows) : rows;
 
   String? get _searchParam =>
       state.search.trim().isEmpty ? null : state.search.trim();
@@ -120,6 +127,7 @@ class CatalogCubit extends Cubit<CatalogState> {
   Future<void> load() async {
     _initDefaultType();
     _loadedSort = _storage.productSort;
+    _loadedGrouping = _storage.groupVariants;
     final req = ++_reqId;
     final needCategories = !_categoriesCached || _categoriesFor != state.selectedType;
     emit(state.copyWith(status: DataFetchStatus.waiting, clearError: true));
@@ -142,7 +150,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       }
       emit(state.copyWith(
         status: DataFetchStatus.success,
-        products: groupFamilies(_rows = paged.items),
+        products: _cards(_rows = paged.items),
         page: paged.currentPage,
         lastPage: paged.lastPage,
         categories: needCategories ? results[1] as List<Category> : null,
@@ -204,7 +212,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       }
       emit(state.copyWith(
         status: DataFetchStatus.success,
-        products: groupFamilies(_rows = paged.items),
+        products: _cards(_rows = paged.items),
         page: paged.currentPage,
         lastPage: paged.lastPage,
         categories: categories,
@@ -248,7 +256,7 @@ class CatalogCubit extends Cubit<CatalogState> {
             );
       if (req != _reqId) return;
       emit(state.copyWith(
-        products: groupFamilies(_rows = [..._rows, ...paged.items]),
+        products: _cards(_rows = [..._rows, ...paged.items]),
         page: paged.currentPage,
         lastPage: paged.lastPage,
       ));

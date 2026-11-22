@@ -228,6 +228,11 @@ class LocalStorageService {
     await _prefs.setString(LocalStorageKeys.productSortDirection, v.direction);
   }
 
+  // New Sale variants (Settings → Sale Configuration → Product Display): every
+  // variant its own card until the web says "Family Wise".
+  bool get groupVariants => _prefs.getBool(LocalStorageKeys.groupVariants) ?? false;
+  Future<void> setGroupVariants(bool v) => _prefs.setBool(LocalStorageKeys.groupVariants, v);
+
   // New Sale catalog rendering preference — 'grid' (image tiles) or 'list'.
   String? get saleView => _prefs.getString(LocalStorageKeys.saleView);
   Future<void> setSaleView(String v) =>

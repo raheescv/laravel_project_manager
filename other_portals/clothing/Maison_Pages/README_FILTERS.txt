@@ -1,0 +1,1 @@
+Collection pages now open with all products for Men, Women, Kids and Gift Boxes. Filter & Refine provides category, colour and size controls. Colour and size combinations are demonstration values only until real SKU data is integrated. All other pages and homepage assets are retained.

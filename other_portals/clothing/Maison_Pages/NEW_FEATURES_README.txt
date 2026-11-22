@@ -1,0 +1,1 @@
+PDP: hover zoom and click zoom. Curated: populate K_CURATED with approved SKUs. Newsletter: currently opens a prefilled email request; connect a mailing-list provider for automatic subscriptions. Instagram handle should be confirmed before launch. Boutique addresses are host locations; exact store-in-store counters not verified. Price filter requires approved SKU prices.

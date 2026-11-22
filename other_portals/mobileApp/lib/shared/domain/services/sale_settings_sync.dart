@@ -16,6 +16,7 @@ typedef RemoteSaleSettings = ({
   bool? schoolEnabled,
   String? logoUrl,
   ProductSort? productSort,
+  bool? groupVariants,
   List<PaymentMethod>? paymentButtons,
   RemotePrintConfig? print,
 });
@@ -61,6 +62,11 @@ Future<RemoteSaleSettings> pullAndCacheSaleSettings() async {
   // New Sale catalog order — the cubit caches it for the Settings card, and
   // the catalog reloads on its next open when it no longer matches.
   await serviceLocator<PosSettingsCubit>().applyRemoteProductSort(settings.productSort);
+
+  // Product Display: one family card per size / colour run, or every variant
+  // on its own. The catalog reloads on its next open when it changes.
+  final group = settings.groupVariants;
+  if (group != null && group != storage.groupVariants) await storage.setGroupVariants(group);
 
   // Checkout quick buttons (System Configurations → POS Payment Buttons).
   final buttons = settings.paymentButtons;
