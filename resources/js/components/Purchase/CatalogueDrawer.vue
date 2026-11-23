@@ -21,13 +21,12 @@
                         <thead>
                             <tr class="l">
                                 <th style="width:34px"></th>
-                                <th>Product</th>
-                                <th>SKU / Code</th>
-                                <th class="pcx-cat-hs">Barcode</th>
-                                <th>Colour</th>
-                                <th>Size</th>
-                                <th class="e">Stock</th>
-                                <th class="e pcx-cat-hs">Cost</th>
+                                <th v-for="column in sortColumns" :key="column.key" :class="column.class" :aria-sort="ariaSort(column.key)">
+                                    <button type="button" class="pcx-cat-sort" :class="{ on: sort.column === column.key }" :title="`Sort by ${column.label.toLowerCase()}`" @click="toggleSort(column.key)">
+                                        {{ column.label }}
+                                        <i class="fa" :class="sortIcon(column.key)"></i>
+                                    </button>
+                                </th>
                                 <th class="e" style="width:118px">Order Qty</th>
                             </tr>
                             <tr class="f">
@@ -227,14 +226,25 @@ const filterColumns = [
     { key: 'size', icon: 'fa-arrows-h', placeholder: 'Size' },
 ]
 
+const sortColumns = [
+    { key: 'name', label: 'Product', class: '' },
+    { key: 'code', label: 'SKU / Code', class: '' },
+    { key: 'barcode', label: 'Barcode', class: 'pcx-cat-hs' },
+    { key: 'colour', label: 'Colour', class: '' },
+    { key: 'size', label: 'Size', class: '' },
+    { key: 'stock', label: 'Stock', class: 'e' },
+    { key: 'cost', label: 'Cost', class: 'e pcx-cat-hs' },
+]
+
 /** Family rows show this many colour dots, then a "+N" count, so big families don't stretch the column. */
 const SWATCH_LIMIT = 8
 
 const LETTER_SIZES = ['XXXS', 'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL', '4XL', '5XL']
 
 const isOpen = ref(false)
-const group = ref(true)
+const group = ref(false)
 const filters = reactive({ name: '', sku: '', barcode: '', colour: '', size: '' })
+const sort = reactive({ column: 'name', direction: 'asc' })
 const rows = ref([])
 const meta = ref({ current_page: 1, last_page: 1, total: 0 })
 const loading = ref(false)
@@ -387,7 +397,7 @@ const fetchPage = async (page = 1) => {
     loading.value = true
     loadError.value = false
 
-    const params = new URLSearchParams({ group: group.value ? 1 : 0, page })
+    const params = new URLSearchParams({ group: group.value ? 1 : 0, page, sort: sort.column, direction: sort.direction })
     Object.entries(filters).forEach(([key, value]) => {
         if (String(value).trim() !== '') params.set(key, String(value).trim())
     })
@@ -410,6 +420,23 @@ const fetchPage = async (page = 1) => {
     }
     loading.value = false
 }
+
+/** First click sorts ascending, second descending, third goes back to the default A–Z by name. */
+const toggleSort = (column) => {
+    if (sort.column !== column) {
+        sort.column = column
+        sort.direction = 'asc'
+    } else if (sort.direction === 'asc') {
+        sort.direction = 'desc'
+    } else {
+        sort.column = 'name'
+        sort.direction = 'asc'
+    }
+    fetchPage(1)
+}
+
+const sortIcon = (column) => (sort.column !== column ? 'fa-sort' : sort.direction === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc')
+const ariaSort = (column) => (sort.column !== column ? 'none' : sort.direction === 'asc' ? 'ascending' : 'descending')
 
 const loadMore = () => fetchPage(meta.value.current_page + 1)
 

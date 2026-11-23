@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Product;
 
+use App\Support\ProductCatalogue;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProductCatalogueRequest extends FormRequest
 {
@@ -23,6 +25,8 @@ class ProductCatalogueRequest extends FormRequest
             'colour' => ['nullable', 'string', 'max:50'],
             'size' => ['nullable', 'string', 'max:30'],
             'group' => ['nullable', 'boolean'],
+            'sort' => ['nullable', 'string', Rule::in(array_keys(ProductCatalogue::SORTABLE))],
+            'direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
     }
@@ -38,6 +42,8 @@ class ProductCatalogueRequest extends FormRequest
             'barcode.max' => 'The barcode filter can be at most 100 characters.',
             'colour.max' => 'The colour filter can be at most 50 characters.',
             'size.max' => 'The size filter can be at most 30 characters.',
+            'sort.in' => 'The catalogue cannot be sorted by that column.',
+            'direction.in' => 'The sort direction must be ascending or descending.',
         ];
     }
 
@@ -52,6 +58,17 @@ class ProductCatalogueRequest extends FormRequest
             'barcode' => trim((string) $this->input('barcode')),
             'colour' => trim((string) $this->input('colour')),
             'size' => trim((string) $this->input('size')),
+        ];
+    }
+
+    /**
+     * @return array{column: string, direction: 'asc'|'desc'}
+     */
+    public function sorting(): array
+    {
+        return [
+            'column' => (string) $this->input('sort', 'name'),
+            'direction' => $this->input('direction') === 'desc' ? 'desc' : 'asc',
         ];
     }
 }

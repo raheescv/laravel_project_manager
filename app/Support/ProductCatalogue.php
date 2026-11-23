@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
  * current branch's own stock (not stock held by employees).
  *
  * @phpstan-type CatalogueFilters array{name: string, sku: string, barcode: string, colour: string, size: string}
+ * @phpstan-type CatalogueSort array{column: string, direction: 'asc'|'desc'}
  * @phpstan-type CatalogueMember array{id: int, family_id: int, name: string, code: ?string, barcode: ?string, size: ?string, colour: string, colour_hex: ?string, variant: string, cost: float, mrp: float, stock: float, thumbnail: ?string}
  */
 final class ProductCatalogue
@@ -24,6 +25,9 @@ final class ProductCatalogue
 
     public const ROWS_PER_PAGE = 50;
 
+    /** Sortable columns: the request key => the products column it orders by ("stock" is a computed subquery). */
+    public const SORTABLE = ['name' => 'products.name', 'code' => 'products.code', 'barcode' => 'products.barcode', 'colour' => 'products.color', 'size' => 'products.size', 'cost' => 'products.cost', 'stock' => 'stock'];
+
     private const COLUMNS = ['products.id', 'products.parent_id', 'products.name', 'products.code', 'products.barcode', 'products.size', 'products.color', 'products.cost', 'products.mrp', 'products.thumbnail', 'products.brand_id'];
 
     /** @var array<string, string>|null */
@@ -31,8 +35,9 @@ final class ProductCatalogue
 
     /**
      * @param  CatalogueFilters  $filters
+     * @param  CatalogueSort  $sort
      */
-    public function __construct(private readonly array $filters) {}
+    public function __construct(private readonly array $filters, private readonly array $sort = ['column' => 'name', 'direction' => 'asc']) {}
 
     /**
      * Family heads (and standalone products) whose family has a member matching
@@ -50,10 +55,10 @@ final class ProductCatalogue
             ->select(self::COLUMNS)
             ->with('brand:id,name')
             ->withCount('variants')
+            ->when($this->sort['column'] === 'stock', fn (Builder $query) => $query->addSelect(['stock' => $this->stockQuery(family: true)]))
             ->when($this->nameTerms(), fn (Builder $query, array $terms) => $this->matchName($query, $terms))
             ->when($memberFilter !== null, fn (Builder $query) => $query->whereIn('products.id', Product::query()->product()->selectRaw('COALESCE(parent_id, id)')->where($memberFilter)))
-            ->orderBy('products.name')
-            ->orderBy('products.id')
+            ->tap(fn (Builder $query) => $this->applySort($query))
             ->paginate(self::FAMILIES_PER_PAGE, ['*'], 'page', $page);
 
         $headIds = $heads->getCollection()->pluck('id')->all();
@@ -91,8 +96,7 @@ final class ProductCatalogue
         $rows = $this->membersQuery()
             ->when($this->nameTerms(), fn (Builder $query, array $terms) => $this->matchName($query, $terms))
             ->when($memberFilter !== null, fn (Builder $query) => $query->where($memberFilter))
-            ->orderBy('products.name')
-            ->orderBy('products.id')
+            ->tap(fn (Builder $query) => $this->applySort($query))
             ->paginate(self::ROWS_PER_PAGE, ['*'], 'page', $page);
 
         return [
@@ -107,12 +111,46 @@ final class ProductCatalogue
         return Product::query()
             ->product()
             ->select(self::COLUMNS)
-            ->addSelect(['stock' => Inventory::query()
-                ->selectRaw('COALESCE(SUM(inventories.quantity), 0)')
-                ->whereColumn('inventories.product_id', 'products.id')
-                ->whereNull('inventories.employee_id')
-                ->when(session('branch_id'), fn (Builder $query, $branchId) => $query->where('inventories.branch_id', $branchId)),
-            ]);
+            ->addSelect(['stock' => $this->stockQuery()]);
+    }
+
+    /**
+     * The current branch's own stock of a product, or (for a family head) of every member of its family.
+     */
+    private function stockQuery(bool $family = false): Builder
+    {
+        return Inventory::query()
+            ->selectRaw('COALESCE(SUM(inventories.quantity), 0)')
+            ->when(
+                $family,
+                fn (Builder $query) => $query
+                    ->join('products as family_members', 'family_members.id', '=', 'inventories.product_id')
+                    ->whereRaw('COALESCE(family_members.parent_id, family_members.id) = products.id'),
+                fn (Builder $query) => $query->whereColumn('inventories.product_id', 'products.id'),
+            )
+            ->whereNull('inventories.employee_id')
+            ->when(session('branch_id'), fn (Builder $query, $branchId) => $query->where('inventories.branch_id', $branchId));
+    }
+
+    /**
+     * Orders by the chosen column, blanks last for text columns, then by name and id so pages never shuffle.
+     */
+    private function applySort(Builder $query): void
+    {
+        $column = self::SORTABLE[$this->sort['column']] ?? self::SORTABLE['name'];
+        $direction = $this->sort['direction'] === 'desc' ? 'desc' : 'asc';
+
+        if (in_array($column, ['products.code', 'products.barcode', 'products.color', 'products.size'], true)) {
+            $query->orderByRaw("COALESCE({$column}, '') = ''");
+        }
+
+        $query->orderBy($column, $direction);
+
+        if ($column !== 'products.name') {
+            $query->orderBy('products.name');
+        }
+
+        $query->orderBy('products.id');
     }
 
     /** @return array<int, string> */

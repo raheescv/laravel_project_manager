@@ -1582,6 +1582,39 @@ textarea.pcx-input {
     height: 27px;
 }
 
+.pcx-cat-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.pcx-cat-sort .fa {
+    font-size: 10px;
+    opacity: .35;
+}
+
+.pcx-cat-sort:hover,
+.pcx-cat-sort.on {
+    color: var(--pcx-ink);
+}
+
+.pcx-cat-sort:hover .fa,
+.pcx-cat-sort.on .fa {
+    opacity: 1;
+}
+
+.pcx-cat-sort.on .fa {
+    color: var(--pcx-acc);
+}
+
 .pcx-cat-tbl thead tr.f th {
     top: 27px;
     padding: 0 8px 8px;

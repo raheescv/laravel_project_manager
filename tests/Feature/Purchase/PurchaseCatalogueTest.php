@@ -109,6 +109,27 @@ it('shows the current branch stock without stock held by employees', function ()
         ->and($members['RS-43']['stock'])->toEqual(0);
 });
 
+it('sorts the flat list by the chosen column and direction', function (): void {
+    expect(collect(($this->catalogue)(['group' => 0, 'sort' => 'code', 'direction' => 'desc'])->json('data'))->pluck('code')->all())
+        ->toBe(['RS-44-HX', 'RS-43', 'RS-42-BL', 'RS-41-BK', 'CAP-1'])
+        ->and(collect(($this->catalogue)(['group' => 0, 'sort' => 'code'])->json('data'))->pluck('code')->all())
+        ->toBe(['CAP-1', 'RS-41-BK', 'RS-42-BL', 'RS-43', 'RS-44-HX']);
+});
+
+it('sorts families by the stock of the whole family', function (): void {
+    catalogueStock($this->world, $this->blue, 7);
+    catalogueStock($this->world, $this->cap, 105);
+
+    expect(collect(($this->catalogue)(['sort' => 'stock', 'direction' => 'desc'])->json('data'))->pluck('name')->all())
+        ->toBe(['Running Shoe', 'Trail Cap'])
+        ->and(collect(($this->catalogue)(['sort' => 'stock', 'direction' => 'asc'])->json('data'))->pluck('name')->all())
+        ->toBe(['Trail Cap', 'Running Shoe']);
+});
+
+it('rejects an unknown sort column', function (): void {
+    $this->getJson($this->world->url('/product/catalogue?sort=password'))->assertUnprocessable()->assertJsonValidationErrors('sort');
+});
+
 it('adds the picked catalogue lines with their quantities, merging into existing lines', function (): void {
     $component = Livewire::test(Page::class)
         ->set('product_id', $this->blue->id)

@@ -44,7 +44,7 @@ class ProductController extends Controller
     /** The purchase "Browse catalogue" drawer: families (or a flat list) filtered per column. */
     public function catalogue(ProductCatalogueRequest $request): JsonResponse
     {
-        $catalogue = new ProductCatalogue($request->filters());
+        $catalogue = new ProductCatalogue($request->filters(), $request->sorting());
         $page = (int) $request->input('page', 1);
 
         return response()->json($request->boolean('group', true) ? $catalogue->families($page) : $catalogue->rows($page));
