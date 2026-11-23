@@ -22,12 +22,15 @@
                 --line: var(--bs-border-color-translucent);
                 --panel: var(--bs-body-bg);
                 --panel-2: var(--bs-tertiary-bg);
+                /* Input fields stay white on the grey page; dark mode uses the panel. */
+                --field: #fff;
                 --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                 --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 8px 24px -18px rgba(16, 24, 40, .35);
                 color: var(--ink);
             }
 
             [data-bs-theme="dark"] .pdx {
+                --field: var(--panel);
                 --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px -18px rgba(0, 0, 0, .9);
             }
 
@@ -44,9 +47,9 @@
             .pdx .chip-size { font-size: .66rem; font-weight: 600; line-height: 1; padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); }
             .pdx .thumb { width: 36px; height: 36px; border-radius: 9px; object-fit: cover; display: grid; place-items: center; background: var(--panel-2); color: var(--ink-2); border: 1px solid var(--line); }
 
-            .pdx .tool-input { border-color: var(--line); background: var(--panel); }
+            .pdx .tool-input { border-color: var(--line); background: var(--field); box-shadow: 0 1px 2px rgba(16, 24, 40, .06); }
             .pdx .tool-input:focus { border-color: var(--acc); box-shadow: 0 0 0 .2rem var(--acc-ring); }
-            .pdx .input-group-text { background: var(--panel); border-color: var(--line); color: var(--ink-2); }
+            .pdx .input-group-text { background: var(--field); border-color: var(--line); color: var(--ink-2); }
             .pdx .btn-ghost { border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
             .pdx .btn-ghost:hover, .pdx .btn-ghost:focus-visible { border-color: var(--acc); color: var(--acc-ink); }
             .pdx .btn-ghost.on { background: var(--acc-soft); border-color: var(--acc-ring); color: var(--acc-ink); }
@@ -60,7 +63,8 @@
             .pdx .fchip button:hover { background: var(--acc-ring); }
             .pdx .filter-panel { background: var(--panel-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
             .pdx .filter-panel .form-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
-            .pdx .filter-panel .form-select, .pdx .filter-panel .form-control { font-size: .8rem; border-color: var(--line); }
+            .pdx .filter-panel .ts-control { background: var(--field); }
+            .pdx .filter-panel .form-select, .pdx .filter-panel .form-control { font-size: .8rem; border-color: var(--line); background-color: var(--field); }
 
             .pdx .ptable { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0; }
             .pdx .pdx-head { border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
@@ -124,6 +128,7 @@
                 .pdx .ptable td.c-price { position: absolute; right: 12px; top: 10px; width: auto; }
                 .pdx .ptable td.c-product { padding-right: 96px !important; }
                 .pdx .ptable td.c-codes, .pdx .ptable td.c-cat { margin-top: 4px; }
+                .pdx .ptable td.c-size, .pdx .ptable td.c-colour { display: inline-block; width: auto; margin: 4px 10px 0 0; }
                 .pdx .ptable td.c-cost, .pdx .ptable td.c-unit, .pdx .ptable td.c-brand { display: none; }
                 .pdx .fam-row { display: block; }
                 .pdx .fam-inner { margin-inline-start: 0; }

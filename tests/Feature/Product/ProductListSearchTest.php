@@ -83,6 +83,41 @@ it('lists applied filters as chips and clears them one at a time or all at once'
     expect($table->viewData('activeFilters'))->toBe([]);
 });
 
+it('filters by size and colour separately, leading a variant to its family when grouped', function (): void {
+    expect(productListIds(['size' => '42']))->toBe([$this->shoe->id])
+        ->and(productListIds(['groupVariants' => false, 'size' => '42']))->toBe([$this->red->id])
+        ->and(productListIds(['color' => 'brown']))->toBe([$this->bag->id])
+        ->and(productListIds(['groupVariants' => false, 'color' => 'Red']))->toBe([$this->red->id])
+        ->and(productListIds(['size' => '41', 'color' => 'Red']))->toBe([$this->shoe->id])
+        ->and(productListIds(['groupVariants' => false, 'size' => '41', 'color' => 'Red']))->toBe([]);
+});
+
+it('offers every used size and colour once, sizes in natural order', function (): void {
+    Product::factory()->create(['unit_id' => $this->shoe->unit_id, 'name' => 'Belt', 'size' => '100', 'color' => ' black ']);
+
+    $table = Livewire::test(Table::class)->instance();
+
+    expect($table->sizeOptions())->toBe(['41', '42', '100'])
+        ->and($table->colourOptions())->toBe(['Black' => 'Black', 'Brown' => 'Brown', 'Red' => 'Red']);
+});
+
+it('clears the search with the filters and shows a colour chip', function (): void {
+    $table = Livewire::test(Table::class)
+        ->set('search', 'shoe')
+        ->set('color', 'Red')
+        ->set('size', '42');
+
+    expect($table->viewData('activeFilters'))->toBe([
+        'size' => ['label' => 'Size', 'value' => '42'],
+        'color' => ['label' => 'Colour', 'value' => 'Red'],
+    ]);
+
+    $table->call('clearFilters')
+        ->assertSet('search', '')
+        ->assertSet('color', '')
+        ->assertSet('size', '');
+});
+
 it('shows 50 rows by default and remembers the compact density', function (): void {
     Livewire::test(Table::class)
         ->assertSet('limit', 50)

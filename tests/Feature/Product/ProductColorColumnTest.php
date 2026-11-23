@@ -24,7 +24,18 @@ it('shows the colour swatch and name on the product row', function (): void {
     Livewire::test(Table::class)
         ->assertSet('columns.color', true)
         ->assertSeeHtml('class="sw"')
-        ->assertSee('Navy');
+        ->assertSeeHtml('text-body-secondary">Navy</small>');
+});
+
+it('gives size and colour their own columns, a family listing every size and colour once', function (): void {
+    $this->world->product->update(['size' => '41']);
+    \App\Models\Product::factory()->variantOf($this->world->product, '42', 'Red')->create();
+
+    Livewire::test(Table::class)
+        ->assertSeeHtmlInOrder(['class="c-size"', '<span class="chip-size">41</span>', '<span class="chip-size">42</span>', 'class="c-colour"', 'title="Navy"', 'title="Red"'])
+        ->set('columns.size', false)
+        ->assertDontSeeHtml('class="c-size"')
+        ->assertSeeHtml('class="c-colour"');
 });
 
 it('offers the color toggle even when the saved columns predate it', function (): void {
@@ -40,9 +51,9 @@ it('hides the colour once the user turns the column off, only for that user', fu
     Livewire::test(Table::class)
         ->set('columns.color', false)
         ->assertSet('columns.color', false)
-        ->assertDontSee('Navy');
+        ->assertDontSeeHtml('text-body-secondary">Navy</small>');
 
-    Livewire::test(Table::class)->assertSet('columns.color', false)->assertDontSee('Navy');
+    Livewire::test(Table::class)->assertSet('columns.color', false)->assertDontSeeHtml('text-body-secondary">Navy</small>');
 
     $this->actingAs(\App\Models\User::factory()->create(['tenant_id' => $this->world->user->tenant_id]));
     Livewire::test(Table::class)->assertSet('columns.color', true);

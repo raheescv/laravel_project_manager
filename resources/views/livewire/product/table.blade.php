@@ -3,7 +3,7 @@
     $show = fn (string $key, bool $default = true): bool => (bool) ($cols[$key] ?? $default);
     $showCodes = $show('code') || $show('barcode');
     $showCategory = $show('department') || $show('main_category') || $show('sub_category');
-    $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
+    $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $show('size') + (int) $show('color') + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
     $panelFilterCount = count(array_diff_key($activeFilters, ['sku' => true]));
 @endphp
 <div class="pdx" x-data="{ filtersOpen: $persist(false).as('product-list-filters-open') }">
@@ -67,6 +67,11 @@
                     <span class="badge rounded-pill text-bg-primary ms-1">{{ $panelFilterCount }}</span>
                 @endif
             </button>
+            @if (count($activeFilters) || trim((string) $search) !== '')
+                <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="clearFilters()" title="Clear search and all filters">
+                    <i class="fa fa-times me-1"></i>Clear
+                </button>
+            @endif
             <div class="seg hide-sm" role="group" aria-label="Row density">
                 <button type="button" class="{{ $compact ? '' : 'on' }}" wire:click="$set('compact', false)">Comfort</button>
                 <button type="button" class="{{ $compact ? 'on' : '' }}" wire:click="$set('compact', true)">Compact</button>
@@ -153,13 +158,32 @@
                 </div>
                 <div class="col-6 col-md-4 col-xl-3">
                     <label for="size" class="form-label">Size</label>
-                    <input type="text" id="size" wire:model.live.debounce.400ms="size" placeholder="e.g. 42, XL" class="form-control form-control-sm" autocomplete="off">
+                    <select id="size" wire:model.live="size" class="form-select form-select-sm">
+                        <option value="">All sizes</option>
+                        @foreach ($this->sizeOptions as $sizeOption)
+                            <option value="{{ $sizeOption }}">{{ $sizeOption }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <label for="color" class="form-label">Colour</label>
+                    <select id="color" wire:model.live="color" class="form-select form-select-sm">
+                        <option value="">All colours</option>
+                        @foreach ($this->colourOptions as $colourValue => $colourName)
+                            <option value="{{ $colourValue }}">{{ $colourName }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-6 col-md-4 col-xl-3 d-flex align-items-end">
                     <div class="form-check form-switch mb-1">
                         <input class="form-check-input" type="checkbox" id="is_selling" wire:model.live="is_selling">
                         <label for="is_selling" class="form-check-label small">Currently selling</label>
                     </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-3 d-flex align-items-end justify-content-end ms-auto">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" wire:click="clearFilters()" @disabled(! count($activeFilters) && trim((string) $search) === '')>
+                        <i class="fa fa-eraser me-1"></i>Clear filters
+                    </button>
                 </div>
             </div>
         </div>
@@ -199,6 +223,12 @@
                         @if ($showCodes)
                             <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="{{ $show('code') ? 'code' : 'barcode' }}" label="{{ $show('code') && $show('barcode') ? 'SKU / Barcode' : ($show('code') ? 'SKU' : 'Barcode') }}" /></th>
                         @endif
+                        @if ($show('size'))
+                            <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" /></th>
+                        @endif
+                        @if ($show('color'))
+                            <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="color" label="Colour" /></th>
+                        @endif
                         @if ($showCategory)
                             <th class="hide-md"><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="{{ $show('department') ? 'department_id' : ($show('main_category') ? 'main_category_id' : 'sub_category_id') }}" label="Category" /></th>
                         @endif
@@ -222,6 +252,9 @@
                             $isSelected = in_array((string) $item->id, array_map('strval', $selected), true);
                             $hasFamily = $groupVariants && ($item->variants_count ?? 0) > 0;
                             $colour = trim((string) $item->color);
+                            $members = $hasFamily ? collect([$item])->merge($item->variants) : collect([$item]);
+                            $rowSizes = $members->pluck('size')->map(fn ($s) => trim((string) $s))->filter()->unique()->values();
+                            $rowColours = $members->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique(fn ($c) => mb_strtolower($c))->values();
                         @endphp
                         <tr class="row-main {{ $isSelected ? 'is-selected' : '' }}" wire:key="product-{{ $item->id }}">
                             <td class="c-check">
@@ -258,35 +291,12 @@
                                 @endif
                                 @if ($hasFamily)
                                     @php
-                                        $family = collect([$item])->merge($item->variants);
-                                        $familySizes = $family->pluck('size')->filter()->unique()->values();
-                                        $familyColours = $family->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique()->values();
                                         $isOpen = in_array($item->id, $openFamilies, true);
                                     @endphp
                                     <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
                                         <button type="button" class="fam-toggle" wire:click="toggleFamily({{ $item->id }})" aria-expanded="{{ $isOpen ? 'true' : 'false' }}" title="Show / hide the variants">
                                             <i class="fa {{ $isOpen ? 'fa-chevron-down' : 'fa-chevron-right' }} me-1"></i>{{ $item->variants_count + 1 }} variants
                                         </button>
-                                        @if ($show('size'))
-                                            @foreach ($familySizes as $familySize)
-                                                <span class="chip-size">{{ $familySize }}</span>
-                                            @endforeach
-                                        @endif
-                                        @if ($show('color'))
-                                            @foreach ($familyColours as $familyColour)
-                                                <span class="sw" title="{{ \App\Support\ProductColours::displayName($familyColour) }}" style="background: {{ \App\Support\ProductColours::hexFor($familyColour, $colourPalette) }}"></span>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                @elseif (($show('size') && $item->size) || ($show('color') && $colour !== ''))
-                                    <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                        @if ($show('size') && $item->size)
-                                            <span class="chip-size">{{ $item->size }}</span>
-                                        @endif
-                                        @if ($show('color') && $colour !== '')
-                                            <span class="sw" style="background: {{ \App\Support\ProductColours::hexFor($colour, $colourPalette) }}"></span>
-                                            <small class="text-body-secondary">{{ \App\Support\ProductColours::displayName($colour) }}</small>
-                                        @endif
                                     </div>
                                 @endif
                             </td>
@@ -301,6 +311,33 @@
                                     @endif
                                     @if ($show('barcode'))
                                         <div class="bc {{ $show('code') ? 'mt-1' : '' }}">{{ $item->barcode ?: '—' }}</div>
+                                    @endif
+                                </td>
+                            @endif
+                            @if ($show('size'))
+                                <td class="c-size">
+                                    @forelse ($rowSizes as $rowSize)
+                                        <span class="chip-size">{{ $rowSize }}</span>
+                                    @empty
+                                        <span class="bc">—</span>
+                                    @endforelse
+                                </td>
+                            @endif
+                            @if ($show('color'))
+                                <td class="c-colour">
+                                    @if ($rowColours->count() === 1)
+                                        <span class="d-inline-flex align-items-center gap-1 text-nowrap">
+                                            <span class="sw" style="background: {{ \App\Support\ProductColours::hexFor($rowColours->first(), $colourPalette) }}"></span>
+                                            <small class="text-body-secondary">{{ \App\Support\ProductColours::displayName($rowColours->first()) }}</small>
+                                        </span>
+                                    @elseif ($rowColours->isNotEmpty())
+                                        <span class="d-inline-flex flex-wrap align-items-center gap-1">
+                                            @foreach ($rowColours as $rowColour)
+                                                <span class="sw" title="{{ \App\Support\ProductColours::displayName($rowColour) }}" style="background: {{ \App\Support\ProductColours::hexFor($rowColour, $colourPalette) }}"></span>
+                                            @endforeach
+                                        </span>
+                                    @else
+                                        <span class="bc">—</span>
                                     @endif
                                 </td>
                             @endif

@@ -16,6 +16,7 @@ use App\Support\ProductColours;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Session;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -54,6 +55,9 @@ class Table extends Component
     public $image_status = '';
 
     public $size = '';
+
+    /** Exact colour (case-insensitive); a variant's colour leads to its family when grouped. */
+    public string $color = '';
 
     /** Product code (SKU) filter; exact match, a variant's code leads to its family. */
     public string $sku = '';
@@ -264,12 +268,14 @@ class Table extends Component
         $this->dispatch('product-filters-cleared', keys: [$key]);
     }
 
+    /** Resets every filter and the search box. */
     public function clearFilters(): void
     {
         $keys = array_keys($this->activeFilters());
         foreach ($keys as $key) {
             $this->{$key} = '';
         }
+        $this->search = '';
         $this->resetPage();
         $this->dispatch('product-filters-cleared', keys: $keys);
     }
@@ -291,6 +297,7 @@ class Table extends Component
             'image_status' => fn ($value) => ['with_image' => 'With image', 'without_image' => 'Without image'][$value] ?? $value,
             'variant' => fn ($value) => ['main' => 'Main products only', 'variants' => 'Variants only'][$value] ?? $value,
             'is_selling' => fn () => 'Currently selling',
+            'color' => fn ($value) => ProductColours::displayName($value),
         ];
 
         $chips = [];
@@ -316,6 +323,7 @@ class Table extends Component
             'brand_id' => 'Brand',
             'unit_id' => 'Unit',
             'size' => 'Size',
+            'color' => 'Colour',
             'status' => 'Status',
             'image_status' => 'Image',
             'variant' => 'Variant',
@@ -337,6 +345,8 @@ class Table extends Component
             'status' => $this->status,
             'image_status' => $this->image_status,
             'variant' => $this->variant,
+            'size' => trim((string) $this->size),
+            'color' => trim($this->color),
         ];
         $count = Product::service()->count();
         if ($count > 2000) {
@@ -347,6 +357,55 @@ class Table extends Component
 
             return Excel::download(new ProductExport($filter), $exportFileName);
         }
+    }
+
+    /**
+     * Every size used on a product, in natural order (S, M… stay as typed; 40 before 100).
+     *
+     * @return array<int, string>
+     */
+    #[Computed]
+    public function sizeOptions(): array
+    {
+        $sizes = $this->distinctValues('size');
+        natcasesort($sizes);
+
+        return array_values($sizes);
+    }
+
+    /**
+     * Every colour used on a product, as stored value => on-screen name.
+     *
+     * @return array<string, string>
+     */
+    #[Computed]
+    public function colourOptions(): array
+    {
+        $colours = [];
+        foreach ($this->distinctValues('color') as $colour) {
+            $colours[$colour] = ProductColours::displayName($colour);
+        }
+        asort($colours, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $colours;
+    }
+
+    /**
+     * Trimmed, non-empty values of a column across products; "black" and "Black" count once.
+     *
+     * @return array<int, string>
+     */
+    private function distinctValues(string $column): array
+    {
+        $values = [];
+        foreach (Product::query()->product()->whereNotNull($column)->where($column, '!=', '')->distinct()->pluck($column) as $value) {
+            $value = trim((string) $value);
+            if ($value !== '') {
+                $values[mb_strtolower($value)] ??= $value;
+            }
+        }
+
+        return array_values($values);
     }
 
     public function toggleFamily(int $id): void
@@ -378,13 +437,14 @@ class Table extends Component
 
     /**
      * The list query. In grouped mode a family is listed (by its head) when the
-     * head or any of its variants matches the search, size or SKU code.
+     * head or any of its variants matches the search, size, colour or SKU code.
      */
     protected function productsQuery(): Builder
     {
         $terms = preg_split('/\s+/', trim((string) $this->search), -1, PREG_SPLIT_NO_EMPTY);
         $size = trim((string) $this->size);
         $sku = trim($this->sku);
+        $colour = trim($this->color);
 
         $query = Product::query()
             ->product()
@@ -394,6 +454,7 @@ class Table extends Component
                 ->with(['variants' => fn ($variants) => $variants->select(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'cost', 'mrp'])->orderBy('id')]))
             ->when($terms, fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $this->matchSearchTerms($member, $terms)))
             ->when($size !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('size', $size)))
+            ->when($colour !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('color', $colour)))
             ->when($sku !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('code', '=', $sku)))
             ->when($this->is_selling, fn (Builder $query) => $query->where('is_selling', true))
             ->when($this->image_status === 'with_image', fn (Builder $query) => $query->whereHas('images'))

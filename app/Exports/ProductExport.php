@@ -43,6 +43,8 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             ->when($this->is_selling ?? '', function ($query, $value) {
                 return $query->where('is_selling', $value);
             })
+            ->when($this->filters['size'] ?? '', fn (Builder $query, $value) => $query->where('size', $value))
+            ->when($this->filters['color'] ?? '', fn (Builder $query, $value) => $query->where('color', $value))
             ->when(($this->filters['variant'] ?? '') === 'main', fn (Builder $query) => $query->whereNull('parent_id'))
             ->when(($this->filters['variant'] ?? '') === 'variants', fn (Builder $query) => $query->whereNotNull('parent_id'));
 
