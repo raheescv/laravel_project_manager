@@ -26,8 +26,9 @@ class SaleDaySession extends Model implements AuditableContracts
         'opening_amount',
         'closing_amount',
         'expected_amount',
-
         'sync_amount',
+        'synced_at',
+        'synced_by',
         'status',
         'notes',
     ];
@@ -35,6 +36,7 @@ class SaleDaySession extends Model implements AuditableContracts
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
+        'synced_at' => 'datetime',
         'opening_amount' => 'decimal:2',
         'closing_amount' => 'decimal:2',
         'expected_amount' => 'decimal:2',
@@ -67,6 +69,12 @@ class SaleDaySession extends Model implements AuditableContracts
     public function closer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function syncer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'synced_by');
     }
 
     /**

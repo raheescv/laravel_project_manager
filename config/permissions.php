@@ -51,7 +51,7 @@ return [
     'inventory transfer' => ['create', 'view', 'edit', 'edit completed', 'delete', 'import', 'export'],
     'issue' => ['create', 'view', 'edit', 'delete', 'print'],
     'ticket' => ['create', 'view', 'edit', 'delete', 'comment', 'import', 'manage board'],
-    'day session' => ['create', 'view', 'list', 'print'],
+    'day session' => ['create', 'view', 'list', 'print', 'moq sync'],
     'category' => ['create', 'view', 'edit', 'delete', 'import', 'export'],
     'appointment' => ['create', 'view', 'edit', 'delete', 'export', 'checkout', 'dashboard'],
     'sale' => [
@@ -151,7 +151,6 @@ return [
         'student recharge',
     ],
     'log' => ['inventory', 'log viewer', 'email'],
-    'day close' => ['sync amount'],
     'api_log' => ['view', 'delete', 'moq settings'],
     'backup' => ['create', 'view', 'download'],
     'system health' => ['view'],

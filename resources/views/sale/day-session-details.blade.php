@@ -72,6 +72,18 @@
                                     <a href="{{ route('sale::day-management') }}" class="hbtn" title="Open day management"><i class="fa fa-sliders"></i> Manage day</a>
                                 @endcan
                             @endif
+                            @if ($session->branch->moq_sync)
+                                @can('day session.moq sync')
+                                    @livewire('sale-day-session.moq-sync', [
+                                        'sessionId' => $session->id,
+                                        'suggestions' => [
+                                            'Total sales' => $grossTotal,
+                                            'Collected' => $stats['collected'],
+                                            'Counted' => $stats['counted'],
+                                        ],
+                                    ])
+                                @endcan
+                            @endif
                             @can('day session.print')
                                 <a href="{{ route('print::sale::day-session-report', $session->id) }}" class="hbtn hbtn--green" target="_blank" title="Print thermal receipt"><i class="fa fa-print"></i> Print</a>
                                 <a href="{{ route('print::sale::day-session-report-combined', $session->id) }}" class="hbtn hbtn--green" target="_blank" title="Print thermal receipt — one row per invoice, payment methods combined"><i class="fa fa-compress"></i> Print Combined</a>
@@ -176,8 +188,8 @@
                                         <span class="v t-muted" style="font-weight: 500; font-size: 12.5px;">Pending close</span>
                                     @endif
                                 </div>
-                                @if ($isClosed && (float) $session->sync_amount != 0)
-                                    <div class="recon__row"><span class="k">Sync amount</span><span class="v">{{ currency($session->sync_amount) }}</span></div>
+                                @if ($session->synced_at || ($isClosed && (float) $session->sync_amount != 0))
+                                    <div class="recon__row"><span class="k">MOQ sync amount</span><span class="v">{{ currency($session->sync_amount) }}</span></div>
                                 @endif
                                 <div class="variance {{ $vClass }}">
                                     <div>
@@ -236,6 +248,20 @@
                                         <div class="tl__meta">Drawer is reconciled when the session is closed from Day Management.</div>
                                         <div class="tl__chips">
                                             <span class="chip"><b>Expected so far</b> {{ currency($stats['expected']) }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if ($session->synced_at)
+                                    <div class="tl__item">
+                                        <span class="tl__dot acc"><i class="fa fa-refresh"></i></span>
+                                        <div class="tl__head">
+                                            <span class="tl__title">Synced to MOQ</span>
+                                            <span class="tl__time">{{ systemDateTime($session->synced_at) }}</span>
+                                        </div>
+                                        <div class="tl__meta"><span class="av">{{ $initial($session->syncer?->name ?? 'Unknown') }}</span> {{ $session->syncer?->name ?? 'Unknown' }}</div>
+                                        <div class="tl__chips">
+                                            <span class="chip chip--acc"><b>Revenue</b> {{ currency($session->sync_amount) }}</span>
                                         </div>
                                     </div>
                                 @endif

@@ -159,19 +159,6 @@
                                 @error('closing_time') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
 
-                            @if ($currentSession?->branch?->moq_sync)
-                                @can('day close.sync amount')
-                                    <div class="mb-3">
-                                        <label for="dsj-sync" class="form-label d-flex align-items-center">Sync amount <span class="text-danger ms-1">*</span> <span class="badge text-bg-primary ms-auto">MOQ sync</span></label>
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="fa fa-refresh"></i></span>
-                                            <input id="dsj-sync" type="number" step="0.01" min="0" class="form-control" wire:model="sync_amount" placeholder="0.00">
-                                        </div>
-                                        @error('sync_amount') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-                                    </div>
-                                @endcan
-                            @endif
-
                             <div class="mb-3">
                                 <label for="dsj-notes" class="form-label">Notes <span class="text-body-secondary">(optional)</span></label>
                                 <textarea id="dsj-notes" class="form-control" rows="2" wire:model="notes" placeholder="Anything worth noting about today's session…"></textarea>
@@ -319,7 +306,7 @@
         function confirmCloseSession() {
             Swal.fire({
                 title: 'Are you sure?',
-                html: "Are you sure you want to close the session? This action cannot be undone. @if($currentSession?->branch?->moq_sync) <br><i> The API sync amount is " + @this.get('sync_amount') + "</i> @endif ",
+                html: "Are you sure you want to close the session? This action cannot be undone.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',

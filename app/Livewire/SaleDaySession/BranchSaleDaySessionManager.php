@@ -2,7 +2,6 @@
 
 namespace App\Livewire\SaleDaySession;
 
-use App\Helpers\Facades\MoqSolutionsHelper;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\SaleDaySession;
@@ -28,8 +27,6 @@ class BranchSaleDaySessionManager extends Component
     public $opening_amount = 0;
 
     public $closing_amount = 0;
-
-    public $sync_amount = 0;
 
     public $notes;
 
@@ -65,12 +62,6 @@ class BranchSaleDaySessionManager extends Component
     protected function momentFor(string $time): Carbon
     {
         return Carbon::parse($this->date.' '.$time);
-    }
-
-    public function updatedClosingAmount()
-    {
-        // $this->sync_amount = $this->closing_amount;
-        // $this->sync_amount = 0;
     }
 
     public function loadOpenSessions()
@@ -118,8 +109,6 @@ class BranchSaleDaySessionManager extends Component
 
         // Set the default closing amount to the expected amount
         $this->closing_amount = $this->sessionStats['expected_amount'];
-        // $this->sync_amount = $this->closing_amount;
-        // $this->sync_amount = 0;
     }
 
     public function openDay()
@@ -204,13 +193,10 @@ class BranchSaleDaySessionManager extends Component
             return;
         }
 
-        $moqSync = (bool) $this->currentSession->branch?->moq_sync;
-
         $this->validate([
             'date' => 'required|date',
             'closing_time' => 'required|date_format:H:i',
             'closing_amount' => 'required|numeric|min:0',
-            'sync_amount' => $moqSync ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
         ]);
 
         $closedAt = $this->momentFor($this->closing_time);
@@ -229,19 +215,7 @@ class BranchSaleDaySessionManager extends Component
             DB::beginTransaction();
 
             // Close the day session at the chosen moment
-            $this->currentSession->close($this->closing_amount, $this->sync_amount, Auth::id(), $this->notes, $closedAt);
-
-            if ($moqSync) {
-                $syncData = [
-                    'Date' => $this->currentSession->opened_at->format('Y-m-d'),
-                    'Revenue' => floatval($this->sync_amount),
-                    'Outlet' => config('app.name').' '.$this->currentSession->branch->name,
-                ];
-                $result = MoqSolutionsHelper::syncDayCloseAmount($syncData);
-                if (! $result['success']) {
-                    throw new \Exception('Failed to close day: '.$result['error']);
-                }
-            }
+            $this->currentSession->close($this->closing_amount, $this->currentSession->sync_amount, Auth::id(), $this->notes, $closedAt);
 
             // Reset the form and reload sessions. The business date goes back to today so the
             // "not started" step doesn't keep showing the date the session was just closed against.

@@ -385,7 +385,7 @@ class SaleController extends Controller
 
     public function daySession($id)
     {
-        $session = SaleDaySession::with(['branch', 'opener', 'closer'])->findOrFail($id);
+        $session = SaleDaySession::with(['branch', 'opener', 'closer', 'syncer'])->findOrFail($id);
 
         return view('sale.day-session-details', [
             'session' => $session,
