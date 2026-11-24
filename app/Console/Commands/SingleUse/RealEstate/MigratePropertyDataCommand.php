@@ -3086,6 +3086,31 @@ class MigratePropertyDataCommand extends Command
                 'updated_at' => $row->updated_at ?? now(),
             ];
         }, ['user_id', 'branch_id']);
+
+        $this->migrateEmployeeBranches();
+    }
+
+    /**
+     * accounts kept an employee's branch in employees.branch_id, not in user_has_branches,
+     * so each migrated employee is attached to its default branch here. Without that row
+     * the employee pickers (salesman, assignee), which filter by the session branch, list nobody.
+     */
+    private function migrateEmployeeBranches(): void
+    {
+        $branchIds = DB::table('branches')->where('tenant_id', $this->tenantId)->pluck('id')->flip();
+        $employees = DB::table('users')
+            ->where('tenant_id', $this->tenantId)
+            ->where('type', 'employee')
+            ->whereNotNull('default_branch_id')
+            ->orderBy('id')
+            ->get(['id', 'default_branch_id']);
+
+        $this->migrateTable('employee branches', $employees, 'user_has_branches', fn ($row) => isset($branchIds[$row->default_branch_id]) ? [
+            'user_id' => $row->id,
+            'branch_id' => (int) $row->default_branch_id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ] : null, ['user_id', 'branch_id']);
     }
 
     /**

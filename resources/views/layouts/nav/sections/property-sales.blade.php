@@ -4,7 +4,9 @@
         auth()->user()->can('rent out lease.cheque management') ||
         auth()->user()->can('rent out service.view') ||
         auth()->user()->can('rent out security.view') ||
-        auth()->user()->can('rent out roi.view'))
+        auth()->user()->can('rent out roi.view') ||
+        auth()->user()->can('rent out commission.view') ||
+        auth()->user()->can('rent out commission.report'))
     <li class="nav-item has-sub">
         @php
             $salesList = [
@@ -14,6 +16,8 @@
                 'property/sale/booking/view/*',
                 'property/report/service-charge',
                 'property/report/roi',
+                'property/sale/commissions',
+                'property/report/commission',
                 'property/report/customer-property/lease',
                 'property/report/security/lease',
                 'property/report/daybook/lease',
@@ -71,6 +75,18 @@
                 <li class="nav-item">
                     <a href="{{ route('property::report::roi') }}"
                         class="nav-link {{ request()->is(['property/report/roi']) ? 'active' : '' }}">ROI Report</a>
+                </li>
+            @endcan
+            @can('rent out commission.view')
+                <li class="nav-item">
+                    <a href="{{ route('property::sale::commissions') }}"
+                        class="nav-link {{ request()->is(['property/sale/commissions']) ? 'active' : '' }}">Commissions</a>
+                </li>
+            @endcan
+            @can('rent out commission.report')
+                <li class="nav-item">
+                    <a href="{{ route('property::report::commission') }}"
+                        class="nav-link {{ request()->is(['property/report/commission']) ? 'active' : '' }}">Commission Report</a>
                 </li>
             @endcan
             @can('rent out lease.cheque management')

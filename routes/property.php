@@ -101,6 +101,10 @@ Route::middleware('auth')->group(function (): void {
                 Route::get('import', 'import')->name('import')->can('rent out lease.create');
             });
 
+            Route::controller(RentOutReportController::class)->group(function (): void {
+                Route::get('commissions', 'commissions')->name('commissions')->can('rent out commission.view');
+            });
+
             // Appointment Scheduler — the Calendly-style self-service bookings.
             // Named appointment_schedule:: rather than appointment:: so it
             // cannot be confused with the Sale module's appointment:: routes,
@@ -133,6 +137,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('security/{agreement_type?}', 'security')->name('security')->where('agreement_type', 'rental|lease')->can('rent out security.view');
             Route::get('service-charge', 'serviceCharge')->name('service-charge')->can('rent out lease.view');
             Route::get('roi', 'roi')->name('roi')->can('rent out roi.view');
+            Route::get('commission', 'commission')->name('commission')->can('rent out commission.report');
             Route::get('daybook/{agreement_type?}', 'daybook')->name('daybook')->where('agreement_type', 'rental|lease')->can('rent out.view');
         });
 

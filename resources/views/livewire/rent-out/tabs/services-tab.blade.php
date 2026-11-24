@@ -66,7 +66,7 @@
     {{-- Service Transactions --}}
     @if($servicePayments->count() > 0)
         <h6 class="fw-bold small text-muted mb-2"><i class="fa fa-exchange me-1"></i> Service Transactions</h6>
-        <div class="table-responsive" style="overflow: visible;">
+        <div class="table-responsive">
             <table class="table table-hover align-middle border-bottom mb-0 table-sm">
                 <thead class="bg-light text-muted">
                     <tr class="text-capitalize small">
@@ -128,6 +128,7 @@
                                     <button type="button" class="btn btn-sm border-0 p-1 d-inline-flex align-items-center justify-content-center"
                                         style="width: 32px; height: 32px; background: #f0f2f5; border-radius: 8px; color: #495057;"
                                         data-bs-toggle="dropdown" aria-expanded="false"
+                                        data-bs-popper-config='{"strategy":"fixed"}'
                                         onmouseover="this.style.background='#1a73e8'; this.style.color='#fff';"
                                         onmouseout="this.style.background='#f0f2f5'; this.style.color='#495057';">
                                         <i class="fa fa-ellipsis-v" style="font-size: 16px;"></i>

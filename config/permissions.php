@@ -249,6 +249,7 @@ return [
     'rent out utility' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out service' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out roi' => ['create', 'view', 'delete', 'payment'],
+    'rent out commission' => ['create', 'view', 'edit', 'delete', 'ceo approve', 'owner approve', 'finance approve', 'pay', 'report'],
     'rent out payment term' => ['create', 'view', 'edit', 'delete', 'export'],
     'rent out note' => ['create', 'view', 'delete'],
     'rent out document' => ['create', 'view', 'edit', 'delete'],

@@ -261,6 +261,12 @@ class RentOut extends Model implements AuditableContracts
         return $this->belongsTo(Account::class, 'down_payment_payment_method_id');
     }
 
+    /** @return HasMany<RentOutCommission, $this> */
+    public function commissions(): HasMany
+    {
+        return $this->hasMany(RentOutCommission::class);
+    }
+
     /** @return HasMany<RentOutSecurity, $this> */
     public function securities(): HasMany
     {

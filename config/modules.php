@@ -440,6 +440,7 @@ return [
                 'rent out utility',
                 'rent out service',
                 'rent out roi',
+                'rent out commission',
                 'rent out payment term',
                 'rent out note',
                 'rent out document',

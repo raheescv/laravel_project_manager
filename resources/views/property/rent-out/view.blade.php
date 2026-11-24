@@ -20,6 +20,10 @@
     <x-rent-out.payout-modal />
     <x-rent-out.roi-modal />
     <x-rent-out.roi-payment-modal />
+    @if (! $config->isRental)
+        <x-rent-out.commission-modal />
+        <x-rent-out.commission-pay-modal />
+    @endif
     <x-rent-out.transfer-payment-modal />
 
     {{-- Scripts --}}

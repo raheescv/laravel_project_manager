@@ -92,6 +92,10 @@ class AccountSeeder extends Seeder
         // Rent-out ROI (ResolvesRentOutAccounts::roiExpenseAccountId creates this on first use for older tenants)
         $data[] = ['name' => 'ROI Expense', 'slug' => 'roi_expense', 'account_type' => 'expense', 'description' => 'Return on investment owed to buyers on sale agreements', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
 
+        // Agent commission (ResolvesRentOutAccounts creates these on first use for older tenants)
+        $data[] = ['name' => 'Commission Expense', 'slug' => 'commission_expense', 'account_type' => 'expense', 'description' => 'Commission earned by agents on closed agreements', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $indirectExpenseMaster->id];
+        $data[] = ['name' => 'Commission Payable', 'slug' => 'commission_payable', 'account_type' => 'liability', 'description' => 'Approved agent commission not yet paid', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $currentLiabilityMaster->id];
+
         // Equity accounts (App\Support\OpeningStock creates this on first use for older tenants)
         $data[] = ['name' => 'Opening Stock', 'slug' => 'opening_stock', 'account_type' => 'equity', 'description' => 'Value of stock on hand when the books were opened', 'model' => null, 'second_reference_no' => null, 'account_category_id' => $equityMaster->id];
 

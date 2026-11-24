@@ -15,11 +15,17 @@
     if (! $isRental) {
         $tabs[] = ['key' => 'RoiTab', 'slug' => 'roi', 'icon' => 'fa-line-chart', 'label' => 'ROI'];
     }
+    $showCommission = ! $isRental && ! ($isBooking ?? false) && auth()->user()?->can('rent out commission.view');
+    if ($showCommission) {
+        $tabs[] = ['key' => 'CommissionTab', 'slug' => 'commission', 'icon' => 'fa-percent', 'label' => 'Commission'];
+    }
     $tabs = array_merge($tabs, [
         ['key' => 'ChequeTab', 'slug' => 'cheques', 'icon' => 'fa-check-square-o', 'label' => 'Cheques'],
         ['key' => 'SecurityTab', 'slug' => 'security', 'icon' => 'fa-shield', 'label' => 'Security'],
-        ['key' => 'ExtendTab', 'slug' => 'extend', 'icon' => 'fa-plus-circle', 'label' => 'Extend'],
     ]);
+    if ($isRental) {
+        $tabs[] = ['key' => 'ExtendTab', 'slug' => 'extend', 'icon' => 'fa-plus-circle', 'label' => 'Extend'];
+    }
     $showAgreementPoints = ($isBooking ?? false) || $rentOut->status === \App\Enums\RentOut\RentOutStatus::Booked;
     if ($showAgreementPoints) {
         $tabs[] = ['key' => 'AgreementPointsTab', 'slug' => 'agreement-points', 'icon' => 'fa-list-ol', 'label' => 'Agmt Points'];
@@ -103,6 +109,12 @@
                 </div>
             @endif
 
+            @if ($showCommission)
+                <div x-show="activeTab === 'CommissionTab'" x-transition:enter.duration.150ms>
+                    @livewire('rent-out.tabs.commission-tab', ['rentOutId' => $rentOut->id], key('commission-tab-' . $rentOut->id))
+                </div>
+            @endif
+
             <div x-show="activeTab === 'ChequeTab'" x-transition:enter.duration.150ms>
                 @livewire('rent-out.tabs.cheques-tab', ['rentOutId' => $rentOut->id], key('cheques-tab-' . $rentOut->id))
             </div>
@@ -111,9 +123,11 @@
                 @livewire('rent-out.tabs.security-tab', ['rentOutId' => $rentOut->id], key('security-tab-' . $rentOut->id))
             </div>
 
-            <div x-show="activeTab === 'ExtendTab'" x-transition:enter.duration.150ms>
-                @livewire('rent-out.tabs.extend-tab', ['rentOutId' => $rentOut->id], key('extend-tab-' . $rentOut->id))
-            </div>
+            @if ($isRental)
+                <div x-show="activeTab === 'ExtendTab'" x-transition:enter.duration.150ms>
+                    @livewire('rent-out.tabs.extend-tab', ['rentOutId' => $rentOut->id], key('extend-tab-' . $rentOut->id))
+                </div>
+            @endif
 
             @if ($showAgreementPoints)
                 <div x-show="activeTab === 'AgreementPointsTab'" x-transition:enter.duration.150ms>

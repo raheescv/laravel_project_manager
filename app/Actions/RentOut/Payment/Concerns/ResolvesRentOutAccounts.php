@@ -79,6 +79,43 @@ trait ResolvesRentOutAccounts
     }
 
     /**
+     * Expense account an agent's commission is booked to, created on first use
+     * for tenants that existed before commissions.
+     */
+    protected function commissionExpenseAccountId(RentOut $rentOut): int
+    {
+        return $this->ensureLockedAccount($rentOut->tenant_id, 'commission_expense', 'Commission Expense', 'expense', 'Indirect Expense', 'Commission earned by agents on closed agreements');
+    }
+
+    /**
+     * Liability holding approved commission until it is paid to the agent.
+     */
+    protected function commissionPayableAccountId(RentOut $rentOut): int
+    {
+        return $this->ensureLockedAccount($rentOut->tenant_id, 'commission_payable', 'Commission Payable', 'liability', 'Current Liabilities', 'Approved agent commission not yet paid');
+    }
+
+    protected function ensureLockedAccount(int $tenantId, string $slug, string $name, string $type, string $categoryName, string $description): int
+    {
+        $existing = $this->lockedAccountId($tenantId, $slug);
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        $category = AccountCategory::firstOrCreate(['tenant_id' => $tenantId, 'name' => $categoryName]);
+
+        return (int) Account::forceCreate([
+            'tenant_id' => $tenantId,
+            'name' => $name,
+            'slug' => $slug,
+            'account_type' => $type,
+            'description' => $description,
+            'account_category_id' => $category->id,
+            'is_locked' => 1,
+        ])->id;
+    }
+
+    /**
      * An account id supplied by the user (the modal's category select), kept
      * only when it really is an account of this tenant.
      */

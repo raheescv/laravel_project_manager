@@ -63,6 +63,7 @@ it('prints a receipt for credit rows and a payment voucher for debit rows', func
         ->assertDispatched('open-receipt-tab', url: route('print::rentout::payment-voucher', $charge->id))
         ->assertSee('Print Receipt')
         ->assertSee('Print Voucher')
+        ->assertSeeHtml('data-bs-popper-config=\'{"strategy":"fixed"}\'')
         ->call('deletePayment', $payment->id)
         ->assertSeeHtml('<td class="text-end fw-bold">1,000.00</td>')
         ->call('deletePayment', $charge->id)

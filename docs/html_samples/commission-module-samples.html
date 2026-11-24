@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commission Module — Samples</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ---------- Preview harness ---------- */
+body { font-family: Poppins, system-ui, sans-serif; font-size: .82rem; background: var(--bs-tertiary-bg); }
+.harness { position: sticky; top: 0; z-index: 30; background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); }
+.harness .btn { font-size: .76rem; }
+.stage { max-width: 1320px; margin: 0 auto; padding: 18px 16px 70px; }
+.note { font-size: .74rem; color: var(--bs-secondary-color); border-left: 3px solid var(--bs-warning); padding: 6px 10px; background: var(--bs-body-bg); border-radius: 0 8px 8px 0; }
+.scr { display: none; } .scr.on { display: block; }
+.var { display: none; } .var.on { display: block; }
+
+/* ---------- Scoped design layer .cmx (theme-var driven) ---------- */
+.cmx { --acc: var(--bs-primary); --acc-soft: color-mix(in srgb, var(--acc) 9%, transparent); --acc-ring: color-mix(in srgb, var(--acc) 26%, transparent);
+  --ink: var(--bs-body-color); --ink-2: var(--bs-secondary-color); --line: var(--bs-border-color-translucent); --panel: var(--bs-body-bg); --panel-2: var(--bs-tertiary-bg);
+  --ok: var(--bs-success); --warn: var(--bs-warning); --bad: var(--bs-danger); --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px -18px rgba(16,24,40,.35); color: var(--ink); }
+[data-bs-theme="dark"] .cmx { --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.9); }
+.cmx .shell { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.cmx .eyebrow { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--ink-2); }
+.cmx .mono { font-family: var(--mono); font-size: .74rem; }
+.cmx .num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+.cmx .muted { color: var(--ink-2); }
+.cmx .hl { background: var(--acc-soft); border: 1px dashed var(--acc); border-radius: 10px; position: relative; }
+.cmx .new-tag { position: absolute; top: -9px; right: 10px; font-size: .6rem; font-weight: 700; letter-spacing: .06em; background: var(--acc); color: #fff; padding: 1px 7px; border-radius: 99px; }
+.cmx .table { --bs-table-bg: transparent; margin: 0; font-size: .78rem; }
+.cmx .table thead th { font-size: .64rem; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; background: var(--panel-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.cmx .table td { vertical-align: middle; border-color: var(--line); }
+.cmx .btn-ghost { border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: .76rem; }
+.cmx .btn-ghost:hover { border-color: var(--acc); color: var(--acc); }
+.cmx .pill { font-size: .66rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.cmx .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.cmx .p-draft { background: var(--panel-2); color: var(--ink-2); border: 1px solid var(--line); }
+.cmx .p-sub { background: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
+.cmx .p-appr { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.cmx .p-fin { background: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.cmx .p-paid { background: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.cmx .p-rej { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+.cmx .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .7rem; font-weight: 600; color: #fff; background: var(--acc); flex: none; }
+
+/* management tabs — mirrors management-tabs.blade.php */
+.cmx .mgmt-tab-btn { font-size: .72rem; border-radius: .375rem; background: var(--bs-body-bg); border: 1px solid var(--bs-border-color); color: var(--bs-emphasis-color); }
+.cmx .mgmt-tab-btn i { color: var(--bs-primary); }
+.cmx .mgmt-tab-btn.active { background: var(--bs-primary); border-color: var(--bs-primary); color: #fff; box-shadow: 0 2px 6px rgba(var(--bs-primary-rgb), .25); }
+.cmx .mgmt-tab-btn.active i { color: #fff; }
+.cmx .mgmt-tab-btn.is-new { outline: 2px dashed var(--bs-warning); outline-offset: 2px; }
+
+/* approval stepper */
+.cmx .steps { display: flex; gap: 0; overflow-x: auto; padding: 4px 2px 2px; }
+.cmx .step { flex: 1 0 110px; text-align: center; position: relative; }
+.cmx .step::before { content: ""; position: absolute; top: 13px; left: -50%; width: 100%; height: 2px; background: var(--line); z-index: 0; }
+.cmx .step:first-child::before { display: none; }
+.cmx .step .dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 4px; display: grid; place-items: center; position: relative; z-index: 1; background: var(--panel); border: 2px solid var(--line); color: var(--ink-2); font-size: .72rem; }
+.cmx .step.done .dot { background: var(--ok); border-color: var(--ok); color: #fff; }
+.cmx .step.done::before, .cmx .step.cur::before { background: var(--ok); }
+.cmx .step.cur .dot { border-color: var(--acc); color: var(--acc); box-shadow: 0 0 0 4px var(--acc-ring); }
+.cmx .step.opt .dot { border-style: dashed; }
+.cmx .step .lbl { font-size: .68rem; font-weight: 600; }
+.cmx .step .sub { font-size: .62rem; color: var(--ink-2); }
+
+/* figure tiles */
+.cmx .fig { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--panel); }
+.cmx .fig .v { font-size: 1.05rem; font-weight: 600; }
+.cmx .fig.accent { background: var(--acc-soft); border-color: var(--acc-ring); }
+.cmx .fig.accent .v { color: var(--acc); }
+.cmx .calc { font-family: var(--mono); font-size: .74rem; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.cmx .je { font-family: var(--mono); font-size: .72rem; }
+.cmx .je .dr { color: var(--bs-danger-text-emphasis); } .cmx .je .cr { color: var(--bs-success-text-emphasis); padding-left: 18px; }
+
+/* sidebar mock */
+.cmx .side { background: #1f2533; color: #c8cfdc; border-radius: 12px; padding: 10px; font-size: .76rem; }
+[data-bs-theme="dark"] .cmx .side { background: #11151d; }
+.cmx .side .grp { color: #fff; font-weight: 600; padding: 6px 8px; display: flex; gap: 8px; align-items: center; }
+.cmx .side .it { padding: 5px 8px 5px 30px; border-radius: 6px; }
+.cmx .side .it.new { background: rgba(255,193,7,.14); color: #ffd666; font-weight: 600; }
+.cmx .side .it.new::after { content: " NEW"; font-size: .58rem; letter-spacing: .06em; }
+.cmx .timeline { list-style: none; padding: 0; margin: 0; }
+.cmx .timeline li { position: relative; padding: 0 0 10px 18px; font-size: .74rem; }
+.cmx .timeline li::before { content: ""; position: absolute; left: 4px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.cmx .timeline li::after { content: ""; position: absolute; left: 7.5px; top: 14px; bottom: 0; width: 1px; background: var(--line); }
+.cmx .timeline li:last-child::after { display: none; }
+.cmx .chipbar .btn { font-size: .72rem; border-radius: 99px; }
+.cmx .form-control, .cmx .form-select { font-size: .78rem; }
+.cmx .typeseg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; padding: 3px; background: var(--panel-2); }
+.cmx .typeseg span { padding: 4px 12px; border-radius: 6px; font-size: .74rem; font-weight: 500; color: var(--ink-2); cursor: pointer; }
+.cmx .typeseg span.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+</style>
+</head>
+<body>
+
+<div class="harness">
+  <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2">
+    <strong class="me-2"><i class="fa fa-percent text-primary"></i> Commission module — samples</strong>
+    <div class="btn-group btn-group-sm" id="scrBtns">
+      <button class="btn btn-outline-primary active" data-scr="map">0 · Where it lives</button>
+      <button class="btn btn-outline-primary" data-scr="tab">1 · Sale view → Commission</button>
+      <button class="btn btn-outline-primary" data-scr="register">2 · Commissions (approvals)</button>
+      <button class="btn btn-outline-primary" data-scr="report">3 · Commission Report</button>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary ms-auto" id="themeBtn"><i class="fa fa-adjust"></i> Light / Dark</button>
+  </div>
+</div>
+
+<div class="stage cmx">
+
+<!-- ================= 0 · MAP ================= -->
+<section class="scr on" id="scr-map">
+  <div class="row g-3">
+    <div class="col-lg-3">
+      <div class="side">
+        <div class="grp"><i class="fa fa-home"></i> Rent Out</div>
+        <div class="grp"><i class="fa fa-dollar"></i> Sales</div>
+        <div class="it">Sales</div><div class="it">Booking</div><div class="it">Payments</div>
+        <div class="it">Service Charge Report</div><div class="it">ROI Report</div><div class="it">Cheque Management</div>
+        <div class="it new">Commissions</div>
+        <div class="it new">Commission Report</div>
+        <div class="grp"><i class="fa fa-filter"></i> Leads</div>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <div class="shell p-3">
+        <div class="eyebrow mb-2">Three touch-points, one flow</div>
+        <div class="row g-2">
+          <div class="col-md-4"><div class="fig h-100"><div class="fw-semibold mb-1"><span class="badge text-bg-primary me-1">1</span>Sale view → <u>Commission</u> tab</div><div class="muted small">Per-deal. Pick Percentage or Fixed and enter the rate on the deal itself (no setup master). Agent = agreement salesman. Submit / approve / invoice / pay from here.</div></div></div>
+          <div class="col-md-4"><div class="fig h-100"><div class="fw-semibold mb-1"><span class="badge text-bg-primary me-1">2</span>Sales → Commissions</div><div class="muted small">Approval queue across all deals: CEO / Owner / Finance each see "waiting on me"; bulk approve; pay selected.</div></div></div>
+          <div class="col-md-4"><div class="fig h-100"><div class="fw-semibold mb-1"><span class="badge text-bg-primary me-1">3</span>Sales → Commission Report</div><div class="muted small">Agent, Property, Contract No., Tenant, %, Amount, Paid/Unpaid — Excel export + print.</div></div></div>
+        </div>
+        <hr>
+        <div class="eyebrow mb-2">Accounting (via Journal CreateAction)</div>
+        <div class="row g-2">
+          <div class="col-md-6"><div class="calc je"><div class="muted mb-1">On Finance Approval</div><div class="dr">Dr  Commission Expense      3,000.00</div><div class="cr">Cr  Commission Payable — Agent  3,000.00</div></div></div>
+          <div class="col-md-6"><div class="calc je"><div class="muted mb-1">On Payment</div><div class="dr">Dr  Commission Payable — Agent  3,000.00</div><div class="cr">Cr  Cash / Bank             3,000.00</div></div></div>
+        </div>
+      </div>
+      <div class="note mt-3"><b>Open questions for you:</b> (1) Spec has two approval chains — "CEO → Owner (optional) → Finance" vs "Submitted → Manager Approved → Finance". Samples use CEO → Owner(optional) → Finance. (2) One agent per deal (agreement salesman), or allow split between 2+ agents? (3) Commission also for Rent Out (Leasing) agreements, or Sales only?</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 1 · SALE VIEW TAB ================= -->
+<section class="scr" id="scr-tab">
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <span class="eyebrow">Placement</span>
+    <div class="btn-group btn-group-sm" id="varBtns">
+      <button class="btn btn-outline-secondary active" data-var="A">A · Own "Commission" tab (recommended)</button>
+      <button class="btn btn-outline-secondary" data-var="B">B · Compact card above tabs</button>
+      <button class="btn btn-outline-secondary" data-var="C">C · Section inside Services tab</button>
+    </div>
+  </div>
+
+  <!-- ---------- A ---------- -->
+  <div class="var on" id="var-A">
+    <div class="shell">
+      <div class="px-3 py-2 border-bottom d-flex align-items-center gap-2"><span class="avatar" style="width:26px;height:26px;background:var(--bs-secondary-bg);color:var(--ink)"><i class="fa fa-folder-open"></i></span><b>Management Sections</b></div>
+      <div class="d-flex flex-wrap gap-1 px-2 py-2 border-bottom" style="background:var(--panel-2)">
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-credit-card me-1"></i>Payment</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-calendar me-1"></i>Terms</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-cogs me-1"></i>Services</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-line-chart me-1"></i>ROI</button>
+        <button class="btn btn-sm mgmt-tab-btn active is-new"><i class="fa fa-percent me-1"></i>Commission</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-check-square-o me-1"></i>Cheques</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-shield me-1"></i>Security</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-plus-circle me-1"></i>Extend</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-file-text-o me-1"></i>Notes</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-exchange me-1"></i>Transactions</button>
+        <button class="btn btn-sm mgmt-tab-btn"><i class="fa fa-file-o me-1"></i>Documents</button>
+      </div>
+      <div class="p-3">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <span class="muted"><i class="fa fa-percent me-1"></i>Commission Expense</span>
+          <span class="pill p-appr">CEO Approved</span>
+          <div class="ms-auto d-flex gap-2">
+            <button class="btn btn-sm btn-ghost"><i class="fa fa-pencil me-1"></i>Edit</button>
+            <button class="btn btn-sm btn-ghost text-danger"><i class="fa fa-times me-1"></i>Reject</button>
+            <button class="btn btn-sm btn-primary"><i class="fa fa-check me-1"></i>Owner Approve</button>
+          </div>
+        </div>
+
+        <div class="shell p-3 mb-3" style="box-shadow:none">
+          <div class="steps">
+            <div class="step done"><div class="dot"><i class="fa fa-check"></i></div><div class="lbl">Draft</div><div class="sub">02 Jul · Rahees</div></div>
+            <div class="step done"><div class="dot"><i class="fa fa-check"></i></div><div class="lbl">Submitted</div><div class="sub">02 Jul · Agent</div></div>
+            <div class="step done"><div class="dot"><i class="fa fa-check"></i></div><div class="lbl">CEO Approved</div><div class="sub">04 Jul · CEO</div></div>
+            <div class="step cur opt"><div class="dot">4</div><div class="lbl">Owner Approval</div><div class="sub">optional · waiting</div></div>
+            <div class="step"><div class="dot">5</div><div class="lbl">Finance Approved</div><div class="sub">posts journal</div></div>
+            <div class="step"><div class="dot">6</div><div class="lbl">Invoiced</div><div class="sub">commission invoice</div></div>
+            <div class="step"><div class="dot">7</div><div class="lbl">Paid</div><div class="sub">cash / bank</div></div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-lg-8">
+            <div class="row g-2 mb-3">
+              <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Agent</div><div class="d-flex align-items-center gap-2 mt-1"><span class="avatar">SA</span><div class="fw-semibold">Sameer A.</div></div></div></div>
+              <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Type</div><div class="typeseg mt-1"><span class="on">%</span><span>Fixed</span></div><div class="input-group input-group-sm mt-1"><input class="form-control text-end" value="5.00"><span class="input-group-text">%</span></div></div></div>
+              <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Contract amount</div><div class="v num">60,000.00</div></div></div>
+              <div class="col-6 col-md-3"><div class="fig accent"><div class="eyebrow">Commission</div><div class="v num">3,000.00</div></div></div>
+            </div>
+            <div class="calc mb-3"><span class="muted">Calculation</span>&nbsp; 60,000.00 × 5.00 % = <b>QAR 3,000.00</b> <span class="muted ms-2">(editable until CEO approval; Fixed = amount entered directly)</span></div>
+            <div class="eyebrow mb-1">Documents</div>
+            <table class="table border rounded">
+              <thead><tr><th>Document</th><th>No.</th><th>Date</th><th class="text-end">Amount</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><i class="fa fa-file-text-o me-1 muted"></i>Commission Invoice</td><td class="muted">— after Finance Approval —</td><td></td><td></td><td></td></tr>
+                <tr><td><i class="fa fa-book me-1 muted"></i>Journal (Dr Expense / Cr Payable)</td><td class="muted">—</td><td></td><td></td><td></td></tr>
+                <tr><td><i class="fa fa-money me-1 muted"></i>Payment Voucher</td><td class="muted">—</td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-lg-4">
+            <div class="shell p-3 h-100" style="box-shadow:none">
+              <div class="eyebrow mb-2">Activity</div>
+              <ul class="timeline">
+                <li><b>CEO approved</b> <span class="muted">· 04 Jul 10:12</span><div class="muted">"OK — deal closed above asking."</div></li>
+                <li><b>Submitted</b> by Sameer A. <span class="muted">· 02 Jul 16:40</span></li>
+                <li><b>Commission entered</b> 5% of contract <span class="muted">· 02 Jul 16:31</span></li>
+                <li><b>Contract generated</b> SA-2026-0141 <span class="muted">· 02 Jul 16:30</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note mt-2">New tab sits next to ROI (Sale-only tabs). Same Livewire tab pattern as Services/ROI → <span class="mono">rent-out.tabs.commission-tab</span>. Buttons shown depend on the current step + the user's permission (<span class="mono">rent out commission.ceo approve</span>, <span class="mono">.finance approve</span>, <span class="mono">.pay</span>).</div>
+  </div>
+
+  <!-- ---------- B ---------- -->
+  <div class="var" id="var-B">
+    <div class="row g-3">
+      <div class="col-lg-4"><div class="shell p-3" style="height:150px"><div class="eyebrow">Tenant / Customer</div><div class="muted small mt-2">(existing hero card)</div></div></div>
+      <div class="col-lg-4"><div class="shell p-3" style="height:150px"><div class="eyebrow">Financials</div><div class="muted small mt-2">(existing hero card)</div></div></div>
+      <div class="col-lg-4">
+        <div class="shell p-3 hl" style="box-shadow:none"><span class="new-tag">NEW</span>
+          <div class="d-flex align-items-center mb-2"><div class="eyebrow">Commission Expense</div><span class="pill p-appr ms-auto">CEO Approved</span></div>
+          <div class="d-flex align-items-center gap-2 mb-2"><span class="avatar">SA</span><div><div class="fw-semibold">Sameer A.</div><div class="muted small">Percentage · 5%</div></div><div class="ms-auto text-end"><div class="num fw-semibold fs-6">3,000.00</div><div class="muted small">of 60,000.00</div></div></div>
+          <div class="progress mb-2" style="height:6px"><div class="progress-bar bg-success" style="width:43%"></div></div>
+          <div class="d-flex gap-2"><span class="muted small">Next: Owner approval</span><button class="btn btn-sm btn-primary ms-auto"><i class="fa fa-check me-1"></i>Approve</button><button class="btn btn-sm btn-ghost"><i class="fa fa-external-link"></i></button></div>
+        </div>
+      </div>
+    </div>
+    <div class="note mt-2">Always visible at a glance, but no room for invoice / journal / history — the <i class="fa fa-external-link"></i> button would open a modal for those. Good if commission is mostly a "status check".</div>
+  </div>
+
+  <!-- ---------- C ---------- -->
+  <div class="var" id="var-C">
+    <div class="shell p-3">
+      <div class="d-flex align-items-center mb-2"><span class="muted"><i class="fa fa-cogs me-1"></i>Services &amp; Charges</span>
+        <div class="ms-auto d-flex gap-2"><button class="btn btn-sm btn-ghost"><i class="fa fa-plus me-1"></i>Add Service</button><button class="btn btn-sm btn-ghost text-info"><i class="fa fa-calculator me-1"></i>Service Charge</button><button class="btn btn-sm btn-ghost text-success"><i class="fa fa-money me-1"></i>Pay Existing</button></div></div>
+      <div class="eyebrow mb-1"><i class="fa fa-bar-chart"></i> Services Summary</div>
+      <table class="table border mb-3"><thead><tr><th>Category</th><th class="text-end">Credit</th><th class="text-end">Debit</th><th class="text-end">Balance</th></tr></thead>
+        <tbody><tr><td>Gym</td><td class="text-end text-success num">0.00</td><td class="text-end text-danger num">12.00</td><td class="text-end fw-bold num">12.00</td></tr></tbody></table>
+      <div class="hl p-2"><span class="new-tag">NEW</span>
+        <div class="d-flex align-items-center mb-1"><div class="eyebrow"><i class="fa fa-percent"></i> Commission Expense</div><button class="btn btn-sm btn-primary ms-auto"><i class="fa fa-check me-1"></i>Approve</button></div>
+        <table class="table"><thead><tr><th>Agent</th><th>Type</th><th class="text-end">Contract</th><th class="text-end">%</th><th class="text-end">Commission</th><th>Status</th></tr></thead>
+          <tbody><tr><td>Sameer A.</td><td>Percentage</td><td class="text-end num">60,000.00</td><td class="text-end num">5.00</td><td class="text-end num fw-semibold">3,000.00</td><td><span class="pill p-appr">CEO Approved</span></td></tr></tbody></table>
+      </div>
+    </div>
+    <div class="note mt-2">Zero new tabs, but mixes a company <i>expense</i> with tenant-billed services — easy to confuse on the Services summary. Not recommended.</div>
+  </div>
+</section>
+
+<!-- ================= 2 · REGISTER ================= -->
+<section class="scr" id="scr-register">
+  <div class="row g-2 mb-3">
+    <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Waiting on me</div><div class="v num">4</div></div></div>
+    <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Approved, unpaid</div><div class="v num">12,500.00</div></div></div>
+    <div class="col-6 col-md-3"><div class="fig"><div class="eyebrow">Paid this month</div><div class="v num">8,000.00</div></div></div>
+    <div class="col-6 col-md-3"><div class="fig accent"><div class="eyebrow">Total commission YTD</div><div class="v num">96,400.00</div></div></div>
+  </div>
+  <div class="shell">
+    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 border-bottom chipbar">
+      <b class="me-2">Commissions</b>
+      <button class="btn btn-sm btn-primary">Waiting on me · 4</button>
+      <button class="btn btn-sm btn-ghost">Submitted</button><button class="btn btn-sm btn-ghost">CEO Approved</button>
+      <button class="btn btn-sm btn-ghost">Finance Approved</button><button class="btn btn-sm btn-ghost">Paid</button><button class="btn btn-sm btn-ghost">All</button>
+      <div class="ms-auto d-flex gap-2"><button class="btn btn-sm btn-ghost"><i class="fa fa-check me-1"></i>Approve selected (2)</button><button class="btn btn-sm btn-success"><i class="fa fa-money me-1"></i>Pay selected</button></div>
+    </div>
+    <div class="table-responsive">
+    <table class="table table-hover">
+      <thead><tr><th><input type="checkbox" class="form-check-input"></th><th>Contract No.</th><th>Agent</th><th>Property</th><th>Customer</th><th class="text-end">Contract</th><th class="text-end">%</th><th class="text-end">Commission</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><input type="checkbox" class="form-check-input" checked></td><td class="mono">SA-2026-0141</td><td>Sameer A.</td><td>Tower B · 1203</td><td>Ahmed Al-Kuwari</td><td class="text-end num">60,000.00</td><td class="text-end num">5.00</td><td class="text-end num fw-semibold">3,000.00</td><td><span class="pill p-appr">CEO Approved</span></td><td><button class="btn btn-sm btn-ghost">Approve</button></td></tr>
+        <tr><td><input type="checkbox" class="form-check-input" checked></td><td class="mono">SA-2026-0138</td><td>Rinu K.</td><td>Villa 14 · Lusail</td><td>M. Haddad</td><td class="text-end num">1,250,000.00</td><td class="text-end num">2.00</td><td class="text-end num fw-semibold">25,000.00</td><td><span class="pill p-sub">Submitted</span></td><td><button class="btn btn-sm btn-ghost">Approve</button></td></tr>
+        <tr><td><input type="checkbox" class="form-check-input"></td><td class="mono">RO-2026-0412</td><td>Sameer A.</td><td>Tower A · 504</td><td>S. Nair</td><td class="text-end num">84,000.00</td><td class="text-end muted">fixed</td><td class="text-end num fw-semibold">1,000.00</td><td><span class="pill p-fin">Finance Approved</span></td><td><button class="btn btn-sm btn-ghost text-success">Pay</button></td></tr>
+        <tr><td><input type="checkbox" class="form-check-input"></td><td class="mono">SA-2026-0120</td><td>Rinu K.</td><td>Tower B · 801</td><td>F. Al-Thani</td><td class="text-end num">72,000.00</td><td class="text-end num">5.00</td><td class="text-end num fw-semibold">3,600.00</td><td><span class="pill p-paid">Paid</span></td><td><i class="fa fa-print muted"></i></td></tr>
+        <tr><td><input type="checkbox" class="form-check-input"></td><td class="mono">SA-2026-0117</td><td>Joseph T.</td><td>Tower A · 210</td><td>K. Rahman</td><td class="text-end num">55,000.00</td><td class="text-end num">5.00</td><td class="text-end num fw-semibold">2,750.00</td><td><span class="pill p-rej">Rejected</span></td><td></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3 · REPORT ================= -->
+<section class="scr" id="scr-report">
+  <div class="shell">
+    <div class="d-flex flex-wrap align-items-end gap-2 px-3 py-2 border-bottom">
+      <div><label class="form-label small mb-1">From</label><input class="form-control form-control-sm" value="01-07-2026" style="width:120px"></div>
+      <div><label class="form-label small mb-1">To</label><input class="form-control form-control-sm" value="30-11-2026" style="width:120px"></div>
+      <div><label class="form-label small mb-1">Agent</label><select class="form-select form-select-sm" style="width:150px"><option>All agents</option></select></div>
+      <div><label class="form-label small mb-1">Type</label><select class="form-select form-select-sm" style="width:120px"><option>Sale</option><option>Rent Out</option></select></div>
+      <div><label class="form-label small mb-1">Status</label><select class="form-select form-select-sm" style="width:120px"><option>All</option><option>Paid</option><option>Unpaid</option></select></div>
+      <div class="ms-auto d-flex gap-2"><button class="btn btn-sm btn-ghost"><i class="fa fa-file-excel-o me-1"></i>Export</button><button class="btn btn-sm btn-ghost"><i class="fa fa-print me-1"></i>Print</button></div>
+    </div>
+    <div class="table-responsive">
+    <table class="table">
+      <thead><tr><th>Agent Name</th><th>Property</th><th>Contract No.</th><th>Tenant / Buyer</th><th class="text-end">Commission %</th><th class="text-end">Commission Amount</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Sameer A.</td><td>Tower B · 1203</td><td class="mono">SA-2026-0141</td><td>Ahmed Al-Kuwari</td><td class="text-end num">5.00</td><td class="text-end num">3,000.00</td><td><span class="pill p-fin">Unpaid</span></td></tr>
+        <tr><td>Sameer A.</td><td>Tower A · 504</td><td class="mono">RO-2026-0412</td><td>S. Nair</td><td class="text-end muted">fixed</td><td class="text-end num">1,000.00</td><td><span class="pill p-fin">Unpaid</span></td></tr>
+        <tr style="background:var(--panel-2)"><td colspan="5" class="fw-semibold text-end">Sameer A. — subtotal</td><td class="text-end num fw-semibold">4,000.00</td><td></td></tr>
+        <tr><td>Rinu K.</td><td>Tower B · 801</td><td class="mono">SA-2026-0120</td><td>F. Al-Thani</td><td class="text-end num">5.00</td><td class="text-end num">3,600.00</td><td><span class="pill p-paid">Paid</span></td></tr>
+        <tr><td>Rinu K.</td><td>Villa 14 · Lusail</td><td class="mono">SA-2026-0138</td><td>M. Haddad</td><td class="text-end num">2.00</td><td class="text-end num">25,000.00</td><td><span class="pill p-fin">Unpaid</span></td></tr>
+        <tr style="background:var(--panel-2)"><td colspan="5" class="fw-semibold text-end">Rinu K. — subtotal</td><td class="text-end num fw-semibold">28,600.00</td><td></td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="5" class="fw-bold text-end">Total</td><td class="text-end num fw-bold">32,600.00</td><td class="small muted">Paid 3,600 · Unpaid 29,000</td></tr></tfoot>
+    </table>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const $$ = (s) => document.querySelectorAll(s);
+$$('#scrBtns button').forEach(b => b.onclick = () => {
+  $$('#scrBtns button').forEach(x => x.classList.remove('active')); b.classList.add('active');
+  $$('.scr').forEach(s => s.classList.toggle('on', s.id === 'scr-' + b.dataset.scr));
+});
+$$('#varBtns button').forEach(b => b.onclick = () => {
+  $$('#varBtns button').forEach(x => x.classList.remove('active')); b.classList.add('active');
+  $$('.var').forEach(s => s.classList.toggle('on', s.id === 'var-' + b.dataset.var));
+});
+document.getElementById('themeBtn').onclick = () => {
+  const h = document.documentElement; h.dataset.bsTheme = h.dataset.bsTheme === 'dark' ? 'light' : 'dark';
+};
+</script>
+</body>
+</html>

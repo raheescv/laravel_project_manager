@@ -62,7 +62,7 @@ it('maps every management tab to a url slug', function (): void {
         'roi' => 'RoiTab',
         'cheques' => 'ChequeTab',
         'checklist' => 'ChecklistTab',
-    ])->not->toHaveKey('utilities');
+    ])->not->toHaveKey('utilities')->not->toHaveKey('extend');
 });
 
 it('shows agreement points on the booking view even after the booking is confirmed', function (): void {

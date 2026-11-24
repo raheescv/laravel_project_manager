@@ -37,6 +37,16 @@ class RentOutReportController extends Controller
         return view('property.report.roi');
     }
 
+    public function commissions()
+    {
+        return view('property.report.commissions');
+    }
+
+    public function commission()
+    {
+        return view('property.report.commission');
+    }
+
     public function daybook(?string $agreement_type = null)
     {
         $type = $agreement_type ? AgreementType::tryFrom($agreement_type) : null;
