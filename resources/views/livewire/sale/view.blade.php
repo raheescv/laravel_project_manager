@@ -199,6 +199,11 @@
                 <i class="fa fa-globe hi"></i>
                 <h4>Online order</h4>
                 <span class="s-chip c-i">{{ $checkout->isDelivery() ? 'Delivery' : 'Pickup' }}</span>
+                @if ($checkout->branch)
+                    <span class="s-chip c-a" title="{{ $checkout->isDelivery() ? 'Branch the order ships from' : 'Branch the customer chose for pickup' }}">
+                        <i class="fa fa-building-o"></i> {{ $checkout->branch->name }}
+                    </span>
+                @endif
                 <span class="cs mono">{{ $checkout->reference }}</span>
             </div>
             <div class="s-two">

@@ -280,6 +280,20 @@ it('leaves a sale with no coupon showing as before', function (): void {
         ->assertDontSee('Coupon discount');
 });
 
+it('shows the branch the customer chose for pickup on the sale page', function (): void {
+    ($this->capture)(745);
+
+    $reference = ($this->checkout)()->json('data.reference');
+    $this->getJson($this->world->url("/api/v1/storefront/checkout/{$reference}"))->assertJsonPath('data.status', 'paid');
+
+    $this->actingAs($this->world->user);
+    session(['branch_id' => $this->world->branch->id]);
+
+    Livewire::test(SaleView::class, ['table_id' => Sale::withoutGlobalScopes()->sole()->id])
+        ->assertSee('Branch the customer chose for pickup')
+        ->assertSeeHtml('<i class="fa fa-building-o"></i> '.e($this->world->branch->name));
+});
+
 it('records the sale even when the recording user has a low discount limit', function (): void {
     User::query()->whereKey($this->world->user->id)->update(['max_discount_per_sale' => 1]);
     Coupon::factory()->create(['code' => 'SAVE20', 'discount_value' => 20]);
