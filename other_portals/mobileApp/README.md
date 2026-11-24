@@ -152,6 +152,7 @@ flutter build apk --dart-define-from-file=env.json --target-platform android-arm
 # Android — release APK (signed, for distribution)
 flutter build apk --release --dart-define-from-file=env.json
 flutter build apk --release --dart-define-from-file=env.json --target-platform android-arm64
+flutter build apk --release --split-per-abi --dart-define-from-file=env.json --target-platform android-arm,android-arm64
 
 # Android — App Bundle (Play Store upload)
 flutter build appbundle --release --dart-define-from-file=env.json

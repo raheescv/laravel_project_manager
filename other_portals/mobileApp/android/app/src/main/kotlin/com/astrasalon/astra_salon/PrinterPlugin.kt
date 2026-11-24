@@ -1,4 +1,4 @@
-package com.astraqatar.invo
+package com.astraqatar.qloudepos
 
 import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
@@ -75,7 +75,7 @@ class PrinterPlugin(private val context: Context) : MethodChannel.MethodCallHand
         private const val IMIN_DESCRIPTOR = "com.imin.printerPlugin.IminPrintService"
         private const val IMIN_PRINT_IMAGE = IBinder.FIRST_CALL_TRANSACTION
 
-        private const val USB_PERMISSION_ACTION = "com.astraqatar.invo.USB_PERMISSION"
+        private const val USB_PERMISSION_ACTION = "com.astraqatar.qloudepos.USB_PERMISSION"
 
         /**
          * Bytes per write on a Bluetooth link. Cheap printers have a ~1KB input

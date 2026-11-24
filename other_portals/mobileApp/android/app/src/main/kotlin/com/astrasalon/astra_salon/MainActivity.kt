@@ -1,4 +1,4 @@
-package com.astraqatar.invo
+package com.astraqatar.qloudepos
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
