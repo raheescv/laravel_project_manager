@@ -39,6 +39,15 @@ class ReverseTransactionAction
             return;
         }
 
+        // A receipt that was transferred out keeps a Transfer Out row pointing at
+        // it; unwind that transfer first so the term isn't released twice.
+        RentOutTransaction::where('rent_out_id', $payment->rent_out_id)
+            ->where('source', 'Transfer')
+            ->where('source_id', $payment->id)
+            ->where('debit', '>', 0)
+            ->get()
+            ->each(fn (RentOutTransaction $transferOut) => $this->reverseTransfer($transferOut));
+
         $this->rollbackSideEffects($payment, $resetCheque);
         $this->deleteJournal($payment->journal_id);
 
@@ -57,7 +66,7 @@ class ReverseTransactionAction
             : collect([$payment]);
 
         foreach ($rows as $row) {
-            if ($row->category === 'transfer_out' && $row->debit > 0) {
+            if ($row->debit > 0) {
                 // Restore the source term the transfer had freed. The originating
                 // receipt is referenced by source_id; re-add the amount to its term.
                 $origin = $row->source_id ? RentOutTransaction::find($row->source_id) : null;
@@ -69,7 +78,7 @@ class ReverseTransactionAction
                 );
             }
 
-            if ($row->category === 'transfer_in' && $row->credit > 0) {
+            if ($row->credit > 0) {
                 // Roll back the target term's paid total (reuses the shared helper).
                 $this->rollbackSideEffects($row, resetCheque: false);
             }

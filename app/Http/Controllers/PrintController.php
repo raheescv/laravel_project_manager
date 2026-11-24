@@ -6,6 +6,7 @@ use App\Actions\PurchaseVendor\BuildStatementDataAction;
 use App\Actions\RentOut\Checklist\GeneratePdfAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
+use App\Actions\RentOut\StatementEntriesAction;
 use App\Actions\Student\PreOrder\PrintListAction;
 use App\Helpers\Facades\SaleHelper;
 use App\Models\Account;
@@ -112,47 +113,10 @@ class PrintController extends Controller
     {
         $rentOut = RentOut::with([
             'customer', 'property', 'building', 'group', 'type',
-            'paymentTerms', 'journals',
+            'paymentTerms',
         ])->findOrFail($id);
 
-        $payments = collect();
-
-        // Add payment term debits
-        foreach ($rentOut->paymentTerms as $term) {
-            $payments->push([
-                'date' => $term->due_date,
-                'payment_mode' => 'Rent Due',
-                'cheque_no' => '',
-                'debit' => $term->total ?? 0,
-                'credit' => 0,
-                'remark' => $term->remarks ?? '',
-            ]);
-        }
-
-        // Add journal credits (actual payments)
-        foreach ($rentOut->journals as $journal) {
-            if (($journal->credit ?? 0) > 0) {
-                $payments->push([
-                    'date' => $journal->date,
-                    'payment_mode' => $journal->payment_mode ?? '',
-                    'cheque_no' => $journal->cheque_no ?? '',
-                    'debit' => 0,
-                    'credit' => $journal->credit ?? 0,
-                    'remark' => $journal->remark ?? '',
-                ]);
-            }
-        }
-
-        // Filter by date range
-        if ($fromDate && $toDate) {
-            $payments = $payments->filter(function ($payment) use ($fromDate, $toDate) {
-                $date = Carbon::parse($payment['date']);
-
-                return $date->greaterThanOrEqualTo($fromDate) && $date->lessThanOrEqualTo($toDate);
-            });
-        }
-
-        $payments = $payments->sortBy('date')->values();
+        $payments = (new StatementEntriesAction())->execute($rentOut, $fromDate, $toDate);
 
         $data = array_merge(
             compact('rentOut', 'payments', 'fromDate', 'toDate'),

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\RentOut\Rent;
 
+use App\Actions\RentOut\Payment\TransferTransactionAction;
 use App\Enums\RentOut\AgreementType;
 use App\Enums\RentOut\PaymentMode;
 use App\Livewire\RentOut\Concerns\HasRentOutReportFilters;
@@ -78,6 +79,8 @@ class PaymentHistoryTable extends Component
             ->whereHas('rentOut', fn ($q) => $q->where('agreement_type', $agreementTypeEnum))
             ->where('credit', '>', 0) // Only receipts (money received from customers)
             ->where('source', '!=', RentOutRoi::SOURCE) // ROI credits the customer without any cash coming in
+            // A payment transfer re-allocates a receipt between agreements; no cash comes in.
+            ->where(fn ($q) => $q->whereNull('payment_type')->orWhere('payment_type', '!=', TransferTransactionAction::PAYMENT_TYPE))
             ->tap(fn ($q) => $this->applyRentOutFilters($q))
             ->tap(fn ($q) => $this->applyDateFilter($q, 'date'))
             ->when($this->search, function ($q, $value) {

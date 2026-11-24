@@ -225,7 +225,11 @@
         <div class="small text-muted">
             <i class="fa fa-credit-card me-1"></i>
             <strong>{{ $payments->count() }}</strong> payment(s) received
-            &middot; Total: <strong class="text-success">{{ number_format($payments->sum('credit'), 2) }}</strong>
+            &middot; Total: <strong class="text-success">{{ number_format($payments->sum('credit') - $payments->sum('debit'), 2) }}</strong>
+            @if ($payments->sum('debit') > 0)
+                <span class="text-muted">({{ number_format($payments->sum('credit'), 2) }} received
+                    <span class="text-danger">&minus; {{ number_format($payments->sum('debit'), 2) }} transferred out</span>)</span>
+            @endif
         </div>
         <div class="d-flex gap-1">
             @if (count($selectedIds) > 0)
@@ -441,8 +445,17 @@
                             class="small text-nowrap {{ $payment->account?->name ? '' : 'is-empty' }}">{{ $payment->account?->name ?? '' }}</td>
                         <td data-label="Cheque No" x-show="columns.cheque_no"
                             class="small text-nowrap {{ $payment->cheque_no ? '' : 'is-empty' }}">{{ $payment->cheque_no ?? '' }}</td>
-                        <td data-label="Amount" x-show="columns.credit" class="text-end text-success fw-medium small">
-                            {{ number_format($payment->credit, 2) }}
+                        <td data-label="Amount" x-show="columns.credit" class="text-end fw-medium small {{ $payment->debit > 0 ? 'text-danger' : 'text-success' }}">
+                            @if ($payment->debit > 0)
+                                &minus;{{ number_format($payment->debit, 2) }}
+                            @else
+                                {{ number_format($payment->credit, 2) }}
+                            @endif
+                            @foreach ($transferredOut[$payment->id] ?? [] as $transfer)
+                                <span class="badge bg-warning bg-opacity-75 text-dark d-block mt-1" title="{{ $transfer->reason }}">
+                                    <i class="fa fa-exchange me-1"></i>{{ number_format($transfer->debit, 2) }} to #{{ $transfer->model_id }}
+                                </span>
+                            @endforeach
                         </td>
                         <td data-label="Remark" x-show="columns.remark"
                             class="small text-muted {{ $payment->remark ? '' : 'is-empty' }}">{{ $payment->remark ?? '' }}</td>
@@ -472,11 +485,13 @@
                                     class="pmx-menu text-start"
                                     :style="`position: fixed; ${flip ? 'bottom: ' + (window.innerHeight - y + 6) + 'px' : 'top: ' + (y + 6) + 'px'}; left: ${x}px; transform: translateX(-100%); z-index: 2000;`">
                                     <div class="pmx-menu__head">Payment Actions</div>
-                                    <a class="pmx-item" href="#" @click="open = false"
-                                        wire:click.prevent="editPayment({{ $payment->id }})">
-                                        <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
-                                    </a>
-                                    @if ($canTransfer && $payment->source === 'PaymentTerm')
+                                    @if ($payment->source !== 'Transfer')
+                                        <a class="pmx-item" href="#" @click="open = false"
+                                            wire:click.prevent="editPayment({{ $payment->id }})">
+                                            <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
+                                        </a>
+                                    @endif
+                                    @if ($canTransfer && $payment->source === 'PaymentTerm' && (float) collect($transferredOut[$payment->id] ?? [])->sum('debit') < (float) $payment->credit)
                                         <a class="pmx-item" href="#" @click="open = false"
                                             wire:click.prevent="openTransferModal({{ $payment->id }})">
                                             <span class="pmx-item__ic"><i class="fa fa-exchange"></i></span> Transfer
@@ -489,7 +504,7 @@
                                             target="_blank">
                                             <span class="pmx-item__ic"><i class="fa fa-print"></i></span> Print Receipt
                                         </a>
-                                    @else
+                                    @elseif ($payment->source !== 'Transfer')
                                         <a class="pmx-item" @click="open = false"
                                             href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
                                             target="_blank">
@@ -519,11 +534,30 @@
                 @endforelse
             </tbody>
             @if ($payments->count() > 0)
+                @php
+                    $totalReceived = (float) $payments->sum('credit');
+                    $totalTransferredOut = (float) $payments->sum('debit');
+                @endphp
                 <tfoot class="table-light">
+                    {{-- One cell per column, toggled exactly like the header, so the total stays under Amount. --}}
                     <tr class="fw-bold small">
-                        <td colspan="11" class="py-2 text-end">Total</td>
-                        <td class="py-2 text-end text-success" data-label="Total">{{ number_format($payments->sum('credit'), 2) }}</td>
-                        <td colspan="3"></td>
+                        <td colspan="2" class="py-2 d-none d-lg-table-cell">Total</td>
+                        @foreach (array_keys($sortableColumns) as $field)
+                            @if ($field === 'credit')
+                                <td class="py-2 text-end text-nowrap" x-show="columns.credit" data-label="Total">
+                                    <span class="text-success">{{ number_format($totalReceived - $totalTransferredOut, 2) }}</span>
+                                    @if ($totalTransferredOut > 0)
+                                        <div class="fw-normal text-muted">
+                                            {{ number_format($totalReceived, 2) }}
+                                            <span class="text-danger">&minus; {{ number_format($totalTransferredOut, 2) }}</span>
+                                        </div>
+                                    @endif
+                                </td>
+                            @else
+                                <td class="py-2 d-none d-lg-table-cell" x-show="columns['{{ $field }}']"></td>
+                            @endif
+                        @endforeach
+                        <td class="py-2 d-none d-lg-table-cell"></td>
                     </tr>
                 </tfoot>
             @endif

@@ -16,13 +16,8 @@ class TransferPaymentModal extends Component
 
     public ?int $fromRentOutId = null;
 
-    // The source agreement's customer — transfers are restricted to this customer.
-    public ?int $customerId = null;
-
-    public ?string $customerName = null;
-
-    // The full amount that will be moved (whole receipt — never partial).
-    public float $amount = 0;
+    // What is still left on the receipt to transfer (its amount minus earlier transfers).
+    public float $available = 0;
 
     // Search term for the (searchable) target-property picker.
     public string $search = '';
@@ -33,6 +28,7 @@ class TransferPaymentModal extends Component
     public array $form = [
         'to_rent_out_id' => '',
         'to_term_id' => '',
+        'amount' => '',
         'remark' => '',
     ];
 
@@ -40,19 +36,18 @@ class TransferPaymentModal extends Component
     public function openModal($paymentId)
     {
         $payment = RentOutTransaction::findOrFail($paymentId);
-        $fromRentOut = RentOut::with('customer')->findOrFail($payment->rent_out_id);
+        $fromRentOut = RentOut::findOrFail($payment->rent_out_id);
 
         $this->paymentId = $payment->id;
         $this->fromRentOutId = $fromRentOut->id;
-        $this->customerId = $fromRentOut->account_id;
-        $this->customerName = $fromRentOut->customer?->name;
-        $this->amount = (float) $payment->credit;
+        $this->available = TransferTransactionAction::transferableAmount($payment);
 
         $this->search = '';
         $this->selectedTargetLabel = null;
         $this->form = [
             'to_rent_out_id' => '',
             'to_term_id' => '',
+            'amount' => $this->available,
             'remark' => '',
         ];
 
@@ -82,8 +77,13 @@ class TransferPaymentModal extends Component
 
         $this->validate([
             'form.to_rent_out_id' => 'required',
+            'form.amount' => 'required|numeric|min:0.01|max:'.$this->available,
         ], [
             'form.to_rent_out_id.required' => 'Select the property to transfer to.',
+            'form.amount.required' => 'Enter the amount to transfer.',
+            'form.amount.numeric' => 'The amount must be a number.',
+            'form.amount.min' => 'The amount must be greater than zero.',
+            'form.amount.max' => 'The amount cannot exceed the '.number_format($this->available, 2).' left on this payment.',
         ]);
 
         $response = (new TransferTransactionAction())->execute(
@@ -91,6 +91,7 @@ class TransferPaymentModal extends Component
             (int) $this->form['to_rent_out_id'],
             $this->form['to_term_id'] ? (int) $this->form['to_term_id'] : null,
             $this->form['remark'] ?? '',
+            (float) $this->form['amount'],
         );
 
         if (! $response['success']) {
@@ -106,8 +107,8 @@ class TransferPaymentModal extends Component
 
     public function render()
     {
-        // Candidate targets: the SAME customer's other agreements (same tenant is
-        // auto-scoped), matching the search term, excluding the source agreement.
+        // Candidate targets: any other agreement in this tenant (auto-scoped),
+        // whichever customer holds it, matching the search term.
         $targets = collect();
         if (! $this->form['to_rent_out_id']) {
             $targets = RentOut::query()
@@ -122,17 +123,25 @@ class TransferPaymentModal extends Component
                             $p->where('number', 'like', "%{$term}%")
                                 ->orWhere('code', 'like', "%{$term}%")
                                 ->orWhere('unit_no', 'like', "%{$term}%");
+                        })->orWhereHas('customer', function ($c) use ($term) {
+                            $c->where('name', 'like', "%{$term}%");
                         });
                     });
                 })
-                ->with(['property', 'group', 'building', 'type'])
+                ->with(['property', 'group', 'building', 'type', 'customer'])
                 ->orderByDesc('id')
                 ->limit(10)
                 ->get();
         }
 
         $terms = collect();
+        $selectedTargetUrl = null;
         if ($this->form['to_rent_out_id']) {
+            $selectedTarget = RentOut::find($this->form['to_rent_out_id']);
+            if ($selectedTarget) {
+                $selectedTargetUrl = route($selectedTarget->agreement_type === AgreementType::Lease ? 'property::sale::view' : 'property::rent::view', $selectedTarget->id);
+            }
+
             $terms = RentOutPaymentTerm::query()
                 ->where('rent_out_id', $this->form['to_rent_out_id'])
                 ->where('status', '!=', 'paid')
@@ -143,6 +152,7 @@ class TransferPaymentModal extends Component
         return view('livewire.rent-out.tabs.transfer-payment-modal', [
             'targets' => $targets,
             'terms' => $terms,
+            'selectedTargetUrl' => $selectedTargetUrl,
         ]);
     }
 }

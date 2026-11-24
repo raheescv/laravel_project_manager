@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\Payment\ReverseTransactionAction;
+use App\Actions\RentOut\Payment\TransferTransactionAction;
 use App\Enums\RentOut\AgreementType;
 use App\Livewire\Concerns\HasColumnPreferences;
 use App\Models\RentOut;
@@ -177,12 +178,25 @@ class PaymentTab extends Component
         $this->dispatch('open-transfer-modal', paymentId: $paymentId);
     }
 
+    /**
+     * Receipts (credits) plus the Transfer Out debits posted against them, so
+     * the list and its totals tally with what actually stays on this agreement.
+     * ROI credits the customer without cash coming in, so it is left out.
+     */
+    protected function receiptsAndTransfersOut($query)
+    {
+        return $query->where('source', '!=', RentOutRoi::SOURCE)
+            ->where(function ($q) {
+                $q->where('credit', '>', 0)
+                    ->orWhere(fn ($q) => $q->where('source', TransferTransactionAction::SOURCE)->where('debit', '>', 0));
+            });
+    }
+
     protected function getFilteredPayments()
     {
         $query = RentOutTransaction::with(['account', 'categoryAccount'])
             ->where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0)
-            ->where('source', '!=', RentOutRoi::SOURCE);
+            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q));
 
         if ($this->filterSource) {
             $query->where('source', $this->filterSource);
@@ -209,30 +223,26 @@ class PaymentTab extends Component
 
         // Source summary (receipts only)
         $sourceSummary = RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0)
-            ->where('source', '!=', RentOutRoi::SOURCE)
-            ->selectRaw('source, SUM(credit) as total_credit, COUNT(*) as count')
+            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
+            ->selectRaw('source, SUM(credit) - SUM(debit) as total_credit, COUNT(*) as count')
             ->groupBy('source')
             ->get();
 
         // Available filter options (receipts only)
         $sources = RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0)
-            ->where('source', '!=', RentOutRoi::SOURCE)
+            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
             ->distinct()->pluck('source')->filter()->sort()->values();
 
         // category is an account id: offer the Rent Out service categories by name.
         $categories = RentOut::serviceCategoryOptions(RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0)
-            ->where('source', '!=', RentOutRoi::SOURCE)
+            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category'));
 
         $paymentModes = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
-            ->where('credit', '>', 0)
-            ->where('source', '!=', RentOutRoi::SOURCE)
+            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
             ->whereNotNull('account_id')
             ->get()
             ->pluck('account.name', 'account_id')
@@ -243,8 +253,17 @@ class PaymentTab extends Component
         $rentOut = RentOut::find($this->rentOutId);
         $canTransfer = Auth::user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.transfer payment' : 'rent out.transfer payment') ?? false;
 
+        // Transfer Out rows posted against each receipt, grouped by receipt id.
+        $transferredOut = RentOutTransaction::where('rent_out_id', $this->rentOutId)
+            ->where('source', TransferTransactionAction::SOURCE)
+            ->where('debit', '>', 0)
+            ->whereNotNull('source_id')
+            ->get(['id', 'source_id', 'model_id', 'debit', 'reason'])
+            ->groupBy('source_id');
+
         return view('livewire.rent-out.tabs.payment-tab', [
             'payments' => $payments,
+            'transferredOut' => $transferredOut,
             'sourceSummary' => $sourceSummary,
             'sources' => $sources,
             'categories' => $categories,
