@@ -92,6 +92,10 @@
                 border: none;
                 padding: .2rem 0;
             }
+
+            .rentout-payment-table tfoot td.pft-fill {
+                display: none;
+            }
         }
 
         /* ── Premium action menu ─────────────────────────────── */
@@ -541,7 +545,7 @@
                 <tfoot class="table-light">
                     {{-- One cell per column, toggled exactly like the header, so the total stays under Amount. --}}
                     <tr class="fw-bold small">
-                        <td colspan="2" class="py-2 d-none d-lg-table-cell">Total</td>
+                        <td colspan="2" class="py-2 pft-fill">Total</td>
                         @foreach (array_keys($sortableColumns) as $field)
                             @if ($field === 'credit')
                                 <td class="py-2 text-end text-nowrap" x-show="columns.credit" data-label="Total">
@@ -554,10 +558,10 @@
                                     @endif
                                 </td>
                             @else
-                                <td class="py-2 d-none d-lg-table-cell" x-show="columns['{{ $field }}']"></td>
+                                <td class="py-2 pft-fill" x-show="columns['{{ $field }}']"></td>
                             @endif
                         @endforeach
-                        <td class="py-2 d-none d-lg-table-cell"></td>
+                        <td class="py-2 pft-fill"></td>
                     </tr>
                 </tfoot>
             @endif

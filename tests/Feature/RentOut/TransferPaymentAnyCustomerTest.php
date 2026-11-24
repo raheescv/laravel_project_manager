@@ -79,6 +79,20 @@ beforeEach(function (): void {
         'group' => 'Rent Payment', 'created_by' => $this->user->id,
     ]);
 
+    $receiptJournal = Journal::create([
+        'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'date' => now()->toDateString(),
+        'description' => 'Rent Payment', 'source' => 'rent_out', 'model' => 'RentOut', 'model_id' => $this->from->id,
+        'created_by' => $this->user->id,
+    ]);
+    foreach ([[$this->cash->id, $this->from->account_id, 2500, 0], [$this->from->account_id, $this->cash->id, 0, 2500]] as [$account, $counter, $debit, $credit]) {
+        JournalEntry::create([
+            'tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'journal_id' => $receiptJournal->id, 'date' => now()->toDateString(),
+            'account_id' => $account, 'counter_account_id' => $counter, 'debit' => $debit, 'credit' => $credit,
+            'source' => 'rent_out', 'model' => 'RentOut', 'model_id' => $this->from->id, 'created_by' => $this->user->id,
+        ]);
+    }
+    $this->payment->update(['journal_id' => $receiptJournal->id]);
+
     $this->actingAs($this->user);
 });
 
@@ -102,10 +116,16 @@ it('keeps the receipt and posts a debit on the source and a credit on a differen
         ->and((float) $in->debit)->toBe(0.0)
         ->and($in->journal_id)->toBe($out->journal_id);
 
+    // The receipt credited the source customer, so the transfer moves it customer to customer.
     $entries = JournalEntry::where('journal_id', $out->journal_id)->get();
+    $debitLeg = $entries->firstWhere('debit', '>', 0);
+    $creditLeg = $entries->firstWhere('credit', '>', 0);
     expect($entries)->toHaveCount(2)
         ->and((float) $entries->sum('debit'))->toBe((float) $entries->sum('credit'))
-        ->and($entries->pluck('account_id')->unique()->all())->toBe([$this->income->id]);
+        ->and($debitLeg->account_id)->toBe($this->from->account_id)
+        ->and($creditLeg->account_id)->toBe($this->to->account_id)
+        ->and($debitLeg->counter_account_id)->toBe($this->to->account_id)
+        ->and($creditLeg->counter_account_id)->toBe($this->from->account_id);
 
     expect($this->fromTerm->fresh()->status)->toBe('pending')
         ->and((float) $this->fromTerm->fresh()->paid)->toBe(0.0)
@@ -201,7 +221,9 @@ it('lists the transfer out on the source payments tab and nets it from the total
 
     $footer = str($component->html())->after('<tfoot')->before('</tfoot>');
     expect(substr_count($footer, '<td') + 1)->toBe(15) // colspan=2 cell counts twice
-        ->and((string) $footer)->toContain('500.00');
+        ->and((string) $footer)->toContain('500.00')
+        // An !important display utility would override x-show and render hidden columns.
+        ->and((string) $footer)->not->toContain('-table-cell');
 
     $summary = $component->viewData('sourceSummary')->keyBy('source');
     expect((float) $summary['Transfer']->total_credit)->toBe(-2000.0)
@@ -224,4 +246,15 @@ it('shows receipts and both sides of a transfer on the rent statements', functio
         ->and($from->sum('credit'))->toBe(2500.0)
         ->and($to->pluck('payment_mode')->all())->toBe(['Rent Due', 'Transfer In'])
         ->and($to->sum('credit'))->toBe(2000.0);
+});
+
+it('moves income to income when the receipt credited an income account', function (): void {
+    JournalEntry::where('journal_id', $this->payment->journal_id)->where('credit', '>', 0)
+        ->update(['account_id' => $this->income->id]);
+
+    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 500);
+
+    $accounts = JournalEntry::where('journal_id', $response['data']['journal_id'])->pluck('account_id')->unique()->values()->all();
+    expect($response['success'])->toBeTrue($response['message'])
+        ->and($accounts)->toBe([$this->income->id]);
 });

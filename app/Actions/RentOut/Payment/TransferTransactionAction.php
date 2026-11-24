@@ -5,6 +5,7 @@ namespace App\Actions\RentOut\Payment;
 use App\Actions\Journal\CreateAction as JournalCreateAction;
 use App\Actions\RentOut\Payment\Concerns\AppliesPaymentTerms;
 use App\Actions\RentOut\Payment\Concerns\ResolvesRentOutAccounts;
+use App\Models\JournalEntry;
 use App\Models\RentOut;
 use App\Models\RentOutPaymentTerm;
 use App\Models\RentOutTransaction;
@@ -17,11 +18,14 @@ use Illuminate\Support\Facades\DB;
  * A receipt can be split across several transfers until nothing is left.
  *
  * The cash was received once and stays where it is; the transfer only
- * re-allocates that value between agreements. It posts ONE income-to-income
- * journal (no cash leg):
+ * re-allocates that value between agreements. It posts ONE journal with no
+ * cash leg that reverses the receipt's credit side on the source and applies
+ * it on the target. A receipt credits the customer, so normally:
  *
- *      Dr  Rent/Sale Income (source agreement)   amount
- *      Cr  Rent/Sale Income (target agreement)   amount
+ *      Dr  Source customer   amount   (their ledger is reduced)
+ *      Cr  Target customer   amount
+ *
+ * A receipt that credited an income account instead moves income to income.
  *
  * and mirrors it with two rent_out_transactions rows sharing that journal:
  *   - source agreement: a DEBIT row ("Transfer Out") that offsets the receipt;
@@ -70,7 +74,7 @@ class TransferTransactionAction
                 $fromLabel = $this->agreementLabel($fromRentOut);
                 $toLabel = $this->agreementLabel($toRentOut);
 
-                $journalId = $this->postJournal($fromRentOut, $toRentOut, $amount, $date, $remark, $createdBy, $fromLabel, $toLabel);
+                $journalId = $this->postJournal($payment, $fromRentOut, $toRentOut, $amount, $date, $remark, $createdBy, $fromLabel, $toLabel);
 
                 $store = new StoreTransactionAction();
 
@@ -179,13 +183,12 @@ class TransferTransactionAction
     }
 
     /**
-     * Dr source income / Cr target income — re-allocates the recognised value
-     * between agreements with no cash leg.
+     * Dr the account the receipt credited (on the source) / Cr its counterpart
+     * on the target — re-allocates the payment with no cash leg.
      */
-    protected function postJournal(RentOut $fromRentOut, RentOut $toRentOut, float $amount, string $date, string $remark, int $createdBy, string $fromLabel, string $toLabel): int
+    protected function postJournal(RentOutTransaction $payment, RentOut $fromRentOut, RentOut $toRentOut, float $amount, string $date, string $remark, int $createdBy, string $fromLabel, string $toLabel): int
     {
-        $fromIncome = $this->incomeAccountId($fromRentOut);
-        $toIncome = $this->incomeAccountId($toRentOut);
+        [$fromAccount, $toAccount] = $this->transferAccounts($payment, $fromRentOut, $toRentOut);
         $narration = 'Payment transferred from '.$fromLabel.' to '.$toLabel;
 
         $base = ['created_by' => $createdBy, 'remarks' => $remark ?: $narration, 'model' => 'RentOut'];
@@ -201,8 +204,8 @@ class TransferTransactionAction
             'model_id' => $fromRentOut->id,
             'created_by' => $createdBy,
             'entries' => [
-                array_merge($base, ['account_id' => $fromIncome, 'counter_account_id' => $toIncome, 'debit' => $amount, 'credit' => 0, 'model_id' => $fromRentOut->id, 'branch_id' => $fromRentOut->branch_id]),
-                array_merge($base, ['account_id' => $toIncome, 'counter_account_id' => $fromIncome, 'debit' => 0, 'credit' => $amount, 'model_id' => $toRentOut->id, 'branch_id' => $toRentOut->branch_id]),
+                array_merge($base, ['account_id' => $fromAccount, 'counter_account_id' => $toAccount, 'debit' => $amount, 'credit' => 0, 'model_id' => $fromRentOut->id, 'branch_id' => $fromRentOut->branch_id]),
+                array_merge($base, ['account_id' => $toAccount, 'counter_account_id' => $fromAccount, 'debit' => 0, 'credit' => $amount, 'model_id' => $toRentOut->id, 'branch_id' => $toRentOut->branch_id]),
             ],
         ]);
 
@@ -211,6 +214,33 @@ class TransferTransactionAction
         }
 
         return $response['data']->id;
+    }
+
+    /**
+     * Which account to debit on the source and credit on the target: the
+     * account the original receipt actually credited, swapped for the
+     * target's equivalent — the target's customer when the receipt credited
+     * the source customer, the target's income account when it credited income.
+     *
+     * @return array{0: int, 1: int}
+     */
+    protected function transferAccounts(RentOutTransaction $payment, RentOut $fromRentOut, RentOut $toRentOut): array
+    {
+        $credited = $payment->journal_id
+            ? JournalEntry::where('journal_id', $payment->journal_id)
+                ->where('credit', '>', 0)
+                ->where('account_id', '!=', $payment->account_id)
+                ->value('account_id')
+            : null;
+
+        $fromCustomer = (int) $fromRentOut->account_id;
+        $fromIncome = $this->incomeAccountId($fromRentOut);
+
+        return match ((int) ($credited ?? $fromCustomer)) {
+            $fromCustomer => [$fromCustomer, (int) $toRentOut->account_id],
+            $fromIncome => [$fromIncome, $this->incomeAccountId($toRentOut)],
+            default => [(int) $credited, (int) $credited],
+        };
     }
 
     /**
