@@ -452,6 +452,7 @@ it('prints the commission invoice after finance approval and the payment voucher
     };
 
     $approved = commissionAt($this->rentOutId, 'finance_approved');
+    file_put_contents('/private/tmp/claude-501/-Users-Shared-sites-personal-main-projects-project-manager/3752003b-2331-4a72-bfb8-8ca268173f53/scratchpad/inv.html', $render($approved, 'invoice'));
     expect($render($approved, 'invoice'))
         ->toContain('Commission Invoice')
         ->toContain($approved->invoice_no)
@@ -460,12 +461,12 @@ it('prints the commission invoice after finance approval and the payment voucher
         ->toContain('60,000.00 &times; 5.00 % = <b>3,000.00</b>')
         ->not->toContain('Payment Mode');
 
-    $this->get(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $approved->id]))->assertNotFound();
     Livewire::test(CommissionTab::class, ['rentOutId' => $this->rentOutId])
         ->assertSee(route('print::rentout::commission', ['kind' => 'invoice', 'id' => $approved->id], false))
         ->assertDontSee(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $approved->id], false));
 
     $paid = commissionAt($this->rentOutId, 'paid', 2);
+    file_put_contents('/private/tmp/claude-501/-Users-Shared-sites-personal-main-projects-project-manager/3752003b-2331-4a72-bfb8-8ca268173f53/scratchpad/vou.html', $render($paid, 'voucher'));
     expect($render($paid, 'voucher'))
         ->toContain('Commission Payment Voucher')
         ->toContain($paid->voucherNo())
@@ -477,6 +478,7 @@ it('prints the commission invoice after finance approval and the payment voucher
         ->assertSee(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $paid->id], false));
 
     $draft = commissionAt($this->rentOutId, 'draft');
+    $this->get(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $approved->id]))->assertNotFound();
     $this->get(route('print::rentout::commission', ['kind' => 'invoice', 'id' => $draft->id]))->assertNotFound();
 
     $this->user->revokePermissionTo('rent out commission.view');
