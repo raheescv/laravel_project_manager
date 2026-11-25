@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function (): void {
             Route::get('payment-receipt/{id}', 'rentOutPaymentReceipt')->name('payment-receipt');
             Route::get('payment-voucher/{id}', 'rentOutPaymentVoucher')->name('payment-voucher');
             Route::get('checklist/{id}', 'rentOutChecklist')->name('checklist')->can('rent out checklist.print');
+            Route::get('commission/{kind}/{id}', 'rentOutCommissionDocument')->whereIn('kind', ['invoice', 'voucher'])->whereNumber('id')->name('commission')->can('rent out commission.view');
         });
         Route::name('project_contract::')->prefix('project-contract')->group(function (): void {
             Route::get('statement/{id}/{fromDate?}/{toDate?}', 'projectContractStatement')->whereNumber('id')->name('statement')->can('project contract.view');

@@ -16,6 +16,7 @@ use App\Models\ProjectContract;
 use App\Models\ProjectContractPayment;
 use App\Models\ProjectContractPaymentTerm;
 use App\Models\RentOut;
+use App\Models\RentOutCommission;
 use App\Models\RentOutRoi;
 use App\Models\RentOutTransaction;
 use App\Services\CompanyLogoResolver;
@@ -325,6 +326,27 @@ class PrintController extends Controller
         );
 
         return $this->browsershotPdf('print.rentout.voucher', $data, "voucher_{$payment->id}.pdf");
+    }
+
+    /**
+     * Commission invoice (once Finance has approved and numbered it) or the
+     * payment voucher (once it is paid) for one sale-agreement commission.
+     */
+    public function rentOutCommissionDocument(string $kind, int $id)
+    {
+        $commission = RentOutCommission::with([
+            'agent', 'paymentAccount', 'ceoApprover', 'ownerApprover', 'financeApprover', 'payer',
+            'rentOut.customer', 'rentOut.property', 'rentOut.building',
+        ])->findOrFail($id);
+
+        abort_if($kind === 'invoice' && ! $commission->invoice_no, 404, 'This commission has not been invoiced yet.');
+        abort_if($kind === 'voucher' && ! $commission->payment_journal_id, 404, 'This commission has not been paid yet.');
+
+        $rentOut = $commission->rentOut;
+        $data = array_merge(compact('commission', 'rentOut', 'kind'), $this->getCompanyInfo());
+        $filename = $kind === 'invoice' ? "commission_invoice_{$commission->invoice_no}.pdf" : "commission_voucher_{$commission->id}.pdf";
+
+        return $this->browsershotPdf('print.rentout.commission', $data, $filename);
     }
 
     public function purchaseVendorStatement(int $id, ?string $fromDate = null, ?string $toDate = null)

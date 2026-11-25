@@ -110,6 +110,14 @@ class RentOutCommission extends Model implements AuditableContracts
         return round($contractAmount * $percentage / 100, 2);
     }
 
+    /**
+     * Payment voucher number, shown on the tab and printed on the voucher.
+     */
+    public function voucherNo(): string
+    {
+        return 'CPV-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+    }
+
     public function typeLabel(): string
     {
         return $this->commission_type === self::TYPE_FIXED ? 'Fixed' : 'Percentage';
@@ -161,6 +169,12 @@ class RentOutCommission extends Model implements AuditableContracts
     public function financeApprover(): BelongsTo
     {
         return $this->belongsTo(User::class, 'finance_approved_by');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
     }
 
     /** @return BelongsTo<User, $this> */

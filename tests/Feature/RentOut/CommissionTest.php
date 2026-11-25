@@ -438,3 +438,47 @@ it('offers Add Commission again once the only commission is rejected, and switch
         ->call('selectCommission', $rejected->id)
         ->assertViewHas('selected', fn ($selected) => $selected->id === $rejected->id);
 });
+
+it('prints the commission invoice after finance approval and the payment voucher once paid', function () {
+    $render = function (RentOutCommission $commission, string $kind): string {
+        $commission->load(['agent', 'paymentAccount', 'ceoApprover', 'ownerApprover', 'financeApprover', 'payer', 'rentOut.customer', 'rentOut.property', 'rentOut.building']);
+
+        return view('print.rentout.commission', [
+            'commission' => $commission,
+            'rentOut' => $commission->rentOut,
+            'kind' => $kind,
+            'companyName' => 'Acme', 'companyAddress' => '', 'companyPhone' => '', 'companyEmail' => '', 'companyLogo' => null,
+        ])->render();
+    };
+
+    $approved = commissionAt($this->rentOutId, 'finance_approved');
+    expect($render($approved, 'invoice'))
+        ->toContain('Commission Invoice')
+        ->toContain($approved->invoice_no)
+        ->toContain('Sameer Agent')
+        ->toContain('1203')
+        ->toContain('60,000.00 &times; 5.00 % = <b>3,000.00</b>')
+        ->not->toContain('Payment Mode');
+
+    $this->get(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $approved->id]))->assertNotFound();
+    Livewire::test(CommissionTab::class, ['rentOutId' => $this->rentOutId])
+        ->assertSee(route('print::rentout::commission', ['kind' => 'invoice', 'id' => $approved->id], false))
+        ->assertDontSee(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $approved->id], false));
+
+    $paid = commissionAt($this->rentOutId, 'paid', 2);
+    expect($render($paid, 'voucher'))
+        ->toContain('Commission Payment Voucher')
+        ->toContain($paid->voucherNo())
+        ->toContain($paid->invoice_no)
+        ->toContain('Amount Paid')
+        ->toContain('Payment Mode');
+    Livewire::test(CommissionTab::class, ['rentOutId' => $this->rentOutId])
+        ->call('selectCommission', $paid->id)
+        ->assertSee(route('print::rentout::commission', ['kind' => 'voucher', 'id' => $paid->id], false));
+
+    $draft = commissionAt($this->rentOutId, 'draft');
+    $this->get(route('print::rentout::commission', ['kind' => 'invoice', 'id' => $draft->id]))->assertNotFound();
+
+    $this->user->revokePermissionTo('rent out commission.view');
+    $this->get(route('print::rentout::commission', ['kind' => 'invoice', 'id' => $approved->id]))->assertForbidden();
+});

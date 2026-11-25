@@ -144,6 +144,7 @@
                                 <th class="fw-semibold py-2">No.</th>
                                 <th class="fw-semibold py-2">Date</th>
                                 <th class="fw-semibold py-2 text-end">Amount</th>
+                                <th class="fw-semibold py-2 text-end" style="width: 1%;"></th>
                             </tr>
                         </thead>
                         <tbody class="small">
@@ -153,8 +154,14 @@
                                     <td>{{ $selected->invoice_no }}</td>
                                     <td>{{ $selected->finance_approved_at?->format('d-m-Y') }}</td>
                                     <td class="text-end">{{ number_format($selected->amount, 2) }}</td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ route('print::rentout::commission', ['kind' => 'invoice', 'id' => $selected->id]) }}" target="_blank"
+                                            class="btn btn-sm btn-outline-secondary py-0 px-2" title="Print Commission Invoice">
+                                            <i class="fa fa-print me-1"></i>Print
+                                        </a>
+                                    </td>
                                 @else
-                                    <td colspan="3" class="text-muted">— after Finance Approval —</td>
+                                    <td colspan="4" class="text-muted">— after Finance Approval —</td>
                                 @endif
                             </tr>
                             <tr>
@@ -163,18 +170,25 @@
                                     <td>#{{ $selected->journal_id }}</td>
                                     <td>{{ $selected->finance_approved_at?->format('d-m-Y') }}</td>
                                     <td class="text-end">{{ number_format($selected->amount, 2) }}</td>
+                                    <td></td>
                                 @else
-                                    <td colspan="3" class="text-muted">—</td>
+                                    <td colspan="4" class="text-muted">—</td>
                                 @endif
                             </tr>
                             <tr>
                                 <td><i class="fa fa-money me-1 text-muted"></i> Payment Voucher</td>
                                 @if ($selected->payment_journal_id)
-                                    <td>#{{ $selected->payment_journal_id }} <span class="text-muted">· {{ $selected->paymentAccount?->name }}</span></td>
+                                    <td>{{ $selected->voucherNo() }} <span class="text-muted">· {{ $selected->paymentAccount?->name }}</span></td>
                                     <td>{{ $selected->paid_date?->format('d-m-Y') }}</td>
                                     <td class="text-end">{{ number_format($selected->amount, 2) }}</td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{{ route('print::rentout::commission', ['kind' => 'voucher', 'id' => $selected->id]) }}" target="_blank"
+                                            class="btn btn-sm btn-outline-secondary py-0 px-2" title="Print Payment Voucher">
+                                            <i class="fa fa-print me-1"></i>Print
+                                        </a>
+                                    </td>
                                 @else
-                                    <td colspan="3" class="text-muted">—</td>
+                                    <td colspan="4" class="text-muted">— after Payment —</td>
                                 @endif
                             </tr>
                         </tbody>

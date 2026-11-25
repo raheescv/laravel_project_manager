@@ -126,6 +126,14 @@
                                 </td>
                                 <td class="text-center text-nowrap">
                                     @include('livewire.rent-out.partials.commission-actions', ['commission' => $commission, 'canReject' => $canReject, 'canEdit' => false])
+                                    @if ($commission->invoice_no)
+                                        <a href="{{ route('print::rentout::commission', ['kind' => 'invoice', 'id' => $commission->id]) }}" target="_blank"
+                                            class="btn btn-sm btn-link text-secondary p-0 me-2" title="Print Commission Invoice"><i class="fa fa-file-text-o"></i></a>
+                                    @endif
+                                    @if ($commission->payment_journal_id)
+                                        <a href="{{ route('print::rentout::commission', ['kind' => 'voucher', 'id' => $commission->id]) }}" target="_blank"
+                                            class="btn btn-sm btn-link text-secondary p-0" title="Print Payment Voucher"><i class="fa fa-print"></i></a>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
