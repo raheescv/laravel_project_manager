@@ -711,18 +711,30 @@
             </div>
 
             {{-- Audit Tab --}}
-            <div class="@if ($selectedTab != 'audit') d-none @endif">
+            @php
+                $productAudits = $product->audits->sortByDesc('id')->values();
+            @endphp
+            <div class="@if ($selectedTab != 'audit') d-none @endif"
+                 x-data="{ auditView: (() => { try { return localStorage.getItem('audit-report-view') || 'table'; } catch (e) { return 'table'; } })() }"
+                 x-init="$watch('auditView', value => { try { localStorage.setItem('audit-report-view', value); } catch (e) {} })">
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                     <div>
                         <h6 class="mb-1 fw-bold"><i class="fa fa-search text-primary me-1"></i>Product Audit</h6>
                         <small class="text-muted">Review old and new product values for each audited change.</small>
                     </div>
-                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
-                        {{ $product->audits->count() }} {{ \Illuminate\Support\Str::plural('entry', $product->audits->count()) }}
-                    </span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                            {{ $productAudits->count() }} {{ \Illuminate\Support\Str::plural('entry', $productAudits->count()) }}
+                        </span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Audit view">
+                            <button type="button" class="btn rounded-start-3" :class="auditView === 'table' ? 'btn-primary' : 'btn-outline-primary'" :aria-pressed="auditView === 'table'" @click="auditView = 'table'"><i class="fa fa-table me-1"></i>Table</button>
+                            <button type="button" class="btn rounded-end-3" :class="auditView === 'timeline' ? 'btn-primary' : 'btn-outline-primary'" :aria-pressed="auditView === 'timeline'" @click="auditView = 'timeline'"><i class="fa fa-list-ul me-1"></i>Timeline</button>
+                        </div>
+                    </div>
                 </div>
 
-                <x-audit.table :audits="$product->audits()->orderBy('created_at', 'desc')->get()" emptyMessage="No product audit entries found." />
+                <div x-show="auditView === 'table'"><x-audit.sheet :audits="$productAudits" emptyMessage="No product audit entries found." /></div>
+                <div x-show="auditView === 'timeline'" x-cloak><x-audit.table :audits="$productAudits" emptyMessage="No product audit entries found." /></div>
             </div>
 
             {{-- Images Tab --}}
