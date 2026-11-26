@@ -96,3 +96,8 @@ it('exports the invoice discount share and effective total like the table', func
         ->and((float) $row['Invoice Discount'])->toBe((float) $saleItem->other_discount_share)
         ->and((float) $row['Effective Total'])->toBe((float) $saleItem->effective_total);
 });
+
+it('links each product to its inventory product view page', function (): void {
+    Livewire::test(SaleItemReport::class)
+        ->assertSeeHtml(route('inventory::product::view', $this->world->product->id));
+});

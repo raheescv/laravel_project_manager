@@ -134,7 +134,11 @@
                             <td class="text-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="demo-pli-tag fs-5 text-warning"></i>
-                                    <span>{{ $item->product?->name }}</span>
+                                    @if ($item->product_id)
+                                        <a href="{{ route('inventory::product::view', $item->product_id) }}" class="text-primary text-decoration-none">{{ $item->product?->name }}</a>
+                                    @else
+                                        <span>{{ $item->product?->name }}</span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="text-nowrap">
