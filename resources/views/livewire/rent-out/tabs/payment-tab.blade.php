@@ -228,11 +228,20 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="small text-muted">
             <i class="fa fa-credit-card me-1"></i>
-            <strong>{{ $payments->count() }}</strong> payment(s) received
+            @php
+                $summaryTransferredOut = (float) $payments->where('source', 'Transfer')->sum('debit');
+                $summaryPaidOut = (float) $payments->where('source', 'Payout')->sum('debit');
+            @endphp
+            <strong>{{ $payments->count() }}</strong> record(s)
             &middot; Total: <strong class="text-success">{{ number_format($payments->sum('credit') - $payments->sum('debit'), 2) }}</strong>
             @if ($payments->sum('debit') > 0)
                 <span class="text-muted">({{ number_format($payments->sum('credit'), 2) }} received
-                    <span class="text-danger">&minus; {{ number_format($payments->sum('debit'), 2) }} transferred out</span>)</span>
+                    @if ($summaryTransferredOut > 0)
+                        <span class="text-danger">&minus; {{ number_format($summaryTransferredOut, 2) }} transferred out</span>
+                    @endif
+                    @if ($summaryPaidOut > 0)
+                        <span class="text-danger">&minus; {{ number_format($summaryPaidOut, 2) }} paid out</span>
+                    @endif)</span>
             @endif
         </div>
         <div class="d-flex gap-1">
@@ -249,6 +258,13 @@
                 wire:click="openPayoutModal">
                 <i class="fa fa-share me-1"></i> Payout
             </button>
+            @if ($canTransfer)
+                <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                    style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                    wire:click="openTransferModal">
+                    <i class="fa fa-exchange me-1"></i> Transfer
+                </button>
+            @endif
 
             {{-- Column visibility --}}
             <div x-data="{
@@ -455,11 +471,6 @@
                             @else
                                 {{ number_format($payment->credit, 2) }}
                             @endif
-                            @foreach ($transferredOut[$payment->id] ?? [] as $transfer)
-                                <span class="badge bg-warning bg-opacity-75 text-dark d-block mt-1" title="{{ $transfer->reason }}">
-                                    <i class="fa fa-exchange me-1"></i>{{ number_format($transfer->debit, 2) }} to #{{ $transfer->model_id }}
-                                </span>
-                            @endforeach
                         </td>
                         <td data-label="Remark" x-show="columns.remark"
                             class="small text-muted {{ $payment->remark ? '' : 'is-empty' }}">{{ $payment->remark ?? '' }}</td>
@@ -493,12 +504,6 @@
                                         <a class="pmx-item" href="#" @click="open = false"
                                             wire:click.prevent="editPayment({{ $payment->id }})">
                                             <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
-                                        </a>
-                                    @endif
-                                    @if ($canTransfer && $payment->source === 'PaymentTerm' && (float) collect($transferredOut[$payment->id] ?? [])->sum('debit') < (float) $payment->credit)
-                                        <a class="pmx-item" href="#" @click="open = false"
-                                            wire:click.prevent="openTransferModal({{ $payment->id }})">
-                                            <span class="pmx-item__ic"><i class="fa fa-exchange"></i></span> Transfer
                                         </a>
                                     @endif
                                     <div class="pmx-sep"></div>
@@ -540,7 +545,7 @@
             @if ($payments->count() > 0)
                 @php
                     $totalReceived = (float) $payments->sum('credit');
-                    $totalTransferredOut = (float) $payments->sum('debit');
+                    $totalOut = (float) $payments->sum('debit');
                 @endphp
                 <tfoot class="table-light">
                     {{-- One cell per column, toggled exactly like the header, so the total stays under Amount. --}}
@@ -549,11 +554,11 @@
                         @foreach (array_keys($sortableColumns) as $field)
                             @if ($field === 'credit')
                                 <td class="py-2 text-end text-nowrap" x-show="columns.credit" data-label="Total">
-                                    <span class="text-success">{{ number_format($totalReceived - $totalTransferredOut, 2) }}</span>
-                                    @if ($totalTransferredOut > 0)
+                                    <span class="text-success">{{ number_format($totalReceived - $totalOut, 2) }}</span>
+                                    @if ($totalOut > 0)
                                         <div class="fw-normal text-muted">
                                             {{ number_format($totalReceived, 2) }}
-                                            <span class="text-danger">&minus; {{ number_format($totalTransferredOut, 2) }}</span>
+                                            <span class="text-danger">&minus; {{ number_format($totalOut, 2) }}</span>
                                         </div>
                                     @endif
                                 </td>

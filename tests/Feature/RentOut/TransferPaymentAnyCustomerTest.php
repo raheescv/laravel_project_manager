@@ -23,9 +23,10 @@ use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 
 /**
- * A transfer keeps the original receipt and posts a Transfer Out (debit) on the
- * source agreement plus a Transfer In (credit) on the target — any customer's —
- * sharing one balanced income-to-income journal.
+ * A transfer is standalone (like a payout): any amount, not tied to a receipt.
+ * It posts a Transfer Out (debit) on the source agreement plus a Transfer In
+ * (credit) on the target — any customer's — sharing one balanced
+ * customer-to-customer journal.
  */
 beforeEach(function (): void {
     $tenant = Tenant::create(['name' => 'TA Tenant', 'subdomain' => 'ta'.uniqid(), 'is_active' => 1]);
@@ -42,7 +43,6 @@ beforeEach(function (): void {
     $building = PropertyBuilding::create(['tenant_id' => $tenant->id, 'branch_id' => $branch->id, 'property_group_id' => $group->id, 'name' => 'TA Building']);
     $type = PropertyType::create(['tenant_id' => $tenant->id, 'name' => 'TA Type']);
     $this->cash = Account::create(['tenant_id' => $tenant->id, 'account_type' => 'asset', 'name' => 'TA Cash']);
-    $this->income = Account::forceCreate(['tenant_id' => $tenant->id, 'account_type' => 'income', 'name' => 'TA Rent Income', 'slug' => 'rent_income', 'is_locked' => 1]);
 
     $makeRentOut = function (string $customerName, string $unit) use ($tenant, $branch, $group, $building, $type): RentOut {
         $customer = Account::create(['tenant_id' => $tenant->id, 'account_type' => 'asset', 'name' => $customerName]);
@@ -96,27 +96,23 @@ beforeEach(function (): void {
     $this->actingAs($this->user);
 });
 
-it('keeps the receipt and posts a debit on the source and a credit on a different customer\'s property', function (): void {
-    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, $this->toTerm->id);
+it('posts a transfer out on the source and a transfer in on a different customer\'s property', function (): void {
+    $response = (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 2500, $this->toTerm->id, 'Move', '2026-11-20');
 
     expect($response['success'])->toBeTrue($response['message']);
-
-    $payment = $this->payment->fresh();
-    expect($payment->rent_out_id)->toBe($this->from->id)
-        ->and((float) $payment->credit)->toBe(2500.0);
 
     $out = $response['data']['from'];
     $in = $response['data']['to'];
     expect($out->rent_out_id)->toBe($this->from->id)
         ->and((float) $out->debit)->toBe(2500.0)
         ->and((float) $out->credit)->toBe(0.0)
-        ->and($out->source_id)->toBe($payment->id)
+        ->and($out->source_id)->toBeNull()
+        ->and($out->date->format('Y-m-d'))->toBe('2026-11-20')
         ->and($in->rent_out_id)->toBe($this->to->id)
         ->and((float) $in->credit)->toBe(2500.0)
         ->and((float) $in->debit)->toBe(0.0)
         ->and($in->journal_id)->toBe($out->journal_id);
 
-    // The receipt credited the source customer, so the transfer moves it customer to customer.
     $entries = JournalEntry::where('journal_id', $out->journal_id)->get();
     $debitLeg = $entries->firstWhere('debit', '>', 0);
     $creditLeg = $entries->firstWhere('credit', '>', 0);
@@ -127,69 +123,65 @@ it('keeps the receipt and posts a debit on the source and a credit on a differen
         ->and($debitLeg->counter_account_id)->toBe($this->to->account_id)
         ->and($creditLeg->counter_account_id)->toBe($this->from->account_id);
 
-    expect($this->fromTerm->fresh()->status)->toBe('pending')
-        ->and((float) $this->fromTerm->fresh()->paid)->toBe(0.0)
+    // Standalone: the existing receipt and its term are left alone.
+    expect((float) $this->payment->fresh()->credit)->toBe(2500.0)
+        ->and((float) $this->fromTerm->fresh()->paid)->toBe(2500.0)
         ->and($this->toTerm->fresh()->status)->toBe('paid');
 });
 
-it('transfers part of a receipt and releases only that much of the source term', function (): void {
-    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, $this->toTerm->id, '', 1000);
+it('transfers any amount, even more than has been received', function (): void {
+    $response = (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 4000);
 
     expect($response['success'])->toBeTrue($response['message'])
-        ->and((float) $response['data']['from']->debit)->toBe(1000.0)
-        ->and((float) $response['data']['to']->credit)->toBe(1000.0)
-        ->and((float) JournalEntry::where('journal_id', $response['data']['journal_id'])->sum('debit'))->toBe(1000.0)
-        ->and((float) $this->fromTerm->fresh()->paid)->toBe(1500.0)
-        ->and((float) $this->toTerm->fresh()->paid)->toBe(1000.0)
-        ->and(TransferTransactionAction::transferableAmount($this->payment))->toBe(1500.0);
+        ->and((float) $response['data']['from']->debit)->toBe(4000.0)
+        ->and((float) JournalEntry::where('journal_id', $response['data']['journal_id'])->sum('debit'))->toBe(4000.0)
+        ->and((float) $this->toTerm->fresh()->paid)->toBe(0.0);
 });
 
-it('splits a receipt across transfers until nothing is left', function (): void {
-    $first = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 1000);
-    $tooMuch = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 1600);
-    $rest = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id);
-    $again = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 1);
+it('rejects a zero amount or the same property', function (): void {
+    $zero = (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 0);
+    $same = (new TransferTransactionAction())->execute($this->from->id, $this->from->id, 100);
 
-    expect($first['success'])->toBeTrue()
-        ->and($tooMuch['success'])->toBeFalse()
-        ->and($tooMuch['message'])->toBe('Transfer amount cannot exceed the 1,500.00 left on this payment.')
-        ->and($rest['success'])->toBeTrue()
-        ->and((float) $rest['data']['from']->debit)->toBe(1500.0)
-        ->and($again['success'])->toBeFalse()
-        ->and($again['message'])->toBe('This payment has already been fully transferred.')
-        ->and((float) $this->fromTerm->fresh()->paid)->toBe(0.0);
+    expect($zero['success'])->toBeFalse()
+        ->and($zero['message'])->toBe('Transfer amount must be greater than zero.')
+        ->and($same['success'])->toBeFalse()
+        ->and($same['message'])->toBe('Cannot transfer to the same property.');
 });
 
-it('rejects a zero transfer amount', function (): void {
-    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 0);
-
-    expect($response['success'])->toBeFalse()
-        ->and($response['message'])->toBe('Transfer amount must be greater than zero.');
-});
-
-it('validates the modal amount against what is left on the receipt', function (): void {
+it('opens from the payments tab and validates the modal', function (): void {
     $this->user->givePermissionTo(Permission::findOrCreate('rent out.transfer payment', 'web'));
 
+    Livewire::test(PaymentTab::class, ['rentOutId' => $this->from->id])
+        ->assertSeeHtml('wire:click="openTransferModal"')
+        ->call('openTransferModal')
+        ->assertDispatched('open-transfer-modal', rentOutId: $this->from->id);
+
     Livewire::test(TransferPaymentModal::class)
-        ->call('openModal', $this->payment->id)
-        ->assertSet('available', 2500.0)
-        ->assertSet('form.amount', 2500.0)
-        ->call('selectTarget', $this->to->id, '#'.$this->to->id)
-        ->set('form.amount', 3000)
+        ->call('openModal', $this->from->id)
+        ->assertSet('form.date', now()->format('Y-m-d'))
         ->call('transfer')
-        ->assertHasErrors(['form.amount' => 'max'])
+        ->assertHasErrors(['form.to_rent_out_id' => 'required', 'form.amount' => 'required'])
+        ->call('selectTarget', $this->to->id, '#'.$this->to->id)
         ->set('form.amount', 400)
         ->call('transfer')
         ->assertHasNoErrors();
 
-    expect((float) RentOutTransaction::where('source', 'Transfer')->where('rent_out_id', $this->to->id)->value('credit'))->toBe(400.0);
+    expect((float) RentOutTransaction::where('source', 'Transfer')->where('rent_out_id', $this->to->id)->value('credit'))->toBe(400.0)
+        ->and((float) RentOutTransaction::where('source', 'Transfer')->where('rent_out_id', $this->from->id)->value('debit'))->toBe(400.0);
 });
 
-it('unwinds both rows, the journal and both terms when the transfer is reversed', function (): void {
-    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, $this->toTerm->id);
+it('hides the transfer button without the permission', function (): void {
+    $this->user->update(['is_admin' => 0]);
+
+    Livewire::test(PaymentTab::class, ['rentOutId' => $this->from->id])
+        ->assertDontSeeHtml('wire:click="openTransferModal"');
+});
+
+it('unwinds both rows, the journal and the target term when the transfer is reversed', function (): void {
+    $response = (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 2500, $this->toTerm->id);
     $journalId = $response['data']['journal_id'];
 
-    (new ReverseTransactionAction())->reverse($response['data']['to']);
+    (new ReverseTransactionAction())->reverse($response['data']['from']);
 
     expect(RentOutTransaction::where('source', 'Transfer')->count())->toBe(0)
         ->and(Journal::find($journalId))->toBeNull()
@@ -198,18 +190,8 @@ it('unwinds both rows, the journal and both terms when the transfer is reversed'
         ->and($this->payment->fresh())->not->toBeNull();
 });
 
-it('unwinds the transfer first when the original receipt is deleted', function (): void {
-    (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, $this->toTerm->id);
-
-    (new ReverseTransactionAction())->reverse($this->payment->fresh());
-
-    expect(RentOutTransaction::where('source', 'Transfer')->count())->toBe(0)
-        ->and((float) $this->toTerm->fresh()->paid)->toBe(0.0)
-        ->and((float) $this->fromTerm->fresh()->paid)->toBe(0.0);
-});
-
 it('lists the transfer out on the source payments tab and nets it from the total', function (): void {
-    (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 2000);
+    (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 2000);
 
     $component = Livewire::test(PaymentTab::class, ['rentOutId' => $this->from->id]);
 
@@ -231,7 +213,7 @@ it('lists the transfer out on the source payments tab and nets it from the total
 });
 
 it('shows receipts and both sides of a transfer on the rent statements', function (): void {
-    (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 2000);
+    (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 2000);
     RentOutTransaction::create([
         'tenant_id' => $this->from->tenant_id, 'branch_id' => $this->from->branch_id, 'rent_out_id' => $this->from->id,
         'date' => now()->toDateString(), 'credit' => 300, 'debit' => 0, 'account_id' => $this->cash->id,
@@ -248,13 +230,21 @@ it('shows receipts and both sides of a transfer on the rent statements', functio
         ->and($to->sum('credit'))->toBe(2000.0);
 });
 
-it('moves income to income when the receipt credited an income account', function (): void {
-    JournalEntry::where('journal_id', $this->payment->journal_id)->where('credit', '>', 0)
-        ->update(['account_id' => $this->income->id]);
+it('lists payouts on the payments tab and nets them from the total', function (): void {
+    (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 1000);
+    RentOutTransaction::create([
+        'tenant_id' => $this->from->tenant_id, 'branch_id' => $this->from->branch_id, 'rent_out_id' => $this->from->id,
+        'date' => now()->toDateString(), 'credit' => 0, 'debit' => 300, 'account_id' => $this->cash->id,
+        'source' => 'Payout', 'group' => 'Payout', 'payment_type' => 'Payout', 'created_by' => $this->user->id,
+    ]);
 
-    $response = (new TransferTransactionAction())->execute($this->payment->id, $this->to->id, null, '', 500);
+    $component = Livewire::test(PaymentTab::class, ['rentOutId' => $this->from->id]);
 
-    $accounts = JournalEntry::where('journal_id', $response['data']['journal_id'])->pluck('account_id')->unique()->values()->all();
-    expect($response['success'])->toBeTrue($response['message'])
-        ->and($accounts)->toBe([$this->income->id]);
+    expect($component->viewData('payments')->pluck('source')->all())->toContain('Payout')
+        ->and($component->viewData('sourceSummary')->keyBy('source')['Payout']->total_credit)->toEqual(-300);
+
+    $component->assertSeeHtml('&minus;300.00')
+        ->assertSeeHtml('&minus; 1,000.00 transferred out')
+        ->assertSeeHtml('&minus; 300.00 paid out')
+        ->assertSee('1,200.00');
 });

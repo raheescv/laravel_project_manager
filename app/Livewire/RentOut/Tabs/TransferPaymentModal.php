@@ -5,19 +5,12 @@ namespace App\Livewire\RentOut\Tabs;
 use App\Actions\RentOut\Payment\TransferTransactionAction;
 use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
-use App\Models\RentOutPaymentTerm;
-use App\Models\RentOutTransaction;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class TransferPaymentModal extends Component
 {
-    public ?int $paymentId = null;
-
     public ?int $fromRentOutId = null;
-
-    // What is still left on the receipt to transfer (its amount minus earlier transfers).
-    public float $available = 0;
 
     // Search term for the (searchable) target-property picker.
     public string $search = '';
@@ -27,27 +20,22 @@ class TransferPaymentModal extends Component
 
     public array $form = [
         'to_rent_out_id' => '',
-        'to_term_id' => '',
+        'date' => '',
         'amount' => '',
         'remark' => '',
     ];
 
     #[On('open-transfer-modal')]
-    public function openModal($paymentId)
+    public function openModal($rentOutId)
     {
-        $payment = RentOutTransaction::findOrFail($paymentId);
-        $fromRentOut = RentOut::findOrFail($payment->rent_out_id);
-
-        $this->paymentId = $payment->id;
-        $this->fromRentOutId = $fromRentOut->id;
-        $this->available = TransferTransactionAction::transferableAmount($payment);
+        $this->fromRentOutId = RentOut::findOrFail($rentOutId)->id;
 
         $this->search = '';
         $this->selectedTargetLabel = null;
         $this->form = [
             'to_rent_out_id' => '',
-            'to_term_id' => '',
-            'amount' => $this->available,
+                'date' => now()->format('Y-m-d'),
+            'amount' => '',
             'remark' => '',
         ];
 
@@ -58,7 +46,6 @@ class TransferPaymentModal extends Component
     public function selectTarget(int $rentOutId, string $label)
     {
         $this->form['to_rent_out_id'] = $rentOutId;
-        $this->form['to_term_id'] = '';
         $this->selectedTargetLabel = $label;
         $this->search = '';
     }
@@ -66,7 +53,6 @@ class TransferPaymentModal extends Component
     public function clearTarget()
     {
         $this->form['to_rent_out_id'] = '';
-        $this->form['to_term_id'] = '';
         $this->selectedTargetLabel = null;
     }
 
@@ -77,21 +63,23 @@ class TransferPaymentModal extends Component
 
         $this->validate([
             'form.to_rent_out_id' => 'required',
-            'form.amount' => 'required|numeric|min:0.01|max:'.$this->available,
+            'form.date' => 'required|date',
+            'form.amount' => 'required|numeric|min:0.01',
         ], [
             'form.to_rent_out_id.required' => 'Select the property to transfer to.',
+            'form.date.required' => 'Date is required.',
             'form.amount.required' => 'Enter the amount to transfer.',
             'form.amount.numeric' => 'The amount must be a number.',
             'form.amount.min' => 'The amount must be greater than zero.',
-            'form.amount.max' => 'The amount cannot exceed the '.number_format($this->available, 2).' left on this payment.',
         ]);
 
         $response = (new TransferTransactionAction())->execute(
-            $this->paymentId,
+            $this->fromRentOutId,
             (int) $this->form['to_rent_out_id'],
-            $this->form['to_term_id'] ? (int) $this->form['to_term_id'] : null,
-            $this->form['remark'] ?? '',
             (float) $this->form['amount'],
+            null,
+            $this->form['remark'] ?? '',
+            $this->form['date'],
         );
 
         if (! $response['success']) {
@@ -134,24 +122,16 @@ class TransferPaymentModal extends Component
                 ->get();
         }
 
-        $terms = collect();
         $selectedTargetUrl = null;
         if ($this->form['to_rent_out_id']) {
             $selectedTarget = RentOut::find($this->form['to_rent_out_id']);
             if ($selectedTarget) {
                 $selectedTargetUrl = route($selectedTarget->agreement_type === AgreementType::Lease ? 'property::sale::view' : 'property::rent::view', $selectedTarget->id);
             }
-
-            $terms = RentOutPaymentTerm::query()
-                ->where('rent_out_id', $this->form['to_rent_out_id'])
-                ->where('status', '!=', 'paid')
-                ->orderBy('due_date')
-                ->get();
         }
 
         return view('livewire.rent-out.tabs.transfer-payment-modal', [
             'targets' => $targets,
-            'terms' => $terms,
             'selectedTargetUrl' => $selectedTargetUrl,
         ]);
     }

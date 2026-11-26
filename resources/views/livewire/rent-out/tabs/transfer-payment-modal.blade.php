@@ -11,9 +11,9 @@
     <div class="modal-body p-3">
         <div class="alert alert-info py-2 px-3 small mb-3">
             <i class="fa fa-info-circle me-1"></i>
-            Transfers all or part of this receipt to another property (any customer). The receipt stays here;
-            a <strong>Transfer Out</strong> (debit) is posted on this property and a <strong>Transfer In</strong>
-            (credit) on the target.
+            Transfers any amount from this property to another (any customer). A <strong>Transfer Out</strong>
+            (debit) is posted here and a <strong>Transfer In</strong> (credit) on the target; this customer's
+            ledger is reduced and the target customer's is credited.
         </div>
 
         <div class="row g-3">
@@ -86,30 +86,17 @@
                 <label class="form-label fw-semibold small mb-1">
                     <i class="fa fa-money me-1 text-muted"></i> Amount <span class="text-danger">*</span>
                 </label>
-                <input type="number" step="0.01" min="0.01" max="{{ $available }}"
+                <input type="number" step="0.01" min="0.01" placeholder="0.00"
                     class="form-control form-control-sm text-end fw-bold @error('form.amount') is-invalid @enderror"
                     wire:model="form.amount">
-                <div class="d-flex justify-content-between small text-muted mt-1">
-                    <span>Available {{ number_format($available, 2) }}</span>
-                    <a href="#" class="text-decoration-none" wire:click.prevent="$set('form.amount', {{ $available }})">Full amount</a>
-                </div>
                 @error('form.amount') <small class="text-danger d-block">{{ $message }}</small> @enderror
-            </div>
 
-            <div class="col-12">
-                <label class="form-label fw-semibold small mb-1">
-                    <i class="fa fa-list me-1 text-muted"></i> Apply To Payment Term <span class="text-muted">(optional)</span>
+                <label class="form-label fw-semibold small mb-1 mt-2">
+                    <i class="fa fa-calendar me-1 text-muted"></i> Date <span class="text-danger">*</span>
                 </label>
-                <select class="form-select form-select-sm" wire:model="form.to_term_id" @disabled(!$form['to_rent_out_id'])>
-                    <option value="">Unapplied (reduce overall balance)</option>
-                    @foreach ($terms as $term)
-                        <option value="{{ $term->id }}">
-                            {{ $term->label ?: 'Term' }}
-                            @if ($term->due_date) &middot; due {{ $term->due_date->format('d-m-Y') }} @endif
-                            &middot; bal {{ number_format($term->balance, 2) }}
-                        </option>
-                    @endforeach
-                </select>
+                <input type="date" class="form-control form-control-sm @error('form.date') is-invalid @enderror"
+                    wire:model="form.date">
+                @error('form.date') <small class="text-danger d-block">{{ $message }}</small> @enderror
             </div>
 
             <div class="col-12">
@@ -129,7 +116,7 @@
         </button>
         <button type="button" class="btn btn-sm btn-primary" wire:click="transfer" wire:loading.attr="disabled"
             wire:target="transfer">
-            <span wire:loading.remove wire:target="transfer"><i class="fa fa-exchange me-1"></i> Transfer Payment</span>
+            <span wire:loading.remove wire:target="transfer"><i class="fa fa-exchange me-1"></i> Transfer</span>
             <span wire:loading wire:target="transfer"><i class="fa fa-spinner fa-spin me-1"></i> Transferring...</span>
         </button>
     </div>

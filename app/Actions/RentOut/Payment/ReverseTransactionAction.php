@@ -39,8 +39,8 @@ class ReverseTransactionAction
             return;
         }
 
-        // A receipt that was transferred out keeps a Transfer Out row pointing at
-        // it; unwind that transfer first so the term isn't released twice.
+        // Transfers made before they became standalone point their Transfer Out
+        // row at the receipt; unwind that transfer first so the term isn't released twice.
         RentOutTransaction::where('rent_out_id', $payment->rent_out_id)
             ->where('source', 'Transfer')
             ->where('source_id', $payment->id)
@@ -67,8 +67,8 @@ class ReverseTransactionAction
 
         foreach ($rows as $row) {
             if ($row->debit > 0) {
-                // Restore the source term the transfer had freed. The originating
-                // receipt is referenced by source_id; re-add the amount to its term.
+                // Older receipt-based transfers freed the receipt's term (source_id);
+                // restore it. Standalone transfers carry no source_id and touch no term.
                 $origin = $row->source_id ? RentOutTransaction::find($row->source_id) : null;
                 $this->creditTerm(
                     $this->termFor($origin),

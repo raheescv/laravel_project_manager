@@ -173,22 +173,23 @@ class PaymentTab extends Component
         $this->dispatch('open-payout-modal', rentOutId: $this->rentOutId);
     }
 
-    public function openTransferModal($paymentId)
+    public function openTransferModal()
     {
-        $this->dispatch('open-transfer-modal', paymentId: $paymentId);
+        $this->dispatch('open-transfer-modal', rentOutId: $this->rentOutId);
     }
 
     /**
-     * Receipts (credits) plus the Transfer Out debits posted against them, so
-     * the list and its totals tally with what actually stays on this agreement.
+     * Receipts (credits) plus the money that left again — Transfer Out and
+     * Payout debits — so the list and its totals tally with what actually
+     * stays on this agreement.
      * ROI credits the customer without cash coming in, so it is left out.
      */
-    protected function receiptsAndTransfersOut($query)
+    protected function receiptsAndMoneyOut($query)
     {
         return $query->where('source', '!=', RentOutRoi::SOURCE)
             ->where(function ($q) {
                 $q->where('credit', '>', 0)
-                    ->orWhere(fn ($q) => $q->where('source', TransferTransactionAction::SOURCE)->where('debit', '>', 0));
+                    ->orWhere(fn ($q) => $q->whereIn('source', [TransferTransactionAction::SOURCE, 'Payout'])->where('debit', '>', 0));
             });
     }
 
@@ -196,7 +197,7 @@ class PaymentTab extends Component
     {
         $query = RentOutTransaction::with(['account', 'categoryAccount'])
             ->where('rent_out_id', $this->rentOutId)
-            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q));
+            ->tap(fn ($q) => $this->receiptsAndMoneyOut($q));
 
         if ($this->filterSource) {
             $query->where('source', $this->filterSource);
@@ -223,26 +224,26 @@ class PaymentTab extends Component
 
         // Source summary (receipts only)
         $sourceSummary = RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
+            ->tap(fn ($q) => $this->receiptsAndMoneyOut($q))
             ->selectRaw('source, SUM(credit) - SUM(debit) as total_credit, COUNT(*) as count')
             ->groupBy('source')
             ->get();
 
         // Available filter options (receipts only)
         $sources = RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
+            ->tap(fn ($q) => $this->receiptsAndMoneyOut($q))
             ->distinct()->pluck('source')->filter()->sort()->values();
 
         // category is an account id: offer the Rent Out service categories by name.
         $categories = RentOut::serviceCategoryOptions(RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
+            ->tap(fn ($q) => $this->receiptsAndMoneyOut($q))
             ->whereNotNull('category')
             ->distinct()
             ->pluck('category'));
 
         $paymentModes = RentOutTransaction::with('account')
             ->where('rent_out_id', $this->rentOutId)
-            ->tap(fn ($q) => $this->receiptsAndTransfersOut($q))
+            ->tap(fn ($q) => $this->receiptsAndMoneyOut($q))
             ->whereNotNull('account_id')
             ->get()
             ->pluck('account.name', 'account_id')
@@ -253,17 +254,8 @@ class PaymentTab extends Component
         $rentOut = RentOut::find($this->rentOutId);
         $canTransfer = Auth::user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.transfer payment' : 'rent out.transfer payment') ?? false;
 
-        // Transfer Out rows posted against each receipt, grouped by receipt id.
-        $transferredOut = RentOutTransaction::where('rent_out_id', $this->rentOutId)
-            ->where('source', TransferTransactionAction::SOURCE)
-            ->where('debit', '>', 0)
-            ->whereNotNull('source_id')
-            ->get(['id', 'source_id', 'model_id', 'debit', 'reason'])
-            ->groupBy('source_id');
-
         return view('livewire.rent-out.tabs.payment-tab', [
             'payments' => $payments,
-            'transferredOut' => $transferredOut,
             'sourceSummary' => $sourceSummary,
             'sources' => $sources,
             'categories' => $categories,
