@@ -15,7 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Occupancy, per-group occupancy and availability, and rent collection by
- * group and in total. Ported from the Livewire
+ * group and in total. The occupancy-rate and availability-rate cards have
+ * their own permissions, as in the old system. Ported from the Livewire
  * `dashboard.property-overview-dashboard` component.
  */
 class PropertyOverviewSource extends DashboardSource
@@ -26,8 +27,8 @@ class PropertyOverviewSource extends DashboardSource
 
         return [
             new WidgetDefinition('property-occupancy', 'Property', 'Occupancy', 'All buildings', 'building', 'kpi', 12, 6, $permission),
-            new WidgetDefinition('group-occupancy', 'Property', 'Group occupancy', 'Occupied of total units', 'th-large', 'meter', 6, 4, $permission),
-            new WidgetDefinition('availability', 'Property', 'Availability snapshot', 'Units available · sold', 'th', 'meter', 6, 4, $permission),
+            new WidgetDefinition('group-occupancy', 'Property', 'Group occupancy', 'Occupied of total units', 'th-large', 'meter', 6, 4, ['property dashboard.occupancy rate']),
+            new WidgetDefinition('availability', 'Property', 'Availability snapshot', 'Units available · sold', 'th', 'meter', 6, 4, ['property dashboard.availability rate']),
             new WidgetDefinition('group-income', 'Property', 'Group income', 'Rent collection by group', 'money', 'table', 8, 6, $permission, self::PERIODS, 'month'),
             new WidgetDefinition('income-summary', 'Property', 'Income summary', 'Rent collection', 'dollar', 'kpi', 4, 4, $permission, self::PERIODS, 'month'),
         ];

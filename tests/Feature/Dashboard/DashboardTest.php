@@ -309,3 +309,26 @@ it('moves a saved layout with the old upcoming and expired cards onto the merged
     expect(collect($layout)->pluck('key')->all())->toBe(['rent-agreements', 'business-kpis'])
         ->and($layout[0]['span'])->toBe(12);
 });
+
+it('shows the occupancy and availability rate cards only with their own permissions', function (): void {
+    Configuration::updateOrCreate(['tenant_id' => $this->world->tenant->id, 'key' => 'active_module'], ['value' => 'Property Management Module']);
+    ($this->grant)('property.dashboard overview');
+
+    ($this->widget)('property-occupancy')->assertOk();
+    ($this->widget)('group-occupancy')->assertForbidden();
+    ($this->widget)('availability')->assertForbidden();
+
+    ($this->grant)('property dashboard.occupancy rate', 'property dashboard.availability rate');
+    ($this->widget)('group-occupancy')->assertOk();
+    ($this->widget)('availability')->assertOk();
+});
+
+it('shows the security deposit overview with rent out security dashboard overview', function (): void {
+    Configuration::updateOrCreate(['tenant_id' => $this->world->tenant->id, 'key' => 'active_module'], ['value' => 'Property Management Module']);
+
+    ($this->widget)('security-overview')->assertForbidden();
+
+    ($this->grant)('rent out security.dashboard overview');
+    expect(collect(($this->widget)('security-overview', ['option' => 'lease'])->assertOk()->json('blocks.0.items'))->pluck('label')->all())
+        ->toBe(['Held', 'Awaited', 'Overdue', 'Returned']);
+});

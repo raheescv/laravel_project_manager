@@ -4,7 +4,7 @@
         style="background: linear-gradient(135deg, #3a9e7a, #2e7d56);">
         <h6 class="modal-title fw-bold mb-0">
             <i class="fa fa-calendar-plus-o me-2"></i>
-            Extend Agreement
+            {{ $editingId ? 'Edit Extension' : 'Extend Agreement' }}
         </h6>
         <button type="button" class="btn-close btn-close-white btn-sm" data-bs-dismiss="modal"></button>
     </div>

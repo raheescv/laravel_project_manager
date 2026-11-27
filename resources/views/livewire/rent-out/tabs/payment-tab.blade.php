@@ -245,7 +245,7 @@
             @endif
         </div>
         <div class="d-flex gap-1">
-            @if (count($selectedIds) > 0)
+            @if ($canEditPayment && count($selectedIds) > 0)
                 <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
                     style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
                     wire:click="deleteSelected"
@@ -500,7 +500,7 @@
                                     class="pmx-menu text-start"
                                     :style="`position: fixed; ${flip ? 'bottom: ' + (window.innerHeight - y + 6) + 'px' : 'top: ' + (y + 6) + 'px'}; left: ${x}px; transform: translateX(-100%); z-index: 2000;`">
                                     <div class="pmx-menu__head">Payment Actions</div>
-                                    @if ($payment->source !== 'Transfer')
+                                    @if ($canEditPayment && $payment->source !== 'Transfer')
                                         <a class="pmx-item" href="#" @click="open = false"
                                             wire:click.prevent="editPayment({{ $payment->id }})">
                                             <span class="pmx-item__ic"><i class="fa fa-pencil"></i></span> Edit
@@ -526,12 +526,14 @@
                                         target="_blank">
                                         <span class="pmx-item__ic"><i class="fa fa-history"></i></span> Audit History
                                     </a>
-                                    <div class="pmx-sep"></div>
-                                    <button type="button" class="pmx-item pmx-item--danger" @click="open = false"
-                                        wire:click="deletePayment({{ $payment->id }})"
-                                        wire:confirm="Are you sure you want to delete this payment record?">
-                                        <span class="pmx-item__ic"><i class="fa fa-trash"></i></span> Delete
-                                    </button>
+                                    @if ($canEditPayment)
+                                        <div class="pmx-sep"></div>
+                                        <button type="button" class="pmx-item pmx-item--danger" @click="open = false"
+                                            wire:click="deletePayment({{ $payment->id }})"
+                                            wire:confirm="Are you sure you want to delete this payment record?">
+                                            <span class="pmx-item__ic"><i class="fa fa-trash"></i></span> Delete
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </td>

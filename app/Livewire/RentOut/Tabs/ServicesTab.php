@@ -2,9 +2,11 @@
 
 namespace App\Livewire\RentOut\Tabs;
 
+use App\Enums\RentOut\AgreementType;
 use App\Models\Account;
 use App\Models\Journal;
 use App\Models\JournalEntry;
+use App\Models\RentOut;
 use App\Models\RentOutTransaction;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
@@ -74,7 +76,13 @@ class ServicesTab extends Component
 
     public function editPayment($paymentId)
     {
+        abort_unless(auth()->user()?->can($this->permissionPrefix().'.service edit'), 403);
         $this->dispatch('edit-service-payment', paymentId: $paymentId);
+    }
+
+    protected function permissionPrefix(): string
+    {
+        return RentOut::whereKey($this->rentOutId)->value('agreement_type') === AgreementType::Lease ? 'rent out lease' : 'rent out';
     }
 
     public function printReceipt($paymentId)
@@ -169,6 +177,7 @@ class ServicesTab extends Component
             'servicePayments' => $servicePayments,
             'categorySummary' => $categorySummary,
             'categoryNames' => $categoryNames,
+            'permissionPrefix' => $this->permissionPrefix(),
         ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\RentOut\Tabs;
 
 use App\Actions\RentOut\ExtendAction;
+use App\Actions\RentOut\UpdateExtendAction;
 use App\Enums\RentOut\AgreementType;
 use App\Models\RentOut;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +42,8 @@ class ExtendModal extends Component
     public function save()
     {
         $authRentOut = RentOut::find($this->form['rent_out_id']);
-        abort_unless(auth()->user()?->can($authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.extend' : 'rent out.extend'), 403);
+        $prefix = $authRentOut?->agreement_type === AgreementType::Lease ? 'rent out lease' : 'rent out';
+        abort_unless(auth()->user()?->can($prefix.($this->editingId ? '.extend edit' : '.extend')), 403);
         $this->validate([
             'form.start_date' => 'required|date',
             'form.end_date' => 'required|date|after_or_equal:form.start_date',
@@ -76,7 +78,9 @@ class ExtendModal extends Component
 
         try {
             DB::beginTransaction();
-            $response = (new ExtendAction())->execute($data);
+            $response = $this->editingId
+                ? (new UpdateExtendAction())->execute($data, $this->editingId)
+                : (new ExtendAction())->execute($data);
             if (! $response['success']) {
                 throw new \Exception($response['message']);
             }

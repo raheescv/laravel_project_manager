@@ -41,7 +41,8 @@ class PayoutModal extends Component
     #[On('edit-payout-payment')]
     public function editPayment($paymentId)
     {
-        $payment = RentOutTransaction::findOrFail($paymentId);
+        $payment = RentOutTransaction::with('rentOut:id,agreement_type')->findOrFail($paymentId);
+        abort_unless(auth()->user()?->can($payment->rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment edit' : 'rent out.payment edit'), 403);
         $this->rentOutId = $payment->rent_out_id;
         $this->editingId = $payment->id;
 
@@ -59,7 +60,8 @@ class PayoutModal extends Component
     public function save()
     {
         $rentOut = RentOut::find($this->rentOutId);
-        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
+        $prefix = $rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease' : 'rent out';
+        abort_unless(auth()->user()?->can($prefix.($this->editingId ? '.payment edit' : '.payment')), 403);
         $this->validate([
             'form.date' => 'required|date',
             'form.amount' => 'required|numeric|min:0.01',

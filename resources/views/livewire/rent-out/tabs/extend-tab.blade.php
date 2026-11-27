@@ -5,11 +5,13 @@
             <i class="fa fa-plus-circle me-1"></i>
             <strong>{{ $rentOut->extends->count() }}</strong> extension(s)
         </div>
-        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
-            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
-            wire:click="openExtendModal">
-            <i class="fa fa-plus me-1"></i> Add Extension
-        </button>
+        @can($permissionPrefix.'.extend')
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openExtendModal">
+                <i class="fa fa-plus me-1"></i> Add Extension
+            </button>
+        @endcan
     </div>
 
     {{-- Table --}}
@@ -23,7 +25,7 @@
                     <th class="fw-semibold py-2 text-end">Rent Amount</th>
                     <th class="fw-semibold py-2">Payment Mode</th>
                     <th class="fw-semibold py-2">Remarks</th>
-                    <th class="fw-semibold py-2 text-center" style="width: 70px;">Actions</th>
+                    <th class="fw-semibold py-2 text-center" style="width: 90px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,11 +37,18 @@
                         <td class="text-end fw-medium">{{ number_format($extend->rent_amount, 2) }}</td>
                         <td>{{ $extend->payment_mode?->label() }}</td>
                         <td>{{ $extend->remarks }}</td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-light btn-sm" wire:click="deleteExtend({{ $extend->id }})"
-                                wire:confirm="Are you sure you want to delete this extension?" title="Delete">
-                                <i class="fa fa-trash text-danger"></i>
-                            </button>
+                        <td class="text-center text-nowrap">
+                            @can($permissionPrefix.'.extend edit')
+                                <button type="button" class="btn btn-light btn-sm" wire:click="editExtend({{ $extend->id }})" title="Edit">
+                                    <i class="fa fa-pencil text-warning"></i>
+                                </button>
+                            @endcan
+                            @can($permissionPrefix.'.extend delete')
+                                <button type="button" class="btn btn-light btn-sm" wire:click="deleteExtend({{ $extend->id }})"
+                                    wire:confirm="Are you sure you want to delete this extension?" title="Delete">
+                                    <i class="fa fa-trash text-danger"></i>
+                                </button>
+                            @endcan
                         </td>
                     </tr>
                 @empty

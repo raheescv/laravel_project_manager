@@ -2,6 +2,7 @@
 
 namespace App\Livewire\SupplyRequest;
 
+use App\Actions\SupplyRequest\AddAttachmentsAction;
 use App\Actions\SupplyRequest\CreateUpdateAction;
 use App\Actions\SupplyRequest\StatusChangeAction;
 use App\Enums\SupplyRequest\SupplyRequestStatus;
@@ -314,6 +315,10 @@ class Create extends Component
 
             $branch = Branch::find($this->item['branch_id']);
             $product = Product::find($this->item['product_id']);
+            if (! $this->canEditUnitPrice()) {
+                $this->item['unit_price'] = $product->cost ?? 0;
+                $this->item['total'] = floatval($this->item['unit_price']) * floatval($this->item['quantity']);
+            }
 
             $this->item['branch_name'] = $branch->name ?? '';
             $this->item['product_name'] = $product->name ?? '';
@@ -364,6 +369,7 @@ class Create extends Component
             if (empty($this->items)) {
                 throw new Exception('Please add at least one item');
             }
+            $this->keepUnitPrices();
 
             DB::beginTransaction();
             $response = (new CreateUpdateAction())->execute(
@@ -425,6 +431,52 @@ class Create extends Component
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    public function canEditUnitPrice(): bool
+    {
+        return (bool) auth()->user()?->can('supply request.unit price edit');
+    }
+
+    /**
+     * Without 'unit price edit', a saved item keeps its stored price and a
+     * new one takes the product cost, whatever the request carried.
+     */
+    protected function keepUnitPrices(): void
+    {
+        if ($this->canEditUnitPrice()) {
+            return;
+        }
+
+        $storedPrices = SupplyRequestItem::whereIn('id', collect($this->items)->pluck('id')->filter())->pluck('unit_price', 'id');
+        $productCosts = Product::whereIn('id', collect($this->items)->pluck('product_id')->filter())->pluck('cost', 'id');
+
+        foreach ($this->items as $key => $item) {
+            $price = isset($item['id']) ? ($storedPrices[$item['id']] ?? 0) : ($productCosts[$item['product_id']] ?? 0);
+            $this->items[$key]['unit_price'] = $price;
+            $this->items[$key]['total'] = floatval($item['quantity']) * floatval($price);
+        }
+        $this->mainCalculator();
+    }
+
+    public function uploadCompletedAttachments(): void
+    {
+        abort_unless(auth()->user()?->can('supply request.upload attachment after completed'), 403);
+        if (! $this->table_id || SupplyRequest::whereKey($this->table_id)->value('status') !== SupplyRequestStatus::COMPLETED) {
+            $this->dispatch('error', ['message' => 'Attachments can be added here only after the request is completed.']);
+
+            return;
+        }
+
+        $response = (new AddAttachmentsAction())->execute((int) $this->table_id, $this->images ?? []);
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->mount($this->table_id, $this->type);
+        $this->dispatch('success', ['message' => $response['message']]);
     }
 
     public function render()

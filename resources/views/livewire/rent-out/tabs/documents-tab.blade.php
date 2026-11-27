@@ -81,10 +81,12 @@
                         <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis"
                             style="font-size: .62rem;">{{ $documents->count() }}</span>
                     </span>
-                    <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center"
-                        style="font-size: .74rem;" wire:click="openDocumentModal">
-                        <i class="fa fa-upload me-1"></i> Add New Document
-                    </button>
+                    @can('rent out document.create')
+                        <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center"
+                            style="font-size: .74rem;" wire:click="openDocumentModal">
+                            <i class="fa fa-upload me-1"></i> Add New Document
+                        </button>
+                    @endcan
                 </div>
 
                 <div class="card-body p-3">
@@ -99,6 +101,7 @@
                             {{ html()->select('document_type_id', [])->value('')->class('select-document_type_id')->id('docTabFilterDocumentType')->placeholder('All Document Types') }}
                         </div>
 
+                        @can('rent out document.delete')
                         <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center ms-auto"
                             wire:click="deleteSelected"
                             wire:confirm="Are you sure you want to delete the selected ({{ count($selectedDocs) }}) documents?"
@@ -109,6 +112,7 @@
                                     style="font-size: .6rem;">{{ count($selectedDocs) }}</span>
                             @endif
                         </button>
+                        @endcan
                     </div>
 
                     {{-- Document card grid --}}
@@ -166,20 +170,26 @@
                                                 class="btn btn-light btn-sm flex-fill" title="View">
                                                 <i class="fa fa-eye text-info me-1"></i>View
                                             </a>
-                                            <button type="button" class="btn btn-light btn-sm flex-fill"
-                                                wire:click="downloadDocument({{ $document->id }})" title="Download">
-                                                <i class="fa fa-download text-primary me-1"></i>Get
-                                            </button>
-                                            <button type="button" class="btn btn-light btn-sm"
-                                                wire:click="editDocument({{ $document->id }})" title="Edit">
-                                                <i class="fa fa-pencil text-warning"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-light btn-sm"
-                                                wire:click="deleteDocument({{ $document->id }})"
-                                                wire:confirm="Are you sure you want to delete this document?"
-                                                title="Delete">
-                                                <i class="fa fa-trash text-danger"></i>
-                                            </button>
+                                            @can('rent out document.download')
+                                                <button type="button" class="btn btn-light btn-sm flex-fill"
+                                                    wire:click="downloadDocument({{ $document->id }})" title="Download">
+                                                    <i class="fa fa-download text-primary me-1"></i>Get
+                                                </button>
+                                            @endcan
+                                            @can('rent out document.edit')
+                                                <button type="button" class="btn btn-light btn-sm"
+                                                    wire:click="editDocument({{ $document->id }})" title="Edit">
+                                                    <i class="fa fa-pencil text-warning"></i>
+                                                </button>
+                                            @endcan
+                                            @can('rent out document.delete')
+                                                <button type="button" class="btn btn-light btn-sm"
+                                                    wire:click="deleteDocument({{ $document->id }})"
+                                                    wire:confirm="Are you sure you want to delete this document?"
+                                                    title="Delete">
+                                                    <i class="fa fa-trash text-danger"></i>
+                                                </button>
+                                            @endcan
                                         </div>
                                     </div>
                                 </div>

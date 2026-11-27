@@ -122,9 +122,7 @@ class PaymentTab extends Component
 
     public function deleteSelected()
     {
-        // No dedicated payment-delete permission in config/permissions.php; gate destructive payment removal with the agreement 'payment' capability.
-        $rentOut = RentOut::find($this->rentOutId);
-        abort_unless(Auth::user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
+        abort_unless(Auth::user()?->can($this->permissionPrefix().'.payment edit'), 403);
         if (empty($this->selectedIds)) {
             return;
         }
@@ -147,9 +145,7 @@ class PaymentTab extends Component
 
     public function deletePayment($id)
     {
-        // No dedicated payment-delete permission in config/permissions.php; gate destructive payment removal with the agreement 'payment' capability.
-        $rentOut = RentOut::find($this->rentOutId);
-        abort_unless(Auth::user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.payment' : 'rent out.payment'), 403);
+        abort_unless(Auth::user()?->can($this->permissionPrefix().'.payment edit'), 403);
         $payment = RentOutTransaction::where('id', $id)
             ->where('rent_out_id', $this->rentOutId)
             ->first();
@@ -165,7 +161,13 @@ class PaymentTab extends Component
 
     public function editPayment($paymentId)
     {
+        abort_unless(Auth::user()?->can($this->permissionPrefix().'.payment edit'), 403);
         $this->dispatch('edit-payout-payment', paymentId: $paymentId);
+    }
+
+    protected function permissionPrefix(): string
+    {
+        return RentOut::whereKey($this->rentOutId)->value('agreement_type') === AgreementType::Lease ? 'rent out lease' : 'rent out';
     }
 
     public function openPayoutModal()
@@ -261,6 +263,7 @@ class PaymentTab extends Component
             'categories' => $categories,
             'paymentModes' => $paymentModes,
             'canTransfer' => $canTransfer,
+            'canEditPayment' => Auth::user()?->can($this->permissionPrefix().'.payment edit') ?? false,
         ]);
     }
 }

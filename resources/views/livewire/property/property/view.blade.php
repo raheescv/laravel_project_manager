@@ -57,7 +57,8 @@
             $current = $this->current;
             $agreements = $this->agreements;
             $maintenances = $this->maintenances;
-            $documents = $this->documents;
+            $canViewDocuments = auth()->user()->can('rent out document.view');
+            $documents = $canViewDocuments ? $this->documents : collect();
             $occupants = $property->tenantDetails;
 
             $statusColors = ['occupied' => 'success', 'vacant' => 'secondary', 'booked' => 'info', 'sold' => 'primary'];
@@ -234,6 +235,9 @@
                     ['documents', 'fa-paperclip', 'Documents', $documents->count()],
                     ['activity', 'fa-clock-o', 'Activity', null],
                 ];
+                if (! $canViewDocuments) {
+                    $tabs = array_values(array_filter($tabs, fn (array $tab): bool => $tab[0] !== 'documents'));
+                }
             @endphp
             @foreach ($tabs as [$key, $icon, $label, $count])
                 <li class="nav-item" role="presentation">
@@ -831,6 +835,7 @@
             </div>
 
             {{-- ─────────────────────────  DOCUMENTS  ───────────────────────── --}}
+            @if ($canViewDocuments)
             <div class="tab-pane fade" id="pv-documents" role="tabpanel" aria-labelledby="pv-documents-tab" tabindex="0">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent d-flex align-items-center gap-2 py-2">
@@ -861,15 +866,19 @@
                                             · {{ systemDate($document->created_at) }}
                                         </div>
                                     </div>
-                                    <a href="{{ $document->url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fa fa-download"></i>
-                                    </a>
+                                    @can('rent out document.download')
+                                        <a href="{{ $document->url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fa fa-download"></i>
+                                        </a>
+                                    @endcan
                                 </li>
                             @endforeach
                         </ul>
                     @endif
                 </div>
             </div>
+
+            @endif
 
             {{-- ─────────────────────────  ACTIVITY  ───────────────────────── --}}
             <div class="tab-pane fade" id="pv-activity" role="tabpanel" aria-labelledby="pv-activity-tab" tabindex="0">

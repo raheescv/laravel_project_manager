@@ -16,7 +16,10 @@
                 <label class="form-label fw-semibold small mb-1"><i class="fa fa-money me-1 text-muted"></i> Amount <span
                         class="text-danger">*</span></label>
                 <input type="number" class="form-control form-control-sm" wire:model="form.amount"
-                    step="0.01">
+                    step="0.01" @disabled($paymentLocked)>
+                @if ($paymentLocked)
+                    <small class="text-muted d-block"><i class="fa fa-lock me-1"></i>You don't have permission to edit the payment.</small>
+                @endif
                 @error('form.amount')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
@@ -27,7 +30,7 @@
                         <span class="text-danger">*</span>
                     @endif
                 </label>
-                <select class="form-select form-select-sm" wire:model.live="form.account_id">
+                <select class="form-select form-select-sm" wire:model.live="form.account_id" @disabled($paymentLocked)>
                     <option value="">Select</option>
                     @foreach ($paymentMethods as $id => $name)
                         <option value="{{ $id }}">{{ $name }}</option>
@@ -42,7 +45,7 @@
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-university me-1 text-muted"></i> Bank Name <span
                             class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-sm"
-                        wire:model="form.bank_name" placeholder="Bank name">
+                        wire:model="form.bank_name" placeholder="Bank name" @disabled($paymentLocked)>
                     @error('form.bank_name')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -51,7 +54,7 @@
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-file-text-o me-1 text-muted"></i> Cheque No <span
                             class="text-danger">*</span></label>
                     <input type="text" class="form-control form-control-sm"
-                        wire:model="form.cheque_no" placeholder="Cheque No">
+                        wire:model="form.cheque_no" placeholder="Cheque No" @disabled($paymentLocked)>
                     @error('form.cheque_no')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -73,12 +76,15 @@
             <div class="col-md-6">
                 <label class="form-label fw-semibold small mb-1"><i class="fa fa-info-circle me-1 text-muted"></i> Status <span
                         class="text-danger">*</span></label>
-                <select class="form-select form-select-sm" wire:model.live="form.status">
+                <select class="form-select form-select-sm" wire:model.live="form.status" @disabled($statusLocked)>
                     <option value="">Select</option>
                     @foreach ($securityStatuses as $status)
                         <option value="{{ $status->value }}">{{ $status->label() }}</option>
                     @endforeach
                 </select>
+                @if ($statusLocked)
+                    <small class="text-muted d-block"><i class="fa fa-lock me-1"></i>You don't have permission to change the status.</small>
+                @endif
                 @error('form.status')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
@@ -96,7 +102,7 @@
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-check-o me-1 text-muted"></i> Collected Date <span
                             class="text-danger">*</span></label>
                     <input type="date" class="form-control form-control-sm"
-                        wire:model="form.collected_date">
+                        wire:model="form.collected_date" @disabled($paymentLocked)>
                     @error('form.collected_date')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -107,7 +113,7 @@
                     <label class="form-label fw-semibold small mb-1"><i class="fa fa-calendar-times-o me-1 text-muted"></i> Returned Date <span
                             class="text-danger">*</span></label>
                     <input type="date" class="form-control form-control-sm"
-                        wire:model="form.returned_date">
+                        wire:model="form.returned_date" @disabled($statusLocked)>
                     @error('form.returned_date')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror

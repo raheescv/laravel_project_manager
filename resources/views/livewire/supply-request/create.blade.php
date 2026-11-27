@@ -277,6 +277,7 @@
             'imageList' => $imageList,
             'branches' => $branches,
             'isCompleted' => $status === SupplyRequestStatus::COMPLETED->value,
+            'canUploadAfterComplete' => $isEditing && auth()->user()->can('supply request.upload attachment after completed'),
             'showTotals' => true,
             'showPayment' => true,
             'supply_request' => $supply_request,

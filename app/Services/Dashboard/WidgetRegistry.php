@@ -15,6 +15,7 @@ use App\Services\Dashboard\Sources\PropertyFinancialSource;
 use App\Services\Dashboard\Sources\PropertyLeadSource;
 use App\Services\Dashboard\Sources\PropertyOverviewSource;
 use App\Services\Dashboard\Sources\RentOutExpirySource;
+use App\Services\Dashboard\Sources\RentOutSecuritySource;
 use App\Services\Dashboard\Sources\SalesPerformanceSource;
 use App\Services\Dashboard\Sources\SalesSummarySource;
 use App\Services\Dashboard\Sources\SupplyRequestSource;
@@ -51,6 +52,7 @@ class WidgetRegistry
         PropertyFinancialSource::class,
         SupplyRequestSource::class,
         RentOutExpirySource::class,
+        RentOutSecuritySource::class,
         ProjectContractSource::class,
     ];
 

@@ -5,7 +5,7 @@
             <i class="fa fa-cogs me-1"></i> Services & Charges
         </div>
         <div class="d-flex gap-1 flex-wrap">
-            @if(count($selectedPayments) > 0)
+            @if (auth()->user()->can('rent out service.delete') && count($selectedPayments) > 0)
                 <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center"
                     style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
                     wire:click="deleteSelected"
@@ -134,11 +134,13 @@
                                         <i class="fa fa-ellipsis-v" style="font-size: 16px;"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="min-width: 140px; z-index: 1050;">
-                                        <li>
-                                            <a class="dropdown-item small py-2" href="#" wire:click.prevent="editPayment({{ $payment->id }})">
-                                                <i class="fa fa-pencil text-primary me-2"></i> Edit
-                                            </a>
-                                        </li>
+                                        @can($permissionPrefix.'.service edit')
+                                            <li>
+                                                <a class="dropdown-item small py-2" href="#" wire:click.prevent="editPayment({{ $payment->id }})">
+                                                    <i class="fa fa-pencil text-primary me-2"></i> Edit
+                                                </a>
+                                            </li>
+                                        @endcan
                                         <li>
                                             <a class="dropdown-item small py-2" href="#" wire:click.prevent="printReceipt({{ $payment->id }})">
                                                 @if ($payment->credit > 0)
@@ -148,14 +150,16 @@
                                                 @endif
                                             </a>
                                         </li>
-                                        <li><hr class="dropdown-divider my-1"></li>
-                                        <li>
-                                            <a class="dropdown-item small py-2 text-danger" href="#"
-                                                wire:click.prevent="deletePayment({{ $payment->id }})"
-                                                wire:confirm="Are you sure you want to delete this payment?">
-                                                <i class="fa fa-trash me-2"></i> Delete
-                                            </a>
-                                        </li>
+                                        @can('rent out service.delete')
+                                            <li><hr class="dropdown-divider my-1"></li>
+                                            <li>
+                                                <a class="dropdown-item small py-2 text-danger" href="#"
+                                                    wire:click.prevent="deletePayment({{ $payment->id }})"
+                                                    wire:confirm="Are you sure you want to delete this payment?">
+                                                    <i class="fa fa-trash me-2"></i> Delete
+                                                </a>
+                                            </li>
+                                        @endcan
                                     </ul>
                                 </div>
                             </td>

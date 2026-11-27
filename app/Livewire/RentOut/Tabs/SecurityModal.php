@@ -7,6 +7,7 @@ use App\Actions\RentOut\Security\UpdateAction;
 use App\Enums\RentOut\SecurityStatus;
 use App\Enums\RentOut\SecurityType;
 use App\Models\Account;
+use App\Models\RentOutSecurity;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -54,6 +55,7 @@ class SecurityModal extends Component
     public function save()
     {
         abort_unless(auth()->user()?->can($this->editingId ? 'rent out security.edit' : 'rent out security.create'), 403);
+        $this->keepLockedFields();
         $rules = [
             'form.amount' => 'required|numeric|min:0.01',
             'form.account_id' => 'nullable',
@@ -131,6 +133,50 @@ class SecurityModal extends Component
     }
 
     /**
+     * On edit, the status (with its returned date) needs 'status change' and
+     * a recorded payment's money fields need 'payment edit'. Locked fields are
+     * reloaded from the stored deposit, so a tampered request can't change them.
+     */
+    protected function keepLockedFields(): void
+    {
+        if (! $this->editingId) {
+            return;
+        }
+        $security = RentOutSecurity::find($this->editingId);
+        if (! $security) {
+            return;
+        }
+
+        if ($this->statusLocked()) {
+            $this->form['status'] = $security->status->value;
+            $this->form['returned_date'] = $security->returned_date?->format('Y-m-d') ?? '';
+        }
+        if ($this->paymentLocked()) {
+            $this->form['amount'] = $security->amount;
+            $this->form['account_id'] = $security->account_id ?? '';
+            $this->form['bank_name'] = $security->bank_name ?? '';
+            $this->form['cheque_no'] = $security->cheque_no ?? '';
+            $this->form['collected_date'] = $security->collected_date?->format('Y-m-d') ?? '';
+        }
+    }
+
+    public function statusLocked(): bool
+    {
+        return $this->editingId && ! auth()->user()?->can('rent out security.status change');
+    }
+
+    /**
+     * Only a payment already recorded is locked: entering the first payment
+     * on a held deposit is not an edit.
+     */
+    public function paymentLocked(): bool
+    {
+        return $this->editingId
+            && ! auth()->user()?->can('rent out security.payment edit')
+            && RentOutSecurity::whereKey($this->editingId)->whereNotNull('account_id')->exists();
+    }
+
+    /**
      * Payment-method account ids flagged as cheque accounts (as strings, to
      * match the select value).
      */
@@ -166,6 +212,8 @@ class SecurityModal extends Component
             'securityStatuses' => SecurityStatus::cases(),
             'collectedStatuses' => SecurityStatus::collectedValues(),
             'refundedStatuses' => SecurityStatus::refundedValues(),
+            'statusLocked' => $this->statusLocked(),
+            'paymentLocked' => $this->paymentLocked(),
         ]);
     }
 }

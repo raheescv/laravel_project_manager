@@ -18,7 +18,11 @@
     - $showPayment    : bool - show payment section (default: false)
     - $paymentMethods : array - payment methods for payment section
     - $payment_mode_id: string - selected payment mode
+    - $canUploadAfterComplete: bool - offer the upload box on a completed record (default: false)
 --}}
+@php
+    $canEditUnitPrice = auth()->user()->can('supply request.unit price edit');
+@endphp
 
 @php
     use App\Enums\SupplyRequest\SupplyRequestStatus;
@@ -92,7 +96,8 @@
                     </div>
                     <div class="col-4 col-sm-2 col-lg-2">
                         <label class="form-label fw-semibold small mb-1 text-secondary">Price</label>
-                        <input type="number" wire:model="item.unit_price" class="form-control form-control-sm text-end" step="any">
+                        <input type="number" wire:model="item.unit_price" class="form-control form-control-sm text-end" step="any"
+                            @readonly(!$canEditUnitPrice) @if (!$canEditUnitPrice) title="Price comes from the product cost" @endif>
                     </div>
                     <div class="col-6 col-sm-2 col-lg-2">
                         <label class="form-label fw-semibold small mb-1 text-secondary">Total</label>
@@ -172,7 +177,7 @@
                                         step="any" style="width: 80px;"></td>
                                 <td><input type="number" wire:model="items.{{ $key }}.unit_price"
                                         class="form-control form-control-sm text-end" wire:change="cartCalculator('{{ $key }}')"
-                                        step="any" style="width: 90px;"></td>
+                                        step="any" style="width: 90px;" @readonly(!$canEditUnitPrice)></td>
                                 <td><input type="number" wire:model="items.{{ $key }}.total"
                                         class="form-control form-control-sm text-end fw-semibold" readonly style="width: 90px;"></td>
                             @endif
@@ -398,6 +403,21 @@
         </div>
     </div>
     <div class="card-body p-3">
+        @if ($isCompleted && ($canUploadAfterComplete ?? false))
+            <div class="border rounded-3 p-3 mb-2 text-center bg-light"
+                style="border-style: dashed !important; border-color: #adb5bd !important;">
+                <i class="fa fa-cloud-upload text-muted d-block mb-1" style="font-size: 1.5rem; opacity: 0.5;"></i>
+                <small class="text-muted d-block mb-2">Add files to this completed request</small>
+                <div class="d-flex gap-2 justify-content-center mx-auto" style="max-width: 480px;">
+                    <input type="file" wire:model="images" class="form-control form-control-sm" multiple
+                        accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx">
+                    <button type="button" class="btn btn-primary btn-sm text-nowrap" wire:click="uploadCompletedAttachments"
+                        wire:loading.attr="disabled" wire:target="images,uploadCompletedAttachments">
+                        <i class="fa fa-upload me-1"></i> Upload
+                    </button>
+                </div>
+            </div>
+        @endif
         @if (!$isCompleted)
             <div class="border rounded-3 p-3 mb-2 text-center bg-light"
                 style="border-style: dashed !important; border-color: #adb5bd !important;">

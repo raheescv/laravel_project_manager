@@ -38,14 +38,33 @@ class ExtendTab extends Component
         );
     }
 
+    public function editExtend($id)
+    {
+        abort_unless(auth()->user()?->can($this->permissionPrefix().'.extend edit'), 403);
+        $extend = RentOutExtend::where('rent_out_id', $this->rentOutId)->find($id);
+        if (! $extend) {
+            return;
+        }
+
+        $this->dispatch('open-extend-modal',
+            form: [
+                'rent_out_id' => $extend->rent_out_id,
+                'start_date' => $extend->start_date?->format('Y-m-d'),
+                'end_date' => $extend->end_date?->format('Y-m-d'),
+                'rent_amount' => $extend->rent_amount,
+                'payment_mode' => $extend->payment_mode?->value,
+                'remarks' => $extend->remarks ?? '',
+            ],
+            editingId: $extend->id,
+        );
+    }
+
     public function deleteExtend($id)
     {
-        // No dedicated extend-delete permission in config/permissions.php; gate with the agreement 'extend' capability.
-        $rentOut = RentOut::find($this->rentOutId);
-        abort_unless(auth()->user()?->can($rentOut?->agreement_type === AgreementType::Lease ? 'rent out lease.extend' : 'rent out.extend'), 403);
+        abort_unless(auth()->user()?->can($this->permissionPrefix().'.extend delete'), 403);
         try {
             DB::beginTransaction();
-            $extend = RentOutExtend::find($id);
+            $extend = RentOutExtend::where('rent_out_id', $this->rentOutId)->find($id);
             if (! $extend) {
                 throw new \Exception('Extension not found.');
             }
@@ -59,10 +78,15 @@ class ExtendTab extends Component
         }
     }
 
+    protected function permissionPrefix(): string
+    {
+        return RentOut::whereKey($this->rentOutId)->value('agreement_type') === AgreementType::Lease ? 'rent out lease' : 'rent out';
+    }
+
     public function render()
     {
         $rentOut = RentOut::with('extends')->find($this->rentOutId);
 
-        return view('livewire.rent-out.tabs.extend-tab', ['rentOut' => $rentOut]);
+        return view('livewire.rent-out.tabs.extend-tab', ['rentOut' => $rentOut, 'permissionPrefix' => $this->permissionPrefix()]);
     }
 }

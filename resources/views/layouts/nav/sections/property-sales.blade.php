@@ -65,7 +65,7 @@
                         class="nav-link {{ request()->is(['property/sale/payment-due']) ? 'active' : '' }}">Payment Due</a>
                 </li>
             @endcan
-            @can('rent out lease.view')
+            @can('rent out lease.service charge report')
                 <li class="nav-item">
                     <a href="{{ route('property::report::service-charge') }}"
                         class="nav-link {{ request()->is(['property/report/service-charge']) ? 'active' : '' }}">Service Charge Report</a>
@@ -95,25 +95,25 @@
                         class="nav-link {{ request()->is(['property/sale/cheque-management']) ? 'active' : '' }}">Cheque Management</a>
                 </li>
             @endcan
-            @can('rent out lease.payment')
+            @can('rent out lease.payment history')
                 <li class="nav-item">
                     <a href="{{ route('property::sale::payment-history') }}"
                         class="nav-link {{ request()->is(['property/sale/payment-history']) ? 'active' : '' }}">Payment History</a>
                 </li>
             @endcan
-            @can('rent out.view')
+            @can('rent out lease.customer property report')
                 <li class="nav-item">
                     <a href="{{ route('property::report::customer-property', 'lease') }}"
                         class="nav-link {{ request()->is(['property/report/customer-property/lease']) ? 'active' : '' }}">Customer Property</a>
                 </li>
             @endcan
-            @can('rent out security.view')
+            @can('rent out lease.security report')
                 <li class="nav-item">
                     <a href="{{ route('property::report::security', 'lease') }}"
                         class="nav-link {{ request()->is(['property/report/security/lease']) ? 'active' : '' }}">Security Report</a>
                 </li>
             @endcan
-            @can('rent out lease.view')
+            @can('rent out lease.daybook')
                 <li class="nav-item">
                     <a href="{{ route('property::report::daybook', 'lease') }}"
                         class="nav-link {{ request()->is(['property/report/daybook/lease']) ? 'active' : '' }}">Day Book</a>

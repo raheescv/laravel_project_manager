@@ -73,25 +73,25 @@
                         class="nav-link {{ request()->is(['property/rent/cheque-management']) ? 'active' : '' }}">Cheque Management</a>
                 </li>
             @endcan
-            @can('rent out.payment')
+            @can('rent out.payment history')
                 <li class="nav-item">
                     <a href="{{ route('property::rent::payment-history') }}"
                         class="nav-link {{ request()->is(['property/rent/payment-history']) ? 'active' : '' }}">Payment History</a>
                 </li>
             @endcan
-            @can('rent out.view')
+            @can('rent out.customer property report')
                 <li class="nav-item">
                     <a href="{{ route('property::report::customer-property', 'rental') }}"
                         class="nav-link {{ request()->is(['property/report/customer-property/rental']) ? 'active' : '' }}">Customer Property</a>
                 </li>
             @endcan
-            @can('rent out security.view')
+            @can('rent out.security report')
                 <li class="nav-item">
                     <a href="{{ route('property::report::security', 'rental') }}"
                         class="nav-link {{ request()->is(['property/report/security/rental']) ? 'active' : '' }}">Security Report</a>
                 </li>
             @endcan
-            @can('rent out.view')
+            @can('rent out.daybook')
                 <li class="nav-item">
                     <a href="{{ route('property::report::daybook', 'rental') }}"
                         class="nav-link {{ request()->is(['property/report/daybook/rental']) ? 'active' : '' }}">Day Book</a>

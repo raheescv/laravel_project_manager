@@ -6,11 +6,13 @@
             <strong>{{ $rentOut->securities->count() }}</strong> security deposit(s)
             &middot; Total: <strong class="text-primary">{{ number_format($rentOut->securities->sum('amount'), 2) }}</strong>
         </div>
-        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
-            style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
-            wire:click="openSecurityModal">
-            <i class="fa fa-plus me-1"></i> Add Security
-        </button>
+        @can('rent out security.create')
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center"
+                style="font-size: .7rem; padding: .2rem .5rem; border-radius: 4px;"
+                wire:click="openSecurityModal">
+                <i class="fa fa-plus me-1"></i> Add Security
+            </button>
+        @endcan
     </div>
 
     {{-- Table --}}
@@ -44,13 +46,17 @@
                         <td>{{ $security->remarks }}</td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-light btn-sm" wire:click="editSecurity({{ $security->id }})" title="Edit">
-                                    <i class="fa fa-pencil text-primary"></i>
-                                </button>
-                                <button type="button" class="btn btn-light btn-sm" wire:click="deleteSecurity({{ $security->id }})"
-                                    wire:confirm="Are you sure you want to delete this security deposit?" title="Delete">
-                                    <i class="fa fa-trash text-danger"></i>
-                                </button>
+                                @can('rent out security.edit')
+                                    <button type="button" class="btn btn-light btn-sm" wire:click="editSecurity({{ $security->id }})" title="Edit">
+                                        <i class="fa fa-pencil text-primary"></i>
+                                    </button>
+                                @endcan
+                                @can('rent out security.delete')
+                                    <button type="button" class="btn btn-light btn-sm" wire:click="deleteSecurity({{ $security->id }})"
+                                        wire:confirm="Are you sure you want to delete this security deposit?" title="Delete">
+                                        <i class="fa fa-trash text-danger"></i>
+                                    </button>
+                                @endcan
                             </div>
                         </td>
                     </tr>

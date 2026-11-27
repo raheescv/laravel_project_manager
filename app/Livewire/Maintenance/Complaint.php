@@ -265,7 +265,7 @@ class Complaint extends Component
             'product_id' => $this->item['product_id'],
             'mode' => $this->item['mode'] ?? 'New',
             'quantity' => $this->item['quantity'] ?? 1,
-            'unit_price' => $this->item['unit_price'] ?? null,
+            'unit_price' => Auth::user()?->can('supply request.unit price edit') ? ($this->item['unit_price'] ?? null) : null,
             'remarks' => $this->item['remarks'] ?? '',
         ], Auth::id());
 
@@ -296,7 +296,7 @@ class Complaint extends Component
         if (! $this->items[$key]['edit_flag'] && isset($this->items[$key]['id'])) {
             $response = (new UpdateSupplyItemAction())->execute($this->items[$key]['id'], [
                 'quantity' => $this->items[$key]['quantity'],
-                'unit_price' => $this->items[$key]['unit_price'],
+                'unit_price' => Auth::user()?->can('supply request.unit price edit') ? $this->items[$key]['unit_price'] : null,
                 'remarks' => $this->items[$key]['remarks'] ?? '',
                 'branch_id' => $this->items[$key]['branch_id'] ?? null,
             ]);
