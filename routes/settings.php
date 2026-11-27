@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ComboOfferController;
 use App\Http\Controllers\FixedAssetController;
+use App\Http\Controllers\OptionGroupController;
 use App\Http\Controllers\PackageCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOfferController;
@@ -120,6 +121,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('', 'index')->name('index')->can('package category.view');
             Route::get('list', 'get')->name('list');
         });
+    });
+    Route::name('product::option_group::')->prefix('product/option-group')->controller(OptionGroupController::class)->group(function (): void {
+        Route::get('', 'index')->name('index')->can('option group.view');
     });
     Route::name('product::offer::')->prefix('product/offer')->controller(ProductOfferController::class)->group(function (): void {
         Route::get('', 'index')->name('index')->can('product offer.view');

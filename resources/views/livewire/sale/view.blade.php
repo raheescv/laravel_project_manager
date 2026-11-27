@@ -452,6 +452,9 @@
                                     @if (!empty($item['variant']))
                                         <div class="s-ps"><i class="fa fa-tag"></i> {{ $item['variant'] }}</div>
                                     @endif
+                                    @if (!empty($item['options']))
+                                        <div class="s-ps"><i class="fa fa-list-ul"></i> {{ implode(' ', $item['options']) }}</div>
+                                    @endif
                                     @if (!empty($item['assistant_name']))
                                         <div class="s-ps"><i class="fa fa-user-plus"></i> {{ $item['assistant_name'] }}</div>
                                     @endif

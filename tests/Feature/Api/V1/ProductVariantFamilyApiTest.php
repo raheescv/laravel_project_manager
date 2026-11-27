@@ -86,3 +86,17 @@ it('returns every member of a family by family_id', function (): void {
 
     expect($ids)->toBe([$this->shoe->id, $this->blue->id]);
 });
+
+it('tells the app each item\'s design and what the family calls that layer', function (): void {
+    cache()->flush();
+    Product::whereKey([$this->shoe->id, $this->blue->id])->update(['variant_option' => 'Flavour', 'variant_size_option' => 'Weight']);
+    $this->blue->update(['variant_value' => 'Mango']);
+
+    $rows = collect($this->getJson($this->world->url('/api/v1/products?in_stock_only=0&search=Running'))
+        ->assertSuccessful()->json('data.data'));
+
+    expect($rows->firstWhere('id', $this->shoe->id)['option_name'])->toBe('Flavour')
+        ->and($rows->firstWhere('id', $this->shoe->id)['size_name'])->toBe('Weight')
+        ->and($rows->firstWhere('id', $this->shoe->id)['design'])->toBeNull()
+        ->and($rows->firstWhere('id', $this->blue->id)['design'])->toBe('Mango');
+});

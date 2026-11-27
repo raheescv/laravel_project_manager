@@ -1243,10 +1243,15 @@ class _ReviewPayScreenState extends State<ReviewPayScreen> {
                               ),
                             ),
                             Expanded(
-                              child: Text(l.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: ui(size: 13, weight: FontWeight.w600, color: p.ink)),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(l.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: ui(size: 13, weight: FontWeight.w600, color: p.ink)),
+                                if (l.optionsLabel.isNotEmpty)
+                                  Text(l.optionsLabel, maxLines: 2, overflow: TextOverflow.ellipsis,
+                                      style: ui(size: 11, weight: FontWeight.w600, color: p.textSecondary)),
+                              ]),
                             ),
                             if (wide)
                               SizedBox(

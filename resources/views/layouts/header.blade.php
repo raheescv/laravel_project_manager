@@ -329,6 +329,11 @@
                                                         <i class="fa fa-certificate fs-5 me-2"></i>Brand
                                                     </a>
                                                 @endcan
+                                                @can('option group.view')
+                                                    <a href="{{ route('product::option_group::index') }}" class="list-group-item list-group-item-action header-mega-child">
+                                                        <i class="fa fa-list-ul fs-5 me-2"></i>Option Groups
+                                                    </a>
+                                                @endcan
                                                 @can('tailoring category.view')
                                                     <a href="{{ route('settings::tailoring_category::index') }}" class="list-group-item list-group-item-action header-mega-child">
                                                         <i class="fa fa-scissors fs-5 me-2"></i>Tailoring Category

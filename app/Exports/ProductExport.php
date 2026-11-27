@@ -76,6 +76,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
 
             'Barcode',
             'Pattern',
+            'Design / Flavour',
             'Color',
             'Size',
             'Model',
@@ -116,6 +117,7 @@ class ProductExport implements FromQuery, WithHeadings, WithMapping
             $row->mrp,
             $row->barcode,
             $row->pattern,
+            $row->variant_value,
             $row->color,
             $row->size,
             $row->model,

@@ -214,7 +214,7 @@
                                     @if ($item->product?->barcode)
                                         <div class="s-ps"><i class="fa fa-barcode"></i> {{ $item->product->barcode }}</div>
                                     @endif
-                                    @if ($variant = \App\Models\Product::variantLabel($item->product?->size, $item->product?->color))
+                                    @if ($variant = $item->product?->variantName())
                                         <div class="s-ps"><i class="fa fa-tag"></i> {{ $variant }}</div>
                                     @endif
                                 </td>

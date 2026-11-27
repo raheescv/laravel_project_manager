@@ -276,6 +276,9 @@ class CatalogItem extends Equatable {
     this.brand,
     this.priority = 0,
     this.size = '',
+    this.design = '',
+    this.optionName = 'Design',
+    this.sizeName = 'Size',
     this.sizeCategory = '',
     this.hsnCode = '',
     this.tax = 0,
@@ -303,6 +306,9 @@ class CatalogItem extends Equatable {
         brand: CatalogRef.of(j['brand_id'], j['brand']),
         priority: asNum(j['priority']).toInt(),
         size: asStr(j['size']),
+        design: asStr(j['design']),
+        optionName: asStr(j['option_name']).trim().isEmpty ? 'Design' : asStr(j['option_name']).trim(),
+        sizeName: asStr(j['size_name']).trim().isEmpty ? 'Size' : asStr(j['size_name']).trim(),
         sizeCategory: asStr(j['size_category']),
         hsnCode: asStr(j['hsn_code']),
         tax: asNum(j['tax']).toDouble(),
@@ -347,6 +353,14 @@ class CatalogItem extends Equatable {
   final CatalogRef? brand;
   final int priority;
   final String size;
+
+  /// The variant family's first layer, above size: this item's design /
+  /// flavour / model, and what the family calls it (named on the web Variants tab).
+  final String design;
+  final String optionName;
+
+  /// What the family calls its second layer, stored in [size] ("Size", "Flavour"…).
+  final String sizeName;
   final String sizeCategory;
   final String hsnCode;
   final double tax;
@@ -382,6 +396,7 @@ class CatalogItem extends Equatable {
           'unit_id': unit?.id,
           'brand_id': brand?.payload,
           'size': size.trim(),
+          'variant_value': design.trim(),
           'size_category': sizeCategory.trim(),
           'hsn_code': hsnCode.trim(),
           'tax': tax,
@@ -395,7 +410,7 @@ class CatalogItem extends Equatable {
   @override
   List<Object?> get props => [
         id, name, nameArabic, code, active, department, mainCategory, subCategory, unit, brand, priority, size,
-        sizeCategory, hsnCode, tax, barcodeNumber, description, isSelling, isFavorite, cost, mrp, time, thumbnail,
+        design, optionName, sizeName, sizeCategory, hsnCode, tax, barcodeNumber, description, isSelling, isFavorite, cost, mrp, time, thumbnail,
         images,
       ];
 }

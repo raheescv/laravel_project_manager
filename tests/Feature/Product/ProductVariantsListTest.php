@@ -80,3 +80,18 @@ it('passes the variant filter to the export', function (): void {
     expect($mainIds)->toBe(collect([$this->shoe->id, $loose->id])->sort()->values()->all())
         ->and($variantIds)->toBe(collect([$this->blue->id, $this->plain->id])->sort()->values()->all());
 });
+
+it('shows a Design column with the family\'s designs and finds a family by one', function (): void {
+    $this->shoe->update(['variant_value' => 'Floral']);
+    $this->blue->update(['variant_value' => 'Striped']);
+
+    $table = Livewire::test(Table::class)
+        ->assertSee('Design / Flavour')
+        ->assertSeeHtmlInOrder(['class="c-design"', '<span class="chip-size">Floral</span>', '<span class="chip-size">Striped</span>', 'class="c-size"'])
+        ->call('toggleFamily', $this->shoe->id)
+        ->assertSee('Striped / 42 / Blue');
+
+    expect(Livewire::test(Table::class)->set('search', 'Striped')->viewData('data')->pluck('id')->all())->toBe([$this->shoe->id]);
+
+    $table->set('columns.variant_value', false)->assertDontSeeHtml('class="c-design"');
+});

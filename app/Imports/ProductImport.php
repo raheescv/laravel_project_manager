@@ -106,7 +106,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
                     $q->orWhereIn('name', $names);
                 }
             })
-            ->get(['id', 'parent_id', 'name', 'size', 'color', 'barcode_number']);
+            ->get(['id', 'parent_id', 'name', 'size', 'color', 'variant_value', 'barcode_number']);
 
         foreach ($activeRows as $row) {
             $this->existingById[$row->id] = $row;
@@ -246,7 +246,7 @@ class ProductImport implements ToCollection, WithBatchInserts, WithChunkReading,
         }
 
         throw new Exception('"'.$data['name'].'" matches '.count($candidates).' variants ('
-            .implode(', ', array_map(fn (Product $candidate) => Product::variantLabel($candidate->size, $candidate->color), $candidates))
+            .implode(', ', array_map(fn (Product $candidate) => $candidate->variantName(), $candidates))
             .'). Add the barcode, or the size and colour columns, so the row points at one of them.', 1);
     }
 

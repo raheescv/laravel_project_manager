@@ -50,7 +50,7 @@ class UpdateAction
                 unset($data['barcode_number']);
             }
             $data['parent_id'] = $model->parent_id;
-            $data += ['size' => $model->size, 'color' => $model->color];
+            $data += ['size' => $model->size, 'color' => $model->color, 'variant_value' => $model->variant_value];
             if ($model->parent_id && $model->parent) {
                 $data = array_merge($data, $model->parent->only(Product::VARIANT_SHARED_FIELDS));
             }

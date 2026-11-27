@@ -2,8 +2,10 @@
 
 namespace App\Actions\Sale\Item;
 
+use App\Actions\Sale\Item\Option\SyncAction;
 use App\Models\Configuration;
 use App\Models\SaleItem;
+use App\Support\Sale\SaleItemOptions;
 use Exception;
 
 class CreateAction
@@ -14,11 +16,19 @@ class CreateAction
     {
         try {
             $this->setUserIds($data, $user_id);
-            $this->validateDuplicate($data);
-            $this->validateUnitPriceAgainstMrp($data);
+            $options = SaleItemOptions::forLine($data) ?? ['rows' => [], 'extra' => 0.0];
+            $this->validateDuplicate($data, (bool) $options['rows']);
+            $this->validateUnitPriceAgainstMrp($data, $options['extra']);
             validationHelper(SaleItem::rules(), $data);
 
             $model = SaleItem::create($data);
+
+            if ($options['rows']) {
+                $response = (new SyncAction())->execute($model, $options['rows']);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
+            }
 
             $return['success'] = true;
             $return['message'] = 'Successfully Created SaleItem';
@@ -36,15 +46,17 @@ class CreateAction
         $data['created_by'] = $data['updated_by'] = $user_id;
     }
 
-    private function validateDuplicate(array $data): void
+    /** Lines with options never merge: two Paw-er Drinks in different flavours are two lines. */
+    private function validateDuplicate(array $data, bool $hasOptions): void
     {
-        if ((Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge') === 'separate') {
+        if ($hasOptions || (Configuration::where('key', 'sale_item_row_mode')->value('value') ?? 'merge') === 'separate') {
             return;
         }
 
         $duplicate = SaleItem::where('product_id', $data['product_id'])
             ->where('employee_id', $data['employee_id'])
             ->where('sale_id', $data['sale_id'])
+            ->whereDoesntHave('options')
             ->exists();
 
         if ($duplicate) {

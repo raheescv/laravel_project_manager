@@ -28,13 +28,13 @@ class Table extends Component
     use WithPagination;
 
     /** Text columns the search box looks in. */
-    private const SEARCH_COLUMNS = ['name', 'name_arabic', 'code', 'barcode', 'color'];
+    private const SEARCH_COLUMNS = ['name', 'name_arabic', 'code', 'barcode', 'color', 'variant_value'];
 
     /** Dropdown filters that match their column exactly. */
     private const EXACT_FILTERS = ['department_id', 'main_category_id', 'sub_category_id', 'brand_id', 'unit_id', 'status'];
 
     /** Columns the headers may sort by. */
-    private const SORTABLE = ['id', 'department_id', 'main_category_id', 'sub_category_id', 'unit_id', 'brand_id', 'size', 'color', 'code', 'name', 'name_arabic', 'barcode', 'cost', 'mrp'];
+    private const SORTABLE = ['id', 'department_id', 'main_category_id', 'sub_category_id', 'unit_id', 'brand_id', 'variant_value', 'size', 'color', 'code', 'name', 'name_arabic', 'barcode', 'cost', 'mrp'];
 
     public $search = '';
 
@@ -116,6 +116,7 @@ class Table extends Component
                 'sub_category' => true,
                 'unit' => true,
                 'brand' => true,
+                'variant_value' => true,
                 'size' => true,
                 'color' => true,
                 'code' => true,
@@ -143,6 +144,7 @@ class Table extends Component
             'id' => 'ID',
             'image' => 'Image',
             'name_arabic' => 'Arabic Name',
+            'variant_value' => 'Design / Flavour',
             'size' => 'Size',
             'color' => 'Color',
             'code' => 'SKU Code',
@@ -451,7 +453,7 @@ class Table extends Component
             ->with(['brand:id,name', 'department:id,name', 'mainCategory:id,name', 'subCategory:id,name', 'unit:id,name'])
             ->withCount('variants')
             ->when($this->groupVariants, fn (Builder $query) => $query->familyHeads()
-                ->with(['variants' => fn ($variants) => $variants->select(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'cost', 'mrp'])->orderBy('id')]))
+                ->with(['variants' => fn ($variants) => $variants->select(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'variant_value', 'cost', 'mrp'])->orderBy('id')]))
             ->when($terms, fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $this->matchSearchTerms($member, $terms)))
             ->when($size !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('size', $size)))
             ->when($colour !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('color', $colour)))

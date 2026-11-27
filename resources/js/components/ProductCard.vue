@@ -23,13 +23,14 @@
                 {{ product.name }}
             </h6>
 
-            <!-- A family card stands for several size / colour items; tapping it asks which one -->
+            <!-- A family card stands for several design / size / colour items; tapping it asks which one -->
             <div v-if="isFamily" class="posx-card-meta">
                 <span class="posx-card-family"><i class="fa fa-th"></i> {{ product.variants.length }} items</span>
             </div>
             <div v-else class="posx-card-meta">
                 <span v-if="product.code"><b>SKU</b> {{ product.code }}</span>
-                <span v-if="product.size"><b>Size</b> {{ product.size }}</span>
+                <span v-if="product.design"><b>{{ product.option_name || 'Design' }}</b> {{ product.design }}</span>
+                <span v-if="product.size"><b>{{ product.size_name || 'Size' }}</b> {{ product.size }}</span>
                 <span v-if="product.color_name" class="posx-card-colour"><i :style="{ background: product.color_hex }"></i>{{ product.color_name }}</span>
                 <span v-if="isProduct && product.barcode" class="text-truncate" style="max-width: 60px;">
                     <b>BC</b> {{ product.barcode }}

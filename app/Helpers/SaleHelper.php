@@ -75,7 +75,7 @@ class SaleHelper
      */
     private function officeBill(Sale $sale, string $company_name): string
     {
-        $sale->loadMissing(['createdUser:id,name', 'items.product.mainCategory', 'comboOffers.comboOffer']);
+        $sale->loadMissing(['createdUser:id,name', 'items.product.mainCategory', 'items.options', 'comboOffers.comboOffer']);
 
         return View::make('sale.print-office-bill', [
             'sale' => $sale,

@@ -144,6 +144,7 @@ class UpdateAction
                 return $response['data'];
             })->load([
                 'items.product:id,name,code,name_arabic,type',
+                'items.options',
                 'items.employee:id,name',
                 'payments.paymentMethod:id,name',
                 'account:id,name,mobile',
@@ -235,7 +236,7 @@ class UpdateAction
                 'conversion_factor' => 1,
                 'discount' => (float) ($line['discount'] ?? 0),
                 'tax' => $product->tax ?? 0,
-            ];
+            ] + CreateAction::optionsOf($line);
 
             // Only trust an id that actually belongs to this sale; anything else is
             // treated as a new line rather than silently patching a foreign row.

@@ -125,6 +125,16 @@
             margin-top: 1px;
         }
 
+        .item-option {
+            font-size: 10px;
+            color: #000;
+            padding-left: 8px;
+        }
+
+        .item-option.nested {
+            padding-left: 16px;
+        }
+
         .text-left {
             text-align: left !important;
         }
@@ -621,7 +631,7 @@
                     </tr>
                 @endforeach
                 {{--  Items Table Area --}}
-                @foreach ($sale->items()->whereNull('sale_combo_offer_id')->get() as $item)
+                @foreach ($sale->items()->whereNull('sale_combo_offer_id')->with('options')->get() as $item)
                     <tr>
                         <td colspan="4" class="text-left">
                             <div class="item-name">
@@ -634,6 +644,9 @@
                             @if ($item->product->description)
                                 <div class="item-description">{{ Str::limit($item->product->description, 30) }}</div>
                             @endif
+                            @foreach ($item->options as $option)
+                                <div @class(['item-option', 'nested' => $option->parent_id])>{{ $option->receiptLabel() }}</div>
+                            @endforeach
                         </td>
                     </tr>
                     @if ($thermal_printer_style == 'with_arabic')

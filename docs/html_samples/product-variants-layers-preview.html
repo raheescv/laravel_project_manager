@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Variants Tab Preview</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
+<style>
+/* ── Harness: stands in for the app's Bootstrap theme variables ─────────── */
+:root {
+    --bs-primary: #3e4b63;
+    --bs-body-bg: #ffffff;
+    --bs-tertiary-bg: #f4f6fa;
+    --bs-body-color: #1f2937;
+    --bs-emphasis-color: #0b1220;
+    --bs-secondary-color: #6b7280;
+    --bs-border-color: #dfe3ea;
+    --bs-border-color-translucent: rgba(15, 23, 42, .09);
+    --bs-success: #16a34a;
+    --bs-danger: #dc2626;
+    --page: #eef1f6;
+}
+:root[data-theme="dark"] {
+    --bs-primary: #7c8db5;
+    --bs-body-bg: #171c27;
+    --bs-tertiary-bg: #1e2432;
+    --bs-body-color: #d7dce6;
+    --bs-emphasis-color: #f4f6fb;
+    --bs-secondary-color: #8d96a8;
+    --bs-border-color: #2c3445;
+    --bs-border-color-translucent: rgba(255, 255, 255, .08);
+    --bs-success: #4ade80;
+    --bs-danger: #f87171;
+    --page: #0f131b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Poppins, system-ui, sans-serif; font-size: 13.5px; background: var(--page); color: var(--bs-body-color); }
+button, input { font: inherit; color: inherit; }
+.host-bar { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color-translucent); }
+.host-bar b { font-size: 14px; }
+.host-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--bs-tertiary-bg); }
+.host-seg button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; color: var(--bs-secondary-color); }
+.host-seg button.on { background: var(--bs-body-bg); color: var(--bs-emphasis-color); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.host-note { flex-basis: 100%; color: var(--bs-secondary-color); font-size: 12.5px; }
+.host-page { max-width: 1240px; margin: 0 auto; padding: 22px 20px 120px; }
+.host-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--bs-border-color); margin-bottom: 18px; color: var(--bs-secondary-color); font-weight: 500; }
+.host-tabs span { padding: 10px 0; }
+.host-tabs span.on { color: var(--bs-emphasis-color); border-bottom: 2px solid var(--bs-primary); }
+
+/* ── Shared tokens for the tab (scope .pvx) — all from theme vars ─────────── */
+.pvx {
+    --acc: var(--bs-primary);
+    --acc-soft: color-mix(in srgb, var(--acc) 9%, var(--bs-body-bg));
+    --acc-soft-2: color-mix(in srgb, var(--acc) 16%, var(--bs-body-bg));
+    --acc-line: color-mix(in srgb, var(--acc) 38%, var(--bs-border-color));
+    --acc-ink: color-mix(in srgb, var(--acc) 75%, var(--bs-emphasis-color));
+    --ok: var(--bs-success);
+    --ok-soft: color-mix(in srgb, var(--ok) 12%, var(--bs-body-bg));
+    --line: var(--bs-border-color-translucent);
+    --muted: var(--bs-secondary-color);
+    --card: var(--bs-body-bg);
+    --sunk: var(--bs-tertiary-bg);
+    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 14px 34px -22px rgba(15,23,42,.45);
+    --r: 16px;
+}
+:root[data-theme="dark"] .pvx { --acc-ink: color-mix(in srgb, var(--acc) 40%, #fff); --acc-soft: color-mix(in srgb, var(--acc) 20%, var(--bs-body-bg)); --acc-soft-2: color-mix(in srgb, var(--acc) 32%, var(--bs-body-bg)); --shadow: 0 14px 34px -22px rgba(0,0,0,.8); }
+.pvx .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+.pvx .muted { color: var(--muted); }
+.pvx .btn { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 11px; padding: 9px 16px; font-weight: 600; cursor: pointer; background: var(--acc); color: #fff; }
+.pvx .btn.soft { background: var(--acc-soft-2); color: var(--acc-ink); }
+.pvx .btn.ghost { background: none; border: 1px solid var(--bs-border-color); color: var(--bs-body-color); }
+.pvx .btn.sm { padding: 6px 11px; font-size: 12.5px; border-radius: 9px; }
+.pvx .link { border: 0; background: none; color: var(--acc-ink); font-weight: 600; cursor: pointer; padding: 0; font-size: 12.5px; }
+.pvx .in { border: 1px solid var(--bs-border-color); background: var(--card); border-radius: 9px; padding: 7px 10px; width: 100%; min-width: 0; outline: 0; }
+.pvx .in:focus { border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft-2); }
+.pvx .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.pvx .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pvx .pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.pvx .pill.made { background: var(--ok-soft); color: var(--ok); }
+.pvx .pill.new { background: var(--acc-soft-2); color: var(--acc-ink); }
+.pvx .pill.orig { background: var(--sunk); color: var(--muted); }
+.pvx .switch { position: relative; width: 38px; height: 22px; border-radius: 99px; background: var(--bs-border-color); border: 0; cursor: pointer; flex: none; transition: background .15s; }
+.pvx .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.pvx .switch.on { background: var(--acc); }
+.pvx .switch.on::after { transform: translateX(16px); }
+.pvx .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 8px 6px 13px; border-radius: 99px; border: 1px solid var(--bs-border-color); background: var(--card); font-weight: 500; }
+.pvx .chip small { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--sunk); color: var(--muted); font-size: 11px; font-weight: 600; }
+.pvx .chip .x { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 3px; }
+.pvx .chip.lock { padding-right: 13px; }
+.pvx .adder { display: inline-flex; align-items: center; gap: 6px; padding: 3px 3px 3px 12px; border-radius: 99px; border: 1px dashed var(--acc-line); }
+.pvx .adder input { border: 0; background: none; outline: 0; width: 110px; }
+.pvx .adder button { border: 0; border-radius: 99px; background: var(--acc); color: #fff; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.pvx .dock { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(1200px, calc(100% - 32px)); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px 12px 20px; border-radius: 18px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); box-shadow: 0 20px 50px -18px rgba(15,23,42,.5); z-index: 40; }
+.pvx .dock .sum { flex: 1; min-width: 220px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.pvx .dock .sum b { font-size: 20px; }
+.pvx .sw { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); background: var(--c); flex: none; }
+.dir { display: none; }
+.dir.on { display: block; }
+
+/* ── A · Matrix ──────────────────────────────────────────────────────────── */
+.a-hero { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; padding: 18px 20px; }
+.a-thumb { width: 58px; height: 58px; border-radius: 14px; background: linear-gradient(135deg, var(--acc-soft-2), var(--acc-soft)); display: grid; place-items: center; color: var(--acc-ink); font-size: 22px; flex: none; }
+.a-hero h2 { margin: 0; font-size: 19px; color: var(--bs-emphasis-color); }
+.a-formula { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; }
+.a-layer { display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 12px; border-radius: 12px; background: var(--sunk); }
+.a-layer .n { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--acc); color: #fff; font-size: 11px; font-weight: 700; }
+.a-layer select { border: 0; background: var(--card); border-radius: 8px; padding: 4px 6px; font-weight: 600; color: var(--bs-emphasis-color); }
+.a-times { color: var(--muted); font-weight: 600; }
+.a-layers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.a-lcard { padding: 16px 18px; }
+.a-lcard header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.a-lcard header h3 { margin: 0; font-size: 15px; }
+.a-lcard .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.a-matrix { margin-top: 14px; overflow: hidden; }
+.a-mhead { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.a-mhead h3 { margin: 0; font-size: 15px; }
+.a-legend { display: flex; gap: 14px; margin-left: auto; color: var(--muted); font-size: 12px; }
+.a-legend i.k { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 5px; vertical-align: -1px; }
+.a-grid { display: grid; gap: 10px; padding: 16px 18px 18px; overflow-x: auto; }
+.a-corner { display: flex; align-items: flex-end; padding: 0 4px 6px; color: var(--muted); font-size: 12px; }
+.a-colhead, .a-rowhead { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--bs-emphasis-color); }
+.a-colhead { flex-direction: column; justify-content: flex-end; padding-bottom: 4px; }
+.a-colhead .t { font-size: 14px; }
+.a-rowhead { justify-content: space-between; padding: 0 4px; }
+.a-cell { position: relative; min-height: 74px; border-radius: 14px; border: 1.5px dashed var(--bs-border-color); background: none; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 10px 12px; text-align: left; transition: border-color .12s, background .12s, transform .08s; }
+.a-cell:hover { border-color: var(--acc); background: var(--acc-soft); }
+.a-cell:active { transform: scale(.98); }
+.a-cell .top { display: flex; width: 100%; align-items: center; justify-content: space-between; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.a-cell .big { font-weight: 600; color: var(--muted); }
+.a-cell.made { border-style: solid; border-color: transparent; background: var(--ok-soft); cursor: default; }
+.a-cell.made .top { color: var(--ok); }
+.a-cell.made .big { color: var(--bs-emphasis-color); }
+.a-cell.picked { border-style: solid; border-color: var(--acc); background: var(--acc-soft-2); }
+.a-cell.picked .top, .a-cell.picked .big { color: var(--acc-ink); }
+.a-prices { margin-top: 14px; }
+.a-prices .bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 18px; background: var(--sunk); border-bottom: 1px solid var(--line); }
+.a-prices .bulk .in { width: 120px; }
+.a-row { display: grid; grid-template-columns: minmax(180px, 1.4fr) 1.2fr .8fr .8fr .8fr 34px; gap: 10px; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--line); }
+.a-row.h { padding-top: 12px; padding-bottom: 8px; }
+.a-row:last-child { border-bottom: 0; }
+.a-vname { display: flex; align-items: center; gap: 9px; font-weight: 600; color: var(--bs-emphasis-color); }
+.a-vname .tag { font-weight: 500; color: var(--muted); }
+/* A · colours on: the current Variants-tab colour board, kept as is */
+.a-colours { margin-top: 14px; padding: 16px 18px 6px; }
+.a-colours header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+.a-colours header h3 { margin: 0; font-size: 15px; }
+.pvx .opt { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 6px; background: var(--sunk); color: var(--muted); }
+.pvx .board { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x proximity; }
+.pvx .col { flex: 0 0 190px; scroll-snap-align: start; border-radius: 20px; background: var(--card); border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column; cursor: pointer; transition: box-shadow .15s, transform .1s; }
+.pvx .col.on { box-shadow: 0 0 0 2.5px var(--acc), var(--shadow); }
+.pvx .col:not(.add):not(.quick):active { transform: scale(.98); }
+.pvx .col__head { position: relative; height: 118px; padding: 14px 16px; background: var(--sw); color: var(--ink); display: flex; flex-direction: column; justify-content: space-between; }
+.pvx .col__head.none { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--bs-border-color) 70%, transparent) 0 10px, var(--sunk) 10px 20px); color: var(--bs-emphasis-color); }
+.pvx .col__head b { font-size: 17px; font-weight: 600; }
+.pvx .col__head small { opacity: .8; font-size: 11.5px; }
+.pvx .col__head .x { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: rgba(255,255,255,.22); color: inherit; cursor: pointer; }
+.pvx .col__head .lk { position: absolute; top: 12px; right: 14px; opacity: .8; }
+.pvx .col__body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
+.pvx .col__bar { height: 6px; border-radius: 99px; background: var(--sunk); overflow: hidden; display: flex; }
+.pvx .col__bar i { display: block; height: 100%; }
+.pvx .col__body .on-tag { color: var(--acc-ink); font-weight: 600; }
+.pvx .col.add { border-style: dashed; background: transparent; box-shadow: none; justify-content: center; align-items: center; padding: 18px; gap: 12px; text-align: center; cursor: default; }
+.pvx .bigdot { width: 72px; height: 72px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: 0 0 0 4px var(--card), 0 0 0 5px var(--bs-border-color); transition: transform .15s; background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #ef4444); }
+.pvx .bigdot:hover { transform: scale(1.05); }
+.pvx .col.quick { flex-basis: 170px; background: transparent; box-shadow: none; border-style: dashed; padding: 14px; gap: 8px; cursor: default; }
+.pvx .ghost { display: inline-flex; align-items: center; gap: 7px; width: 100%; padding: 6px 12px; border-radius: 99px; border: 1px dashed var(--bs-border-color); background: none; color: var(--muted); font-weight: 500; cursor: pointer; }
+.pvx .ghost:hover { border-color: var(--acc); color: var(--acc-ink); }
+.pvx .sw.none { background: linear-gradient(135deg, transparent 44%, var(--muted) 44% 56%, transparent 56%); box-shadow: inset 0 0 0 1.5px var(--muted); border: 0; }
+.pvx .back { position: fixed; inset: 0; z-index: 90; background: rgba(15,23,42,.45); backdrop-filter: blur(2px); }
+.pvx .chooser { position: fixed; z-index: 91; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px)); max-height: calc(100vh - 40px); overflow: auto; border-radius: 20px; background: var(--card); box-shadow: 0 30px 60px -20px rgba(0,0,0,.5); border: 1px solid var(--line); }
+.pvx .chooser__top { display: flex; align-items: center; gap: 14px; padding: 18px 18px 14px; }
+.pvx .chooser__sec { padding: 0 18px 14px; }
+.pvx .chooser__sec > small { display: block; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.pvx .shades { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.pvx .shade { aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); transition: transform .12s; }
+.pvx .shade:hover { transform: scale(1.12); }
+.pvx .any { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--bs-border-color); cursor: pointer; }
+.pvx .any input { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.pvx .custom { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--acc-soft); }
+.pvx .custom .prev { width: 40px; height: 40px; border-radius: 12px; flex: none; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+.a-mhead .now { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 6px; border-radius: 99px; background: var(--sunk); font-weight: 600; }
+.a-mhead .now .sw { width: 18px; height: 18px; }
+.ibtn { border: 0; background: none; color: var(--muted); cursor: pointer; width: 30px; height: 30px; border-radius: 8px; }
+.ibtn:hover { background: var(--sunk); color: var(--bs-danger); }
+
+/* ── Shared compact grid for A1–A3 ───────────────────────────────────────── */
+.g-wrap { overflow-x: auto; }
+.g-table { border-collapse: separate; border-spacing: 8px; }
+.g-table th { font-weight: 600; text-align: left; vertical-align: bottom; }
+.g-corner { font-size: 11.5px; color: var(--muted); font-weight: 500 !important; white-space: nowrap; padding: 0 8px 6px 4px; }
+.g-colh { min-width: 132px; padding: 0 4px 2px; }
+.g-colh .nm, .g-rowh .nm { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--bs-emphasis-color); font-size: 14px; }
+.g-colh .ct { font-size: 11.5px; color: var(--muted); font-weight: 500; }
+.g-rowh { white-space: nowrap; padding-right: 10px !important; vertical-align: middle !important; }
+.g-rowh .nm { justify-content: flex-start; }
+.g-all { border: 0; background: none; color: var(--acc-ink); cursor: pointer; font-size: 11.5px; font-weight: 600; padding: 0; opacity: .75; }
+.g-all:hover { opacity: 1; text-decoration: underline; }
+.g-cell { width: 100%; min-width: 132px; height: 56px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--sunk); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; color: var(--muted); transition: background .12s, border-color .12s, transform .08s; }
+.g-cell .plus { opacity: .35; }
+.g-cell:hover { border-color: var(--acc); background: var(--acc-soft); color: var(--acc-ink); }
+.g-cell:hover .plus { opacity: 1; }
+.g-cell:active { transform: scale(.97); }
+.g-cell.made { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+.g-cell.made small { color: var(--muted); font-weight: 500; }
+.g-cell.made.out { color: var(--bs-danger); }
+.g-cell.new { background: var(--acc); border-color: var(--acc); color: #fff; box-shadow: 0 10px 20px -12px var(--acc); }
+.g-cell.sel { outline: 2.5px solid var(--bs-emphasis-color); outline-offset: 2px; }
+.g-add input { border: 1.5px dashed var(--acc-line); background: none; border-radius: 12px; padding: 0 12px; height: 40px; width: 100%; min-width: 130px; outline: 0; font-weight: 500; }
+.g-add input:focus { border-style: solid; border-color: var(--acc); background: var(--card); }
+.g-legend { display: flex; flex-wrap: wrap; gap: 16px; color: var(--muted); font-size: 12px; }
+.g-legend i.k { display: inline-block; width: 14px; height: 14px; border-radius: 5px; margin-right: 6px; vertical-align: -2px; }
+.ctabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctab { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 7px; border-radius: 12px; border: 1.5px solid var(--bs-border-color); background: var(--card); cursor: pointer; font-weight: 600; color: var(--bs-emphasis-color); }
+.ctab small { font-weight: 500; color: var(--muted); }
+.ctab .rm { color: var(--muted); padding: 0 2px; }
+.ctab .rm:hover { color: var(--bs-danger); }
+.ctab.on { border-color: var(--acc); background: var(--acc-soft); box-shadow: 0 0 0 3px var(--acc-soft-2); }
+.ctab.add { border-style: dashed; color: var(--muted); font-weight: 500; }
+.ctab.add .rb { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #ef4444); }
+.showing { display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px 4px 6px; border-radius: 99px; background: var(--sunk); font-weight: 600; font-size: 12.5px; }
+.prices-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--line); }
+.prices-h h3 { margin: 0 8px 0 0; font-size: 15px; color: var(--bs-emphasis-color); }
+.prices-h .in { width: 110px; }
+
+.b-seg { display: inline-flex; flex-wrap: wrap; gap: 3px; padding: 3px; border-radius: 10px; background: var(--sunk); }
+.b-seg button { border: 0; background: none; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 12.5px; color: var(--muted); }
+.b-seg button.on { background: var(--card); color: var(--bs-emphasis-color); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+/* ── A1 · One sheet ──────────────────────────────────────────────────────── */
+.s1-head { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.s1-head h2 { margin: 0; font-size: 18px; color: var(--bs-emphasis-color); }
+.s1-formula { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; color: var(--muted); }
+.s1-formula select { border: 1px solid var(--bs-border-color); background: var(--card); border-radius: 9px; padding: 4px 8px; font-weight: 600; color: var(--bs-emphasis-color); }
+.s1-stats { display: flex; gap: 6px; margin-left: auto; }
+.s1-stat { min-width: 78px; padding: 8px 12px; border-radius: 12px; background: var(--sunk); }
+.s1-stat b { display: block; font-size: 19px; line-height: 1.1; color: var(--bs-emphasis-color); }
+.s1-stat span { font-size: 11.5px; color: var(--muted); }
+.s1-stat.new { background: var(--acc-soft-2); } .s1-stat.new b { color: var(--acc-ink); }
+.s1-stat.made { background: var(--ok-soft); } .s1-stat.made b { color: var(--ok); }
+.s1-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 18px; background: var(--sunk); border-bottom: 1px solid var(--line); }
+.s1-bar .ctabs { flex-basis: 100%; }
+.s1-hint { display: flex; align-items: center; gap: 8px; padding: 0 18px 14px; font-size: 12.5px; }
+.s1-rows { border-top: 1px solid var(--line); }
+
+/* ── A2 · Grid + side panel ──────────────────────────────────────────────── */
+.i-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.i-layers { display: grid; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--sunk); }
+.i-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.i-line > .eyebrow { width: 78px; flex: none; }
+.i-panel { position: sticky; top: 76px; overflow: hidden; }
+.i-panel .ph { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+.i-panel .ph h3 { margin: 0; font-size: 15px; color: var(--bs-emphasis-color); flex: 1; }
+.i-sel { margin: 12px; padding: 14px; border-radius: 14px; background: var(--acc-soft); border: 1px solid var(--acc-line); }
+.i-sel.made { background: var(--ok-soft); border-color: transparent; }
+.i-sel .t { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--bs-emphasis-color); font-size: 14.5px; }
+.i-sel .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.i-sel .fields .full { grid-column: 1 / -1; }
+.i-sel label { font-size: 11.5px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; gap: 4px; }
+.i-empty { margin: 12px; padding: 18px; border-radius: 14px; border: 1.5px dashed var(--bs-border-color); text-align: center; color: var(--muted); }
+.i-empty i { display: block; font-size: 22px; margin-bottom: 6px; color: var(--acc-ink); }
+.i-list { padding: 0 8px 8px; max-height: 260px; overflow: auto; }
+.i-list .eyebrow { display: block; padding: 8px 8px 6px; }
+.i-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; cursor: pointer; }
+.i-item:hover, .i-item.on { background: var(--sunk); }
+.i-item .nm { flex: 1; min-width: 0; font-weight: 500; }
+.i-item .in { width: 82px; padding: 5px 8px; }
+.i-foot { padding: 14px 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; background: var(--sunk); }
+.i-foot .row { display: flex; gap: 6px; align-items: center; }
+.i-foot .row .in { flex: 1; }
+
+/* ── A3 · Three steps ────────────────────────────────────────────────────── */
+.w-steps { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--line); }
+.w-step { flex: 1; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 0; background: none; cursor: pointer; text-align: left; min-width: 0; }
+.w-step .n { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--sunk); color: var(--muted); font-weight: 700; flex: none; }
+.w-step b { display: block; color: var(--bs-emphasis-color); }
+.w-step small { color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.w-step.on { background: var(--acc-soft); }
+.w-step.on .n { background: var(--acc); color: #fff; }
+.w-step.done .n { background: var(--ok-soft); color: var(--ok); }
+.w-body { padding: 20px; }
+.w-body h4 { margin: 0 0 4px; font-size: 15px; color: var(--bs-emphasis-color); }
+.w-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.w-box { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; }
+.w-box .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.w-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.w-opt { text-align: left; border: 1.5px solid var(--bs-border-color); border-radius: 14px; padding: 14px 16px; background: var(--card); cursor: pointer; display: flex; align-items: center; gap: 12px; }
+.w-opt .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--sunk); color: var(--muted); flex: none; font-size: 16px; }
+.w-opt b { display: block; color: var(--bs-emphasis-color); }
+.w-opt.on { border-color: var(--acc); background: var(--acc-soft); }
+.w-opt.on .ico { background: var(--acc); color: #fff; }
+.w-group { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 12px; }
+.w-group > header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; background: linear-gradient(90deg, var(--acc-soft), transparent 70%); }
+.w-group > header .badge { display: inline-grid; place-items: center; height: 26px; padding: 0 11px; border-radius: 8px; background: var(--acc); color: #fff; font-weight: 600; }
+.w-group > header .same { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.w-group > header .same .in { width: 84px; padding: 5px 8px; }
+.w-foot { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--sunk); border-radius: 0 0 var(--r) var(--r); }
+
+@media (max-width: 900px) {
+    .a-layers, .i-wrap, .w-two, .w-choice { grid-template-columns: 1fr; }
+    .i-panel { position: static; }
+    .a-row { grid-template-columns: 1fr 1fr; }
+    .a-row.h { display: none; }
+    .w-step small { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="host-bar">
+    <b><i class="fa fa-th"></i> Product → Variants</b>
+    <span class="host-seg" id="dirSeg">
+        <button data-dir="a">A · Matrix</button>
+        <button data-dir="a1" class="on">A1 · One sheet</button>
+        <button data-dir="a2">A2 · Grid + panel</button>
+        <button data-dir="a3">A3 · Three steps</button>
+    </span>
+    <span class="host-seg" id="themeSeg">
+        <button data-theme="light" class="on"><i class="fa fa-sun-o"></i> Light</button>
+        <button data-theme="dark"><i class="fa fa-moon-o"></i> Dark</button>
+    </span>
+    <span class="host-seg" id="colourSeg">
+        <button data-colours="off" class="on">Colours off</button>
+        <button data-colours="on">Colours on</button>
+    </span>
+    <span class="host-note" id="dirNote"></span>
+</div>
+
+<div class="host-page">
+    <div class="host-tabs"><span>Details</span><span>Attributes</span><span>Prices</span><span class="on">Variants</span><span>Options</span><span>Images</span></div>
+    <div class="pvx" id="app"></div>
+</div>
+
+<script>
+const notes = {
+    a: 'A · Matrix: everything you can make is one grid, with Bases across the top and Flavours down the side. Tap a cell to make that pack; a whole row or column is one tap. Turn ③ Colour on to get the current colour board (colour columns, Choose a colour, Quick add); tap a colour and the grid shows that colour\'s packs. Prices sit right below, and one bar at the bottom creates everything.',
+    a1: 'A1 · One sheet (recommended): one card, nothing scattered. The layer names read as a sentence ("Each pack is a Base × Flavour"), and you add a base or flavour by typing in the grid\'s last column or row. Made / new / not made counts sit in the header, colours are one switch with colour tabs, and the price list stays folded until you need it.',
+    a2: 'A2 · Grid + side panel: the grid stays clean (no prices in it). Tap any box and its details open on the right: barcode, cost and MRP for a made pack, or the price of a new one. The panel also holds the list of new packs and the Create button.',
+    a3: 'A3 · Three steps: one question per screen. 1 · What is it made of (layer names, values, colours yes/no), 2 · Which packs exist (the grid), 3 · Prices, grouped by base. Back and Next at the bottom, so a new user can\'t get lost.',
+};
+const S = {
+    dir: 'a1', sel: null, step: 2, pricesOpen: false,
+    l1: 'Base', l2: 'Flavour',
+    coloursOn: false,
+    colours: [{ name: '', hex: '' }, { name: 'Red', hex: '#dc2626' }],
+    activeColour: '',
+    chooser: false, customHex: '#6b7280', customName: '',
+    activeBase: 'Soda',
+    bases: ['Soda', 'Red Bull'],
+    flavours: ['Mango', 'Lemon', 'Strawberry', 'Passion'],
+    made: { 'Soda|Mango': { stock: 24, orig: true, bc: '6291004410101', cost: 2.5, mrp: 4 }, 'Soda|Lemon': { stock: 18, bc: '6291004410102', cost: 2.5, mrp: 4 }, 'Red Bull|Mango': { stock: 9, bc: '6291004410103', cost: 4, mrp: 7 }, 'Red Bull|Lemon': { stock: 0, bc: '6291004410104', cost: 4, mrp: 7 }, 'Red Bull|Strawberry': { stock: 12, bc: '6291004410105', cost: 4, mrp: 7 } },
+    picked: new Set(['Soda|Strawberry', 'Soda|Passion']),
+};
+const key = (b, f) => S.coloursOn ? `${b}|${f}|${S.activeColour}` : `${b}|${f}`;
+const isMade = (b, f) => (!S.coloursOn || S.activeColour === '') && S.made[`${b}|${f}`];
+const plural = w => /[^aeiou]y$/i.test(w) ? w.slice(0, -1) + 'ies' : /(s|x|ch|sh)$/i.test(w) ? w + 'es' : w + 's';
+const lc = s => s.toLowerCase();
+const madeCount = () => Object.keys(S.made).length;
+const SHADES = [['Black','#1f2328'],['Charcoal','#36393f'],['Grey','#9ca3af'],['Silver','#c0c4cc'],['White','#f8fafc'],['Cream','#f5ecd7'],['Beige','#e7dcc4'],['Khaki','#b9a77a'],['Tan','#b08155'],['Brown','#78350f'],['Maroon','#7f1d1d'],['Burgundy','#6d1a2c'],['Red','#dc2626'],['Coral','#f87171'],['Orange','#ea580c'],['Mustard','#ca8a04'],['Yellow','#eab308'],['Gold','#c9a227'],['Olive','#65712b'],['Lime','#84cc16'],['Green','#15803d'],['Forest Green','#14532d'],['Mint','#6ee7b7'],['Teal','#0f766e'],['Sky Blue','#38bdf8'],['Blue','#2563eb'],['Royal Blue','#1d4ed8'],['Navy','#1e3a8a'],['Lavender','#a78bfa'],['Purple','#7e22ce'],['Pink','#ec4899'],['Rose','#e11d48']];
+const hexOf = n => (S.colours.find(c => c.name === n) || {}).hex || '#9ca3af';
+const rgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const lum = h => { const [r, g, b] = rgb(h); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+const inkFor = h => lum(h) > 0.62 ? '#111827' : '#ffffff';
+const usedColour = n => S.colours.some(c => lc(c.name) === lc(n));
+function autoName(h) {
+    const [r, g, b] = rgb(h); let best = SHADES[0], bd = Infinity;
+    SHADES.forEach(s => { const [r2, g2, b2] = rgb(s[1]); const d = (r - r2) ** 2 * 2 + (g - g2) ** 2 * 4 + (b - b2) ** 2 * 3; if (d < bd) { bd = d; best = s; } });
+    const diff = lum(h) - lum(best[1]); let name = Math.abs(diff) > 0.12 ? (diff > 0 ? 'Light ' : 'Dark ') + best[0] : best[0];
+    if (usedColour(name)) { let i = 2; while (usedColour(name + ' ' + i)) i++; name += ' ' + i; }
+    return name;
+}
+function addColour(name, hex) { if (!usedColour(name)) S.colours.push({ name, hex }); S.activeColour = name; S.chooser = false; S.customName = ''; render(); }
+function removeColour(name) { S.colours = S.colours.filter(c => c.name !== name); [...S.picked].forEach(k => k.split('|')[2] === name && S.picked.delete(k)); if (S.activeColour === name) S.activeColour = S.colours[0]?.name ?? ''; render(); }
+const swatch = (n, size = 14) => n === '' ? `<span class="sw none" style="width:${size}px;height:${size}px"></span>` : `<span class="sw" style="--c:${hexOf(n)};width:${size}px;height:${size}px"></span>`;
+const colourLabel = n => n === '' ? 'No colour' : n;
+function toggle(b, f) { if (isMade(b, f)) return; const k = key(b, f); S.picked.has(k) ? S.picked.delete(k) : S.picked.add(k); render(); }
+function toggleRow(f) { const open = S.bases.filter(b => !isMade(b, f)); const all = open.every(b => S.picked.has(key(b, f))); open.forEach(b => all ? S.picked.delete(key(b, f)) : S.picked.add(key(b, f))); render(); }
+function toggleCol(b) { const open = S.flavours.filter(f => !isMade(b, f)); const all = open.every(f => S.picked.has(key(b, f))); open.forEach(f => all ? S.picked.delete(key(b, f)) : S.picked.add(key(b, f))); render(); }
+function addTo(list, id) { const v = document.getElementById(id).value.trim(); if (v && !S[list].some(x => lc(x) === lc(v))) { S[list].push(v); render(); } }
+function removeFrom(list, v) { S[list] = S[list].filter(x => x !== v); [...S.picked].forEach(k => k.split('|').includes(v) && S.picked.delete(k)); render(); }
+const pickedList = () => [...S.picked].map(k => k.split('|'));
+const usedIn = (v) => Object.keys(S.made).filter(k => k.split('|').includes(v)).length;
+const chip = (list, v) => usedIn(v)
+    ? `<span class="chip lock"><i class="fa fa-lock muted"></i> ${v} <small>${usedIn(v)}</small></span>`
+    : `<span class="chip">${v} <button class="x" onclick="removeFrom('${list}','${v}')"><i class="fa fa-times"></i></button></span>`;
+const adder = (list, id, ph, label) => `<span class="adder"><input id="${id}" placeholder="${ph}" onkeydown="if(event.key==='Enter')addTo('${list}','${id}')" /><button onclick="addTo('${list}','${id}')"><i class="fa fa-plus"></i> ${label}</button></span>`;
+const dock = () => {
+    const n = S.picked.size, m = madeCount();
+    return `<div class="dock"><div class="sum"><span><b>${n + m}</b> packs</span><span class="muted">${n} new · ${m} already made · shows as <b style="font-size:14px">1</b> product in the list</span></div>
+        <button class="btn ghost">Cancel</button><button class="btn" ${n ? '' : 'disabled style="opacity:.5"'}><i class="fa fa-check"></i> Create ${n} pack${n === 1 ? '' : 's'}</button></div>`;
+};
+
+/* A · Matrix */
+function colourBoard() {
+    const total = S.bases.length * S.flavours.length;
+    const cols = S.colours.map(c => {
+        const made = c.name === '' ? madeCount() : 0;
+        const nw = [...S.picked].filter(k => k.split('|')[2] === c.name).length;
+        const locked = c.name === '' && made > 0;
+        const ink = c.name === '' ? '' : inkFor(c.hex);
+        return `<div class="col ${c.name === S.activeColour ? 'on' : ''}" onclick="S.activeColour='${c.name}';render()">
+            <div class="col__head ${c.name === '' ? 'none' : ''}" style="--sw:${c.hex};--ink:${ink}">
+                ${locked ? '<i class="fa fa-lock lk" title="Already has packs"></i>' : `<button class="x" title="Remove colour" onclick="event.stopPropagation();removeColour('${c.name}')"><i class="fa fa-times"></i></button>`}
+                <small>${c.name === '' ? 'no colour' : c.hex.toUpperCase()}</small>
+                <div><b>${colourLabel(c.name)}</b><br /><small>${made + nw} of ${total} packs</small></div>
+            </div>
+            <div class="col__body">
+                <div class="col__bar"><i style="width:${made / total * 100}%;background:var(--ok)"></i><i style="width:${nw / total * 100}%;background:var(--acc)"></i></div>
+                <span class="muted">${made} made · ${nw} new</span>
+                ${c.name === S.activeColour ? '<span class="on-tag"><i class="fa fa-hand-o-down"></i> Showing below</span>' : '<span class="muted">Tap to tick its packs</span>'}
+            </div>
+        </div>`;
+    }).join('');
+    const quick = SHADES.filter(([n]) => !usedColour(n)).slice(0, 7);
+    return `<div class="card a-colours">
+        <header><h3>Colours</h3><span class="opt">Optional</span><span class="muted">Each colour gets its own grid below. Tap a colour to tick its packs.</span></header>
+        <div class="board">${cols}
+            <div class="col add"><button class="bigdot" title="Choose a colour" onclick="S.chooser=true;render()"></button><button class="btn sm" style="width:100%;justify-content:center" onclick="S.chooser=true;render()"><i class="fa fa-plus"></i> Choose a colour</button><small class="muted">Any shade you need</small></div>
+            <div class="col quick"><small class="muted" style="font-weight:600">Quick add</small>
+                ${quick.map(([n, h]) => `<button class="ghost" onclick="addColour('${n}','${h}')"><span class="sw" style="--c:${h}"></span> ${n}</button>`).join('')}
+                ${usedColour('') ? '' : `<button class="ghost" onclick="addColour('','')">${swatch('')} No colour</button>`}
+            </div>
+        </div>
+    </div>
+    ${S.chooser ? `<div class="back" onclick="S.chooser=false;render()"></div>
+    <div class="chooser" role="dialog" aria-label="Choose a colour">
+        <div class="chooser__top"><div style="flex:1"><b style="display:block;font-size:15px">Choose a colour</b><small class="muted">Tap one and it's added straight away</small></div><button class="ibtn" onclick="S.chooser=false;render()"><i class="fa fa-times"></i></button></div>
+        <div class="chooser__sec"><div class="shades">${SHADES.filter(([n]) => !usedColour(n)).map(([n, h]) => `<button class="shade" style="--sw:${h}" title="${n}" onclick="addColour('${n}','${h}')"></button>`).join('')}</div></div>
+        <div class="chooser__sec"><small>Need a different shade?</small>
+            <label class="any"><input type="color" value="${S.customHex}" oninput="S.customHex=this.value;S.customName=autoName(this.value);document.getElementById('cPrev').style.setProperty('--sw',this.value);document.getElementById('cName').textContent=S.customName;document.getElementById('cHex').textContent=this.value.toUpperCase();document.getElementById('cBox').style.display='flex'" /><span><b style="display:block">Pick any shade</b><small class="muted">Opens the full colour picker</small></span></label>
+            <div class="custom" id="cBox" style="display:${S.customName ? 'flex' : 'none'}"><span class="prev" id="cPrev" style="--sw:${S.customHex}"></span><span style="flex:1"><b style="display:block" id="cName">${S.customName}</b><small class="mono" id="cHex">${S.customHex.toUpperCase()}</small></span><button class="btn sm" onclick="addColour(S.customName,S.customHex)"><i class="fa fa-plus"></i> Add</button></div>
+        </div>
+    </div>` : ''}`;
+}
+function renderA() {
+    const cols = S.bases.length;
+    const tint = S.coloursOn && S.activeColour !== '' ? swatch(S.activeColour, 12) + ' ' : '';
+    const cell = (b, f) => {
+        const m = isMade(b, f), p = S.picked.has(key(b, f));
+        if (m) return `<button class="a-cell made" title="Already a product"><span class="top"><span><i class="fa fa-check-circle"></i> ${m.orig ? 'Original' : 'Made'}</span><i class="fa fa-lock"></i></span><span class="big">${m.stock} in stock</span></button>`;
+        if (p) return `<button class="a-cell picked" onclick="toggle('${b}','${f}')"><span class="top"><span><i class="fa fa-plus-circle"></i> New</span><i class="fa fa-check"></i></span><span class="big">${tint}${b} · ${f}</span></button>`;
+        return `<button class="a-cell" onclick="toggle('${b}','${f}')"><span class="top"><span>Not made</span><i class="fa fa-plus"></i></span><span class="big">Tap to make</span></button>`;
+    };
+    return `
+    <div class="card a-hero">
+        <div class="a-thumb"><i class="fa fa-flask"></i></div>
+        <div><h2>mulak pack - 80g</h2><div class="muted">${madeCount() + S.picked.size} packs · every pack is its own stock item with its own barcode</div></div>
+        <div class="a-formula">
+            <span class="a-layer"><span class="n">1</span><select onchange="S.l1=this.value;render()">${['Base', 'Design', 'Flavour', 'Model', 'Style'].map(o => `<option ${o === S.l1 ? 'selected' : ''}>${o}</option>`).join('')}</select></span>
+            <span class="a-times">×</span>
+            <span class="a-layer"><span class="n">2</span><select onchange="S.l2=this.value;render()">${['Flavour', 'Size', 'Weight', 'Volume', 'Pack'].map(o => `<option ${o === S.l2 ? 'selected' : ''}>${o}</option>`).join('')}</select></span>
+            <span class="a-times">×</span>
+            <span class="a-layer" style="padding-right:12px"><span class="n" style="background:${S.coloursOn ? 'var(--acc)' : 'var(--bs-border-color)'}">3</span> Colour <button class="switch ${S.coloursOn ? 'on' : ''}" title="${S.coloursOn ? 'Hide colours' : 'Comes in colours'}" onclick="S.coloursOn=!S.coloursOn;S.picked.clear();S.activeColour='';render()"></button></span>
+        </div>
+    </div>
+    <div class="a-layers">
+        <div class="card a-lcard"><header><h3>${plural(S.l1)}</h3><span class="muted">${S.bases.length} · across the top</span></header><div class="chips">${S.bases.map(b => chip('bases', b)).join('')}${adder('bases', 'aBase', 'e.g. Red Bull', S.l1)}</div></div>
+        <div class="card a-lcard"><header><h3>${plural(S.l2)}</h3><span class="muted">${S.flavours.length} · down the side</span></header><div class="chips">${S.flavours.map(f => chip('flavours', f)).join('')}${adder('flavours', 'aFlav', 'e.g. Mango', S.l2)}</div></div>
+    </div>
+    ${S.coloursOn ? colourBoard() : ''}
+    <div class="card a-matrix">
+        <div class="a-mhead"><h3>Which packs exist${S.coloursOn ? ' in' : '?'}</h3>${S.coloursOn ? `<span class="now">${swatch(S.activeColour, 18)} ${colourLabel(S.activeColour)}</span>` : ''}<span class="muted">Tap a cell to make it, or a name to make the whole row or column</span>
+            <span class="a-legend"><span><i class="k" style="background:var(--ok-soft)"></i>Made</span><span><i class="k" style="background:var(--acc-soft-2);border:1.5px solid var(--acc)"></i>New</span><span><i class="k" style="border:1.5px dashed var(--bs-border-color)"></i>Not made</span></span></div>
+        <div class="a-grid" style="grid-template-columns: 150px repeat(${cols}, minmax(150px, 1fr))">
+            <div class="a-corner">${S.l2} ↓ &nbsp; ${S.l1} →</div>
+            ${S.bases.map(b => `<div class="a-colhead"><span class="t">${b}</span><button class="link" onclick="toggleCol('${b}')">All ${lc(plural(S.l2))}</button></div>`).join('')}
+            ${S.flavours.map(f => `<div class="a-rowhead"><span>${f}</span><button class="link" title="Every ${lc(S.l1)}" onclick="toggleRow('${f}')"><i class="fa fa-long-arrow-right"></i></button></div>${S.bases.map(b => cell(b, f)).join('')}`).join('')}
+        </div>
+    </div>
+    <div class="card a-prices">
+        <div class="a-mhead"><h3>Barcode, price and opening stock</h3><span class="muted">Name, category, brand, tax and unit come from mulak pack - 80g</span></div>
+        <div class="bulk"><span class="eyebrow" style="margin-right:4px">Same for all new</span><input class="in" placeholder="Cost" /><input class="in" placeholder="MRP" /><input class="in" placeholder="Opening stock" /><button class="btn sm"><i class="fa fa-check"></i> Apply</button></div>
+        <div class="a-row h eyebrow"><span>Pack</span><span>Barcode</span><span>Cost</span><span>MRP</span><span>Stock</span><span></span></div>
+        ${pickedList().map(([b, f, c]) => `<div class="a-row"><span class="a-vname">${S.coloursOn ? swatch(c) : ''}${b} <span class="tag">· ${f}${S.coloursOn && c ? ' · ' + c : ''}</span> <span class="pill new"><i class="fa fa-plus"></i> New</span></span><input class="in mono" placeholder="Auto" /><input class="in" value="2.50" /><input class="in" value="4.00" /><input class="in" placeholder="Optional" /><button class="ibtn" onclick="S.picked.delete('${[b, f, c].filter(x => x !== undefined).join('|')}');render()"><i class="fa fa-trash-o"></i></button></div>`).join('')}
+        ${Object.entries(S.made).map(([k, m]) => { const [b, f] = k.split('|'); return `<div class="a-row"><span class="a-vname">${S.coloursOn ? swatch('') : ''}${b} <span class="tag">· ${f}</span> <span class="pill ${m.orig ? 'orig' : 'made'}"><i class="fa fa-${m.orig ? 'lock' : 'check'}"></i> ${m.orig ? 'Original' : 'Made'}</span></span><input class="in mono" value="${m.bc}" /><input class="in" value="${m.cost.toFixed(2)}" /><input class="in" value="${m.mrp.toFixed(2)}" /><span class="muted" style="font-size:12px">${m.stock} in stock</span><span></span></div>`; }).join('')}
+    </div>
+    ${dock()}`;
+}
+
+/* ── Shared pieces for A1–A3 ─────────────────────────────────────────────── */
+function toggleColours() { S.coloursOn = !S.coloursOn; S.picked.clear(); S.activeColour = ''; S.sel = null; render(); }
+const colourCount = n => (n === '' ? madeCount() : 0) + [...S.picked].filter(k => k.split('|')[2] === n).length;
+function chooserModal() {
+    if (!S.chooser) return '';
+    return `<div class="back" onclick="S.chooser=false;render()"></div>
+    <div class="chooser" role="dialog" aria-label="Choose a colour">
+        <div class="chooser__top"><div style="flex:1"><b style="display:block;font-size:15px">Choose a colour</b><small class="muted">Tap one and it's added straight away</small></div><button class="ibtn" onclick="S.chooser=false;render()"><i class="fa fa-times"></i></button></div>
+        <div class="chooser__sec"><div class="shades">${SHADES.filter(([n]) => !usedColour(n)).map(([n, h]) => `<button class="shade" style="--sw:${h}" title="${n}" onclick="addColour('${n}','${h}')"></button>`).join('')}</div></div>
+        <div class="chooser__sec"><small>Need a different shade?</small>
+            <label class="any"><input type="color" value="${S.customHex}" oninput="S.customHex=this.value;S.customName=autoName(this.value);document.getElementById('cPrev').style.setProperty('--sw',this.value);document.getElementById('cName').textContent=S.customName;document.getElementById('cHex').textContent=this.value.toUpperCase();document.getElementById('cBox').style.display='flex'" /><span><b style="display:block">Pick any shade</b><small class="muted">Opens the full colour picker</small></span></label>
+            <div class="custom" id="cBox" style="display:${S.customName ? 'flex' : 'none'}"><span class="prev" id="cPrev" style="--sw:${S.customHex}"></span><span style="flex:1"><b style="display:block" id="cName">${S.customName}</b><small class="mono" id="cHex">${S.customHex.toUpperCase()}</small></span><button class="btn sm" onclick="addColour(S.customName,S.customHex)"><i class="fa fa-plus"></i> Add</button></div>
+            ${usedColour('') ? '' : `<button class="ghost" style="margin-top:10px" onclick="addColour('','')">${swatch('')} No colour, for items sold without one</button>`}
+        </div>
+    </div>`;
+}
+function colourTabs() {
+    const total = S.bases.length * S.flavours.length;
+    return `<div class="ctabs">${S.colours.map(c => {
+        const locked = c.name === '' && madeCount() > 0;
+        return `<button class="ctab ${c.name === S.activeColour ? 'on' : ''}" onclick="S.activeColour='${c.name}';S.sel=null;render()">${swatch(c.name, 22)} ${colourLabel(c.name)} <small>${colourCount(c.name)}/${total}</small>${locked ? '<i class="fa fa-lock muted" title="Has packs"></i>' : `<i class="fa fa-times rm" title="Remove colour" onclick="event.stopPropagation();removeColour('${c.name}')"></i>`}</button>`;
+    }).join('')}<button class="ctab add" onclick="S.chooser=true;render()"><span class="rb"></span> Add colour</button></div>${chooserModal()}`;
+}
+function cellClick(b, f) {
+    const k = key(b, f);
+    if (isMade(b, f)) { S.sel = S.sel === k ? null : k; render(); return; }
+    if (S.picked.has(k)) { S.picked.delete(k); S.sel = null; } else { S.picked.add(k); S.sel = k; }
+    render();
+}
+function gCell(b, f, opts) {
+    const k = key(b, f), m = isMade(b, f), p = S.picked.has(k), sel = opts.inspector && S.sel === k ? ' sel' : '';
+    const click = opts.inspector ? `cellClick('${b}','${f}')` : `toggle('${b}','${f}')`;
+    if (m) return `<button class="g-cell made${m.stock ? '' : ' out'}${sel}" ${opts.inspector ? `onclick="${click}"` : 'style="cursor:default"'} title="${b} · ${f}: already made"><i class="fa fa-check-circle"></i> ${m.stock ? `${m.stock} <small>in stock</small>` : '<small style="color:inherit">Out of stock</small>'}</button>`;
+    if (p) return `<button class="g-cell new${sel}" onclick="${click}" title="Tap again to drop it"><i class="fa fa-check"></i> New</button>`;
+    return `<button class="g-cell${sel}" onclick="${click}" title="Make ${b} · ${f}"><i class="fa fa-plus plus"></i></button>`;
+}
+function gridTable(opts = {}) {
+    const head = S.bases.map(b => {
+        const have = S.flavours.filter(f => isMade(b, f) || S.picked.has(key(b, f))).length;
+        return `<th class="g-colh"><div class="nm">${b}<button class="g-all" onclick="toggleCol('${b}')">All</button></div><div class="ct">${have} of ${S.flavours.length}</div></th>`;
+    }).join('');
+    const addCol = opts.inlineAdd ? `<th class="g-add"><input id="gBase" placeholder="+ Add ${lc(S.l1)}" onkeydown="if(event.key==='Enter')addTo('bases','gBase')" /></th>` : '';
+    const rows = S.flavours.map(f => `<tr><th class="g-rowh"><div class="nm">${f}</div><button class="g-all" onclick="toggleRow('${f}')">All ${lc(plural(S.l1))}</button></th>${S.bases.map(b => `<td>${gCell(b, f, opts)}</td>`).join('')}${opts.inlineAdd ? '<td></td>' : ''}</tr>`).join('');
+    const addRow = opts.inlineAdd ? `<tr><th class="g-add"><input id="gFlav" placeholder="+ Add ${lc(S.l2)}" onkeydown="if(event.key==='Enter')addTo('flavours','gFlav')" /></th></tr>` : '';
+    return `<div class="g-wrap"><table class="g-table"><thead><tr><th class="g-corner">${S.l2} ↓ &nbsp;·&nbsp; ${S.l1} →</th>${head}${addCol}</tr></thead><tbody>${rows}${addRow}</tbody></table></div>`;
+}
+const legend = () => `<div class="g-legend"><span><i class="k" style="background:var(--ok-soft)"></i>Made, with its stock</span><span><i class="k" style="background:var(--acc)"></i>New, will be made</span><span><i class="k" style="background:var(--sunk);border:1.5px solid var(--line)"></i>Not made, tap to make</span></div>`;
+const showing = () => S.coloursOn ? `<span class="showing">${swatch(S.activeColour, 18)} Showing ${colourLabel(S.activeColour)}</span>` : '';
+const formulaSelects = () => `<select onchange="S.l1=this.value;render()">${['Base', 'Design', 'Flavour', 'Model', 'Style'].map(o => `<option ${o === S.l1 ? 'selected' : ''}>${o}</option>`).join('')}</select> × <select onchange="S.l2=this.value;render()">${['Flavour', 'Size', 'Weight', 'Volume', 'Pack'].map(o => `<option ${o === S.l2 ? 'selected' : ''}>${o}</option>`).join('')}</select>${S.coloursOn ? ' × Colour' : ''}`;
+function priceRows(groupByBase = false) {
+    const row = ([b, f, c]) => `<div class="a-row"><span class="a-vname">${S.coloursOn ? swatch(c ?? '') : ''}${b} <span class="tag">· ${f}${c ? ' · ' + c : ''}</span> <span class="pill new"><i class="fa fa-plus"></i> New</span></span><input class="in mono" placeholder="Auto" /><input class="in" value="2.50" /><input class="in" value="4.00" /><input class="in" placeholder="Optional" /><button class="ibtn" onclick="S.picked.delete('${[b, f, c].filter(x => x !== undefined).join('|')}');render()"><i class="fa fa-trash-o"></i></button></div>`;
+    const made = ([k, m]) => { const [b, f] = k.split('|'); return `<div class="a-row"><span class="a-vname">${S.coloursOn ? swatch('') : ''}${b} <span class="tag">· ${f}</span> <span class="pill ${m.orig ? 'orig' : 'made'}"><i class="fa fa-${m.orig ? 'lock' : 'check'}"></i> ${m.orig ? 'Original' : 'Made'}</span></span><input class="in mono" value="${m.bc}" /><input class="in" value="${m.cost.toFixed(2)}" /><input class="in" value="${m.mrp.toFixed(2)}" /><span class="muted" style="font-size:12px">${m.stock} in stock</span><span></span></div>`; };
+    const head = '<div class="a-row h eyebrow"><span>Pack</span><span>Barcode</span><span>Cost</span><span>MRP</span><span>Stock</span><span></span></div>';
+    if (!groupByBase) return head + pickedList().map(row).join('') + Object.entries(S.made).map(made).join('');
+    return S.bases.map(b => {
+        const nw = pickedList().filter(p => p[0] === b), md = Object.entries(S.made).filter(([k]) => k.split('|')[0] === b);
+        if (!nw.length && !md.length) return '';
+        return `<div class="w-group"><header><span class="badge">${b}</span><span class="muted">${nw.length} new · ${md.length} made</span><span class="same"><span class="eyebrow">Same for ${b}</span><input class="in" placeholder="Cost" /><input class="in" placeholder="MRP" /><input class="in" placeholder="Stock" /><button class="btn sm"><i class="fa fa-check"></i></button></span></header>${head}${nw.map(row).join('')}${md.map(made).join('')}</div>`;
+    }).join('');
+}
+
+/* A1 · One sheet: names, values, colours and the grid on one surface */
+function renderA1() {
+    const total = S.bases.length * S.flavours.length * (S.coloursOn ? S.colours.length : 1);
+    return `<div class="card">
+        <div class="s1-head"><div class="a-thumb"><i class="fa fa-flask"></i></div>
+            <div><h2>mulak pack - 80g</h2><div class="s1-formula">Each pack is a ${formulaSelects()}</div></div>
+            <div class="s1-stats"><div class="s1-stat made"><b>${madeCount()}</b><span>made</span></div><div class="s1-stat new"><b>${S.picked.size}</b><span>new</span></div><div class="s1-stat"><b>${total - madeCount() - S.picked.size}</b><span>not made</span></div></div>
+        </div>
+        <div class="s1-bar"><button class="switch ${S.coloursOn ? 'on' : ''}" onclick="toggleColours()"></button><b>Comes in colours</b><span class="muted">${S.coloursOn ? 'Pick a colour, then tick its packs in the grid.' : 'Off: packs, drinks and food skip colours.'}</span>${S.coloursOn ? colourTabs() : ''}</div>
+        <div style="padding:10px 10px 2px">${S.coloursOn ? `<div style="padding:4px 8px 0">${showing()}</div>` : ''}${gridTable({ inlineAdd: true })}</div>
+        <div class="s1-hint muted"><i class="fa fa-info-circle"></i> Type a new ${lc(S.l1)} in the last column or a new ${lc(S.l2)} in the last row. Tap a box to make that pack, tap again to drop it. ${legend()}</div>
+        <div class="prices-h"><h3>Prices</h3><span class="eyebrow">Same for all new</span><input class="in" placeholder="Cost" /><input class="in" placeholder="MRP" /><input class="in" placeholder="Opening stock" /><button class="btn sm"><i class="fa fa-check"></i> Apply</button>
+            <button class="link" style="margin-left:auto" onclick="S.pricesOpen=!S.pricesOpen;render()">${S.pricesOpen ? 'Hide' : 'Show'} each pack (${S.picked.size + madeCount()}) <i class="fa fa-chevron-${S.pricesOpen ? 'up' : 'down'}"></i></button></div>
+        ${S.pricesOpen ? `<div class="s1-rows">${priceRows()}</div>` : ''}
+    </div>${dock()}`;
+}
+
+/* A2 · Grid + side panel: tap any box, its details open on the right */
+function inspector() {
+    let box = `<div class="i-empty"><i class="fa fa-hand-o-up"></i>Tap an empty box to make that pack.<br />Tap a made one to see its barcode and price.</div>`;
+    if (S.sel) {
+        const [b, f, c] = S.sel.split('|'), m = (!c) && S.made[`${b}|${f}`];
+        const title = `${S.coloursOn ? swatch(c ?? '', 16) : ''}${b} · ${f}${c ? ' · ' + c : ''}`;
+        box = m
+            ? `<div class="i-sel made"><div class="t">${title}<span class="pill ${m.orig ? 'orig' : 'made'}" style="margin-left:auto">${m.orig ? 'Original' : 'Made'}</span></div>
+                <div class="fields"><label class="full">Barcode<input class="in mono" value="${m.bc}" /></label><label>Cost<input class="in" value="${m.cost.toFixed(2)}" /></label><label>MRP<input class="in" value="${m.mrp.toFixed(2)}" /></label></div>
+                <div class="muted" style="font-size:12px;margin-top:10px"><b style="color:var(--bs-emphasis-color)">${m.stock} in stock</b> · change stock through a purchase or stock adjustment · <button class="link">Open this pack</button></div></div>`
+            : `<div class="i-sel"><div class="t">${title}<span class="pill new" style="margin-left:auto"><i class="fa fa-plus"></i> New</span></div>
+                <div class="fields"><label class="full">Barcode<input class="in mono" placeholder="Made automatically" /></label><label>Cost<input class="in" value="2.50" /></label><label>MRP<input class="in" value="4.00" /></label><label class="full">Opening stock<input class="in" placeholder="Optional" /></label></div>
+                <button class="link" style="margin-top:10px;color:var(--bs-danger)" onclick="cellClick('${b}','${f}')"><i class="fa fa-trash-o"></i> Don't make it</button></div>`;
+    }
+    const list = pickedList().map(p => { const k = p.join('|'); return `<div class="i-item ${S.sel === k ? 'on' : ''}" onclick="S.sel='${k}';render()"><span class="pill new"><i class="fa fa-plus"></i></span><span class="nm">${p[0]} · ${p[1]}${p[2] ? ' · ' + p[2] : ''}</span><input class="in" value="4.00" title="MRP" onclick="event.stopPropagation()" /></div>`; }).join('');
+    return `<div class="ph"><h3>${S.picked.size} new pack${S.picked.size === 1 ? '' : 's'}</h3><span class="muted" style="font-size:12px">${madeCount()} made</span></div>
+        ${box}
+        <div class="i-list"><span class="eyebrow">Will be created · MRP</span>${list || '<div class="muted" style="padding:6px 8px 10px">Nothing yet.</div>'}</div>
+        <div class="i-foot"><span class="eyebrow">Same for all new</span><div class="row"><input class="in" placeholder="Cost" /><input class="in" placeholder="MRP" /><button class="btn sm soft"><i class="fa fa-check"></i></button></div>
+            <button class="btn" style="justify-content:center" ${S.picked.size ? '' : 'disabled style="opacity:.5"'}><i class="fa fa-check"></i> Create ${S.picked.size} pack${S.picked.size === 1 ? '' : 's'}</button><button class="btn ghost" style="justify-content:center">Cancel</button></div>`;
+}
+function renderA2() {
+    return `<div class="i-wrap"><div class="card">
+        <div class="s1-head"><div class="a-thumb"><i class="fa fa-flask"></i></div><div><h2>mulak pack - 80g</h2><div class="s1-formula">Each pack is a ${formulaSelects()}</div></div>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:8px"><button class="switch ${S.coloursOn ? 'on' : ''}" onclick="toggleColours()"></button> Colours</span></div>
+        <div class="i-layers">
+            <div class="i-line"><span class="eyebrow">${plural(S.l1)}</span>${S.bases.map(b => chip('bases', b)).join('')}${adder('bases', 'iBase', 'e.g. Red Bull', S.l1)}</div>
+            <div class="i-line"><span class="eyebrow">${plural(S.l2)}</span>${S.flavours.map(f => chip('flavours', f)).join('')}${adder('flavours', 'iFlav', 'e.g. Mango', S.l2)}</div>
+            ${S.coloursOn ? `<div class="i-line"><span class="eyebrow">Colours</span>${colourTabs()}</div>` : ''}
+        </div>
+        <div style="padding:10px 10px 4px">${S.coloursOn ? `<div style="padding:4px 8px 0">${showing()}</div>` : ''}${gridTable({ inspector: true })}</div>
+        <div style="padding:0 18px 16px">${legend()}</div>
+    </div><aside class="card i-panel">${inspector()}</aside></div>`;
+}
+
+/* A3 · Three steps: one question per screen */
+function renderA3() {
+    const steps = [
+        ['What is it made of?', `${S.bases.length} ${lc(plural(S.l1))} × ${S.flavours.length} ${lc(plural(S.l2))}${S.coloursOn ? ' × ' + S.colours.length + ' colours' : ''}`],
+        ['Which packs exist?', `${madeCount()} made · ${S.picked.size} new`],
+        ['Prices and barcodes', `${S.picked.size} new to price`],
+    ];
+    let body = '';
+    if (S.step === 1) {
+        const layerBox = (n, label, opts, list, id, ph) => `<div class="w-box"><div style="display:flex;align-items:center;gap:8px"><span class="eyebrow">Layer ${n}</span><span class="b-seg" style="margin-left:auto">${opts.map(o => `<button class="${o === S[label] ? 'on' : ''}" onclick="S.${label}='${o}';render()">${o}</button>`).join('')}</span></div>
+            <h4>${plural(S[label])}</h4><div class="chips">${S[list].map(v => chip(list, v)).join('')}${adder(list, id, ph, S[label])}</div></div>`;
+        body = `<h4>Name the two layers and list their values</h4><p class="muted" style="margin:0 0 14px">The till, receipts and stock reports use these words.</p>
+            <div class="w-two">${layerBox(1, 'l1', ['Base', 'Design', 'Flavour', 'Model'], 'bases', 'wBase', 'e.g. Red Bull')}${layerBox(2, 'l2', ['Flavour', 'Size', 'Weight', 'Pack'], 'flavours', 'wFlav', 'e.g. Mango')}</div>
+            <h4 style="margin-top:20px">Does it come in colours?</h4>
+            <div class="w-choice"><button class="w-opt ${S.coloursOn ? '' : 'on'}" onclick="${S.coloursOn ? 'toggleColours()' : ''}"><span class="ico"><i class="fa fa-cubes"></i></span><span><b>No colours</b><span class="muted">Packs, drinks, food</span></span></button>
+                <button class="w-opt ${S.coloursOn ? 'on' : ''}" onclick="${S.coloursOn ? '' : 'toggleColours()'}"><span class="ico"><i class="fa fa-paint-brush"></i></span><span><b>Yes, in colours</b><span class="muted">Clothes, shoes, bags</span></span></button></div>
+            ${S.coloursOn ? `<div style="margin-top:14px">${colourTabs()}</div>` : ''}`;
+    } else if (S.step === 2) {
+        body = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px"><h4 style="margin:0">Tap the packs you sell</h4>${showing()}<span class="muted" style="margin-left:auto">${legend()}</span></div>
+            ${S.coloursOn ? `<div style="margin:8px 0 4px">${colourTabs()}</div>` : ''}${gridTable()}`;
+    } else {
+        body = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><h4 style="margin:0 8px 0 0">Price the new packs</h4><span class="eyebrow">Same for all new</span><input class="in" style="width:110px" placeholder="Cost" /><input class="in" style="width:110px" placeholder="MRP" /><input class="in" style="width:130px" placeholder="Opening stock" /><button class="btn sm"><i class="fa fa-check"></i> Apply</button></div>
+            ${priceRows(true)}`;
+    }
+    return `<div class="card">
+        <div class="w-steps">${steps.map(([t, sub], i) => `<button class="w-step ${S.step === i + 1 ? 'on' : (S.step > i + 1 ? 'done' : '')}" onclick="S.step=${i + 1};render()"><span class="n">${S.step > i + 1 ? '<i class="fa fa-check"></i>' : i + 1}</span><span style="min-width:0"><b>${t}</b><small>${sub}</small></span></button>`).join('')}</div>
+        <div class="w-body">${body}</div>
+        <div class="w-foot">${S.step > 1 ? `<button class="btn ghost" onclick="S.step--;render()"><i class="fa fa-chevron-left"></i> Back</button>` : ''}
+            <span class="muted" style="margin-left:auto">${S.picked.size} new · ${madeCount()} made</span>
+            ${S.step < 3 ? `<button class="btn" onclick="S.step++;render()">Next <i class="fa fa-chevron-right"></i></button>` : `<button class="btn" ${S.picked.size ? '' : 'disabled style="opacity:.5"'}><i class="fa fa-check"></i> Create ${S.picked.size} pack${S.picked.size === 1 ? '' : 's'}</button>`}</div>
+    </div>`;
+}
+
+function render() {
+    document.getElementById('app').innerHTML = ({ a: renderA, a1: renderA1, a2: renderA2, a3: renderA3 })[S.dir]();
+    document.getElementById('dirNote').textContent = notes[S.dir];
+}
+const seg = (id, attr, fn) => document.getElementById(id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    [...e.currentTarget.children].forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset[attr]);
+});
+seg('dirSeg', 'dir', d => { S.dir = d; S.sel = null; render(); });
+seg('themeSeg', 'theme', t => { document.documentElement.dataset.theme = t; });
+seg('colourSeg', 'colours', c => { S.coloursOn = c === 'on'; S.picked.clear(); S.activeColour = ''; render(); });
+render();
+</script>
+</body>
+</html>

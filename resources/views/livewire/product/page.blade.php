@@ -72,7 +72,7 @@
             <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 mb-3">
                 <i class="fa fa-sitemap"></i>
                 <span>
-                    This is <b>{{ \App\Models\Product::variantLabel($products['size'] ?? '', $products['color'] ?? '') }}</b>, a variant of
+                    This is <b>{{ \App\Models\Product::variantLabel($products['size'] ?? '', $products['color'] ?? '', $products['variant_value'] ?? '') }}</b>, a variant of
                     <a href="{{ route('product::edit', $variantParent['id']) }}" class="alert-link">{{ $variantParent['name'] }}</a>.
                     Name, category, brand, unit, tax and accounts come from {{ $variantParent['name'] }} and are changed there.
                 </span>
@@ -762,130 +762,141 @@
                                             <ul class="nav nav-tabs nav-tabs-bordered mb-3" role="tablist">
                                                 @if (isset($table_id) && !$isFixedAsset)
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Prices') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Prices')" data-bs-target="#tabPrices"
-                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            data-bs-toggle="tab" href="?tab=Prices" wire:click.prevent="tabSelect('Prices')" data-bs-target="#tabPrices"
+                                                            role="tab" aria-controls="profile" aria-selected="false"
                                                             tabindex="-1">
                                                             <i class="fa fa-money text-success"></i>
                                                             Prices
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if ($isProduct || $isFixedAsset)
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Attributes') active @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Attributes')"
-                                                            data-bs-target="#tabAttributes" type="button" role="tab" aria-controls="home"
+                                                            data-bs-toggle="tab" href="?tab=Attributes" wire:click.prevent="tabSelect('Attributes')"
+                                                            data-bs-target="#tabAttributes" role="tab" aria-controls="home"
                                                             aria-selected="true">
                                                             <i class="fa fa-table text-primary"></i>
                                                             {{ $isFixedAsset ? 'Asset Info' : 'Attributes' }}
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if ($isFixedAsset)
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Depreciation') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Depreciation')"
-                                                            data-bs-target="#tabDepreciation" type="button" role="tab"
+                                                            data-bs-toggle="tab" href="?tab=Depreciation" wire:click.prevent="tabSelect('Depreciation')"
+                                                            data-bs-target="#tabDepreciation" role="tab"
                                                             aria-controls="profile" aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-line-chart text-success"></i>
                                                             Depreciation Settings
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Accounting') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Accounting')"
-                                                            data-bs-target="#tabAccounting" type="button" role="tab" aria-controls="profile"
+                                                            data-bs-toggle="tab" href="?tab=Accounting" wire:click.prevent="tabSelect('Accounting')"
+                                                            data-bs-target="#tabAccounting" role="tab" aria-controls="profile"
                                                             aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-book text-warning"></i>
                                                             Accounting
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if (isset($table_id) && $type == 'product')
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Variants') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Variants')" data-bs-target="#tabVariants"
-                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            data-bs-toggle="tab" href="?tab=Variants" wire:click.prevent="tabSelect('Variants')" data-bs-target="#tabVariants"
+                                                            role="tab" aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-th text-primary"></i>
                                                             Variants
                                                             @if (($variantCount ?? 0) > 0)
                                                                 <span class="badge rounded-pill bg-primary">{{ $variantCount }}</span>
                                                             @endif
-                                                        </button>
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                                @if (isset($table_id) && ! $isFixedAsset)
+                                                    <li class="nav-item" role="presentation">
+                                                        <a
+                                                            class="nav-link @if ($selectedTab == 'Options') active show @endif d-flex align-items-center gap-2"
+                                                            data-bs-toggle="tab" href="?tab=Options" wire:click.prevent="tabSelect('Options')" data-bs-target="#tabOptions"
+                                                            role="tab" aria-selected="false" tabindex="-1">
+                                                            <i class="fa fa-list-ul text-success"></i>
+                                                            Options
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if ($type == 'product')
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Stock') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Stock')" data-bs-target="#tabStock"
-                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            data-bs-toggle="tab" href="?tab=Stock" wire:click.prevent="tabSelect('Stock')" data-bs-target="#tabStock"
+                                                            role="tab" aria-controls="profile" aria-selected="false"
                                                             tabindex="-1">
                                                             <i class="fa fa-archive text-warning"></i>
                                                             Stock Details
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if ($type == 'product')
                                                     @if (isset($table_id))
                                                         <li class="nav-item" role="presentation">
-                                                            <button
+                                                            <a
                                                                 class="nav-link @if ($selectedTab == 'Uom') active show @endif d-flex align-items-center gap-2"
-                                                                data-bs-toggle="tab" wire:click="tabSelect('Uom')" data-bs-target="#tabUom"
-                                                                type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                                data-bs-toggle="tab" href="?tab=Uom" wire:click.prevent="tabSelect('Uom')" data-bs-target="#tabUom"
+                                                                role="tab" aria-controls="profile" aria-selected="false"
                                                                 tabindex="-1">
                                                                 <i class="fa fa-cubes text-info"></i>
                                                                 Unit of Measures
-                                                            </button>
+                                                            </a>
                                                         </li>
                                                     @endif
                                                 @endif
                                                 <li class="nav-item" role="presentation">
-                                                    <button
+                                                    <a
                                                         class="nav-link @if ($selectedTab == 'Images') active show @endif d-flex align-items-center gap-2"
-                                                        data-bs-toggle="tab" wire:click="tabSelect('Images')" data-bs-target="#tabImages"
-                                                        type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                        data-bs-toggle="tab" href="?tab=Images" wire:click.prevent="tabSelect('Images')" data-bs-target="#tabImages"
+                                                        role="tab" aria-controls="profile" aria-selected="false"
                                                         tabindex="-1">
                                                         <i class="fa fa-picture-o text-danger"></i>
                                                         {{ $isFixedAsset ? 'Asset Photos' : 'Images' }}
-                                                    </button>
+                                                    </a>
                                                 </li>
                                                 @if (isset($table_id) && $type == 'product')
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Related') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Related')" data-bs-target="#tabRelated"
-                                                            type="button" role="tab" aria-controls="profile" aria-selected="false"
+                                                            data-bs-toggle="tab" href="?tab=Related" wire:click.prevent="tabSelect('Related')" data-bs-target="#tabRelated"
+                                                            role="tab" aria-controls="profile" aria-selected="false"
                                                             tabindex="-1">
                                                             <i class="fa fa-link text-info"></i>
                                                             Related Products
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'RawMaterials') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('RawMaterials')" data-bs-target="#tabRawMaterials"
-                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            data-bs-toggle="tab" href="?tab=RawMaterials" wire:click.prevent="tabSelect('RawMaterials')" data-bs-target="#tabRawMaterials"
+                                                            role="tab" aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-cubes text-warning"></i>
                                                             Raw Materials
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                                 @if (isset($table_id) && auth()->user()->can('product.audit view'))
                                                     <li class="nav-item" role="presentation">
-                                                        <button
+                                                        <a
                                                             class="nav-link @if ($selectedTab == 'Audit') active show @endif d-flex align-items-center gap-2"
-                                                            data-bs-toggle="tab" wire:click="tabSelect('Audit')" data-bs-target="#tabAudit"
-                                                            type="button" role="tab" aria-selected="false" tabindex="-1">
+                                                            data-bs-toggle="tab" href="?tab=Audit" wire:click.prevent="tabSelect('Audit')" data-bs-target="#tabAudit"
+                                                            role="tab" aria-selected="false" tabindex="-1">
                                                             <i class="fa fa-history text-secondary"></i>
                                                             Audit
-                                                        </button>
+                                                        </a>
                                                     </li>
                                                 @endif
                                             </ul>
@@ -1446,6 +1457,13 @@
                                                         class="tab-pane fade @if ($selectedTab == 'Variants') active show @endif"
                                                         role="tabpanel">
                                                         @livewire('product.variants', ['product_id' => $table_id], key('variants-' . $table_id))
+                                                    </div>
+                                                @endif
+                                                @if (isset($table_id) && ! $isFixedAsset)
+                                                    <div id="tabOptions"
+                                                        class="tab-pane fade @if ($selectedTab == 'Options') active show @endif"
+                                                        role="tabpanel">
+                                                        @livewire('product.options', ['product_id' => $table_id], key('options-' . $table_id))
                                                     </div>
                                                 @endif
                                                 @if (isset($table_id) && auth()->user()->can('product.audit view'))

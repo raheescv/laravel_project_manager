@@ -128,6 +128,7 @@ class _CatalogFormState extends State<_CatalogForm> {
   late final _code = TextEditingController(text: _item.code);
   late final _priority = TextEditingController(text: _item.isNew ? '' : '${_item.priority}');
   late final _size = TextEditingController(text: _item.size);
+  late final _design = TextEditingController(text: _item.design);
   late final _sizeCategory = TextEditingController(text: _item.sizeCategory);
   late final _hsn = TextEditingController(text: _item.hsnCode);
   late final _tax = TextEditingController(text: _num(_item.tax));
@@ -150,7 +151,7 @@ class _CatalogFormState extends State<_CatalogForm> {
   Map<String, String> _errors = const {};
 
   List<TextEditingController> get _controllers =>
-      [_name, _nameArabic, _code, _priority, _size, _sizeCategory, _hsn, _tax, _barcode, _description, _cost, _mrp, _time];
+      [_name, _nameArabic, _code, _priority, _size, _design, _sizeCategory, _hsn, _tax, _barcode, _description, _cost, _mrp, _time];
 
   static String _num(double v) => v == 0 ? '' : (v == v.roundToDouble() ? v.toInt().toString() : v.toString());
   static double _parse(TextEditingController c) => double.tryParse(c.text.trim()) ?? 0;
@@ -179,6 +180,9 @@ class _CatalogFormState extends State<_CatalogForm> {
         brand: _brand,
         priority: _parse(_priority).toInt(),
         size: _size.text,
+        design: _design.text,
+        optionName: _item.optionName,
+        sizeName: _item.sizeName,
         sizeCategory: _sizeCategory.text,
         hsnCode: _hsn.text,
         tax: _parse(_tax),
@@ -400,9 +404,13 @@ class _CatalogFormState extends State<_CatalogForm> {
           ),
           FieldPair(
             _picker('Brand', _brand, 'Select brand', () => _pick('Brand', options.brands, _brand, (r) => _brand = r, optional: true)),
-            _text('Size', _size, hint: 'Size'),
+            _text(_item.sizeName, _size, hint: _item.sizeName == 'Flavour' ? 'e.g. Mango' : _item.sizeName),
           ),
-          _text('Size Category', _sizeCategory, hint: 'Size category name', rtl: true),
+          // The variant layer above size: design / flavour / model, as the family names it.
+          FieldPair(
+            _text(_item.optionName, _design, hint: 'e.g. ${_item.optionName == 'Flavour' ? 'Mango' : 'Floral'}'),
+            _text('Size Category', _sizeCategory, hint: 'Size category name', rtl: true),
+          ),
           FieldPair(_text('HSN Code', _hsn, hint: 'HSN code'), _text('Tax %', _tax, hint: '0', numeric: true)),
           if (options.barcodeTypedPerProduct) _text('Barcode', _barcode, hint: 'Scan or type a unique barcode'),
         ] else

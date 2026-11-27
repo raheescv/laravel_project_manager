@@ -1525,6 +1525,20 @@ html.dark .posx .posx-date-input {
     background: var(--pos-ok-soft);
 }
 
+/* a picked option under a cart line: "Mango Passion", "Chia +3.00" */
+.posx .posx-chip-opt {
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: .6875rem;
+    font-weight: 700;
+    color: var(--pos-ink);
+    background: color-mix(in srgb, var(--pos-ink) 7%, transparent);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* totals */
 .posx .posx-total-row {
     display: flex;

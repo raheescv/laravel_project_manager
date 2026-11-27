@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Services\TenantService;
 use App\Support\ProductColours;
+use App\Support\ProductOptions;
 use App\Support\Storefront\SizeFilter;
 use App\Support\StorefrontSlug;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,7 +42,7 @@ class GetProductsAction
      */
     private const LIST_COLUMNS = [
         'id', 'parent_id', 'type', 'code', 'name', 'name_arabic', 'thumbnail', 'description',
-        'barcode', 'color', 'size', 'model', 'hsn_code', 'mrp', 'tax',
+        'barcode', 'color', 'size', 'variant_option', 'variant_size_option', 'variant_value', 'model', 'hsn_code', 'mrp', 'tax',
         'location', 'priority', 'time', 'document_file',
         'reorder_level', 'min_stock',
         'unit_id', 'brand_id', 'main_category_id', 'sub_category_id',
@@ -81,6 +82,9 @@ class GetProductsAction
         if ($filters['group_by_family'] ?? false) {
             $this->attachFamilies($products->getCollection(), $filters);
         }
+        // The till asks these when the card is tapped (base, flavour, add-ons…); one lookup for the page.
+        $optionGroups = ProductOptions::forProducts($products->getCollection());
+        $products->getCollection()->each(fn (Product $product) => $product->setAttribute('option_groups_payload', $optionGroups[$product->id] ?? []));
 
         return [
             'data' => ProductResource::collection($products->items()),
@@ -233,7 +237,7 @@ class GetProductsAction
         }
         $familyOf = fn (Product $product): int => (int) ($product->parent_id ?: $product->id);
 
-        $members = Product::query()->select(['id', 'parent_id', 'size', 'color', 'mrp'])->withOnlinePrice();
+        $members = Product::query()->select(['id', 'parent_id', 'variant_value', 'size', 'color', 'mrp'])->withOnlinePrice();
         $this->addStockAggregates($members, $filters['branch_id'] ?? null);
         $this->applyFilters($members, array_intersect_key($filters, array_flip(self::FAMILY_MEMBER_FILTERS)));
         $members = $members->whereIn(DB::raw(self::FAMILY_KEY), $products->map($familyOf)->unique()->values())
@@ -250,6 +254,7 @@ class GetProductsAction
             $product->setAttribute('family_summary', [
                 'id' => $familyOf($product),
                 'count' => $family->count(),
+                'designs' => $family->map(fn (Product $member) => trim((string) $member->variant_value))->filter()->unique()->values()->all(),
                 'sizes' => $family->map(fn (Product $member) => trim((string) $member->size))->filter()->unique()->values()->all(),
                 'colours' => $colours->map(fn (string $colour) => [
                     'value' => $colour,

@@ -196,6 +196,8 @@ extension _ReceiptSections on InvoiceScreen {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l.name, style: ui(size: 13, weight: FontWeight.w700, color: p.ink)),
+                if (l.options.isNotEmpty)
+                  Text(l.options.map((o) => o.name).join(' · '), style: ui(size: 11, weight: FontWeight.w600, color: p.textSecondary)),
                 const SizedBox(height: 2),
                 Text(sub, style: ui(size: 10.5, weight: FontWeight.w600, color: p.textMuted)),
               ],

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -121,7 +122,21 @@ class Product extends Model implements AuditableContracts
         'is_selling',
         'income_account_id',
         'expense_account_id',
+        'variant_option',
+        'variant_size_option',
     ];
+
+    /** What the family's first layer (variant_value) is called when variant_option is empty. */
+    public const DEFAULT_VARIANT_OPTION = 'Design';
+
+    /** Layer names offered as one-tap choices on the Variants tab; any other name can be typed. */
+    public const SUGGESTED_VARIANT_OPTIONS = ['Design', 'Base', 'Flavour', 'Model', 'Style'];
+
+    /** What the family's second layer (size) is called when variant_size_option is empty. */
+    public const DEFAULT_SIZE_OPTION = 'Size';
+
+    /** Second-layer names offered as one-tap choices on the Variants tab; any other name can be typed. */
+    public const SUGGESTED_SIZE_OPTIONS = ['Size', 'Flavour', 'Weight', 'Volume', 'Pack'];
 
     protected $fillable = [
         'tenant_id',
@@ -157,6 +172,9 @@ class Product extends Model implements AuditableContracts
         'pattern',
         'color',
         'size',
+        'variant_option',
+        'variant_size_option',
+        'variant_value',
         'size_category',
         'model',
         'part_no',
@@ -204,19 +222,18 @@ class Product extends Model implements AuditableContracts
             'name' => array_merge(
                 ['required', 'max:100'],
                 $isVariant ? [] : [Rule::unique('products')->where('tenant_id', $tenantId)->where('type', $type)->whereNull('parent_id')->whereNull('deleted_at')->ignore($id)],
-            ),
-            'size' => [
-                $isVariant ? 'required' : 'nullable',
-                'max:255',
-                function (string $attribute, mixed $value, \Closure $fail) use ($data, $familyId, $id, $isVariant): void {
+                [function (string $attribute, mixed $value, \Closure $fail) use ($data, $familyId, $id, $isVariant): void {
                     if (! $familyId || (! $isVariant && ! self::query()->where('parent_id', $familyId)->exists())) {
                         return;
                     }
-                    if (self::familyCombinationTaken($familyId, $value, $data['color'] ?? null, (int) $id)) {
-                        $fail('This family already has a '.self::variantLabel($value, $data['color'] ?? null).' variant.');
+                    $design = $data['variant_value'] ?? null;
+                    if (self::familyCombinationTaken($familyId, $data['size'] ?? null, $data['color'] ?? null, (int) $id, $design)) {
+                        $fail('This family already has a '.(self::variantLabel($data['size'] ?? null, $data['color'] ?? null, $design) ?: 'plain').' variant.');
                     }
-                },
-            ],
+                }],
+            ),
+            'size' => array_merge($isVariant ? ['required_without:variant_value'] : [], ['nullable', 'max:255']),
+            'variant_value' => ['nullable', 'max:100'],
             'type' => ['required', Rule::in(['product', 'service', 'asset'])],
             'code' => ['required', 'max:50'],
             'department_id' => ['required'],
@@ -258,15 +275,16 @@ class Product extends Model implements AuditableContracts
     }
 
     /**
-     * Whether another live member of the family already uses this size + colour.
-     * Compared trimmed and case-insensitively; a missing colour counts as a value
-     * of its own, so a family cannot hold two plain "43" items either.
+     * Whether another live member of the family already uses this design + size
+     * + colour. Compared trimmed and case-insensitively; a missing value counts
+     * as a value of its own, so a family cannot hold two plain "43" items either.
      */
-    public static function familyCombinationTaken(int $familyId, ?string $size, ?string $color, int $ignoreId = 0): bool
+    public static function familyCombinationTaken(int $familyId, ?string $size, ?string $color, int $ignoreId = 0, ?string $design = null): bool
     {
         return self::query()
             ->where(fn (Builder $query) => $query->where('id', $familyId)->orWhere('parent_id', $familyId))
             ->when($ignoreId, fn (Builder $query) => $query->where('id', '!=', $ignoreId))
+            ->whereRaw("LOWER(TRIM(COALESCE(variant_value, ''))) = ?", [self::normaliseVariantValue($design)])
             ->whereRaw("LOWER(TRIM(COALESCE(size, ''))) = ?", [self::normaliseVariantValue($size)])
             ->whereRaw("LOWER(TRIM(COALESCE(color, ''))) = ?", [self::normaliseVariantValue($color)])
             ->exists();
@@ -277,13 +295,22 @@ class Product extends Model implements AuditableContracts
         return mb_strtolower(trim((string) $value));
     }
 
-    /** "42 / Blue", or just "43" when the variant has no colour. A picked hex ("#ff0000") reads as its colour name. */
-    public static function variantLabel(?string $size, ?string $color): string
+    /**
+     * "Floral / M / Navy": design, size and colour, each left out when empty
+     * ("42 / Blue", "Mango"). A picked hex ("#ff0000") reads as its colour name.
+     */
+    public static function variantLabel(?string $size, ?string $color, ?string $design = null): string
     {
-        $size = trim((string) $size);
-        $color = ProductColours::displayName($color);
+        return implode(' / ', array_filter(
+            [trim((string) $design), trim((string) $size), ProductColours::displayName($color)],
+            fn (string $part) => $part !== '',
+        ));
+    }
 
-        return $color === '' ? $size : trim($size.' / '.$color, ' /');
+    /** This product's design / size / colour label ('' for a plain product). */
+    public function variantName(): string
+    {
+        return self::variantLabel($this->size, $this->color, $this->variant_value);
     }
 
     /**
@@ -301,7 +328,7 @@ class Product extends Model implements AuditableContracts
     }
 
     /**
-     * "Running Shoe - 42 / Blue": the name plus the size and colour, so two pairs
+     * "Running Shoe - 42 / Blue": the name plus the design, size and colour, so two pairs
      * of one model can be told apart on a receipt. A size or colour the name
      * already spells out ("Polo Shirt XL") is not repeated.
      */
@@ -313,9 +340,37 @@ class Product extends Model implements AuditableContracts
         $label = self::variantLabel(
             $mentioned($this->size) ? null : $this->size,
             $mentioned(ProductColours::displayName($this->color)) ? null : $this->color,
+            $mentioned($this->variant_value) ? null : $this->variant_value,
         );
 
         return $label === '' ? $name : $name.' - '.$label;
+    }
+
+    /** "Design", "Flavour", "Model"…: what this family's first layer (variant_value) is called. */
+    public function optionName(): string
+    {
+        return trim((string) $this->variant_option) ?: self::DEFAULT_VARIANT_OPTION;
+    }
+
+    /** "Size", "Flavour", "Weight"…: what this family's second layer (size) is called. */
+    public function sizeName(): string
+    {
+        return trim((string) $this->variant_size_option) ?: self::DEFAULT_SIZE_OPTION;
+    }
+
+    /**
+     * This item's design and what its family calls both layers — the one shape
+     * the POS grid, the mobile catalogue and the catalogue editor all send.
+     *
+     * @return array{design: ?string, option_name: string, size_name: string}
+     */
+    public function variantLayersPayload(): array
+    {
+        return [
+            'design' => trim((string) $this->variant_value) ?: null,
+            'option_name' => $this->optionName(),
+            'size_name' => $this->sizeName(),
+        ];
     }
 
     public function isVariant(): bool
@@ -339,6 +394,16 @@ class Product extends Model implements AuditableContracts
     public function variants(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    /** @return BelongsToMany<OptionGroup, $this> the choices the till asks for this product, in order */
+    public function optionGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(OptionGroup::class, 'product_option_groups')
+            ->withPivot(['id', 'sort', 'min_select', 'max_select', 'tenant_id'])
+            ->withTimestamps()
+            ->orderByPivot('sort')
+            ->orderBy('option_groups.id');
     }
 
     /** Family heads and standalone products: what a product list shows by default. */

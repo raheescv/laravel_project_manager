@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContracts;
@@ -59,6 +60,12 @@ class SaleItem extends Model implements AuditableContracts
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return HasMany<SaleItemOption, $this> the choices picked on this line (base, flavour, add-ons…) */
+    public function options(): HasMany
+    {
+        return $this->hasMany(SaleItemOption::class)->orderBy('sort')->orderBy('id');
     }
 
     /** @return BelongsTo<Sale, $this> */

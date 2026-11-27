@@ -4,6 +4,7 @@ namespace App\Actions\Sale\Pos;
 
 use App\Models\Inventory;
 use App\Models\ProductUnit;
+use App\Support\ProductOptions;
 use App\Support\Sale\OutOfStockSales;
 use Illuminate\Support\Facades\Log;
 
@@ -97,6 +98,7 @@ class GetProductByBarcodeAction
                 'unit_name' => $selectedUnitName ?? ($inventory->product->unit->name ?? ''),
                 'conversion_factor' => $selectedConversionFactor,
                 'units' => $inventory->product->getResolvedUnits(),
+                'option_groups' => ProductOptions::forProduct($inventory->product),
             ];
 
             return [

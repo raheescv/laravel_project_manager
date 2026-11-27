@@ -151,6 +151,7 @@ class CreateAction
                 },
             ))->load([
                 'items.product:id,name,type',
+                'items.options',
                 'items.employee:id,name',
                 'payments.paymentMethod:id,name',
                 'account:id,name,mobile',
@@ -236,6 +237,7 @@ class CreateAction
             ->where('client_uuid', $clientUuid)
             ->with([
                 'items.product:id,name,type',
+                'items.options',
                 'items.employee:id,name',
                 'payments.paymentMethod:id,name',
                 'account:id,name,mobile',
@@ -332,10 +334,29 @@ class CreateAction
                 'conversion_factor' => 1,
                 'discount' => (float) ($line['discount'] ?? 0),
                 'tax' => $product->tax ?? 0,
-            ];
+            ] + self::optionsOf($line);
         }
 
         return $items;
+    }
+
+    /**
+     * The line's picked options in the web action's shape, or nothing when the
+     * app sent no `options` key (an older build), so the line is not checked.
+     *
+     * @param  array<string, mixed>  $line
+     * @return array{options?: list<array{option_group_item_id: int, parent_option_group_item_id: ?int}>}
+     */
+    public static function optionsOf(array $line): array
+    {
+        if (! array_key_exists('options', $line)) {
+            return [];
+        }
+
+        return ['options' => array_values(array_map(fn (array $pick) => [
+            'option_group_item_id' => (int) $pick['optionGroupItemId'],
+            'parent_option_group_item_id' => isset($pick['parentOptionGroupItemId']) ? (int) $pick['parentOptionGroupItemId'] : null,
+        ], (array) $line['options']))];
     }
 
     /**
@@ -354,7 +375,7 @@ class CreateAction
             ->where('created_by', $userId)
             ->where('status', 'completed')
             ->where('created_at', '>=', now()->subMinutes(self::DUPLICATE_WINDOW_MINUTES))
-            ->with('items:id,sale_id,product_id,quantity,unit_price,discount')
+            ->with('items:id,sale_id,product_id,quantity,unit_price,discount', 'items.options:id,sale_item_id,option_group_item_id')
             ->latest('id')
             ->get();
 
@@ -370,6 +391,7 @@ class CreateAction
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'discount' => $item->discount ?? 0,
+                        'options' => $item->options->map(fn ($option) => ['option_group_item_id' => $option->option_group_item_id])->all(),
                     ],
                 )
                 ->all();
@@ -393,6 +415,8 @@ class CreateAction
                 'quantity' => (float) $item['quantity'],
                 'unit_price' => (float) $item['unit_price'],
                 'discount' => (float) ($item['discount'] ?? 0),
+                // Two drinks in different flavours are different sales.
+                'options' => collect($item['options'] ?? [])->pluck('option_group_item_id')->map(fn ($id) => (int) $id)->sort()->values()->all(),
             ],
             $items,
         );

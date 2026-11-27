@@ -3,7 +3,7 @@
     $show = fn (string $key, bool $default = true): bool => (bool) ($cols[$key] ?? $default);
     $showCodes = $show('code') || $show('barcode');
     $showCategory = $show('department') || $show('main_category') || $show('sub_category');
-    $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $show('size') + (int) $show('color') + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
+    $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $show('variant_value') + (int) $show('size') + (int) $show('color') + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
     $panelFilterCount = count(array_diff_key($activeFilters, ['sku' => true]));
 @endphp
 <div class="pdx" x-data="{ filtersOpen: $persist(false).as('product-list-filters-open') }">
@@ -223,6 +223,9 @@
                         @if ($showCodes)
                             <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="{{ $show('code') ? 'code' : 'barcode' }}" label="{{ $show('code') && $show('barcode') ? 'SKU / Barcode' : ($show('code') ? 'SKU' : 'Barcode') }}" /></th>
                         @endif
+                        @if ($show('variant_value'))
+                            <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="variant_value" label="Design" /></th>
+                        @endif
                         @if ($show('size'))
                             <th><x-sortable-header :direction="$sortDirection" :sortField="$sortField" field="size" label="Size" /></th>
                         @endif
@@ -253,6 +256,7 @@
                             $hasFamily = $groupVariants && ($item->variants_count ?? 0) > 0;
                             $colour = trim((string) $item->color);
                             $members = $hasFamily ? collect([$item])->merge($item->variants) : collect([$item]);
+                            $rowDesigns = $members->pluck('variant_value')->map(fn ($d) => trim((string) $d))->filter()->unique(fn ($d) => mb_strtolower($d))->values();
                             $rowSizes = $members->pluck('size')->map(fn ($s) => trim((string) $s))->filter()->unique()->values();
                             $rowColours = $members->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique(fn ($c) => mb_strtolower($c))->values();
                         @endphp
@@ -277,7 +281,7 @@
                             <td class="c-product" style="min-width: 220px">
                                 <a href="{{ route('product::edit', $item->id) }}" class="name">
                                     {{ $item->name }}@if (! $groupVariants && ($item->parent_id || ($item->variants_count ?? 0)))
-                                        <span class="fw-normal text-body-secondary">— {{ \App\Models\Product::variantLabel($item->size, $item->color) }}</span>
+                                        <span class="fw-normal text-body-secondary">— {{ $item->variantName() }}</span>
                                     @endif
                                 </a>
                                 @if (! $item->is_selling)
@@ -312,6 +316,15 @@
                                     @if ($show('barcode'))
                                         <div class="bc {{ $show('code') ? 'mt-1' : '' }}">{{ $item->barcode ?: '—' }}</div>
                                     @endif
+                                </td>
+                            @endif
+                            @if ($show('variant_value'))
+                                <td class="c-design" title="{{ $item->optionName() }}">
+                                    @forelse ($rowDesigns as $rowDesign)
+                                        <span class="chip-size">{{ $rowDesign }}</span>
+                                    @empty
+                                        <span class="bc">—</span>
+                                    @endforelse
                                 </td>
                             @endif
                             @if ($show('size'))
@@ -406,7 +419,7 @@
                                                                 @if (trim((string) $member->color) !== '')
                                                                     <span class="sw me-1" style="background: {{ \App\Support\ProductColours::hexFor($member->color, $colourPalette) }}"></span>
                                                                 @endif
-                                                                {{ \App\Models\Product::variantLabel($member->size, $member->color) ?: $member->name }}
+                                                                {{ $member->variantName() ?: $member->name }}
                                                             </a>
                                                             @if ($member->id === $item->id)
                                                                 <span class="badge bg-primary-subtle text-primary-emphasis ms-1">Original</span>
@@ -475,6 +488,9 @@
                 @endcan
                 @can('product offer.view')
                     <li><a class="dropdown-item" href="{{ route('product::offer::index') }}"><i class="fa fa-tags me-2 text-warning"></i>Offers</a></li>
+                @endcan
+                @can('option group.view')
+                    <li><a class="dropdown-item" href="{{ route('product::option_group::index') }}"><i class="fa fa-list-ul me-2 text-success"></i>Option groups</a></li>
                 @endcan
             </ul>
         </div>

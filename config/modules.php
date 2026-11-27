@@ -265,6 +265,7 @@ return [
                 'service',
                 'combo offer',
                 'product offer',
+                'option group',
             ],
         ],
 

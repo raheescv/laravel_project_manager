@@ -9,7 +9,12 @@ use Exception;
 
 trait ValidatesUnitPriceAgainstMrpTrait
 {
-    protected function validateUnitPriceAgainstMrp(array $data): void
+    /**
+     * [$optionsExtra] is what the line's picked options add on top of the MRP
+     * (Large +3, Ginger +2) — a closure when it costs a query, so it only runs
+     * when the check is on.
+     */
+    protected function validateUnitPriceAgainstMrp(array $data, float|\Closure $optionsExtra = 0): void
     {
         $shouldValidate = $this->shouldValidateUnitPriceAgainstMrp();
 
@@ -18,7 +23,7 @@ trait ValidatesUnitPriceAgainstMrpTrait
         }
 
         $product = Product::find($data['product_id']);
-        $productMrp = $this->calculateProductMrp($product, $data['unit_id']);
+        $productMrp = $this->calculateProductMrp($product, $data['unit_id']) + (float) value($optionsExtra);
 
         if ($this->isUnitPriceExceedingMrp($product, $data['unit_price'], $productMrp)) {
             throw new Exception('Unit price cannot be greater than MRP.', 1);

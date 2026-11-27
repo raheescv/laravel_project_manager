@@ -32,6 +32,8 @@ class CatalogItemResource extends JsonResource
             'unit' => $this->unit?->name,
             'brand' => $this->brand?->name,
             'size' => $this->size,
+            // The family's first layer: this item's design / flavour / model, and what the family calls it.
+            ...$this->resource->variantLayersPayload(),
             'cost' => (float) $this->cost,
             'mrp' => (float) $this->mrp,
             'priority' => (int) $this->priority,

@@ -7,7 +7,7 @@ use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Makes size / colour variants of a product. Every variant is a full product
+ * Makes design (flavour, model…) / size / colour variants of a product. Every variant is a full product
  * (own barcode, code, cost, MRP and stock) whose parent_id is the family head,
  * so sales, purchases, transfers and reports treat it like any other item.
  *
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class CreateVariantsAction
 {
     /**
-     * @param  array<int, array{size?: ?string, color?: ?string, barcode_number?: ?string, cost?: mixed, mrp?: mixed, opening_stock?: mixed}>  $variants
+     * @param  array<int, array{variant_value?: ?string, size?: ?string, color?: ?string, barcode_number?: ?string, cost?: mixed, mrp?: mixed, opening_stock?: mixed}>  $variants
      * @return array{success: bool, message: string, data?: array<int, Product>}
      */
     public function execute(int $headId, array $variants, int $userId): array
@@ -32,10 +32,10 @@ class CreateVariantsAction
                 throw new \Exception("{$head->name} is itself a variant. Add variants from the main product instead.");
             }
             if ($head->type !== 'product') {
-                throw new \Exception('Only products can have size / colour variants.');
+                throw new \Exception('Only products can have variants.');
             }
             if (! $variants) {
-                throw new \Exception('Pick at least one size / colour to create.');
+                throw new \Exception('Pick at least one variant to create.');
             }
 
             $rows = $this->checkedRows($head, $variants);
@@ -45,7 +45,7 @@ class CreateVariantsAction
                 foreach ($rows as $row) {
                     $response = (new CreateAction())->execute($this->productData($head, $row), $userId);
                     if (! $response['success']) {
-                        throw new \Exception(Product::variantLabel($row['size'], $row['color']).': '.$response['message']);
+                        throw new \Exception(Product::variantLabel($row['size'], $row['color'], $row['variant_value']).': '.$response['message']);
                     }
                     $created[] = $response['data'];
                 }
@@ -66,12 +66,12 @@ class CreateVariantsAction
     }
 
     /**
-     * Trim the rows and reject the batch, with every problem listed, when a size
-     * is missing, a size + colour repeats (in the batch or the family), or a
+     * Trim the rows and reject the batch, with every problem listed, when a row
+     * has neither a design nor a size, a design + size + colour repeats (in the batch or the family), or a
      * barcode repeats inside the batch. Barcodes already used elsewhere are caught
      * by Product::rules() when each row is saved.
      *
-     * @return array<int, array{size: string, color: ?string, barcode_number: ?string, cost: float, mrp: float, opening_stock: float}>
+     * @return array<int, array{variant_value: ?string, size: ?string, color: ?string, barcode_number: ?string, cost: float, mrp: float, opening_stock: float}>
      */
     private function checkedRows(Product $head, array $variants): array
     {
@@ -81,21 +81,22 @@ class CreateVariantsAction
         $seenBarcodes = [];
 
         foreach (array_values($variants) as $index => $variant) {
+            $design = trim((string) ($variant['variant_value'] ?? ''));
             $size = trim((string) ($variant['size'] ?? ''));
             $color = trim((string) ($variant['color'] ?? ''));
             $barcode = trim((string) ($variant['barcode_number'] ?? ''));
-            $label = $size === '' ? 'Row '.($index + 1) : Product::variantLabel($size, $color);
+            $label = $size === '' && $design === '' ? 'Row '.($index + 1) : Product::variantLabel($size, $color, $design);
 
-            if ($size === '') {
-                $errors[] = "{$label}: a size is required.";
+            if ($size === '' && $design === '') {
+                $errors[] = "{$label}: a ".mb_strtolower($head->optionName()).' or a size is required.';
 
                 continue;
             }
 
-            $combo = Product::normaliseVariantValue($size).'|'.Product::normaliseVariantValue($color);
+            $combo = Product::normaliseVariantValue($design).'|'.Product::normaliseVariantValue($size).'|'.Product::normaliseVariantValue($color);
             if (isset($seenCombos[$combo])) {
                 $errors[] = "{$label} is listed twice.";
-            } elseif (Product::familyCombinationTaken($head->id, $size, $color)) {
+            } elseif (Product::familyCombinationTaken($head->id, $size, $color, 0, $design)) {
                 $errors[] = "{$head->name} already has a {$label} variant.";
             }
             $seenCombos[$combo] = true;
@@ -115,7 +116,8 @@ class CreateVariantsAction
             }
 
             $rows[] = [
-                'size' => $size,
+                'variant_value' => $design === '' ? null : $design,
+                'size' => $size === '' ? null : $size,
                 'color' => $color === '' ? null : $color,
                 'barcode_number' => $barcode === '' ? null : $barcode,
                 'cost' => (float) (($variant['cost'] ?? '') === '' ? $head->cost : $variant['cost']),
@@ -131,11 +133,12 @@ class CreateVariantsAction
         return $rows;
     }
 
-    /** The head's shared fields plus the row's own size, colour, barcode, prices and stock. */
+    /** The head's shared fields plus the row's own design, size, colour, barcode, prices and stock. */
     private function productData(Product $head, array $row): array
     {
         return array_merge($head->only(Product::VARIANT_SHARED_FIELDS), [
             'parent_id' => $head->id,
+            'variant_value' => $row['variant_value'],
             'size' => $row['size'],
             'color' => $row['color'],
             'barcode_number' => $row['barcode_number'],

@@ -128,7 +128,7 @@
                 .pdx .ptable td.c-price { position: absolute; right: 12px; top: 10px; width: auto; }
                 .pdx .ptable td.c-product { padding-right: 96px !important; }
                 .pdx .ptable td.c-codes, .pdx .ptable td.c-cat { margin-top: 4px; }
-                .pdx .ptable td.c-size, .pdx .ptable td.c-colour { display: inline-block; width: auto; margin: 4px 10px 0 0; }
+                .pdx .ptable td.c-design, .pdx .ptable td.c-size, .pdx .ptable td.c-colour { display: inline-block; width: auto; margin: 4px 10px 0 0; }
                 .pdx .ptable td.c-cost, .pdx .ptable td.c-unit, .pdx .ptable td.c-brand { display: none; }
                 .pdx .fam-row { display: block; }
                 .pdx .fam-inner { margin-inline-start: 0; }

@@ -17,6 +17,7 @@ use Faker\Factory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Spatie\LivewireFilepond\WithFilePond;
 
@@ -36,7 +37,8 @@ class Page extends Component
 
     public bool $syncBarcodeToCode = false;
 
-    public $selectedTab = 'Prices';
+    #[Url(as: 'tab', except: '')]
+    public $selectedTab = '';
 
     public $product;
 
@@ -69,7 +71,6 @@ class Page extends Component
         $this->syncBarcodeToCode = Configuration::where('key', 'sync_barcode_to_code')->value('value') === 'yes';
         $this->table_id = $table_id;
         $this->type = $type;
-        $this->selectedTab = $this->type === 'asset' ? 'Attributes' : 'Prices';
         $this->departments = [];
         $this->brands = [];
         if (! $this->table_id) {
@@ -167,9 +168,9 @@ class Page extends Component
             }
             $this->products = $this->product->toArray();
             $this->type = $this->product->type;
-            $this->selectedTab = $this->type === 'asset' ? 'Attributes' : 'Prices';
             $this->loadRelatedProducts();
         }
+        $this->selectedTab = $this->resolveTab($this->selectedTab);
         if ($this->type === 'asset') {
             $this->recalculateDepreciation();
         }
@@ -304,6 +305,7 @@ class Page extends Component
                 'degree' => $this->degree,
                 'document_file_upload' => $this->document_file,
             ]);
+            unset($payload['variant_option'], $payload['variant_size_option'], $payload['variant_value']);
             if (! $this->table_id) {
                 $selected['mainCategory'] = [
                     'id' => $this->products['main_category_id'],
@@ -357,9 +359,51 @@ class Page extends Component
         }
     }
 
+    /**
+     * The tab keys this page shows for the current product type, mirroring the
+     * nav in the Blade view so a ?tab= link never opens a hidden pane.
+     *
+     * @return list<string>
+     */
+    public function availableTabs(): array
+    {
+        $isEditing = (bool) $this->table_id;
+        $isProduct = $this->type === 'product';
+        $isFixedAsset = $this->type === 'asset';
+
+        return array_values(array_keys(array_filter([
+            'Prices' => $isEditing && ! $isFixedAsset,
+            'Attributes' => $isProduct || $isFixedAsset,
+            'Depreciation' => $isFixedAsset,
+            'Accounting' => $isFixedAsset,
+            'Variants' => $isEditing && $isProduct,
+            'Options' => $isEditing && ! $isFixedAsset,
+            'Stock' => $isProduct,
+            'Uom' => $isEditing && $isProduct,
+            'Images' => true,
+            'Related' => $isEditing && $isProduct,
+            'RawMaterials' => $isEditing && $isProduct,
+            'Audit' => $isEditing && (bool) auth()->user()?->can('product.audit view'),
+        ])));
+    }
+
+    /**
+     * Keep a requested tab when this page shows it, otherwise fall back to the
+     * page's default tab.
+     */
+    protected function resolveTab(?string $requestedTab): string
+    {
+        if ($requestedTab && in_array($requestedTab, $this->availableTabs(), true)) {
+            return $requestedTab;
+        }
+
+        return $this->type === 'asset' ? 'Attributes' : 'Prices';
+    }
+
     public function tabSelect($key)
     {
-        $this->selectedTab = $key;
+        $this->selectedTab = $this->resolveTab($key);
+        $key = $this->selectedTab;
         if ($key == 'Related' && $this->table_id) {
             $this->loadRelatedProducts();
         }

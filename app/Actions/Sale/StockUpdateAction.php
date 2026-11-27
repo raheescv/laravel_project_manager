@@ -11,6 +11,9 @@ use Exception;
 
 class StockUpdateAction
 {
+    /** @var array<int, \Illuminate\Support\Collection<int, \App\Models\SaleItemOption>> */
+    private array $stockOptions = [];
+
     public function execute($sale, $user_id, $sale_type = 'sale'): array
     {
         try {
@@ -36,17 +39,46 @@ class StockUpdateAction
 
         if ($rawMaterials->isNotEmpty()) {
             $this->updateRawMaterials($item, $sale, $sale_type, $user_id, $rawMaterials);
-
-            return;
+        } else {
+            $this->adjustInventory(
+                $item->inventory_id,
+                $item->base_unit_quantity,
+                $sale,
+                $sale_type,
+                $user_id
+            );
         }
 
-        $this->adjustInventory(
-            $item->inventory_id,
-            $item->base_unit_quantity,
-            $sale,
-            $sale_type,
-            $user_id
-        );
+        $this->updateOptionStock($item, $sale, $sale_type, $user_id);
+    }
+
+    /**
+     * Picked options that use a stock item (Red Bull → one Red Bull can) move
+     * that item's stock in the sale's branch, per unit of the line.
+     */
+    private function updateOptionStock($item, $sale, $sale_type, $user_id): void
+    {
+        foreach ($this->stockOptions($item) as $option) {
+            $quantity = (float) $option->stock_quantity * (float) $item->base_unit_quantity;
+            if ($quantity <= 0) {
+                continue;
+            }
+            $inventory = Inventory::withoutGlobalScope(AssignedBranchScope::class)
+                ->where('product_id', $option->product_id)
+                ->where('branch_id', $sale->branch_id)
+                ->first();
+            if (! $inventory) {
+                throw new Exception("The stock item of the option {$option->option_name} is not set up in this branch.", 1);
+            }
+
+            $this->adjustInventory($inventory->id, $quantity, $sale, $sale_type, $user_id, ' (Option '.$option->option_name.')');
+        }
+    }
+
+    /** A line's picked options that use a stock item, read once per run (the availability check and the movement share it). */
+    private function stockOptions($item)
+    {
+        return $this->stockOptions[$item->id] ??= $item->options()->whereNotNull('product_id')->get();
     }
 
     private function updateRawMaterials($item, $sale, $sale_type, $user_id, $rawMaterials): void
@@ -174,6 +206,10 @@ class StockUpdateAction
                 $quantity = (float) $rm->quantity * (float) $item->base_unit_quantity;
                 $rawMaterialQty = ($required[$rm->raw_material_id] ?? 0);
                 $required[$rm->raw_material_id] = $rawMaterialQty + $quantity;
+            }
+            // Stock items used by picked options are checked the same way.
+            foreach ($this->stockOptions($item) as $option) {
+                $required[$option->product_id] = ($required[$option->product_id] ?? 0) + (float) $option->stock_quantity * (float) $item->base_unit_quantity;
             }
         }
 

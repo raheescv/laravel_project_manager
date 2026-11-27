@@ -196,6 +196,8 @@ extension _CatalogViews on _NewSaleScreenState {
             child: TextField(
               controller: _searchCtl,
               onChanged: cat.setSearch,
+              onSubmitted: _submitSearch,
+              textInputAction: TextInputAction.search,
               style: ui(size: 13.5, weight: FontWeight.w600, color: p.ink),
               decoration: InputDecoration(
                 isDense: true,

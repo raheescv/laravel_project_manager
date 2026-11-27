@@ -301,6 +301,9 @@
         <!-- Size / colour picker for a product family (one card, several variants) -->
         <VariantPickerModal :show="!!variantFamily" :family="variantFamily" @close="variantFamily = null"
             @pick="pickVariant" />
+        <!-- Base / flavour / add-ons for an item with option groups -->
+        <OptionPickerModal :show="!!optionProduct" :product="optionProduct" @close="optionProduct = null"
+            @pick="pickOptions" />
     </div>
 </template>
 
@@ -318,6 +321,7 @@ import SaleConfirmationModal from '@/components/SaleConfirmationModal.vue'
 import SearchableSelect from '@/components/SearchableSelectFixed.vue'
 import ComboOfferModal from '@/components/ComboOfferModal.vue'
 import VariantPickerModal from '@/components/VariantPickerModal.vue'
+import OptionPickerModal from '@/components/OptionPickerModal.vue'
 
 import {
     useForm
@@ -356,6 +360,7 @@ export default {
         EditItemModal,
         ComboOfferModal,
         VariantPickerModal,
+        OptionPickerModal,
     },
     props: {
         categories: Array,
@@ -774,7 +779,11 @@ export default {
         const createTempCartRowKey = () => `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
         const buildCartItemKey = (item) => {
-            const baseKey = `${item.employee_id}-${item.inventory_id}`
+            // Lines with picked options merge only with the same picks (two Mango Red Bulls = qty 2).
+            const optionKey = Array.isArray(item.options) && item.options.length
+                ? '-o' + item.options.map(pick => `${pick.parent_option_group_item_id || 0}.${pick.option_group_item_id}`).sort().join('_')
+                : ''
+            const baseKey = `${item.employee_id}-${item.inventory_id}${optionKey}`
 
             if (props.saleItemRowMode === 'separate') {
                 const suffix = item.id ?? item.cart_row_key ?? createTempCartRowKey()
@@ -795,7 +804,7 @@ export default {
                 })
 
                 if (response.data) {
-                    await addProductToCart(response.data)
+                    await addOrAskOptions(response.data)
                     barcodeKey.value = ''
                 } else {
                     toast.error(response.data?.message || response.data?.error || 'Product not found')
@@ -805,7 +814,7 @@ export default {
             }
         }, 300)
 
-        const addProductToCart = async (product) => {
+        const addProductToCart = async (product, choice = null) => {
             if (!form.employee_id) {
                 toast.warning('Please select an employee first.')
                 // Open the employee dropdown
@@ -849,6 +858,12 @@ export default {
                 })
 
                 const item = response.data
+                if (choice) {
+                    // The server prices the base item; the picks add their own prices on top.
+                    item.options = choice.picks
+                    item.option_lines = choice.lines
+                    item.unit_price = Math.round(((Number(item.unit_price) || 0) + (Number(choice.extra) || 0)) * 10000) / 10000
+                }
                 if (props.saleItemRowMode === 'separate' && !item.id && !item.cart_row_key) {
                     item.cart_row_key = createTempCartRowKey()
                 }
@@ -1017,16 +1032,31 @@ export default {
         // A card that stands for several size / colour variants asks which one;
         // a card with a single item goes straight to the cart.
         const variantFamily = ref(null)
+        // An item with option groups (base, flavour, add-ons) asks for them before it is added.
+        const optionProduct = ref(null)
+        const addOrAskOptions = async (product) => {
+            // Without an employee, addProductToCart asks for one first; don't make the cashier pick twice.
+            if (form.employee_id && Array.isArray(product?.option_groups) && product.option_groups.length) {
+                optionProduct.value = product
+                return
+            }
+            await addProductToCart(product)
+        }
         const selectProduct = (product) => {
             if (Array.isArray(product?.variants) && product.variants.length > 1) {
                 variantFamily.value = product
                 return
             }
-            addProductToCart(product)
+            addOrAskOptions(product)
         }
         const pickVariant = async (variant) => {
             variantFamily.value = null
-            await addProductToCart(variant)
+            await addOrAskOptions(variant)
+        }
+        const pickOptions = async (choice) => {
+            const product = optionProduct.value
+            optionProduct.value = null
+            if (product) await addProductToCart(product, choice)
         }
 
         // Combo Offer Modal
@@ -1713,6 +1743,8 @@ export default {
             variantFamily,
             selectProduct,
             pickVariant,
+            optionProduct,
+            pickOptions,
             updateItemQuantity,
             removeCartItem,
             updateItemField,

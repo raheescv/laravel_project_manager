@@ -227,3 +227,21 @@ it('reads and writes product configuration behind configuration.settings', funct
         ->assertJsonPath('data.hide_out_of_stock_sale_items', 'yes')
         ->assertJsonPath('data.barcode_prefix', 'LS');
 });
+
+it('sends the design layer and keeps it on an app save', function (): void {
+    $item = ($this->catalogItem)('product', 'Power Drink', ['size' => '250ml', 'variant_option' => 'Flavour', 'variant_value' => 'Mango']);
+    $plain = ($this->catalogItem)('product', 'Plain Shoe', ['size' => '42']);
+
+    $this->getJson($this->world->url("/api/v1/catalog/product/{$item->id}"))
+        ->assertSuccessful()
+        ->assertJsonPath('data.option_name', 'Flavour')
+        ->assertJsonPath('data.design', 'Mango');
+    $this->getJson($this->world->url("/api/v1/catalog/product/{$plain->id}"))
+        ->assertJsonPath('data.option_name', 'Design')
+        ->assertJsonPath('data.design', null);
+
+    $this->putJson($this->world->url("/api/v1/catalog/product/{$item->id}"), ($this->payload)(['name' => 'Power Drink', 'size' => '500ml']))
+        ->assertSuccessful();
+
+    expect($item->fresh()->only(['size', 'variant_option', 'variant_value']))->toBe(['size' => '500ml', 'variant_option' => 'Flavour', 'variant_value' => 'Mango']);
+});

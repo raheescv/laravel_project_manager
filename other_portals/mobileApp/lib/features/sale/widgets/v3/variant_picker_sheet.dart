@@ -8,13 +8,18 @@ import 'package:invo/shared/utils/components/theme/index.dart';
 import 'package:invo/shared/widgets/astra_widgets.dart';
 import 'package:invo/shared/widgets/offline_image.dart';
 
-/// Size / colour picker for a family card on New Sale — the "Studio" layout of
-/// the web POS (resources/js/components/VariantPickerModal.vue). One side shows
-/// the product in the chosen colour with every colour as a photo thumbnail; the
-/// other is a size keypad for that colour. Tapping a size returns that item:
-/// click-and-go, no Add button. A size-only family skips the colours; a
-/// colour-only one turns the keypad into colour keys. Returns null when
+/// Design / size / colour picker for a family card on New Sale — the "Studio"
+/// layout of the web POS (resources/js/components/VariantPickerModal.vue). One
+/// side shows the product in the chosen colour with every colour as a photo
+/// thumbnail; the other is a size keypad for that colour. Tapping a size returns
+/// that item: click-and-go, no Add button. A size-only family skips the colours;
+/// a colour-only one turns the keypad into colour keys. Returns null when
 /// dismissed.
+///
+/// A family may have a first layer above size — a design / flavour / model
+/// ([Product.design], named by [Product.optionName]). With sizes, the designs
+/// sit in a row above the keypad and narrow it; without sizes (a drink in
+/// flavours) the designs ARE the keys.
 ///
 /// Three widths, as on the web: two roomy columns, two dense ones (tablet), and
 /// on a phone one scrolling column under a pinned header, with the product as a
@@ -41,8 +46,15 @@ class _ColourOption {
   String get name => sample.color.isEmpty ? 'No colour' : sample.colorName;
 }
 
-/// A key on the pad: a size (or colour) and the item it adds, null when this
-/// colour has none.
+/// One design / flavour of the family and its stock.
+class _DesignOption {
+  _DesignOption(this.value);
+  final String value;
+  num stock = 0;
+}
+
+/// A key on the pad: a size (or design, or colour) and the item it adds, null
+/// when this colour has none.
 class _Key {
   const _Key(this.label, this.variant, {this.colour});
   final String label;
@@ -80,8 +92,13 @@ class _VariantSheetState extends State<_VariantSheet> {
   static const double _tabletBelow = 1100;
 
   late final List<String> _sizes;
-  late final List<_ColourOption> _colours;
+  late final List<_DesignOption> _designs;
+  String? _design;
   String? _colour;
+
+  /// The colours of the chosen design, each with its stock and first photo —
+  /// rebuilt only when the design changes, not on every read during build.
+  List<_ColourOption> _colours = const [];
 
   List<Product> get _variants => widget.family.variants;
 
@@ -89,19 +106,56 @@ class _VariantSheetState extends State<_VariantSheet> {
   void initState() {
     super.initState();
     _sizes = sortedSizes(widget.family.familySizes);
+    final byDesign = <String, _DesignOption>{};
+    for (final v in _variants) {
+      if (v.design.isEmpty) continue;
+      byDesign.putIfAbsent(v.design, () => _DesignOption(v.design)).stock += v.totalStock;
+    }
+    _designs = byDesign.values.toList();
+    // Open on the first design, then the first colour of it, that has stock.
+    if (_designs.isNotEmpty) {
+      _design = _designs.firstWhere((d) => d.stock > 0, orElse: () => _designs.first).value;
+    }
+    _colours = _coloursOfDesign();
+    _resetColour();
+  }
+
+  void _resetColour() {
+    final colours = _colours;
+    _colour = colours.isEmpty ? null : colours.firstWhere((c) => c.stock > 0, orElse: () => colours.first).value;
+  }
+
+  /// A new design keeps the colour when it comes in it, else opens on its first colour in stock.
+  void _pickDesign(String design) {
+    setState(() {
+      _design = design;
+      _colours = _coloursOfDesign();
+      if (!_colours.any((c) => c.value == _colour)) _resetColour();
+    });
+  }
+
+  /// Sizes sit under the designs, so the designs get a row of their own.
+  bool get _showDesignRow => _designs.isNotEmpty && _sizes.isNotEmpty;
+
+  /// The items under the chosen design (all of them when designs are the keys or absent).
+  List<Product> get _scoped =>
+      !_showDesignRow || _design == null ? _variants : [for (final v in _variants) if (v.design == _design) v];
+
+  List<_ColourOption> _coloursOfDesign() {
+    if (!_variants.any((v) => v.color.isNotEmpty)) return const [];
     final byColour = <String, _ColourOption>{};
-    if (_variants.any((v) => v.color.isNotEmpty)) {
-      for (final v in _variants) {
-        final option = byColour.putIfAbsent(v.color, () => _ColourOption(v.color, v));
-        option.stock += v.totalStock;
-        if (option.photo.isEmpty && v.thumbnail.isNotEmpty) option.photo = v.thumbnail;
-      }
+    for (final v in _scoped) {
+      final option = byColour.putIfAbsent(v.color, () => _ColourOption(v.color, v));
+      option.stock += v.totalStock;
+      if (option.photo.isEmpty && v.thumbnail.isNotEmpty) option.photo = v.thumbnail;
     }
-    _colours = byColour.values.toList();
-    // Open on the first colour that has stock.
-    if (_colours.isNotEmpty) {
-      _colour = _colours.firstWhere((c) => c.stock > 0, orElse: () => _colours.first).value;
-    }
+    return byColour.values.toList();
+  }
+
+  /// "Floral · Navy": what the stage is showing.
+  String get _caption {
+    final parts = [if (_showDesignRow && _design != null) _design!, if (_current != null) _current!.name];
+    return parts.isEmpty ? widget.family.name : parts.join(' · ');
   }
 
   _ColourOption? get _current {
@@ -113,7 +167,7 @@ class _VariantSheetState extends State<_VariantSheet> {
 
   /// The chosen colour's items; every item when the family has no colours.
   List<Product> get _inColour =>
-      _current == null ? _variants : [for (final v in _variants) if (v.color == _colour) v];
+      _current == null ? _scoped : [for (final v in _scoped) if (v.color == _colour) v];
 
   /// The chosen colour's own photo; else the family photo the catalog card
   /// shows (the head's, or the first variant that has one) — most colours are
@@ -132,6 +186,13 @@ class _VariantSheetState extends State<_VariantSheet> {
   /// swatch of the chosen one).
   bool get _borrowedPhoto => _current != null && _current!.photo.isEmpty && _heroPhoto.isNotEmpty;
 
+  /// "flavours", "designs", "sizes": the option's name for a count above one.
+  static String _plural(String word) {
+    if (RegExp(r'[^aeiou]y$').hasMatch(word)) return '${word.substring(0, word.length - 1)}ies';
+    if (RegExp(r'(s|x|z|ch|sh)$').hasMatch(word)) return '${word}es';
+    return '${word}s';
+  }
+
   /// Of several rows for one size and colour, the one holding the most stock.
   Product? _best(Iterable<Product> rows) {
     Product? top;
@@ -142,12 +203,17 @@ class _VariantSheetState extends State<_VariantSheet> {
   }
 
   bool get _sizeKeys => _sizes.isNotEmpty;
-  bool get _showThumbs => _colours.isNotEmpty && _sizeKeys;
+  bool get _designKeys => !_sizeKeys && _designs.isNotEmpty;
+  bool get _showThumbs => _colours.isNotEmpty && (_sizeKeys || _designKeys);
 
   List<_Key> get _keys {
     if (_sizeKeys) {
       final rows = _inColour;
       return [for (final s in _sizes) _Key(s, _best(rows.where((v) => v.size.trim() == s)))];
+    }
+    if (_designKeys) {
+      final rows = _inColour;
+      return [for (final d in _designs) _Key(d.value, _best(rows.where((v) => v.design == d.value)))];
     }
     if (_colours.isNotEmpty) {
       return [for (final c in _colours) _Key(c.name, _best(_variants.where((v) => v.color == c.value)), colour: c.sample)];
@@ -166,7 +232,11 @@ class _VariantSheetState extends State<_VariantSheet> {
     final inColour = _inColour;
     final stock = inColour.fold<num>(0, (sum, v) => sum + v.totalStock);
     final sizes = {for (final v in inColour) if (v.size.trim().isNotEmpty) v.size.trim()}.length;
-    return sizes > 0 ? '${qtyLabel(stock)} in stock across $sizes ${sizes == 1 ? 'size' : 'sizes'}' : '${qtyLabel(stock)} in stock';
+    final size = widget.family.sizeName.toLowerCase();
+    if (sizes > 0) return '${qtyLabel(stock)} in stock across $sizes ${sizes == 1 ? size : _plural(size)}';
+    final designs = {for (final v in inColour) if (v.design.isNotEmpty) v.design}.length;
+    final option = widget.family.optionName.toLowerCase();
+    return designs > 0 ? '${qtyLabel(stock)} in stock across $designs ${designs == 1 ? option : _plural(option)}' : '${qtyLabel(stock)} in stock';
   }
 
   @override
@@ -254,7 +324,7 @@ class _VariantSheetState extends State<_VariantSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(current?.name ?? widget.family.name, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    Text(_caption, maxLines: 2, overflow: TextOverflow.ellipsis,
                         style: ui(size: 17, weight: FontWeight.w900, color: p.ink, height: 1.15)),
                     const SizedBox(height: 3),
                     Text(_stockLine, style: ui(size: 12.5, weight: FontWeight.w600, color: p.textSecondary)),
@@ -292,7 +362,7 @@ class _VariantSheetState extends State<_VariantSheet> {
           Center(child: _grabber(p)),
           SizedBox(height: m.hero, child: Center(child: _hero(p, current))),
           const SizedBox(height: 12),
-          Text(current?.name ?? widget.family.name, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+          Text(_caption, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: ui(size: m.title, weight: FontWeight.w900, color: p.ink)),
           const SizedBox(height: 2),
           Text(_stockLine, textAlign: TextAlign.center, style: ui(size: 13, weight: FontWeight.w600, color: p.textSecondary)),
@@ -452,11 +522,21 @@ class _VariantSheetState extends State<_VariantSheet> {
   /// The label, the keys and the scan hint — shared by every width.
   List<Widget> _keypad(AstraPalette p, _Metrics m) {
     final current = _current;
-    final label = _sizeKeys ? (current == null ? 'Size' : 'Size in ${current.name}') : (_colours.isNotEmpty ? 'Colour' : 'Items');
+    final option = widget.family.optionName;
+    final where = current == null ? '' : ' in ${current.name}';
+    final label = _sizeKeys ? '${widget.family.sizeName}$where' : (_designKeys ? '$option$where' : (_colours.isNotEmpty ? 'Colour' : 'Items'));
     final keys = _keys;
-    final wideKeys = !_sizeKeys;
+    // Designs, colours and long size names ("Small", "Free size") need the wide keys.
+    final wideKeys = !_sizeKeys || _sizes.any((s) => s.length > 4);
     final gap = m == _Metrics.wide ? _gap : 8.0;
     return [
+      if (_showDesignRow) ...[
+        Text(option.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: ui(size: 12, weight: FontWeight.w800, color: p.textMuted, letterSpacing: 0.9)),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: [for (final d in _designs) _designChip(p, d)]),
+        const SizedBox(height: 18),
+      ],
       Row(
         children: [
           Expanded(
@@ -471,7 +551,10 @@ class _VariantSheetState extends State<_VariantSheet> {
         final minKey = wideKeys ? m.wideKey : m.key;
         final cols = ((c.maxWidth + gap) / (minKey + gap)).floor().clamp(1, 8);
         final w = (c.maxWidth - gap * (cols - 1)) / cols;
-        return Wrap(spacing: gap, runSpacing: gap, children: [for (final key in keys) _keyTile(p, m, key, w, wide: wideKeys)]);
+        final lines = _labelLines(keys, w, _keyLabelStyle(p, m, wideKeys), m);
+        return Wrap(spacing: gap, runSpacing: gap, children: [
+          for (final key in keys) _keyTile(p, m, key, w, wide: wideKeys, lines: lines),
+        ]);
       }),
       const SizedBox(height: 16),
       Divider(height: 1, color: p.hairline),
@@ -489,7 +572,59 @@ class _VariantSheetState extends State<_VariantSheet> {
     ];
   }
 
-  Widget _keyTile(AstraPalette p, _Metrics m, _Key key, double width, {required bool wide}) {
+  /// One design / flavour in the row above the size keypad; tapping it narrows the keys.
+  Widget _designChip(AstraPalette p, _DesignOption design) {
+    final on = design.value == _design;
+    final fg = on ? Colors.white : (design.stock <= 0 ? p.textMuted : p.ink);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(99),
+        onTap: () => _pickDesign(design.value),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+          decoration: BoxDecoration(
+            color: on ? p.primary : p.cardSolid,
+            borderRadius: BorderRadius.circular(99),
+            border: Border.all(color: on ? p.primary : p.cardBorder, width: 1.5),
+          ),
+          child: Text(design.value, style: ui(size: 15, weight: FontWeight.w800, color: fg)),
+        ),
+      ),
+    );
+  }
+
+  TextStyle _keyLabelStyle(AstraPalette p, _Metrics m, bool wide) => ui(
+        size: wide ? m.wideKeyFont : m.keyFont,
+        weight: wide ? FontWeight.w800 : FontWeight.w900,
+        color: p.ink,
+        height: 1.05,
+      );
+
+  /// Room for a key's name: the tile less its padding and swatch.
+  double _labelRoom(_Metrics m, _Key key, double width) =>
+      width - 12 - (key.colour != null ? (m == _Metrics.phone ? 24 : 30) + 10 : 0);
+
+  /// One line for every key's name, or two when any of them ("Mango Passion")
+  /// will not fit on one — the whole pad grows together so the rows stay even,
+  /// as the web keys wrap instead of cutting the name off.
+  int _labelLines(List<_Key> keys, double width, TextStyle style, _Metrics m) {
+    final scaler = MediaQuery.textScalerOf(context);
+    for (final key in keys) {
+      final painter = TextPainter(
+        text: TextSpan(text: key.label, style: style),
+        maxLines: 1,
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+      )..layout(maxWidth: _labelRoom(m, key, width));
+      final tooLong = painter.didExceedMaxLines;
+      painter.dispose();
+      if (tooLong) return 2;
+    }
+    return 1;
+  }
+
+  Widget _keyTile(AstraPalette p, _Metrics m, _Key key, double width, {required bool wide, int lines = 1}) {
     final variant = key.variant;
     final available = variant != null;
     final out = available && variant.totalStock <= 0;
@@ -503,9 +638,11 @@ class _VariantSheetState extends State<_VariantSheet> {
       note = '${qtyLabel(variant.totalStock)} left${_price.range ? ' · ${Money.plain(variant.mrp)}' : ''}';
     }
     final radius = BorderRadius.circular(m.keyRadius);
+    final labelStyle = _keyLabelStyle(p, m, wide);
+    final extraLine = lines > 1 ? MediaQuery.textScalerOf(context).scale(labelStyle.fontSize ?? 17) * 1.05 : 0.0;
     final tile = SizedBox(
       width: width,
-      height: m.keyHeight,
+      height: m.keyHeight + extraLine,
       child: Material(
         color: Colors.transparent,
         child: Ink(
@@ -533,13 +670,8 @@ class _VariantSheetState extends State<_VariantSheet> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: key.colour != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                       children: [
-                        Text(key.label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: ui(
-                              size: wide ? m.wideKeyFont : m.keyFont,
-                              weight: wide ? FontWeight.w800 : FontWeight.w900,
-                              color: p.ink,
-                              height: 1.05,
-                            )),
+                        Text(key.label, maxLines: lines, overflow: TextOverflow.ellipsis,
+                            textAlign: key.colour != null ? TextAlign.start : TextAlign.center, style: labelStyle),
                         const SizedBox(height: 3),
                         Text(note, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center,
                             style: ui(

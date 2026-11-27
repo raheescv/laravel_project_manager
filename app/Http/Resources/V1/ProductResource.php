@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1;
 
 use App\Models\Product;
 use App\Support\ProductColours;
+use App\Support\ProductOptions;
 use App\Support\StorefrontSlug;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -57,6 +58,11 @@ class ProductResource extends JsonResource
             // `group_by_family` lists: the family behind this card (sizes, colours, price range, stock).
             'family' => $this->when($this->resource->getAttribute('family_summary') !== null, fn () => $this->resource->getAttribute('family_summary')),
             'size' => $this->size,
+            // The family's first layer: this item's design / flavour / model, and what the family calls it.
+            ...$this->resource->variantLayersPayload(),
+            // The option groups the till asks (see App\Support\ProductOptions). The list
+            // action loads them for the whole page; a detail view looks them up itself.
+            'option_groups' => $this->resource->getAttribute('option_groups_payload') ?? ($isList ? [] : ProductOptions::forProduct($this->resource)),
             'model' => $this->model,
             'hsn_code' => $this->hsn_code,
             // 'cost' => $this->cost,

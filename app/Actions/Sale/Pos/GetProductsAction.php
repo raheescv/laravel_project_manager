@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\UniversalUnitConversion;
 use App\Support\ProductColours;
+use App\Support\ProductOptions;
 use App\Support\Sale\OutOfStockSales;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,9 @@ class GetProductsAction
 
     /** @var array{0: mixed}|null the tenant logo shown on cards without a photo, read once per request */
     private ?array $logo = null;
+
+    /** @var array<int, list<array<string, mixed>>> product id => the option groups the till asks for it */
+    private array $optionGroups = [];
 
     public function execute(array $filters = [], ?int $branchId = null)
     {
@@ -64,6 +68,7 @@ class GetProductsAction
                 ->get()
                 ->groupBy('base_unit_id');
 
+            $this->optionGroups = ProductOptions::forProducts($rows->pluck('product'));
             $palette = ProductColours::palette();
             $products = $groupVariants
                 ? $this->groupFamilies($rows, $saleType, $palette)
@@ -179,6 +184,7 @@ class GetProductsAction
 
                 return array_merge($this->formatProduct($head, $saleType, $palette), [
                     'size' => null,
+                    'design' => null,
                     'barcode' => null,
                     'color' => null,
                     'color_name' => null,
@@ -187,6 +193,7 @@ class GetProductsAction
                     'mrp' => $prices->min(),
                     'mrp_max' => $prices->max(),
                     'original_price' => $prices->min(),
+                    'designs' => $variants->pluck('design')->filter()->unique()->values()->all(),
                     'sizes' => $variants->pluck('size')->filter(fn ($size) => trim((string) $size) !== '')->unique()->values()->all(),
                     'colours' => $variants->filter(fn ($variant) => $variant['color'])->unique('color')
                         ->map(fn ($variant) => ['value' => $variant['color'], 'name' => $variant['color_name'], 'hex' => $variant['color_hex']])
@@ -218,6 +225,9 @@ class GetProductsAction
             'type' => $product->type,
             'barcode' => $product->barcode,
             'size' => $product->size,
+            ...$product->variantLayersPayload(),
+            // Asked when the card is tapped (base, flavour, add-ons…); empty = straight to the cart.
+            'option_groups' => $this->optionGroups[$product->id] ?? [],
             'code' => $product->code,
             'priority' => (int) $product->priority,
             'mrp' => $product->saleTypePrice($saleType),

@@ -35,6 +35,12 @@ Widget cartLineCard(BuildContext context, CartLine line) {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(line.name, style: serif(size: 15, color: p.ink)),
+                    if (line.optionsLabel.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(line.optionsLabel, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: ui(size: 11.5, weight: FontWeight.w600, color: p.textSecondary)),
+                      ),
                     const SizedBox(height: 5),
                     Row(
                       children: [
@@ -182,6 +188,9 @@ Widget cartLineRow(BuildContext context, CartLine line, {bool thumb = true, bool
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(line.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: serif(size: 14, color: p.ink)),
+                      if (line.optionsLabel.isNotEmpty)
+                        Text(line.optionsLabel, maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: ui(size: 10.5, weight: FontWeight.w600, color: p.textSecondary)),
                       const SizedBox(height: 3),
                       Row(
                         children: [

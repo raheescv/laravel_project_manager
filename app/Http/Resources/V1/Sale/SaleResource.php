@@ -59,6 +59,8 @@ class SaleResource extends JsonResource
                 'discount' => (float) $item->discount,
                 'tax' => (float) $item->tax,
                 'total' => round((float) $item->unit_price * (float) $item->quantity - (float) $item->discount, 2),
+                // Picked options (base, flavour, add-ons…), printed under the line.
+                'options' => $item->options->map->toLine()->values(),
             ])->values(),
             'payments' => $this->payments->map(fn ($payment) => [
                 'id' => (int) $payment->id,

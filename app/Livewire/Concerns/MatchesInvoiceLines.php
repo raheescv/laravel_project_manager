@@ -99,7 +99,7 @@ trait MatchesInvoiceLines
 
     private function catalogueColumns(): array
     {
-        return ['id', 'parent_id', 'code', 'barcode', 'name', 'size', 'color', 'unit_id', 'cost', 'tax', 'expense_account_id'];
+        return ['id', 'parent_id', 'code', 'barcode', 'name', 'size', 'color', 'variant_value', 'unit_id', 'cost', 'tax', 'expense_account_id'];
     }
 
     /**
@@ -110,7 +110,7 @@ trait MatchesInvoiceLines
     private function catalogueName($product): string
     {
         static $isHead = [];
-        $label = trim((string) $product->size) !== '' ? Product::variantLabel($product->size, $product->color) : '';
+        $label = trim((string) $product->size.$product->variant_value) !== '' ? $product->variantName() : '';
         $inFamily = $product->parent_id
             || ($label !== '' && ($isHead[$product->id] ??= Product::where('parent_id', $product->id)->exists()));
 

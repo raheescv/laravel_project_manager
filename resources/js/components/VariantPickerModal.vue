@@ -10,7 +10,7 @@
                     <i v-else class="fa fa-cube vsx-hero-icon"></i>
                 </div>
                 <div class="vsx-caption">
-                    <b>{{ current ? current.name : family.name }}</b>
+                    <b>{{ captionTitle }}</b>
                     <span>{{ stockLine }}</span>
                 </div>
                 <div v-if="colours.length" class="vsx-thumbs">
@@ -42,11 +42,25 @@
                     </button>
                 </header>
 
+                <!-- Layer 1: the design / flavour / model, when sizes or colours sit under it -->
+                <template v-if="showDesignRow">
+                    <div class="vsx-label">
+                        <span>{{ optionName }}</span>
+                    </div>
+                    <div class="vsx-designs" role="group" :aria-label="optionName">
+                        <button v-for="option in designs" :key="'d-' + option.value" type="button" class="vsx-design"
+                            :class="{ on: design === option.value, out: option.stock <= 0 }"
+                            :aria-pressed="design === option.value" @click="pickDesign(option.value)">
+                            {{ option.name }}
+                        </button>
+                    </div>
+                </template>
+
                 <div class="vsx-label">
                     <span>{{ keyLabel }}</span>
                     <em>Tap to add</em>
                 </div>
-                <div class="vsx-keys" :class="{ wide: keyKind !== 'size' }">
+                <div class="vsx-keys" :class="{ wide: wideKeys }">
                     <button v-for="key in keys" :key="key.id" type="button" class="vsx-key"
                         :class="{ out: key.variant && Number(key.variant.stock) <= 0 }"
                         :disabled="!key.variant" @click="$emit('pick', key.variant)">
@@ -75,7 +89,18 @@
  * right side is a size keypad for that colour. Tapping a size adds the item:
  * click-and-go, no Save. A family with sizes only skips the colours; one with
  * colours only turns the keypad into colour keys.
+ *
+ * Families can have three layers: a design / flavour / model (`design`, named
+ * by the family's `option_name`), then size, then colour. With sizes, the
+ * designs sit in a row above the keypad and narrow it; without sizes (a drink
+ * in flavours) the designs ARE the keys.
  */
+const plural = word => {
+    if (/[^aeiou]y$/i.test(word)) return word.slice(0, -1) + 'ies';
+    if (/(s|x|z|ch|sh)$/i.test(word)) return word + 'es';
+    return word + 's';
+};
+
 const sizeOrder = (a, b) => {
     const numA = /^\d+(\.\d+)?$/.test(a);
     const numB = /^\d+(\.\d+)?$/.test(b);
@@ -94,12 +119,49 @@ export default {
     },
 
     data() {
-        return { colour: null };
+        return { colour: null, design: null };
     },
 
     computed: {
         variants() {
             return this.family?.variants || [];
+        },
+        optionName() {
+            return this.family?.option_name || this.variants.find(v => v.option_name)?.option_name || 'Design';
+        },
+        /** What the family calls its second layer: "Size", or "Flavour" for a Base × Flavour pack. */
+        sizeName() {
+            return this.family?.size_name || this.variants.find(v => v.size_name)?.size_name || 'Size';
+        },
+        /** Designs, colours and long size names ("Small", "Free size") need the wide keys. */
+        wideKeys() {
+            if (this.keyKind !== 'size') return true;
+            return this.sizes.some(size => size.length > 4);
+        },
+        /** One entry per design / flavour, with its stock, in catalog order. */
+        designs() {
+            const seen = new Map();
+            this.variants.forEach(v => {
+                const value = this.designOf(v);
+                if (!value) return;
+                const option = seen.get(value) || { value, name: value, stock: 0 };
+                option.stock += Number(v.stock) || 0;
+                seen.set(value, option);
+            });
+            return [...seen.values()];
+        },
+        /** Sizes sit under the designs, so the designs get a row of their own. */
+        showDesignRow() {
+            return this.designs.length > 0 && this.sizes.length > 0;
+        },
+        /** The items under the chosen design (all of them when designs are the keys or absent). */
+        scoped() {
+            if (!this.showDesignRow || this.design === null) return this.variants;
+            return this.variants.filter(v => this.designOf(v) === this.design);
+        },
+        captionTitle() {
+            const parts = [this.showDesignRow ? this.design : null, this.current ? this.current.name : null].filter(Boolean);
+            return parts.length ? parts.join(' · ') : this.family.name;
         },
         sizes() {
             return [...new Set(this.variants.map(v => this.sizeOf(v)).filter(Boolean))].sort(sizeOrder);
@@ -108,7 +170,7 @@ export default {
         colours() {
             if (!this.variants.some(v => v.color)) return [];
             const seen = new Map();
-            this.variants.forEach(v => {
+            this.scoped.forEach(v => {
                 const value = this.colourKey(v);
                 const option = seen.get(value) || { value, name: value ? v.color_name : 'No colour', hex: v.color_hex, stock: 0, photo: null };
                 option.stock += Number(v.stock) || 0;
@@ -122,16 +184,20 @@ export default {
         },
         /** The chosen colour's items; every item when the family has no colours. */
         inColour() {
-            return this.current ? this.variants.filter(v => this.colourKey(v) === this.colour) : this.variants;
+            return this.current ? this.scoped.filter(v => this.colourKey(v) === this.colour) : this.scoped;
         },
         heroPhoto() {
             if (this.current) return this.current.photo;
-            return this.variants.find(v => v.photo)?.photo || null;
+            return this.scoped.find(v => v.photo)?.photo || this.variants.find(v => v.photo)?.photo || null;
         },
         stockLine() {
             const stock = this.inColour.reduce((total, v) => total + (Number(v.stock) || 0), 0);
             const sizes = new Set(this.inColour.map(v => this.sizeOf(v)).filter(Boolean)).size;
-            return sizes ? `${stock} in stock across ${sizes} ${sizes === 1 ? 'size' : 'sizes'}` : `${stock} in stock`;
+            const size = this.sizeName.toLowerCase();
+            if (sizes) return `${stock} in stock across ${sizes} ${sizes === 1 ? size : plural(size)}`;
+            const designs = new Set(this.inColour.map(v => this.designOf(v)).filter(Boolean)).size;
+            const option = this.optionName.toLowerCase();
+            return designs ? `${stock} in stock across ${designs} ${designs === 1 ? option : plural(option)}` : `${stock} in stock`;
         },
         priceRange() {
             const prices = this.inColour.map(v => Number(v.mrp) || 0);
@@ -140,19 +206,29 @@ export default {
         },
         keyKind() {
             if (this.sizes.length) return 'size';
+            if (this.designs.length) return 'design';
             return this.colours.length ? 'colour' : 'item';
         },
         keyLabel() {
-            if (this.keyKind === 'size') return this.current ? `Size in ${this.current.name}` : 'Size';
+            const where = this.current ? ` in ${this.current.name}` : '';
+            if (this.keyKind === 'size') return `${this.sizeName}${where}`;
+            if (this.keyKind === 'design') return `${this.optionName}${where}`;
             return this.keyKind === 'colour' ? 'Colour' : 'Items';
         },
-        /** The keypad: every size of the family (ghosted where this colour has none). */
+        /** The keypad: every size (or flavour, design…) of the family, ghosted where this colour has none. */
         keys() {
             if (this.keyKind === 'size') {
                 return this.sizes.map(size => ({
                     id: 's-' + size,
                     label: size,
                     variant: this.best(this.inColour.filter(v => this.sizeOf(v) === size)),
+                }));
+            }
+            if (this.keyKind === 'design') {
+                return this.designs.map(option => ({
+                    id: 'd-' + option.value,
+                    label: option.name,
+                    variant: this.best(this.inColour.filter(v => this.designOf(v) === option.value)),
                 }));
             }
             if (this.keyKind === 'colour') {
@@ -191,17 +267,30 @@ export default {
         sizeOf(variant) {
             return (variant.size ?? '').toString().trim();
         },
+        designOf(variant) {
+            return (variant.design ?? '').toString().trim();
+        },
         /** Of several stock rows for one size and colour, the one holding the most. */
         best(rows) {
             return rows.reduce((top, v) => (!top || Number(v.stock) > Number(top.stock) ? v : top), null);
         },
-        /** Open on the first colour that has stock. */
+        /** Open on the first design, then the first colour of it, that has stock. */
         reset() {
+            const designs = this.designs;
+            this.design = designs.length ? (designs.find(option => option.stock > 0) || designs[0]).value : null;
+            this.resetColour();
+        },
+        resetColour() {
             const colours = this.colours;
             this.colour = colours.length ? (colours.find(option => option.stock > 0) || colours[0]).value : null;
         },
         pickColour(value) {
             this.colour = value;
+        },
+        /** A new design keeps the colour when it comes in it, else opens on its first colour in stock. */
+        pickDesign(value) {
+            this.design = value;
+            if (!this.colours.some(option => option.value === this.colour)) this.resetColour();
         },
         formatPrice(price) {
             return price ? parseFloat(price).toFixed(2) : '0.00';
@@ -437,6 +526,37 @@ export default {
     font-weight: 600;
 }
 
+.vsx-designs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.vsx-design {
+    min-height: 46px;
+    max-width: 100%;
+    padding: 8px 18px;
+    border-radius: 99px;
+    border: 1.5px solid var(--pos-line-strong, var(--pos-line));
+    background: var(--pos-panel);
+    color: var(--pos-ink);
+    font-size: 15px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+    transition: background .12s, border-color .12s, color .12s;
+}
+
+.vsx-design.out {
+    color: var(--pos-muted);
+}
+
+.vsx-design.on {
+    background: var(--pos-pri);
+    border-color: var(--pos-pri);
+    color: var(--pos-on-pri, #fff);
+}
+
 .vsx-keys {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -448,6 +568,7 @@ export default {
 }
 
 .vsx-key {
+    min-width: 0;
     min-height: 84px;
     border-radius: 18px;
     border: 1.5px solid var(--pos-line-strong, var(--pos-line));
@@ -467,6 +588,9 @@ export default {
     font-weight: 900;
     letter-spacing: -.02em;
     line-height: 1.05;
+    max-width: 100%;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .vsx-keys.wide .vsx-key b {

@@ -378,7 +378,15 @@ Future<Uint8List> _buildOfficeBill(Sale sale, PrintSettings settings, pw.ThemeDa
                 pw.Expanded(
                     child: pw.Padding(
                   padding: pw.EdgeInsets.only(right: s(8)),
-                  child: pw.Text(l.quantity == 1 ? l.name : '${l.name} × ${_num(l.quantity)}', style: bold),
+                  child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                    pw.Text(l.quantity == 1 ? l.name : '${l.name} × ${_num(l.quantity)}', style: bold),
+                    // Picked options (base, flavour, add-ons…) under the item.
+                    for (final o in l.options)
+                      pw.Padding(
+                        padding: pw.EdgeInsets.only(left: s(o.nested ? 12 : 6), top: s(1)),
+                        child: pw.Text(o.label(_amt), style: pw.TextStyle(fontSize: s(7.5))),
+                      ),
+                  ]),
                 )),
                 pw.Text(_amt(l.unitPrice * l.quantity), style: bold),
               ]),
@@ -485,6 +493,9 @@ pw.Widget _itemsTable(Sale sale, bool ar, double Function(double) s, QuantityLab
   for (var i = 0; i < sale.lines.length; i++) {
     final line = sale.lines[i];
     rows.add(_cell(line.name, s(8)));
+    for (final o in line.options) {
+      rows.add(_cell('${o.nested ? '    ' : '  '}${o.label(_amt)}', s(7.5)));
+    }
     if (ar && line.nameArabic.isNotEmpty) {
       rows.add(_cell(line.nameArabic, s(8), align: pw.Alignment.centerRight, rtl: true));
     }

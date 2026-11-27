@@ -35,6 +35,11 @@ class UpdateRequest extends FormRequest
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.unitPrice' => ['nullable', 'numeric', 'min:0'],
             'items.*.discount' => ['nullable', 'numeric', 'min:0'],
+            // Picked options (base, flavour, add-ons…): optionGroupItemId, plus
+            // parentOptionGroupItemId for a follow-up pick. Leave the key out to keep a line's picks.
+            'items.*.options' => ['sometimes', 'array'],
+            'items.*.options.*.optionGroupItemId' => ['required', 'integer'],
+            'items.*.options.*.parentOptionGroupItemId' => ['nullable', 'integer'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             // Gratuity collected on the sale — stored as an independent extra amount.
             'tip' => ['nullable', 'numeric', 'min:0'],

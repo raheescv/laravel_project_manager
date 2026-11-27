@@ -77,11 +77,15 @@ class Product extends Equatable {
     this.priority = 0,
     this.parentId,
     this.size = '',
+    this.design = '',
+    this.optionName = 'Design',
+    this.sizeName = 'Size',
     this.color = '',
     this.colorName = '',
     this.colorHex = '',
     this.variants = const [],
     this.maxMrp = 0,
+    this.optionGroups = const [],
   });
 
   final int id;
@@ -105,6 +109,15 @@ class Product extends Equatable {
   /// the product form); [colorName] / [colorHex] are what to show.
   final int? parentId;
   final String size;
+
+  /// The family's first layer, above size: this item's design / flavour /
+  /// model ('' when the family has none), and what the family calls that layer.
+  final String design;
+  final String optionName;
+
+  /// What the family calls its second layer, stored in [size]: "Size", or
+  /// "Flavour" for a Base × Flavour pack.
+  final String sizeName;
   final String color;
   final String colorName;
   final String colorHex;
@@ -115,15 +128,20 @@ class Product extends Equatable {
   final List<Product> variants;
   final double maxMrp;
 
+  /// Choices the till asks before the item goes on the ticket (base, flavour,
+  /// add-ons…) — web Inventory → Option Groups. Empty = straight to the cart.
+  final List<OptionGroup> optionGroups;
+  bool get hasOptions => optionGroups.isNotEmpty;
+
   bool get isService => type == 'service';
   bool get hasImage => thumbnail.startsWith('http');
   int get familyId => parentId ?? id;
   bool get isFamily => variants.length > 1;
   bool get hasPriceRange => isFamily && maxMrp > mrp;
 
-  /// "42 / Blue", "M", or '' for a product that is not a variant.
+  /// "Floral / M / Navy", "42 / Blue", "Mango", or '' for a product that is not a variant.
   String get variantLabel =>
-      [size.trim(), color.isEmpty ? '' : colorName].where((e) => e.isNotEmpty).join(' / ');
+      [design, size.trim(), color.isEmpty ? '' : colorName].where((e) => e.isNotEmpty).join(' / ');
 
   /// The name a ticket line carries — a variant says which one it is.
   String get displayName => variantLabel.isEmpty || isFamily ? name : '$name · $variantLabel';
@@ -160,6 +178,9 @@ class Product extends Equatable {
       totalStock: members.fold<num>(0, (sum, m) => sum + m.totalStock),
       thumbnail: photo,
       priority: head.priority,
+      optionName: head.optionName,
+      sizeName: head.sizeName,
+      optionGroups: head.optionGroups,
       variants: members,
     );
   }
@@ -189,9 +210,16 @@ class Product extends Equatable {
       priority: asNum(j['priority']).toInt(),
       parentId: j['parent_id'] == null ? null : asNum(j['parent_id']).toInt(),
       size: asStr(j['size']).trim(),
+      design: asStr(j['design']).trim(),
+      optionName: asStr(j['option_name']).trim().isEmpty ? 'Design' : asStr(j['option_name']).trim(),
+      sizeName: asStr(j['size_name']).trim().isEmpty ? 'Size' : asStr(j['size_name']).trim(),
       color: asStr(j['color']).trim(),
       colorName: asStr(j['color_name']).isEmpty ? asStr(j['color']).trim() : asStr(j['color_name']),
       colorHex: asStr(j['color_hex']),
+      optionGroups: [
+        for (final g in (j['option_groups'] is List ? j['option_groups'] as List : const []))
+          if (g is Map) OptionGroup.fromJson(Map<String, dynamic>.from(g)),
+      ],
     );
   }
 
@@ -212,12 +240,95 @@ class Product extends Equatable {
         priority,
         parentId,
         size,
+        design,
+        optionName,
+        sizeName,
         color,
         colorName,
         colorHex,
         variants,
         maxMrp,
+        optionGroups,
       ];
+}
+
+/// An option group the till asks for a product (ProductOptions on the server):
+/// its rule — [min] picks needed, at most [max] (null = no limit) — and its options.
+class OptionGroup extends Equatable {
+  const OptionGroup({required this.id, required this.name, required this.min, this.max, this.rule = '', this.items = const []});
+  final int id;
+  final String name;
+  final int min;
+  final int? max;
+
+  /// "Pick exactly 1", "Optional · up to 3": the server's wording of [min] / [max].
+  final String rule;
+  final List<OptionItem> items;
+
+  bool get required => min > 0;
+  /// Pick one = swap; otherwise tick up to [max].
+  bool get multi => max == null || max! > 1;
+
+  factory OptionGroup.fromJson(Map<String, dynamic> j) => OptionGroup(
+        id: asNum(j['id']).toInt(),
+        name: asStr(j['name']),
+        min: asNum(j['min']).toInt(),
+        max: j['max'] == null ? null : asNum(j['max']).toInt(),
+        rule: asStr(j['rule']),
+        items: [
+          for (final i in (j['items'] is List ? j['items'] as List : const []))
+            if (i is Map) OptionItem.fromJson(Map<String, dynamic>.from(i)),
+        ],
+      );
+
+  @override
+  List<Object?> get props => [id, name, min, max, rule, items];
+}
+
+/// One choice of an [OptionGroup]: its extra price, and the group it opens
+/// next when picked ([next], e.g. Red Bull → Sugar).
+class OptionItem extends Equatable {
+  const OptionItem({required this.id, required this.name, this.price = 0, this.isDefault = false, this.next});
+  final int id;
+  final String name;
+  final double price;
+  final bool isDefault;
+  final OptionGroup? next;
+
+  factory OptionItem.fromJson(Map<String, dynamic> j) => OptionItem(
+        id: asNum(j['id']).toInt(),
+        name: asStr(j['name']),
+        price: asNum(j['price']).toDouble(),
+        isDefault: j['is_default'] == true,
+        next: j['next'] is Map ? OptionGroup.fromJson(Map<String, dynamic>.from(j['next'] as Map)) : null,
+      );
+
+  @override
+  List<Object?> get props => [id, name, price, isDefault, next];
+}
+
+/// A choice picked for a ticket line. [itemId] / [parentItemId] go to the
+/// server; the names and price are what the ticket and receipt show.
+class OptionPick extends Equatable {
+  const OptionPick({required this.itemId, this.parentItemId, required this.groupName, required this.optionName, this.price = 0});
+  final int itemId;
+  final int? parentItemId;
+  final String groupName;
+  final String optionName;
+  final double price;
+
+  bool get nested => parentItemId != null;
+
+  Map<String, dynamic> toPayload() => {
+        'optionGroupItemId': itemId,
+        if (parentItemId != null) 'parentOptionGroupItemId': parentItemId,
+      };
+
+  /// What the offline receipt prints (same keys as the server's sale items).
+  Map<String, dynamic> toReceipt() => {'group_name': groupName, 'option_name': optionName, 'price': price, 'nested': nested};
+
+  @override
+  List<Object?> get props => [itemId, parentItemId, groupName, optionName, price];
 }
 
 /// Fold size / colour variants into one card each, keeping the catalog order

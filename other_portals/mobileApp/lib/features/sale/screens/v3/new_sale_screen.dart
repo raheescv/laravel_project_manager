@@ -37,6 +37,7 @@ import 'package:invo/features/sale/screens/v3/pending_sales_screen.dart';
 import 'package:invo/features/sale/widgets/v3/cart_widgets.dart';
 import 'package:invo/features/sale/widgets/v3/client_lookup_fields.dart';
 import 'package:invo/features/sale/widgets/v3/stylist_sheet.dart';
+import 'package:invo/features/sale/widgets/v3/option_picker_sheet.dart';
 import 'package:invo/features/sale/widgets/v3/variant_picker_sheet.dart';
 import 'package:invo/features/student_card/domain/models/student_card.dart';
 import 'package:invo/features/student_card/domain/services/nfc_card_reader.dart';
@@ -97,6 +98,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     super.initState();
     _scrollCtl.addListener(_onScroll);
     _watchDay();
+    HardwareKeyboard.instance.addHandler(_onHardwareKey);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDay();
       final cat = context.read<CatalogCubit>();
@@ -172,6 +174,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    HardwareKeyboard.instance.removeHandler(_onHardwareKey);
     unawaited(_stopListeningForCards());
     _cardConfirmSub?.cancel();
     _daySub?.cancel();
@@ -230,10 +233,15 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
   /// refusing a sale on an estimate, with the customer standing there, is worse
   /// than the server refusing it later. Services have no stock to check.
   ///
-  /// A size / colour family card first asks which one (see [pickVariant]).
-  void _addToCart(Product product) {
+  /// A size / colour family card first asks which one (see [pickVariant]), and
+  /// an item with option groups asks its base, flavour, add-ons… (see [pickOptions]).
+  void _addToCart(Product product, {List<OptionPick>? options}) {
     if (product.isFamily) {
       unawaited(_pickVariantAndAdd(product));
+      return;
+    }
+    if (options == null && product.hasOptions) {
+      unawaited(_pickOptionsAndAdd(product));
       return;
     }
     final cart = context.read<CartCubit>();
@@ -241,7 +249,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     final onTicket = cart.lines
         .where((l) => l.productId == product.id)
         .fold<double>(0, (sum, l) => sum + l.qty);
-    cart.add(product);
+    cart.add(product, options: options ?? const []);
     if (!cat.state.servingCached || product.isService) return;
     if (product.totalStock > onTicket) return;
     AstraSnack.show(context, '${product.name} may be out of stock — the catalog is offline');
@@ -251,6 +259,12 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     final variant = await pickVariant(context, family);
     if (variant == null || !mounted) return;
     _addToCart(variant);
+  }
+
+  Future<void> _pickOptionsAndAdd(Product product) async {
+    final picks = await pickOptions(context, product);
+    if (picks == null || !mounted) return;
+    _addToCart(product, options: picks);
   }
 
   /// Infinite scroll: pull the next page in once the user nears the bottom.
@@ -1257,49 +1271,146 @@ class _NewSaleScreenState extends State<NewSaleScreen> with RouteAware {
     if (!mounted) return;
     // Open the shared continuous scanner: it stays open and adds each scanned
     // product straight to the cart. The cart list updates live underneath.
-    final cart = context.read<CartCubit>();
     await ContinuousScannerScreen.open(
       context,
       title: 'ADD TO SALE',
       tallyLabel: 'ADDED THIS SESSION',
       emptyHint: 'Point the camera at a product barcode to add it to the sale.',
-      onScan: (code) async {
-        // Answered off the device when it can be. If the server's background
-        // check then reports a newer price, move the lines this scan priced —
-        // only those still at the cached price, so a hand-edited one is kept.
-        final product = await cat.findByBarcode(code, onPriceChanged: (live, served) {
-          final stale = cart.lines
-              .where((l) => l.productId == live.id && l.unitPrice == served.mrp)
-              .toList();
-          for (final line in stale) {
-            cart.updateLine(line, unitPrice: live.mrp);
-          }
-        });
-        if (product == null) return ScanFeedback.error(code, 'No product for this code');
-        final onTicket = cart.lines
-            .where((l) => l.productId == product.id)
-            .fold<double>(0, (sum, l) => sum + l.qty);
-        cart.add(product);
-        final qty = cart.defaultQty;
-        // The scanner owns the whole screen, so the low-stock warning rides on
-        // its own feedback line rather than a snackbar nobody would see.
-        final lowStock = cat.state.servingCached &&
-            !product.isService &&
-            product.totalStock <= onTicket;
-        return ScanFeedback(
-          title: product.name,
-          detail: lowStock
-              ? 'Added ${qtyLabel(qty)} · may be out of stock'
-              : 'Added ${qtyLabel(qty)}${product.code.isEmpty ? '' : ' · ${product.code}'}',
-          undo: () async {
-            final matches = cart.lines.where((l) => l.productId == product.id);
-            if (matches.isEmpty) return null;
-            cart.changeQty(matches.first, -qty);
-            return ScanFeedback(title: product.name, detail: 'Removed from sale');
-          },
-        );
+      onScan: _addScannedCode,
+    );
+  }
+
+  /// Look [code] up and put the product on the ticket — the one path every
+  /// scan takes, from the camera or a hardware barcode scanner.
+  Future<ScanFeedback> _addScannedCode(String code) async {
+    final cat = context.read<CatalogCubit>();
+    final cart = context.read<CartCubit>();
+    // Answered off the device when it can be. If the server's background
+    // check then reports a newer price, move the lines this scan priced —
+    // only those still at the cached price, so a hand-edited one is kept.
+    final product = await cat.findByBarcode(code, onPriceChanged: (live, served) {
+      final stale = cart.lines
+          .where((l) => l.productId == live.id && l.unitPrice == served.mrp)
+          .toList();
+      for (final line in stale) {
+        cart.updateLine(line, unitPrice: live.mrp);
+      }
+    });
+    if (product == null) return ScanFeedback.error(code, _noProductForCode);
+    final onTicket = cart.lines
+        .where((l) => l.productId == product.id)
+        .fold<double>(0, (sum, l) => sum + l.qty);
+    // A scanned drink still needs its base / flavour picked.
+    var picks = const <OptionPick>[];
+    if (product.hasOptions) {
+      if (!mounted) return ScanFeedback.error(code, 'Pick the options first');
+      final chosen = await pickOptions(context, product);
+      if (chosen == null) return ScanFeedback.error(code, 'Not added: no options picked');
+      picks = chosen;
+    }
+    cart.add(product, options: picks);
+    final qty = cart.defaultQty;
+    // The camera scanner owns the whole screen, so the low-stock warning rides
+    // on its own feedback line rather than a snackbar nobody would see.
+    final lowStock = cat.state.servingCached &&
+        !product.isService &&
+        product.totalStock <= onTicket;
+    return ScanFeedback(
+      title: product.name,
+      detail: lowStock
+          ? 'Added ${qtyLabel(qty)} · may be out of stock'
+          : 'Added ${qtyLabel(qty)}${product.code.isEmpty ? '' : ' · ${product.code}'}',
+      undo: () async {
+        final matches = cart.lines.where((l) => l.productId == product.id);
+        if (matches.isEmpty) return null;
+        cart.changeQty(matches.first, -qty);
+        return ScanFeedback(title: product.name, detail: 'Removed from sale');
       },
     );
+  }
+
+  // ─── Hardware barcode scanner ──────────────────────────────────────────────
+
+  /// Keys a USB / Bluetooth scanner has typed so far, and when the last landed.
+  final _wedgeBuffer = StringBuffer();
+  DateTime _wedgeLastKey = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Scans run one after another, so a burst of beeps never races the cart.
+  Future<void> _scanChain = Future.value();
+
+  /// A scanner is a keyboard that types a whole code in a few milliseconds and
+  /// presses Enter. With no text field focused those keys land here: a fast
+  /// burst ended by Enter is a scan; anything slower is a person and is left
+  /// alone. A focused search box gets the keys itself — see [_submitSearch].
+  bool _onHardwareKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return false;
+    final focus = FocusManager.instance.primaryFocus?.context;
+    if (focus != null && focus.findAncestorStateOfType<EditableTextState>() != null) return false;
+    final now = DateTime.now();
+    if (now.difference(_wedgeLastKey) > _wedgeKeyGap) _wedgeBuffer.clear();
+    _wedgeLastKey = now;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter) {
+      final code = _wedgeBuffer.toString().trim();
+      _wedgeBuffer.clear();
+      if (code.length < _wedgeMinLength) return false;
+      _queueHardwareScan(code);
+      return true;
+    }
+    final ch = event.character;
+    if (ch != null && ch.length == 1 && ch.codeUnitAt(0) >= 0x20) _wedgeBuffer.write(ch);
+    return false;
+  }
+
+  static const _noProductForCode = 'No product for this code';
+  static const _wedgeKeyGap = Duration(milliseconds: 100);
+  static const _wedgeMinLength = 3;
+
+  void _queueHardwareScan(String code) {
+    _scanChain = _scanChain.then((_) => _hardwareScan(code));
+  }
+
+  /// Adds a hardware-scanned code and says what happened on a snackbar — the
+  /// POS is on screen, unlike the camera scanner which shows its own feed.
+  /// [fromSearch]: the code was typed into the search box, so one that is no
+  /// product's barcode is just a search and is not reported as a failed scan.
+  /// Returns whether the code was a product that went on the ticket.
+  Future<bool> _hardwareScan(String code, {bool fromSearch = false}) async {
+    if (!mounted) return false;
+    final snack = AstraSnack.capture(context);
+    try {
+      final result = await _addScannedCode(code);
+      if (fromSearch && result.isError && result.detail == _noProductForCode) return false;
+      final line = [result.title, if (result.detail != null) result.detail].join(' · ');
+      if (result.isError) {
+        FeedbackSound.cardRefused();
+        snack.error(line);
+        return false;
+      }
+      unawaited(HapticFeedback.mediumImpact());
+      snack.success(line, duration: const Duration(seconds: 2));
+      return true;
+    } catch (_) {
+      FeedbackSound.cardRefused();
+      snack.error('$code · could not look this code up');
+      return false;
+    }
+  }
+
+  /// Enter in the search box. A scanner typing into the focused box ends with
+  /// Enter, as does a cashier keying a barcode by hand: when the text is a
+  /// product's barcode it goes on the ticket and the box clears for the next
+  /// one. Anything else stays a search.
+  void _submitSearch(String value) {
+    final code = value.trim();
+    if (code.length < _wedgeMinLength) return;
+    _scanChain = _scanChain.then((_) async {
+      if (!await _hardwareScan(code, fromSearch: true) || !mounted) return;
+      if (_searchCtl.text.trim() != code) return;
+      _searchCtl.clear();
+      context.read<CatalogCubit>().setSearch('');
+    });
   }
 }
 

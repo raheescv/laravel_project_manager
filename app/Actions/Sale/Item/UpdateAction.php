@@ -2,9 +2,11 @@
 
 namespace App\Actions\Sale\Item;
 
+use App\Actions\Sale\Item\Option\SyncAction;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\SaleItem;
+use App\Support\Sale\SaleItemOptions;
 use Exception;
 
 class UpdateAction
@@ -16,11 +18,20 @@ class UpdateAction
         try {
             $model = $this->findSaleItem($id);
             $this->prepareDataForUpdate($data, $model, $user_id);
-            $this->validateUnitPriceAgainstMrp($data);
+            // A caller that sends `options` replaces the line's picks; one that does not keeps them.
+            $options = SaleItemOptions::forLine($data, $model->product_id);
+            $this->validateUnitPriceAgainstMrp($data, $options ? $options['extra'] : fn () => (float) $model->options()->sum('price'));
             $this->preserveQuantityForAuditLog($data, $model);
 
             validationHelper(SaleItem::rules($id), $data);
             $model->update($data);
+
+            if ($options !== null) {
+                $response = (new SyncAction())->execute($model, $options['rows']);
+                if (! $response['success']) {
+                    throw new Exception($response['message'], 1);
+                }
+            }
 
             $return['success'] = true;
             $return['message'] = 'Successfully Update SaleItem';

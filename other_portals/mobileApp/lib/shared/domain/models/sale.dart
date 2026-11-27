@@ -62,6 +62,29 @@ class SaleItemsPage extends Equatable {
 
 // ---- Sale (SaleResource) ----
 
+/// A choice picked on a sold line ("+ Mango Passion", "+ Chia 3.00"), as the
+/// receipt prints it. [nested] = opened by another pick (Red Bull → Sugar-free).
+class LineOption extends Equatable {
+  const LineOption({required this.name, this.group = '', this.price = 0, this.nested = false});
+  final String name;
+  final String group;
+  final double price;
+  final bool nested;
+
+  factory LineOption.fromJson(Map<String, dynamic> j) => LineOption(
+        name: asStr(j['option_name']),
+        group: asStr(j['group_name']),
+        price: asNum(j['price']).toDouble(),
+        nested: j['nested'] == true,
+      );
+
+  /// "+ Chia (3.00)" — the price only when the option costs extra.
+  String label(String Function(double) amount) => '+ $name${price != 0 ? ' (${amount(price)})' : ''}';
+
+  @override
+  List<Object?> get props => [name, group, price, nested];
+}
+
 class SaleLine extends Equatable {
   const SaleLine({
     required this.name,
@@ -77,6 +100,7 @@ class SaleLine extends Equatable {
     this.employeeId,
     this.code = '',
     this.tax = 0,
+    this.options = const [],
   });
   final String name;
   final String nameArabic;
@@ -93,6 +117,7 @@ class SaleLine extends Equatable {
   final int? employeeId;
   final String code;
   final double tax;
+  final List<LineOption> options;
 
   factory SaleLine.fromJson(Map<String, dynamic> j) => SaleLine(
         name: asStr(j['name']),
@@ -108,6 +133,10 @@ class SaleLine extends Equatable {
         employeeId: j['employee_id'] == null ? null : asNum(j['employee_id']).toInt(),
         code: asStr(j['code']),
         tax: asNum(j['tax']).toDouble(),
+        options: [
+          for (final o in (j['options'] is List ? j['options'] as List : const []))
+            if (o is Map) LineOption.fromJson(Map<String, dynamic>.from(o)),
+        ],
       );
 
 
@@ -126,6 +155,7 @@ class SaleLine extends Equatable {
         employeeId,
         code,
         tax,
+        options,
       ];
 }
 

@@ -85,6 +85,14 @@
                                             <span class="truncate">{{ item.color }}</span>
                                         </span>
                                     </div>
+                                    <!-- Picked options (base, flavour, add-ons…) -->
+                                    <div v-if="item.option_lines && item.option_lines.length"
+                                        class="flex flex-wrap gap-1 mb-1">
+                                        <span v-for="(line, index) in item.option_lines" :key="index"
+                                            class="posx-chip-opt" :class="{ 'opacity-75': line.nested }" :title="line.group_name">
+                                            {{ line.option_name }}<template v-if="Number(line.price)"> +{{ formatNumber(line.price) }}</template>
+                                        </span>
+                                    </div>
                                     <div class="text-xs posx-ink-2 leading-tight">
                                         <span v-if="item.combo_offer_price && item.combo_offer_price > 0" class="flex items-center gap-1">
                                             <span class="line-through posx-muted">{{ formatNumber(item.unit_price) }}</span>

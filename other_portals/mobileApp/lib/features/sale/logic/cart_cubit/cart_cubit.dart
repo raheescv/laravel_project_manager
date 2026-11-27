@@ -42,6 +42,8 @@ class CartLine extends Equatable {
     this.employeeName = '',
     this.thumbnail = '',
     this.saleItemId,
+    this.options = const [],
+    this.savedOptions = const [],
   });
 
   final int productId;
@@ -59,6 +61,22 @@ class CartLine extends Equatable {
   final double taxPercent;
   final int? employeeId;
   final String employeeName;
+
+  /// Choices picked when the item was added (base, flavour, add-ons…); their
+  /// prices are already in [unitPrice]. Sent with the sale.
+  final List<OptionPick> options;
+
+  /// The picks of a line loaded from a sale being edited: shown only, never
+  /// re-sent, so the server keeps them as they are.
+  final List<LineOption> savedOptions;
+
+  /// Same product + same picks = the same line (two Mango Red Bulls merge).
+  String get optionsKey => optionsKeyOf(options);
+
+  static String optionsKeyOf(List<OptionPick> picks) => ([for (final o in picks) '${o.parentItemId ?? 0}.${o.itemId}']..sort()).join('_');
+
+  /// "Red Bull · Mango Passion · Chia" for the ticket.
+  String get optionsLabel => [for (final o in options) o.optionName, for (final o in savedOptions) o.name].join(' · ');
 
   /// Copy with the editable fields replaced. A null argument means "leave as
   /// is" — to *clear* the assigned employee use [withEmployee].
@@ -85,6 +103,8 @@ class CartLine extends Equatable {
         taxPercent: taxPercent ?? this.taxPercent,
         employeeId: employeeId ?? this.employeeId,
         employeeName: employeeName ?? this.employeeName,
+        options: options,
+        savedOptions: savedOptions,
       );
 
   /// Copy with the assigned employee replaced, including clearing it — the one
@@ -103,6 +123,8 @@ class CartLine extends Equatable {
         taxPercent: taxPercent,
         employeeId: id,
         employeeName: name,
+        options: options,
+        savedOptions: savedOptions,
       );
 
   @override
@@ -120,6 +142,8 @@ class CartLine extends Equatable {
         taxPercent,
         employeeId,
         employeeName,
+        options,
+        savedOptions,
       ];
 
   // Rounded at exactly the points the server's generated columns are, so the
@@ -487,24 +511,28 @@ class CartCubit extends Cubit<CartState> {
     ));
   }
 
-  void add(Product p) {
+  /// Put [p] on the ticket, with the [options] picked for it (their prices on top of its own).
+  void add(Product p, {List<OptionPick> options = const []}) {
     final next = [...state.lines];
-    _addProduct(next, p, defaultQty);
+    _addProduct(next, p, defaultQty, options: options);
     emit(state.copyWith(lines: next));
   }
 
-  /// Add [qty] of [p] to [rows]: onto its existing line, or as a new one.
-  void _addProduct(List<CartLine> rows, Product p, double qty) {
-    final index = rows.indexWhere((l) => l.productId == p.id);
+  /// Add [qty] of [p] to [rows]: onto its existing line (same picks), or as a new one.
+  void _addProduct(List<CartLine> rows, Product p, double qty, {List<OptionPick> options = const []}) {
+    final key = CartLine.optionsKeyOf(options);
+    final index = rows.indexWhere((l) => l.productId == p.id && l.optionsKey == key && l.savedOptions.isEmpty);
     if (index != -1) {
       rows[index] = rows[index].copyWith(qty: rows[index].qty + qty);
     } else {
+      final extra = options.fold<double>(0, (sum, o) => sum + o.price);
       rows.add(CartLine(
         productId: p.id,
         name: p.displayName,
         code: p.code,
         type: p.type,
-        unitPrice: p.mrp,
+        unitPrice: p.mrp + extra,
+        options: options,
         qty: qty,
         taxPercent: p.tax,
         thumbnail: p.thumbnail,
@@ -652,6 +680,7 @@ class CartCubit extends Cubit<CartState> {
               taxPercent: l.tax,
               employeeId: l.employeeId,
               employeeName: l.employee,
+              savedOptions: l.options,
             ))
         .toList();
     final firstWithEmployee = lines.where((l) => l.employeeId != null).firstOrNull;
@@ -844,6 +873,10 @@ class CartCubit extends Cubit<CartState> {
               'discount': l.discountAmount,
               'tax': l.taxPercent,
               'total': l.total,
+              'options': [
+                for (final o in l.options) o.toReceipt(),
+                for (final o in l.savedOptions) {'group_name': o.group, 'option_name': o.name, 'price': o.price, 'nested': o.nested},
+              ],
             },
         ],
         'payments': [
@@ -910,6 +943,8 @@ class CartCubit extends Cubit<CartState> {
                   // while the sale sat in the outbox committed a total that no
                   // longer matched the cash in the drawer.
                   'tax': l.taxPercent,
+                  // New picks only: a line loaded from the sale keeps its saved ones.
+                  if (l.options.isNotEmpty) 'options': [for (final o in l.options) o.toPayload()],
                 })
             .toList(),
         'discount': state.orderDiscountAmount,

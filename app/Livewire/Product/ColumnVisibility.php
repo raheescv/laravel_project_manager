@@ -25,6 +25,7 @@ class ColumnVisibility extends Component
             'sub_category' => true,
             'unit' => true,
             'brand' => true,
+            'variant_value' => true,
             'size' => true,
             'color' => true,
             'code' => true,

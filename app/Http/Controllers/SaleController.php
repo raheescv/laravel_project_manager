@@ -120,7 +120,7 @@ class SaleController extends Controller
                     'account:id,name,mobile',
                     'branch:id,name',
                     'items' => function ($query): void {
-                        $query->with(['product:id,name,mrp,size,barcode,unit_id', 'product.unit:id,name', 'product.units.subUnit:id,name', 'employee:id,name', 'assistant:id,name', 'unit:id,name']);
+                        $query->with(['product:id,name,mrp,size,barcode,unit_id', 'product.unit:id,name', 'product.units.subUnit:id,name', 'employee:id,name', 'assistant:id,name', 'unit:id,name', 'options']);
                     },
                     'comboOffers.comboOffer:id,name',
                     'createdUser:id,name',
@@ -207,6 +207,8 @@ class SaleController extends Controller
                         'units' => $item->product->getResolvedUnits(),
                         'combo_offer_price' => 0,
                         'combo_offer_id' => null,
+                        // Shown under the line only: a saved line keeps its picks unless the cashier re-picks it.
+                        'option_lines' => $item->options->map->toLine()->values()->all(),
                     ];
                 }
                 $saleData['items'] = $cartItems;

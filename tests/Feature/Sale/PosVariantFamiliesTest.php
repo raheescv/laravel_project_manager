@@ -145,3 +145,33 @@ it('shows only the starred variant in Favorites when Product Display is Individu
     expect($cards)->toHaveCount(1)
         ->and($cards->first()['product_id'])->toBe($this->blue->id);
 });
+
+it('gives the till each item\'s design and the family\'s designs and layer name', function (): void {
+    Product::where('id', $this->shoe->id)->orWhere('parent_id', $this->shoe->id)->update(['variant_option' => 'Flavour']);
+    $this->shoe->update(['variant_value' => 'Mango']);
+    $this->blue->update(['variant_value' => 'Lime']);
+
+    $family = collect($this->getJson($this->world->url('products'))->assertOk()->json())->firstWhere('name', 'Running Shoe');
+
+    expect($family['option_name'])->toBe('Flavour')
+        ->and($family['designs'])->toBe(['Mango', 'Lime'])
+        ->and(collect($family['variants'])->firstWhere('product_id', $this->blue->id)['design'])->toBe('Lime')
+        ->and(collect($family['variants'])->firstWhere('product_id', $this->plain->id)['design'])->toBeNull();
+});
+
+it('gives the till the family\'s second-layer name', function (): void {
+    Product::where('id', $this->shoe->id)->orWhere('parent_id', $this->shoe->id)->update(['variant_size_option' => 'Flavour']);
+
+    $family = collect($this->getJson($this->world->url('products'))->assertOk()->json())->firstWhere('name', 'Running Shoe');
+
+    expect($family['size_name'])->toBe('Flavour')
+        ->and(collect($family['variants'])->pluck('size_name')->unique()->all())->toBe(['Flavour']);
+});
+
+it('calls the first layer Design when the family never named it', function (): void {
+    $family = collect($this->getJson($this->world->url('products'))->assertOk()->json())->firstWhere('name', 'Running Shoe');
+
+    expect($family['option_name'])->toBe('Design')
+        ->and($family['size_name'])->toBe('Size')
+        ->and($family['designs'])->toBe([]);
+});

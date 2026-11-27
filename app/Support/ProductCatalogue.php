@@ -28,7 +28,7 @@ final class ProductCatalogue
     /** Sortable columns: the request key => the products column it orders by ("stock" is a computed subquery). */
     public const SORTABLE = ['name' => 'products.name', 'code' => 'products.code', 'barcode' => 'products.barcode', 'colour' => 'products.color', 'size' => 'products.size', 'cost' => 'products.cost', 'stock' => 'stock'];
 
-    private const COLUMNS = ['products.id', 'products.parent_id', 'products.name', 'products.code', 'products.barcode', 'products.size', 'products.color', 'products.cost', 'products.mrp', 'products.thumbnail', 'products.brand_id'];
+    private const COLUMNS = ['products.id', 'products.parent_id', 'products.name', 'products.code', 'products.barcode', 'products.size', 'products.color', 'products.variant_value', 'products.cost', 'products.mrp', 'products.thumbnail', 'products.brand_id'];
 
     /** @var array<string, string>|null */
     private ?array $palette = null;
@@ -216,7 +216,7 @@ final class ProductCatalogue
             'size' => $product->size,
             'colour' => ProductColours::displayName($colour),
             'colour_hex' => $colour === '' ? null : ProductColours::hexFor($colour, $this->palette()),
-            'variant' => Product::variantLabel($product->size, $product->color),
+            'variant' => $product->variantName(),
             'cost' => (float) $product->cost,
             'mrp' => (float) $product->mrp,
             'stock' => (float) $product->getAttribute('stock'),

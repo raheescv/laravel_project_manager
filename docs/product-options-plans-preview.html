@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Options Plans</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* Tokens mirror resources/css/pos-premium.css (graphite preset). */
+:root {
+    --pri: #23262d; --on-pri: #fff; --acc: #9a7a3c; --acc-soft: rgba(154,122,60,.12);
+    --canvas: #eceef2; --panel: #fff; --panel-2: #f6f7f9;
+    --ink: #1a1d21; --ink-2: #6b7280; --muted: #8a919c;
+    --line: rgba(26,29,33,.09); --line-strong: rgba(26,29,33,.16);
+    --ok: #1f9d63; --ok-soft: rgba(31,157,99,.12);
+    --warn: #b7791f; --warn-soft: rgba(183,121,31,.13);
+    --bad: #c2483f; --bad-soft: rgba(194,72,63,.1);
+    --shadow: 0 10px 26px -20px rgba(26,29,33,.5);
+    --shadow-lg: 0 30px 70px -30px rgba(26,29,33,.55);
+    --pri-soft: color-mix(in srgb, var(--pri) 7%, transparent);
+    --pri-ring: color-mix(in srgb, var(--pri) 22%, transparent);
+}
+[data-theme="dark"] {
+    --pri: #e8e2d4; --on-pri: #17191d; --acc: #d2b170; --acc-soft: rgba(210,177,112,.14);
+    --canvas: #0f1114; --panel: #181b20; --panel-2: #1f2329;
+    --ink: #eceef1; --ink-2: #9aa3ae; --muted: #7d8590;
+    --line: rgba(255,255,255,.08); --line-strong: rgba(255,255,255,.16);
+    --shadow: 0 10px 26px -18px rgba(0,0,0,.8);
+    --shadow-lg: 0 30px 70px -30px rgba(0,0,0,.9);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--canvas); color: var(--ink); -webkit-font-smoothing: antialiased; line-height: 1.45; }
+button { font: inherit; color: inherit; cursor: pointer; }
+h2, h3, h4 { margin: 0; letter-spacing: -.02em; }
+
+/* ---------- harness ---------- */
+.bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; background: color-mix(in srgb, var(--canvas) 86%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.bar h1 { font-size: 14px; margin: 0 8px 0 0; font-weight: 800; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.seg button.on { background: var(--pri); color: var(--on-pri); }
+.seg button .rec { font-size: 10px; font-weight: 800; margin-left: 4px; color: var(--acc); }
+.seg button.on .rec { color: inherit; opacity: .8; }
+.theme { margin-left: auto; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 22px 16px 70px; }
+.plan { display: none; }
+body[data-plan="overview"] .plan[data-for="overview"],
+body[data-plan="a"] .plan[data-for="a"],
+body[data-plan="b"] .plan[data-for="b"],
+body[data-plan="c"] .plan[data-for="c"] { display: block; }
+
+/* ---------- shared blocks ---------- */
+.hero { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+.hero h2 { font-size: 26px; font-weight: 900; }
+.hero p { margin: 6px 0 0; color: var(--ink-2); max-width: 680px; font-size: 14.5px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .02em; }
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.badge.bad { background: var(--bad-soft); color: var(--bad); }
+.badge.acc { background: var(--acc-soft); color: var(--acc); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.card-h { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.card-h h3 { font-size: 15px; font-weight: 800; }
+.card-h .sub { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 600; }
+.card-b { padding: 16px 18px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.mt { margin-top: 16px; }
+.lbl { font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; display: flex; gap: 8px; align-items: center; }
+.lbl em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--ink-2); }
+.lbl em.req { background: var(--bad-soft); color: var(--bad); }
+.lbl.mt, ul.pc.mt { margin-top: 16px; }
+.muted { color: var(--ink-2); }
+.small { font-size: 12.5px; }
+ul.pc { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 13.5px; }
+ul.pc li { display: flex; gap: 9px; align-items: flex-start; }
+ul.pc li i { margin-top: 3px; width: 14px; text-align: center; }
+ul.pc li.y i { color: var(--ok); }
+ul.pc li.n i { color: var(--bad); }
+ul.pc li.m i { color: var(--warn); }
+
+/* ---------- case matrix ---------- */
+.cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.case { padding: 16px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
+.case .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--panel-2); font-size: 17px; margin-bottom: 10px; }
+.case b { display: block; font-size: 15px; }
+.case p { margin: 4px 0 10px; font-size: 13px; color: var(--ink-2); }
+.case .need { font-size: 12px; font-weight: 700; color: var(--acc); }
+table.mx { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
+table.mx th, table.mx td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.mx th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+table.mx td:first-child { font-weight: 700; }
+table.mx tr:last-child td { border-bottom: 0; }
+.mx-wrap { overflow-x: auto; }
+.dot { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+.dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.dot.ok { color: var(--ok); } .dot.warn { color: var(--warn); } .dot.bad { color: var(--bad); }
+
+/* ---------- schema boxes ---------- */
+.schema { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.tbl { border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; background: var(--panel-2); font-size: 12.5px; }
+.tbl h5 { margin: 0; padding: 8px 12px; font-size: 12.5px; font-weight: 800; background: var(--pri); color: var(--on-pri); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tbl h5.new::after { content: "NEW"; float: right; font-size: 10px; letter-spacing: .08em; color: var(--acc); }
+.tbl h5.have::after { content: "EXISTS"; float: right; font-size: 10px; letter-spacing: .08em; opacity: .6; }
+.tbl div { padding: 5px 12px; border-top: 1px solid var(--line); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-2); }
+.tbl div b { color: var(--ink); font-weight: 700; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.flow span { padding: 7px 12px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); }
+.flow i { color: var(--muted); }
+
+/* ---------- POS sheet mock ---------- */
+.sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow-lg); overflow: hidden; }
+.sh-head { display: flex; gap: 14px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.sh-ph { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #f5b041, #e74c3c); display: grid; place-items: center; color: #fff; font-size: 22px; flex: none; }
+.sh-ph.tea { background: linear-gradient(135deg, #a3794c, #6b4423); }
+.sh-ph.shoe { background: linear-gradient(135deg, #34495e, #1b2631); }
+.sh-t { flex: 1; min-width: 0; }
+.sh-t h4 { font-size: 19px; font-weight: 900; }
+.sh-t p { margin: 2px 0 0; font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+.sh-price { font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+.sh-body { padding: 16px 18px; display: grid; gap: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 50px; padding: 9px 16px; border-radius: 16px; border: 1.5px solid var(--line-strong); background: var(--panel); font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; }
+.chip small { font-weight: 700; font-size: 12px; color: var(--muted); }
+.chip.on { background: var(--pri); border-color: var(--pri); color: var(--on-pri); }
+.chip.on small { color: inherit; opacity: .75; }
+.chip.multi.on { background: var(--pri-soft); color: var(--ink); border-color: var(--pri); box-shadow: 0 0 0 3px var(--pri-ring); }
+.chip.multi.on small { color: var(--ink-2); }
+.chip .tick { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--line-strong); display: grid; place-items: center; font-size: 10px; }
+.chip.multi.on .tick { background: var(--pri); color: var(--on-pri); border-color: var(--pri); }
+.chip.sm { min-height: 40px; font-size: 13.5px; padding: 7px 13px; border-radius: 13px; }
+.chip.ghost { opacity: .35; border-style: dashed; }
+.nest { margin: 10px 0 0 14px; padding: 12px 14px; border-left: 3px solid var(--acc); background: var(--acc-soft); border-radius: 0 14px 14px 0; }
+.sh-foot { display: flex; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--line); background: var(--panel-2); }
+.sh-foot .sum { flex: 1; font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.sh-foot .sum b { color: var(--ink); }
+.btn { border: 0; border-radius: 14px; padding: 13px 20px; font-weight: 800; font-size: 15px; background: var(--pri); color: var(--on-pri); display: inline-flex; gap: 8px; align-items: center; }
+.btn.soft { background: var(--panel); border: 1px solid var(--line-strong); color: var(--ink); }
+.steps { display: flex; gap: 6px; }
+.steps span { height: 5px; flex: 1; border-radius: 9px; background: var(--line-strong); }
+.steps span.on { background: var(--pri); }
+
+/* receipt + cart line */
+.rcpt { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: #fffdf7; color: #222; border-radius: 12px; padding: 14px 16px; border: 1px dashed #d8d2c2; }
+[data-theme="dark"] .rcpt { background: #24221d; color: #eee; border-color: #4a463b; }
+.rcpt .l { display: flex; justify-content: space-between; gap: 10px; }
+.rcpt .m { padding-left: 14px; color: #777; }
+[data-theme="dark"] .rcpt .m { color: #aaa; }
+.rcpt hr { border: 0; border-top: 1px dashed #cfc8b6; margin: 8px 0; }
+
+/* admin mock */
+.adm { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); }
+.adm-row { display: grid; grid-template-columns: 1.6fr .8fr 1.4fr 1.2fr; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; align-items: center; }
+.adm-row.h { border-top: 0; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel-2); }
+.adm-row .in { padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--panel); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-row .in.dim { color: var(--muted); font-weight: 500; }
+.rule { display: inline-flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--panel-2); font-size: 12px; font-weight: 700; }
+.rule span { padding: 4px 10px; border-radius: 8px; color: var(--ink-2); }
+.rule span.on { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.attached { display: grid; gap: 8px; }
+.att { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); font-size: 13.5px; }
+.att .grip { color: var(--muted); }
+.att b { font-size: 14px; }
+.att .meta { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pill { padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: var(--panel-2); color: var(--ink-2); }
+.pill.req { background: var(--bad-soft); color: var(--bad); }
+.pill.acc { background: var(--acc-soft); color: var(--acc); }
+
+/* variant grid (plan B) */
+.vgrid { display: grid; grid-template-columns: 110px repeat(3, 1fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 13px; }
+.vgrid div { padding: 10px 12px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.vgrid .h { background: var(--panel-2); font-weight: 800; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.vgrid .sku { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--ink-2); }
+.verdict { padding: 14px 16px; border-radius: 16px; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+.verdict i { font-size: 18px; margin-top: 1px; }
+.verdict.ok { background: var(--ok-soft); }
+.verdict.ok i { color: var(--ok); }
+.verdict.warn { background: var(--warn-soft); }
+.verdict.warn i { color: var(--warn); }
+.verdict.bad { background: var(--bad-soft); }
+.verdict.bad i { color: var(--bad); }
+.slot { border: 1.5px dashed var(--line-strong); border-radius: 16px; padding: 12px 14px; }
+.slot-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 800; font-size: 14px; }
+.prod { display: inline-flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: 14px; border: 1.5px solid var(--line-strong); font-size: 13.5px; font-weight: 700; background: var(--panel); }
+.prod .th { width: 30px; height: 30px; border-radius: 9px; background: var(--panel-2); display: grid; place-items: center; font-size: 13px; }
+.prod small { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+.prod.on { border-color: var(--pri); box-shadow: 0 0 0 3px var(--pri-ring); }
+@media (max-width: 640px) {
+    .adm-row { grid-template-columns: 1fr 1fr; }
+    .hero h2 { font-size: 22px; }
+    .vgrid { grid-template-columns: 90px repeat(3, 1fr); font-size: 12px; }
+}
+</style>
+</head>
+<body data-plan="overview" data-theme="light">
+
+<div class="bar">
+    <h1>Product options · plans</h1>
+    <div class="seg" id="plans">
+        <button data-plan="overview" class="on">Overview</button>
+        <button data-plan="a">A · Option Groups <span class="rec">BEST</span></button>
+        <button data-plan="b">B · More Variant Layers</button>
+        <button data-plan="c">C · Bundle Slots</button>
+    </div>
+    <div class="seg theme" id="theme">
+        <button data-theme="light" class="on"><i class="fa fa-sun-o"></i></button>
+        <button data-theme="dark"><i class="fa fa-moon-o"></i></button>
+    </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============================ OVERVIEW ============================ -->
+<section class="plan" data-for="overview">
+    <div class="hero">
+        <div>
+            <h2>Two different jobs, so two tools</h2>
+            <p>A <b>shoe in size 42 / Black</b> is a different item on the shelf, with its own stock and barcode. A <b>Paw-er Drink with Red Bull + Mango</b> is one menu item made to order: the base and flavour are <b>choices</b>, not separate items. Putting both through one "variant" system is why the last version felt wrong.</p>
+        </div>
+        <span class="badge acc"><i class="fa fa-lightbulb-o"></i> Recommended: keep Variants for retail + add Option Groups (Plan A)</span>
+    </div>
+
+    <div class="cases">
+        <div class="case">
+            <div class="ic"><i class="fa fa-tag"></i></div>
+            <b>Shoe / shirt</b>
+            <p>Size 41–45 × Black, Navy. Every pair is counted and scanned separately.</p>
+            <span class="need">Needs: separate stock items → Variants (already built)</span>
+        </div>
+        <div class="case">
+            <div class="ic"><i class="fa fa-glass"></i></div>
+            <b>Paw-er Drink · 30 QAR</b>
+            <p>Choose a base: Red Bull or soda. Choose a flavour: Lemongrass, Strawberry, Mango Passion.</p>
+            <span class="need">Needs: required pick-one choices, one price, uses a Red Bull can from stock</span>
+        </div>
+        <div class="case">
+            <div class="ic"><i class="fa fa-coffee"></i></div>
+            <b>Tea + add-ons</b>
+            <p>Milk +1, Ginger +2, Extra sugar. Pick none, one or several.</p>
+            <span class="need">Needs: optional multi-pick with extra prices</span>
+        </div>
+        <div class="case">
+            <div class="ic"><i class="fa fa-sitemap"></i></div>
+            <b>Future layers</b>
+            <p>Red Bull → Regular or Sugar-free. Burger meal → any drink → that drink's size.</p>
+            <span class="need">Needs: a choice that opens the next choice (nesting)</span>
+        </div>
+    </div>
+
+    <div class="card mt">
+        <div class="card-h"><h3>How each plan handles the cases</h3><span class="sub">Tap a plan above for its screens</span></div>
+        <div class="mx-wrap">
+        <table class="mx">
+            <thead><tr><th></th><th>A · Option Groups</th><th>B · More Variant Layers</th><th>C · Bundle Slots</th></tr></thead>
+            <tbody>
+                <tr><td>Shoe size × colour</td><td><span class="dot ok">Stays on Variants</span></td><td><span class="dot ok">Perfect</span></td><td><span class="dot warn">Not meant for it</span></td></tr>
+                <tr><td>Paw-er Drink base + flavour</td><td><span class="dot ok">2 required groups, 1 product</span></td><td><span class="dot bad">6 fake stock items</span></td><td><span class="dot warn">Every flavour must be a product</span></td></tr>
+                <tr><td>Tea add-ons (pick many)</td><td><span class="dot ok">Optional group, up to 3</span></td><td><span class="dot bad">Impossible</span></td><td><span class="dot warn">Clumsy</span></td></tr>
+                <tr><td>Extra price per choice</td><td><span class="dot ok">+ price per option</span></td><td><span class="dot warn">Price per item only</span></td><td><span class="dot ok">Sum or fixed</span></td></tr>
+                <tr><td>Stock (Red Bull can used)</td><td><span class="dot ok">Option can use a stock item</span></td><td><span class="dot warn">Stock of drinks never made</span></td><td><span class="dot ok">Exact</span></td></tr>
+                <tr><td>Future layers (nesting)</td><td><span class="dot ok">An option opens the next group</span></td><td><span class="dot bad">Items multiply: 2×3×2×…</span></td><td><span class="dot warn">Slots in slots, heavy</span></td></tr>
+                <tr><td>Set up once, reuse</td><td><span class="dot ok">"Flavour" group on 20 drinks</span></td><td><span class="dot bad">Per product</span></td><td><span class="dot warn">Per product</span></td></tr>
+                <tr><td>Kitchen / receipt</td><td><span class="dot ok">Choices printed under the line</span></td><td><span class="dot ok">Name says it</span></td><td><span class="dot ok">Lines per part</span></td></tr>
+                <tr><td>Build effort</td><td><span class="dot warn">Medium (new tables + picker)</span></td><td><span class="dot ok">Small</span></td><td><span class="dot bad">Large</span></td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <div class="card mt">
+        <div class="card-h"><h3>Recommended final structure</h3></div>
+        <div class="card-b">
+            <div class="flow">
+                <span><i class="fa fa-cube"></i> Product</span><i class="fa fa-long-arrow-right"></i>
+                <span><i class="fa fa-th"></i> Variants <small class="muted">(retail: size / colour / design → stock items)</small></span>
+                <span style="background:none;border:0">+</span>
+                <span><i class="fa fa-list-ul"></i> Option Groups <small class="muted">(menu: base, flavour, add-ons → choices on one item)</small></span>
+                <i class="fa fa-long-arrow-right"></i>
+                <span><i class="fa fa-level-down"></i> an option can open another group</span>
+            </div>
+            <p class="small muted" style="margin:12px 0 0">The Design layer from the last round stays useful for retail items (a floral shirt in M is a real stock item). The Paw-er Drink moves off variants and onto option groups.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================ PLAN A ============================ -->
+<section class="plan" data-for="a">
+    <div class="hero">
+        <div>
+            <h2>A · Option Groups (modifiers)</h2>
+            <p>The way restaurant POS systems handle this. You build reusable <b>groups</b> ("Drink base", "Flavour", "Tea add-ons") with a rule: <b>pick exactly 1</b>, <b>pick up to N</b> or <b>optional</b>. Attach groups to any product. Each option can add a price, use a stock item, and open a follow-up group, so you can add layers later.</p>
+        </div>
+        <span class="badge ok"><i class="fa fa-check"></i> Recommended</span>
+    </div>
+
+    <div class="grid2">
+        <!-- POS picker -->
+        <div>
+            <p class="lbl">Till · tap the card</p>
+            <div class="sheet">
+                <div class="sh-head">
+                    <div class="sh-ph"><i class="fa fa-glass"></i></div>
+                    <div class="sh-t"><h4>Paw-er Drink</h4><p>2 choices · then it drops into the cart</p></div>
+                    <div class="sh-price">30.00</div>
+                </div>
+                <div class="sh-body">
+                    <div class="steps"><span class="on"></span><span class="on"></span></div>
+                    <div>
+                        <p class="lbl">Base <em class="req">Required · pick 1</em></p>
+                        <div class="chips">
+                            <button class="chip on"><i class="fa fa-bolt"></i> Red Bull</button>
+                            <button class="chip">Soda</button>
+                        </div>
+                        <div class="nest">
+                            <p class="lbl">Red Bull <em>Optional · later layer</em></p>
+                            <div class="chips">
+                                <button class="chip sm on">Regular</button>
+                                <button class="chip sm">Sugar-free <small>+2.00</small></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="lbl">Flavour <em class="req">Required · pick 1</em></p>
+                        <div class="chips">
+                            <button class="chip">Lemongrass</button>
+                            <button class="chip">Strawberry</button>
+                            <button class="chip on">Mango Passion</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="sh-foot">
+                    <div class="sum">Red Bull · Mango Passion<br><b>30.00</b></div>
+                    <button class="btn"><i class="fa fa-plus"></i> Add · 30.00</button>
+                </div>
+            </div>
+            <p class="small muted" style="margin:10px 4px 0"><i class="fa fa-hand-pointer-o"></i> Click-and-go: when the last <b>required</b> choice is tapped and nothing optional is left, it adds straight away with no Add button. The button only shows when optional groups (like add-ons) remain.</p>
+        </div>
+
+        <!-- tea add-ons -->
+        <div>
+            <p class="lbl">Same picker · tea with add-ons</p>
+            <div class="sheet">
+                <div class="sh-head">
+                    <div class="sh-ph tea"><i class="fa fa-coffee"></i></div>
+                    <div class="sh-t"><h4>Karak Tea</h4><p>Add-ons are optional</p></div>
+                    <div class="sh-price">8.00</div>
+                </div>
+                <div class="sh-body">
+                    <div>
+                        <p class="lbl">Cup <em class="req">Required · pick 1</em></p>
+                        <div class="chips">
+                            <button class="chip on">Small</button>
+                            <button class="chip">Large <small>+3.00</small></button>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="lbl">Add-ons <em>Optional · up to 3</em></p>
+                        <div class="chips">
+                            <button class="chip multi on"><span class="tick"><i class="fa fa-check"></i></span> Milk <small>+1.00</small></button>
+                            <button class="chip multi on"><span class="tick"><i class="fa fa-check"></i></span> Ginger <small>+2.00</small></button>
+                            <button class="chip multi"><span class="tick"></span> Saffron <small>+4.00</small></button>
+                            <button class="chip multi"><span class="tick"></span> Less sugar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="sh-foot">
+                    <div class="sum">Small · Milk · Ginger<br><b>8.00 + 3.00</b></div>
+                    <button class="btn"><i class="fa fa-plus"></i> Add · 11.00</button>
+                </div>
+            </div>
+            <p class="lbl mt">Receipt &amp; kitchen ticket</p>
+            <div class="rcpt">
+                <div class="l"><span>1 x Paw-er Drink</span><span>30.00</span></div>
+                <div class="m">+ Red Bull (Regular)</div>
+                <div class="m">+ Mango Passion</div>
+                <hr>
+                <div class="l"><span>1 x Karak Tea</span><span>11.00</span></div>
+                <div class="m">+ Small</div>
+                <div class="m">+ Milk              1.00</div>
+                <div class="m">+ Ginger            2.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid2 mt">
+        <div class="card">
+            <div class="card-h"><h3><i class="fa fa-list-ul"></i> Settings → Option Groups</h3><span class="sub">built once, reused</span></div>
+            <div class="card-b" style="display:grid;gap:12px">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                    <b style="font-size:16px">Flavour</b>
+                    <span class="rule"><span class="on">Pick exactly 1</span><span>Up to…</span><span>Optional</span></span>
+                    <span class="pill">Used on 12 drinks</span>
+                </div>
+                <div class="adm">
+                    <div class="adm-row h"><span>Option</span><span>+ Price</span><span>Uses stock</span><span>Then ask</span></div>
+                    <div class="adm-row"><span class="in">Lemongrass</span><span class="in">0.00</span><span class="in">Lemongrass syrup × 30 ml</span><span class="in dim">—</span></div>
+                    <div class="adm-row"><span class="in">Strawberry</span><span class="in">0.00</span><span class="in">Strawberry syrup × 30 ml</span><span class="in dim">—</span></div>
+                    <div class="adm-row"><span class="in">Mango Passion</span><span class="in">0.00</span><span class="in dim">— none —</span><span class="in dim">—</span></div>
+                </div>
+                <div class="adm">
+                    <div class="adm-row h"><span>Drink base</span><span>+ Price</span><span>Uses stock</span><span>Then ask</span></div>
+                    <div class="adm-row"><span class="in">Red Bull</span><span class="in">0.00</span><span class="in">Red Bull 250ml × 1</span><span class="in">Sugar choice</span></div>
+                    <div class="adm-row"><span class="in">Soda</span><span class="in">0.00</span><span class="in">Soda can × 1</span><span class="in dim">—</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-h"><h3><i class="fa fa-cube"></i> Product page → Options tab</h3><span class="sub">Paw-er Drink</span></div>
+            <div class="card-b">
+                <div class="attached">
+                    <div class="att"><i class="fa fa-bars grip"></i><b>Drink base</b><div class="meta"><span class="pill req">Required · 1</span><span class="pill acc">opens Sugar choice</span></div></div>
+                    <div class="att"><i class="fa fa-bars grip"></i><b>Flavour</b><div class="meta"><span class="pill req">Required · 1</span></div></div>
+                    <div class="att" style="border-style:dashed;color:var(--ink-2)"><i class="fa fa-plus"></i> Attach a group… <span class="muted small">Tea add-ons · Cup size · Ice level</span></div>
+                </div>
+                <p class="small muted" style="margin:12px 0 0">Drag to set the order the till asks in. A product can have Variants <b>and</b> Option Groups, e.g. a shirt picks a size (stock item) and then optional gift wrap.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt">
+        <div class="card-h"><h3><i class="fa fa-database"></i> Data structure</h3><span class="sub">4 new tables, nothing removed</span></div>
+        <div class="card-b">
+            <div class="schema">
+                <div class="tbl"><h5 class="new">option_groups</h5><div><b>name</b> "Flavour"</div><div><b>min_select</b> 1 · <b>max_select</b> 1</div><div>tenant_id, sort, status</div></div>
+                <div class="tbl"><h5 class="new">option_group_items</h5><div><b>option_group_id</b></div><div><b>name</b> "Red Bull" · <b>price</b> 0</div><div><b>product_id</b> → stock item (nullable)</div><div><b>quantity</b> used per sale</div><div><b>next_group_id</b> → nested layer</div><div>is_default, sort</div></div>
+                <div class="tbl"><h5 class="new">product_option_groups</h5><div><b>product_id</b> · <b>option_group_id</b></div><div>sort, min / max override</div></div>
+                <div class="tbl"><h5 class="new">sale_item_options</h5><div><b>sale_item_id</b></div><div>group_name, option_name <small>(snapshot)</small></div><div>price, quantity, product_id</div><div>parent_option_id <small>(layers)</small></div></div>
+                <div class="tbl"><h5 class="have">products · sale_items</h5><div>Variants unchanged (parent_id)</div><div>sale_items.unit_price += option prices</div></div>
+            </div>
+            <ul class="pc mt">
+                <li class="y"><i class="fa fa-check"></i> Covers every case: required, optional, multi-pick, extra price, stock use, nesting.</li>
+                <li class="y"><i class="fa fa-check"></i> Reusable: change "Flavour" once and every drink using it updates.</li>
+                <li class="y"><i class="fa fa-check"></i> Sales keep a snapshot of names and prices, so old receipts never change.</li>
+                <li class="y"><i class="fa fa-check"></i> Works on web POS, mobile till, kitchen ticket, sale view and reports ("most-picked flavour").</li>
+                <li class="m"><i class="fa fa-exclamation"></i> Medium build: new tables, settings page, Options tab, picker (web + mobile), sale save/print/return.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ============================ PLAN B ============================ -->
+<section class="plan" data-for="b">
+    <div class="hero">
+        <div>
+            <h2>B · More variant layers</h2>
+            <p>Extend what we have: any number of layers (Base → Flavour → …) and every combination becomes its own stock item. Simple to build on today's code, and the right model for shoes, but it fights the drink and tea cases.</p>
+        </div>
+        <span class="badge warn"><i class="fa fa-exclamation-triangle"></i> Retail only</span>
+    </div>
+
+    <div class="grid2">
+        <div class="card">
+            <div class="card-h"><h3>Paw-er Drink becomes 6 stock items</h3></div>
+            <div class="card-b">
+                <div class="vgrid">
+                    <div class="h">Base ↓ / Flavour →</div><div class="h">Lemongrass</div><div class="h">Strawberry</div><div class="h">Mango P.</div>
+                    <div class="h">Red Bull</div><div>Item 1<br><span class="sku">PD-RB-LEM · stock 0</span></div><div>Item 2<br><span class="sku">PD-RB-STR · stock 0</span></div><div>Item 3<br><span class="sku">PD-RB-MAN · stock 0</span></div>
+                    <div class="h">Soda</div><div>Item 4<br><span class="sku">PD-SO-LEM · stock 0</span></div><div>Item 5<br><span class="sku">PD-SO-STR · stock 0</span></div><div>Item 6<br><span class="sku">PD-SO-MAN · stock 0</span></div>
+                </div>
+                <p class="small muted" style="margin:12px 0 0">Add "Regular / Sugar-free" and it doubles to 12. Add "Ice level" (3) and it becomes 36 items, each with its own stock that nobody counts.</p>
+            </div>
+        </div>
+        <div>
+            <p class="lbl">Till · layer by layer</p>
+            <div class="sheet">
+                <div class="sh-head">
+                    <div class="sh-ph"><i class="fa fa-glass"></i></div>
+                    <div class="sh-t"><h4>Paw-er Drink</h4><p>Base → Flavour</p></div>
+                    <div class="sh-price">30.00</div>
+                </div>
+                <div class="sh-body">
+                    <div><p class="lbl">Base</p><div class="chips"><button class="chip on">Red Bull</button><button class="chip">Soda</button></div></div>
+                    <div><p class="lbl">Flavour in Red Bull</p><div class="chips"><button class="chip">Lemongrass</button><button class="chip">Strawberry</button><button class="chip">Mango Passion</button></div></div>
+                    <div><p class="lbl">Tea add-ons?</p><div class="chips"><button class="chip ghost">Milk + Ginger together: not possible</button></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="grid3 mt">
+        <div class="verdict ok"><i class="fa fa-check-circle"></i><span><b>Great for</b> shoes, shirts, phones (storage × colour): real items with real stock.</span></div>
+        <div class="verdict bad"><i class="fa fa-times-circle"></i><span><b>Breaks on</b> add-ons (pick many), per-choice prices, and "uses a Red Bull can" stock.</span></div>
+        <div class="verdict warn"><i class="fa fa-exclamation-circle"></i><span><b>Layers multiply</b> items (2 × 3 × 2 × 3 = 36), and each flavour list is copied per product.</span></div>
+    </div>
+</section>
+
+<!-- ============================ PLAN C ============================ -->
+<section class="plan" data-for="c">
+    <div class="hero">
+        <div>
+            <h2>C · Bundle slots</h2>
+            <p>The product is a set of <b>slots</b>, and each slot is filled with a <b>real product</b> from the catalogue: Base slot (Red Bull can, Soda can), Flavour slot (syrup bottles). Stock is always exact, which suits meal deals. Simple menu choices like "less sugar" have to become products, though.</p>
+        </div>
+        <span class="badge warn"><i class="fa fa-exclamation-triangle"></i> Heavy for simple choices</span>
+    </div>
+    <div class="grid2">
+        <div>
+            <p class="lbl">Till · fill each slot</p>
+            <div class="sheet">
+                <div class="sh-head">
+                    <div class="sh-ph"><i class="fa fa-glass"></i></div>
+                    <div class="sh-t"><h4>Paw-er Drink</h4><p>2 slots · fixed price</p></div>
+                    <div class="sh-price">30.00</div>
+                </div>
+                <div class="sh-body">
+                    <div class="slot">
+                        <div class="slot-h"><span>Slot 1 · Base</span><span class="pill req">1 product</span></div>
+                        <div class="chips">
+                            <span class="prod on"><span class="th"><i class="fa fa-bolt"></i></span><span>Red Bull 250ml<small>stock 48</small></span></span>
+                            <span class="prod"><span class="th"><i class="fa fa-tint"></i></span><span>Soda can<small>stock 120</small></span></span>
+                        </div>
+                    </div>
+                    <div class="slot">
+                        <div class="slot-h"><span>Slot 2 · Flavour</span><span class="pill req">1 product</span></div>
+                        <div class="chips">
+                            <span class="prod"><span class="th"><i class="fa fa-leaf"></i></span><span>Lemongrass syrup<small>3.2 L</small></span></span>
+                            <span class="prod on"><span class="th"><i class="fa fa-flask"></i></span><span>Mango syrup<small>1.1 L</small></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="sh-foot"><div class="sum">Stock: −1 Red Bull · −30ml Mango syrup</div><button class="btn"><i class="fa fa-plus"></i> Add · 30.00</button></div>
+            </div>
+        </div>
+        <div style="display:grid;gap:14px;align-content:start">
+            <div class="card">
+                <div class="card-h"><h3><i class="fa fa-database"></i> Data</h3></div>
+                <div class="card-b">
+                    <div class="schema">
+                        <div class="tbl"><h5 class="new">product_slots</h5><div><b>product_id</b>, name, min, max</div><div>price_mode: fixed | sum</div></div>
+                        <div class="tbl"><h5 class="new">product_slot_items</h5><div><b>slot_id</b> · <b>product_id</b></div><div>quantity, extra price</div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="verdict ok"><i class="fa fa-check-circle"></i><span><b>Best for</b> meal deals: "Burger + any drink + any side" where every part is a real stocked item.</span></div>
+            <div class="verdict warn"><i class="fa fa-exclamation-circle"></i><span><b>Heavy</b>: "Less sugar", "No ice" and "Extra hot" would each need a fake product. Slots are set up per product, not shared.</span></div>
+            <div class="verdict ok"><i class="fa fa-info-circle"></i><span>Plan A covers this too: an option that <b>uses a stock item</b> gives exact stock, and you keep the free-text choices.</span></div>
+        </div>
+    </div>
+</section>
+
+</div>
+
+<script>
+    const body = document.body;
+    const bind = (id, attr) => document.querySelectorAll('#' + id + ' button').forEach(b => b.addEventListener('click', () => {
+        document.querySelectorAll('#' + id + ' button').forEach(x => x.classList.toggle('on', x === b));
+        body.dataset[attr] = b.dataset[attr];
+        if (attr === 'plan') window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+    bind('plans', 'plan');
+    bind('theme', 'theme');
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.querySelector('#theme [data-theme="dark"]').click();
+</script>
+</body>
+</html>

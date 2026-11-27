@@ -210,7 +210,11 @@
                 $name = $isCategory ? $item->product->mainCategory->name : $item->product?->name;
             @endphp
             <div class="split item">
-                <div class="name">{{ $name }}@if ((float) $item->quantity != 1) × {{ round($item->quantity, 3) }}@endif</div>
+                <div class="name">{{ $name }}@if ((float) $item->quantity != 1) × {{ round($item->quantity, 3) }}@endif
+                    @foreach ($item->options as $option)
+                        <div style="font-weight: 400; font-size: .85em; padding-left: {{ $option->parent_id ? 16 : 8 }}px">{{ $option->receiptLabel() }}</div>
+                    @endforeach
+                </div>
                 <div class="price">{{ currency($item->gross_amount) }}</div>
             </div>
         @endforeach

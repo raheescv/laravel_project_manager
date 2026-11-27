@@ -37,6 +37,7 @@ class SaveRequest extends FormRequest
             'brand_id' => ['nullable'],
             'priority' => ['nullable', 'integer', 'min:0'],
             'size' => ['nullable', 'string', 'max:50'],
+            'variant_value' => ['nullable', 'string', 'max:100'],
             'size_category' => ['nullable', 'string', 'max:100'],
             'hsn_code' => ['nullable', 'string', 'max:50'],
             'tax' => ['nullable', 'numeric', 'min:0', 'max:100'],
