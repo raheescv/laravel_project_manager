@@ -23,6 +23,7 @@ class RentOutTableExport implements FromQuery, WithHeadings, WithMapping
         return RentOut::query()
             ->with(['customer', 'property', 'building', 'group'])
             ->where('agreement_type', $agreementType)
+            ->excludingBookings()
             ->when($this->filters['filterGroup'] ?? '', fn ($q, $v) => $q->where('property_group_id', $v))
             ->when($this->filters['filterBuilding'] ?? '', fn ($q, $v) => $q->where('property_building_id', $v))
             ->when($this->filters['filterProperty'] ?? '', fn ($q, $v) => $q->where('property_id', $v))

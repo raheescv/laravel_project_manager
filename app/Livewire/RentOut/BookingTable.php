@@ -74,6 +74,7 @@ class BookingTable extends Component
             'end_date' => true,
             'rent' => true,
             'booking_status' => true,
+            'status' => true,
             'created_at' => false,
         ];
     }
@@ -188,7 +189,7 @@ class BookingTable extends Component
     {
         if ($value) {
             $this->selected = RentOut::where('agreement_type', $this->agreementType)
-                ->where('status', RentOutStatus::Booked)
+                ->bookings()
                 ->latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
@@ -205,6 +206,7 @@ class BookingTable extends Component
             'filterProperty' => $this->filterProperty,
             'filterCustomer' => $this->filterCustomer,
             'filterBookingType' => $this->filterBookingType,
+            'filterStatus' => $this->filterStatus,
             'filterBookingStatus' => $this->filterBookingStatus,
             'fromDate' => $this->fromDate,
             'toDate' => $this->toDate,
@@ -228,7 +230,7 @@ class BookingTable extends Component
     {
         $data = RentOut::with(['customer', 'property', 'building', 'group'])
             ->where('agreement_type', $this->agreementType)
-            ->where('status', RentOutStatus::Booked)
+            ->bookings()
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
@@ -275,10 +277,15 @@ class BookingTable extends Component
             ->mapWithKeys(fn ($case) => [$case->value => $case->label()])
             ->toArray();
 
+        $statusOptions = collect([RentOutStatus::Booked, RentOutStatus::Cancelled])
+            ->mapWithKeys(fn (RentOutStatus $case) => [$case->value => $case->label()])
+            ->toArray();
+
         return view('livewire.rent-out.booking-table', [
             'data' => $data,
             'config' => $this->config,
             'bookingStatusOptions' => $bookingStatusOptions,
+            'statusOptions' => $statusOptions,
         ]);
     }
 }

@@ -144,7 +144,7 @@
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Status
                     </label>
-                    {{ html()->select('filterStatus', rentOutStatusOptions())->value($filterStatus)->class('form-select form-select-sm border-secondary-subtle shadow-sm')->attribute('wire:model.live', 'filterStatus')->placeholder('All Status') }}
+                    {{ html()->select('filterStatus', collect(rentOutStatusOptions())->except(\App\Enums\RentOut\RentOutStatus::Booked->value)->all())->value($filterStatus)->class('form-select form-select-sm border-secondary-subtle shadow-sm')->attribute('wire:model.live', 'filterStatus')->placeholder('All Status') }}
                 </div>
             </div>
 

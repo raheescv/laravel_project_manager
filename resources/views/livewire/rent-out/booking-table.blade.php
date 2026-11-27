@@ -3,7 +3,7 @@
         <div class="card-header bg-light py-3">
             {{-- ═══ Top Bar: Actions + Show/Search/Column Visibility ═══ --}}
             <div class="row mt-3">
-                <div class="col-md-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-md-0">
+                <div class="col-12 col-lg-6 d-flex flex-wrap gap-2 align-items-center mb-3 mb-lg-0">
                     @can($config->bookingCreatePermission)
                         <a href="{{ route($config->bookingCreateRoute) }}"
                             class="btn btn-primary d-flex align-items-center shadow-sm">
@@ -25,8 +25,8 @@
                         <span class="d-none d-md-inline">Excel</span>
                     </button>
                 </div>
-                <div class="col-md-6">
-                    <div class="row g-2 align-items-center">
+                <div class="col-12 col-lg-6">
+                    <div class="row g-2 align-items-center flex-nowrap">
                         <div class="col-auto">
                             <label class="form-label mb-0 text-muted small fw-semibold">Show:</label>
                         </div>
@@ -38,7 +38,7 @@
                                 <option value="500">500</option>
                             </select>
                         </div>
-                        <div class="col">
+                        <div class="col" style="min-width:0;">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white border-secondary-subtle">
                                     <i class="fa fa-search"></i>
@@ -114,31 +114,31 @@
 
             {{-- ═══ Filter Row 1: Group, Building, Property, Customer, Status ═══ --}}
             <div class="row g-3">
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-folder-open text-primary me-1 small"></i> Group/Project
                     </label>
                     {{ html()->select('filterGroup', [])->value('')->class('select-property_group_id-list border-secondary-subtle shadow-sm')->id('booking_filterGroup')->placeholder('All Groups')->attribute('wire:model', 'filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-sm-6 col-lg-3" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-building text-primary me-1 small"></i> Building
                     </label>
                     {{ html()->select('filterBuilding', [])->value('')->class('select-property_building_id-list border-secondary-subtle shadow-sm')->id('booking_filterBuilding')->placeholder('All Buildings')->attribute('wire:model', 'filterBuilding')->attribute('data-group-select', '#booking_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-md-6" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-home text-primary me-1 small"></i> Property/Unit
                     </label>
                     {{ html()->select('filterProperty', [])->value('')->class('select-property_id-list border-secondary-subtle shadow-sm')->id('booking_filterProperty')->placeholder('All Properties')->attribute('wire:model', 'filterProperty')->attribute('data-building-select', '#booking_filterBuilding')->attribute('data-group-select', '#booking_filterGroup') }}
                 </div>
-                <div class="col-md-4 col-lg" wire:ignore>
+                <div class="col-12 col-md-4" wire:ignore>
                     <label class="form-label fw-medium">
                         <i class="fa fa-user text-primary me-1 small"></i> Customer
                     </label>
                     {{ html()->select('filterCustomer', [])->value('')->class('select-customer_id-list border-secondary-subtle shadow-sm')->id('booking_filterCustomer')->placeholder('All Customers')->attribute('wire:model', 'filterCustomer') }}
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-6 col-md-4">
                     <label class="form-label fw-medium">
                         <i class="fa fa-flag text-primary me-1 small"></i> Booking Status
                     </label>
@@ -150,25 +150,37 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="col-6 col-md-4">
+                    <label class="form-label fw-medium">
+                        <i class="fa fa-ban text-primary me-1 small"></i> Status
+                    </label>
+                    <select wire:model.live="filterStatus"
+                        class="form-select form-select-sm border-secondary-subtle shadow-sm">
+                        <option value="">All</option>
+                        @foreach ($statusOptions as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
 
             {{-- ═══ Filter Row 2: Dates + Booking Type ═══ --}}
             <div class="row g-3 mt-1">
-                <div class="col-md-4 col-lg">
+                <div class="col-6 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar text-primary me-1 small"></i> From Date
                     </label>
                     <input type="date" wire:model.live="fromDate"
                         class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-6 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-calendar-check-o text-primary me-1 small"></i> To Date
                     </label>
                     <input type="date" wire:model.live="toDate"
                         class="form-control form-control-sm border-secondary-subtle shadow-sm">
                 </div>
-                <div class="col-md-4 col-lg">
+                <div class="col-12 col-lg">
                     <label class="form-label fw-medium">
                         <i class="fa fa-tag text-primary me-1 small"></i> Booking Type
                     </label>
@@ -241,6 +253,9 @@
                             @endif
                             @if ($columns['booking_status'] ?? false)
                                 <th class="fw-semibold">Booking Status</th>
+                            @endif
+                            @if ($columns['status'] ?? false)
+                                <th class="fw-semibold">Status</th>
                             @endif
                             @if ($columns['created_at'] ?? false)
                                 <th class="fw-semibold"> <x-sortable-header :direction="$sortDirection" :sortField="$sortField"
@@ -316,6 +331,13 @@
                                     <td>
                                         <span class="badge bg-{{ $item->booking_status?->color() }}">
                                             {{ $item->booking_status?->label() }}
+                                        </span>
+                                    </td>
+                                @endif
+                                @if ($columns['status'] ?? false)
+                                    <td>
+                                        <span class="badge bg-{{ $item->status?->color() }}">
+                                            {{ $item->status?->label() }}
                                         </span>
                                     </td>
                                 @endif

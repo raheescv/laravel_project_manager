@@ -3,7 +3,6 @@
 namespace App\Exports\RentOut;
 
 use App\Enums\RentOut\AgreementType;
-use App\Enums\RentOut\RentOutStatus;
 use App\Models\RentOut;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -24,12 +23,13 @@ class BookingExport implements FromQuery, WithHeadings, WithMapping
         return RentOut::query()
             ->with(['customer', 'property', 'building', 'group'])
             ->where('agreement_type', $agreementType)
-            ->where('status', RentOutStatus::Booked)
+            ->bookings()
             ->when($this->filters['filterGroup'] ?? '', fn ($q, $v) => $q->where('property_group_id', $v))
             ->when($this->filters['filterBuilding'] ?? '', fn ($q, $v) => $q->where('property_building_id', $v))
             ->when($this->filters['filterProperty'] ?? '', fn ($q, $v) => $q->where('property_id', $v))
             ->when($this->filters['filterCustomer'] ?? '', fn ($q, $v) => $q->where('account_id', $v))
             ->when($this->filters['filterBookingType'] ?? '', fn ($q, $v) => $q->where('booking_type', $v))
+            ->when($this->filters['filterStatus'] ?? '', fn ($q, $v) => $q->where('status', $v))
             ->when($this->filters['filterBookingStatus'] ?? '', fn ($q, $v) => $q->where('booking_status', $v))
             ->when($this->filters['fromDate'] ?? '', fn ($q, $v) => $q->whereDate('start_date', '>=', $v))
             ->when($this->filters['toDate'] ?? '', fn ($q, $v) => $q->whereDate('end_date', '<=', $v))

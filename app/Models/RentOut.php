@@ -206,6 +206,25 @@ class RentOut extends Model implements AuditableContracts
         return $query->where('status', RentOutStatus::Booked);
     }
 
+    /**
+     * Agreements only — bookings live on their own Booking page.
+     */
+    public function scopeExcludingBookings($query)
+    {
+        return $query->where('status', '!=', RentOutStatus::Booked)
+            ->where(fn ($q) => $q->where('status', '!=', RentOutStatus::Cancelled)->orWhereNull('booking_status'));
+    }
+
+    /**
+     * Booking page rows — live bookings plus bookings that were cancelled
+     * (agreements never carry a booking_status, so a cancelled row with one was a booking).
+     */
+    public function scopeBookings($query)
+    {
+        return $query->where(fn ($q) => $q->where('status', RentOutStatus::Booked)
+            ->orWhere(fn ($q) => $q->where('status', RentOutStatus::Cancelled)->whereNotNull('booking_status')));
+    }
+
     public function scopeRental($query)
     {
         return $query->where('agreement_type', AgreementType::Rental);

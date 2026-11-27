@@ -186,6 +186,7 @@ class Table extends Component
     {
         if ($value) {
             $this->selected = RentOut::where('agreement_type', $this->agreementType)
+                ->excludingBookings()
                 ->latest()->limit(2000)->pluck('id')->toArray();
         } else {
             $this->selected = [];
@@ -227,6 +228,7 @@ class Table extends Component
     {
         $data = RentOut::with(['customer', 'property', 'building'])
             ->where('agreement_type', $this->agreementType)
+            ->excludingBookings()
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where(function ($q) use ($value) {
