@@ -248,3 +248,26 @@ it('lists payouts on the payments tab and nets them from the total', function ()
         ->assertSeeHtml('&minus; 300.00 paid out')
         ->assertSee('1,200.00');
 });
+
+it('prints a transfer in as an amount transfer voucher received from the source customer and unit', function (): void {
+    $response = (new TransferTransactionAction())->execute($this->from->id, $this->to->id, 1500);
+    $in = $response['data']['to']->load(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building']);
+
+    $transferFrom = TransferTransactionAction::transferredFrom($in);
+    expect($transferFrom?->id)->toBe($this->from->id)
+        ->and(TransferTransactionAction::transferredFrom($this->payment))->toBeNull()
+        ->and(TransferTransactionAction::transferredFrom($response['data']['from']))->toBeNull();
+
+    $html = view('print.rentout.receipt', [
+        'payment' => $in, 'rentOut' => $in->rentOut, 'transferFrom' => $transferFrom,
+        'companyName' => 'Co', 'companyAddress' => '', 'companyPhone' => '', 'companyEmail' => '', 'companyWebsite' => '', 'companyLogo' => null,
+    ])->render();
+
+    expect($html)->toContain('Amount Transfer Voucher')
+        ->toContain('Amount Transferred')
+        ->toContain('TA Customer One')
+        ->toContain('Unit TA-101 (TA Building)')
+        ->toContain('Transferred To')
+        ->toContain('TA Customer Two')
+        ->not->toContain('Receipt Voucher');
+});

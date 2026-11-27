@@ -7,6 +7,7 @@ use App\Actions\RentOut\Checklist\GeneratePdfAction;
 use App\Actions\RentOut\GenerateBrokerAgreementAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
+use App\Actions\RentOut\Payment\TransferTransactionAction;
 use App\Actions\RentOut\StatementEntriesAction;
 use App\Actions\Student\PreOrder\PrintListAction;
 use App\Helpers\Facades\SaleHelper;
@@ -306,8 +307,10 @@ class PrintController extends Controller
         $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
 
+        $transferFrom = TransferTransactionAction::transferredFrom($payment);
+
         $data = array_merge(
-            compact('payment', 'rentOut'),
+            compact('payment', 'rentOut', 'transferFrom'),
             $this->getCompanyInfo()
         );
 

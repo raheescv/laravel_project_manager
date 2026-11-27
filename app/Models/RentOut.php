@@ -487,10 +487,10 @@ class RentOut extends Model implements AuditableContracts
         $id = str_pad((string) $this->id, 3, '0', STR_PAD_LEFT);
 
         if ($this->agreement_type === AgreementType::Rental) {
-            return "BASL/{$yearCode}-{$id}";
+            return "BAS/{$yearCode}-{$id}";
         }
 
-        return "BASL/L/{$yearCode}-{$id}";
+        return "BAS/S/{$yearCode}-{$id}";
     }
 
     public function getReferenceNoAttribute(): string

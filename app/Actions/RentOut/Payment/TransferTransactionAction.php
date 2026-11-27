@@ -125,6 +125,23 @@ class TransferTransactionAction
         }
     }
 
+    /**
+     * The agreement a Transfer In row came from: its source_id points at the
+     * Transfer Out row, whose agreement is the source. Null for anything else.
+     */
+    public static function transferredFrom(RentOutTransaction $row): ?RentOut
+    {
+        if ($row->source !== self::SOURCE || (float) $row->credit <= 0 || ! $row->source_id) {
+            return null;
+        }
+
+        return RentOutTransaction::with(['rentOut.customer', 'rentOut.property', 'rentOut.building'])
+            ->where('source', self::SOURCE)
+            ->where('debit', '>', 0)
+            ->find($row->source_id)
+            ?->rentOut;
+    }
+
     protected function guard(RentOut $fromRentOut, RentOut $toRentOut, float $amount): void
     {
         if ($fromRentOut->id === $toRentOut->id) {

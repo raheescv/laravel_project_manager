@@ -2,8 +2,11 @@
     $isServiceInvoice = in_array($payment->source, ['Service', 'ServiceCharge'], true) && $payment->debit > 0 && ! ($payment->credit > 0);
     $receiptAmount    = $payment->credit > 0 ? $payment->credit : $payment->debit;
     $voucherNo        = $payment->voucher_no ?? $payment->id;
+    $transferFrom     = $transferFrom ?? null;
+    $isTransferIn     = $payment->source === 'Transfer' && $payment->credit > 0;
     $receiptTitle     = match (true) {
         $isServiceInvoice                     => trim(trim((string) $payment->category_label) . ' Invoice'),
+        $isTransferIn                         => 'Amount Transfer Voucher',
         $payment->model === 'RentOutSecurity' => 'Security Deposit Receipt Voucher',
         default                               => 'Receipt Voucher',
     };
@@ -69,6 +72,7 @@
         .b-fields .f-label { width: 26%; font-size: 10px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
         .b-fields .f-colon { width: 1%; padding: 8px 8px; color: #aaa; }
         .b-fields .f-value { font-size: 11px; color: var(--ink); word-break: break-word; }
+        .b-fields .f-sub { font-size: 9.5px; color: var(--ink-soft); margin-top: 2px; }
         .b-fields .pos { color: var(--accent-dark); font-weight: 700; }
         .b-fields .neg { color: #b3261e; font-weight: 700; }
 
@@ -118,7 +122,7 @@
 
     {{-- ── Amount ── --}}
     <div class="b-amount">
-        <div class="lbl">{{ $isServiceInvoice ? 'Amount Due' : 'Amount Received' }}</div>
+        <div class="lbl">{{ $isServiceInvoice ? 'Amount Due' : ($isTransferIn ? 'Amount Transferred' : 'Amount Received') }}</div>
         <div class="fig"><span class="cur">QR</span> {{ currency($receiptAmount) }}</div>
     </div>
 
@@ -128,7 +132,26 @@
     {{-- ── Fields ── --}}
     <table class="b-fields">
         <tbody>
+            @if ($isTransferIn && $transferFrom)
+            <tr>
+                <td class="f-label">Received From</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">
+                    {{ $transferFrom->customer?->name ?: '—' }}
+                    <div class="f-sub">
+                        @if ($transferFrom->property)Unit {{ $transferFrom->property->number }}@if ($transferFrom->building) ({{ $transferFrom->building->name }})@endif &bull; @endif
+                        Agreement {{ $transferFrom->agreement_no ?: '#' . $transferFrom->id }}
+                    </div>
+                </td>
+            </tr>
             @if ($rentOut->customer)
+            <tr>
+                <td class="f-label">Transferred To</td>
+                <td class="f-colon">:</td>
+                <td class="f-value">{{ $rentOut->customer->name }}</td>
+            </tr>
+            @endif
+            @elseif ($rentOut->customer)
             <tr>
                 <td class="f-label">{{ $isServiceInvoice ? 'Billed To' : 'Received From' }}</td>
                 <td class="f-colon">:</td>
@@ -150,7 +173,7 @@
             <tr>
                 <td class="f-label">Payment Mode</td>
                 <td class="f-colon">:</td>
-                <td class="f-value">{{ $payment->account?->name ?: '—' }}</td>
+                <td class="f-value">{{ $isTransferIn ? 'Transfer' : ($payment->account?->name ?: '—') }}</td>
             </tr>
             <tr>
                 <td class="f-label">Source</td>
@@ -197,7 +220,7 @@
     </table>
 
     {{-- ── Footer ── --}}
-    <div class="footer">Computer generated {{ $isServiceInvoice ? 'invoice' : 'receipt' }} &bull; {{ now()->format('d/m/Y h:i A') }}</div>
+    <div class="footer">Computer generated {{ $isServiceInvoice ? 'invoice' : ($isTransferIn ? 'transfer voucher' : 'receipt') }} &bull; {{ now()->format('d/m/Y h:i A') }}</div>
 
 </body>
 </html>
