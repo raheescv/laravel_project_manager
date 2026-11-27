@@ -2,6 +2,7 @@
 
 namespace App\Actions\V1\Sale;
 
+use App\Http\Resources\V1\Sale\SaleResource;
 use App\Models\Sale;
 
 class GetAction
@@ -14,15 +15,7 @@ class GetAction
     public function execute(int $saleId): Sale
     {
         return Sale::query()
-            ->with([
-                'items.product:id,name,code,name_arabic,type',
-                'items.options',
-                'items.employee:id,name',
-                'payments.paymentMethod:id,name',
-                'account:id,name,mobile',
-                'createdUser:id,name',
-                'branch',
-            ])
+            ->with(SaleResource::RELATIONS)
             ->findOrFail($saleId);
     }
 }

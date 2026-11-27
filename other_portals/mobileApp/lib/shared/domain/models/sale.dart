@@ -101,6 +101,12 @@ class SaleLine extends Equatable {
     this.code = '',
     this.tax = 0,
     this.options = const [],
+    this.printName = '',
+    this.printNameArabic = '',
+    this.description = '',
+    this.unit = '',
+    this.lineTotal,
+    this.effectiveTotal,
   });
   final String name;
   final String nameArabic;
@@ -118,6 +124,21 @@ class SaleLine extends Equatable {
   final String code;
   final double tax;
   final List<LineOption> options;
+
+  /// The line as the web invoice names it (product, or "code) category"); '' = [name].
+  final String printName;
+  final String printNameArabic;
+
+  /// The product's description, cut to 30 characters, printed in italics.
+  final String description;
+
+  /// The sold unit ("pcs", "kg"), printed small after the quantity.
+  final String unit;
+
+  /// The stored line total after tax, and the same after its share of the bill
+  /// discount — null on a sale rung up offline, which falls back to [total].
+  final double? lineTotal;
+  final double? effectiveTotal;
 
   factory SaleLine.fromJson(Map<String, dynamic> j) => SaleLine(
         name: asStr(j['name']),
@@ -137,6 +158,12 @@ class SaleLine extends Equatable {
           for (final o in (j['options'] is List ? j['options'] as List : const []))
             if (o is Map) LineOption.fromJson(Map<String, dynamic>.from(o)),
         ],
+        printName: asStr(j['print_name']),
+        printNameArabic: asStr(j['print_name_arabic']),
+        description: asStr(j['description']),
+        unit: asStr(j['unit']),
+        lineTotal: j['line_total'] == null ? null : asNum(j['line_total']).toDouble(),
+        effectiveTotal: j['effective_total'] == null ? null : asNum(j['effective_total']).toDouble(),
       );
 
 
@@ -156,12 +183,21 @@ class SaleLine extends Equatable {
         code,
         tax,
         options,
+        printName,
+        printNameArabic,
+        description,
+        unit,
+        lineTotal,
+        effectiveTotal,
       ];
 }
 
 class SalePayment extends Equatable {
-  const SalePayment({required this.method, required this.amount, this.paymentId, this.paymentMethodId});
+  const SalePayment({required this.method, required this.amount, this.paymentId, this.paymentMethodId, this.alias = ''});
   final String method;
+
+  /// The payment method's short name, printed instead of [method] when set.
+  final String alias;
   final double amount;
   final int? paymentId;
   final int? paymentMethodId;
@@ -170,6 +206,7 @@ class SalePayment extends Equatable {
         amount: asNum(j['amount']).toDouble(),
         paymentId: j['id'] == null ? null : asNum(j['id']).toInt(),
         paymentMethodId: j['payment_method_id'] == null ? null : asNum(j['payment_method_id']).toInt(),
+        alias: asStr(j['alias']),
       );
 
 
@@ -179,7 +216,63 @@ class SalePayment extends Equatable {
         amount,
         paymentId,
         paymentMethodId,
+        alias,
       ];
+}
+
+/// The `receipt` block of SaleResource: what else the web invoice prints
+/// (branch contact, GST, customer contact, barcode, QR link, served by…).
+/// Absent on a sale rung up offline; the receipt then falls back to what the
+/// sale itself carries.
+class SaleReceiptInfo extends Equatable {
+  const SaleReceiptInfo({
+    this.branchLocation = '',
+    this.branchMobile = '',
+    this.branchEmail = '',
+    this.gstNo = '',
+    this.customerMobile = '',
+    this.customerEmail = '',
+    this.customerTaxNo = '',
+    this.barcode = '',
+    this.qr = '',
+    this.servedBy = '',
+    this.updatedAt = '',
+    this.currencyCode = '',
+    this.currencySymbol = '',
+  });
+
+  factory SaleReceiptInfo.fromJson(Map<String, dynamic> j) => SaleReceiptInfo(
+        branchLocation: asStr(j['branch_location']),
+        branchMobile: asStr(j['branch_mobile']),
+        branchEmail: asStr(j['branch_email']),
+        gstNo: asStr(j['gst_no']),
+        customerMobile: asStr(j['customer_mobile']),
+        customerEmail: asStr(j['customer_email']),
+        customerTaxNo: asStr(j['customer_tax_no']),
+        barcode: asStr(j['barcode']),
+        qr: asStr(j['qr']),
+        servedBy: asStr(j['served_by']),
+        updatedAt: asStr(j['updated_at']),
+        currencyCode: asStr(j['currency_code']),
+        currencySymbol: asStr(j['currency_symbol']),
+      );
+
+  final String branchLocation;
+  final String branchMobile;
+  final String branchEmail;
+  final String gstNo;
+  final String customerMobile;
+  final String customerEmail;
+  final String customerTaxNo;
+  final String barcode;
+  final String qr;
+  final String servedBy;
+  final String updatedAt;
+  final String currencyCode;
+  final String currencySymbol;
+
+  @override
+  List<Object?> get props => [branchLocation, branchMobile, branchEmail, gstNo, customerMobile, customerEmail, customerTaxNo, barcode, qr, servedBy, updatedAt, currencyCode, currencySymbol];
 }
 
 /// The student a sale was charged to (`student` on SaleResource), with the card
@@ -232,6 +325,7 @@ class Sale extends Equatable {
     this.notes = '',
     this.pending = false,
     this.student,
+    this.receipt,
   });
 
   final String id;
@@ -281,6 +375,9 @@ class Sale extends Equatable {
 
   /// Set when the customer is a student (paid from their card).
   final SaleStudent? student;
+
+  /// What else the web invoice prints; null for a sale rung up offline.
+  final SaleReceiptInfo? receipt;
 
   double get discount => itemDiscount + otherDiscount;
 
@@ -334,6 +431,7 @@ class Sale extends Equatable {
       // pending — only one rebuilt from the outbox is.
       pending: j['pending'] == true,
       student: j['student'] is Map ? SaleStudent.fromJson(Map<String, dynamic>.from(j['student'] as Map)) : null,
+      receipt: j['receipt'] is Map ? SaleReceiptInfo.fromJson(Map<String, dynamic>.from(j['receipt'] as Map)) : null,
     );
   }
 
@@ -366,5 +464,6 @@ class Sale extends Equatable {
         notes,
         pending,
         student,
+        receipt,
       ];
 }

@@ -19,10 +19,7 @@ class SaleHelper
         if (! $sale) {
             return redirect(route('sale::index'));
         }
-        $grand_total = str_pad(intval($sale->grand_total).'00', 6, '0', STR_PAD_LEFT);
-        $barcode_string = '229919'.$grand_total;
-        $checkDigit = $this->checkDigitFunction($barcode_string);
-        $barcode_string .= $checkDigit;
+        $barcode_string = self::barcodeString(str_pad(intval($sale->grand_total).'00', 6, '0', STR_PAD_LEFT));
 
         $company_name = Configuration::where('key', 'company_name')->value('value') ?? '';
         $thermal_printer_style = Configuration::where('key', 'thermal_printer_style')->value('value') ?? 'with_arabic';
@@ -104,7 +101,15 @@ class SaleHelper
         exec($command);
     }
 
-    private function checkDigitFunction($barcode)
+    /** The receipt barcode: '229919' + the padded total + its check digit (web print and the app's receipt). */
+    public static function barcodeString(string $paddedTotal): string
+    {
+        $barcode = '229919'.$paddedTotal;
+
+        return $barcode.self::checkDigitFunction($barcode);
+    }
+
+    private static function checkDigitFunction($barcode)
     {
         // make sure there is just numbers in $barcode
         $barcode = preg_replace('/[^0-9]/', '', $barcode);

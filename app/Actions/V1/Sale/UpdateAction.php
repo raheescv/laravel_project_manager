@@ -9,6 +9,7 @@ use App\Actions\Sale\UpdateAction as SaleUpdateAction;
 use App\Actions\Student\EnsureAccountsAction;
 use App\Actions\V1\Student\ResolveCardCustomerAction;
 use App\Http\Requests\V1\Sale\UpdateRequest;
+use App\Http\Resources\V1\Sale\SaleResource;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\ApiLog;
@@ -142,15 +143,7 @@ class UpdateAction
                 }
 
                 return $response['data'];
-            })->load([
-                'items.product:id,name,code,name_arabic,type',
-                'items.options',
-                'items.employee:id,name',
-                'payments.paymentMethod:id,name',
-                'account:id,name,mobile',
-                'createdUser:id,name',
-                'branch',
-            ]);
+            })->load(SaleResource::RELATIONS);
 
             $this->completeApiLog($apiLog, 'success', [
                 'sale_id' => $sale->id,

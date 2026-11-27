@@ -8,6 +8,7 @@ use App\Actions\Sale\CreateAction as SaleCreateAction;
 use App\Actions\Student\EnsureAccountsAction;
 use App\Actions\V1\Student\ResolveCardCustomerAction;
 use App\Http\Requests\V1\Sale\StoreRequest;
+use App\Http\Resources\V1\Sale\SaleResource;
 use App\Models\Account;
 use App\Models\AccountCategory;
 use App\Models\ApiLog;
@@ -149,15 +150,7 @@ class CreateAction
 
                     return $response['data'];
                 },
-            ))->load([
-                'items.product:id,name,type',
-                'items.options',
-                'items.employee:id,name',
-                'payments.paymentMethod:id,name',
-                'account:id,name,mobile',
-                'createdUser:id,name',
-                'branch',
-            ]);
+            ))->load(SaleResource::RELATIONS);
 
             if ($request->boolean('sendToWhatsapp')) {
                 $this->dispatchWhatsapp((int) $sale->id);
@@ -235,15 +228,7 @@ class CreateAction
             ->withoutGlobalScope(AssignedBranchScope::class)
             ->withTrashed()
             ->where('client_uuid', $clientUuid)
-            ->with([
-                'items.product:id,name,type',
-                'items.options',
-                'items.employee:id,name',
-                'payments.paymentMethod:id,name',
-                'account:id,name,mobile',
-                'createdUser:id,name',
-                'branch',
-            ])
+            ->with(SaleResource::RELATIONS)
             ->first();
     }
 
