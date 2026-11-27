@@ -94,7 +94,8 @@ class Table extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->when($this->search ?? '', function ($query, $value) {
                 return $query->where('name', 'like', "%{$value}%")
-                    ->orWhere('location', 'like', "%{$value}%");
+                    ->orWhere('location', 'like', "%{$value}%")
+                    ->orWhere('property_type_no', 'like', "%{$value}%");
             })
             ->paginate($this->limit);
 

@@ -53,8 +53,8 @@
                     </div>
                 </div>
 
-                {{-- Row 3: Created Date, Reference Code, Building No --}}
-                <div class="col-md-4">
+                {{-- Row 3: Created Date, Reference Code, Building No, Property Type No --}}
+                <div class="col-md-3">
                     <div class="form-floating">
                         <input type="date" class="form-control @error('formData.created_date') is-invalid @enderror" id="created_date" wire:model="formData.created_date">
                         <label for="created_date">Created Date</label>
@@ -63,7 +63,7 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.reference_code') is-invalid @enderror" id="reference_code" placeholder="Enter Reference Code" wire:model="formData.reference_code">
                         <label for="reference_code">Reference Code</label>
@@ -72,11 +72,20 @@
                         @enderror
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="form-floating">
                         <input type="text" class="form-control @error('formData.building_no') is-invalid @enderror" id="building_no" placeholder="Enter Building No" wire:model="formData.building_no">
                         <label for="building_no">Building No</label>
                         @error('formData.building_no')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="text" class="form-control @error('formData.property_type_no') is-invalid @enderror" id="property_type_no" placeholder="Enter Property Type No" wire:model="formData.property_type_no">
+                        <label for="property_type_no">Property Type No</label>
+                        @error('formData.property_type_no')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

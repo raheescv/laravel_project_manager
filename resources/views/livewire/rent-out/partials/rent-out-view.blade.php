@@ -81,6 +81,11 @@
                     @if ($isRental)
                         <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAUtilitiesModal"><i class="fa fa-bolt"></i> Utilities</button>
                     @endif
+                    @if (! $isRental)
+                        @can('rent out lease.view')
+                            <a href="{{ route('print::rentout::broker-agreement', $rentOut->id) }}" target="_blank" class="btn btn-glass"><i class="fa fa-print"></i> Broker Agreement</a>
+                        @endcan
+                    @endif
                     @if ($activeStatus)
                         <button type="button" class="btn btn-glass-warn" wire:click="openVacateModal"><i class="fa fa-sign-out"></i> Vacate</button>
                     @endif

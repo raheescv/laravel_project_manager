@@ -9,6 +9,7 @@
         $collectionMode = $rent_outs['collection_payment_mode'] ?? '';
         $hasTerms = collect(['remark', 'cancellation_policy_en', 'cancellation_policy_ar', 'payment_terms_en', 'payment_terms_ar', 'payment_terms_extended_en', 'payment_terms_extended_ar'])->contains(fn ($key) => filled($rent_outs[$key] ?? null));
         $currencyCode = base_currency()['code'] ?? null;
+        $hasBrokerDetails = collect(['broker_agreement_date', 'asking_rent', 'minimum_rent', 'available_from', 'launch_incentive_en', 'launch_incentive_ar'])->contains(fn ($key) => filled($rent_outs[$key] ?? null));
     @endphp
     <x-rent-out.form.premium />
 
@@ -281,6 +282,48 @@
                         </div>
                     </div>
                 </section>
+
+                @if ($config->isLease)
+                    {{-- 5 · Broker agreement --}}
+                    <section class="bk-card bk-sec is-collapsible" x-data="{ open: @js($hasBrokerDetails) }" :class="{ 'closed': !open }">
+                        <header @click="open = !open">
+                            <span class="n">5</span>
+                            <h3>Broker Agreement</h3>
+                            <span class="meta">Printed on the Exclusive Leasing Brokerage Agreement</span>
+                            <i class="fa fa-angle-down chev"></i>
+                        </header>
+                        <div class="bd" x-show="open" x-cloak>
+                            <div class="bk-g">
+                                <div>
+                                    <div class="bk-lbl">Agreement date</div>
+                                    <input type="date" class="ctl" wire:model="rent_outs.broker_agreement_date">
+                                    @error('broker_agreement_date') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                                </div>
+                                <div>
+                                    <div class="bk-lbl">Approved asking rent / month</div>
+                                    <div class="{{ $currencyCode ? 'bk-pre' : '' }}">@if ($currencyCode)<span>{{ $currencyCode }}</span>@endif<input type="number" class="ctl" wire:model="rent_outs.asking_rent" step="0.01" min="0"></div>
+                                </div>
+                                <div>
+                                    <div class="bk-lbl">Minimum rent</div>
+                                    <div class="{{ $currencyCode ? 'bk-pre' : '' }}">@if ($currencyCode)<span>{{ $currencyCode }}</span>@endif<input type="number" class="ctl" wire:model="rent_outs.minimum_rent" step="0.01" min="0"></div>
+                                </div>
+                                <div>
+                                    <div class="bk-lbl">Available from</div>
+                                    <input type="date" class="ctl" wire:model="rent_outs.available_from">
+                                </div>
+                                <div class="span2">
+                                    <div class="bk-lbl">Launch incentive (English)</div>
+                                    <input type="text" class="ctl" wire:model="rent_outs.launch_incentive_en" maxlength="255" placeholder="e.g. 1 month rent free">
+                                </div>
+                                <div class="span2">
+                                    <div class="bk-lbl">العرض الترويجي (عربي)</div>
+                                    <input type="text" class="ctl" dir="rtl" wire:model="rent_outs.launch_incentive_ar" maxlength="255" placeholder="مثال: شهر مجاناً">
+                                </div>
+                            </div>
+                            <div class="small text-body-secondary mt-2">Left blank, the agreement prints the created date, the start date and the free months; a blank rent prints a line to fill in by hand.</div>
+                        </div>
+                    </section>
+                @endif
             </div>
 
             {{-- Summary rail --}}

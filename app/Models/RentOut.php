@@ -57,6 +57,12 @@ class RentOut extends Model implements AuditableContracts
         'payment_frequency',
         'discount',
         'free_month',
+        'broker_agreement_date',
+        'asking_rent',
+        'minimum_rent',
+        'available_from',
+        'launch_incentive_en',
+        'launch_incentive_ar',
         'total',
         'collection_starting_day',
         'collection_payment_mode',
@@ -114,6 +120,8 @@ class RentOut extends Model implements AuditableContracts
         'vacate_date' => 'date',
         'actual_move_in_date' => 'date',
         'actual_move_out_date' => 'date',
+        'broker_agreement_date' => 'date',
+        'available_from' => 'date',
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
         'financial_approved_at' => 'datetime',
@@ -126,6 +134,8 @@ class RentOut extends Model implements AuditableContracts
         'total' => 'decimal:2',
         'management_fee' => 'decimal:2',
         'down_payment' => 'decimal:2',
+        'asking_rent' => 'decimal:2',
+        'minimum_rent' => 'decimal:2',
     ];
 
     public static function rules($id = 0, array $merge = []): array
@@ -140,6 +150,12 @@ class RentOut extends Model implements AuditableContracts
             'total' => 'required|numeric|min:0',
             'collection_starting_day' => 'required|numeric|min:1|max:31',
             'collection_payment_mode' => 'required',
+            'broker_agreement_date' => 'nullable|date',
+            'asking_rent' => 'nullable|numeric|min:0',
+            'minimum_rent' => 'nullable|numeric|min:0',
+            'available_from' => 'nullable|date',
+            'launch_incentive_en' => 'nullable|string|max:255',
+            'launch_incentive_ar' => 'nullable|string|max:255',
         ], $merge);
     }
 

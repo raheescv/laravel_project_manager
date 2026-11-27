@@ -23,6 +23,9 @@ class RentOutPrintSettings
 
     public const DEFAULT_SECONDARY_COLOR = '#d9f0fb';
 
+    /** JSON list of the numbered clauses printed on the broker agreement. */
+    public const BROKER_CLAUSES_KEY = 'broker_agreement_clauses';
+
     /**
      * Agreement / reservation wording: key => default printed when the key is blank.
      * Arabic defaults left empty mean "print nothing", or, for project names,
@@ -84,6 +87,25 @@ class RentOutPrintSettings
     }
 
     /**
+     * Broker (agent) block of the Exclusive Leasing Brokerage Agreement printed
+     * for a sale agreement. Keys without a language suffix print the same value
+     * on both sides.
+     *
+     * @return array<string, string>
+     */
+    public static function brokerKeys(): array
+    {
+        return [
+            'broker_name_english' => 'Name (English)',
+            'broker_name_arabic' => 'Name (Arabic)',
+            'broker_cr_no' => 'CR No',
+            'broker_license_no' => 'Brokerage Licence No',
+            'broker_authorized_by_english' => 'Represented By (English)',
+            'broker_authorized_by_arabic' => 'Represented By (Arabic)',
+        ];
+    }
+
+    /**
      * Single-language keys this app read before the English/Arabic split; still
      * honoured so a tenant that set them keeps its lessor details.
      */
@@ -117,6 +139,7 @@ class RentOutPrintSettings
         return [
             ...array_keys(self::textDefaults()),
             ...array_keys(self::lessorKeys()),
+            ...array_keys(self::brokerKeys()),
             self::PRIMARY_COLOR_KEY,
             self::SECONDARY_COLOR_KEY,
         ];
@@ -157,6 +180,53 @@ class RentOutPrintSettings
         }
 
         return $value;
+    }
+
+    public static function broker(string $key): string
+    {
+        return trim((string) Configuration::where('key', $key)->value('value'));
+    }
+
+    /**
+     * The broker agreement's numbered clauses, in print order.
+     *
+     * @return list<array{heading_en: string, heading_ar: string, text_en: string, text_ar: string}>
+     */
+    public static function brokerClauses(): array
+    {
+        $stored = json_decode((string) Configuration::where('key', self::BROKER_CLAUSES_KEY)->value('value'), true);
+
+        return self::normalizeBrokerClauses(is_array($stored) ? $stored : []);
+    }
+
+    /**
+     * Trim every field and drop clauses left completely blank.
+     *
+     * @param  array<int, mixed>  $clauses
+     * @return list<array{heading_en: string, heading_ar: string, text_en: string, text_ar: string}>
+     */
+    public static function normalizeBrokerClauses(array $clauses): array
+    {
+        return collect($clauses)
+            ->filter(fn ($clause): bool => is_array($clause))
+            ->map(fn (array $clause): array => [
+                'heading_en' => trim((string) ($clause['heading_en'] ?? '')),
+                'heading_ar' => trim((string) ($clause['heading_ar'] ?? '')),
+                'text_en' => trim((string) ($clause['text_en'] ?? '')),
+                'text_ar' => trim((string) ($clause['text_ar'] ?? '')),
+            ])
+            ->filter(fn (array $clause): bool => implode('', $clause) !== '')
+            ->values()
+            ->all();
+    }
+
+    /** @param  array<int, mixed>  $clauses */
+    public static function saveBrokerClauses(array $clauses): void
+    {
+        Configuration::updateOrCreate(
+            ['key' => self::BROKER_CLAUSES_KEY],
+            ['value' => json_encode(self::normalizeBrokerClauses($clauses), JSON_UNESCAPED_UNICODE)]
+        );
     }
 
     /** Replace the {date} token in a contract clause. */

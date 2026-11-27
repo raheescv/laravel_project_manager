@@ -125,6 +125,8 @@ class Page extends Component
             $this->rent_outs['collection_payment_mode'] = $this->rentOut->collection_payment_mode->value;
             $this->rent_outs['start_date'] = $this->rentOut->start_date->format('Y-m-d');
             $this->rent_outs['end_date'] = $this->rentOut->end_date->format('Y-m-d');
+            $this->rent_outs['broker_agreement_date'] = $this->rentOut->broker_agreement_date?->format('Y-m-d');
+            $this->rent_outs['available_from'] = $this->rentOut->available_from?->format('Y-m-d');
             $property_name = $this->rentOut->property ? $this->rentOut->property->number.($this->rentOut->property->building ? ' - '.$this->rentOut->property->building->name : '') : '';
             $this->preFilledDropDowns = [
                 'group' => [
@@ -203,6 +205,12 @@ class Page extends Component
                 'payment_terms_ar' => '',
                 'payment_terms_extended_en' => '',
                 'payment_terms_extended_ar' => '',
+                'broker_agreement_date' => null,
+                'asking_rent' => null,
+                'minimum_rent' => null,
+                'available_from' => null,
+                'launch_incentive_en' => '',
+                'launch_incentive_ar' => '',
             ];
 
             // Pre-fill from Property Lead transfer (session data)
@@ -342,6 +350,7 @@ class Page extends Component
             $permission = $this->table_id ? $this->config->editPermission : $this->config->createPermission;
         }
         abort_unless(auth()->user()?->can($permission), 403);
+        $this->clearBlankBrokerFields();
         try {
             DB::beginTransaction();
             if ($this->type === 'Booking') {
@@ -371,6 +380,16 @@ class Page extends Component
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
+        }
+    }
+
+    /** Cleared inputs come back as '' — store them as NULL so the decimal and date columns accept them. */
+    private function clearBlankBrokerFields(): void
+    {
+        foreach (['broker_agreement_date', 'asking_rent', 'minimum_rent', 'available_from', 'launch_incentive_en', 'launch_incentive_ar'] as $field) {
+            if (($this->rent_outs[$field] ?? null) === '') {
+                $this->rent_outs[$field] = null;
+            }
         }
     }
 

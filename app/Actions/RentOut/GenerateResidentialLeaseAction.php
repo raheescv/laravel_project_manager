@@ -147,7 +147,7 @@ class GenerateResidentialLeaseAction
     {
         $customer = $rentOut->customer;
 
-        return [
+        $rows = [
             [
                 'english' => ['title' => 'Name', 'value' => $customer?->name],
                 'arabic' => ['title' => 'اسم', 'value' => $customer?->name],
@@ -156,20 +156,36 @@ class GenerateResidentialLeaseAction
                 'english' => ['title' => 'Qid No', 'value' => $customer?->id_no],
                 'arabic' => ['title' => 'رقم بطاقة المستأجر', 'value' => $customer?->id_no],
             ],
-            [
-                'english' => ['title' => 'Mobile No', 'value' => $customer?->mobile],
-                'arabic' => ['title' => 'رقم هاتف المستأجر', 'value' => $customer?->mobile],
-            ],
-            [
-                'english' => ['title' => 'E-Mail', 'value' => $customer?->email, 'keep_original' => true],
-                'arabic' => ['title' => 'بريد إلكتروني'],
-            ],
         ];
+
+        if (filled($customer?->cr_number)) {
+            $rows[] = [
+                'english' => ['title' => 'CR No', 'value' => $customer->cr_number, 'keep_original' => true],
+                'arabic' => ['title' => 'رقم السجل التجاري'],
+            ];
+        }
+
+        $rows[] = [
+            'english' => ['title' => 'Mobile No', 'value' => $customer?->mobile],
+            'arabic' => ['title' => 'رقم هاتف المستأجر', 'value' => $customer?->mobile],
+        ];
+        $rows[] = [
+            'english' => ['title' => 'E-Mail', 'value' => $customer?->email, 'keep_original' => true],
+            'arabic' => ['title' => 'بريد إلكتروني'],
+        ];
+
+        return $rows;
     }
 
+    /**
+     * Meter numbers (water, BTU, gas) print only when the unit has one, so a
+     * unit without a gas line does not show an empty "Gas Meter No" row.
+     */
     private function buildPremisesDetails(RentOut $rentOut): array
     {
-        return [
+        $property = $rentOut->property;
+
+        $rows = [
             [
                 'english' => ['title' => 'Tower', 'value' => $rentOut->building?->name],
                 'arabic' => ['title' => 'برج', 'value' => $rentOut->building?->arabic_name],
@@ -179,30 +195,38 @@ class GenerateResidentialLeaseAction
                 'arabic' => ['title' => 'نوع الشقة', 'value' => $rentOut->type?->arabic_name],
             ],
             [
-                'english' => ['title' => 'Unit No', 'value' => $rentOut->property?->number],
-                'arabic' => ['title' => 'رقم الوحدة', 'value' => $rentOut->property?->number],
+                'english' => ['title' => 'Unit No', 'value' => $property?->number],
+                'arabic' => ['title' => 'رقم الوحدة', 'value' => $property?->number],
             ],
             [
-                'english' => ['title' => 'Electricity No', 'value' => $rentOut->property?->kahramaa],
-                'arabic' => ['title' => 'رقم الكهرباء', 'value' => $rentOut->property?->kahramaa],
-            ],
-            [
-                'english' => ['title' => 'Water No', 'value' => $rentOut->property?->water_number],
-                'arabic' => ['title' => 'رقم المياه', 'value' => $rentOut->property?->water_number],
-            ],
-            [
-                'english' => ['title' => 'BTU No', 'value' => $rentOut->property?->btu_number],
-                'arabic' => ['title' => 'رقم BTU', 'value' => $rentOut->property?->btu_number],
-            ],
-            [
-                'english' => ['title' => 'Gas Meter No', 'value' => $rentOut->property?->gas_meter_number],
-                'arabic' => ['title' => 'رقم عداد الغاز', 'value' => $rentOut->property?->gas_meter_number],
-            ],
-            [
-                'english' => ['title' => 'Parking Number', 'value' => $rentOut->property?->parking],
-                'arabic' => ['title' => 'رقم موقف السيارة', 'value' => $rentOut->property?->parking],
+                'english' => ['title' => 'Electricity No', 'value' => $property?->kahramaa],
+                'arabic' => ['title' => 'رقم الكهرباء', 'value' => $property?->kahramaa],
             ],
         ];
+
+        foreach ([
+            'water_number' => ['Water No', 'رقم المياه'],
+            'btu_number' => ['BTU No', 'رقم BTU'],
+            'gas_meter_number' => ['Gas Meter No', 'رقم عداد الغاز'],
+        ] as $column => [$englishTitle, $arabicTitle]) {
+            if (filled($property?->{$column})) {
+                $rows[] = [
+                    'english' => ['title' => $englishTitle, 'value' => $property->{$column}],
+                    'arabic' => ['title' => $arabicTitle, 'value' => $property->{$column}],
+                ];
+            }
+        }
+
+        $rows[] = [
+            'english' => ['title' => 'Property Type No', 'value' => $rentOut->building?->property_type_no],
+            'arabic' => ['title' => 'رقم نوع العقار', 'value' => $rentOut->building?->property_type_no],
+        ];
+        $rows[] = [
+            'english' => ['title' => 'Parking Number', 'value' => $property?->parking],
+            'arabic' => ['title' => 'رقم موقف السيارة', 'value' => $property?->parking],
+        ];
+
+        return $rows;
     }
 
     private function buildContractDetails(RentOut $rentOut, string $type): array

@@ -15,6 +15,8 @@
     $agreementImageCount = count($existing_rent_out_agreement_images);
     $bondPaperOn = $reservation_bond_paper_mode === 'yes';
     $lessorSet = collect($lessorFields)->keys()->filter(fn ($key) => filled($print_settings[$key] ?? null))->count();
+    $brokerSet = collect($brokerFields)->keys()->filter(fn ($key) => filled($print_settings[$key] ?? null))->count();
+    $brokerClauseCount = count($broker_clauses);
     $agreementPrimary = $print_settings[\App\Support\RentOutPrintSettings::PRIMARY_COLOR_KEY] ?? '';
     $agreementSecondary = $print_settings[\App\Support\RentOutPrintSettings::SECONDARY_COLOR_KEY] ?? '';
     $customColors = filled($agreementPrimary) || filled($agreementSecondary);
@@ -75,6 +77,17 @@
             'ok' => $lessorSet > 0,
             'sub' => 'The landlord company printed as the First Party - Lessor on the tenancy agreement PDF.',
             'fields' => collect($lessorFields)->keys()->map(fn ($key) => 'print_settings.' . $key)->all(),
+        ],
+        'broker' => [
+            'icon' => 'fa-briefcase',
+            'title' => 'Broker Agreement',
+            'status' => $brokerSet . ' of ' . count($brokerFields) . ' set · ' . $brokerClauseCount . ' ' . str('clause')->plural($brokerClauseCount),
+            'ok' => $brokerSet > 0 && $brokerClauseCount > 0,
+            'sub' => 'The broker, numbered clauses and letterhead layout of the Exclusive Leasing Brokerage Agreement printed from a sale agreement. The owner block prints the sale\'s customer.',
+            'fields' => [
+                ...collect($brokerFields)->keys()->map(fn ($key) => 'print_settings.' . $key)->all(),
+                'broker_clauses.*', 'broker_logo_height', 'broker_footer_height', 'broker_bond_paper_mode',
+            ],
         ],
         'colors' => [
             'icon' => 'fa-paint-brush',
@@ -405,6 +418,97 @@
                                     @enderror
                                 </div>
                             @endforeach
+                        </div>
+                    </div>
+                </section>
+
+                {{-- ============ BROKER AGREEMENT ============ --}}
+                <section x-show="tab === 'broker'" x-cloak>
+                    @include('livewire.settings.partials.rent-out-pane-head', ['section' => $sections['broker']])
+
+                    <div class="card shadow-none border rounded-3 p-3 mb-3">
+                        <div class="fw-semibold small mb-2"><i class="fa fa-user me-1"></i> Broker</div>
+                        <div class="row g-3">
+                            @foreach ($brokerFields as $key => $label)
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold small" for="print_{{ $key }}">{{ $label }}</label>
+                                    <input type="text" id="print_{{ $key }}" class="form-control form-control-sm" wire:model="print_settings.{{ $key }}"
+                                        @if (str_ends_with($key, '_arabic')) dir="rtl" @endif>
+                                    @error("print_settings.{$key}")
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="card shadow-none border rounded-3 p-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <div class="fw-semibold small"><i class="fa fa-list-ol me-1"></i> Clauses</div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" wire:click="addBrokerClause"><i class="fa fa-plus me-1"></i> Add clause</button>
+                        </div>
+                        @forelse ($broker_clauses as $index => $clause)
+                            <div class="border rounded-3 p-2 mb-2" wire:key="broker-clause-{{ $index }}">
+                                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">{{ $index + 1 }}</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-secondary" wire:click="moveBrokerClause({{ $index }}, -1)" @disabled($index === 0) title="Move up"><i class="fa fa-arrow-up"></i></button>
+                                        <button type="button" class="btn btn-outline-secondary" wire:click="moveBrokerClause({{ $index }}, 1)" @disabled($index === count($broker_clauses) - 1) title="Move down"><i class="fa fa-arrow-down"></i></button>
+                                        <button type="button" class="btn btn-outline-danger" wire:click="removeBrokerClause({{ $index }})" title="Remove"><i class="fa fa-trash"></i></button>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-6">
+                                        <input type="text" class="form-control form-control-sm" wire:model="broker_clauses.{{ $index }}.heading_en" placeholder="Heading (English)">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <input type="text" class="form-control form-control-sm" dir="rtl" wire:model="broker_clauses.{{ $index }}.heading_ar" placeholder="العنوان (عربي)">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <textarea class="form-control form-control-sm" rows="4" wire:model="broker_clauses.{{ $index }}.text_en" placeholder="Clause text (English)"></textarea>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <textarea class="form-control form-control-sm" rows="4" dir="rtl" wire:model="broker_clauses.{{ $index }}.text_ar" placeholder="نص البند (عربي)"></textarea>
+                                    </div>
+                                </div>
+                                @error("broker_clauses.{$index}.*")
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @empty
+                            <div class="text-body-secondary small">No clauses yet. The agreement prints its sections and signatures only.</div>
+                        @endforelse
+                    </div>
+
+                    <div class="card shadow-none border rounded-3 p-3">
+                        <label class="d-flex align-items-center justify-content-between gap-3 mb-3" for="broker_bond_paper_mode" role="button">
+                            <span class="min-w-0">
+                                <span class="d-block fw-semibold small">Bond paper mode</span>
+                                <span class="d-block small text-body-secondary">Hide the logo &amp; footer image on the broker agreement only, keep their space blank.</span>
+                            </span>
+                            <span class="form-check form-switch m-0 flex-shrink-0">
+                                <input type="checkbox" class="form-check-input m-0" role="switch" id="broker_bond_paper_mode"
+                                    :checked="$wire.broker_bond_paper_mode === 'yes'"
+                                    x-on:change="$wire.broker_bond_paper_mode = $event.target.checked ? 'yes' : 'no'">
+                            </span>
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold small" for="broker_logo_height">Header reserved height</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" id="broker_logo_height" wire:model="broker_logo_height" class="form-control" min="0" placeholder="80">
+                                    <span class="input-group-text">px</span>
+                                </div>
+                                @error('broker_logo_height') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label fw-semibold small" for="broker_footer_height">Footer reserved height</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" id="broker_footer_height" wire:model="broker_footer_height" class="form-control" min="0" placeholder="50">
+                                    <span class="input-group-text">px</span>
+                                </div>
+                                @error('broker_footer_height') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                            </div>
                         </div>
                     </div>
                 </section>

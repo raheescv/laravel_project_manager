@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\PurchaseVendor\BuildStatementDataAction;
 use App\Actions\RentOut\Checklist\GeneratePdfAction;
+use App\Actions\RentOut\GenerateBrokerAgreementAction;
 use App\Actions\RentOut\GenerateReservationFormAction;
 use App\Actions\RentOut\GenerateResidentialLeaseAction;
 use App\Actions\RentOut\StatementEntriesAction;
@@ -446,6 +447,12 @@ class PrintController extends Controller
         $this->authorizeBookingPrint($id, 'bookingResidentialLeasePermission');
 
         return (new GenerateResidentialLeaseAction())->execute($id, $type);
+    }
+
+    /** Exclusive Leasing Brokerage Agreement of a sale (lease) agreement; the route gates on 'rent out lease.view'. */
+    public function brokerAgreement($id)
+    {
+        return (new GenerateBrokerAgreementAction())->execute((int) $id);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────

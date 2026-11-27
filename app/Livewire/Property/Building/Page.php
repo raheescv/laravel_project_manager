@@ -54,6 +54,7 @@ class Page extends Component
                 'created_date' => now()->subDay()->format('Y-m-d'),
                 'reference_code' => '',
                 'building_no' => '',
+                'property_type_no' => '',
                 'location' => '',
                 'floors' => '',
                 'investment' => '',

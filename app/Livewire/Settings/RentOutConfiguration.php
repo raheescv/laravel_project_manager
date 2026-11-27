@@ -24,6 +24,16 @@ class RentOutConfiguration extends Component
 
     public $reservation_footer_height;
 
+    // Bond Paper / Letterhead Mode for the Broker Agreement PDF only
+    public $broker_bond_paper_mode;
+
+    public $broker_logo_height;
+
+    public $broker_footer_height;
+
+    /** @var list<array{heading_en: string, heading_ar: string, text_en: string, text_ar: string}> */
+    public array $broker_clauses = [];
+
     // Default charge pre-filled on a utility Connect service request for an occupied unit
     public $service_request_connect_amount;
 
@@ -78,6 +88,9 @@ class RentOutConfiguration extends Component
         'reservation_bond_paper_mode',
         'reservation_logo_height',
         'reservation_footer_height',
+        'broker_bond_paper_mode',
+        'broker_logo_height',
+        'broker_footer_height',
         'service_request_connect_amount',
     ];
 
@@ -100,6 +113,10 @@ class RentOutConfiguration extends Component
         $this->reservation_logo_height = $this->reservation_logo_height ?: 80;
         $this->reservation_footer_height = $this->reservation_footer_height ?: 30;
         $this->reservation_bond_paper_mode = $this->reservation_bond_paper_mode ?: 'no';
+        $this->broker_logo_height = $this->broker_logo_height ?: 80;
+        $this->broker_footer_height = $this->broker_footer_height ?: 50;
+        $this->broker_bond_paper_mode = $this->broker_bond_paper_mode ?: 'no';
+        $this->broker_clauses = RentOutPrintSettings::brokerClauses();
 
         // Load existing logo paths
         $this->existing_rental_reservation_logo = Configuration::where('key', 'rental_reservation_logo')->value('value');
@@ -172,6 +189,14 @@ class RentOutConfiguration extends Component
             'print_settings.*' => 'nullable|string|max:2000',
             'appointment_slot_scope' => 'required|in:'.SlotService::SLOT_SCOPE_INDIVIDUAL.','.SlotService::SLOT_SCOPE_GLOBAL,
             'service_request_connect_amount' => 'nullable|numeric|min:0',
+            'broker_bond_paper_mode' => 'required|in:yes,no',
+            'broker_logo_height' => 'nullable|integer|min:0|max:400',
+            'broker_footer_height' => 'nullable|integer|min:0|max:300',
+            'broker_clauses' => 'array|max:30',
+            'broker_clauses.*.heading_en' => 'nullable|string|max:255',
+            'broker_clauses.*.heading_ar' => 'nullable|string|max:255',
+            'broker_clauses.*.text_en' => 'nullable|string|max:3000',
+            'broker_clauses.*.text_ar' => 'nullable|string|max:3000',
         ], [
             'print_settings.*.regex' => 'Enter a colour as #RRGGBB, e.g. #1b7bbc.',
             'print_settings.lessor_email.email' => 'Enter a valid lessor email address.',
@@ -203,6 +228,9 @@ class RentOutConfiguration extends Component
         foreach (RentOutPrintSettings::keys() as $key) {
             Configuration::updateOrCreate(['key' => $key], ['value' => trim((string) ($this->print_settings[$key] ?? ''))]);
         }
+
+        RentOutPrintSettings::saveBrokerClauses($this->broker_clauses);
+        $this->broker_clauses = RentOutPrintSettings::brokerClauses();
 
         // Save checklist print headings / declarations (blanks fall back to defaults)
         RentOutChecklistNotes::save($this->checklist_notes);
@@ -255,6 +283,27 @@ class RentOutConfiguration extends Component
         Artisan::call('optimize:clear');
     }
 
+    public function addBrokerClause(): void
+    {
+        $this->broker_clauses[] = ['heading_en' => '', 'heading_ar' => '', 'text_en' => '', 'text_ar' => ''];
+    }
+
+    public function removeBrokerClause(int $index): void
+    {
+        unset($this->broker_clauses[$index]);
+        $this->broker_clauses = array_values($this->broker_clauses);
+    }
+
+    public function moveBrokerClause(int $index, int $direction): void
+    {
+        $target = $index + $direction;
+        if (! isset($this->broker_clauses[$index], $this->broker_clauses[$target])) {
+            return;
+        }
+
+        [$this->broker_clauses[$index], $this->broker_clauses[$target]] = [$this->broker_clauses[$target], $this->broker_clauses[$index]];
+    }
+
     public function render()
     {
         return view('livewire.settings.rent-out-configuration', [
@@ -267,6 +316,7 @@ class RentOutConfiguration extends Component
             'checklistDefaults' => RentOutChecklistNotes::defaults(),
             'printTextDefaults' => RentOutPrintSettings::textDefaults(),
             'lessorFields' => RentOutPrintSettings::lessorKeys(),
+            'brokerFields' => RentOutPrintSettings::brokerKeys(),
             'colorPresets' => RentOutPrintSettings::colorPresets(),
         ]);
     }

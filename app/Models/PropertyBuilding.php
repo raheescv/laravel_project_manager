@@ -24,6 +24,7 @@ class PropertyBuilding extends Model implements AuditableContracts
         'created_date',
         'reference_code',
         'building_no',
+        'property_type_no',
         'location',
         'floors',
         'investment',

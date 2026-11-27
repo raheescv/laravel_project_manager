@@ -1021,6 +1021,7 @@ class MigratePropertyDataCommand extends Command
             'created_date' => $row->date_created ?? null,
             'reference_code' => $row->reference_code ?? null,
             'building_no' => $row->building_no ?? null,
+            'property_type_no' => $row->property_type_no ?? null,
             'location' => $row->location ?? null,
             'floors' => $row->floors ?? null,
             'investment' => $row->investment ?? null,
@@ -1119,6 +1120,12 @@ class MigratePropertyDataCommand extends Command
             'payment_frequency' => $row->payment_frequency ?? null,
             'discount' => $row->discount ?? 0,
             'free_month' => $row->free_month ?? 0,
+            'broker_agreement_date' => $row->broker_agreement_date ?? null,
+            'asking_rent' => $row->asking_rent ?? null,
+            'minimum_rent' => $row->minimum_rent ?? null,
+            'available_from' => $row->available_from ?? null,
+            'launch_incentive_en' => $row->launch_incentive_en ?? null,
+            'launch_incentive_ar' => $row->launch_incentive_ar ?? null,
             'total' => $row->total ?? 0,
             'collection_starting_day' => $row->collection_starting_day ?? 1,
             'collection_payment_mode' => $this->resolvePaymentMode($row->collection_payment_mode_id ?? null),
@@ -1991,6 +1998,11 @@ class MigratePropertyDataCommand extends Command
             'reservation_form_title_arabic' => 'نموذج تأكيد وحجز مكتب',
             'reservation_project_name_english' => 'Bin Al Sheikh Abu Humour Complex',
             'reservation_project_name_arabic' => 'مجمع بن الشيخ أبو الفكاهة',
+            'broker_name_english' => 'Al Khatat Real Estate Brokerage',
+            'broker_name_arabic' => 'شركة الخطاط للوساطة العقارية',
+            'broker_cr_no' => '102542',
+            'broker_license_no' => '977',
+            'broker_authorized_by_english' => 'SALEM MOHD S KH',
         ];
 
         $old = DB::connection('mysql2')->table('configurations')
@@ -2014,6 +2026,74 @@ class MigratePropertyDataCommand extends Command
                 ['value' => $value, 'updated_at' => now(), 'created_at' => now()]
             );
         }
+
+        // accounts printed these broker agreement clauses from its template; a tenant
+        // that already edited its own clauses in Settings keeps them.
+        $hasClauses = DB::table('configurations')->where('tenant_id', $this->tenantId)
+            ->where('key', RentOutPrintSettings::BROKER_CLAUSES_KEY)->whereNotIn('value', ['', '[]'])->exists();
+        if (! $hasClauses) {
+            $this->putConfiguration(RentOutPrintSettings::BROKER_CLAUSES_KEY, json_encode($this->accountsBrokerClauses(), JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    /**
+     * The clauses accounts printed on its Exclusive Leasing Brokerage Agreement
+     * ("Brokerage agreement - Bin Al Sheikh Marina Residences.docx").
+     *
+     * @return list<array{heading_en: string, heading_ar: string, text_en: string, text_ar: string}>
+     */
+    private function accountsBrokerClauses(): array
+    {
+        return array_map(fn (array $clause): array => array_combine(['heading_en', 'heading_ar', 'text_en', 'text_ar'], $clause), [
+            [
+                'Appointment and scope',
+                'التعيين ونطاق العمل',
+                'The Owner appoints Al Khatat as the exclusive broker to market and lease the above unit, arrange viewings, introduce tenants, negotiate offers and coordinate lease signing. This is a brokerage agreement only, not a property-management or power-of-attorney appointment.',
+                'يعين المالك شركة الخطاط وسيطاً حصرياً لتسويق وتأجير الوحدة المذكورة وتنظيم المعاينات وتقديم المستأجرين والتفاوض على العروض وتنسيق توقيع عقد الإيجار. يقتصر هذا العقد على الوساطة ولا يعد عقد إدارة عقار أو توكيلاً عاماً.',
+            ],
+            [
+                'Term and exclusivity',
+                'المدة والحصرية',
+                'Valid for 90 days from signature. Renewal must be in writing. During this period, the Owner shall not appoint another broker for the unit and shall refer rental enquiries to Al Khatat. Any pre-existing prospective tenant must be disclosed in writing upon signing.',
+                'يسري العقد لمدة 90 يوماً من تاريخ التوقيع، ولا يجدد إلا كتابةً. خلال هذه المدة لا يجوز للمالك تعيين وسيط آخر للوحدة، وعليه إحالة استفسارات التأجير إلى الخطاط. ويجب الإفصاح كتابةً عند التوقيع عن أي مستأجر محتمل سبق التواصل معه.',
+            ],
+            [
+                'Rent and owner approval',
+                'الإيجار وموافقة المالك',
+                'Rent, payment terms, rent-free periods and other incentives require the Owner’s written approval. Al Khatat may not sign a lease, grant a discount or accept a tenant on behalf of the Owner without specific written authorization.',
+                'تخضع قيمة الإيجار وشروط السداد وفترات الإعفاء والحوافز الأخرى لموافقة المالك الخطية. ولا يجوز للخطاط توقيع عقد الإيجار أو منح خصم أو قبول مستأجر نيابة عن المالك دون تفويض خطي محدد.',
+            ],
+            [
+                'Brokerage commission',
+                'عمولة الوساطة',
+                'For a completed long-term residential lease resulting from Al Khatat’s qualifying brokerage, the Owner shall pay a one-time fee equal to half of one month’s contractual base rent. The fee is due upon signing the lease and payable against invoice within 7 days, subject to applicable law. No fee arises from an enquiry or unsigned reservation alone.',
+                'عند إبرام عقد إيجار سكني طويل الأجل نتيجة وساطة الخطاط المستوفية للشروط القانونية، يلتزم المالك بدفع عمولة لمرة واحدة تعادل نصف الإيجار الأساسي الشهري المتفق عليه بالعقد. تستحق العمولة عند توقيع عقد الإيجار وتدفع بموجب فاتورة خلال 7 أيام، مع مراعاة القانون المعمول به. ولا تستحق عمولة لمجرد الاستفسار أو الحجز غير الموقع.',
+            ],
+            [
+                'Owner obligations',
+                'التزامات المالك',
+                'The Owner confirms lawful ownership/authority to lease, provides correct documents and unit details, and delivers the unit ready for occupancy with keys, essential services and agreed fixtures. The Owner remains responsible for landlord obligations, property defects, major maintenance and statutory charges unless lawfully agreed otherwise.',
+                'يقر المالك بملكيته القانونية للوحدة أو صلاحية تأجيرها، ويلتزم بتقديم المستندات والبيانات الصحيحة وتسليم الوحدة صالحة للسكن مع المفاتيح والخدمات الأساسية والتجهيزات المتفق عليها. ويبقى مسؤولاً عن التزامات المؤجر وعيوب العقار والصيانة الرئيسية والرسوم النظامية ما لم يُتفق خلاف ذلك بصورة قانونية.',
+            ],
+            [
+                'Broker obligations and funds',
+                'التزامات الوسيط والمبالغ',
+                'Al Khatat shall market professionally, update availability, coordinate viewings and present offers accurately. Rent, deposits and cheques shall be paid directly to the Owner unless lawful written collection authority is separately given. Al Khatat does not guarantee rent payment or tenant performance.',
+                'تلتزم الخطاط بالتسويق المهني وتحديث حالة التوفر وتنظيم المعاينات وعرض العروض بدقة. تدفع الإيجارات والتأمينات والشيكات مباشرةً إلى المالك ما لم يصدر تفويض تحصيل خطي مستقل ومشروع. ولا تضمن الخطاط سداد المستأجر أو تنفيذه لالتزاماته.',
+            ],
+            [
+                'Ending the agreement and introduced tenants',
+                'إنهاء العقد والمستأجرون المقدمون',
+                'Either party may terminate with 15 days’ written notice. Following termination, Al Khatat shall provide its documented list of introduced prospects. If a lease is concluded within 90 days with a prospect introduced through qualifying brokerage during the term, commission remains payable only to the extent permitted by law.',
+                'يجوز لأي طرف إنهاء العقد بإشعار خطي قبل 15 يوماً. وعند الإنهاء تقدم الخطاط قائمة موثقة بالمستأجرين الذين قدمتهم. وإذا أُبرم عقد خلال 90 يوماً بعد الإنهاء مع مستأجر نتج التعارف عليه عن وساطة مستوفية للشروط خلال مدة العقد، تبقى العمولة مستحقة فقط بالقدر الذي يجيزه القانون.',
+            ],
+            [
+                'General conditions',
+                'أحكام عامة',
+                'Short-stay/holiday rentals, sale brokerage, tenant rent collection and property management are excluded unless separately agreed in writing and duly approved. Parties shall keep information confidential, comply with Qatari law, and seek amicable settlement before referring disputes to the competent Qatari authority or courts. In case of conflict, the Arabic text prevails to the extent permitted by law.',
+                'لا يشمل هذا العقد الإيجار قصير الأجل أو السياحي أو وساطة البيع أو تحصيل الإيجارات أو إدارة العقار إلا باتفاق خطي مستقل وبعد الحصول على الموافقات اللازمة. يلتزم الطرفان بالسرية وبالقانون القطري ويسعيان للتسوية الودية قبل اللجوء إلى الجهة المختصة أو المحاكم القطرية. وعند التعارض يُعتد بالنص العربي بالقدر الذي يسمح به القانون.',
+            ],
+        ]);
     }
 
     /**
@@ -2098,6 +2178,7 @@ class MigratePropertyDataCommand extends Command
         $old = DB::connection('mysql2')->table('configurations')
             ->whereIn('keys', [
                 'reservation_bond_paper_mode', 'reservation_logo_height', 'reservation_footer_height', 'mandatory_document_types',
+                'broker_bond_paper_mode', 'broker_logo_height', 'broker_footer_height',
                 'rental_reservation_form_logo', 'lease_reservation_form_logo', 'rentout_agreement_logo_footer', 'lease_residential_logo',
                 'rentout_agreement_images',
             ])
@@ -2108,6 +2189,9 @@ class MigratePropertyDataCommand extends Command
             'reservation_bond_paper_mode' => in_array($old['reservation_bond_paper_mode'] ?? '', ['yes', 'no'], true) ? $old['reservation_bond_paper_mode'] : '',
             'reservation_logo_height' => is_numeric($old['reservation_logo_height'] ?? null) ? (string) (int) $old['reservation_logo_height'] : '',
             'reservation_footer_height' => is_numeric($old['reservation_footer_height'] ?? null) ? (string) (int) $old['reservation_footer_height'] : '',
+            'broker_bond_paper_mode' => in_array($old['broker_bond_paper_mode'] ?? '', ['yes', 'no'], true) ? $old['broker_bond_paper_mode'] : '',
+            'broker_logo_height' => is_numeric($old['broker_logo_height'] ?? null) ? (string) (int) $old['broker_logo_height'] : '',
+            'broker_footer_height' => is_numeric($old['broker_footer_height'] ?? null) ? (string) (int) $old['broker_footer_height'] : '',
         ], 'filled');
 
         if (isset($old['mandatory_document_types'])) {
