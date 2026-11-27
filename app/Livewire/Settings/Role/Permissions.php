@@ -148,9 +148,9 @@ class Permissions extends Component
         // the one screen that can hand out every other permission in the system.
         abort_unless(auth()->user()?->can('role.permissions'), 403);
         try {
-            if ($this->role['id'] == 1 && Auth::user()->id != 3) {
-                throw new Exception('You cant edit Super Admin privileges', 1);
-            }
+            // if ($this->role['id'] == 1 && Auth::user()->id != 3) {
+            //     // throw new Exception('You cant edit Super Admin privileges', 1);
+            // }
             $this->role->syncPermissions([]);
             $this->selected = array_keys(array_filter($this->selected));
             $permissions = Permission::whereIn('id', $this->selected)->get();
