@@ -57,7 +57,8 @@
                                                     <th width="30%">Product</th>
                                                     <th>Batch</th>
                                                     <th>Barcode</th>
-                                                    <th class="text-end">Current Stock</th>
+                                                    <th class="text-end">{{ $fromBranchName ?: 'From Branch' }} Stock</th>
+                                                    <th class="text-end">{{ $toBranchName ?: 'To Branch' }} Stock</th>
                                                     <th class="text-end">Quantity</th>
                                                     <th>Action</th>
                                                 </tr>
@@ -69,7 +70,8 @@
                                                         <td>{{ $item['name'] }}</td>
                                                         <td>{{ $item['batch'] }}</td>
                                                         <td>{{ $item['barcode'] }}</td>
-                                                        <td class="text-end">{{ $item['current_stock'] }}</td>
+                                                        <td class="text-end">{{ round($item['current_stock'], 3) }}</td>
+                                                        <td class="text-end">{{ isset($toBranchStocks[$item['product_id']]) ? round($toBranchStocks[$item['product_id']], 3) : ($toBranchName ? 0 : '-') }}</td>
                                                         <td>
                                                             {{ html()->number('quantity')->value($item['quantity'])->attribute('min', 1)->class('input-xs number select_on_focus transparent_border_input')->attribute('style', 'width:100%')->attribute('step', 'any')->attribute('wire:model.live', 'items.' . $item['key'] . '.quantity') }}
                                                         </td>
@@ -84,7 +86,7 @@
                                                     $items = collect($items);
                                                 @endphp
                                                 <tr>
-                                                    <th colspan="5" class="text-end">Total</th>
+                                                    <th colspan="6" class="text-end">Total</th>
                                                     <th class="text-end"><b>{{ currency($items->sum('quantity')) }}</b></th>
                                                     <th></th>
                                                 </tr>

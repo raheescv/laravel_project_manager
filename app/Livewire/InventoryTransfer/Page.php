@@ -5,8 +5,10 @@ namespace App\Livewire\InventoryTransfer;
 use App\Actions\InventoryTransfer\CreateAction;
 use App\Actions\InventoryTransfer\Item\DeleteAction as ItemDeleteAction;
 use App\Actions\InventoryTransfer\UpdateAction;
+use App\Models\Branch;
 use App\Models\Inventory;
 use App\Models\InventoryTransfer;
+use App\Models\Scopes\AssignedBranchScope;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -231,8 +233,43 @@ class Page extends Component
         }
     }
 
+    /**
+     * Branch-level stock (excluding employee-held stock) of every cart product in the
+     * destination branch, keyed by product id. Ignores the assigned-branch scope so a
+     * branch the user is not assigned to still shows its stock.
+     *
+     * @return array<int, float>
+     */
+    public function toBranchStocks(): array
+    {
+        $toBranchId = $this->inventory_transfers['to_branch_id'] ?? null;
+        $productIds = collect($this->items)->pluck('product_id')->filter()->unique()->values();
+        if (! $toBranchId || $productIds->isEmpty()) {
+            return [];
+        }
+
+        return Inventory::query()
+            ->withoutGlobalScope(AssignedBranchScope::class)
+            ->where('branch_id', $toBranchId)
+            ->whereNull('employee_id')
+            ->whereIn('product_id', $productIds)
+            ->groupBy('product_id')
+            ->selectRaw('product_id, SUM(quantity) as quantity')
+            ->pluck('quantity', 'product_id')
+            ->map(fn ($quantity): float => (float) $quantity)
+            ->all();
+    }
+
     public function render()
     {
-        return view('livewire.inventory-transfer.page');
+        $branchNames = Branch::query()
+            ->whereKey(array_filter([$this->inventory_transfers['from_branch_id'] ?? null, $this->inventory_transfers['to_branch_id'] ?? null]))
+            ->pluck('name', 'id');
+
+        return view('livewire.inventory-transfer.page', [
+            'toBranchStocks' => $this->toBranchStocks(),
+            'fromBranchName' => $branchNames[$this->inventory_transfers['from_branch_id'] ?? ''] ?? null,
+            'toBranchName' => $branchNames[$this->inventory_transfers['to_branch_id'] ?? ''] ?? null,
+        ]);
     }
 }

@@ -50,9 +50,54 @@ class WhatsappWebhookController extends Controller
             return response('Forbidden', 403);
         }
 
-        Log::info('WhatsApp webhook received', ['payload' => json_decode($request->getContent(), true)]);
+        Log::info('WhatsApp webhook received', ['payload' => $request->getContent()]);
+
+        foreach ($this->incomingMessages((array) json_decode($request->getContent(), true)) as $message) {
+            Log::info('WhatsApp message received', $message);
+        }
 
         return response('EVENT_RECEIVED', 200);
+    }
+
+    /**
+     * Flatten Meta's deeply nested payload (entry → changes → value → messages)
+     * into one record per message. Logging the nested payload directly gets
+     * truncated by the log normalizer, hiding the sender and text.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return list<array{id: ?string, from: ?string, name: ?string, type: ?string, text: ?string, timestamp: ?string, phone_number_id: ?string}>
+     */
+    private function incomingMessages(array $payload): array
+    {
+        $messages = [];
+
+        foreach ($payload['entry'] ?? [] as $entry) {
+            foreach ($entry['changes'] ?? [] as $change) {
+                $value = $change['value'] ?? [];
+                $contactNames = collect($value['contacts'] ?? [])->pluck('profile.name', 'wa_id');
+
+                foreach ($value['messages'] ?? [] as $message) {
+                    $type = $message['type'] ?? null;
+
+                    $messages[] = [
+                        'id' => $message['id'] ?? null,
+                        'from' => $message['from'] ?? null,
+                        'name' => $contactNames[$message['from'] ?? ''] ?? null,
+                        'type' => $type,
+                        'text' => $message['text']['body']
+                            ?? $message['button']['text']
+                            ?? $message['interactive']['button_reply']['title']
+                            ?? $message['interactive']['list_reply']['title']
+                            ?? $message[$type]['caption']
+                            ?? null,
+                        'timestamp' => $message['timestamp'] ?? null,
+                        'phone_number_id' => $value['metadata']['phone_number_id'] ?? null,
+                    ];
+                }
+            }
+        }
+
+        return $messages;
     }
 
     /**
