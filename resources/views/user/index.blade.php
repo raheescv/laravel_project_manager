@@ -2,7 +2,9 @@
     @push('styles')
     @endpush
     @livewire('user.table')
-    @push('scripts')
-    @endpush
     <x-user.user-modal />
+    <x-settings.designation.designation-modal />
+    @push('scripts')
+        <x-select.designationSelect />
+    @endpush
 </x-app-layout>

@@ -38,6 +38,20 @@ class View extends Component
     /** Tabs opened at least once — the heavy ones only query once opened. */
     public $loaded_tabs = ['profile' => true];
 
+    protected $listeners = [
+        'RefreshUserTable' => 'refreshUser',
+        'RefreshEmployeeTable' => 'refreshUser',
+    ];
+
+    /**
+     * Re-read the record after the User / Employee modal saves, so the hero
+     * (name, photo, designation) reflects the edit without a page reload.
+     */
+    public function refreshUser(): void
+    {
+        $this->user = User::find($this->table_id);
+    }
+
     public function mount($table_id)
     {
         $this->table_id = $table_id;

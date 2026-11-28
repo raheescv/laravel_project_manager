@@ -4,11 +4,14 @@ namespace App\Livewire\User;
 
 use App\Actions\User\CreateAction;
 use App\Actions\User\UpdateAction;
+use App\Models\Designation;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\TenantService;
 use App\Traits\OptimizesUploadedImage;
 use Faker\Factory;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -72,16 +75,21 @@ class Page extends Component
                 'username' => '',
                 'mobile' => $mobile,
                 'password' => $password,
+                'designation_id' => null,
             ];
+            $this->selectedRoles = [];
             $this->isAdmin = false;
             $this->originalImage = null;
+            $designation = null;
         } else {
-            $user = User::find($this->table_id);
-            $this->users = $user->toArray();
+            $user = User::with('designation:id,name')->find($this->table_id);
+            $designation = $user->designation;
+            $this->users = $user->withoutRelations()->toArray();
             $this->selectedRoles = $user->roles->pluck('name')->toArray();
             $this->isAdmin = (bool) $user->is_admin;
             $this->originalImage = $this->users['image'] ?? null;
         }
+        $this->dispatch('UserDesignationSelected', designation: $designation?->only(['id', 'name']));
     }
 
     protected function rules()
@@ -91,6 +99,7 @@ class Page extends Component
             'users.email' => ['required', 'unique:users,email,'.$this->table_id],
             'users.username' => User::usernameRules($this->table_id),
             'users.mobile' => ['required'],
+            'users.designation_id' => ['nullable', Rule::exists(Designation::class, 'id')->where('tenant_id', app(TenantService::class)->getCurrentTenantId())],
             'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
         if (! $this->table_id) {
@@ -115,11 +124,13 @@ class Page extends Component
         'users.code.unique' => 'The code is already Registered',
         'users.code.max' => 'The code field must not be greater than 20 characters.',
         'users.password.required' => 'The password field is required.',
+        'users.designation_id.exists' => 'The selected designation is not available.',
     ];
 
     public function save($close = false)
     {
         abort_unless(auth()->user()?->can($this->table_id ? 'user.edit' : 'user.create'), 403);
+        $this->users['designation_id'] = filled($this->users['designation_id'] ?? null) ? (int) $this->users['designation_id'] : null;
         $this->validate();
         try {
             // A freshly-picked upload replaces the stored avatar path.
