@@ -77,6 +77,14 @@ class RentOutConfig
 
     public string $viewJournalPermission;
 
+    public string $printPermission;
+
+    public string $soaStatementPermission;
+
+    public string $soaUtilitiesPermission;
+
+    public string $residentialLeasePermission;
+
     // Booking Permissions
     public string $bookingViewPermission;
 
@@ -185,6 +193,10 @@ class RentOutConfig
         $this->editPermission = $prefix.'.edit';
         $this->deletePermission = $prefix.'.delete';
         $this->viewJournalPermission = $prefix.'.view journal entries';
+        $this->printPermission = $prefix.'.print';
+        $this->soaStatementPermission = $prefix.'.soa statement';
+        $this->soaUtilitiesPermission = $prefix.'.soa utilities';
+        $this->residentialLeasePermission = $prefix.'.residential lease';
 
         $bookingPrefix = $this->isRental ? 'rent out booking' : 'rent out lease booking';
         $this->bookingViewPermission = $bookingPrefix.'.view';

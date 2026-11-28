@@ -14,6 +14,10 @@
         @endcan
     </div>
 
+    @php
+        $latestExtendId = $rentOut->extends->max('id');
+    @endphp
+
     {{-- Table --}}
     <div class="table-responsive">
         <table class="table table-hover align-middle border-bottom mb-0 table-sm">
@@ -25,7 +29,7 @@
                     <th class="fw-semibold py-2 text-end">Rent Amount</th>
                     <th class="fw-semibold py-2">Payment Mode</th>
                     <th class="fw-semibold py-2">Remarks</th>
-                    <th class="fw-semibold py-2 text-center" style="width: 90px;">Actions</th>
+                    <th class="fw-semibold py-2 text-center" style="width: 120px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -38,6 +42,14 @@
                         <td>{{ $extend->payment_mode?->label() }}</td>
                         <td>{{ $extend->remarks }}</td>
                         <td class="text-center text-nowrap">
+                            @if ($extend->id === $latestExtendId)
+                                @can($permissionPrefix.'.residential lease')
+                                    <a href="{{ route('print::rentout::residential-lease', [$rentOut->id, 'extended']) }}" target="_blank"
+                                        class="btn btn-light btn-sm" title="{{ $permissionPrefix === 'rent out' ? 'Residential Lease' : 'Sales Agreement' }}">
+                                        <i class="fa fa-print text-primary"></i>
+                                    </a>
+                                @endcan
+                            @endif
                             @can($permissionPrefix.'.extend edit')
                                 <button type="button" class="btn btn-light btn-sm" wire:click="editExtend({{ $extend->id }})" title="Edit">
                                     <i class="fa fa-pencil text-warning"></i>

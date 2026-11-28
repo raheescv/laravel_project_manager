@@ -275,11 +275,13 @@
                                                     class="btn btn-sm btn-outline-primary" title="Assign Technician">
                                                     <i class="fa fa-user-plus"></i>
                                                 </button>
-                                                <button type="button" wire:click="removeComplaint({{ $index }})"
-                                                    wire:confirm="Are you sure you want to remove this request?"
-                                                    class="btn btn-sm btn-outline-danger" title="Remove">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
+                                                @if (empty($complaint['id']) || auth()->user()?->can('maintenance.delete item'))
+                                                    <button type="button" wire:click="removeComplaint({{ $index }})"
+                                                        wire:confirm="Are you sure you want to remove this request?"
+                                                        class="btn btn-sm btn-outline-danger" title="Remove">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                @endif
                                             </div>
                                         </td>
                                     @endif
@@ -345,6 +347,14 @@
             <a href="{{ route('property::maintenance::index') }}" class="btn btn-light">
                 <i class="fa fa-times me-1"></i> Cancel
             </a>
+            @if ($maintenance_id && ($formData['status'] ?? 'pending') === 'pending')
+                @can('maintenance.cancel')
+                    <button type="button" class="btn btn-outline-danger" wire:click="cancel"
+                        wire:confirm="Cancel this maintenance request? Its open complaints will be cancelled too.">
+                        <i class="fa fa-ban me-1"></i> Cancel Request
+                    </button>
+                @endcan
+            @endif
             <button type="submit" class="btn btn-success px-4">
                 <i class="fa fa-save me-1"></i> Save
             </button>

@@ -264,6 +264,7 @@ class PaymentTab extends Component
             'paymentModes' => $paymentModes,
             'canTransfer' => $canTransfer,
             'canEditPayment' => Auth::user()?->can($this->permissionPrefix().'.payment edit') ?? false,
+            'canPrintPayment' => Auth::user()?->can($this->permissionPrefix().'.print') ?? false,
         ]);
     }
 }

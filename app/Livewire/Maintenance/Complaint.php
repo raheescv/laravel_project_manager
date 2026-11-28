@@ -409,6 +409,8 @@ class Complaint extends Component
 
     public function save($status = 'pending')
     {
+        abort_unless(Auth::user()?->can($status === 'completed' ? 'maintenance.complete' : 'maintenance.technician edit'), 403);
+
         if ($status === 'completed' && empty(trim($this->technician_remark))) {
             $this->addError('technician_remark', 'The technician remark is required to complete.');
 

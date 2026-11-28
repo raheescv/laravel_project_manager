@@ -118,6 +118,7 @@ class PrintController extends Controller
             'customer', 'property', 'building', 'group', 'type',
             'paymentTerms',
         ])->findOrFail($id);
+        $this->authorizeRentOutPrint($rentOut, 'soaStatementPermission');
 
         $payments = (new StatementEntriesAction())->execute($rentOut, $fromDate, $toDate);
 
@@ -253,6 +254,7 @@ class PrintController extends Controller
             'customer', 'property', 'building', 'group', 'type',
             'utilityTerms.utility', 'journals',
         ])->findOrFail($id);
+        $this->authorizeRentOutPrint($rentOut, 'soaUtilitiesPermission');
 
         $payments = collect();
 
@@ -306,6 +308,7 @@ class PrintController extends Controller
     {
         $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
+        $this->authorizeRentOutPrint($rentOut, 'printPermission');
 
         $transferFrom = TransferTransactionAction::transferredFrom($payment);
 
@@ -321,6 +324,12 @@ class PrintController extends Controller
     {
         $payment = RentOutTransaction::with(['account', 'rentOut.customer', 'rentOut.property', 'rentOut.building'])->findOrFail($id);
         $rentOut = $payment->rentOut;
+        // ROI invoices and payouts are printed from the ROI tab, which 'rent out roi.view' already gates.
+        if (in_array($payment->source, [RentOutRoi::SOURCE, RentOutRoi::PAYMENT_SOURCE], true)) {
+            abort_unless(auth()->user()?->can('rent out roi.view'), 403);
+        } else {
+            $this->authorizeRentOutPrint($rentOut, 'printPermission');
+        }
         // An ROI row prints as the ROI invoice, so it needs the period and rate it was booked with.
         $roi = $payment->source === RentOutRoi::SOURCE ? RentOutRoi::find($payment->model_id) : null;
 
@@ -445,9 +454,14 @@ class PrintController extends Controller
         ], 'pre-orders-'.$date.($branchId ? '-branch-'.$branchId : '').'.pdf');
     }
 
+    /**
+     * The 'extended' lease is printed from an agreement's Extend tab, so it is
+     * gated by the agreement's residential-lease permission; the normal one
+     * is printed from the booking.
+     */
     public function residentialLease($id, $type = 'normal')
     {
-        $this->authorizeBookingPrint($id, 'bookingResidentialLeasePermission');
+        $this->authorizeBookingPrint($id, $type === 'extended' ? 'residentialLeasePermission' : 'bookingResidentialLeasePermission');
 
         return (new GenerateResidentialLeaseAction())->execute($id, $type);
     }
@@ -467,7 +481,16 @@ class PrintController extends Controller
      */
     private function authorizeBookingPrint(int|string $id, string $permissionProperty): void
     {
-        $rentOut = RentOut::findOrFail($id);
+        $this->authorizeRentOutPrint(RentOut::findOrFail($id), $permissionProperty);
+    }
+
+    /**
+     * The rent-out print routes are shared by both agreement types, so the
+     * permission is resolved from the agreement's type ('rent out.print' for a
+     * rental, 'rent out lease.print' for a sale, …) rather than on the route.
+     */
+    private function authorizeRentOutPrint(RentOut $rentOut, string $permissionProperty): void
+    {
         $config = RentOutConfig::make($rentOut->agreement_type->value);
 
         abort_unless(auth()->user()?->can($config->{$permissionProperty}), 403);

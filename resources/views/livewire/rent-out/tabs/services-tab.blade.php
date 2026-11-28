@@ -141,15 +141,17 @@
                                                 </a>
                                             </li>
                                         @endcan
-                                        <li>
-                                            <a class="dropdown-item small py-2" href="#" wire:click.prevent="printReceipt({{ $payment->id }})">
-                                                @if ($payment->credit > 0)
-                                                    <i class="fa fa-print text-info me-2"></i> Print Receipt
-                                                @else
-                                                    <i class="fa fa-file-text-o text-info me-2"></i> Print Voucher
-                                                @endif
-                                            </a>
-                                        </li>
+                                        @can($permissionPrefix.'.print')
+                                            <li>
+                                                <a class="dropdown-item small py-2" href="#" wire:click.prevent="printReceipt({{ $payment->id }})">
+                                                    @if ($payment->credit > 0)
+                                                        <i class="fa fa-print text-info me-2"></i> Print Receipt
+                                                    @else
+                                                        <i class="fa fa-file-text-o text-info me-2"></i> Print Voucher
+                                                    @endif
+                                                </a>
+                                            </li>
+                                        @endcan
                                         @can('rent out service.delete')
                                             <li><hr class="dropdown-divider my-1"></li>
                                             <li>

@@ -234,11 +234,13 @@ return [
         'customer property report',
         'security report',
         'daybook',
-        // Gates every rent-out print document (statement, utilities statement,
-        // payment receipt/voucher). Deliberately one permission across both the
-        // 'rent out' and 'rent out lease' agreement types, since the print
-        // routes are shared and a route can only check a single ability.
+        // Payment receipt / voucher prints. Each agreement type has its own
+        // print, SOA and residential-lease permissions; the shared print
+        // routes resolve the agreement type before checking them.
         'print',
+        'soa statement',
+        'soa utilities',
+        'residential lease',
     ],
     'rent out booking' => [
         'create',
@@ -312,6 +314,10 @@ return [
         'security report',
         'daybook',
         'service charge report',
+        'print',
+        'soa statement',
+        'soa utilities',
+        'residential lease',
     ],
     'rent out lease booking' => [
         'create',
@@ -336,7 +342,7 @@ return [
     'lpo-purchase' => ['create', 'view', 'view own', 'edit', 'delete', 'decide', 'reverse'],
 
     // Maintenance Module
-    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'technician view'],
+    'maintenance' => ['create', 'view', 'edit', 'delete', 'export', 'assign', 'complete', 'cancel', 'delete item', 'technician view', 'technician edit'],
 
     // Service Requests (utility connect / disconnect)
     'property service request' => ['create', 'view', 'edit', 'edit date', 'delete', 'delete note', 'approve', 'financial approve', 'complete', 'report'],

@@ -77,9 +77,13 @@
 
             <div class="col-lg-5">
                 <div class="hero-actions d-flex flex-wrap gap-2 justify-content-lg-end mb-3">
-                    <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAStatementModal"><i class="fa fa-print"></i> SOA</button>
+                    @can($config->soaStatementPermission)
+                        <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAStatementModal"><i class="fa fa-print"></i> SOA</button>
+                    @endcan
                     @if ($isRental)
-                        <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAUtilitiesModal"><i class="fa fa-bolt"></i> Utilities</button>
+                        @can($config->soaUtilitiesPermission)
+                            <button type="button" class="btn btn-glass" data-bs-toggle="modal" data-bs-target="#SOAUtilitiesModal"><i class="fa fa-bolt"></i> Utilities</button>
+                        @endcan
                     @endif
                     @if (! $isRental)
                         @can('rent out lease.view')
@@ -303,10 +307,12 @@
     </section>
 
     {{-- ════════════════════════════  MODALS  ════════════════════════════ --}}
-    <x-rent-out.view.soa-modal id="SOAStatementModal" formId="SOAStatementForm" title="SOA Statement" icon="fa-calendar"
-        :route="route('print::rentout::statement', $rentOut->id)" hint="Select the date range for the SOA Statement." />
+    @can($config->soaStatementPermission)
+        <x-rent-out.view.soa-modal id="SOAStatementModal" formId="SOAStatementForm" title="SOA Statement" icon="fa-calendar"
+            :route="route('print::rentout::statement', $rentOut->id)" hint="Select the date range for the SOA Statement." />
+    @endcan
 
-    @if ($isRental)
+    @if ($isRental && auth()->user()?->can($config->soaUtilitiesPermission))
         <x-rent-out.view.soa-modal id="SOAUtilitiesModal" formId="SOAUtilitiesForm" title="SOA Utilities" icon="fa-bolt"
             :route="route('print::rentout::utilities-statement', $rentOut->id)" hint="Select the date range for the Utilities SOA." />
     @endif

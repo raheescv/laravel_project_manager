@@ -54,7 +54,7 @@ it('prints a receipt for credit rows and a payment voucher for debit rows', func
     $charge = $row(0, 1000);
 
     $this->actingAs($user);
-    $user->givePermissionTo(Permission::findOrCreate('rent out service.delete', 'web'));
+    $user->givePermissionTo(Permission::findOrCreate('rent out service.delete', 'web'), Permission::findOrCreate('rent out lease.print', 'web'));
 
     Livewire::test(ServicesTab::class, ['rentOutId' => $rentOut->id])
         ->call('printReceipt', $payment->id)

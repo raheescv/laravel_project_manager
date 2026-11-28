@@ -246,9 +246,11 @@
                 </a>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     @if(!in_array($maintenanceComplaint?->status?->value, ['completed', 'cancelled']))
-                        <button type="button" wire:click="save('pending')" class="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm">
-                            <i class="fa fa-save"></i><span>Save</span>
-                        </button>
+                        @can('maintenance.technician edit')
+                            <button type="button" wire:click="save('pending')" class="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-pill px-3 shadow-sm">
+                                <i class="fa fa-save"></i><span>Save</span>
+                            </button>
+                        @endcan
                         @can('maintenance.complete')
                             <button type="button" wire:click="save('completed')"
                                 wire:confirm="Complete this complaint? This action cannot be undone."

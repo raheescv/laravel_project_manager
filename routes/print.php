@@ -15,8 +15,9 @@ Route::middleware('auth')->group(function (): void {
             Route::get('customer-receipt', 'customerReceipt')->name('customer-receipt')->can('sale.receipts');
         });
         Route::name('rentout::')->prefix('rentout')->group(function (): void {
-            Route::get('statement/{id}/{fromDate?}/{toDate?}', 'rentoutStatement')->name('statement')->can('rent out.print');
-            Route::get('utilities-statement/{id}/{fromDate?}/{toDate?}', 'rentoutUtilitiesStatement')->name('utilities-statement')->can('rent out.print');
+            // Rent-out prints are shared by both agreement types; PrintController checks the type's permission.
+            Route::get('statement/{id}/{fromDate?}/{toDate?}', 'rentoutStatement')->name('statement');
+            Route::get('utilities-statement/{id}/{fromDate?}/{toDate?}', 'rentoutUtilitiesStatement')->name('utilities-statement');
             Route::get('reservation-form/{id}', 'reservationForm')->name('reservation-form');
             Route::get('residential-lease/{id}/{type?}', 'residentialLease')->name('residential-lease');
             Route::get('broker-agreement/{id}', 'brokerAgreement')->whereNumber('id')->name('broker-agreement')->can('rent out lease.view');

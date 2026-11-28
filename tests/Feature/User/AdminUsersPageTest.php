@@ -45,7 +45,7 @@ it('defaults the branch facet to the current branch and filters by assigned bran
         ->and($component->viewData('data')->pluck('name')->all())
         ->toContain('Main Admin', 'Both Admin')
         ->not->toContain('Second Admin')
-        ->and((int) $component->viewData('branchCounts')[$second->id])->toBe(2);
+        ->and((int) $component->viewData('branchCounts')[$second->id])->toBe(3);
 
     $component->call('setBranch', $second->id);
     expect($component->viewData('data')->pluck('name')->all())

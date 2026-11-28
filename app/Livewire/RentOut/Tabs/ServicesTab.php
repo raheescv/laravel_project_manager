@@ -87,6 +87,7 @@ class ServicesTab extends Component
 
     public function printReceipt($paymentId)
     {
+        abort_unless(auth()->user()?->can($this->permissionPrefix().'.print'), 403);
         $payment = RentOutTransaction::query()
             ->where('rent_out_id', $this->rentOutId)
             ->findOrFail($paymentId, ['id', 'credit']);

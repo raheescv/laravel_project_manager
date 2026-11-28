@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Maintenance;
 
+use App\Actions\Maintenance\CancelAction;
 use App\Actions\Maintenance\CreateAction;
 use App\Actions\Maintenance\UpdateAction;
 use App\Enums\Maintenance\MaintenancePriority;
@@ -258,6 +259,10 @@ class Page extends Component
 
     public function removeComplaint($index)
     {
+        // Rows added in this session were never saved; only removing a saved one is a delete.
+        if (! empty($this->complaints[$index]['id'])) {
+            abort_unless(auth()->user()?->can('maintenance.delete item'), 403);
+        }
         unset($this->complaints[$index]);
         $this->complaints = array_values($this->complaints);
     }
@@ -312,6 +317,7 @@ class Page extends Component
     public function save()
     {
         abort_unless(auth()->user()?->can($this->maintenance_id ? 'maintenance.edit' : 'maintenance.create'), 403);
+        abort_if($this->removesSavedComplaint() && ! auth()->user()?->can('maintenance.delete item'), 403);
         try {
             DB::beginTransaction();
             $this->formData['created_by'] = auth()->id();
@@ -349,6 +355,37 @@ class Page extends Component
             DB::rollback();
             $this->dispatch('error', ['message' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * UpdateAction deletes every saved complaint missing from the list, so a
+     * save that leaves one out is a 'delete item'.
+     */
+    protected function removesSavedComplaint(): bool
+    {
+        if (! $this->maintenance_id) {
+            return false;
+        }
+
+        $keptIds = collect($this->complaints)->pluck('id')->filter();
+
+        return (bool) Maintenance::find($this->maintenance_id)?->maintenanceComplaints()->whereNotIn('id', $keptIds)->exists();
+    }
+
+    public function cancel()
+    {
+        abort_unless($this->maintenance_id && auth()->user()?->can('maintenance.cancel'), 403);
+
+        $response = (new CancelAction())->execute($this->maintenance_id, auth()->id());
+        if (! $response['success']) {
+            $this->dispatch('error', ['message' => $response['message']]);
+
+            return;
+        }
+
+        $this->dispatch('success', ['message' => $response['message']]);
+
+        return redirect()->route('property::maintenance::index');
     }
 
     public function render()

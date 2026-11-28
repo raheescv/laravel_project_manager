@@ -507,13 +507,13 @@
                                         </a>
                                     @endif
                                     <div class="pmx-sep"></div>
-                                    @if ($payment->credit > 0)
+                                    @if ($canPrintPayment && $payment->credit > 0)
                                         <a class="pmx-item" @click="open = false"
                                             href="{{ route('print::rentout::payment-receipt', $payment->id) }}"
                                             target="_blank">
                                             <span class="pmx-item__ic"><i class="fa fa-print"></i></span> Print Receipt
                                         </a>
-                                    @elseif ($payment->source !== 'Transfer')
+                                    @elseif ($canPrintPayment && $payment->source !== 'Transfer')
                                         <a class="pmx-item" @click="open = false"
                                             href="{{ route('print::rentout::payment-voucher', $payment->id) }}"
                                             target="_blank">
