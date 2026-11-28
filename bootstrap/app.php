@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             __DIR__.'/../routes/flat_trade.php',
             __DIR__.'/../routes/api_log.php',
             __DIR__.'/../routes/tenant_route.php',
+            __DIR__.'/../routes/webhook.php',
             __DIR__.'/../routes/tailoring.php',
             __DIR__.'/../routes/property.php',
             __DIR__.'/../routes/student.php',
@@ -80,6 +81,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Exclude routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'flat_trade/webhook/post_back',
+            // Meta WhatsApp Cloud API callback; authenticated by X-Hub-Signature-256.
+            'whatsapp/webhook',
             // Public booking endpoint. Authorisation here is the unguessable
             // per-booking token in the URL, not the session — so CSRF adds no
             // protection (there is no ambient authority to borrow) while an

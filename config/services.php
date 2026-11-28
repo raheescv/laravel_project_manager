@@ -60,6 +60,10 @@ return [
     'whatsapp' => [
         'driver' => env('WHATSAPP_DRIVER', 'meta'),
     ],
+    'whatsapp_webhook' => [
+        'verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', ''),
+        'app_secret' => env('WHATSAPP_APP_SECRET', ''),
+    ],
     'core_connecta' => [
         'url' => env('CORE_CONNECTA_URL', 'http://localhost:3000'),
         'api_key' => env('CORE_CONNECTA_API_KEY', ''),
