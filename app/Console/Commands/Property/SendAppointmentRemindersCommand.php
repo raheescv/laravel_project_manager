@@ -38,8 +38,8 @@ class SendAppointmentRemindersCommand extends Command
         // the template lookup and the customer relation are both tenant-scoped.
         $due = PropertyAppointment::withoutGlobalScopes()
             ->where('status', 'scheduled')
-            // ->whereNull('reminder_sent_at')
-            // ->whereNotNull('scheduled_at')
+            ->whereNull('reminder_sent_at')
+            ->whereNotNull('scheduled_at')
             ->whereBetween('scheduled_at', [now(), now()->addHours($hours)])
             ->orderBy('scheduled_at')
             ->get();

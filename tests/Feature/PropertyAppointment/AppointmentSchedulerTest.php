@@ -1844,3 +1844,21 @@ it('still reassigns a booked appointment to another employee when slots are glob
     expect($response['success'])->toBeTrue()
         ->and($seed['appointment']->fresh()->employee_id)->toBe($seed['other']->id);
 });
+
+it('sends each appointment reminder only once however often the schedule runs', function () {
+    Illuminate\Support\Facades\Queue::fake();
+    $seed = vsSeed();
+    (new CreateDefaultsAction())->execute(AppointmentMailData::MODULE);
+
+    $appointment = (new CreateAction())->execute(['rent_out_id' => $seed['rentOut']->id, 'employee_id' => $seed['employee']->id], $seed['employee']->id)['data'];
+    $appointment->forceFill(['status' => 'scheduled', 'scheduled_at' => now()->addHours(3)])->save();
+
+    $this->artisan('appointments:send-reminders')->assertSuccessful();
+    $this->artisan('appointments:send-reminders')->assertSuccessful();
+    $this->artisan('appointments:send-reminders')->assertSuccessful();
+
+    $reminders = EmailLog::where('related_id', $appointment->id)->where('type', 'appointment_reminder')->count();
+
+    expect($reminders)->toBe(1)
+        ->and($appointment->fresh()->reminder_sent_at)->not->toBeNull();
+});
