@@ -53,6 +53,13 @@ class CartPage extends Component
      */
     public bool $autoFill = true;
 
+    /**
+     * Console switch: on, the scanner and search boxes list only inventory
+     * rows with stock above zero; off, out-of-stock rows are listed too.
+     * Saved per tenant.
+     */
+    public bool $inStockOnly = true;
+
     public $fillPrice = '';
 
     public $fillWeight = '';
@@ -92,6 +99,7 @@ class CartPage extends Component
 
         $this->separateRows = Configuration::where('key', 'barcode_cart_separate_rows')->value('value') === '1';
         $this->autoFill = Configuration::where('key', 'barcode_cart_auto_fill')->value('value') !== '0';
+        $this->inStockOnly = Configuration::where('key', 'barcode_cart_in_stock_only')->value('value') !== '0';
 
         // Set default quantity
         $this->quantity = 1;
@@ -149,6 +157,16 @@ class CartPage extends Component
     {
         unset($this->cartSettings);
         Configuration::updateOrCreate(['key' => 'barcode_cart_separate_rows'], ['value' => $this->separateRows ? '1' : '0']);
+    }
+
+    public function updatedInStockOnly(): void
+    {
+        Configuration::updateOrCreate(['key' => 'barcode_cart_in_stock_only'], ['value' => $this->inStockOnly ? '1' : '0']);
+
+        $term = trim($this->searchQuery) ?: trim($this->barcodeInput);
+        if (strlen($term) >= 2) {
+            $this->loadProducts($term, trim($this->searchQuery) === '');
+        }
     }
 
     /**
@@ -309,7 +327,7 @@ class CartPage extends Component
                 }
             })
             ->where('inventories.branch_id', session('branch_id'))
-            ->where('quantity', '>', 0)
+            ->when($this->inStockOnly, fn ($query) => $query->where('quantity', '>', 0))
             ->limit(10)
             ->get()
             ->map(function ($inventory) {

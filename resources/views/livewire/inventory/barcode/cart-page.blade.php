@@ -132,6 +132,14 @@
                         </label>
                     </label>
 
+                    <label class="bcx-field" title="On: search lists only items with stock. Off: out-of-stock items are listed too.">
+                        <span>In stock only</span>
+                        <label class="bcx-switch" style="margin-inline-start:auto">
+                            <input type="checkbox" wire:model.live="inStockOnly" id="inStockOnlySwitch">
+                            <span></span>
+                        </label>
+                    </label>
+
                     <div class="bcx-drawer__title">Search</div>
                     <div class="bcx-cart__scan">
                         <input type="text" wire:model.live.debounce.300ms="searchQuery" class="bcx-input" id="searchInput"
@@ -453,6 +461,7 @@
             @endif
             <span>ROW PER SCAN <b>{{ $separateRows ? 'on' : 'off' }}</b></span>
             <span>FILL <b>{{ $autoFill ? 'auto' : 'custom' }}</b></span>
+            <span>IN STOCK ONLY <b>{{ $inStockOnly ? 'on' : 'off' }}</b></span>
             <span>UNIT FILTER <b>{{ $selectedUnitId ? 'on' : 'all' }}</b></span>
             <span class="bcx-spacer"></span>
             <span>CTRL+B SCANNER · CTRL+K SEARCH · CTRL+P PRINT</span>

@@ -80,3 +80,17 @@ it('adds the current branch row when a barcode scan matches several branches', f
         ->call('handleBarcodeScan')
         ->assertSet("cartItems.inventory_{$branchInventoryId}.inventory_id", $branchInventoryId);
 });
+
+it('hides out-of-stock items by default and lists them when In stock only is switched off', function (): void {
+    DB::table('inventories')->where('product_id', $this->world->product->id)->update(['quantity' => 0]);
+
+    Livewire::test(CartPage::class)
+        ->assertSet('inStockOnly', true)
+        ->set('searchQuery', $this->world->product->name)
+        ->assertCount('products', 0)
+        ->set('inStockOnly', false)
+        ->assertCount('products', 1)
+        ->assertSet('products.0.product_id', $this->world->product->id);
+
+    Livewire::test(CartPage::class)->assertSet('inStockOnly', false);
+});
