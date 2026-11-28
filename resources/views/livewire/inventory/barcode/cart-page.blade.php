@@ -320,7 +320,9 @@
                                         <td class="bcx-cart__num" data-label="Labels" @click.stop>
                                             <div class="bcx-stepper">
                                                 <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] - 1 }})" title="Less"><i class="fa fa-minus"></i></button>
-                                                <b>{{ $item['quantity'] }}</b>
+                                                <input type="number" min="1" step="1" inputmode="numeric" class="bcx-cart__count"
+                                                    wire:model.blur="cartItems.{{ $cartKey }}.quantity" @keydown.enter.prevent="$el.blur()"
+                                                    @focus="$el.select()" aria-label="Labels to print" title="Labels to print">
                                                 <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] + 1 }})" title="More"><i class="fa fa-plus"></i></button>
                                             </div>
                                         </td>
@@ -618,6 +620,33 @@
 
         .bcx-cart__gram {
             display: inline-flex;
+        }
+
+        .bcx-cart__count {
+            width: 44px;
+            height: 22px;
+            padding: 0 4px;
+            border: 0;
+            border-inline: 1px solid var(--bcx-line);
+            background: transparent;
+            color: var(--bcx-ink);
+            text-align: center;
+            font-family: var(--bcx-mono);
+            font-size: 11px;
+            font-weight: 700;
+            -moz-appearance: textfield;
+        }
+
+        .bcx-cart__count::-webkit-inner-spin-button,
+        .bcx-cart__count::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .bcx-cart__count:focus {
+            outline: 0;
+            background: var(--bcx-panel);
+            box-shadow: inset 0 0 0 1px var(--bcx-brand);
         }
 
         .bcx-cart__gram.is-missing input,

@@ -367,6 +367,24 @@ it('shows each cart row with its product category', function (): void {
     $component->assertSeeHtml('<span class="bcx-cart__category">General</span>');
 });
 
+it('lets the label count be typed, keeping it at least one', function (): void {
+    ($this->useTemplate)('standard');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('wire:model.blur="cartItems.'.$key.'.quantity"')
+        ->set("cartItems.{$key}.quantity", '25')
+        ->assertSet("cartItems.{$key}.quantity", 25)
+        ->set("cartItems.{$key}.quantity", '0')
+        ->assertSet("cartItems.{$key}.quantity", 1)
+        ->set("cartItems.{$key}.quantity", '')
+        ->assertSet("cartItems.{$key}.quantity", 1);
+
+    expect(session('cart_items')[$key]['quantity'])->toBe(1);
+});
+
 it('drops a row stub that a late edit recreates after the row was removed', function (): void {
     ($this->useTemplate)('standard');
     $key = "inventory_{$this->inventoryId}";
