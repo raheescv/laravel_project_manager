@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Branch;
 use App\Models\Designation;
 use App\Models\Role;
 use App\Models\User;
@@ -30,6 +31,9 @@ class Table extends Component
 
     public $is_active = '';
 
+    /** Assigned-branch facet; starts on the session's current branch. */
+    public $branch_id = '';
+
     /** 'list' | 'grid' — remembered for the session so it survives navigation. */
     public $view = 'list';
 
@@ -42,6 +46,7 @@ class Table extends Component
     public function mount(): void
     {
         $this->view = session('users.table.view') === 'grid' ? 'grid' : 'list';
+        $this->branch_id = (string) (session('branch_id') ?? '');
     }
 
     public function updated($key, $value): void
@@ -98,9 +103,19 @@ class Table extends Component
         $this->resetPage();
     }
 
+    public function setBranch($id): void
+    {
+        if ($id !== '' && ! in_array((int) $id, $this->accessibleBranchIds(), true)) {
+            return;
+        }
+
+        $this->branch_id = (string) $id;
+        $this->resetPage();
+    }
+
     public function resetFilters(): void
     {
-        $this->reset(['search', 'role_id', 'designation_id', 'is_active']);
+        $this->reset(['search', 'role_id', 'designation_id', 'is_active', 'branch_id']);
         $this->resetPage();
     }
 
@@ -119,6 +134,7 @@ class Table extends Component
             'role_id' => $this->role_id,
             'designation_id' => $this->designation_id,
             'is_active' => $this->is_active,
+            'branch_id' => $this->branch_id,
         ];
 
         foreach ($except as $key) {
@@ -171,6 +187,27 @@ class Table extends Component
             ->toArray();
     }
 
+    /**
+     * Branches the signed-in user may work in — the same list the branch popup offers.
+     *
+     * @return array<int, int>
+     */
+    protected function accessibleBranchIds(): array
+    {
+        return auth()->user()->operableBranchIds();
+    }
+
+    /** Users per assigned branch, keyed by branch id. */
+    protected function branchCounts(): array
+    {
+        return User::getFilteredQuery($this->getFilters(['branch_id']))
+            ->join('user_has_branches', 'user_has_branches.user_id', '=', 'users.id')
+            ->groupBy('user_has_branches.branch_id')
+            ->selectRaw('user_has_branches.branch_id as branch_id, count(distinct users.id) as total')
+            ->pluck('total', 'branch_id')
+            ->toArray();
+    }
+
     public function render()
     {
         $data = User::getFilteredQuery($this->getFilters())
@@ -192,12 +229,15 @@ class Table extends Component
             'designations' => Designation::orderBy('order_no')->orderBy('name')->get(['id', 'name']),
             'roleCounts' => $roleCounts,
             'designationCounts' => $this->designationCounts(),
+            'branches' => Branch::whereIn('id', $this->accessibleBranchIds())->orderBy('name')->pluck('name', 'id')->toArray(),
+            'branchCounts' => $this->branchCounts(),
             'statusCounts' => [
                 'active' => (int) ($statusCounts[1] ?? 0),
                 'inactive' => (int) ($statusCounts[0] ?? 0),
             ],
             'allRolesCount' => User::getFilteredQuery($this->getFilters(['role_id']))->count(),
             'allDesignationsCount' => User::getFilteredQuery($this->getFilters(['designation_id']))->count(),
+            'allBranchesCount' => User::getFilteredQuery($this->getFilters(['branch_id']))->count(),
         ]);
     }
 }

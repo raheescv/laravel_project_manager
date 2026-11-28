@@ -5,9 +5,10 @@
         ╔══════════════════════════════════════════════════════════════════════╗
         ║  Users — "Facet Rail" premium design system                           ║
         ║                                                                      ║
-        ║  Roles, designations and status are a clickable rail with live       ║
-        ║  counts rather than dropdowns: each tally is what you would get if   ║
-        ║  you clicked that facet (see Table::getFilters()'s $except).         ║
+        ║  Roles, designations, branches and status are a clickable rail with  ║
+        ║  live counts rather than dropdowns: each tally is what you would get ║
+        ║  if you clicked that facet (see Table::getFilters()'s $except).      ║
+        ║  Branch starts on the session's current branch.                      ║
         ║                                                                      ║
         ║  Styling lives in components/user/premium.blade.php, scoped to       ║
         ║  .usrx and derived from the active settings theme.                   ║
@@ -20,7 +21,8 @@
     @php
         $activeRole = $role_id ? $roles->firstWhere('id', (int) $role_id) : null;
         $activeDesignation = $designation_id ? $designations->firstWhere('id', (int) $designation_id) : null;
-        $hasFilters = $search !== '' || $role_id !== '' || $designation_id !== '' || $is_active !== '';
+        $activeBranch = $branch_id ? ($branches[(int) $branch_id] ?? null) : null;
+        $hasFilters = $search !== '' || $role_id !== '' || $designation_id !== '' || $is_active !== '' || $branch_id !== '';
     @endphp
 
     <div class="content__boxed">
@@ -52,6 +54,9 @@
                             <span><i class="fa fa-users"></i>{{ $data->total() }} {{ Str::plural('user', $data->total()) }} matching</span>
                             @if ($activeRole)
                                 <span><i class="fa fa-filter"></i>{{ $activeRole->name }}</span>
+                            @endif
+                            @if ($activeBranch)
+                                <span><i class="fa fa-sitemap"></i>{{ $activeBranch }}</span>
                             @endif
                         </div>
                     </div>
@@ -125,6 +130,32 @@
                             @empty
                                 <div class="facet is-empty"><span class="n">No designations yet</span></div>
                             @endforelse
+                        </div>
+                    </div>
+
+                    <div class="rail">
+                        <div class="rh">
+                            <span class="t"><i class="fa fa-sitemap"></i> Branches</span>
+                            @if ($branch_id !== '')
+                                <button type="button" class="rst" wire:click="setBranch('')">Reset</button>
+                            @endif
+                        </div>
+                        <div class="facets">
+                            <button type="button" class="facet @if ($branch_id === '') on @endif" wire:click="setBranch('')">
+                                <span class="sw"></span>
+                                <span class="n">All branches</span>
+                                <span class="c">{{ $allBranchesCount }}</span>
+                            </button>
+                            @foreach ($branches as $id => $name)
+                                @php $count = (int) ($branchCounts[$id] ?? 0); @endphp
+                                <button type="button" wire:key="branch-{{ $id }}"
+                                    class="facet @if ((int) $branch_id === $id) on @elseif (! $count) is-empty @endif"
+                                    wire:click="setBranch({{ $id }})">
+                                    <span class="sw"></span>
+                                    <span class="n text-capitalize">{{ $name }}</span>
+                                    <span class="c">{{ $count }}</span>
+                                </button>
+                            @endforeach
                         </div>
                     </div>
 
@@ -205,6 +236,11 @@
                             @if ($activeDesignation)
                                 <span class="chip">Designation <b class="text-capitalize">{{ $activeDesignation->name }}</b>
                                     <button type="button" wire:click="setDesignation('')" aria-label="Clear designation"><i class="fa fa-times"></i></button>
+                                </span>
+                            @endif
+                            @if ($activeBranch)
+                                <span class="chip">Branch <b class="text-capitalize">{{ $activeBranch }}</b>
+                                    <button type="button" wire:click="setBranch('')" aria-label="Clear branch"><i class="fa fa-times"></i></button>
                                 </span>
                             @endif
                             @if ($is_active !== '')
