@@ -53,7 +53,11 @@ it('filters by branch facet and counts each branch excluding its own filter', fu
     rosterEmployee($this->world, 'Both Branches', [$this->world->branch->id, $this->second->id]);
     rosterEmployee($this->world, 'Second Only', [$this->second->id], active: false);
 
-    $component = Livewire::test(Table::class)->call('setBranch', $this->second->id);
+    $component = Livewire::test(Table::class)
+        ->assertSet('branch_id', (string) $this->world->branch->id)
+        ->assertSet('is_active', '1')
+        ->call('setStatus', '')
+        ->call('setBranch', $this->second->id);
 
     expect($component->viewData('data')->pluck('name')->all())
         ->toContain('Both Branches', 'Second Only')
@@ -68,7 +72,8 @@ it('filters by branch facet and counts each branch excluding its own filter', fu
     expect($component->viewData('data')->pluck('name')->all())->toBe(['Both Branches']);
 
     $component->call('resetFilters');
-    expect($component->get('branch_id'))->toBe('')->and($component->get('is_active'))->toBe('');
+    expect($component->get('branch_id'))->toBe((string) $this->world->branch->id)
+        ->and($component->get('is_active'))->toBe('1');
 });
 
 it('maps sort presets and remembers the view mode', function (): void {

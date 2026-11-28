@@ -31,10 +31,12 @@ class Table extends Component
 
     public $role_id = '';
 
-    public $is_active = '';
+    /** Status facet; starts on active employees. */
+    public $is_active = '1';
 
     public $designation_id = '';
 
+    /** Assigned-branch facet; starts on the session's current branch. */
     public $branch_id = '';
 
     /** Bulk "assign branches" modal state. */
@@ -63,6 +65,7 @@ class Table extends Component
     public function mount(): void
     {
         $this->view = session('employees.table.view') === 'grid' ? 'grid' : 'list';
+        $this->branch_id = (string) (session('branch_id') ?? '');
     }
 
     public function delete()
@@ -181,9 +184,11 @@ class Table extends Component
         $this->resetPage();
     }
 
+    /** Back to the default selection: current branch, active only. */
     public function resetFilters(): void
     {
-        $this->reset(['search', 'role_id', 'designation_id', 'is_active', 'branch_id']);
+        $this->reset(['search', 'role_id', 'designation_id', 'is_active']);
+        $this->branch_id = (string) (session('branch_id') ?? '');
         $this->resetPage();
     }
 

@@ -42,6 +42,7 @@ it('defaults the branch facet to the current branch and filters by assigned bran
     $component = Livewire::test(Table::class);
 
     expect($component->get('branch_id'))->toBe((string) $this->world->branch->id)
+        ->and($component->get('is_active'))->toBe('1')
         ->and($component->viewData('data')->pluck('name')->all())
         ->toContain('Main Admin', 'Both Admin')
         ->not->toContain('Second Admin')
@@ -52,10 +53,13 @@ it('defaults the branch facet to the current branch and filters by assigned bran
         ->toContain('Both Admin', 'Second Admin')
         ->not->toContain('Main Admin');
 
-    $component->call('resetFilters');
-    expect($component->get('branch_id'))->toBe('')
-        ->and($component->viewData('data')->pluck('name')->all())
+    $component->call('setBranch', '');
+    expect($component->viewData('data')->pluck('name')->all())
         ->toContain('Main Admin', 'Both Admin', 'Second Admin');
+
+    $component->call('resetFilters');
+    expect($component->get('branch_id'))->toBe((string) $this->world->branch->id)
+        ->and($component->get('is_active'))->toBe('1');
 });
 
 it('lists and accepts only the branches the signed-in user has access to', function (): void {

@@ -29,7 +29,8 @@ class Table extends Component
 
     public $designation_id = '';
 
-    public $is_active = '';
+    /** Status facet; starts on active users. */
+    public $is_active = '1';
 
     /** Assigned-branch facet; starts on the session's current branch. */
     public $branch_id = '';
@@ -113,9 +114,11 @@ class Table extends Component
         $this->resetPage();
     }
 
+    /** Back to the default selection: current branch, active only. */
     public function resetFilters(): void
     {
-        $this->reset(['search', 'role_id', 'designation_id', 'is_active', 'branch_id']);
+        $this->reset(['search', 'role_id', 'designation_id', 'is_active']);
+        $this->branch_id = (string) (session('branch_id') ?? '');
         $this->resetPage();
     }
 
