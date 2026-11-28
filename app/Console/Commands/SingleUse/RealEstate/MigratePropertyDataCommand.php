@@ -1398,6 +1398,17 @@ class MigratePropertyDataCommand extends Command
             ];
         }
 
+        // accounts labels a journal Services / Management Fee even when its form left a
+        // stale utility_term_id behind, and lists it on the Services report - so the
+        // label wins over the utility link.
+        if ($isServiceCharge) {
+            return [
+                'source' => 'Service',
+                'group' => $mode === null ? 'Service' : 'Service Payment',
+                'payment_type' => 'Services',
+            ];
+        }
+
         if (($row->utility_term_id ?? 0) > 0) {
             return [
                 'source' => 'UtilityTerm',
@@ -1407,14 +1418,6 @@ class MigratePropertyDataCommand extends Command
                 'group' => 'Utility Payment',
                 'payment_type' => 'Utility',
                 'due_date' => $this->normalizeDate($utilityDates[$row->utility_term_id] ?? null),
-            ];
-        }
-
-        if ($isServiceCharge) {
-            return [
-                'source' => 'Service',
-                'group' => $mode === null ? 'Service' : 'Service Payment',
-                'payment_type' => 'Services',
             ];
         }
 
