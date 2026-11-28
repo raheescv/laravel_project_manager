@@ -1868,8 +1868,9 @@ class MigratePropertyDataCommand extends Command
                     'Corporate' => 'Corporate',
                     default => 'Sales',
                 },
-                'property_group_id' => $row->property_group_id ?? null,
-                'property_type_id' => $row->property_type_id ?? null,
+                // accounts stored "none" as 0, which fails the exists rule on every later save.
+                'property_group_id' => ($row->property_group_id ?? null) ?: null,
+                'property_type_id' => ($row->property_type_id ?? null) ?: null,
                 'rental_type' => $row->rental_type ?? null,
                 'budget_min' => $row->budget_min ?? null,
                 'budget_max' => $row->budget_max ?? null,

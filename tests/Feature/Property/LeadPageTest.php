@@ -107,6 +107,18 @@ it('opens a migrated lead with a drifted status and saves it canonical', functio
     expect($lead->fresh()->status)->toBe('Low Budget');
 });
 
+it('saves a migrated lead whose property group and type hold 0', function (): void {
+    $lead = leadPageLead(['property_group_id' => 0, 'property_type_id' => 0, 'mobile' => '97455551234', 'country_id' => leadPageCountryId()]);
+
+    Livewire::test(Page::class, ['lead_id' => $lead->id])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($lead->fresh())
+        ->property_group_id->toBeNull()
+        ->property_type_id->toBeNull();
+});
+
 it('keeps an unknown legacy status selectable rather than blanking it', function (): void {
     $lead = leadPageLead(['status' => 'Priority']);
 

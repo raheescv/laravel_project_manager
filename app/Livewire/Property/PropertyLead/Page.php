@@ -218,6 +218,9 @@ class Page extends Component
             foreach (['property_group_id', 'property_type_id', 'rental_type', 'budget_min', 'budget_max'] as $nullable) {
                 $payload[$nullable] = blank($payload[$nullable] ?? null) ? null : $payload[$nullable];
             }
+            foreach (['property_group_id', 'property_type_id'] as $foreignKey) {
+                $payload[$foreignKey] = empty($payload[$foreignKey]) ? null : $payload[$foreignKey];
+            }
 
             if (! $this->lead_id) {
                 $response = (new CreateAction())->execute($payload, Auth::id());
