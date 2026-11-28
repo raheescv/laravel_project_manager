@@ -29,7 +29,12 @@ class WhatsappWebhookController extends Controller
             && hash_equals($expectedToken, (string) $request->query('hub_verify_token'));
 
         if (! $isValidHandshake) {
-            Log::warning('WhatsApp webhook verification failed', ['ip' => $request->ip()]);
+            Log::warning('WhatsApp webhook verification failed', [
+                'ip' => $request->ip(),
+                'mode' => $request->query('hub_mode'),
+                'token_configured' => $expectedToken !== '',
+                'token_received' => filled($request->query('hub_verify_token')),
+            ]);
 
             return response('Forbidden', 403);
         }
@@ -45,7 +50,7 @@ class WhatsappWebhookController extends Controller
             return response('Forbidden', 403);
         }
 
-        Log::info('WhatsApp webhook received', ['payload' => $request->json()->all()]);
+        Log::info('WhatsApp webhook received', ['payload' => json_decode($request->getContent(), true)]);
 
         return response('EVENT_RECEIVED', 200);
     }

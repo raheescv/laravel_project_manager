@@ -13,7 +13,7 @@ beforeEach(function (): void {
 
 function whatsappVerifyUrl(string $token, string $host = ''): string
 {
-    return $host.'/public-whatsapp/webhook?'.http_build_query([
+    return $host.'/whatsapp/webhook?'.http_build_query([
         'hub.mode' => 'subscribe',
         'hub.verify_token' => $token,
         'hub.challenge' => '1158201444',
@@ -49,7 +49,7 @@ it('prefers the tenant configuration verify token over the env one', function ()
 it('accepts an event signed with the app secret', function (): void {
     $payload = json_encode(['object' => 'whatsapp_business_account', 'entry' => []]);
 
-    $this->call('POST', '/public-whatsapp/webhook', [], [], [], [
+    $this->call('POST', '/whatsapp/webhook', [], [], [], [
         'CONTENT_TYPE' => 'application/json',
         'HTTP_X_HUB_SIGNATURE_256' => 'sha256='.hash_hmac('sha256', $payload, 'app-secret'),
     ], $payload)->assertOk()->assertSeeText('EVENT_RECEIVED');
@@ -58,7 +58,7 @@ it('accepts an event signed with the app secret', function (): void {
 it('rejects an event with a bad signature', function (): void {
     $payload = json_encode(['object' => 'whatsapp_business_account', 'entry' => []]);
 
-    $this->call('POST', '/public-whatsapp/webhook', [], [], [], [
+    $this->call('POST', '/whatsapp/webhook', [], [], [], [
         'CONTENT_TYPE' => 'application/json',
         'HTTP_X_HUB_SIGNATURE_256' => 'sha256=invalid',
     ], $payload)->assertForbidden();
