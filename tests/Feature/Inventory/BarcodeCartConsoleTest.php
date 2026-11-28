@@ -367,6 +367,66 @@ it('shows each cart row with its product category', function (): void {
     $component->assertSeeHtml('<span class="bcx-cart__category">General</span>');
 });
 
+it('drops a row stub that a late edit recreates after the row was removed', function (): void {
+    ($this->useTemplate)('standard');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->call('removeFromCart', $key)
+        ->set("cartItems.{$key}.mfg_date", '2026-11-02')
+        ->assertSet('cartItems', []);
+
+    expect(session('cart_items'))->toBe([]);
+});
+
+it('opens the cart past row stubs an earlier build saved to the session', function (): void {
+    ($this->useTemplate)('standard');
+    $key = "inventory_{$this->inventoryId}";
+
+    Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId);
+
+    session(['cart_items' => session('cart_items') + ['inventory_999999' => ['mfg_date' => '2026-11-02']]]);
+
+    expect(array_keys(Livewire::test(CartPage::class)->get('cartItems')))->toBe([$key]);
+});
+
+it('stacks cart rows into captioned cards sooner when the template adds date columns', function (): void {
+    ($this->useTemplate)('standard');
+
+    $narrow = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('data-label="Labels"')
+        ->assertDontSeeHtml('data-label="Exp Date"');
+
+    preg_match('/@container bcx-stage \\(max-width: (\\d+)px\\)/', $narrow->html(), $plain);
+
+    BarcodeTemplateConfiguration::saveConfiguration([
+        'default_template' => 'shop',
+        'templates' => [
+            'shop' => ['name' => 'Shop', 'type' => 'standard', 'settings' => [
+                'type' => 'standard',
+                'mfg_date' => ['visible' => true],
+                'exp_date' => ['visible' => true],
+            ]],
+        ],
+    ]);
+
+    $dated = Livewire::test(CartPage::class)
+        ->set('cartItems', [])
+        ->call('addToCart', $this->inventoryId)
+        ->assertSeeHtml('data-label="Mfg Date"')
+        ->assertSeeHtml('data-label="Exp Date"');
+
+    preg_match('/@container bcx-stage \\(max-width: (\\d+)px\\)/', $dated->html(), $withDates);
+
+    expect((int) $withDates[1])->toBe((int) $plain[1] + 2 * 164);
+});
+
 it('titles cart rows with the category when Item Label In Print is Category', function (): void {
     ($this->useTemplate)('standard');
     Configuration::updateOrCreate(['key' => 'print_item_label'], ['value' => 'category']);

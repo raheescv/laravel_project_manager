@@ -19,6 +19,9 @@
     // Date columns the chosen template prints, typed per row at print time.
     $dateColumns = array_filter(\App\Support\BarcodeLabel::DATE_FIELDS, fn (string $field) => $cart[$field . '_column'], ARRAY_FILTER_USE_KEY);
 
+    // Natural width of the cart sheet (px); below it the rows stack into cards instead of clipping.
+    $cartStackBelow = 560 + ($cart['price_column'] ? 428 : 0) + ($cart['weight_column'] ? 154 : 0) + 164 * count($dateColumns);
+
     $proofUrl = null;
     if ($selectedRow) {
         $isUnit = ($selectedRow['item_type'] ?? 'inventory') === 'product_unit';
@@ -256,8 +259,8 @@
                                     @endphp
                                     <tr wire:key="cart-{{ $cartKey }}" class="{{ $cartKey === $selectedRowKey ? 'is-selected' : '' }}"
                                         wire:click="selectRow('{{ $cartKey }}')">
-                                        <td class="bcx-num" style="color:var(--bcx-faint)">{{ $loop->iteration }}</td>
-                                        <td>
+                                        <td class="bcx-num bcx-cart__index" style="color:var(--bcx-faint)">{{ $loop->iteration }}</td>
+                                        <td class="bcx-cart__item">
                                             <div style="display:flex;align-items:center;gap:10px;min-width:0">
                                                 <img src="{{ $item['thumbnail'] ?? ($item['image'] ?? tenant_cache('logo')) }}" alt="" class="bcx-cart__thumb">
                                                 <div style="min-width:0">
@@ -280,14 +283,14 @@
                                             </div>
                                         </td>
                                         @if ($cart['price_column'])
-                                            <td class="bcx-cart__num" @click.stop>
+                                            <td class="bcx-cart__num" data-label="Unit Price" @click.stop>
                                                 <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell"
                                                     wire:model.blur="cartItems.{{ $cartKey }}.unit_price" placeholder="—"
                                                     title="{{ $cart['weight_column'] ? 'Price per gram' : 'Price per piece' }}: fills the MRP with tax">
                                             </td>
                                         @endif
                                         @if ($cart['weight_column'])
-                                            <td class="bcx-cart__num" @click.stop>
+                                            <td class="bcx-cart__num" data-label="Weight" @click.stop>
                                                 <div class="bcx-field__unit bcx-cart__gram {{ $missingWeight ? 'is-missing' : '' }}">
                                                     <input type="number" step="0.001" min="0" class="bcx-input bcx-cart__cell" data-gram-input
                                                         wire:model.blur="cartItems.{{ $cartKey }}.weight" placeholder="0.000"
@@ -297,31 +300,31 @@
                                             </td>
                                         @endif
                                         @if ($cart['price_column'])
-                                            <td class="bcx-cart__num bcx-cart__num--tax" @click.stop>
+                                            <td class="bcx-cart__num bcx-cart__num--tax" data-label="Tax %" @click.stop>
                                                 <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell"
                                                     wire:model.blur="cartItems.{{ $cartKey }}.tax" placeholder="0" title="Tax % added to the unit price">
                                             </td>
-                                            <td class="bcx-cart__num" @click.stop>
+                                            <td class="bcx-cart__num" data-label="MRP" @click.stop>
                                                 <input type="number" step="0.01" min="0" class="bcx-input bcx-cart__cell {{ $missingPrice ? 'is-missing' : '' }}"
                                                     wire:model.blur="cartItems.{{ $cartKey }}.price" placeholder="MRP"
                                                     title="MRP printed on this row's labels{{ is_numeric($item['unit_price'] ?? null) ? ' — worked out from unit price, weight and tax' : '' }}">
                                             </td>
                                         @endif
                                         @foreach ($dateColumns as $dateField => $dateLabel)
-                                            <td class="bcx-cart__num" @click.stop>
+                                            <td class="bcx-cart__num" data-label="{{ $dateLabel }}" @click.stop>
                                                 <input type="date" class="bcx-input bcx-cart__cell bcx-cart__date {{ empty($item[$dateField]) ? 'is-missing' : '' }}"
                                                     wire:model.blur="cartItems.{{ $cartKey }}.{{ $dateField }}"
                                                     title="{{ $dateLabel }} printed on this row's labels">
                                             </td>
                                         @endforeach
-                                        <td class="bcx-cart__num" @click.stop>
+                                        <td class="bcx-cart__num" data-label="Labels" @click.stop>
                                             <div class="bcx-stepper">
                                                 <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] - 1 }})" title="Less"><i class="fa fa-minus"></i></button>
                                                 <b>{{ $item['quantity'] }}</b>
                                                 <button wire:click="updateQuantity('{{ $cartKey }}', {{ $item['quantity'] + 1 }})" title="More"><i class="fa fa-plus"></i></button>
                                             </div>
                                         </td>
-                                        <td style="text-align:end;white-space:nowrap" @click.stop>
+                                        <td class="bcx-cart__actions" style="text-align:end;white-space:nowrap" @click.stop>
                                             <button wire:click="duplicateRow('{{ $cartKey }}')" class="bcx-ord" title="Another row for this item">
                                                 <i class="fa fa-files-o"></i>
                                             </button>
@@ -545,6 +548,7 @@
         }
 
         .bcx-cart__stage {
+            container: bcx-stage / inline-size;
             padding: 16px;
             overflow: auto;
             max-height: 70vh;
@@ -561,6 +565,11 @@
 
         .bcx-cart__grid tbody tr {
             cursor: pointer;
+        }
+
+        /* Never clip a column: a sheet wider than the pane scrolls sideways. */
+        .bcx-card.bcx-cart__sheet {
+            overflow-x: auto;
         }
 
         .bcx-cart__grid tbody tr.is-selected td {
@@ -675,6 +684,110 @@
 
             .bcx-cart__template select {
                 min-width: 0;
+            }
+        }
+
+        /* Narrow pane: each row becomes a card, item on top and its fields
+           wrapping underneath with their own captions. The width is the
+           sheet's natural width, so more typed columns stack sooner. */
+        @container bcx-stage (max-width: {{ $cartStackBelow }}px) {
+            .bcx-cart__grid,
+            .bcx-cart__grid tbody {
+                display: block;
+            }
+
+            .bcx-cart__grid thead {
+                display: none;
+            }
+
+            .bcx-cart__grid tbody tr {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-end;
+                gap: 10px 12px;
+                padding: 12px 14px;
+                border-bottom: 1px solid var(--bcx-line-soft);
+            }
+
+            .bcx-cart__grid tbody tr:last-child {
+                border-bottom: 0;
+            }
+
+            .bcx-cart__grid tbody td,
+            .bcx-cart__grid tbody tr:hover td,
+            .bcx-cart__grid tbody tr.is-selected td {
+                display: block;
+                width: auto;
+                padding: 0;
+                border: 0;
+                background: transparent;
+                box-shadow: none;
+                text-align: start;
+            }
+
+            .bcx-cart__grid tbody tr:hover {
+                background: color-mix(in srgb, var(--bcx-brand) 5%, transparent);
+            }
+
+            .bcx-cart__grid tbody tr.is-selected {
+                background: color-mix(in srgb, var(--bcx-brand) 10%, transparent);
+                box-shadow: inset 3px 0 0 var(--bcx-brand);
+            }
+
+            .bcx-cart__index {
+                align-self: center;
+                min-width: 16px;
+            }
+
+            .bcx-cart__item {
+                flex: 1 1 calc(100% - 130px);
+                min-width: 0;
+                align-self: center;
+            }
+
+            .bcx-cart__name {
+                max-width: none;
+            }
+
+            .bcx-cart__actions {
+                align-self: center;
+            }
+
+            .bcx-cart__grid td[data-label] {
+                order: 1;
+                flex: 1 1 120px;
+                min-width: 0;
+            }
+
+            .bcx-cart__grid td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                margin-bottom: 4px;
+                font-size: 9.5px;
+                font-weight: 800;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+                color: var(--bcx-muted);
+                white-space: nowrap;
+            }
+
+            .bcx-cart__cell,
+            .bcx-cart__num--tax .bcx-cart__cell,
+            .bcx-cart__cell.bcx-cart__date {
+                width: 100%;
+            }
+
+            .bcx-cart__gram {
+                display: flex;
+                width: 100%;
+            }
+
+            .bcx-cart__grid td.bcx-cart__num--tax {
+                flex-basis: 80px;
+            }
+
+            .bcx-cart__grid td[data-label="Labels"] {
+                flex: 0 0 auto;
             }
         }
 

@@ -87,7 +87,7 @@ class CartPage extends Component
             'tax' => 0,
             'mfg_date' => null,
             'exp_date' => null,
-        ], session('cart_items', []));
+        ], array_filter(session('cart_items', []), $this->isCartRow(...)));
         $this->cartItems = $this->withCategoryNames($this->cartItems);
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
 
@@ -625,6 +625,15 @@ class CartPage extends Component
         }
     }
 
+    /**
+     * A late wire:model write to a removed row recreates it holding only that
+     * field; such a stub is not a cart row.
+     */
+    private function isCartRow(mixed $item): bool
+    {
+        return is_array($item) && isset($item['product_id']);
+    }
+
     private function persistCart(): void
     {
         $this->cartItems = $this->sortCartItemsByProductId($this->cartItems);
@@ -639,6 +648,13 @@ class CartPage extends Component
         [$rowKey, $field] = array_pad(explode('.', (string) $key, 2), 2, null);
 
         if (! isset($this->cartItems[$rowKey])) {
+            return;
+        }
+
+        if (! $this->isCartRow($this->cartItems[$rowKey])) {
+            unset($this->cartItems[$rowKey]);
+            $this->persistCart();
+
             return;
         }
 
