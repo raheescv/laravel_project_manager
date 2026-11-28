@@ -66,7 +66,8 @@
             .pdx .filter-panel .ts-control { background: var(--field); }
             .pdx .filter-panel .form-select, .pdx .filter-panel .form-control { font-size: .8rem; border-color: var(--line); background-color: var(--field); }
 
-            .pdx .ptable { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0; }
+            .pdx .ptable { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0; transition: opacity .15s ease; }
+            .pdx .ptable.is-loading { opacity: .5; pointer-events: none; }
             .pdx .pdx-head { border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
             .pdx .pdx-head .filter-panel { background: transparent; border-bottom: 0; }
             .pdx .col-menu { min-width: 210px; max-height: 70vh; overflow-y: auto; }

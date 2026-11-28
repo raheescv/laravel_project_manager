@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\ProductColours;
 use App\Support\StorefrontSlug;
+use App\Support\TenantCache;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,7 +60,21 @@ class Product extends Model implements AuditableContracts
             if (array_key_exists('unit_id', $product->getChanges())) {
                 Cache::increment('product_units_version_'.$product->id);
             }
+            if ($product->wasRecentlyCreated || $product->wasChanged(['size', 'color', 'type', 'deleted_at'])) {
+                self::forgetFilterOptions($product->tenant_id);
+            }
         });
+        static::deleted(fn (Product $product) => self::forgetFilterOptions($product->tenant_id));
+    }
+
+    /** Per-tenant cache of the distinct sizes / colours the product list filters offer. */
+    public const FILTER_OPTIONS_CACHE_KEY = 'product_list_filter_options';
+
+    public static function forgetFilterOptions(?int $tenantId): void
+    {
+        if ($tenantId) {
+            Cache::forget(TenantCache::key(self::FILTER_OPTIONS_CACHE_KEY, $tenantId));
+        }
     }
 
     /** Size categories used to group products on the storefront. */

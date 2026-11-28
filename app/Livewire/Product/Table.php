@@ -12,9 +12,14 @@ use App\Models\Configuration;
 use App\Models\Department;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Services\TenantService;
 use App\Support\ProductColours;
+use App\Support\TenantCache;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Session;
@@ -369,7 +374,7 @@ class Table extends Component
     #[Computed]
     public function sizeOptions(): array
     {
-        $sizes = $this->distinctValues('size');
+        $sizes = $this->filterOptionValues()['size'];
         natcasesort($sizes);
 
         return array_values($sizes);
@@ -384,12 +389,29 @@ class Table extends Component
     public function colourOptions(): array
     {
         $colours = [];
-        foreach ($this->distinctValues('color') as $colour) {
+        foreach ($this->filterOptionValues()['color'] as $colour) {
             $colours[$colour] = ProductColours::displayName($colour);
         }
         asort($colours, SORT_NATURAL | SORT_FLAG_CASE);
 
         return $colours;
+    }
+
+    /**
+     * The sizes and colours on file, cached per tenant: scanning every product for them
+     * on each keystroke of the search box was a third of the request. Product saves that
+     * touch size / colour clear it ({@see Product::forgetFilterOptions()}).
+     *
+     * @return array{size: array<int, string>, color: array<int, string>}
+     */
+    private function filterOptionValues(): array
+    {
+        $build = fn (): array => ['size' => $this->distinctValues('size'), 'color' => $this->distinctValues('color')];
+        $tenantId = app(TenantService::class)->getCurrentTenantId();
+
+        return $tenantId
+            ? Cache::remember(TenantCache::key(Product::FILTER_OPTIONS_CACHE_KEY, $tenantId), now()->addHours(6), $build)
+            : $build();
     }
 
     /**
@@ -429,12 +451,102 @@ class Table extends Component
 
     public function render()
     {
+        $data = $this->productsQuery()->paginate($this->limit);
+        $familyIds = $this->groupVariants ? $data->getCollection()->filter(fn (Product $row) => $row->variants_count > 0)->pluck('id')->all() : [];
+        $this->loadOpenFamilies($data->getCollection(), $familyIds);
+
         return view('livewire.product.table', [
-            'data' => $this->productsQuery()->paginate($this->limit),
+            'data' => $data,
+            'rowFacets' => $this->rowFacets($data->getCollection(), $familyIds),
             'colourPalette' => ProductColours::palette(),
             'activeFilters' => $this->activeFilters(),
             'columnLabels' => $this->columnLabels(),
         ]);
+    }
+
+    /**
+     * Design / size / colour chips per listed row. A family's chips cover its head and
+     * every variant, read as distinct values in one grouped query instead of loading
+     * each variant (a page of large families used to hydrate thousands of models).
+     * Values keep the order they first appear in (head first, then by variant id).
+     *
+     * @param  Collection<int, Product>  $rows
+     * @param  array<int, int>  $familyIds  listed heads that have variants
+     * @return array<int, array{designs: Collection<int, string>, sizes: Collection<int, string>, colours: Collection<int, string>}>
+     */
+    private function rowFacets(Collection $rows, array $familyIds): array
+    {
+        $facets = ['variant_value' => 'designs', 'size' => 'sizes', 'color' => 'colours'];
+        $values = [];
+        foreach ($rows as $row) {
+            foreach ($facets as $column => $facet) {
+                $values[$row->id][$facet] = [$row->{$column}];
+            }
+        }
+
+        if ($familyIds) {
+            $variantValues = null;
+            foreach ($facets as $column => $facet) {
+                $query = Product::query()
+                    ->whereIn('parent_id', $familyIds)
+                    ->whereNotNull($column)
+                    ->where($column, '!=', '')
+                    ->select('parent_id')
+                    ->selectRaw('? as facet, MIN(id) as first_id', [$facet])
+                    ->addSelect("{$column} as value")
+                    ->groupBy('parent_id', $column)
+                    ->toBase();
+                $variantValues = $variantValues ? $variantValues->unionAll($query) : $query;
+            }
+            foreach ($variantValues->get()->sortBy('first_id') as $variantValue) {
+                $values[$variantValue->parent_id][$variantValue->facet][] = $variantValue->value;
+            }
+        }
+
+        return array_map(fn (array $row) => [
+            'designs' => $this->distinctChips($row['designs'], caseInsensitive: true),
+            'sizes' => $this->distinctChips($row['sizes'], caseInsensitive: false),
+            'colours' => $this->distinctChips($row['colours'], caseInsensitive: true),
+        ], $values);
+    }
+
+    /**
+     * @param  array<int, mixed>  $values
+     * @return Collection<int, string>
+     */
+    private function distinctChips(array $values, bool $caseInsensitive): Collection
+    {
+        return collect($values)
+            ->map(fn ($value) => trim((string) $value))
+            ->filter(fn (string $value) => $value !== '')
+            ->unique(fn (string $value) => $caseInsensitive ? mb_strtolower($value) : $value)
+            ->values();
+    }
+
+    /**
+     * Full variant rows only for the families the user has expanded on this page.
+     *
+     * @param  Collection<int, Product>  $rows
+     * @param  array<int, int>  $familyIds
+     */
+    private function loadOpenFamilies(Collection $rows, array $familyIds): void
+    {
+        $openIds = array_values(array_intersect($familyIds, array_map('intval', $this->openFamilies)));
+        if (! $openIds) {
+            return;
+        }
+
+        $variants = Product::query()
+            ->whereIn('parent_id', $openIds)
+            ->get(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'variant_value', 'cost', 'mrp'])
+            ->sortBy('id')
+            ->groupBy('parent_id');
+
+        foreach ($rows as $row) {
+            if (in_array($row->id, $openIds, true)) {
+                $row->setRelation('variants', $variants->get($row->id, new EloquentCollection())->values());
+            }
+        }
     }
 
     /**
@@ -452,8 +564,7 @@ class Table extends Component
             ->product()
             ->with(['brand:id,name', 'department:id,name', 'mainCategory:id,name', 'subCategory:id,name', 'unit:id,name'])
             ->withCount('variants')
-            ->when($this->groupVariants, fn (Builder $query) => $query->familyHeads()
-                ->with(['variants' => fn ($variants) => $variants->select(['id', 'parent_id', 'name', 'code', 'barcode', 'size', 'color', 'variant_value', 'cost', 'mrp'])->orderBy('id')]))
+            ->when($this->groupVariants, fn (Builder $query) => $query->familyHeads())
             ->when($terms, fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $this->matchSearchTerms($member, $terms)))
             ->when($size !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('size', $size)))
             ->when($colour !== '', fn (Builder $query) => $this->whereFamilyMatches($query, fn (Builder $member) => $member->where('color', $colour)))

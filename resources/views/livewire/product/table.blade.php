@@ -5,6 +5,7 @@
     $showCategory = $show('department') || $show('main_category') || $show('sub_category');
     $columnCount = 2 + (int) $show('image', false) + (int) $showCodes + (int) $show('variant_value') + (int) $show('size') + (int) $show('color') + (int) $showCategory + (int) $show('brand') + (int) $show('unit') + (int) $show('cost') + (int) $show('mrp');
     $panelFilterCount = count(array_diff_key($activeFilters, ['sku' => true]));
+    $decimals = currency_decimals();
 @endphp
 <div class="pdx" x-data="{ filtersOpen: $persist(false).as('product-list-filters-open') }">
     <x-product.list-premium />
@@ -50,15 +51,21 @@
         <div class="toolbar d-flex flex-wrap align-items-center gap-2 px-3 pb-3">
             <div class="search-wrap" style="flex: 1 1 260px; max-width: 420px">
                 <div class="input-group input-group-sm">
-                    <span class="input-group-text"><i class="fa fa-search"></i></span>
-                    <input type="text" id="search" wire:model.live.debounce.400ms="search" placeholder="Search name, Arabic name, code, colour, price…" class="form-control tool-input" autocomplete="off"
+                    <span class="input-group-text">
+                        <i class="fa fa-search" wire:loading.remove wire:target="search"></i>
+                        <i class="fa fa-spinner fa-spin" wire:loading wire:target="search"></i>
+                    </span>
+                    <input type="text" id="search" wire:model.live.debounce.300ms="search" placeholder="Search name, Arabic name, code, colour, price…" class="form-control tool-input" autocomplete="off"
                         aria-label="Search products">
                 </div>
             </div>
             <div class="search-wrap" style="flex: 0 1 200px">
                 <div class="input-group input-group-sm">
-                    <span class="input-group-text"><i class="fa fa-barcode"></i></span>
-                    <input type="text" id="sku" wire:model.live.debounce.400ms="sku" placeholder="SKU code" class="form-control tool-input mono" autocomplete="off" aria-label="Search SKU code">
+                    <span class="input-group-text">
+                        <i class="fa fa-barcode" wire:loading.remove wire:target="sku"></i>
+                        <i class="fa fa-spinner fa-spin" wire:loading wire:target="sku"></i>
+                    </span>
+                    <input type="text" id="sku" wire:model.live.debounce.300ms="sku" placeholder="SKU code" class="form-control tool-input mono" autocomplete="off" aria-label="Search SKU code">
                 </div>
             </div>
             <button type="button" class="btn btn-sm btn-ghost" :class="{ 'on': filtersOpen }" @click="filtersOpen = ! filtersOpen" :aria-expanded="filtersOpen" aria-controls="productFilterPanel">
@@ -205,7 +212,8 @@
 
         {{-- List --}}
         <div class="table-responsive">
-            <table class="ptable {{ $compact ? 'is-compact' : '' }}">
+            <table class="ptable {{ $compact ? 'is-compact' : '' }}" wire:loading.delay.class="is-loading"
+                wire:target="search,sku,status,variant,image_status,size,color,is_selling,unit_id,department_id,main_category_id,sub_category_id,brand_id,groupVariants,limit,sortBy,clearFilter,clearFilters,gotoPage,nextPage,previousPage">
                 <thead>
                     <tr>
                         <th style="width: 1%">
@@ -254,11 +262,9 @@
                         @php
                             $isSelected = in_array((string) $item->id, array_map('strval', $selected), true);
                             $hasFamily = $groupVariants && ($item->variants_count ?? 0) > 0;
-                            $colour = trim((string) $item->color);
-                            $members = $hasFamily ? collect([$item])->merge($item->variants) : collect([$item]);
-                            $rowDesigns = $members->pluck('variant_value')->map(fn ($d) => trim((string) $d))->filter()->unique(fn ($d) => mb_strtolower($d))->values();
-                            $rowSizes = $members->pluck('size')->map(fn ($s) => trim((string) $s))->filter()->unique()->values();
-                            $rowColours = $members->pluck('color')->map(fn ($c) => trim((string) $c))->filter()->unique(fn ($c) => mb_strtolower($c))->values();
+                            $rowDesigns = $rowFacets[$item->id]['designs'];
+                            $rowSizes = $rowFacets[$item->id]['sizes'];
+                            $rowColours = $rowFacets[$item->id]['colours'];
                         @endphp
                         <tr class="row-main {{ $isSelected ? 'is-selected' : '' }}" wire:key="product-{{ $item->id }}">
                             <td class="c-check">
@@ -385,11 +391,11 @@
                                 <td class="c-unit hide-lg small text-body-secondary">{{ $item->unit?->name ?? '—' }}</td>
                             @endif
                             @if ($show('cost'))
-                                <td class="c-cost num hide-sm text-body-secondary">{{ currency($item->cost) }}</td>
+                                <td class="c-cost num hide-sm text-body-secondary">{{ currency($item->cost, $decimals) }}</td>
                             @endif
                             @if ($show('mrp'))
                                 <td class="c-price num fw-semibold">
-                                    {{ currency($item->mrp) }}
+                                    {{ currency($item->mrp, $decimals) }}
                                     @if ($show('cost') && $item->mrp > 0)
                                         @php $margin = round((1 - $item->cost / $item->mrp) * 100); @endphp
                                         <div class="margin fw-normal hide-md {{ $margin < 0 ? 'text-danger' : 'text-success' }}">{{ $margin }}% margin</div>
@@ -427,8 +433,8 @@
                                                         </td>
                                                         <td><span class="sku">{{ $member->code ?: '—' }}</span></td>
                                                         <td class="hide-sm"><span class="bc">{{ $member->barcode ?: '—' }}</span></td>
-                                                        <td class="text-end hide-sm">{{ currency($member->cost) }}</td>
-                                                        <td class="text-end fw-semibold">{{ currency($member->mrp) }}</td>
+                                                        <td class="text-end hide-sm">{{ currency($member->cost, $decimals) }}</td>
+                                                        <td class="text-end fw-semibold">{{ currency($member->mrp, $decimals) }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>

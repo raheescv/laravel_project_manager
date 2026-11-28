@@ -95,3 +95,28 @@ it('shows a Design column with the family\'s designs and finds a family by one',
 
     $table->set('columns.variant_value', false)->assertDontSeeHtml('class="c-design"');
 });
+
+it('builds a collapsed family\'s chips without loading its variants, and loads them once expanded', function (): void {
+    $table = Livewire::test(Table::class)
+        ->assertSeeHtmlInOrder(['class="c-size"', '<span class="chip-size">41</span>', '<span class="chip-size">42</span>', '<span class="chip-size">43</span>']);
+
+    $facets = $table->viewData('rowFacets')[$this->shoe->id];
+    expect($facets['sizes']->all())->toBe(['41', '42', '43'])
+        ->and($facets['colours']->all())->toBe(['Black', 'Blue'])
+        ->and($table->viewData('data')->first()->relationLoaded('variants'))->toBeFalse();
+
+    $expanded = $table->call('toggleFamily', $this->shoe->id)->viewData('data')->first();
+    expect($expanded->relationLoaded('variants'))->toBeTrue()
+        ->and($expanded->variants->pluck('id')->all())->toBe([$this->blue->id, $this->plain->id]);
+});
+
+it('offers a newly used size in the size filter straight away', function (): void {
+    expect(Livewire::test(Table::class)->instance()->sizeOptions)->toBe(['41', '42', '43']);
+
+    Product::factory()->variantOf($this->shoe, '44', 'Green')->create();
+    $this->plain->update(['size' => '45']);
+
+    $table = Livewire::test(Table::class)->instance();
+    expect($table->sizeOptions)->toBe(['41', '42', '44', '45'])
+        ->and(array_keys($table->colourOptions))->toContain('Green');
+});
