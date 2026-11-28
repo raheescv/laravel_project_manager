@@ -17,6 +17,14 @@ class CompareRentOutPopulationAction
         5 => 'cancelled',
     ];
 
+    /** accounts' Rentout / PaymentTerm payment mode constants - not account_heads ids. */
+    private const PAYMENT_MODE_MAP = [
+        1 => 'cash',
+        2 => 'cheque',
+        3 => 'pos',
+        4 => 'bank_transfer',
+    ];
+
     private const CHEQUE_STATUS_MAP = [
         1 => 'uncleared',
         2 => 'submitted',
@@ -606,7 +614,7 @@ class CompareRentOutPopulationAction
     {
         return match ($type) {
             'account' => $isOld ? $this->normaliseInteger($value) : ($accountReferences[(int) $value] ?? $this->normaliseInteger($value)),
-            'payment_mode' => $isOld ? ($paymentModes[(int) $value] ?? 'cash') : $this->normalisePaymentMode($value),
+            'payment_mode' => $isOld ? (self::PAYMENT_MODE_MAP[(int) $value] ?? 'cash') : $this->normalisePaymentMode($value),
             'status' => $isOld ? $this->normaliseStatus($value) : $this->normaliseValue($value),
             default => $this->normaliseTypedValue($value, $type),
         };
@@ -618,7 +626,7 @@ class CompareRentOutPopulationAction
     private function normaliseChildField(mixed $value, string $type, bool $isOld, array $paymentModes): mixed
     {
         return match ($type) {
-            'payment_mode' => $isOld ? ($paymentModes[(int) $value] ?? 'cash') : $this->normalisePaymentMode($value),
+            'payment_mode' => $isOld ? (self::PAYMENT_MODE_MAP[(int) $value] ?? 'cash') : $this->normalisePaymentMode($value),
             'cheque_status' => $isOld ? (self::CHEQUE_STATUS_MAP[(int) $value] ?? $this->normaliseValue($value)) : $this->normaliseValue($value),
             'security_status' => $isOld ? $this->normaliseSecurityStatus($value) : $this->normaliseValue($value),
             'security_type' => $isOld ? ($this->normaliseValue($value) === 'guarantee' ? 'guarantee' : 'deposit') : $this->normaliseValue($value),

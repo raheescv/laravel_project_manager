@@ -54,16 +54,13 @@ beforeEach(function (): void {
 });
 
 it('renames rent out columns and translates their values', function (): void {
-    (function () {
-        $this->accountByRef = [1809 => 55];
-        $this->paymentModeMap = [1 => 'cash', 7 => 'cheque'];
-    })->call($this->command);
+    (fn () => $this->accountByRef = [1809 => 55])->call($this->command);
     seedAuditTargets($this->command, ['rent_outs' => 1938]);
 
     $row = migrateAudit($this->command, 'Rentout', [
         'auditable_id' => 1938,
         'old_values' => json_encode(['customer_id' => 1, 'status' => 4, 'collection_payment_mode_id' => 1, 'purpose' => 'Residential', 'updated_at' => '2026-10-29 19:05:08']),
-        'new_values' => json_encode(['customer_id' => '1809', 'status' => 1, 'collection_payment_mode_id' => 7, 'purpose' => 'Commercial', 'updated_at' => '2026-10-29 19:05:29']),
+        'new_values' => json_encode(['customer_id' => '1809', 'status' => 1, 'collection_payment_mode_id' => 2, 'purpose' => 'Commercial', 'updated_at' => '2026-10-29 19:05:29']),
     ]);
 
     expect($row)->toMatchArray(['auditable_type' => RentOut::class, 'auditable_id' => 1938, 'tags' => 'accounts-migration'])

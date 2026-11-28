@@ -44,6 +44,12 @@ class RentOutPaymentTerm extends Model implements AuditableContracts
 
     protected static function booted(): void
     {
+        static::creating(function (self $model) {
+            if (! $model->payment_mode && $model->rent_out_id) {
+                $model->payment_mode = RentOut::withoutGlobalScopes()->whereKey($model->rent_out_id)->first()?->collection_payment_mode?->value;
+            }
+        });
+
         static::saving(function (self $model) {
             $model->total = ($model->amount ?? 0) - ($model->discount ?? 0);
             $model->balance = $model->total - ($model->paid ?? 0);

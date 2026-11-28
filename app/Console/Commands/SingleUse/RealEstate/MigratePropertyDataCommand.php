@@ -139,6 +139,14 @@ class MigratePropertyDataCommand extends Command
         'cancelled' => 'cancelled',
     ];
 
+    /** @var array<int, string> accounts' Rentout / PaymentTerm payment mode constants => new payment mode */
+    private const RENT_OUT_PAYMENT_MODES = [
+        1 => 'cash',
+        2 => 'cheque',
+        3 => 'pos',
+        4 => 'bank_transfer',
+    ];
+
     private array $paymentModeMap = [];
 
     /**
@@ -445,13 +453,16 @@ class MigratePropertyDataCommand extends Command
         }
     }
 
+    /**
+     * Resolve the payment mode stored on an old rent-out record (rentouts.collection_payment_mode_id,
+     * payment_terms / rentout_extends.payment_mode_id, rentout_securities.security_payment_mode_id).
+     *
+     * Those columns hold accounts' fixed Rentout::Cash..BANK_TRANSFER constants (1-4), not
+     * account_heads ids, so they must not go through the account-head map.
+     */
     private function resolvePaymentMode(?int $modeId): string
     {
-        if (! $modeId) {
-            return 'cash';
-        }
-
-        return $this->paymentModeMap[$modeId] ?? 'cash';
+        return self::RENT_OUT_PAYMENT_MODES[$modeId ?? 0] ?? 'cash';
     }
 
     /** @var array<int, int> old designations.id => target designations.id */
@@ -1739,6 +1750,7 @@ class MigratePropertyDataCommand extends Command
             'due_date' => $row->date,
             'paid_date' => null,
             'status' => ($row->paid ?? 0) >= ($row->amount ?? 0) && ($row->amount ?? 0) > 0 ? 'paid' : 'pending',
+            'payment_mode' => $this->resolvePaymentMode($row->payment_mode_id ?? null),
             'remarks' => $row->remark ?? null,
             'deleted_at' => $row->deleted_at ?? null,
             'created_at' => $row->created_at ?? now(),
